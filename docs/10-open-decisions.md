@@ -247,21 +247,21 @@ Choose exact Phase 3/8 approach:
 
 ### D-400 — Month lock timing
 
-- Decide whether manager approval immediately locks or an administrator/scheduled close locks later.
-- Recommended MVP: manager approval records approval; explicit lock action follows, potentially combined by policy.
+**Status:** Resolved by `WL-008`.
+
+- Manager approval creates the immutable approval snapshot and moves the period to `APPROVED`.
+- A separate explicit action by the eligible current non-self manager moves that exact approved version to `LOCKED`; it does not rebuild the snapshot.
+- Automatic, scheduled, administrator-only, and approval-implies-lock modes are excluded from the MVP. Before lock, the manager may instead request changes with a reason.
+- Lock rechecks current scope, self-action, expected period version, approved snapshot/source fingerprint, and ledger reconciliation atomically. There is no ordinary unlock action.
 
 ### D-401 — Approved snapshot contents
 
-Define exact snapshot fields and version metadata needed to reproduce:
+**Status:** Resolved by `WL-008`.
 
-- expected,
-- worked,
-- credited absence,
-- adjustments,
-- daily balances,
-- period total,
-- schedule/policy versions,
-- calculation engine version.
+- The immutable canonical snapshot records schema/engine versions; organization, employee, timezone, calendar boundaries, approval cycle, period version, source/snapshot fingerprints, snapshot/actor identity, and creation instant.
+- Each ordered local-date row records its status, source fingerprint, full integer-minute calculation breakdown, warnings, and the effective schedule, policy, holiday, correction, neutral absence effect, adjustment, and daily-ledger source/version references.
+- Period sums, opening/closing posted time-account balances, and the ordered included ledger-entry IDs/amounts must reconcile to the rows.
+- The snapshot contains no sickness classification, request/reviewer notes, diagnosis, entitlement balance, or unrestricted protected-record payload. Later adjustments reference it and never replace it.
 
 ## Decisions blocking production release
 

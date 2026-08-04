@@ -472,8 +472,9 @@ Property-oriented follow-up should generate even/odd expectations, disjoint/inte
 
 ### EX-035 — Correction in submitted month
 
-- Ordinary mutation is denied or period is returned according to workflow.
-- No silent edit.
+- An employee attempts an ordinary correction while the month is `SUBMITTED`.
+- The command returns `PERIOD_REOPEN_REQUIRED`; period/source versions, calculation, ledger, and audit success history are unchanged.
+- The current manager requests changes with a reason; state becomes `CHANGES_REQUESTED`, after which a new correction version may be submitted and the month must be resubmitted.
 
 ### EX-036 — Correction after lock
 
@@ -490,9 +491,9 @@ Property-oriented follow-up should generate even/odd expectations, disjoint/inte
 
 ### EX-038 — Ready month
 
-- All scheduled days complete or covered.
-- No blocking warnings.
-- Period state can become ready and submitted.
+- The organization-local month has ended; all employed dates are `COMPLETE`, every eligible date has its base posting, and no correction, absence, configuration, or reconciliation blocker remains.
+- Readiness derives as `READY_FOR_SUBMISSION`; the employee acknowledges the exact warning/source set and submits with the current period version.
+- State becomes `SUBMITTED`, version increments once, and the submitted source fingerprint is recorded; no approval snapshot exists yet.
 
 ### EX-039 — Incomplete month
 
@@ -501,9 +502,9 @@ Property-oriented follow-up should generate even/odd expectations, disjoint/inte
 
 ### EX-040 — Manager approval and lock
 
-- Authorized manager approves.
-- Snapshot and audit decision stored.
-- Lock prevents ordinary changes.
+- The current non-self manager approves a source-unchanged `SUBMITTED` month.
+- State becomes `APPROVED`; approval cycle 1 snapshot, decision, version, audit, and notification commit atomically and its rows/totals/ledger references reconcile.
+- A later explicit lock rechecks the exact snapshot/source and changes state to `LOCKED` without creating another snapshot. Ordinary changes then return `PERIOD_LOCKED` or `PERIOD_ADJUSTMENT_REQUIRED`.
 
 ### EX-041 — Self-approval attempt
 
@@ -515,6 +516,76 @@ Property-oriented follow-up should generate even/odd expectations, disjoint/inte
 - Manager assignment ended before request review.
 - Access denied because manager scope is resolved from the current effective assignment.
 - Historical relationship or prior approval attribution grants no access; delegation is outside the MVP.
+
+### EX-076 — Warning acknowledgement becomes stale
+
+- A ready month has warning set/fingerprint A; the employee acknowledges A.
+- A source recalculation changes the warning/source set to fingerprint B before submission.
+- Submission returns `PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED`; no transition occurs until B is reviewed and acknowledged.
+
+### EX-077 — Approval detects changed sources
+
+- The submitted source fingerprint is S1. A concurrent privileged operation changes a covered source before approval, producing S2.
+- Approval returns `PERIOD_SOURCE_CHANGED`; it writes no snapshot, decision, notification, or ledger effect.
+- The period must enter `CHANGES_REQUESTED`, be made ready, and be resubmitted from S2.
+
+### EX-078 — Approval snapshot reconciliation
+
+- Two daily rows have balances +30 and -15; opening posted balance is 600; the ordered included month ledger effects total +15.
+- The snapshot period balance is +15 and closing posted balance is 615, with matching row, total, and ledger references.
+- A mismatch returns `PERIOD_LEDGER_MISMATCH` and approval commits nothing.
+
+### EX-079 — Changes requested after approval
+
+- Before lock, the current manager requests changes on an `APPROVED` period with a reason.
+- State becomes `CHANGES_REQUESTED`; approval-cycle-1 snapshot remains immutable historical evidence but is not a locked baseline.
+- After correction and resubmission, approval creates cycle-2 snapshot; lock fixes cycle 2.
+
+### EX-080 — Lock source race
+
+- Manager loads `APPROVED` period version 4 and snapshot fingerprint P1; another accepted transition advances it to version 5.
+- Lock with expected version 4 returns `PERIOD_VERSION_CONFLICT` and creates no lock/audit success event.
+- A valid lock of the unchanged approved version fixes P1 and does not recalculate or create a second snapshot.
+
+### EX-081 — Post-lock positive correction
+
+- Locked snapshot closing balance is 615. An approved correction adds 13 minutes to one date.
+- The snapshot and original daily ledger entries remain unchanged; one uniquely keyed `POST_LOCK_ADJUSTMENT +13` and linked adjustment record commit.
+- Approved view closes at 615; current adjusted view reports baseline 615, cumulative delta +13, adjusted closing 628.
+
+### EX-082 — Post-lock zero-delta correction
+
+- A locked source interpretation is corrected but recalculates to the same daily and period totals.
+- Approval records the interpretation, decision, per-date zero delta, adjustment-chain link, audit, and notification, but appends no zero time-account entry.
+- The snapshot remains unchanged and the adjusted view explains that the net delta is zero.
+
+### EX-083 — Concurrent post-lock decisions
+
+- Two reviewers decide the same adjustment request/version concurrently.
+- One approval commits its interpretation and ledger delta; the other returns a version/state conflict after refetch.
+- Semantic source uniqueness proves the correction affects the balance once only.
+
+### EX-084 — Post-lock reversal
+
+- A prior locked adjustment added 13 minutes and is later found incorrect.
+- Approval appends a linked compensating adjustment and `POST_LOCK_ADJUSTMENT -13`; it does not edit or delete the first entry.
+- The ordered chain nets to zero while both decisions and the original snapshot remain reproducible.
+
+### EX-085 — Snapshot absence privacy
+
+- The approved month includes 480 sickness-credit minutes from an authorized absence effect.
+- Snapshot rows contain the neutral effect/source ID and 480 absence-credit minutes, but no sickness classification, coverage payload, request/reviewer note, entitlement amount, or diagnosis.
+- Generic monthly detail/export cannot recover the sensitive type by embedded fields; protected source detail requires separate authorization.
+
+## Monthly-period fixture execution matrix
+
+| Priority | Cases | Primary test level | Risk covered |
+|---|---|---|---|
+| P0 | `EX-035`, `EX-038`–`EX-042`, `EX-076`–`EX-080` | Domain state-machine plus application/database transaction and authorization tests | Readiness, freeze/reopen, current scope, self-action, stale warnings/sources, snapshot reconciliation, approval cycles, and explicit lock. |
+| P0 | `EX-036`, `EX-081`–`EX-084` | Domain ledger plus database concurrency/integration tests | Immutable baseline, exact post-lock delta, zero delta, duplicate decision, and compensating reversal. |
+| P0 | `EX-037`, `EX-085` | Snapshot serialization/version and API/export privacy tests | Historical reproducibility and sensitive absence data minimization. |
+
+Property-oriented follow-up should generate period transition sequences, daily row/ledger minute sets, stale period/source versions, and ordered adjustment/reversal chains. Assert legal-state reachability, exact row/period/ledger reconciliation, one snapshot per approval cycle, no snapshot rebuild on lock, and at most one semantic adjustment effect.
 
 ## Reporting and export
 

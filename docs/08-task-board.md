@@ -24,8 +24,8 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 | WL-005 | Finalize attendance state machine and idempotency rules | WL-004 | Transition table, invalid cases, retries, tabs/devices defined | Done |
 | WL-006 | Finalize time-calculation rules and example catalog | WL-004, WL-005 | At least 25 cases with expected results | Done |
 | WL-007 | Finalize absence, entitlement, privacy, overlap, and cancellation rules | WL-003, WL-004 | Policy matrix and ledger effects accepted | Done |
-| WL-008 | Finalize monthly submission, approval, locking, and adjustment rules | WL-003, WL-004, WL-006 | State transitions and immutable snapshot rules accepted | Ready |
-| WL-009 | Finalize route map, screen states, responsive behavior, and accessibility criteria | WL-002, WL-003 | Every MVP workflow maps to routes/states and tests | Not started |
+| WL-008 | Finalize monthly submission, approval, locking, and adjustment rules | WL-003, WL-004, WL-006 | State transitions and immutable snapshot rules accepted | Done |
+| WL-009 | Finalize route map, screen states, responsive behavior, and accessibility criteria | WL-002, WL-003 | Every MVP workflow maps to routes/states and tests | Ready |
 | WL-010 | Finalize security, data classification, threat model, and operations assumptions | WL-003 | Threats and release controls accepted | Not started |
 | WL-011 | Ratify architecture decisions and repository boundaries | WL-002, WL-004, WL-010 | ADRs accepted; dependency direction clear | Not started |
 | WL-012 | Execute Phase 0 gate review | WL-002–WL-011 | Gate checklist complete; exact next task selected | Not started |

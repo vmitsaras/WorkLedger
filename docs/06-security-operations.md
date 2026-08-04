@@ -125,6 +125,10 @@ The risk is high because sickness is health-related and absence coverage can rev
 - Concurrency conflicts return a stable error and current version/state.
 - Destructive administrative actions require reason and audit where appropriate.
 - Never perform a balance mutation without its source record in the same transaction.
+- Period submit, request-changes, approval, lock, and post-lock decisions validate the expected period/request version and current source fingerprint. Approval atomically writes one reconciled immutable snapshot; the separate lock action fixes that exact snapshot and cannot rebuild or unlock it.
+- Period review/lock always resolves the current direct manager and prohibits self-approval/self-lock across combined roles. HR or system-administrator capability alone is insufficient; post-lock privileged HR effects remain non-self and reasoned.
+- Snapshot and generic period DTOs contain neutral absence source references and calculation minutes only. Sickness classification, coverage payloads, request/reviewer notes, entitlement balances, and protected source details require separate purpose-specific authorization and are excluded from generic exports, caches, notifications, audit payloads, and logs.
+- Each post-lock effect has a unique semantic source key, locked-snapshot reference, per-date/net signed delta, decision, ledger link, and audit evidence in one transaction. Reversal appends compensation; no ordinary API updates or deletes a snapshot or prior adjustment.
 
 ## 6. Audit events
 

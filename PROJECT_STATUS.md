@@ -1,14 +1,14 @@
 # WorkLedger Project Status
 
 **Current phase:** Phase 0 — Product and domain contract
-**Current milestone:** Monthly submission, approval, locking, and adjustment finalization
-**Active task:** `WL-008`
+**Current milestone:** Route map, screen-state, responsive, and accessibility finalization
+**Active task:** `WL-009`
 **Status:** Ready
 **Last verified:** 2026-08-04
 
 ## Current objective
 
-Finalize monthly-period readiness, submission, changes-requested, approval, explicit locking, immutable snapshot, and post-lock adjustment behavior before scaffolding application code.
+Finalize the MVP route map, complete screen-state inventory, responsive behavior, and testable accessibility acceptance criteria before security and architecture ratification.
 
 ## Verified decisions
 
@@ -52,6 +52,10 @@ Finalize monthly-period readiness, submission, changes-requested, approval, expl
 - Unpaid leave reduces covered expectation by default and contributes no absence credit.
 - Cancellation is a separate versioned workflow that may target exact remaining coverage, restores no more than the linked deduction, and never rewrites the original request/decision.
 - Sickness has no diagnosis, note, clinician, or attachment field; type and sensitive context stay out of team DTOs, URLs, browser persistence, generic notifications/exports, technical audit, and operational logs.
+- Monthly readiness and adjusted-after-lock are derived; persisted workflow states are open, submitted, changes requested, approved, and locked.
+- Approval creates a reconciled immutable snapshot; a separate eligible current non-self manager action locks that exact snapshot, with no MVP unlock.
+- Submitted/approved months require an explicit changes-requested transition before ordinary mutation; locked changes append uniquely linked adjustments against the preserved baseline.
+- Monthly snapshots include versioned daily calculation/source/ledger evidence but exclude sickness classification, notes, entitlement balances, and other purpose-incompatible HR detail.
 
 ## Work completed
 
@@ -69,15 +73,15 @@ Finalize monthly-period readiness, submission, changes-requested, approval, expl
 
 ## Latest completed task
 
-### `WL-007` — Finalize absence, entitlement, privacy, overlap, and cancellation rules
+### `WL-008` — Finalize monthly submission, approval, locking, and adjustment rules
 
-- Changed: finalized the bounded absence policy matrix, exact full/half/minute coverage rules, entitlement equations and signed transition entries, approval/report state machines, overlap behavior, negative-balance override, retrospective sickness boundary, unpaid-leave expectation reduction, and partial/full cancellation reversal.
-- Verified: 27 accepted absence fixtures cover arithmetic, policy effects, reservation conservation, acknowledgement, overlap, work intersection, cancellation concurrency, locked history, authorization, privacy channels, and invalid configuration; all 75 example headings and 88 invariant IDs are unique; all referenced absence/warning codes exist.
-- Commands: Markdown table-shape and decision-status script, example/invariant uniqueness and count script, API-code coverage comparison, task-ID parity check, stale-decision searches, `git diff --check`, and focused diff review. No package quality commands exist before Phase 1 scaffolding.
-- Decisions: resolved `D-300`–`D-304`; leave minutes, exact first/second half partition, reasoned non-self HR negative override, configurable seven-day default sickness window, and unpaid expected-time neutralization.
-- Privacy: added the absence data inventory and high-risk control matrix for collection, purpose-specific DTOs, browser/cache/URL state, notifications, logs, exports, telemetry, retention, and correction/cancellation user control.
-- Remaining risk: `D-500` still owns exact production retention/anonymization periods; `WL-008` must finalize locked-date adjustment mechanics; Phase 2/3/6 must prove calculations, source uniqueness, authorization, rollback, cache clearing, and privacy-shaped serialization in executable tests.
-- Next task: `WL-008`.
+- Changed: finalized persisted versus derived period states, month-end readiness/blockers and warning acknowledgement, source-fingerprinted submission, explicit changes-requested reopening, separate approval and lock actions, immutable snapshot schema/reconciliation, and source-linked post-lock adjustment/reversal behavior.
+- Verified: exact period fixtures now cover freeze/reopen, warning/source races, current scope and self-action, approval cycles, snapshot/ledger reconciliation, explicit lock, positive/zero/concurrent/reversed adjustments, and absence privacy; state/invariant/example/error/task consistency checks pass.
+- Decisions: resolved `D-400` and `D-401`; approval creates the snapshot, the eligible current non-self manager locks separately, there is no MVP unlock, and snapshots contain canonical daily/source/ledger evidence with privacy-minimized absence references.
+- Accessibility: period states, blockers, warning acknowledgement, decision actions, stale outcomes, permanent lock confirmation, and approved-versus-adjusted records have textual, keyboard/focus, table/list, and announcement requirements.
+- Security/data: every transition is versioned, scoped, self-action-safe, fingerprinted, transactional, audited, and concurrency-safe; snapshots/adjustments are append-only and generic period surfaces exclude sensitive absence details.
+- Remaining risk: `D-500` still owns production retention/anonymization periods; Phase 2/3/8 must prove canonical fingerprinting, database uniqueness, snapshot reconciliation, authorization, and adjustment concurrency in executable tests.
+- Next task: `WL-009`.
 
 ## Current blockers
 
@@ -85,7 +89,7 @@ See `docs/10-open-decisions.md` and the unresolved findings in `docs/17-planning
 
 ## Next task
 
-`WL-008 — Finalize monthly submission, approval, locking, and adjustment rules.`
+`WL-009 — Finalize route map, screen states, responsive behavior, and accessibility acceptance criteria.`
 
 ## Update rules
 

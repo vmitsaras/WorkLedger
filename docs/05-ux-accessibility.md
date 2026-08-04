@@ -180,6 +180,14 @@ Do not announce the running elapsed timer every second or announce each automati
 - Cancellation shows the still-effective coverage, permits a keyboard-complete subset selection, previews exact entitlement restoration and calculation impact, and states that the original request/history remains. Pending, partially cancelled, cancelled, and rejected states use text and not color alone.
 - Successful submit, report, decision, and cancellation outcomes announce one concise result, move focus to the updated heading/status when navigation changes, and do not expose sickness/type details in generic notification previews.
 
+### Monthly review, approval, lock, and adjustment
+
+- Present persisted workflow state and derived readiness/adjusted status as text, never color alone. Group blockers by local date with links to the relevant record; distinguish blockers from warnings and identify when the exact current warning set still needs acknowledgement.
+- The employee review uses a captioned table/list alternative with per-date expected, worked, absence-credit, adjustment, credited, and balance minutes plus period totals. Submission errors move focus to an error summary; successful submission moves focus to and announces the updated `Submitted` status.
+- Manager review labels `Request changes`, `Approve`, and the later `Lock month` as distinct actions. Requesting changes exposes a visible required reason. Lock uses an accessible confirmation that explains permanence, the preserved approved snapshot, and the post-lock adjustment path; cancel restores focus without effect.
+- If period/source versions become stale, keep the user's typed reason where safe, refetch authoritative state, focus the changed status/summary, and announce that no decision was recorded. Do not announce each background reconciliation check.
+- A locked adjusted month offers clearly headed `Approved record` and `Current adjusted record` views. A textual adjustment table lists date, signed delta, decision status, actor/date, and explanation; users never have to infer a delta from color, strikethrough, or side-by-side visual position.
+
 ## 12. Calendar requirements
 
 - Date selection uses React Aria date controls.
