@@ -24,7 +24,7 @@ This document is the canonical implementation-neutral vocabulary and invariant r
 | Physical identifier type | Open, non-conceptual | Affects migration and database ergonomics, not stable domain identity semantics. | `D-201`, resolve before Phase 3 schema. |
 | Daily projection persistence | Open | Determines rebuild/version behavior and persistence boundaries. | `D-202`, resolve before Phase 3 schema. |
 | Leave units, half-day definition, negative balance, sickness reporting, and unpaid-leave behavior | Accepted | Leave uses integer minutes; half-days partition date expectation; negative vacation approval needs a non-self HR override; sickness has a bounded retrospective window; unpaid leave reduces covered expectation by default. | `D-300`–`D-304`, resolved by `WL-007`. |
-| Month-lock timing and exact approved snapshot schema | Open | Affects period transitions and snapshot cardinality/content. | `D-400` and `D-401`, resolve in `WL-008`. |
+| Month-lock timing and exact approved snapshot schema | Accepted | Approval creates one immutable snapshot; a separate eligible non-self manager lock transition makes it final, and post-lock effects reference that baseline. | `D-400` and `D-401`, resolved by `WL-008`. |
 | Retention/anonymization | Open until production gate | Affects historical identity, audit, and deletion behavior. | `D-500`, resolve before production release. |
 
 ## 3. Canonical domain vocabulary
@@ -132,7 +132,7 @@ This document is the canonical implementation-neutral vocabulary and invariant r
 | Absence request | uses | Absence type and affected local dates/minutes | Exactly one type; one or more affected dates/segments | Decided request keeps type/version and decision history. |
 | Absence cancellation request | targets | Effective absence request coverage | One original request; one or more still-effective segments or subsegments | Approval subtracts only targeted coverage and links compensating effects; rejection changes nothing. |
 | Monthly period | covers | Daily records | Exactly one employee and calendar month | Ordinary sources are protected by submitted/locked state. |
-| Approved snapshot | belongs to | Monthly period | At least one immutable approved/locked baseline; exact snapshot fields/revisions remain `D-401` | Adjustment references the preserved baseline. |
+| Approved snapshot | belongs to | Monthly period | Exactly one immutable approval baseline per approval cycle; a returned period may later create a new numbered cycle, while lock fixes the latest approved cycle as the permanent baseline | Every later adjustment references that locked snapshot. |
 | Idempotency record | binds retry outcome for | Attendance command intent | At most one terminal outcome per organization, actor account, and key | Matching fingerprint replays it; conflicting fingerprint has no attendance effect. |
 | Audit event | references | Actor and target | One actor/system process and one primary target, with optional safe correlation | Target deletion/deactivation does not remove audit attribution. |
 
@@ -505,15 +505,51 @@ Cancellation is a separate workflow with states `PENDING_DECISION`, `CHANGES_REQ
 - Team status/calendar/agenda, generic notifications, technical audit, operational logs, and generic report/export DTOs use neutral `UNAVAILABLE`/absence action data and never expose sickness classification.
 - Absence type, request note, decision reason, entitlement amount, or sickness classification is never placed in a URL. Detailed privacy, cache, export, logging, notification, retention, and user-control rules are in `docs/06-security-operations.md`.
 
-## 13. Monthly-period baseline
+## 13. Monthly-period contract
 
-Canonical MVP state names are `OPEN`, `INCOMPLETE`, `READY_FOR_SUBMISSION`, `SUBMITTED`, `CHANGES_REQUESTED`, `APPROVED`, `LOCKED`, and `ADJUSTED_AFTER_LOCK`. `WL-008` determines which are persisted workflow states versus derived readiness/adjustment views.
+### 13.1 Persisted state and derived presentation
 
-- Submission requires blockers to be resolved and any required warning acknowledgement to be recorded.
-- Ordinary employee mutation is prohibited after submission unless the period is returned through the accepted workflow.
-- Approval records eligible non-self actor, decision instant, and reproducible calculated snapshot inputs/outputs.
-- Locking prevents ordinary changes.
-- Post-lock changes preserve the approved snapshot and add a linked delta/current adjusted view.
+Persisted workflow states are `OPEN`, `SUBMITTED`, `CHANGES_REQUESTED`, `APPROVED`, and `LOCKED`. `INCOMPLETE` and `READY_FOR_SUBMISSION` are derived readiness values while `OPEN` or `CHANGES_REQUESTED`; `ADJUSTED_AFTER_LOCK` is a derived flag/view over `LOCKED`, never a replacement workflow state. A period has a strictly increasing `periodVersion`; every mutation supplies the expected version.
+
+A period covers exactly one employee and one organization-local calendar month. The organization timezone is already immutable once period facts exist, so its date boundaries cannot drift. Readiness is recalculated from identified daily results and workflow sources, not manually assigned.
+
+### 13.2 Readiness and submission
+
+A period is `READY_FOR_SUBMISSION` only after the month has ended in the organization timezone and every covered employed date has a final `COMPLETE` daily result, all eligible dates have their base daily posting, and no submission blocker remains. Blockers include incomplete/overlapping attendance, missing schedule or policy, unresolved correction requests affecting the month, unresolved approval-required absence affecting the month, and any source-to-ledger inconsistency. Non-blocking warnings do not prevent submission, but the employee must acknowledge the exact current warning-code/source set; any source/version change invalidates that acknowledgement.
+
+Employee submission validates self ownership, current employee capability, readiness, warning acknowledgement, and `expectedPeriodVersion`. It atomically changes `OPEN` or `CHANGES_REQUESTED` to `SUBMITTED`, records the submitted source fingerprint, actor and instant, increments the version once, and appends audit/notification evidence. It creates no snapshot. Ordinary attendance, absence, correction, policy, posting, or administrative mutation that would affect a `SUBMITTED` or `APPROVED` month returns `PERIOD_REOPEN_REQUIRED`; no caller may silently mutate and recompute it.
+
+### 13.3 Review transitions and authorization
+
+Only the employee's current effective direct manager may review, approve, request changes, or lock. Scope is re-evaluated for every action; historical scope and delegation grant no access. No actor may approve or lock their own employee period, including through combined roles. HR and system-administrator capability do not independently grant period approval or lock capability.
+
+| Current state | Command | Required reason | Result |
+|---|---|---|---|
+| `SUBMITTED` | Request changes | Yes | `CHANGES_REQUESTED`; records decision, invalidates the submitted fingerprint, and permits ordinary source correction before resubmission. |
+| `SUBMITTED` | Approve | No | `APPROVED`; creates the next immutable numbered approval snapshot and decision atomically. |
+| `APPROVED` | Request changes | Yes | `CHANGES_REQUESTED`; allowed only before lock, preserves the superseded approval snapshot as history, and requires a new submission/approval cycle. |
+| `APPROVED` | Lock | No | `LOCKED`; fixes the latest approval snapshot as the locked baseline without rebuilding it. |
+| Any other state | Any review command | N/A | `PERIOD_STATE_CONFLICT`; no partial effect. |
+
+Approval and lock are deliberately separate manager actions for the MVP (`D-400`). Installations cannot configure automatic or approval-implies-lock behavior in the initial release. Before either action commits, authorization, state, expected version, source fingerprint, ledger reconciliation, and current blocker status are rechecked inside one transaction. Approval fails if sources differ from submission; lock fails if current sources or ledger differ from the approved snapshot. Each successful command records actor, instant, prior/new state, version, and safe audit/notification data.
+
+### 13.4 Immutable approval snapshot
+
+An approval snapshot is a canonical persisted document with `snapshotSchemaVersion`, `calculationEngineVersion`, organization/employee/period identity, organization timezone, calendar boundaries, approval-cycle number, snapshot ID, creation instant, approver identity, approved `periodVersion`, submitted source fingerprint, and a canonical snapshot fingerprint.
+
+It contains an ordered row for every local date with calculation status; source fingerprint; scheduled, holiday-reduction, absence-expected-reduction, expected, worked, break, absence-credit, adjustment, credited, and daily-balance integer minutes; structured warning codes; and references to the effective schedule, policy, holiday, applied-correction, neutral absence-effect, adjustment, and daily-ledger source/version IDs needed for reproduction. It also contains period sums for each minute field, opening and closing posted time-account balances, and the exact ordered ledger-entry IDs/amounts included through month end.
+
+The snapshot stores neutral absence-effect references and aggregate minutes, not sickness classification, request/reviewer notes, diagnosis, entitlement balances, or other purpose-incompatible HR detail. Referenced protected records remain independently authorized. Snapshot rows and totals must reconcile exactly; approval writes the snapshot, decision, state/version, audit, and notification records atomically. Snapshots are append-only and never rebuilt, edited, or deleted by ordinary flows.
+
+### 13.5 Lock and post-lock adjustment
+
+Locking changes workflow state only; it does not create a second snapshot or ledger effect. A locked period rejects ordinary source mutation, cancellation, recalculation posting, return, or unlock. There is no MVP unlock command.
+
+A post-lock correction/cancellation begins a separate request that names the locked snapshot, target source and local dates, original/proposed interpretation, reason, and expected adjustment-request version. An eligible current manager may decide it under ordinary correction scope; when the change requires privileged HR authority (for example entitlement override), the eligible non-self HR actor supplies that authority and reason. No actor may decide or privileged-adjust their own period.
+
+Approval atomically preserves the original sources and snapshot; creates the approved interpretation/effect; appends one or more uniquely source-keyed `POST_LOCK_ADJUSTMENT` time-account entries and any exact leave-entitlement compensating entries; records per-date signed deltas and a net delta against the locked baseline; advances the adjustment/current-view version; and writes decision, audit, and notifications. Zero time-account delta retains the decision and linked adjustment record without a zero ledger entry. Rejection changes no calculation or ledger effect.
+
+The approved view always renders the immutable snapshot. The current adjusted view renders that baseline plus the ordered, non-superseded adjustment chain and separately reports original closing balance, cumulative post-lock delta, and adjusted closing balance. Reversal appends a compensating linked adjustment; it never deletes or edits an earlier adjustment. Concurrent decisions serialize by expected versions and semantic source uniqueness so at most one effect commits.
 
 ## 14. Ledger semantics
 
@@ -644,6 +680,13 @@ These IDs are stable references for domain errors, tests, reviews, and later per
 | `INV-PER-003` | Approval and locking record an eligible non-self actor, decision time, and reproducible immutable snapshot. |
 | `INV-PER-004` | Locked periods reject ordinary mutation. |
 | `INV-PER-005` | Post-lock changes append linked adjustments and preserve both the approved view and current adjusted view. |
+| `INV-PER-006` | `INCOMPLETE`/`READY_FOR_SUBMISSION` and `ADJUSTED_AFTER_LOCK` are derived values; persisted period state is never assigned from presentation state. |
+| `INV-PER-007` | Submission is allowed only after month end with complete posted dates, no blockers, and acknowledgement of the exact current warning/source set. |
+| `INV-PER-008` | Approval and lock are separate transitions; approval creates one immutable snapshot for that cycle and lock fixes it without rebuilding it. |
+| `INV-PER-009` | Every period transition validates current scope, self-action prohibition, expected period version, state, and relevant source fingerprint in one transaction. |
+| `INV-PER-010` | Snapshot daily rows, period totals, and included ledger entries reconcile exactly and retain schema, engine, source, configuration, actor, and version identity. |
+| `INV-PER-011` | A locked period has no ordinary unlock or recalculation path; every later effect is a uniquely source-linked post-lock adjustment against its snapshot. |
+| `INV-PER-012` | Period snapshots and generic views contain neutral absence effects and minutes, never sickness classification, request/reviewer notes, or entitlement balances. |
 
 ### Authorization, audit, and concurrency
 

@@ -11,7 +11,7 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 - [x] `WL-005` Finalize attendance state machine and idempotency rules.
 - [x] `WL-006` Finalize time-calculation rules and example catalog.
 - [x] `WL-007` Finalize absence, entitlement, privacy, and cancellation rules.
-- [ ] `WL-008` Finalize monthly submission, approval, locking, and adjustment rules.
+- [x] `WL-008` Finalize monthly submission, approval, locking, and adjustment rules.
 - [ ] `WL-009` Finalize route map, screen states, responsive behavior, and accessibility acceptance criteria.
 - [ ] `WL-010` Finalize security, data classification, threat model, and operations assumptions.
 - [ ] `WL-011` Ratify architecture decisions and repository boundaries.
