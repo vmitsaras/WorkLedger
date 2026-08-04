@@ -128,7 +128,7 @@ Use currently supported stable releases. Do not install beta, release-candidate,
 - Locked monthly periods cannot be edited through ordinary flows.
 - Post-lock corrections create adjustments and audit events.
 - An employee cannot approve their own request.
-- A manager may only access employees in their current or delegated scope.
+- A manager may only access employees whose current effective direct-manager assignment names them; approval delegation grants no access in the MVP.
 - Sickness details are minimized; ordinary team views show availability, not medical information.
 - Every decision records actor, timestamp, status, and reason where required.
 - Clock mutations must be idempotent and safe across retries, double-clicks, tabs, and devices.

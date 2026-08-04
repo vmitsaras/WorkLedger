@@ -1,14 +1,18 @@
 # Scope and Non-Goals
 
+The MVP is the complete set of capabilities listed below. A capability is not complete until its domain, permission, route or operator workflow, tests, accessibility behavior, and operations impact have an explicit task owner.
+
 ## MVP scope
 
 ### Organization and people
 
 - One organization per installation.
 - Employee records with start/end dates and status.
-- Teams, departments, and one direct manager per employee.
+- Teams and one current direct manager per employee.
 - Employee, manager, HR administrator, and system administrator roles.
+- Credential sign-in and sign-out, password reset through an expiring single-use token, and secure session expiry.
 - Account invitation, activation, deactivation, and session revocation.
+- Read-only employee self-service profile summary plus sign-out and revocation of the employee's own sessions; HR-owned identity, employment, schedule, team, and role data is not self-editable.
 
 ### Work schedules and policies
 
@@ -72,6 +76,7 @@
 - Safe CSV export.
 - Printable monthly record.
 - Searchable audit events.
+- In-app notification records for request and decision outcomes; external email delivery is optional.
 
 ### Self-hosting
 
@@ -85,6 +90,7 @@
 
 ## Nice-to-have after MVP
 
+- Departments or additional organization hierarchies.
 - Approval delegation.
 - Multi-stage approval.
 - Time off in lieu.
@@ -99,6 +105,16 @@
 - Kiosk mode.
 - Organization branding.
 - Additional locales and per-employee timezone display.
+
+## MVP boundary clarifications
+
+- Teams are the only organization grouping. Departments have no MVP data model, authorization effect, route, report, or administration flow.
+- Approval is single-stage. Approval delegation does not grant access in the MVP and requires a later ADR plus explicit authorization, expiry, audit, administration, UI, and test work.
+- English is the only shipped UI language. API/domain codes remain language-neutral, and user-facing formatting must not hardcode English-formatted dates or numbers.
+- The profile is read-only self-service context plus account/session actions. Employees cannot edit HR-owned employment facts.
+- In-app notification history is part of the product. SMTP or another external delivery adapter is optional, and delivery failure cannot roll back an approval or other domain decision.
+- Attachment fields, storage, upload, download, and medical-document workflows are excluded even where future authorization or security constraints are documented.
+- Attendance is online-only. The UI must surface loss of connectivity and recovery, but it must not queue clock mutations locally.
 
 ## Explicit non-goals for the first release
 
@@ -126,3 +142,4 @@ A new feature may enter the MVP only when:
 3. Its accessibility implications are defined.
 4. Its test and operations cost is accepted.
 5. An existing MVP task cannot cover the need more simply.
+6. A stable task owns its end-to-end implementation and acceptance evidence.

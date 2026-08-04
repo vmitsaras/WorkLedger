@@ -149,17 +149,19 @@ Examples:
 
 Generic CRUD is acceptable for low-risk administration resources when validation and audit behavior remain explicit.
 
+The Today response is the authoritative source of `state`, `attendanceRevision`, and `validActions`. Every attendance `POST` requires the `Idempotency-Key` header and the latest `expectedAttendanceRevision`; `CLOCK_OUT` also accepts the narrowly scoped `confirmActiveBreak` flag. Ordinary commands never accept a client occurrence timestamp. Exact processing, retry, and replay behavior is defined in `docs/03-domain-rules.md` section 9 and `docs/13-api-error-conventions.md`.
+
 ## 5. Application services
 
 Application services coordinate:
 
-1. authenticate actor,
+1. authenticate actor and validate request security,
 2. authorize resource/action,
-3. load state,
-4. invoke domain rule,
-5. persist in a transaction,
-6. append ledger/audit records,
-7. return DTO and relevant version.
+3. claim retry protection where required,
+4. lock/load current state and validate expected revision,
+5. invoke the domain rule,
+6. persist domain, revision, idempotency, and audit effects in one transaction,
+7. return the serialized operation snapshot and relevant version.
 
 They should not depend on React or UI language.
 
@@ -178,7 +180,7 @@ They should not depend on React or UI language.
 - Never use schema push as the production migration process.
 - Use database constraints for invariant support where practical.
 - Use transactions for multi-record domain changes.
-- Use unique constraints for idempotency and one-active-state protection where practical.
+- Use a unique organization/actor/key claim for idempotency and transaction locking plus attendance revision checks for active-state protection.
 - Use optimistic version or equivalent concurrency control for records edited by multiple actors.
 - Index common organization, employee, date, status, manager, and period queries.
 - Use soft deactivation or status fields for employees; do not cascade-delete audit history.
@@ -188,16 +190,16 @@ They should not depend on React or UI language.
 - authentication users and sessions,
 - organizations and settings,
 - employees and employment periods,
-- teams, manager assignments, and delegations,
+- teams plus effective-dated team and manager assignments; delegation only after a later ADR,
 - schedules, policies, and assignments,
 - holiday calendars and dates,
-- punch events and correction versions,
-- calculated daily records or persisted snapshots,
+- immutable punch events, correction requests, decisions, and applied interpretations,
+- daily-record projections with identified source/rule versions,
 - time-account entries,
-- absence types, requests, decisions, and entitlements,
-- monthly periods and snapshots,
+- absence types, requests, decisions, and leave-entitlement entries,
+- monthly periods and immutable approved snapshots,
 - notifications,
-- attachments,
+- attachments only after a later ADR; not in the MVP model,
 - idempotency records,
 - audit events.
 
@@ -213,6 +215,9 @@ Recommended:
 - Version calculation-policy inputs.
 - Store the approved period snapshot and hash/version metadata.
 - Rebuild projections through an explicit process, never silently during arbitrary reads.
+- Preserve the `PROVISIONAL`, `INCOMPLETE`, and `COMPLETE` calculation-status distinction and the identified calculation source fingerprint.
+- Post only `COMPLETE` past dates: one idempotent base `DAILY_DELTA`, then append-only `DAILY_RECALCULATION_DELTA` differences for later unlocked source changes.
+- Keep posted ledger balance, projected balance, and incomplete-date blockers distinct. This is the accepted `D-105` lifecycle; `D-202` still owns the physical projection-persistence strategy.
 
 ## 10. Error architecture
 

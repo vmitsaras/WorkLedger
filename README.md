@@ -12,7 +12,6 @@ Copy the following into the root of the WorkLedger repository:
 - `CODEX_MASTER_PROMPT.md`
 - `PROJECT_STATUS.md`
 - `TODO.md`
-- `.agents/`
 - `docs/`
 
 Then open the repository in Codex and begin with `CODEX_MASTER_PROMPT.md`.
@@ -39,7 +38,7 @@ Codex must not skip directly to attractive dashboard screens. WorkLedger is only
 | `docs/07-roadmap.md` | Full phased roadmap and exit gates |
 | `docs/08-task-board.md` | Detailed backlog with task IDs and dependencies |
 | `docs/09-definition-of-done.md` | Completion criteria for every task and milestone |
-| `.agents/skills/` | Reusable Codex workflows for implementation and reviews |
+| `docs/17-planning-audit.md` | Ratification evidence, contradictions, and missing-item ownership |
 
 ## Default implementation principle
 

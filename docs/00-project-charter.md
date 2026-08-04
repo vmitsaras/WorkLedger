@@ -67,7 +67,7 @@ Organizations often split attendance, flexible-time balances, vacation, sickness
 
 ## Primary success outcomes
 
-- An employee can clock in or out in a few clear actions on desktop or mobile.
+- An employee can use the valid clock action directly from Today on desktop or mobile.
 - An employee can explain their daily and monthly balance from the interface.
 - A manager can process requests from one queue with sufficient context.
 - A schedule or policy change affects only its valid date range.
@@ -76,6 +76,22 @@ Organizations often split attendance, flexible-time balances, vacation, sickness
 - An unauthorized user cannot access another employee’s protected data.
 - A new self-hosted installation can be backed up and restored from documented procedures.
 - Critical workflows pass automated and manual accessibility tests.
+
+## MVP release success criteria
+
+| ID | Criterion | Required evidence |
+|---|---|---|
+| SC-001 | An invited, active employee can sign in, sign out, and complete a password reset; invalid credentials receive a generic recoverable error, and a deactivated account cannot establish or retain a session. | Authentication integration tests and the critical account browser flows. |
+| SC-002 | From Today, an employee can complete clock in, break start, break end, and clock out; after each step the server state and one valid primary action are clear. | API integration tests plus keyboard-only and narrow-viewport browser tests. |
+| SC-003 | Repeating the same clock command returns the original result, while concurrent different commands produce exactly one accepted transition and a stable conflict/current-state response. | Idempotency and two-device concurrency tests. |
+| SC-004 | Every accepted case in `docs/11-example-calculation-catalog.md` has one explicit expected result and maps to executable tests or named workflow evidence. | Catalog-to-test/evidence mapping completed by the relevant phase gates. |
+| SC-005 | An employee can trace daily and monthly expected, worked, absence-credit, adjustment, credited, and balance minutes to their source records without hidden arithmetic. | Calculation-breakdown component tests and seeded end-to-end review. |
+| SC-006 | Approved corrections preserve original punch facts, and post-lock corrections preserve the approved snapshot while adding a linked adjustment. | Domain, database, API, and locked-period workflow tests. |
+| SC-007 | Vacation reservation, approval, rejection, and cancellation produce explainable leave-ledger effects, while team views reveal no sickness classification or medical detail. | Ledger sequence and privacy-shaped response tests. |
+| SC-008 | A complete calendar month can be reviewed, submitted, approved, locked, exported, and later adjusted without ordinary edits changing the locked snapshot. | Seeded monthly-closure browser flow, snapshot tests, and CSV safety tests. |
+| SC-009 | Every protected endpoint passes the actor/scope cases defined in `docs/02-roles-permissions.md`, including self-approval, former-scope, deactivated-account, system-administrator, and cross-organization denial cases. | Permission-matrix integration suite. |
+| SC-010 | All critical workflows in `docs/05-ux-accessibility.md` are keyboard complete, pass configured automated accessibility checks, and have no unresolved critical accessibility blocker after screen-reader, zoom/reflow, forced-colors, reduced-motion, and touch review. | Automated reports and recorded manual review notes. |
+| SC-011 | A clean self-hosted deployment can be configured without committed secrets, migrated, health-checked, backed up, and restored with verified record and ledger integrity. | Production-style deployment, backup/restore, migration, and integrity-check evidence. |
 
 ## Product success evidence
 
@@ -95,9 +111,15 @@ A release is credible when a seeded organization can complete this full scenario
 
 ## Assumptions
 
-- Working-time rules vary by organization and jurisdiction; WorkLedger provides configurable rules.
-- Payroll and salary calculation are outside the initial product.
-- Vacation and absence entitlement are ledger-based.
-- Duration precision is one minute in the MVP.
-- Public holidays are configured or imported by an administrator; the first implementation does not depend on a legal holiday API.
-- The product is responsive web software, not an offline-first clock terminal.
+- A deployment serves one organization of approximately 10–250 employees and uses one primary IANA organization timezone.
+- Teams are the only organization grouping in the MVP; department hierarchies are deferred.
+- Each employee has at most one current direct manager. Approvals are single-stage, and approval delegation is deferred.
+- English is the only shipped UI language in the MVP. Dates, times, numbers, and durations remain locale-aware and translation-ready without shipping German or Greek translations.
+- Working-time rules vary by organization and jurisdiction. WorkLedger provides configurable product rules, while the deploying organization remains responsible for selecting lawful policies and retention settings.
+- Vacation and absence entitlement, flexible-time balances, corrections, and post-lock changes are ledger-based or otherwise source-linked and explainable.
+- Duration precision is one minute, with no rounding by default.
+- Public holidays are configured by an administrator; the MVP does not depend on a legal holiday API.
+- Attendance mutations require a live server connection. The responsive web application may explain offline state but does not queue offline clock commands.
+- In-app records provide the core notification history. External email delivery is optional and must not determine whether a domain decision succeeds.
+- Attachments and medical-document upload are outside the MVP.
+- Payroll, salary, and jurisdiction-specific legal compliance calculations remain outside the product boundary.

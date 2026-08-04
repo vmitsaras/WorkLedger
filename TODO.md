@@ -4,13 +4,13 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
 ## Phase 0 — Product and domain contract
 
-- [ ] `WL-001` Audit and ratify the project charter and planning pack.
-- [ ] `WL-002` Finalize MVP, non-goals, assumptions, and success criteria.
-- [ ] `WL-003` Finalize roles, scopes, and permission matrix.
-- [ ] `WL-004` Finalize terminology and domain invariants.
-- [ ] `WL-005` Finalize attendance state machine and idempotency rules.
-- [ ] `WL-006` Finalize time-calculation rules and example catalog.
-- [ ] `WL-007` Finalize absence, entitlement, privacy, and cancellation rules.
+- [x] `WL-001` Audit and ratify the project charter and planning pack.
+- [x] `WL-002` Finalize MVP, non-goals, assumptions, and success criteria.
+- [x] `WL-003` Finalize roles, scopes, and permission matrix.
+- [x] `WL-004` Finalize terminology and domain invariants.
+- [x] `WL-005` Finalize attendance state machine and idempotency rules.
+- [x] `WL-006` Finalize time-calculation rules and example catalog.
+- [x] `WL-007` Finalize absence, entitlement, privacy, and cancellation rules.
 - [ ] `WL-008` Finalize monthly submission, approval, locking, and adjustment rules.
 - [ ] `WL-009` Finalize route map, screen states, responsive behavior, and accessibility acceptance criteria.
 - [ ] `WL-010` Finalize security, data classification, threat model, and operations assumptions.

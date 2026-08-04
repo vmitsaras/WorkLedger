@@ -17,14 +17,14 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-001 | Audit and ratify the project charter and planning pack | None | Contradiction/missing-item audit; project status updated | Not started |
-| WL-002 | Finalize MVP, non-goals, assumptions, and success criteria | WL-001 | Scope files have no ambiguous MVP items | Not started |
-| WL-003 | Finalize roles, resource scopes, and permission matrix | WL-001 | Matrix covers all MVP actions; self-approval and admin separation explicit | Not started |
-| WL-004 | Finalize terminology and domain invariants | WL-001 | Shared glossary and invariant list accepted | Not started |
-| WL-005 | Finalize attendance state machine and idempotency rules | WL-004 | Transition table, invalid cases, retries, tabs/devices defined | Not started |
-| WL-006 | Finalize time-calculation rules and example catalog | WL-004, WL-005 | At least 25 cases with expected results | Not started |
-| WL-007 | Finalize absence, entitlement, privacy, overlap, and cancellation rules | WL-003, WL-004 | Policy matrix and ledger effects accepted | Not started |
-| WL-008 | Finalize monthly submission, approval, locking, and adjustment rules | WL-003, WL-004, WL-006 | State transitions and immutable snapshot rules accepted | Not started |
+| WL-001 | Audit and ratify the project charter and planning pack | None | Contradiction/missing-item audit; project status updated | Done |
+| WL-002 | Finalize MVP, non-goals, assumptions, and success criteria | WL-001 | Scope files have no ambiguous MVP items | Done |
+| WL-003 | Finalize roles, resource scopes, and permission matrix | WL-001 | Matrix covers all MVP actions; self-approval and admin separation explicit | Done |
+| WL-004 | Finalize terminology and domain invariants | WL-001 | Shared glossary and invariant list accepted | Done |
+| WL-005 | Finalize attendance state machine and idempotency rules | WL-004 | Transition table, invalid cases, retries, tabs/devices defined | Done |
+| WL-006 | Finalize time-calculation rules and example catalog | WL-004, WL-005 | At least 25 cases with expected results | Done |
+| WL-007 | Finalize absence, entitlement, privacy, overlap, and cancellation rules | WL-003, WL-004 | Policy matrix and ledger effects accepted | Done |
+| WL-008 | Finalize monthly submission, approval, locking, and adjustment rules | WL-003, WL-004, WL-006 | State transitions and immutable snapshot rules accepted | Ready |
 | WL-009 | Finalize route map, screen states, responsive behavior, and accessibility criteria | WL-002, WL-003 | Every MVP workflow maps to routes/states and tests | Not started |
 | WL-010 | Finalize security, data classification, threat model, and operations assumptions | WL-003 | Threats and release controls accepted | Not started |
 | WL-011 | Ratify architecture decisions and repository boundaries | WL-002, WL-004, WL-010 | ADRs accepted; dependency direction clear | Not started |

@@ -10,7 +10,7 @@ Prepare WorkLedger for implementation without prematurely writing application co
 
 ## First-run instructions
 
-1. Read all root planning files and the documents under `docs/`.
+1. Read all root planning files and the documents under `docs/`, including the latest planning audit when present.
 2. Check for contradictions, missing dependencies, duplicated responsibilities, vague acceptance criteria, or rules that cannot be tested.
 3. Review `docs/10-open-decisions.md` and classify every entry as:
    - blocking Phase 1,
