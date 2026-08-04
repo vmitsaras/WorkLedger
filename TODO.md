@@ -1,0 +1,142 @@
+# WorkLedger Ordered TODO
+
+This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
+
+## Phase 0 — Product and domain contract
+
+- [ ] `WL-001` Audit and ratify the project charter and planning pack.
+- [ ] `WL-002` Finalize MVP, non-goals, assumptions, and success criteria.
+- [ ] `WL-003` Finalize roles, scopes, and permission matrix.
+- [ ] `WL-004` Finalize terminology and domain invariants.
+- [ ] `WL-005` Finalize attendance state machine and idempotency rules.
+- [ ] `WL-006` Finalize time-calculation rules and example catalog.
+- [ ] `WL-007` Finalize absence, entitlement, privacy, and cancellation rules.
+- [ ] `WL-008` Finalize monthly submission, approval, locking, and adjustment rules.
+- [ ] `WL-009` Finalize route map, screen states, responsive behavior, and accessibility acceptance criteria.
+- [ ] `WL-010` Finalize security, data classification, threat model, and operations assumptions.
+- [ ] `WL-011` Ratify architecture decisions and repository boundaries.
+- [ ] `WL-012` Pass the Phase 0 exit gate.
+
+## Phase 1 — Repository foundation
+
+- [ ] `WL-100` Initialize pnpm workspace and root tooling.
+- [ ] `WL-101` Scaffold web, API, and shared package boundaries; defer the Astro site to Phase 11.
+- [ ] `WL-102` Configure strict TypeScript, linting, formatting, and shared config.
+- [ ] `WL-103` Configure test projects and baseline CI.
+- [ ] `WL-104` Configure local PostgreSQL and Docker development environment.
+- [ ] `WL-105` Configure environment validation and safe example configuration.
+- [ ] `WL-106` Initialize React Aria shadcn base and design tokens.
+- [ ] `WL-107` Add repository documentation and contributor commands.
+- [ ] `WL-108` Pass the Phase 1 exit gate.
+
+## Phase 2 — Domain engine
+
+- [ ] `WL-200` Implement domain primitives and branded value objects.
+- [ ] `WL-201` Implement effective-dated schedules and policy resolution.
+- [ ] `WL-202` Implement attendance transition validation.
+- [ ] `WL-203` Implement punch-to-session reconstruction.
+- [ ] `WL-204` Implement break and multiple-session calculations.
+- [ ] `WL-205` Implement daily expected, worked, credited, and balance minutes.
+- [ ] `WL-206` Implement overnight and timezone-aware day splitting.
+- [ ] `WL-207` Implement absence credit integration.
+- [ ] `WL-208` Implement time-account ledger calculations.
+- [ ] `WL-209` Implement warning and incompleteness detection.
+- [ ] `WL-210` Complete domain example and property-oriented tests.
+- [ ] `WL-211` Pass the Phase 2 exit gate.
+
+## Phase 3 — Data, authentication, and API foundation
+
+- [ ] `WL-300` Implement initial PostgreSQL schema and migrations.
+- [ ] `WL-301` Implement repository interfaces and transaction boundaries.
+- [ ] `WL-302` Integrate Better Auth credentials and sessions.
+- [ ] `WL-303` Implement application roles and scoped authorization.
+- [ ] `WL-304` Implement API error envelope and validation conventions.
+- [ ] `WL-305` Implement audit event persistence.
+- [ ] `WL-306` Implement idempotency storage for clock mutations.
+- [ ] `WL-307` Implement seed organization and realistic personas.
+- [ ] `WL-308` Generate or expose OpenAPI safely.
+- [ ] `WL-309` Pass the Phase 3 exit gate.
+
+## Phase 4 — Employee attendance vertical slice
+
+- [ ] `WL-400` Build authenticated application shell and route boundaries.
+- [ ] `WL-401` Build Today query and attendance state endpoint.
+- [ ] `WL-402` Build clock-in mutation end to end.
+- [ ] `WL-403` Build break, resume, and clock-out mutations end to end.
+- [ ] `WL-404` Build Today timeline and calculation breakdown.
+- [ ] `WL-405` Add duplicate, retry, stale-state, offline, and error handling.
+- [ ] `WL-406` Complete keyboard, screen-reader, mobile, and reduced-motion tests.
+- [ ] `WL-407` Pass the Phase 4 exit gate.
+
+## Phase 5 — Time records and corrections
+
+- [ ] `WL-500` Build My Time week/month views.
+- [ ] `WL-501` Build daily record details and accessible timeline/list.
+- [ ] `WL-502` Build missing-entry and policy-warning presentation.
+- [ ] `WL-503` Build correction request workflow.
+- [ ] `WL-504` Build manager correction review and comparison.
+- [ ] `WL-505` Preserve original values and apply approved adjustment.
+- [ ] `WL-506` Pass the Phase 5 exit gate.
+
+## Phase 6 — Absence and leave balances
+
+- [ ] `WL-600` Implement absence types and policy behavior.
+- [ ] `WL-601` Implement entitlement ledger and current balance.
+- [ ] `WL-602` Build vacation request workflow.
+- [ ] `WL-603` Build sickness reporting with privacy boundaries.
+- [ ] `WL-604` Build partial-day and hourly absence support.
+- [ ] `WL-605` Build personal calendar plus accessible agenda alternative.
+- [ ] `WL-606` Build cancellation workflow and balance reversal.
+- [ ] `WL-607` Pass the Phase 6 exit gate.
+
+## Phase 7 — Manager approvals and team availability
+
+- [ ] `WL-700` Build manager approval inbox and URL-owned filters.
+- [ ] `WL-701` Build approve, reject, and changes-requested decisions.
+- [ ] `WL-702` Build team status and privacy-safe availability.
+- [ ] `WL-703` Build team calendar and agenda alternative.
+- [ ] `WL-704` Implement notification records and optional email delivery.
+- [ ] `WL-705` Complete authorization and accessibility review.
+- [ ] `WL-706` Pass the Phase 7 exit gate.
+
+## Phase 8 — Monthly closure and reporting
+
+- [ ] `WL-800` Implement monthly period summary and blockers.
+- [ ] `WL-801` Implement employee submission.
+- [ ] `WL-802` Implement manager approval and lock.
+- [ ] `WL-803` Implement post-lock adjustment workflow.
+- [ ] `WL-804` Build monthly, balance, leave, and missing-record reports.
+- [ ] `WL-805` Build safe CSV export and printable record.
+- [ ] `WL-806` Pass the Phase 8 exit gate.
+
+## Phase 9 — Administration
+
+- [ ] `WL-900` Build employee create, invite, deactivate, and history.
+- [ ] `WL-901` Build teams and manager assignment.
+- [ ] `WL-902` Build schedule and effective-date management.
+- [ ] `WL-903` Build time-policy management.
+- [ ] `WL-904` Build absence-type and entitlement management.
+- [ ] `WL-905` Build holiday calendar management.
+- [ ] `WL-906` Build audit explorer.
+- [ ] `WL-907` Pass the Phase 9 exit gate.
+
+## Phase 10 — Production hardening and self-hosting
+
+- [ ] `WL-1000` Complete security and permission test suite.
+- [ ] `WL-1001` Complete performance, pagination, and concurrency review.
+- [ ] `WL-1002` Complete full accessibility audit and remediation.
+- [ ] `WL-1003` Complete Docker production deployment.
+- [ ] `WL-1004` Document and test backup and restore.
+- [ ] `WL-1005` Document and test migrations and upgrades.
+- [ ] `WL-1006` Add health checks, structured logs, and failure diagnostics.
+- [ ] `WL-1007` Complete retention and data-export controls.
+- [ ] `WL-1008` Pass the production release gate.
+
+## Phase 11 — Portfolio presentation
+
+- [ ] `WL-1100` Build Astro project site and case-study structure.
+- [ ] `WL-1101` Add seeded demo accounts and safe demo reset.
+- [ ] `WL-1102` Document architecture, accessibility, threat model, and tradeoffs.
+- [ ] `WL-1103` Add screenshots, workflow media, and calculation examples.
+- [ ] `WL-1104` Complete public README, known limitations, and future roadmap.
+- [ ] `WL-1105` Pass the portfolio release gate.
