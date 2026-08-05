@@ -36,15 +36,15 @@ Remove ambiguous business rules before they become database columns or UI assump
 
 Phase 0 passes when:
 
-- [ ] Every blocking item in `docs/10-open-decisions.md` is resolved.
-- [ ] At least 25 calculation and workflow examples have explicit expected results.
-- [ ] No rule contradicts the permission matrix, state machine, or ledger model.
-- [ ] Every MVP feature has a role, route/workflow, data owner, and test strategy.
-- [ ] Non-goals are explicit.
-- [ ] Architecture boundaries and dependency directions are accepted.
-- [ ] The exact first scaffold task is identified.
+- [x] Every decision blocking Phase 1 in `docs/10-open-decisions.md` is resolved; later-phase and production decisions have an explicit owner and deadline.
+- [x] At least 25 calculation and workflow examples have explicit expected results.
+- [x] No rule contradicts the permission matrix, state machine, or ledger model.
+- [x] Every MVP feature has a role, route/workflow, data owner, and test strategy.
+- [x] Non-goals are explicit.
+- [x] Architecture boundaries and dependency directions are accepted.
+- [x] The exact first scaffold task is identified.
 
-**Gate evidence:** planning-audit report and updated `PROJECT_STATUS.md`.
+**Gate evidence:** `docs/19-phase-0-gate-review.md`, the historical planning/architecture audits, and updated `PROJECT_STATUS.md`.
 
 ---
 
@@ -59,6 +59,7 @@ Create a strict, reproducible monorepo and development environment without imple
 - pnpm workspace.
 - `apps/web`, `apps/api`, and package boundaries.
 - Strict TypeScript, ESM, lint, format, test, and build configuration.
+- Enforced ADR `0011` package exports, dependency directions, cycle rejection, and internal-publication guardrails.
 - PostgreSQL development container.
 - Validated environment configuration.
 - Baseline CI.
@@ -75,6 +76,7 @@ Create a strict, reproducible monorepo and development environment without imple
 - [ ] CI runs the same checks.
 - [ ] UI foundation includes visible focus, reduced-motion tokens, and a semantic link/button example.
 - [ ] No feature or calculation logic has leaked into scaffold files.
+- [ ] Representative forbidden cross-package/deep imports fail in automated boundary checks; all workspace projects remain private/internal.
 
 **Gate evidence:** command output, CI result, and setup documentation.
 
@@ -332,23 +334,25 @@ Make WorkLedger safe and operable outside the developer laptop.
 - Full authorization/security suite.
 - Concurrency and performance review.
 - Full accessibility audit.
-- Production Docker Compose.
-- Backup and tested restore.
+- Production Docker Compose with Caddy reference proxy and private API/database network.
+- Encrypted backup and isolated tested restore with restored-session/grant invalidation.
 - Upgrade and migration procedure.
 - Health, readiness, logs, and diagnostics.
-- Retention/export controls.
+- Mandatory class-specific retention/minimization, backup-expiry, and safe export controls.
 - Security and operations documentation.
 
 ## Production release gate
 
 - [ ] Clean production-style deployment works with documented configuration.
-- [ ] Backup and restore have been executed successfully.
+- [ ] Direct API/database access and forged forwarded headers are denied; canonical HTTPS origin, cookies, CSRF, and health/readiness behave as specified.
+- [ ] Backup and isolated restore have been executed successfully with new secrets, revoked restored sessions/grants, disabled outbound mail, and ledger/snapshot/audit integrity evidence.
 - [ ] Upgrade from the previous test release works.
-- [ ] No known critical/high security issue remains.
+- [ ] Every `T-001`–`T-020` control has evidence and no known Critical/High security issue remains.
 - [ ] No known critical accessibility blocker remains in core workflows.
 - [ ] Permission matrix tests pass.
 - [ ] Load/concurrency targets for expected organization size pass.
-- [ ] Logs redact sensitive data.
+- [ ] Logs, audit, URLs, browser storage/cache, notifications, clipboard, print, and exports respect the data inventory/privacy matrix.
+- [ ] A non-placeholder retention profile covers every required class and its backup behavior.
 - [ ] Failure modes are documented.
 
 ---

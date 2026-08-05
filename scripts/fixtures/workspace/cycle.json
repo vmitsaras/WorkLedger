@@ -1,0 +1,13 @@
+{
+  "packages/contracts": {
+    "dependencies": {
+      "@workledger/domain": "workspace:*"
+    }
+  },
+  "packages/domain": {
+    "devDependencies": {
+      "@workledger/config": "workspace:*",
+      "@workledger/contracts": "workspace:*"
+    }
+  }
+}

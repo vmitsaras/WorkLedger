@@ -58,7 +58,7 @@ Rules:
 - `fields` maps field paths to one or more safe error codes/messages.
 - `context` contains only safe recovery data.
 - `meta.idempotentReplay` is present for retry-sensitive mutations and follows the success-envelope rule.
-- No stack, SQL, internal path, secret, or unrelated record data.
+- No stack, SQL, internal path, environment/config value, raw URL/query, password, cookie, session/reset/invitation/CSRF/idempotency token, or unrelated record data.
 
 ## 4. Error classes and HTTP mapping
 
@@ -80,6 +80,20 @@ Do not use `404` to disguise every authorization failure unless an explicit thre
 For the MVP, a request explicitly naming an unauthorized employee or resource returns `403 ACCESS_DENIED`. Scoped collections do not fail merely because unrelated records exist; they apply organization and manager scope before filters, totals, sorting, and pagination.
 
 ## 5. Initial domain error codes
+
+### Authentication and request security
+
+- `AUTH_REQUIRED`
+- `AUTH_INVALID_CREDENTIALS`
+- `AUTH_SESSION_EXPIRED`
+- `AUTH_SESSION_NOT_FRESH`
+- `AUTH_RESET_INVALID_OR_EXPIRED`
+- `AUTH_INVITATION_INVALID_OR_EXPIRED`
+- `AUTH_CSRF_INVALID`
+- `AUTH_ORIGIN_INVALID`
+- `RATE_LIMITED`
+
+`AUTH_INVALID_CREDENTIALS` is the only normal sign-in failure code for an unknown, inactive, deactivated, or incorrectly authenticated account. Reset/invitation errors do not distinguish malformed, expired, consumed, superseded, or wrong-purpose grants and never echo the submitted identifier or grant. `RATE_LIMITED` may provide safe retry timing but no account-existence signal.
 
 ### Attendance
 

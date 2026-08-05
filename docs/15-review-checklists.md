@@ -1,5 +1,17 @@
 # Review Checklists
 
+## Architecture and repository review
+
+- Is the behavior in the app/package that owns it under `docs/04-architecture.md`?
+- Is every WorkLedger import an allowed edge in ADR `0011`, declared with `workspace:*`, and addressed through an explicit package export?
+- Does any import traverse into another project's `src`, tests, migrations, generated internals, or build output?
+- Is an app imported by another app/package, or is a speculative shared package being created before a second consumer exists?
+- Do domain and contracts remain independent, runtime-neutral models with explicit API mapping rather than one database/domain/wire shape?
+- Are database rows, Drizzle objects, environment access, server authentication, and authorization truth kept out of browser/UI/contracts/domain code?
+- Are shared config and test utilities development/test-only, with no domain ↔ test-utils or other workspace cycle?
+- Do private flags, package exports, the single lockfile, cycle rejection, TypeScript boundaries, and negative import fixtures prove the documented graph?
+- Has a new dependency edge, production workspace, task orchestrator, or package-publication workflow received the required ADR?
+
 ## Domain review
 
 - Does the implementation use the schedule/policy valid on the target date?
@@ -69,6 +81,9 @@
 
 ## React/UI review
 
+- Does the route have a unique document title, visible `h1`, permission boundary, and deliberate navigation focus target?
+- Does the route implement or explicitly mark not applicable every state required for its family in `docs/05-ux-accessibility.md` section 16?
+- Are path/search parameters limited to the approved non-sensitive route contract, with type-neutral request and approval routes?
 - Is the component using the correct semantic element?
 - Is a link still a link and an action still a button?
 - Is accessible name/description correct?
@@ -80,12 +95,18 @@
 - Are success, confirmation-required, stale, offline, and retry outcomes announced once with usable recovery text?
 - Is status more than color?
 - Are loading, empty, error, permission, and stale states present?
-- Does narrow layout remain understandable?
+- Does narrow layout follow the surface-specific reflow contract without changing reading/focus order or losing label/value relationships?
+- Do calendar grid/agenda and any table/list transformations expose equivalent authorized information and actions?
 - Is motion reduced appropriately?
 - Has React Aria behavior been preserved?
 
 ## Security/privacy review
 
+- Does the data inventory identify source, storage/transfer, sensitivity, purpose, retention class, user control, risk, and control for every affected datum?
+- Does the data cross each browser, proxy, API, database, SMTP, backup, or host boundary only through its allowed minimized contract?
+- Are Better Auth settings pinned and asserted for database-backed revocation, cookie attributes, idle/absolute/freshness, reset expiry/revocation, rate limits, and disabled stateless/cookie cache?
+- Do unsafe WorkLedger mutations validate configured origin plus a session-bound CSRF token, with no mutation on `GET` and no broad credentialed CORS?
+- Can a reset/invitation grant reach raw query logs, referrers, third-party resources, browser persistence, cache, history after capture, errors, or audit?
 - Could an actor change the target identifier to access another record?
 - Does a former manager retain access accidentally?
 - Could a system admin see HR data unnecessarily?
@@ -96,6 +117,7 @@
 - Does logout/session expiry clear sensitive in-memory query data, and do sensitive responses prevent shared caching?
 - Are retention, cancellation/correction user control, backup expiry, and future anonymization behavior documented without a universal legal claim?
 - Could CSV content execute as a formula?
+- Could hostile names/notes/reasons execute or alter HTML, logs, notifications, print, or export output?
 - Could a mutation replay or race create duplicates?
 - Could an idempotency replay bypass current session, employee capability, organization scope, CSRF, or endpoint authorization?
 - Could raw idempotency keys or fingerprints reach URLs, logs, analytics, or audit data?
@@ -104,6 +126,11 @@
 - Does an explicit unauthorized target return `403` while collections apply scope before counts and pagination?
 - Could an attachment become public?
 - Does deactivation revoke sessions?
+- Can an untrusted client spoof `Host`/forwarded headers to affect origin checks, secure cookies, redirects, rate limits, or audit identity; are API/PostgreSQL ports private?
+- Do public health/errors avoid versions, topology, migrations, counts, SQL, environment, and dependency details?
+- Are secrets injected/rotatable, dependencies/images pinned/scanned, and runtime telemetry/remote scripts absent?
+- Does a clean restore use new secrets, revoke restored sessions/grants, disable outbound email, reapply retention, and reconcile ledgers/snapshots/audit before activation?
+- Does production have an explicit class-specific retention profile with no silent indefinite values or cascade loss of explainability?
 
 ## Documentation review
 

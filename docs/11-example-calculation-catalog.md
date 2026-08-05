@@ -2,7 +2,7 @@
 
 These examples are planning fixtures. During Phase 2, each accepted case must become an executable test with controlled clocks, exact Temporal values, inputs, outputs, and structured warning/error codes.
 
-`WL-006` accepts calculation fixtures `EX-001`–`EX-021` and `EX-046`–`EX-059`, giving 35 single-outcome calculation cases. Later workflow tasks own the remaining cases and their named open decisions; IDs stay stable even when topic grouping is not numeric.
+Phase 0 accepts all 85 single-outcome planning fixtures, `EX-001` through `EX-085`. `WL-006` owns the 35 attendance/calculation cases, `WL-007` owns the 27 absence/entitlement cases, `WL-008` owns the 20 correction/monthly cases, and `WL-003`/`WL-010` own the three reporting/security cases. IDs stay stable even though topic grouping is not numeric. `WL-210` must map every applicable case to executable evidence; later implementation choices may add detail but cannot turn an accepted outcome back into alternatives silently.
 
 Unless a case overrides it:
 
@@ -498,7 +498,7 @@ Property-oriented follow-up should generate even/odd expectations, disjoint/inte
 ### EX-039 — Incomplete month
 
 - One missing clock-out.
-- Submission blocked with date-specific issue.
+- Submission returns `409 PERIOD_NOT_READY` with the authorized affected local date and `ATTENDANCE_INCOMPLETE`; state/version remain `OPEN`/unchanged and no submission audit success or notification is written.
 
 ### EX-040 — Manager approval and lock
 
@@ -509,7 +509,7 @@ Property-oriented follow-up should generate even/odd expectations, disjoint/inte
 ### EX-041 — Self-approval attempt
 
 - Manager is also requester/employee for own period.
-- Approval denied.
+- Approval returns `APPROVAL_SELF_NOT_ALLOWED`; period/version remain `SUBMITTED`/unchanged and no decision, snapshot, audit success, or notification is written.
 
 ### EX-042 — Former manager access
 
@@ -591,8 +591,9 @@ Property-oriented follow-up should generate period transition sequences, daily r
 
 ### EX-043 — CSV formula injection
 
-- Employee-entered text begins with `=`, `+`, `-`, or `@` in a field exported to CSV.
-- Export neutralizes spreadsheet execution.
+- After control/leading-whitespace inspection, an employee-entered cell beginning with `=`, `+`, `-`, `@`, tab, carriage return, or line feed is formula-significant.
+- The canonical CSV cell value prefixes one apostrophe before the normalized original text and then applies ordinary CSV quoting. Example: `=2+2` serializes as the cell text `'=2+2`; reopening the export cannot execute it as a formula.
+- Non-formula text is preserved, and the exporter adds no hidden column, macro, link, or metadata.
 
 ### EX-044 — Scoped report
 
@@ -602,5 +603,5 @@ Property-oriented follow-up should generate period transition sequences, daily r
 
 ### EX-045 — Deactivated employee
 
-- Account cannot sign in.
+- Sign-in returns the same `AUTH_INVALID_CREDENTIALS` response used for unknown/incorrect accounts; no session is created and no account-existence detail is exposed.
 - Historical records remain in authorized reports and audit history.

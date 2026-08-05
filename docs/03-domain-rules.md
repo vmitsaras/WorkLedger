@@ -25,7 +25,7 @@ This document is the canonical implementation-neutral vocabulary and invariant r
 | Daily projection persistence | Open | Determines rebuild/version behavior and persistence boundaries. | `D-202`, resolve before Phase 3 schema. |
 | Leave units, half-day definition, negative balance, sickness reporting, and unpaid-leave behavior | Accepted | Leave uses integer minutes; half-days partition date expectation; negative vacation approval needs a non-self HR override; sickness has a bounded retrospective window; unpaid leave reduces covered expectation by default. | `D-300`–`D-304`, resolved by `WL-007`. |
 | Month-lock timing and exact approved snapshot schema | Accepted | Approval creates one immutable snapshot; a separate eligible non-self manager lock transition makes it final, and post-lock effects reference that baseline. | `D-400` and `D-401`, resolved by `WL-008`. |
-| Retention/anonymization | Open until production gate | Affects historical identity, audit, and deletion behavior. | `D-500`, resolve before production release. |
+| Retention/anonymization | Accepted contract; implementation remains a production gate | A deployment-owned class profile controls purge/minimization and backup expiry without cascade loss of ledger, snapshot, decision, or audit integrity. | `D-500`, resolved by `WL-010`; implement/verify in `WL-1007`. |
 
 ## 3. Canonical domain vocabulary
 
@@ -153,7 +153,7 @@ This document is the canonical implementation-neutral vocabulary and invariant r
 - Configuration changes create new effective versions or ranges. Previously approved/locked results keep the identifiers and versions used to calculate them.
 - Workflow status is the current projection of recorded submissions and decisions. Decision history remains append-only and attributable.
 - Corrections, cancellations, and reversals add interpretations or compensating effects; they do not delete the original.
-- Retention/anonymization may later minimize identity fields, but it must preserve ledger, snapshot, decision, and audit explainability according to `D-500`.
+- Retention/anonymization may minimize identity or sensitive free-text fields after the configured class period, but it must preserve ledger, snapshot, decision, audit, and referential explainability according to `D-500` and `docs/06-security-operations.md`.
 
 ## 8. Time, identity, and effective-date semantics
 
@@ -720,7 +720,7 @@ These IDs are stable references for domain errors, tests, reviews, and later per
 - Additive model changes preserve stable identities and old versions. Semantic or breaking changes require an ADR, explicit source mapping, compatibility plan, validation, and recovery strategy.
 - Never invent missing historical instants, local dates, policy versions, reasons, or ledger sources during a backfill. Unrecoverable values become explicit unknown/configuration issues.
 - Rebuilding a projection is an explicit versioned operation with validation and audit; approved snapshots are not rebuild targets.
-- Ordinary deletion is restricted for records needed by attendance, workflow, ledger, snapshot, or audit history. Retention/anonymization rules remain `D-500` and must preserve explainability and referential integrity.
+- Ordinary deletion is restricted for records needed by attendance, workflow, ledger, snapshot, or audit history. The accepted `D-500` deployment profile and `WL-1007` process must preserve explainability and referential integrity while minimizing data whose configured period has ended.
 - Before implementation, every open decision affecting calculation or persistence must have an owner and executable example evidence.
 
 ## 18. Risks and edge cases
@@ -751,4 +751,4 @@ These IDs are stable references for domain errors, tests, reviews, and later per
 - [x] Greenfield evolution, backfill, rebuild, validation, and recovery constraints are recorded.
 - [x] Consequential unresolved choices have decision IDs and owners.
 - [x] Absence policy, entitlement, coverage, overlap, cancellation, and privacy decisions have exact rules and example owners.
-- [ ] Open period, persistence, and retention decisions are resolved by their assigned Phase 0/production tasks.
+- [x] Period and retention rules required for Phase 0 are resolved; physical persistence choices have explicit Phase 3 owners and acceptance deadlines.

@@ -15,8 +15,11 @@ A task is not complete because code exists. It is complete when the relevant cri
 - Domain logic is not embedded in React, Fastify handlers, or repositories.
 - Database rows are not exposed directly to the client.
 - Dependency direction is preserved.
+- Cross-workspace imports use declared package names and public exports rather than sibling-source/deep paths.
+- Applicable boundary and cycle checks pass; test/config packages do not leak into production source.
 - No new package was added without a documented need.
 - Public contracts have stable names and ownership.
+- Internal-only apps/packages remain protected from accidental publication.
 
 ## 3. Domain correctness
 
@@ -91,6 +94,7 @@ Relevant states exist and are tested or reviewed:
 
 ## 8. Security and privacy
 
+- The data inventory/classification and trust boundary cover every new collection, storage, transfer, cache, log, export, backup, and deletion path.
 - Input and output validation are present.
 - Errors do not leak internals.
 - Logs/audit data do not include forbidden sensitive fields.
@@ -98,6 +102,8 @@ Relevant states exist and are tested or reviewed:
 - CSV values are neutralized when relevant.
 - Secret/config handling is correct.
 - Threat model is updated for a new surface.
+- Authentication/session/CSRF/proxy/cache controls remain at or above the accepted security profile.
+- Retention, user control, backup/restore, and restored-credential behavior are tested or explicitly not applicable.
 
 ## 9. Tests
 

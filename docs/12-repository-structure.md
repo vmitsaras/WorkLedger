@@ -3,17 +3,27 @@
 This is the target shape after Phase 1. Do not create all feature folders before their phase.
 
 ```text
-workledger/
+WorkLedger/
 ├── AGENTS.md
 ├── README.md
 ├── PROJECT_STATUS.md
 ├── TODO.md
+├── .editorconfig
+├── .node-version
+├── .prettierignore
 ├── package.json
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
-├── tsconfig.base.json
+├── scripts/
+│   ├── check-toolchain.mjs
+│   ├── check-boundaries.mjs
+│   ├── check-boundaries.test.mjs
+│   ├── check-workspace-build.mjs
+│   ├── check-workspace.mjs
+│   └── check-workspace.test.mjs
+├── tsconfig.json
 ├── eslint.config.js
-├── prettier.config.*
+├── prettier.config.js
 ├── .env.example
 │
 ├── apps/
@@ -105,6 +115,12 @@ workledger/
 │   │   └── stories/
 │   │
 │   ├── config/
+│   │   ├── eslint/
+│   │   ├── prettier/
+│   │   ├── src/
+│   │   ├── typescript/
+│   │   ├── package.json
+│   │   └── tsconfig.json
 │   └── test-utils/
 │
 ├── docs/
@@ -124,6 +140,8 @@ workledger/
 └── .github/
     └── workflows/
 ```
+
+`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells, and `WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter adapters, and boundary fixtures/checks shown above. Feature folders, framework files, test-runner projects, infrastructure, `apps/site`, and other descendants in this diagram remain phased targets rather than claims that they already exist.
 
 ## Feature-folder rule
 
@@ -146,12 +164,19 @@ Do not create a feature-level “utils” dumping ground. Name modules by respon
 
 ## Package-boundary rule
 
-- `packages/domain` may not import another WorkLedger app/package except a tiny shared runtime-neutral type package if later justified.
-- `packages/contracts` must not import React, Fastify route instances, or database schema.
-- `packages/database` may map to domain types but must not expose Drizzle query objects to API handlers.
-- `packages/ui` is presentation only.
-- `apps/web` cannot import `packages/database` or server-only auth modules.
-- `apps/api` cannot import `packages/ui`.
+`docs/04-architecture.md` section 11 is canonical. In summary:
+
+- `packages/domain`, `packages/contracts`, `packages/ui`, and `packages/config` import no other WorkLedger runtime package.
+- `packages/database` may import `packages/domain`; it must not expose Drizzle rows/query builders or an unrestricted client to API handlers.
+- `packages/test-utils` may import domain/contracts through public exports but is test-only. `packages/domain` keeps its own factories local and never imports `packages/test-utils`.
+- `apps/web` may import contracts/UI only; it cannot import domain calculations, database, API/server auth, environment, or another app.
+- `apps/api` may import domain/contracts/database only; it cannot import UI/web or delegate server authorization to contracts.
+- `apps/site`, when added in Phase 11, may import UI only unless a later ADR justifies another edge.
+- Cross-project imports use declared `@workledger/*` `workspace:*` dependencies and explicit package exports; do not traverse into sibling `src`, tests, migrations, generated files, or build output.
+- Root/apps/packages are private and internal-only for the MVP. Workspace cycles fail; they are not ignored.
+- Shared configuration is a development dependency, not production runtime code. External dependencies are declared by their direct importer.
+
+`WL-101` rejects the wrong manifest graph and proves accepted public-root imports through a real build. `WL-102` now also rejects TypeScript-reference drift and executes static negative fixtures for forbidden, deep, app, sibling-source, production test/config, and browser/server imports. Do not rely on this document alone.
 
 ## Test placement
 

@@ -15,6 +15,31 @@ Before installing any package, Codex must:
 
 ## Selected platform
 
+### Workspace and runtime
+
+- pnpm workspaces with `apps/*` and `packages/*`, one committed root lockfile, and no Turborepo initially.
+- Internal dependencies use `workspace:*`; workspace cycles fail rather than warn-and-continue.
+- Root/apps/packages use `"private": true` for the MVP. Exact package exports and the dependency matrix follow ADR `0011` and `docs/04-architecture.md` section 11.
+- Support Node.js 22 or newer only while the selected line remains under official LTS. `WL-100` pins the then-current compatible LTS toolchain/package manager; do not choose an odd-numbered/EOL line or assume “current” is production-supported.
+
+`WL-100` verified and pinned Node.js `24.18.0` LTS plus pnpm `11.20.0` stable on 2026-08-05. `.node-version`, `package.json`, `pnpm-workspace.yaml`, and the generated lockfile are the executable authority. Node 26 was Current rather than LTS and pnpm 12 was beta, so neither was selected. Later compatibility and production gates must recheck these time-sensitive versions before changing the pins.
+
+At `WL-101` completion, TypeScript `7.0.2` was the only compiler dependency needed to prove the eight typed workspace entries built under Node `24.18.0`. Its supported Node range was checked before installation and the exact resolution remains locked. `WL-102` then replaced that task's temporary command-line flags with the shared configuration described below.
+
+`WL-102` replaced the temporary compiler command with shared composite configuration and exact project references. It pins ESLint `10.8.0`, `@eslint/js` `10.0.1`, Prettier `3.9.6`, `globals` `17.9.0`, and `es-module-lexer` `2.3.1`. ESLint covers repository JavaScript/tooling; strict TypeScript plus the repository-owned lexer cover TypeScript because current `typescript-eslint` `8.66.0` excludes TypeScript 7 through its `<6.1.0` peer range. Do not install that unsupported combination; recheck compatibility in a later tooling upgrade.
+
+Official references:
+
+- https://pnpm.io/workspaces
+- https://pnpm.io/settings
+- https://docs.npmjs.com/cli/v11/configuring-npm/package-json#private
+- https://nodejs.org/en/about/previous-releases
+- https://registry.npmjs.org/typescript/7.0.2
+- https://www.typescriptlang.org/docs/handbook/project-references.html
+- https://eslint.org/docs/latest/use/configure/configuration-files
+- https://prettier.io/docs/configuration
+- https://registry.npmjs.org/typescript-eslint/8.66.0
+
 ### React web
 
 - React and TypeScript.
@@ -81,7 +106,20 @@ Official references:
 - https://better-auth.com/docs/installation
 - https://better-auth.com/docs/integrations/fastify
 - https://better-auth.com/docs/concepts/session-management
+- https://better-auth.com/docs/concepts/rate-limit
+- https://better-auth.com/docs/reference/security
+- https://better-auth.com/docs/reference/options
 - https://better-auth.com/docs/adapters/postgresql
+
+### Reference reverse proxy
+
+- Caddy is the shipped production Compose/reference example; WorkLedger remains compatible with another proxy only when it satisfies `docs/06-security-operations.md`.
+- Use one canonical HTTPS origin, private API/database services, exact trusted-proxy configuration, and overwritten forwarded headers.
+
+Official references:
+
+- https://caddyserver.com/docs/caddyfile/options
+- https://caddyserver.com/docs/caddyfile/directives/reverse_proxy
 
 ### Date and time
 
@@ -129,6 +167,8 @@ Do not add these until a task proves the need:
 - Search engine.
 - Analytics/telemetry SDK.
 - Native/PWA offline mutation package.
+- Turborepo or another task orchestrator/cache layer.
+- Changesets or another package-publication/versioning workflow.
 
 ## Dependency review questions
 

@@ -12,21 +12,21 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 - [x] `WL-006` Finalize time-calculation rules and example catalog.
 - [x] `WL-007` Finalize absence, entitlement, privacy, and cancellation rules.
 - [x] `WL-008` Finalize monthly submission, approval, locking, and adjustment rules.
-- [ ] `WL-009` Finalize route map, screen states, responsive behavior, and accessibility acceptance criteria.
-- [ ] `WL-010` Finalize security, data classification, threat model, and operations assumptions.
-- [ ] `WL-011` Ratify architecture decisions and repository boundaries.
-- [ ] `WL-012` Pass the Phase 0 exit gate.
+- [x] `WL-009` Finalize route map, screen states, responsive behavior, and accessibility acceptance criteria.
+- [x] `WL-010` Finalize security, data classification, threat model, and operations assumptions.
+- [x] `WL-011` Ratify architecture decisions and repository boundaries.
+- [x] `WL-012` Pass the Phase 0 exit gate.
 
 ## Phase 1 — Repository foundation
 
-- [ ] `WL-100` Initialize pnpm workspace and root tooling.
-- [ ] `WL-101` Scaffold web, API, and shared package boundaries; defer the Astro site to Phase 11.
-- [ ] `WL-102` Configure strict TypeScript, linting, formatting, and shared config.
+- [x] `WL-100` Initialize the private pnpm workspace, single lockfile, cycle rejection, and root tooling.
+- [x] `WL-101` Scaffold web, API, explicit internal package exports, and shared boundaries; defer the Astro site to Phase 11.
+- [x] `WL-102` Configure strict TypeScript, linting, formatting, shared config, and executable import-boundary checks.
 - [ ] `WL-103` Configure test projects and baseline CI.
 - [ ] `WL-104` Configure local PostgreSQL and Docker development environment.
-- [ ] `WL-105` Configure environment validation and safe example configuration.
+- [ ] `WL-105` Configure environment, origin/proxy trust, secrets, and safe example configuration.
 - [ ] `WL-106` Initialize React Aria shadcn base and design tokens.
-- [ ] `WL-107` Add repository documentation and contributor commands.
+- [ ] `WL-107` Add public repository, setup, contribution, license, and verified security-reporting documentation.
 - [ ] `WL-108` Pass the Phase 1 exit gate.
 
 ## Phase 2 — Domain engine
@@ -48,10 +48,10 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
 - [ ] `WL-300` Implement initial PostgreSQL schema and migrations.
 - [ ] `WL-301` Implement repository interfaces and transaction boundaries.
-- [ ] `WL-302` Integrate Better Auth credentials and sessions.
+- [ ] `WL-302` Integrate the accepted Better Auth credential, session, CSRF, reset, and revocation profile.
 - [ ] `WL-303` Implement application roles and scoped authorization.
 - [ ] `WL-304` Implement API error envelope and validation conventions.
-- [ ] `WL-305` Implement audit event persistence.
+- [ ] `WL-305` Implement separated domain/security audit persistence.
 - [ ] `WL-306` Implement idempotency storage for clock mutations.
 - [ ] `WL-307` Implement seed organization and realistic personas.
 - [ ] `WL-308` Generate or expose OpenAPI safely.
@@ -59,7 +59,7 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
 ## Phase 4 — Employee attendance vertical slice
 
-- [ ] `WL-400` Build authenticated application shell and route boundaries.
+- [ ] `WL-400` Build authentication routes, application shell, profile/session surface, and route boundaries.
 - [ ] `WL-401` Build Today query and attendance state endpoint.
 - [ ] `WL-402` Build clock-in mutation end to end.
 - [ ] `WL-403` Build break, resume, and clock-out mutations end to end.
@@ -70,7 +70,7 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
 ## Phase 5 — Time records and corrections
 
-- [ ] `WL-500` Build My Time week/month views.
+- [ ] `WL-500` Build My Time and the flexible-time portion of My Balances.
 - [ ] `WL-501` Build daily record details and accessible timeline/list.
 - [ ] `WL-502` Build missing-entry and policy-warning presentation.
 - [ ] `WL-503` Build correction request workflow.
@@ -81,7 +81,7 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 ## Phase 6 — Absence and leave balances
 
 - [ ] `WL-600` Implement absence types and policy behavior.
-- [ ] `WL-601` Implement entitlement ledger and current balance.
+- [ ] `WL-601` Implement the entitlement ledger and complete My Balances.
 - [ ] `WL-602` Build vacation request workflow.
 - [ ] `WL-603` Build sickness reporting with privacy boundaries.
 - [ ] `WL-604` Build partial-day and hourly absence support.
@@ -95,7 +95,7 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 - [ ] `WL-701` Build approve, reject, and changes-requested decisions.
 - [ ] `WL-702` Build team status and privacy-safe availability.
 - [ ] `WL-703` Build team calendar and agenda alternative.
-- [ ] `WL-704` Implement notification records and optional email delivery.
+- [ ] `WL-704` Implement notification records, in-app history, and optional email delivery.
 - [ ] `WL-705` Complete authorization and accessibility review.
 - [ ] `WL-706` Pass the Phase 7 exit gate.
 
@@ -106,12 +106,12 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 - [ ] `WL-802` Implement manager approval and lock.
 - [ ] `WL-803` Implement post-lock adjustment workflow.
 - [ ] `WL-804` Build monthly, balance, leave, and missing-record reports.
-- [ ] `WL-805` Build safe CSV export and printable record.
+- [ ] `WL-805` Build safe CSV, print, and explicit clipboard behavior.
 - [ ] `WL-806` Pass the Phase 8 exit gate.
 
 ## Phase 9 — Administration
 
-- [ ] `WL-900` Build employee create, invite, deactivate, and history.
+- [ ] `WL-900` Build employee lifecycle and separated technical-account/session administration.
 - [ ] `WL-901` Build teams and manager assignment.
 - [ ] `WL-902` Build schedule and effective-date management.
 - [ ] `WL-903` Build time-policy management.
@@ -122,14 +122,14 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
 ## Phase 10 — Production hardening and self-hosting
 
-- [ ] `WL-1000` Complete security and permission test suite.
+- [ ] `WL-1000` Remediate the threat model and complete security/privacy/permission tests.
 - [ ] `WL-1001` Complete performance, pagination, and concurrency review.
 - [ ] `WL-1002` Complete full accessibility audit and remediation.
-- [ ] `WL-1003` Complete Docker production deployment.
-- [ ] `WL-1004` Document and test backup and restore.
+- [ ] `WL-1003` Complete the Caddy-reference Docker production deployment.
+- [ ] `WL-1004` Document and test encrypted backup and isolated clean restore.
 - [ ] `WL-1005` Document and test migrations and upgrades.
-- [ ] `WL-1006` Add health checks, structured logs, and failure diagnostics.
-- [ ] `WL-1007` Complete retention and data-export controls.
+- [ ] `WL-1006` Add structured logs, failure diagnostics, and safe technical operations/audit surfaces.
+- [ ] `WL-1007` Complete mandatory retention, minimization, user-export, and backup-expiry controls.
 - [ ] `WL-1008` Pass the production release gate.
 
 ## Phase 11 — Portfolio presentation

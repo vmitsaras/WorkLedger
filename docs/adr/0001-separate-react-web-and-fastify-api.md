@@ -18,8 +18,8 @@ Use:
 
 - Clear frontend/backend boundaries.
 - API can be tested independently and serve future clients.
-- Authentication/CORS/cookie configuration requires care.
-- Deployment contains separate web and API services or one proxy routing both.
+- Production still uses one canonical HTTPS origin; the service boundary does not authorize broad CORS or cross-origin cookies.
+- Deployment uses separate private web/API services behind the accepted reverse-proxy contract.
 
 ## Rejected alternatives
 

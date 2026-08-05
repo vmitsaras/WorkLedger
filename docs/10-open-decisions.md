@@ -51,30 +51,48 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 | UI primitive | React Aria-based shadcn components | Consistent accessibility behavior and design freedom |
 | ORM/driver | Drizzle with `pg`/node-postgres and generated SQL migrations | Type-safe SQL-oriented persistence, standard pooling, and reviewable migrations |
 | Authentication | Better Auth for credentials/sessions | Avoid custom credential/session implementation |
+| Credential policy | Invite-only; 15–128 characters; local common-password rejection; 30-minute reset and 24-hour invitation grants | Meets the password-only security floor without arbitrary composition or periodic changes |
+| Session profile | PostgreSQL-backed/revocable; no stateless/cache/remember-me; 30-minute idle, 12-hour absolute, 15-minute freshness | Makes revocation immediate and bounds stolen-session lifetime while supporting a workday |
+| Browser mutation security | Same-origin HTTPS, secure host-only cookie, Better Auth checks plus WorkLedger session-bound CSRF token | SameSite is defense in depth rather than the only CSRF control |
+| Retention | Mandatory deployment-owned rules by data class; no universal legal duration or silent indefinite value | Preserves jurisdiction choice while making privacy/backup behavior explicit before production |
+| Reference proxy | Caddy example; proxy-agnostic contract | Gives self-hosters one maintained HTTPS path without coupling application security to one proxy |
 | Date/time domain | Temporal semantics with polyfill as required | Correct instant, local date, timezone, and DST handling |
+| Repository publication | Public GitHub repository `vmitsaras/WorkLedger` | The planning repository is already public; public visibility does not authorize npm/container/release publication |
+| Source license | MIT (`LICENSE` at repository root) | Permissive self-hosting, modification, contribution, and portfolio use with a short standard notice |
+| Workspace package publication | Internal-only private packages using `workspace:*` | Prevents accidental registry publication while package APIs and product boundaries are still evolving |
 
-## Decisions blocking Phase 1
+## Resolved Phase 1 repository decisions
 
-These should be confirmed during `WL-001`–`WL-012`.
+These were confirmed from repository evidence and the architecture ratification.
 
 ### D-001 — Repository naming and publication
 
-- Proposed repository: `workledger`.
-- Decide whether it is public from the first commit or made public after foundation.
-- Does not affect architecture, but affects README/security disclosure workflow.
+**Status:** Resolved by `WL-011` from repository evidence.
+
+- The canonical product and repository display name is `WorkLedger`; the current remote is `https://github.com/vmitsaras/WorkLedger` and GitHub reports it as public.
+- Public visibility is accepted from the planning stage. It does not authorize pushing changes, publishing packages/images, creating releases, or deploying an instance; those remain separately permissioned workflows.
+- Until Phase 1 replaces the planning-only README, the repository must state honestly that no runnable application exists. `WL-107` owns verified setup, contribution, license, and security-reporting instructions before the foundation gate.
+- Public changes must keep examples secret-free and use the dependency, generated-artifact, security, and documentation checks assigned to the relevant task.
 
 ### D-002 — License
 
-- Choose an open-source license before public publication.
-- Candidate decision must consider self-hosted use and desired contribution model.
-- Do not copy a license text from memory; use an official source when selected.
+**Status:** Resolved by `WL-011` as MIT.
+
+- Keep the existing root `LICENSE`, whose text and copyright line were checked against the Open Source Initiative MIT template and which GitHub identifies as MIT.
+- Root and workspace package metadata use the SPDX identifier `MIT`. Internal package `private` flags prevent registry publication; they do not change the repository's source license.
+- The MIT license applies to WorkLedger-owned source. Third-party dependencies, copied React Aria/shadcn source, fonts, icons, and other assets retain their own notices and must be reviewed before distribution.
+- A future license change is a repository-governance decision requiring explicit owner approval; it is not an implementation refactor.
 
 ### D-004 — Package publication
 
-- Proposed: internal workspace packages only for MVP.
-- Do not publish `packages/domain` or `packages/ui` until APIs stabilize.
+**Status:** Resolved by `WL-011` as internal-only for the MVP.
 
-## Resolved Phase 1 entry decisions
+- The root and every `apps/*` and `packages/*` manifest use `"private": true`; there is no npm publish script, registry credential, Changesets/release workflow, or public-package compatibility promise.
+- Internal package names use the `@workledger/*` scope and cross-workspace dependencies use `workspace:*`, so local resolution cannot silently fall back to a registry package.
+- Container/application release work is separate from npm package publication. No workspace package is packed or published as an MVP release artifact.
+- Publishing any package later requires a new ADR covering scope ownership, stable public API/exports, semantic versioning, build artifacts, dependency/license/security review, provenance, registry access, documentation, and migration/compatibility expectations.
+
+## Resolved Phase 1 product decisions
 
 ### D-003 — Default locale
 
@@ -157,7 +175,9 @@ These should be confirmed during `WL-001`–`WL-012`.
 
 ### D-200 — API contract implementation
 
-Evaluate during scaffold:
+**Status:** Open; owner `WL-304`. Resolve from a bounded spike at the start of that task before implementing the shared contract/serialization/OpenAPI path.
+
+Evaluate:
 
 - Zod-based Fastify type provider and OpenAPI generation, or
 - JSON Schema/TypeBox contracts with generated client.
@@ -175,15 +195,21 @@ Do not choose solely for fashion; create an ADR from a small spike.
 
 ### D-204 — Validation HTTP status
 
+**Status:** Open; owner `WL-304`. Resolve together with D-200 before the first WorkLedger validation/error contract is accepted.
+
 - Choose one status for semantic request validation and use it consistently.
 - Recommended: `422 Unprocessable Content` for syntactically valid JSON that fails field/semantic validation; reserve `400` for malformed requests.
 
 ### D-201 — Database identifier type
 
+**Status:** Open; owner `WL-300`. Resolve before generating the first application-schema migration.
+
 - Proposed: UUIDv7 or another sortable opaque identifier for domain records.
 - Confirm PostgreSQL/runtime support and migration ergonomics during schema design.
 
 ### D-202 — Calculation projection persistence
+
+**Status:** Open; owner `WL-300`, using the completed Phase 2 domain/test evidence. Resolve before the initial schema/migration is accepted.
 
 Choose exact Phase 3/8 approach:
 
@@ -194,9 +220,11 @@ Choose exact Phase 3/8 approach:
 
 ### D-203 — Email delivery
 
+**Status:** Resolved by `WL-002`, `WL-009`, and `WL-010`; implementation owner `WL-704`.
+
 - MVP core must work without SMTP.
-- Decide whether Phase 3 includes only an email interface/fake adapter or a real SMTP adapter later in Phase 7.
-- Recommended: interface and in-app notifications first; SMTP in Phase 7.
+- Phase 3 may define the outbound interface/fake needed by integration tests but does not add a production SMTP dependency.
+- `WL-704` implements durable generic in-app notifications and may add the optional privacy-safe SMTP adapter. Delivery failure/retry never changes the committed domain outcome.
 
 ## Resolved Phase 6 entry decisions
 
@@ -267,20 +295,34 @@ Choose exact Phase 3/8 approach:
 
 ### D-500 — Data retention defaults
 
-- No universal legal period is hardcoded.
-- Provide configurable retention and deployment documentation.
+**Status:** Resolved by `WL-010` as a deployment-owned retention profile; implementation evidence remains a production gate.
+
+- WorkLedger hardcodes no universal legal duration. Production readiness requires an explicit non-placeholder rule for authentication transient data, account/security metadata, operational logs, notification delivery, sensitive HR data/free text, domain source/ledger/snapshot/audit history, technical audit, and backups.
+- Each class records duration/expiry, purge versus minimization, backup effect, responsible operator, and deployment policy/jurisdiction owner. Silent indefinite retention is invalid.
+- Ordinary delete/deactivation never cascade-deletes punches, decisions, ledgers, approved snapshots, adjustments, or required audit evidence. `WL-1007` must implement source-preserving minimization/anonymization and reapply it to restored backups before activation.
 
 ### D-501 — Password and session policies
 
-- Confirm defaults from the selected auth library and tighten for production.
-- Define session duration, freshness, reset behavior, and administrative revocation.
+**Status:** Resolved by `WL-010`; `WL-302` must prove the selected stable Better Auth version against this profile.
+
+- Invite-only credentials use 15–128 character passwords, accept paste/password managers/Unicode, reject a local common-password set, and impose no composition or routine periodic-rotation rule.
+- Sessions are PostgreSQL-backed and revocable; stateless sessions, session/cookie cache, and persistent “remember me” are disabled. The server enforces 30-minute idle, 12-hour absolute, and 15-minute freshness boundaries.
+- Session cookies use `__Host-`, `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, and no `Domain`. WorkLedger unsafe mutations also require current-origin validation and a session-bound CSRF token.
+- Reset grants expire after 30 minutes; invitations after 24 hours. Both are protected, single use, rate limited, URL/log/referrer minimized, and same-origin only. Password reset revokes all sessions and returns to normal sign-in.
+- Password reset, account deactivation/unlink, and privileged role change revoke all sessions. High-risk account/privilege operations require a fresh session; ordinary domain work still requires current server authorization.
 
 ### D-502 — Browser support matrix
+
+**Status:** Open; initial evidence owner `WL-103`, final production owner `WL-1002`. Record the executable development matrix in Phase 1 and revalidate exact supported versions, Temporal/polyfill behavior, and accessibility before the production gate.
 
 - Proposed: current and previous stable Chrome, Edge, Firefox, Safari; current mobile Safari and Chrome Android.
 - Confirm against selected packages and Temporal polyfill.
 
 ### D-503 — Production reverse proxy
 
-- Documentation may show one recommended example while remaining proxy-agnostic.
-- Decide whether project ships Caddy, Traefik, or plain proxy guidance.
+**Status:** Resolved by `WL-010`.
+
+- Ship Caddy as the reference Docker/reverse-proxy example while keeping the documented security contract proxy-agnostic.
+- Production uses one canonical HTTPS origin for web/API, publishes only proxy ports, keeps API/PostgreSQL private, and fixes the public origin in validated configuration.
+- The proxy overwrites forwarded headers; the application trusts only exact configured proxy addresses. Direct client-supplied forwarded values cannot affect callback URLs, cookie security, rate limits, or audit identity.
+- Equivalent proxies are supported only when they meet the TLS, header, network-isolation, timeout/limit, health, and security-header requirements in `docs/06-security-operations.md`.

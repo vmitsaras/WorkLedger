@@ -1,14 +1,14 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 0 — Product and domain contract
-**Current milestone:** Route map, screen-state, responsive, and accessibility finalization
-**Active task:** `WL-009`
+**Current phase:** Phase 1 — Repository foundation
+**Current milestone:** Test projects, accessibility harnesses, and baseline CI
+**Active task:** `WL-103`
 **Status:** Ready
-**Last verified:** 2026-08-04
+**Last verified:** 2026-08-05
 
 ## Current objective
 
-Finalize the MVP route map, complete screen-state inventory, responsive behavior, and testable accessibility acceptance criteria before security and architecture ratification.
+Configure Vitest projects, React Testing Library, API/database integration harnesses, Playwright, axe/accessibility helpers, and baseline CI for the existing workspace. Add only credible smoke evidence and test infrastructure; do not begin product features, database schema work, design-system implementation, or `apps/site` in `WL-103`.
 
 ## Verified decisions
 
@@ -56,6 +56,30 @@ Finalize the MVP route map, complete screen-state inventory, responsive behavior
 - Approval creates a reconciled immutable snapshot; a separate eligible current non-self manager action locks that exact snapshot, with no MVP unlock.
 - Submitted/approved months require an explicit changes-requested transition before ordinary mutation; locked changes append uniquely linked adjustments against the preserved baseline.
 - Monthly snapshots include versioned daily calculation/source/ledger evidence but exclude sickness classification, notes, entitlement balances, and other purpose-incompatible HR detail.
+- The MVP application has 31 canonical route patterns plus three explicit host-operator workflows, each with stable implementation ownership.
+- Request and approval routes are type-neutral; sensitive workflow types, notes, reasons, entitlement values, and person-identifying search text never become URL state.
+- Route navigation updates the document title and visible heading with deterministic focus behavior; screen states have persistent, non-duplicative focus and announcement rules.
+- Narrow-screen calendars use an equivalent agenda/list when the grid is unsuitable, and responsive transformations preserve reading order, relationships, and actions.
+- System-administrator routes expose only technical account/session, safe operations, and technical-audit data; restore, secret rotation, and upgrade remain host-operator workflows.
+- WorkLedger treats authentication, employment, attendance, benefits, sickness-related absence, approvals, audit, exports, and backups as high-sensitivity data with purpose-specific access and retention.
+- Invite-only credentials use 15–128 character passwords, local common-password rejection, 30-minute single-use reset grants, and 24-hour single-use invitation grants.
+- Sessions are PostgreSQL-backed and immediately revocable; stateless/session caches and persistent remember-me are excluded, with 30-minute idle, 12-hour absolute, and 15-minute freshness boundaries.
+- Production uses one canonical HTTPS origin, secure host-only cookies, enabled Better Auth checks, WorkLedger session-bound CSRF protection, protected-response no-store caching, and no sensitive browser persistence.
+- Caddy is the reference production proxy while the observable TLS, trusted-header, network-isolation, health, and security-header contract remains proxy-agnostic.
+- Each deployment must own an explicit retention profile by data class; ordinary deletion never destroys source, ledger, snapshot, or required audit integrity, and restored sessions/grants are invalidated before activation.
+- The canonical repository is the existing public `vmitsaras/WorkLedger` GitHub project and WorkLedger-owned source/documentation uses the existing MIT license.
+- Root, app, and package manifests remain private/internal for the MVP; internal names use `@workledger/*` and cross-workspace edges use `workspace:*`, with no npm publication workflow.
+- The accepted dependency graph keeps domain, contracts, UI, and config independent; database may import domain; web may import UI/contracts; API composes domain/contracts/database; test-utils is test-only.
+- Cross-project deep/sibling-source imports, app imports, undeclared path-alias edges, workspace cycles, production test/config imports, and browser imports of authoritative domain/database/server code are prohibited and must fail executable Phase 1 checks.
+- pnpm with one root lockfile and no Turborepo is sufficient for the initial workspace; new production projects, dependency edges, orchestration, or package publication require an ADR.
+- The root toolchain is pinned to Node `24.18.0` LTS and pnpm `11.20.0` stable; the generated lockfile records the Node runtime integrity variants.
+- The exact workspace is two non-importable application shells plus six packages with explicit exports; five expose only their typed root and config also exposes its accepted tooling surfaces. `apps/site` remains deferred to Phase 11.
+- The eight accepted internal edges resolve through `@workledger/*` package roots and emit typed ESM entries; no sibling-source or deep import exists in the scaffold.
+- TypeScript `7.0.2` is governed by a shared strict composite configuration; the root solution and per-project references must exactly mirror the eight runtime edges and cannot use path aliases.
+- Seven explicit development-only `@workledger/config` edges provide shared TypeScript configuration without making config production runtime code.
+- ESLint `10.8.0` checks JavaScript/tooling, Prettier `3.9.6` checks code/config formatting, and `es-module-lexer` `2.3.1` powers repository-owned source-boundary checks. Current `typescript-eslint` is not installed because its `<6.1.0` TypeScript peer range excludes TypeScript 7.
+- Root commands reject a mismatched active toolchain, missing/unexpected or non-private workspace projects/configuration, alternate/nested lockfiles, wrong/non-`workspace:*` internal edges, TypeScript-reference drift/path aliases, dependency cycles, application exports, package export drift, forbidden/deep/app/test/config/browser-server source imports, and package-publication paths.
+- Phase 0 passed with all seven roadmap criteria evidenced; the accepted catalog contains 85 contiguous single-outcome examples, and every remaining open decision has an explicit later owner/deadline.
 
 ## Work completed
 
@@ -66,30 +90,37 @@ Finalize the MVP route map, complete screen-state inventory, responsive behavior
 - [x] Attendance transitions, invalid actions, deterministic event order, idempotency, retry, and tab/device conflict behavior finalized (`WL-005`).
 - [x] Daily calculation, DST/manual-time, holiday, timezone, posting, and 35 exact calculation fixtures finalized (`WL-006`).
 - [x] Absence policy, entitlement ledger, coverage/overlap, workflow, cancellation, privacy, and 27 exact absence fixtures finalized (`WL-007`).
-- [ ] Phase 0 blocking decisions resolved.
-- [ ] Domain example catalog approved.
+- [x] Monthly submission, changes-requested reopening, approval snapshot, separate lock, and post-lock adjustment rules finalized (`WL-008`).
+- [x] Route ownership, screen states, responsive behavior, and testable accessibility criteria finalized (`WL-009`).
+- [x] Security/privacy inventory, threat model, authentication/session controls, retention, proxy, backup/restore, and release controls finalized (`WL-010`).
+- [x] Architecture decisions, repository publication/license choices, internal package policy, and enforceable dependency boundaries ratified (`WL-011`).
+- [x] Phase 0 / Phase 1-entry blocking decisions resolved.
+- [x] Domain and workflow example catalog approved with 85 single-outcome cases.
 - [x] Roadmap and task-board mapping verified.
-- [ ] Phase 0 exit gate passed.
+- [x] Phase 0 exit gate passed with criterion-by-criterion evidence (`WL-012`; see `docs/19-phase-0-gate-review.md`).
+- [x] Private pnpm root workspace, stable toolchain, one lockfile, native manifest/cycle/publication checks, and root quality commands initialized (`WL-100`; see `docs/20-workspace-foundation.md`).
+- [x] Two application and six internal package shells created with explicit exports, exact ADR `0011` edges, typed builds, and emitted-entry resolution checks (`WL-101`; see `docs/21-workspace-shells.md`).
+- [x] Shared strict TypeScript/ESM, project references, ESLint/Prettier, and executable negative source-boundary fixtures configured (`WL-102`; see `docs/22-strict-tooling-and-boundaries.md`).
 
 ## Latest completed task
 
-### `WL-008` — Finalize monthly submission, approval, locking, and adjustment rules
+### `WL-102` — Configure strict tooling and executable source boundaries
 
-- Changed: finalized persisted versus derived period states, month-end readiness/blockers and warning acknowledgement, source-fingerprinted submission, explicit changes-requested reopening, separate approval and lock actions, immutable snapshot schema/reconciliation, and source-linked post-lock adjustment/reversal behavior.
-- Verified: exact period fixtures now cover freeze/reopen, warning/source races, current scope and self-action, approval cycles, snapshot/ledger reconciliation, explicit lock, positive/zero/concurrent/reversed adjustments, and absence privacy; state/invariant/example/error/task consistency checks pass.
-- Decisions: resolved `D-400` and `D-401`; approval creates the snapshot, the eligible current non-self manager locks separately, there is no MVP unlock, and snapshots contain canonical daily/source/ledger evidence with privacy-minimized absence references.
-- Accessibility: period states, blockers, warning acknowledgement, decision actions, stale outcomes, permanent lock confirmation, and approved-versus-adjusted records have textual, keyboard/focus, table/list, and announcement requirements.
-- Security/data: every transition is versioned, scoped, self-action-safe, fingerprinted, transactional, audited, and concurrency-safe; snapshots/adjustments are append-only and generic period surfaces exclude sensitive absence details.
-- Remaining risk: `D-500` still owns production retention/anonymization periods; Phase 2/3/8 must prove canonical fingerprinting, database uniqueness, snapshot reconciliation, authorization, and adjustment concurrency in executable tests.
-- Next task: `WL-009`.
+- Changed: added shared strict TypeScript/ESM, an eight-project solution/reference graph, explicit config-only development edges/exports, ESLint flat config, Prettier/EditorConfig, a repository-owned import scanner, and physical positive/negative boundary fixtures; removed the temporary shell-build runner.
+- Verified: formatting, ESLint, strict project-reference typechecking, all 18 native contract/fixture tests, all eight builds/emitted imports, the applicable full root quality gate, frozen/offline installation, and diff hygiene pass under pinned Node `24.18.0`/pnpm `11.20.0`.
+- Decisions: ESLint `10.8.0`, `@eslint/js` `10.0.1`, Prettier `3.9.6`, `globals` `17.9.0`, and `es-module-lexer` `2.3.1` are exact stable tooling pins. TypeScript source uses strict compiler diagnostics, formatting, and the repository scanner because current `typescript-eslint` `8.66.0` does not support TypeScript 7.
+- Accessibility: no UI behavior was created; DOM libraries are confined to web/UI projects, while domain/contracts keep the ambient-type-free runtime-neutral base. Automated accessibility infrastructure remains `WL-103`.
+- Security/data: production config/test imports, browser/server boundary violations, undeclared aliases, deep/sibling/app imports, wrong references, cycles, and publication paths fail. No secret, employee data, persistence, network, authentication, telemetry, or deployment surface was added.
+- Remaining risk: test runners, axe/Playwright/browser/API/database harnesses, CI execution, and dependency/license/secret scanning are not yet present; current integration/E2E root commands still have no project-specific runner work.
+- Next task: `WL-103`.
 
 ## Current blockers
 
-See `docs/10-open-decisions.md` and the unresolved findings in `docs/17-planning-audit.md`.
+No `WL-103` blocker remains. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. The strict project/tooling boundary is ready; test libraries, environment-specific harness ownership, CI jobs, and executable accessibility smoke evidence remain to be selected and configured.
 
 ## Next task
 
-`WL-009 — Finalize route map, screen states, responsive behavior, and accessibility acceptance criteria.`
+`WL-103 — Configure test projects, accessibility/browser/API/database harnesses, and baseline CI.`
 
 ## Update rules
 

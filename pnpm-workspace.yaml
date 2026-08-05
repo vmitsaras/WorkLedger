@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+
+sharedWorkspaceLockfile: true
+linkWorkspacePackages: false
+saveWorkspaceProtocol: rolling
+savePrefix: ''
+disallowWorkspaceCycles: true
+engineStrict: true
+nodeVersion: 24.18.0
+pmOnFail: download

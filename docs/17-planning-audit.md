@@ -2,13 +2,13 @@
 
 **Audit date:** 2026-08-04
 **Task:** `WL-001`
-**Outcome:** Ratified as the working contract for the remaining Phase 0 tasks. Phase 0 is not complete, and product-code scaffolding remains blocked until `WL-012` passes.
+**Original outcome:** Ratified as the working contract for the remaining Phase 0 tasks; Phase 0 was incomplete at `WL-001`. `WL-012` later passed the superseding gate in `docs/19-phase-0-gate-review.md`.
 
 ## Scope reviewed
 
 - Root project controls: `AGENTS.md`, `README.md`, `CODEX_MASTER_PROMPT.md`, `PROJECT_STATUS.md`, and `TODO.md`.
 - Product, domain, architecture, UX/accessibility, security/operations, roadmap, task-board, definition-of-done, decision, example, repository, API, seed, review, and technology documents under `docs/`.
-- ADRs `0001` through `0010`.
+- ADRs `0001` through `0010` at the original audit; `WL-011` later ratified them and added boundary ADR `0011`.
 - Repository state, license file, task identifiers, and current file layout.
 
 ## Ratification evidence
@@ -20,7 +20,7 @@
 - The time model covers real instants, IANA timezones, organization-local dates, integer minutes, effective dates, overnight splitting, and daylight-saving transitions.
 - Authorization, self-approval prevention, immutable history, ledger effects, idempotency, concurrency, locking, CSV safety, backup, restore, and sensitive-data minimization are represented before their implementation phases.
 - WCAG 2.2 AA, keyboard completion, focus behavior, validation, live-region restraint, equivalent calendar views, reduced motion, zoom/reflow, forced colors, and touch use are represented in acceptance criteria.
-- At this audit the example catalog contained 45 numbered cases, exceeding the numerical minimum of 25. `WL-006` later expanded it to 59 while resolving the calculation exactness gaps; later workflow-owned gaps still prevent the Phase 0 gate from passing.
+- At this audit the example catalog contained 45 numbered cases, exceeding the numerical minimum of 25. Later Phase 0 tasks expanded and made the catalog exact through `EX-085`; `WL-012` verifies the superseding gate result.
 
 ## Findings and required follow-up
 
@@ -39,22 +39,22 @@
 
 - `PA-001`: resolved by `WL-002` and `WL-003`; delegation is excluded and grants no access.
 - `PA-002`: resolved by `WL-002`; teams are the only MVP organization grouping.
-- `PA-003`: open; assigned to `WL-009`.
-- `PA-004`: open; assigned to `WL-009`.
-- `PA-005`: product and permission boundaries resolved by `WL-002` and `WL-003`; route/task details remain assigned to `WL-009` and security review remains assigned to `WL-010`.
-- `PA-006`: scoped-report behavior resolved by `WL-003`; exact spring-forward/fall-back fixtures resolved by `WL-006`; submitted-period outcome remains assigned to `WL-008`.
-- `PA-007`: partially resolved by `WL-002` for `D-003`; `D-001`, `D-002`, and `D-004` remain assigned to `WL-011`.
+- `PA-003`: resolved by `WL-009`; `/sign-in`, `/forgot-password`, and `/reset-password` now have route/state/accessibility contracts and `WL-302`/`WL-400` ownership.
+- `PA-004`: resolved by `WL-009`; `WL-500` owns the flexible-time balance/ledger surface and `WL-601` completes `/my-balances` with the leave-entitlement surface.
+- `PA-005`: resolved by `WL-002`, `WL-003`, `WL-009`, and `WL-010`; `/profile` is read-only for HR-owned facts, session DTOs omit tokens, protected cache is memory-only/no-store, reset grants have bounded same-origin handling, and session/security task ownership is explicit.
+- `PA-006`: resolved by `WL-003`, `WL-006`, and `WL-008`; scoped reports, exact DST fixtures, and submitted-period outcomes now each have one accepted result.
+- `PA-007`: resolved by `WL-002` and `WL-011`; the repository is the public `vmitsaras/WorkLedger` project, the existing MIT license is accepted, and all MVP workspace packages remain private/internal under ADR `0011`.
 - `PA-008`: resolved by `WL-001`.
 
 ## Non-blocking clarifications
 
 - Attachment concepts in authorization, data classification, and future data areas are treated as safety requirements for a later feature, not authorization to implement attachments in the MVP.
 - Cross-organization denial tests remain intentional defense in depth even though one organization per installation is the MVP deployment model.
-- The separate `APPROVED` and `LOCKED` monthly states remain intentional; `D-400` must decide whether deployments combine the actions by policy.
-- The example catalog is planning evidence only. `WL-210` must map the accepted cases to executable domain tests.
+- The separate `APPROVED` and `LOCKED` monthly states remain intentional; `WL-008` resolved D-400 with separate explicit manager actions and no MVP combined/automatic policy mode.
+- The example catalog is planning evidence only. `WL-012` later accepted all 85 single-outcome cases; `WL-210` must map the applicable cases to executable domain tests and later phase tasks own their integration/E2E evidence.
 
 ## Gate assessment
 
 `WL-001` is complete because the planning pack has been reviewed, contradictions and missing ownership have been recorded, task-ID parity has been verified, and follow-up work has explicit owners.
 
-The Phase 0 exit gate is **not passed**. The next task is `WL-002 — Finalize MVP, non-goals, assumptions, and success criteria`.
+At `WL-001`, the Phase 0 exit gate was not passed and the next task was `WL-002`. That historical assessment is superseded by the passed `WL-012` review in `docs/19-phase-0-gate-review.md`; the current next task is `WL-100`.

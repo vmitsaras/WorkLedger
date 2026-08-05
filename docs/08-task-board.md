@@ -25,10 +25,10 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 | WL-006 | Finalize time-calculation rules and example catalog | WL-004, WL-005 | At least 25 cases with expected results | Done |
 | WL-007 | Finalize absence, entitlement, privacy, overlap, and cancellation rules | WL-003, WL-004 | Policy matrix and ledger effects accepted | Done |
 | WL-008 | Finalize monthly submission, approval, locking, and adjustment rules | WL-003, WL-004, WL-006 | State transitions and immutable snapshot rules accepted | Done |
-| WL-009 | Finalize route map, screen states, responsive behavior, and accessibility criteria | WL-002, WL-003 | Every MVP workflow maps to routes/states and tests | Ready |
-| WL-010 | Finalize security, data classification, threat model, and operations assumptions | WL-003 | Threats and release controls accepted | Not started |
-| WL-011 | Ratify architecture decisions and repository boundaries | WL-002, WL-004, WL-010 | ADRs accepted; dependency direction clear | Not started |
-| WL-012 | Execute Phase 0 gate review | WL-002–WL-011 | Gate checklist complete; exact next task selected | Not started |
+| WL-009 | Finalize route map, screen states, responsive behavior, and accessibility criteria | WL-002, WL-003 | Every MVP workflow maps to routes/states and tests | Done |
+| WL-010 | Finalize security, data classification, threat model, and operations assumptions | WL-003 | Threats and release controls accepted | Done |
+| WL-011 | Ratify architecture decisions and repository boundaries | WL-002, WL-004, WL-010 | ADRs accepted; dependency direction clear | Done |
+| WL-012 | Execute Phase 0 gate review | WL-002–WL-011 | Gate checklist complete; exact next task selected | Done |
 
 ---
 
@@ -36,15 +36,15 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-100 | Initialize pnpm workspace and root package scripts | WL-012 | Clean install from lockfile; workspace package discovery | Not started |
-| WL-101 | Scaffold `apps/web`, `apps/api`, `packages/domain`, `contracts`, `database`, `ui`, `config`, and `test-utils`; do not scaffold `apps/site` yet | WL-100 | Each package builds a minimal typed entry; boundaries documented | Not started |
-| WL-102 | Configure strict TypeScript, ESM, linting, formatting, and import boundaries | WL-101 | Typecheck/lint/format checks pass; forbidden imports tested or linted | Not started |
-| WL-103 | Configure Vitest projects, React Testing Library, API integration harness, Playwright, axe, and CI | WL-101, WL-102 | Baseline unit, component, integration, and E2E smoke tests pass in CI | Not started |
+| WL-100 | Initialize private pnpm workspace, root package scripts, one lockfile, `workspace:*` policy, and cycle rejection | WL-012 | Frozen clean install; exact workspace discovery; root/apps/packages private; no cycle or publish path | Done |
+| WL-101 | Scaffold `apps/web`, `apps/api`, `packages/domain`, `contracts`, `database`, `ui`, `config`, and `test-utils` with explicit exports; do not scaffold `apps/site` yet | WL-100 | Each package builds a minimal typed public entry; only ADR `0011` edges exist; no sibling-source/deep import | Done |
+| WL-102 | Configure strict TypeScript, ESM, linting, formatting, and executable import-boundary checks | WL-101 | Typecheck/lint/format pass; negative fixtures reject representative forbidden edges, deep imports, cycles, and production test/config imports | Done |
+| WL-103 | Configure Vitest projects, React Testing Library, API integration harness, Playwright, axe, and CI | WL-101, WL-102 | Baseline unit, component, integration, and E2E smoke tests pass in CI | Ready |
 | WL-104 | Configure PostgreSQL Docker development service and test database lifecycle | WL-101 | Health check and isolated integration DB test pass | Not started |
-| WL-105 | Implement validated environment schema and `.env.example` | WL-101 | Missing/invalid config fails clearly; no secrets committed | Not started |
+| WL-105 | Implement validated environment, canonical-origin, proxy-trust, and secret schema plus safe `.env.example` | WL-101 | Missing/placeholder/invalid production config fails clearly; secrets stay out of repo/browser/logs | Not started |
 | WL-106 | Initialize shadcn with React Aria base; add tokens, focus, reduced-motion, and semantic examples | WL-101, WL-102 | Story/tests for button, link, field, dialog; keyboard and axe pass | Not started |
-| WL-107 | Write local setup, scripts, package boundaries, and contribution workflow | WL-100–WL-106 | Fresh-clone instructions verified | Not started |
-| WL-108 | Execute Phase 1 gate review | WL-100–WL-107 | All Phase 1 gate evidence recorded | Not started |
+| WL-107 | Write public repository status, local setup, scripts, package boundaries, contribution, license, and verified security-reporting workflow | WL-100–WL-106 | Fresh-clone instructions verified; no runnable/release/security-support claim exceeds evidence | Not started |
+| WL-108 | Execute Phase 1 gate review | WL-100–WL-107 | All Phase 1 gate evidence recorded, including clean install and enforced ADR `0011` boundaries | Not started |
 
 ---
 
@@ -73,14 +73,14 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 |---|---|---|---|---|
 | WL-300 | Design and implement initial PostgreSQL schema and generated migrations | WL-211 | Clean migration, rollback strategy note, constraints and indexes reviewed | Not started |
 | WL-301 | Define repository interfaces and implement transaction boundary helpers | WL-300 | Repository integration tests and no SQL leakage outside database package | Not started |
-| WL-302 | Integrate Better Auth credential flow, session cookies, reset foundation, and test utilities | WL-300, WL-105 | Login/session/deactivation/security tests pass | Not started |
+| WL-302 | Integrate Better Auth invite-only credentials, database-backed sessions, CSRF/origin controls, reset/revocation profile, and auth test utilities | WL-300, WL-105 | Accepted password/cookie/timeout/freshness/reset/rate-limit/revocation/cache profile is pinned and passes integration tests | Not started |
 | WL-303 | Implement employee-account link, roles, manager scope, and authorization policy functions | WL-301, WL-302 | Permission matrix integration tests pass | Not started |
 | WL-304 | Implement API contract schemas, error envelope, request IDs, and safe error mapping | WL-101, WL-303 | Contract tests and non-leaking error tests pass | Not started |
-| WL-305 | Implement append-only audit event persistence and querying foundation | WL-301, WL-303 | Atomic audit writes and redaction tests pass | Not started |
+| WL-305 | Implement append-only, audience-separated domain/security audit persistence and querying foundation | WL-301, WL-303 | Atomic audit writes, field minimization, hostile-text, role separation, and redaction tests pass | Not started |
 | WL-306 | Implement idempotency-key persistence and replay behavior | WL-301, WL-304 | Same-key replay and conflicting-request tests pass | Not started |
 | WL-307 | Implement realistic seed organization, users, schedules, balances, requests, and locked history | WL-300–WL-306 | Seed is deterministic and covers scenario catalog | Not started |
 | WL-308 | Expose OpenAPI and typed client generation if stable with selected contracts | WL-304 | Generated artifact reproducible; no duplicate hand-written types | Not started |
-| WL-309 | Execute Phase 3 gate review | WL-300–WL-308 | Migration, auth, authorization, audit, idempotency evidence | Not started |
+| WL-309 | Execute Phase 3 gate review | WL-300–WL-308 | Migration, accepted auth/session/CSRF profile, authorization, audit, secret/config, and idempotency evidence | Not started |
 
 ---
 
@@ -88,7 +88,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-400 | Build authenticated app shell, skip link, responsive navigation, route error boundaries, and permission gates | WL-309, WL-106 | Keyboard navigation, route title, session-expiry, and axe tests pass | Not started |
+| WL-400 | Build sign-in/recovery/reset routes, authenticated app shell, read-only profile/session surface, skip link, responsive navigation, route boundaries, and permission gates | WL-309, WL-106 | Authentication recovery, keyboard navigation, route title/focus, profile field boundary, own-session revocation/expiry, and axe tests pass | Not started |
 | WL-401 | Implement Today query/application service/API/client query | WL-309, WL-211 | Correct state, timeline, calculation, warnings, and permissions | Not started |
 | WL-402 | Implement clock-in command through domain, transaction, idempotency, audit, API, and UI | WL-401 | Duplicate click/retry and unauthorized tests; accessible success feedback | Not started |
 | WL-403 | Implement break-start, break-end, and clock-out commands end to end | WL-402 | Full state sequence, on-break clock-out confirmation, conflict tests | Not started |
@@ -103,7 +103,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-500 | Implement My Time week/month query, URL date state, pagination/limits, and summary | WL-407 | Correct totals and restorable filters | Not started |
+| WL-500 | Implement My Time week/month query and the flexible-time balance/ledger portion of My Balances with URL date state, pagination/limits, and summaries | WL-407 | Correct posted/projected totals, explainable entries, and restorable non-sensitive filters | Not started |
 | WL-501 | Build daily detail, sessions, breaks, absence credit, and accessible event list | WL-500 | Normal/incomplete/overnight days understandable | Not started |
 | WL-502 | Build structured warning and missing-entry actions | WL-209, WL-501 | Warning codes map to precise UI/action; no prose parsing | Not started |
 | WL-503 | Implement employee correction request form and submission | WL-501, WL-304 | Validation, error summary, reason, proposed impact, audit | Not started |
@@ -118,7 +118,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
 | WL-600 | Implement absence-type configuration model and policy validation | WL-309, WL-007 | MVP defaults and invalid combinations tested | Not started |
-| WL-601 | Implement entitlement ledger, pending reservation, deduction, restoration, and balance query | WL-600 | Ledger sequence fixtures and concurrency tests pass | Not started |
+| WL-601 | Implement entitlement ledger, pending reservation, deduction, restoration, and balance query; complete the leave portion of My Balances | WL-600, WL-500 | Ledger sequence/concurrency fixtures pass and available/reserved/projected values have an accessible source-entry view | Not started |
 | WL-602 | Implement vacation request calculation and form | WL-601, WL-201 | Weekends/holidays/zero-hour/insufficient balance cases pass | Not started |
 | WL-603 | Implement sickness reporting and acknowledgement with privacy-safe DTOs | WL-600, WL-303 | No diagnosis; team/manager/HR views differ correctly | Not started |
 | WL-604 | Implement half-day and hourly absence | WL-602, WL-207 | Worked-plus-absence avoids double credit | Not started |
@@ -136,7 +136,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 | WL-701 | Implement approve, reject, and changes-requested decisions consistently | WL-700 | Atomic decision effects, comments, audit, self-approval denial | Not started |
 | WL-702 | Build privacy-safe team current-status list | WL-401, WL-303 | Scoped data and neutral unavailable labels | Not started |
 | WL-703 | Build team calendar and agenda/list alternative | WL-607, WL-702 | Same information in accessible alternative; coverage warnings are textual | Not started |
-| WL-704 | Implement notification records and optional email adapter | WL-701 | Domain decision persists even when email fails; retry diagnostics | Not started |
+| WL-704 | Implement notification records, the generic in-app notification route, and optional email adapter | WL-701 | Authorized generic notification history is accessible and privacy-safe; domain decision persists when delivery fails; retry diagnostics exist | Not started |
 | WL-705 | Execute manager authorization and accessibility review | WL-700–WL-704 | Permission matrix and critical-flow review complete | Not started |
 | WL-706 | Execute Phase 7 gate review | WL-705 | Gate evidence recorded | Not started |
 
@@ -151,7 +151,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 | WL-802 | Implement manager changes request, approval, and lock | WL-801, WL-303 | Scope/self-approval, transaction, snapshot, audit tests | Not started |
 | WL-803 | Implement post-lock correction and adjustment linkage | WL-505, WL-802 | Approved snapshot preserved; delta report correct | Not started |
 | WL-804 | Build monthly, balance, leave, missing-record, and approval reports | WL-800–WL-803 | Scoped queries, pagination, empty/loading/error/accessibility states | Not started |
-| WL-805 | Implement authorized CSV export and printable monthly record | WL-804 | Formula-injection, encoding, permission, and print tests | Not started |
+| WL-805 | Implement authorized CSV export, printable monthly record, and explicit safe clipboard behavior where offered | WL-804 | Formula/encoding/filename, permission/scope-change, field-minimization, clipboard, and print tests | Not started |
 | WL-806 | Execute Phase 8 gate review | WL-800–WL-805 | End-to-end close/export/adjust scenario passes | Not started |
 
 ---
@@ -160,7 +160,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-900 | Build employee create, invite, activate, deactivate, and employment history | WL-309, WL-400 | Complex form accessibility; deactivation revokes session and preserves history | Not started |
+| WL-900 | Build HR employee create/invite/activate/deactivate/history plus separated technical-account, system-role, and session administration routes | WL-309, WL-400 | Complex-form accessibility; deactivation revokes sessions and preserves history; HR/system fields and self-role actions remain separated | Not started |
 | WL-901 | Build teams, manager assignments, and effective scope changes | WL-900 | Scope changes reflected immediately; historical attribution preserved | Not started |
 | WL-902 | Build effective-dated schedule management | WL-201, WL-900 | Overlap/gap validation; future change does not rewrite history | Not started |
 | WL-903 | Build time-policy management | WL-902 | Policy preview and effective-date behavior tested | Not started |
@@ -175,14 +175,14 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-1000 | Complete threat-model remediation and permission regression suite | WL-907 | Security checklist; no unresolved critical/high issue | Not started |
+| WL-1000 | Complete `T-001`–`T-020` threat-model remediation and permission/privacy regression suite | WL-907 | Every control has evidence and no unresolved Critical/High issue remains | Not started |
 | WL-1001 | Test expected-scale performance, indexing, pagination, and concurrent mutations | WL-907 | Defined targets and measured results | Not started |
 | WL-1002 | Complete full WCAG 2.2 AA audit and remediate core-flow blockers | WL-907 | Automated plus manual report | Not started |
-| WL-1003 | Build production Docker Compose, reverse-proxy guidance, health/readiness, and safe config | WL-907 | Clean production-style deployment | Not started |
-| WL-1004 | Document and execute PostgreSQL backup and clean restore | WL-1003 | Restore evidence and integrity checks | Not started |
-| WL-1005 | Document and test migration/upgrade from prior release fixture | WL-1003 | Upgrade and rollback notes; migration checks | Not started |
-| WL-1006 | Add structured logging, redaction, correlation IDs, and failure diagnostics | WL-1003 | Log review and dependency-failure scenarios | Not started |
-| WL-1007 | Implement/document retention, user export, and deactivation/anonymization controls | WL-1000 | Data-class rules and tests | Not started |
+| WL-1003 | Build production Docker Compose with the Caddy reference proxy, private API/database network, trusted-header/origin controls, health/readiness, and safe config | WL-907 | Clean production-style HTTPS deployment passes direct-port, forged-header, secret, and diagnostic-shape checks | Not started |
+| WL-1004 | Document and execute encrypted PostgreSQL backup and isolated clean restore | WL-1003 | Manifest/access/expiry evidence; restore uses new secrets, revokes sessions/grants, disables outbound mail, and reconciles ledgers/snapshots/audit | Not started |
+| WL-1005 | Document and test migration/upgrade from prior release fixture | WL-1003 | Backup, readiness/maintenance, auth-profile, upgrade/rollback, and integrity checks pass | Not started |
+| WL-1006 | Add allowlisted structured logging, redaction, correlation IDs, failure diagnostics, and safe system-operations/technical-audit surfaces | WL-1003 | Secret/HR/query/body/hostile-text redaction, role-separated DTOs, and healthy/degraded/dependency-failure scenarios pass | Not started |
+| WL-1007 | Implement/document the mandatory retention profile, class-specific purge/minimization, user export, deactivation/anonymization, and backup-expiry controls | WL-1000 | Production rejects unset classes; purge/minimization/restore tests preserve ledger/snapshot/audit integrity | Not started |
 | WL-1008 | Execute production release gate | WL-1000–WL-1007 | Release checklist signed off | Not started |
 
 ---

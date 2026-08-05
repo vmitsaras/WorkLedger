@@ -4,6 +4,9 @@
 
 ```text
 Browser
+  │ HTTPS; one canonical production origin
+  ▼
+reference Caddy / equivalent trusted reverse proxy
   │
   ├── apps/web — React application
   │      ├── React Router Data Mode
@@ -11,7 +14,7 @@ Browser
   │      ├── React Aria / WorkLedger UI
   │      └── React Hook Form / Zod
   │
-  └── HTTPS JSON API
+  └── private JSON API
          │
          └── apps/api — Fastify
                 ├── authentication/session adapter
@@ -22,7 +25,7 @@ Browser
                 └── PostgreSQL
 ```
 
-A later `apps/site` Astro application presents the public case study, documentation, and portfolio material. It is not required to operate WorkLedger.
+A later `apps/site` Astro application presents the public case study, documentation, and portfolio material. It is not required to operate WorkLedger. The API and PostgreSQL remain private in production; proxy trust, TLS, headers, health, and network requirements are defined in `docs/06-security-operations.md`.
 
 ## 2. Monorepo boundaries
 
@@ -119,6 +122,21 @@ Owns:
 
 Product-specific feature components may remain in `apps/web/src/features` until reuse is demonstrated.
 
+### `packages/config`
+
+Owns shared TypeScript, ESLint, Vitest, and formatting configuration. It is tooling-only: production source must not import it at runtime, and it must not depend on another WorkLedger app/package.
+
+### `packages/test-utils`
+
+Owns generic deterministic clocks, builders/factories based on public domain/contract APIs, accessibility helpers, and transport-test helpers that are genuinely reused. It may depend on `packages/domain` and `packages/contracts`, but it is test-only and never imported by production source. Domain tests keep domain-specific factories local so `packages/domain` never depends back on `packages/test-utils`.
+
+### Composition and interface ownership
+
+- `apps/api` is the server composition root and application-service layer. Route handlers remain transport-thin; application services coordinate authorization, repositories, transactions, domain rules, audit, and contract mapping.
+- Repository interfaces, implementations, and transaction adapters live in `packages/database` for the MVP. They expose narrow application-facing methods and domain/application values, never Drizzle query builders or rows.
+- `apps/web` is the browser composition root. It consumes serialized contracts and does not reimplement authoritative domain calculation or authorization.
+- `packages/contracts` owns wire schemas and DTOs independently of domain entities. The API explicitly and exhaustively maps domain results/errors to contracts; neither package imports the other.
+
 ## 3. React Router and TanStack Query contract
 
 - Use React Router Data Mode.
@@ -167,11 +185,13 @@ They should not depend on React or UI language.
 
 ## 6. Authentication
 
-- Better Auth handles credentials, password reset, verification where enabled, sessions, and secure cookies.
+- Better Auth handles invite-only credentials, password reset, verification where enabled, PostgreSQL-backed sessions, and secure cookies under ADR `0008` and `docs/06-security-operations.md` sections 6–8.
+- Stateless sessions, secondary session storage, and Better Auth cookie/session caching are excluded from the MVP so revocation is authoritative on the next request.
+- Production is same-origin. Better Auth CSRF/origin/redirect checks stay enabled, and WorkLedger domain mutations additionally require the accepted session-bound CSRF contract.
 - WorkLedger stores employee identity, team, manager, and application roles separately.
 - A user account may link to one employee record in the MVP.
-- Deactivation revokes access without deleting history.
-- The session response exposes only the minimum data needed by the client.
+- Password reset, deactivation/unlink, and privileged-role changes revoke all sessions without deleting domain history.
+- Session/profile responses expose only safe opaque session IDs and minimum client context, never session/reset/CSRF tokens or authoritative domain permissions.
 
 ## 7. Database design principles
 
@@ -239,17 +259,37 @@ Do not expose stack traces, SQL, secrets, or sensitive record details.
 
 ## 11. Dependency rule
 
-Allowed dependency direction:
+Arrows mean “may import.” These are the only WorkLedger runtime edges:
 
 ```text
-apps/web ──> packages/ui, packages/contracts
-apps/api ──> packages/contracts, packages/domain, packages/database
-packages/database ──> packages/domain where mapping types require it
-packages/ui ──> React Aria and style utilities
-packages/domain ──> only small runtime-neutral utilities and Temporal support
+packages/domain       ──> no WorkLedger package
+packages/contracts    ──> no WorkLedger package
+packages/database     ──> packages/domain
+packages/ui           ──> no WorkLedger package
+packages/config       ──> no WorkLedger package (tooling only)
+packages/test-utils   ──> packages/domain, packages/contracts (tests only)
+
+apps/web              ──> packages/ui, packages/contracts
+apps/api              ──> packages/domain, packages/contracts, packages/database
+apps/site             ──> packages/ui (Phase 11 only)
 ```
 
-No circular package dependencies.
+Development-only edges from the seven consuming apps/packages to `packages/config` are allowed and now explicit. Test files outside `packages/domain` may use `packages/test-utils`; production source may not. External dependencies are declared by the workspace project that imports them.
+
+Boundary and publication rules:
+
+- No app/package imports an app. Shared behavior moves to a package only after a second real consumer proves the need.
+- Cross-workspace imports use `@workledger/*` package names and declared `workspace:*` dependencies. Relative traversal into another project or an undeclared TypeScript path alias is prohibited.
+- Import only explicit package export subpaths. Imports from another project's `src`, tests, migrations, generated internals, or build directory are prohibited.
+- Root, apps, and packages are `"private": true` for the MVP. There is no npm publish workflow or registry credential.
+- Use one committed root lockfile and fail installation/CI on workspace cycles. Do not suppress cycle warnings.
+- `packages/domain` remains runtime-neutral apart from the accepted Temporal support; it has no React, Fastify, database, environment, filesystem, or network dependency.
+- `packages/contracts` has no React, router, Fastify instance, database, domain, environment, or Node-only dependency. It contains transport schemas/codes, not application services or database entities.
+- `packages/database` may map to domain types but exposes neither Drizzle rows/query objects nor unrestricted database clients to API handlers.
+- `packages/ui` contains product-neutral accessible presentation/interaction primitives and does not import contracts, domain, database, auth, or feature code.
+- `packages/config` and `packages/test-utils` cannot become back doors around production dependency direction.
+
+`WL-100` established the workspace, `WL-101` encoded the project/manifest/export graph, and `WL-102` now enforces matching TypeScript project references plus repository-owned negative fixtures for forbidden/deep/app/test/config/browser-server imports. ESLint owns JavaScript/tooling diagnostics; the strict compiler and module lexer cover TypeScript. Do not add a boundary plugin unless the built-in configuration/check cannot express the matrix clearly.
 
 ## 12. Architecture review triggers
 
@@ -266,3 +306,7 @@ Create or update an ADR before:
 - adding formal overtime,
 - changing monthly locking semantics,
 - replacing the UI primitive foundation.
+- adding a new production app/package or moving an ownership boundary,
+- allowing a new dependency edge or package cycle,
+- publishing any workspace package or introducing registry/release automation,
+- importing authoritative domain behavior into the browser or transport/database behavior into the domain.

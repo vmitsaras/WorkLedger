@@ -18,3 +18,4 @@ React Router Data Mode and TanStack Query can both fetch and mutate data. Unclea
 - One remote-state cache and mutation path.
 - Non-sensitive search/filter state remains shareable; sensitive workflow state stays in the form or authorized server-state boundary.
 - Team must resist duplicating router actions and Query mutations for the same command.
+- Router permission gates are navigation/UX behavior only; the API re-evaluates authoritative authorization on every protected request.

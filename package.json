@@ -1,0 +1,40 @@
+{
+  "name": "workledger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted working-time, absence, approval, and monthly-record application.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.20.0",
+  "engines": {
+    "node": "24.18.x",
+    "pnpm": ">=11.0.0 <12.0.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "24.18.0",
+      "onFail": "download"
+    }
+  },
+  "scripts": {
+    "preinstall": "node scripts/check-toolchain.mjs",
+    "toolchain:check": "node scripts/check-toolchain.mjs",
+    "workspace:check": "pnpm run toolchain:check && node scripts/check-workspace.mjs",
+    "format": "prettier --write . --ignore-unknown",
+    "format:check": "pnpm run workspace:check && prettier --check . --ignore-unknown",
+    "lint": "pnpm run workspace:check && eslint . --max-warnings 0 && node scripts/check-boundaries.mjs",
+    "typecheck": "pnpm run workspace:check && tsc --build --pretty false --force",
+    "test": "pnpm run workspace:check && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs",
+    "test:integration": "pnpm run workspace:check && pnpm --recursive --if-present run test:integration",
+    "test:e2e": "pnpm run workspace:check && pnpm --recursive --if-present run test:e2e",
+    "build": "pnpm run workspace:check && tsc --build --pretty false --force && node scripts/check-workspace-build.mjs",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
+  },
+  "devDependencies": {
+    "es-module-lexer": "2.3.1",
+    "eslint": "10.8.0",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2"
+  }
+}
