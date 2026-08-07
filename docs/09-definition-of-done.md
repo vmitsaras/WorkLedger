@@ -131,7 +131,16 @@ pnpm build
 
 A task may use a narrower subset only when unaffected layers are demonstrably unchanged. Never claim unrun checks passed.
 
-## 11. Documentation
+## 11. Phase-gate versioning
+
+For a phase exit-gate task:
+
+- Root and every workspace manifest use `0.<completed phase-gate count>.0` in the same change.
+- `TODO.md` records the gate as complete only with its matching version bump; skipped gates are invalid.
+- `pnpm run phase:check` passes.
+- The version bump is recorded as an internal milestone only; it does not create a tag, publish packages, create a release, or deploy an instance.
+
+## 12. Documentation
 
 Update the relevant files:
 
@@ -144,7 +153,7 @@ Update the relevant files:
 - task board,
 - project status.
 
-## 12. Completion report
+## 13. Completion report
 
 The final task report includes:
 

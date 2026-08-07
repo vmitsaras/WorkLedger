@@ -28,6 +28,8 @@ At `WL-101` completion, TypeScript `7.0.2` was the only compiler dependency need
 
 `WL-102` replaced the temporary compiler command with shared composite configuration and exact project references. It pins ESLint `10.8.0`, `@eslint/js` `10.0.1`, Prettier `3.9.6`, `globals` `17.9.0`, and `es-module-lexer` `2.3.1`. ESLint covers repository JavaScript/tooling; strict TypeScript plus the repository-owned lexer cover TypeScript because current `typescript-eslint` `8.66.0` excludes TypeScript 7 through its `<6.1.0` peer range. Do not install that unsupported combination; recheck compatibility in a later tooling upgrade.
 
+`WL-103` pins the baseline test stack after checking stable package metadata and official support docs on 2026-08-07: Vitest `4.1.10`, jsdom `30.0.1`, `@vitejs/plugin-react` `6.0.4`, React/React DOM `19.2.8`, React Testing Library `16.3.2`, DOM Testing Library `10.4.1`, jest-dom `7.0.0`, user-event `14.6.1`, Playwright `1.61.1`, axe-core and `@axe-core/playwright` `4.12.1`, Fastify `5.10.0`, `@types/node` `24.13.3`, `@types/react` `19.2.17`, and `@types/react-dom` `19.2.3`. Vitest `5.0.0` was still beta, so it was excluded. Playwright supports the pinned Node 24 line; Fastify v5 requires Node 20+; Vite/plugin-react support Node 20.19+, 22.12+, or newer, which includes Node `24.18.0`.
+
 Official references:
 
 - https://pnpm.io/workspaces
@@ -39,6 +41,22 @@ Official references:
 - https://eslint.org/docs/latest/use/configure/configuration-files
 - https://prettier.io/docs/configuration
 - https://registry.npmjs.org/typescript-eslint/8.66.0
+- https://www.npmjs.com/package/vitest
+- https://vitest.dev/guide/
+- https://vite.dev/releases
+- https://www.npmjs.com/package/@vitejs/plugin-react
+- https://www.npmjs.com/package/react
+- https://www.npmjs.com/package/react-dom
+- https://react.dev/learn/typescript
+- https://www.npmjs.com/package/@testing-library/react
+- https://www.npmjs.com/package/@testing-library/dom
+- https://www.npmjs.com/package/@testing-library/jest-dom
+- https://testing-library.com/docs/user-event/intro/
+- https://playwright.dev/docs/intro
+- https://playwright.dev/docs/ci
+- https://www.npmjs.com/package/axe-core
+- https://www.npmjs.com/package/@axe-core/playwright
+- https://fastify.dev/docs/v5.10.x/Guides/Migration-Guide-V5/
 
 ### React web
 

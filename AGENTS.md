@@ -263,6 +263,12 @@ Update:
 - `docs/08-task-board.md`.
 - Relevant ADR, README, API, domain, accessibility, or operations documentation.
 
+### Phase-completion versioning
+
+When a phase exit-gate task is marked complete, bump the root and every workspace manifest to the next minor version in the same change. The zero-indexed roadmap uses `0.<completed phase-gate count>.0`: Phase 0 completion is `0.1.0`, Phase 1 completion is `0.2.0`, and so on.
+
+`pnpm run phase:check` is part of the workspace check. It reads the canonical phase-gate checkboxes in `TODO.md`, rejects skipped gates, and requires all workspace manifests to match the required version. A version bump is an internal milestone only; it does not authorize a tag, package publication, container release, or deployment. Changing this policy or moving to `1.0.0` requires an ADR.
+
 ### Step 7 — Report
 
 Use this completion format:

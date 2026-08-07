@@ -9,7 +9,7 @@
 - `In review`
 - `Done`
 
-A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
+A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A completed phase exit-gate additionally requires the matching internal minor-version bump and a passing `pnpm run phase:check`; this does not authorize publication or deployment.
 
 ---
 
@@ -39,8 +39,8 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied.
 | WL-100 | Initialize private pnpm workspace, root package scripts, one lockfile, `workspace:*` policy, and cycle rejection | WL-012 | Frozen clean install; exact workspace discovery; root/apps/packages private; no cycle or publish path | Done |
 | WL-101 | Scaffold `apps/web`, `apps/api`, `packages/domain`, `contracts`, `database`, `ui`, `config`, and `test-utils` with explicit exports; do not scaffold `apps/site` yet | WL-100 | Each package builds a minimal typed public entry; only ADR `0011` edges exist; no sibling-source/deep import | Done |
 | WL-102 | Configure strict TypeScript, ESM, linting, formatting, and executable import-boundary checks | WL-101 | Typecheck/lint/format pass; negative fixtures reject representative forbidden edges, deep imports, cycles, and production test/config imports | Done |
-| WL-103 | Configure Vitest projects, React Testing Library, API integration harness, Playwright, axe, and CI | WL-101, WL-102 | Baseline unit, component, integration, and E2E smoke tests pass in CI | Ready |
-| WL-104 | Configure PostgreSQL Docker development service and test database lifecycle | WL-101 | Health check and isolated integration DB test pass | Not started |
+| WL-103 | Configure Vitest projects, React Testing Library, API integration harness, Playwright, axe, and CI | WL-101, WL-102 | Baseline unit, component, integration, and E2E smoke tests pass in CI | Done |
+| WL-104 | Configure PostgreSQL Docker development service and test database lifecycle | WL-101 | Health check and isolated integration DB test pass | Ready |
 | WL-105 | Implement validated environment, canonical-origin, proxy-trust, and secret schema plus safe `.env.example` | WL-101 | Missing/placeholder/invalid production config fails clearly; secrets stay out of repo/browser/logs | Not started |
 | WL-106 | Initialize shadcn with React Aria base; add tokens, focus, reduced-motion, and semantic examples | WL-101, WL-102 | Story/tests for button, link, field, dialog; keyboard and axe pass | Not started |
 | WL-107 | Write public repository status, local setup, scripts, package boundaries, contribution, license, and verified security-reporting workflow | WL-100–WL-106 | Fresh-clone instructions verified; no runnable/release/security-support claim exceeds evidence | Not started |

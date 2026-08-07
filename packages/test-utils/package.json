@@ -16,8 +16,11 @@
     "typecheck": "tsc --build tsconfig.json --pretty false"
   },
   "dependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@playwright/test": "1.61.1",
     "@workledger/contracts": "workspace:*",
-    "@workledger/domain": "workspace:*"
+    "@workledger/domain": "workspace:*",
+    "axe-core": "4.12.1"
   },
   "devDependencies": {
     "@workledger/config": "workspace:*"

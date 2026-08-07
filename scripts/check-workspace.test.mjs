@@ -10,9 +10,10 @@ import {
   EXPECTED_PACKAGE_MANAGER,
   EXPECTED_PROJECTS,
   EXPECTED_WORKSPACE_CONFIG,
-  EXPECTED_WORKSPACE_VERSION,
   validateWorkspace,
 } from './check-workspace.mjs';
+
+const WORKSPACE_VERSION = '0.1.0';
 
 const cycleFixture = JSON.parse(
   readFileSync(new URL('./fixtures/workspace/cycle.json', import.meta.url), 'utf8'),
@@ -39,7 +40,7 @@ function createProject(expectedProject) {
     directory: expectedProject.directory,
     manifest: {
       name: expectedProject.name,
-      version: EXPECTED_WORKSPACE_VERSION,
+      version: WORKSPACE_VERSION,
       private: true,
       license: 'MIT',
       type: 'module',
@@ -78,7 +79,7 @@ function createState() {
   return {
     rootManifest: {
       name: 'workledger',
-      version: EXPECTED_WORKSPACE_VERSION,
+      version: WORKSPACE_VERSION,
       private: true,
       license: 'MIT',
       type: 'module',
@@ -97,6 +98,7 @@ function createState() {
       scripts: {
         'toolchain:check': 'node scripts/check-toolchain.mjs',
         'workspace:check': 'node scripts/check-workspace.mjs',
+        'phase:check': 'test command',
         format: 'test command',
         'format:check': 'test command',
         lint: 'test command',
@@ -121,12 +123,29 @@ function createState() {
   };
 }
 
-test('accepts the exact private WL-102 workspace and tooling graph', () => {
+test('accepts the exact private workspace and tooling graph', () => {
   assert.deepEqual(validateWorkspace(createState()), {
     projectCount: 8,
     runtimeEdgeCount: 8,
-    developmentEdgeCount: 7,
+    developmentEdgeCount: 11,
   });
+});
+
+test('rejects malformed root versions and workspace-version drift', () => {
+  const malformedRootVersion = createState();
+  malformedRootVersion.rootManifest.version = '0.1';
+  assert.throws(
+    () => validateWorkspace(malformedRootVersion),
+    /root package must use a complete semantic version/,
+  );
+
+  const versionDrift = createState();
+  const domain = versionDrift.projects.find(({ directory }) => directory === 'packages/domain');
+  domain.manifest.version = '0.2.0';
+  assert.throws(
+    () => validateWorkspace(versionDrift),
+    /packages\/domain must use the root package version 0\.1\.0/,
+  );
 });
 
 test('rejects a missing or unexpected workspace project', () => {
@@ -144,7 +163,7 @@ test('rejects a missing or unexpected workspace project', () => {
     directory: 'apps/site',
     manifest: {
       name: '@workledger/site',
-      version: EXPECTED_WORKSPACE_VERSION,
+      version: WORKSPACE_VERSION,
       private: true,
       license: 'MIT',
       type: 'module',

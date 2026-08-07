@@ -20,21 +20,36 @@
   "scripts": {
     "preinstall": "node scripts/check-toolchain.mjs",
     "toolchain:check": "node scripts/check-toolchain.mjs",
-    "workspace:check": "pnpm run toolchain:check && node scripts/check-workspace.mjs",
+    "workspace:check": "pnpm run toolchain:check && node scripts/check-workspace.mjs && node scripts/check-phase-version.mjs",
+    "phase:check": "node scripts/check-phase-version.mjs",
     "format": "prettier --write . --ignore-unknown",
     "format:check": "pnpm run workspace:check && prettier --check . --ignore-unknown",
     "lint": "pnpm run workspace:check && eslint . --max-warnings 0 && node scripts/check-boundaries.mjs",
     "typecheck": "pnpm run workspace:check && tsc --build --pretty false --force",
-    "test": "pnpm run workspace:check && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs",
-    "test:integration": "pnpm run workspace:check && pnpm --recursive --if-present run test:integration",
-    "test:e2e": "pnpm run workspace:check && pnpm --recursive --if-present run test:e2e",
+    "test:build": "tsc --build --pretty false --force",
+    "test": "pnpm run workspace:check && pnpm run test:build && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs scripts/check-phase-version.test.mjs && vitest run --project unit --project component",
+    "test:integration": "pnpm run workspace:check && pnpm run test:build && vitest run --project integration",
+    "test:e2e": "pnpm run workspace:check && pnpm run test:build && playwright test",
     "build": "pnpm run workspace:check && tsc --build --pretty false --force && node scripts/check-workspace-build.mjs",
     "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
   },
   "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "7.0.0",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.4",
     "es-module-lexer": "2.3.1",
     "eslint": "10.8.0",
+    "jsdom": "30.0.1",
     "prettier": "3.9.6",
-    "typescript": "7.0.2"
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
   }
 }

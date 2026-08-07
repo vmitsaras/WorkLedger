@@ -1,14 +1,14 @@
 # WorkLedger Project Status
 
 **Current phase:** Phase 1 — Repository foundation
-**Current milestone:** Test projects, accessibility harnesses, and baseline CI
-**Active task:** `WL-103`
+**Current milestone:** Local PostgreSQL and Docker development environment
+**Active task:** `WL-104`
 **Status:** Ready
-**Last verified:** 2026-08-05
+**Last verified:** 2026-08-07
 
 ## Current objective
 
-Configure Vitest projects, React Testing Library, API/database integration harnesses, Playwright, axe/accessibility helpers, and baseline CI for the existing workspace. Add only credible smoke evidence and test infrastructure; do not begin product features, database schema work, design-system implementation, or `apps/site` in `WL-103`.
+Configure the local PostgreSQL Docker development service and test database lifecycle for the existing workspace. Add health-check and isolated test-database evidence only; do not begin application schema design, Drizzle migrations, authentication storage, seed data, or production deployment work in `WL-104`.
 
 ## Verified decisions
 
@@ -77,8 +77,12 @@ Configure Vitest projects, React Testing Library, API/database integration harne
 - The eight accepted internal edges resolve through `@workledger/*` package roots and emit typed ESM entries; no sibling-source or deep import exists in the scaffold.
 - TypeScript `7.0.2` is governed by a shared strict composite configuration; the root solution and per-project references must exactly mirror the eight runtime edges and cannot use path aliases.
 - Seven explicit development-only `@workledger/config` edges provide shared TypeScript configuration without making config production runtime code.
+- Four explicit test-only `@workledger/test-utils` development edges allow API, web, database, and UI tests to use shared harness helpers while production imports remain prohibited.
 - ESLint `10.8.0` checks JavaScript/tooling, Prettier `3.9.6` checks code/config formatting, and `es-module-lexer` `2.3.1` powers repository-owned source-boundary checks. Current `typescript-eslint` is not installed because its `<6.1.0` TypeScript peer range excludes TypeScript 7.
 - Root commands reject a mismatched active toolchain, missing/unexpected or non-private workspace projects/configuration, alternate/nested lockfiles, wrong/non-`workspace:*` internal edges, TypeScript-reference drift/path aliases, dependency cycles, application exports, package export drift, forbidden/deep/app/test/config/browser-server source imports, and package-publication paths.
+- Every completed zero-indexed phase gate requires the shared root/workspace version `0.<completed phase-gate count>.0`; the executable phase-version check reads `TODO.md`, rejects skipped gates and manifest drift, and does not authorize package publication, tagging, deployment, or release creation.
+- Vitest `4.1.10` owns unit, component, and integration projects; React/React DOM `19.2.8`, React Testing Library `16.3.2`, jsdom `30.0.1`, axe-core `4.12.1`, Playwright `1.61.1`, and Fastify `5.10.0` are pinned for the baseline harnesses.
+- The root quality gate now runs native contract tests, Vitest unit/component tests, Vitest integration tests, Chromium Playwright E2E with axe, and a GitHub Actions workflow that mirrors `pnpm run verify`.
 - Phase 0 passed with all seven roadmap criteria evidenced; the accepted catalog contains 85 contiguous single-outcome examples, and every remaining open decision has an explicit later owner/deadline.
 
 ## Work completed
@@ -101,26 +105,27 @@ Configure Vitest projects, React Testing Library, API/database integration harne
 - [x] Private pnpm root workspace, stable toolchain, one lockfile, native manifest/cycle/publication checks, and root quality commands initialized (`WL-100`; see `docs/20-workspace-foundation.md`).
 - [x] Two application and six internal package shells created with explicit exports, exact ADR `0011` edges, typed builds, and emitted-entry resolution checks (`WL-101`; see `docs/21-workspace-shells.md`).
 - [x] Shared strict TypeScript/ESM, project references, ESLint/Prettier, and executable negative source-boundary fixtures configured (`WL-102`; see `docs/22-strict-tooling-and-boundaries.md`).
+- [x] Vitest projects, React Testing Library/jsdom component smoke tests, API/database integration harness smoke tests, Playwright Chromium E2E with axe, and baseline CI configured (`WL-103`; see `docs/23-test-projects-and-ci.md`).
 
 ## Latest completed task
 
-### `WL-102` — Configure strict tooling and executable source boundaries
+### `WL-103` — Configure test projects and baseline CI
 
-- Changed: added shared strict TypeScript/ESM, an eight-project solution/reference graph, explicit config-only development edges/exports, ESLint flat config, Prettier/EditorConfig, a repository-owned import scanner, and physical positive/negative boundary fixtures; removed the temporary shell-build runner.
-- Verified: formatting, ESLint, strict project-reference typechecking, all 18 native contract/fixture tests, all eight builds/emitted imports, the applicable full root quality gate, frozen/offline installation, and diff hygiene pass under pinned Node `24.18.0`/pnpm `11.20.0`.
-- Decisions: ESLint `10.8.0`, `@eslint/js` `10.0.1`, Prettier `3.9.6`, `globals` `17.9.0`, and `es-module-lexer` `2.3.1` are exact stable tooling pins. TypeScript source uses strict compiler diagnostics, formatting, and the repository scanner because current `typescript-eslint` `8.66.0` does not support TypeScript 7.
-- Accessibility: no UI behavior was created; DOM libraries are confined to web/UI projects, while domain/contracts keep the ambient-type-free runtime-neutral base. Automated accessibility infrastructure remains `WL-103`.
-- Security/data: production config/test imports, browser/server boundary violations, undeclared aliases, deep/sibling/app imports, wrong references, cycles, and publication paths fail. No secret, employee data, persistence, network, authentication, telemetry, or deployment surface was added.
-- Remaining risk: test runners, axe/Playwright/browser/API/database harnesses, CI execution, and dependency/license/secret scanning are not yet present; current integration/E2E root commands still have no project-specific runner work.
-- Next task: `WL-103`.
+- Changed: added a shared Vitest project factory, root Vitest/Playwright configs, React Testing Library/jsdom setup, shared fixed-clock/API/database/axe/Playwright helpers, baseline unit/component/integration/E2E smoke tests, and `.github/workflows/ci.yml`.
+- Verified: workspace contract, lint/boundary scan, strict project-reference typecheck, native Node contract tests, Vitest unit/component tests, Vitest integration tests, Chromium Playwright E2E with axe, and build all pass locally under pinned Node `24.18.0`/pnpm `11.20.0`.
+- Decisions: `WL-104` still owns real PostgreSQL lifecycle; the database harness only validates URL enablement/redaction. Remote GitHub Actions execution awaits a push/PR because this task did not perform git publishing.
+- Accessibility: baseline component and browser smoke tests include axe WCAG A/AA tags, real accessible names/roles, and DOM cleanup. Full design-system accessibility evidence remains `WL-106`.
+- Security/data: no employee data, secret, persistent store, schema, migration, auth surface, or telemetry was added. The database harness redacts credentials in labels and does not open network/database connections.
+- Remaining risk: dependency/license/secret scanning, real PostgreSQL lifecycle, Docker services, environment validation, and production supply-chain gates remain later Phase 1/release work.
+- Next task: `WL-104`.
 
 ## Current blockers
 
-No `WL-103` blocker remains. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. The strict project/tooling boundary is ready; test libraries, environment-specific harness ownership, CI jobs, and executable accessibility smoke evidence remain to be selected and configured.
+No `WL-104` blocker is known. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. Test projects and CI scaffolding are ready; real PostgreSQL service lifecycle, health checks, and isolated test database behavior remain to be configured.
 
 ## Next task
 
-`WL-103 — Configure test projects, accessibility/browser/API/database harnesses, and baseline CI.`
+`WL-104 — Configure local PostgreSQL and Docker development environment.`
 
 ## Update rules
 

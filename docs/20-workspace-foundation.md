@@ -48,6 +48,8 @@ Exact versions are time-sensitive. `WL-103` must recheck tool/test compatibility
 | `scripts/check-toolchain.mjs` | Rejects a command or install that is not using pnpm `11.20.0` and Node `24.18.0` |
 | `scripts/check-workspace.mjs` | Validates root/project privacy, names, exact discovery, internal specs, lockfiles, cycles, and publication guardrails |
 | `scripts/check-workspace.test.mjs` | Positive and negative native tests for the workspace contract |
+| `scripts/check-phase-version.mjs` | Maps completed `TODO.md` phase gates to the required shared internal workspace version and rejects skipped gates or version drift |
+| `scripts/check-phase-version.test.mjs` | Positive and negative tests for the phase-completion version policy |
 
 `docs/04-architecture.md` section 11 and ADR `0011` remain canonical for which package may depend on which. At `WL-100` completion this task enforced only the pre-project manifest/repository guardrails; `WL-102` subsequently added project-reference and source/import boundary checks.
 

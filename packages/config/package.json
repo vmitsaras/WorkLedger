@@ -12,7 +12,8 @@
     },
     "./eslint": "./eslint/index.js",
     "./prettier": "./prettier/index.js",
-    "./typescript/base.json": "./typescript/tsconfig.base.json"
+    "./typescript/base.json": "./typescript/tsconfig.base.json",
+    "./vitest": "./vitest/index.js"
   },
   "scripts": {
     "build": "tsc --build tsconfig.json --pretty false",

@@ -19,6 +19,7 @@
     "@workledger/domain": "workspace:*"
   },
   "devDependencies": {
-    "@workledger/config": "workspace:*"
+    "@workledger/config": "workspace:*",
+    "@workledger/test-utils": "workspace:*"
   }
 }

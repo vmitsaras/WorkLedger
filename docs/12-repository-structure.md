@@ -11,6 +11,7 @@ WorkLedger/
 ├── .editorconfig
 ├── .node-version
 ├── .prettierignore
+├── playwright.config.ts
 ├── package.json
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
@@ -18,16 +19,23 @@ WorkLedger/
 │   ├── check-toolchain.mjs
 │   ├── check-boundaries.mjs
 │   ├── check-boundaries.test.mjs
+│   ├── check-phase-version.mjs
+│   ├── check-phase-version.test.mjs
 │   ├── check-workspace-build.mjs
 │   ├── check-workspace.mjs
 │   └── check-workspace.test.mjs
 ├── tsconfig.json
+├── vitest.config.ts
 ├── eslint.config.js
 ├── prettier.config.js
+├── test/
+│   └── setup/
+│       └── vitest-dom.ts
 ├── .env.example
 │
 ├── apps/
 │   ├── web/
+│   │   ├── e2e/
 │   │   ├── src/
 │   │   │   ├── app/
 │   │   │   │   ├── router/
@@ -51,7 +59,7 @@ WorkLedger/
 │   │   │   │   └── testing/
 │   │   │   ├── styles/
 │   │   │   └── main.tsx
-│   │   ├── tests/
+│   │   ├── test/
 │   │   └── vite.config.*
 │   │
 │   ├── api/
@@ -72,7 +80,7 @@ WorkLedger/
 │   │   │   ├── errors/
 │   │   │   ├── observability/
 │   │   │   └── server.ts
-│   │   └── tests/
+│   │   └── test/
 │   │
 │   └── site/                      # Added in Phase 11
 │
@@ -86,14 +94,14 @@ WorkLedger/
 │   │   │   ├── absences/
 │   │   │   ├── leave-account/
 │   │   │   └── periods/
-│   │   └── tests/
+│   │   └── test/
 │   │
 │   ├── contracts/
 │   │   ├── src/
 │   │   │   ├── common/
 │   │   │   ├── errors/
 │   │   │   └── modules/
-│   │   └── tests/
+│   │   └── test/
 │   │
 │   ├── database/
 │   │   ├── src/
@@ -103,7 +111,7 @@ WorkLedger/
 │   │   │   ├── mapping/
 │   │   │   └── seed/
 │   │   ├── migrations/
-│   │   └── tests/
+│   │   └── test/
 │   │
 │   ├── ui/
 │   │   ├── src/
@@ -119,9 +127,12 @@ WorkLedger/
 │   │   ├── prettier/
 │   │   ├── src/
 │   │   ├── typescript/
+│   │   ├── vitest/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   └── test-utils/
+│       ├── src/
+│       └── test/
 │
 ├── docs/
 │   ├── adr/
@@ -139,9 +150,10 @@ WorkLedger/
 │   └── proxy-examples/
 └── .github/
     └── workflows/
+        └── ci.yml
 ```
 
-`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells, and `WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter adapters, and boundary fixtures/checks shown above. Feature folders, framework files, test-runner projects, infrastructure, `apps/site`, and other descendants in this diagram remain phased targets rather than claims that they already exist.
+`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells, `WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter adapters, and boundary fixtures/checks, and `WL-103` added the baseline test-runner, accessibility, Playwright, and CI files shown above. Feature folders, framework files beyond smoke harnesses, infrastructure, `apps/site`, and other descendants in this diagram remain phased targets rather than claims that they already exist.
 
 ## Feature-folder rule
 
@@ -180,7 +192,7 @@ Do not create a feature-level “utils” dumping ground. Name modules by respon
 
 ## Test placement
 
-- Pure domain tests live beside or under `packages/domain/tests`.
-- Database integration tests live in `packages/database/tests` or API integration tests.
+- Pure domain tests live beside or under `packages/domain/test`.
+- Database integration tests live in `packages/database/test` or API integration tests.
 - Component behavior tests live near components.
-- Playwright tests live under `e2e/` and cover critical workflows rather than every field combination.
+- Playwright tests live under the owning app's `e2e/` folder and cover critical workflows rather than every field combination.

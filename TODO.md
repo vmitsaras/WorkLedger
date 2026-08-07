@@ -2,6 +2,10 @@
 
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
+## Phase-completion version rule
+
+When an exit-gate task is checked complete, bump the root and every workspace manifest to `0.<completed phase-gate count>.0` in the same change. Phase 0 maps to `0.1.0`, Phase 1 to `0.2.0`, and so on. `pnpm run phase:check` enforces this rule; the version does not authorize publishing, tagging, releasing, or deployment.
+
 ## Phase 0 — Product and domain contract
 
 - [x] `WL-001` Audit and ratify the project charter and planning pack.
@@ -22,7 +26,7 @@ This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 - [x] `WL-100` Initialize the private pnpm workspace, single lockfile, cycle rejection, and root tooling.
 - [x] `WL-101` Scaffold web, API, explicit internal package exports, and shared boundaries; defer the Astro site to Phase 11.
 - [x] `WL-102` Configure strict TypeScript, linting, formatting, shared config, and executable import-boundary checks.
-- [ ] `WL-103` Configure test projects and baseline CI.
+- [x] `WL-103` Configure test projects and baseline CI.
 - [ ] `WL-104` Configure local PostgreSQL and Docker development environment.
 - [ ] `WL-105` Configure environment, origin/proxy trust, secrets, and safe example configuration.
 - [ ] `WL-106` Initialize React Aria shadcn base and design tokens.

@@ -8,6 +8,8 @@
 - The task board in `docs/08-task-board.md` is authoritative for task IDs and dependencies.
 - Product code begins only after Phase 0 passes.
 - Build vertical slices after the domain and platform foundations exist.
+- Completing a phase exit-gate task requires one internal minor-version bump across the root and every workspace manifest. The version is `0.<completed phase-gate count>.0`: Phase 0 completion is `0.1.0`, Phase 1 completion is `0.2.0`, and so on.
+- `pnpm run phase:check` reads the phase-gate checkboxes in `TODO.md`, rejects skipped gates, and verifies the required workspace version. The version is an internal milestone, not permission to tag, publish, release, or deploy. Moving to `1.0.0` requires an ADR.
 
 ---
 

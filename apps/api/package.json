@@ -16,6 +16,8 @@
     "@workledger/domain": "workspace:*"
   },
   "devDependencies": {
-    "@workledger/config": "workspace:*"
+    "@workledger/config": "workspace:*",
+    "@workledger/test-utils": "workspace:*",
+    "fastify": "5.10.0"
   }
 }

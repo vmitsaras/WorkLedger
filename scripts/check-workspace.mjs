@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 
 export const EXPECTED_NODE_VERSION = '24.18.0';
 export const EXPECTED_PACKAGE_MANAGER = 'pnpm@11.20.0';
-export const EXPECTED_WORKSPACE_VERSION = '0.1.0';
 export const EXPECTED_WORKSPACE_CONFIG = `packages:
   - apps/*
   - packages/*
@@ -25,14 +24,14 @@ export const EXPECTED_PROJECTS = [
     name: '@workledger/api',
     kind: 'application',
     runtimeDependencies: ['@workledger/contracts', '@workledger/database', '@workledger/domain'],
-    developmentDependencies: ['@workledger/config'],
+    developmentDependencies: ['@workledger/config', '@workledger/test-utils'],
   },
   {
     directory: 'apps/web',
     name: '@workledger/web',
     kind: 'application',
     runtimeDependencies: ['@workledger/contracts', '@workledger/ui'],
-    developmentDependencies: ['@workledger/config'],
+    developmentDependencies: ['@workledger/config', '@workledger/test-utils'],
   },
   {
     directory: 'packages/config',
@@ -53,7 +52,7 @@ export const EXPECTED_PROJECTS = [
     name: '@workledger/database',
     kind: 'package',
     runtimeDependencies: ['@workledger/domain'],
-    developmentDependencies: ['@workledger/config'],
+    developmentDependencies: ['@workledger/config', '@workledger/test-utils'],
   },
   {
     directory: 'packages/domain',
@@ -74,7 +73,7 @@ export const EXPECTED_PROJECTS = [
     name: '@workledger/ui',
     kind: 'package',
     runtimeDependencies: [],
-    developmentDependencies: ['@workledger/config'],
+    developmentDependencies: ['@workledger/config', '@workledger/test-utils'],
   },
 ];
 
@@ -90,6 +89,7 @@ export const EXPECTED_CONFIG_EXPORTS = {
   './eslint': './eslint/index.js',
   './prettier': './prettier/index.js',
   './typescript/base.json': './typescript/tsconfig.base.json',
+  './vitest': './vitest/index.js',
 };
 
 const EXPECTED_PROJECT_SCRIPTS = {
@@ -106,6 +106,7 @@ const DEPENDENCY_FIELDS = [
 const REQUIRED_SCRIPTS = [
   'toolchain:check',
   'workspace:check',
+  'phase:check',
   'format',
   'format:check',
   'lint',
@@ -115,6 +116,7 @@ const REQUIRED_SCRIPTS = [
   'test:e2e',
   'build',
 ];
+const SEMANTIC_VERSION_PATTERN = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/;
 const REQUIRED_CONFIGURATION_FILES = [
   '.editorconfig',
   '.prettierignore',
@@ -125,6 +127,10 @@ const REQUIRED_CONFIGURATION_FILES = [
   'packages/config/eslint/index.js',
   'packages/config/prettier/index.js',
   'packages/config/typescript/tsconfig.base.json',
+  'packages/config/vitest/index.js',
+  'playwright.config.ts',
+  'test/setup/vitest-dom.ts',
+  'vitest.config.ts',
 ];
 const ALTERNATE_LOCKFILES = [
   'package-lock.json',
@@ -344,8 +350,11 @@ export function validateWorkspace(state) {
   const { rootManifest } = state;
 
   if (rootManifest.name !== 'workledger') errors.push('The root package name must be workledger.');
-  if (rootManifest.version !== EXPECTED_WORKSPACE_VERSION) {
-    errors.push(`The root package must use version ${EXPECTED_WORKSPACE_VERSION}.`);
+  if (
+    typeof rootManifest.version !== 'string' ||
+    !SEMANTIC_VERSION_PATTERN.test(rootManifest.version)
+  ) {
+    errors.push('The root package must use a complete semantic version.');
   }
   if (rootManifest.private !== true) errors.push('The root package must be private.');
   if (rootManifest.license !== 'MIT') errors.push('The root package license must be MIT.');
@@ -445,8 +454,8 @@ export function validateWorkspace(state) {
       errors.push(`Workspace package name ${manifest.name} is duplicated.`);
     }
     projectNames.add(manifest.name);
-    if (manifest.version !== EXPECTED_WORKSPACE_VERSION) {
-      errors.push(`${directory} must use version ${EXPECTED_WORKSPACE_VERSION}.`);
+    if (manifest.version !== rootManifest.version) {
+      errors.push(`${directory} must use the root package version ${rootManifest.version}.`);
     }
     if (manifest.private !== true) errors.push(`${directory} must be private.`);
     if (manifest.license !== 'MIT') errors.push(`${directory} must use the MIT license.`);
@@ -530,7 +539,7 @@ if (isMain) {
   try {
     const result = validateWorkspace(readWorkspaceState());
     console.log(
-      `Workspace contract valid: root + ${result.projectCount} projects, ${result.runtimeEdgeCount} runtime edges, ${result.developmentEdgeCount} config-only development edges, one lockfile, no cycles or publication path.`,
+      `Workspace contract valid: root + ${result.projectCount} projects, ${result.runtimeEdgeCount} runtime edges, ${result.developmentEdgeCount} development edges, one lockfile, no cycles or publication path.`,
     );
   } catch (error) {
     console.error(error.message);
