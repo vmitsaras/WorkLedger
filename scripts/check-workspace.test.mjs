@@ -99,6 +99,12 @@ function createState() {
         'toolchain:check': 'node scripts/check-toolchain.mjs',
         'workspace:check': 'node scripts/check-workspace.mjs',
         'phase:check': 'test command',
+        'db:up': 'test command',
+        'db:down': 'test command',
+        'db:reset': 'test command',
+        'db:check': 'test command',
+        'db:test': 'test command',
+        'db:verify': 'test command',
         format: 'test command',
         'format:check': 'test command',
         lint: 'test command',
@@ -198,7 +204,7 @@ test('rejects a missing shared configuration file', () => {
 
   assert.throws(
     () => validateWorkspace(state),
-    /Required WL-102 configuration files are missing: packages\/config\/typescript\/tsconfig.base.json/,
+    /Required workspace configuration files are missing: packages\/config\/typescript\/tsconfig.base.json/,
   );
 });
 

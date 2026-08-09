@@ -1,14 +1,14 @@
 # WorkLedger Project Status
 
 **Current phase:** Phase 1 — Repository foundation
-**Current milestone:** Local PostgreSQL and Docker development environment
-**Active task:** `WL-104`
+**Current milestone:** Environment, origin/proxy trust, secrets, and safe example configuration
+**Active task:** `WL-105`
 **Status:** Ready
-**Last verified:** 2026-08-07
+**Last verified:** 2026-08-09
 
 ## Current objective
 
-Configure the local PostgreSQL Docker development service and test database lifecycle for the existing workspace. Add health-check and isolated test-database evidence only; do not begin application schema design, Drizzle migrations, authentication storage, seed data, or production deployment work in `WL-104`.
+Implement validated environment configuration, canonical-origin handling, proxy-trust boundaries, secret requirements, and safe example configuration for the existing workspace. Do not begin React Aria design-system work, application schema design, Drizzle migrations, authentication storage, seed data, or production deployment behavior in `WL-105`.
 
 ## Verified decisions
 
@@ -83,6 +83,10 @@ Configure the local PostgreSQL Docker development service and test database life
 - Every completed zero-indexed phase gate requires the shared root/workspace version `0.<completed phase-gate count>.0`; the executable phase-version check reads `TODO.md`, rejects skipped gates and manifest drift, and does not authorize package publication, tagging, deployment, or release creation.
 - Vitest `4.1.10` owns unit, component, and integration projects; React/React DOM `19.2.8`, React Testing Library `16.3.2`, jsdom `30.0.1`, axe-core `4.12.1`, Playwright `1.61.1`, and Fastify `5.10.0` are pinned for the baseline harnesses.
 - The root quality gate now runs native contract tests, Vitest unit/component tests, Vitest integration tests, Chromium Playwright E2E with axe, and a GitHub Actions workflow that mirrors `pnpm run verify`.
+- Local PostgreSQL development uses Docker Compose at `infra/compose/postgres.dev.yml`, official `postgres:18.4-trixie`, loopback-only host binding on port `54329` by default, a `pg_isready` health check, and the PostgreSQL 18 Docker image's `/var/lib/postgresql` volume layout.
+- `WL-104` creates only local non-production database roles and empty development/test databases; it does not add WorkLedger product tables, Drizzle migrations, authentication storage, seed data, production Compose, or deployment behavior.
+- `pg` `8.22.0` and `@types/pg` `8.20.0` are pinned for local host health checks and database integration tests. Drizzle remains deferred until real schema/migration work.
+- `WORKLEDGER_TEST_DATABASE_URL` opts the PostgreSQL lifecycle integration test into a real database connection; without it, the test skips. CI starts the same local Compose service, runs `db:verify`, sets the URL, and then runs the full quality gate.
 - Phase 0 passed with all seven roadmap criteria evidenced; the accepted catalog contains 85 contiguous single-outcome examples, and every remaining open decision has an explicit later owner/deadline.
 
 ## Work completed
@@ -106,26 +110,27 @@ Configure the local PostgreSQL Docker development service and test database life
 - [x] Two application and six internal package shells created with explicit exports, exact ADR `0011` edges, typed builds, and emitted-entry resolution checks (`WL-101`; see `docs/21-workspace-shells.md`).
 - [x] Shared strict TypeScript/ESM, project references, ESLint/Prettier, and executable negative source-boundary fixtures configured (`WL-102`; see `docs/22-strict-tooling-and-boundaries.md`).
 - [x] Vitest projects, React Testing Library/jsdom component smoke tests, API/database integration harness smoke tests, Playwright Chromium E2E with axe, and baseline CI configured (`WL-103`; see `docs/23-test-projects-and-ci.md`).
+- [x] Local PostgreSQL Docker service, host health check, isolated test database lifecycle proof, and CI database startup configured (`WL-104`; see `docs/24-postgres-docker-dev.md`).
 
 ## Latest completed task
 
-### `WL-103` — Configure test projects and baseline CI
+### `WL-104` — Configure local PostgreSQL and Docker development environment
 
-- Changed: added a shared Vitest project factory, root Vitest/Playwright configs, React Testing Library/jsdom setup, shared fixed-clock/API/database/axe/Playwright helpers, baseline unit/component/integration/E2E smoke tests, and `.github/workflows/ci.yml`.
-- Verified: workspace contract, lint/boundary scan, strict project-reference typecheck, native Node contract tests, Vitest unit/component tests, Vitest integration tests, Chromium Playwright E2E with axe, and build all pass locally under pinned Node `24.18.0`/pnpm `11.20.0`.
-- Decisions: `WL-104` still owns real PostgreSQL lifecycle; the database harness only validates URL enablement/redaction. Remote GitHub Actions execution awaits a push/PR because this task did not perform git publishing.
-- Accessibility: baseline component and browser smoke tests include axe WCAG A/AA tags, real accessible names/roles, and DOM cleanup. Full design-system accessibility evidence remains `WL-106`.
-- Security/data: no employee data, secret, persistent store, schema, migration, auth surface, or telemetry was added. The database harness redacts credentials in labels and does not open network/database connections.
-- Remaining risk: dependency/license/secret scanning, real PostgreSQL lifecycle, Docker services, environment validation, and production supply-chain gates remain later Phase 1/release work.
-- Next task: `WL-104`.
+- Changed: added `infra/compose/postgres.dev.yml`, PostgreSQL init SQL, root `db:*` scripts, host health and integration runners, `pg`/`@types/pg`, a real isolated database lifecycle test, CI PostgreSQL startup/cleanup, and the `WL-104` evidence document.
+- Verified: lockfile update, frozen install, workspace contract, lint/boundary scan, strict typecheck, ordinary integration suite, Docker Compose startup, `db:verify`, and the full `pnpm run verify` gate with `WORKLEDGER_TEST_DATABASE_URL` set all passed locally under pinned Node `24.18.0`/pnpm `11.20.0`.
+- Decisions: PostgreSQL is pinned to official `postgres:18.4-trixie` for local development; the volume mounts at `/var/lib/postgresql` to match PostgreSQL 18 Docker image expectations. The integration test skips when no test URL is set but runs in CI and local `db:test`/`db:verify`.
+- Accessibility: no user interface changed. Existing component/E2E accessibility smoke checks still pass.
+- Security/data: local PostgreSQL binds only to `127.0.0.1`, uses explicit non-production credentials, redacts health-check labels, and creates only empty local databases plus disposable test schemas. No employee data, production secret, application schema, migration, authentication table, seed data, export, telemetry, or production deployment was added.
+- Remaining risk: environment validation, canonical origin/proxy trust, secret policy, safe `.env.example`, dependency/license/secret scanning, Drizzle schema/migrations, and production deployment remain later tasks.
+- Next task: `WL-105`.
 
 ## Current blockers
 
-No `WL-104` blocker is known. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. Test projects and CI scaffolding are ready; real PostgreSQL service lifecycle, health checks, and isolated test database behavior remain to be configured.
+No `WL-105` blocker is known. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. Local PostgreSQL is configured; environment validation, canonical origins, proxy trust, and secret/example configuration remain to be implemented.
 
 ## Next task
 
-`WL-104 — Configure local PostgreSQL and Docker development environment.`
+`WL-105 — Configure environment, origin/proxy trust, secrets, and safe example configuration.`
 
 ## Update rules
 

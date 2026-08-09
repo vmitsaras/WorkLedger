@@ -107,6 +107,12 @@ const REQUIRED_SCRIPTS = [
   'toolchain:check',
   'workspace:check',
   'phase:check',
+  'db:up',
+  'db:down',
+  'db:reset',
+  'db:check',
+  'db:test',
+  'db:verify',
   'format',
   'format:check',
   'lint',
@@ -129,6 +135,10 @@ const REQUIRED_CONFIGURATION_FILES = [
   'packages/config/typescript/tsconfig.base.json',
   'packages/config/vitest/index.js',
   'playwright.config.ts',
+  'infra/compose/postgres.dev.yml',
+  'infra/docker/postgres/init/001-workledger-local.sql',
+  'scripts/check-postgres-dev.mjs',
+  'scripts/run-postgres-integration.mjs',
   'test/setup/vitest-dom.ts',
   'vitest.config.ts',
 ];
@@ -403,7 +413,7 @@ export function validateWorkspace(state) {
   }
   if (state.missingConfigurationFiles.length > 0) {
     errors.push(
-      `Required WL-102 configuration files are missing: ${state.missingConfigurationFiles.join(', ')}.`,
+      `Required workspace configuration files are missing: ${state.missingConfigurationFiles.join(', ')}.`,
     );
   }
 

@@ -1,6 +1,6 @@
 import { createDatabaseHarnessState, TEST_DATABASE_URL_ENV } from '@workledger/test-utils';
 
-test('reports the database harness as disabled until WL-104 provides a test database', () => {
+test('reports the database harness as disabled until a test database URL is provided', () => {
   expect(createDatabaseHarnessState({})).toEqual({
     enabled: false,
     safeLabel: `${TEST_DATABASE_URL_ENV} is not set`,

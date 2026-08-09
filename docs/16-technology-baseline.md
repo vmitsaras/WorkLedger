@@ -30,6 +30,8 @@ At `WL-101` completion, TypeScript `7.0.2` was the only compiler dependency need
 
 `WL-103` pins the baseline test stack after checking stable package metadata and official support docs on 2026-08-07: Vitest `4.1.10`, jsdom `30.0.1`, `@vitejs/plugin-react` `6.0.4`, React/React DOM `19.2.8`, React Testing Library `16.3.2`, DOM Testing Library `10.4.1`, jest-dom `7.0.0`, user-event `14.6.1`, Playwright `1.61.1`, axe-core and `@axe-core/playwright` `4.12.1`, Fastify `5.10.0`, `@types/node` `24.13.3`, `@types/react` `19.2.17`, and `@types/react-dom` `19.2.3`. Vitest `5.0.0` was still beta, so it was excluded. Playwright supports the pinned Node 24 line; Fastify v5 requires Node 20+; Vite/plugin-react support Node 20.19+, 22.12+, or newer, which includes Node `24.18.0`.
 
+`WL-104` pins the local PostgreSQL development image to official `postgres:18.4-trixie` and adds `pg` `8.22.0` plus `@types/pg` `8.20.0` after checking stable package and upstream docs on 2026-08-09. Docker Compose owns only the local development/test service, binds PostgreSQL to loopback port `54329` by default, waits on `pg_isready`, and mounts the PostgreSQL 18 data volume at `/var/lib/postgresql`. Drizzle, generated migrations, product schema, production Compose, secrets, and environment validation remain later tasks.
+
 Official references:
 
 - https://pnpm.io/workspaces
@@ -57,6 +59,13 @@ Official references:
 - https://www.npmjs.com/package/axe-core
 - https://www.npmjs.com/package/@axe-core/playwright
 - https://fastify.dev/docs/v5.10.x/Guides/Migration-Guide-V5/
+- https://www.postgresql.org/docs/release/18.4/
+- https://hub.docker.com/_/postgres
+- https://docs.docker.com/reference/cli/docker/compose/up/
+- https://docs.docker.com/reference/compose-file/services/#healthcheck
+- https://node-postgres.com/apis/client
+- https://www.npmjs.com/package/pg
+- https://www.npmjs.com/package/@types/pg
 
 ### React web
 
@@ -103,13 +112,17 @@ Official references:
 
 ### Database
 
-- PostgreSQL.
-- Drizzle ORM using the `pg`/node-postgres driver.
-- Drizzle Kit-generated SQL migrations committed to the repository.
+- PostgreSQL, locally bootstrapped by `WL-104` through `infra/compose/postgres.dev.yml`.
+- Drizzle ORM using the `pg`/node-postgres driver; Drizzle itself remains deferred until schema/migration work begins.
+- Drizzle Kit-generated SQL migrations committed to the repository once `WL-300` starts real schema work.
+- Local development/test databases use explicit non-production defaults and loopback-only exposure until `WL-105` introduces validated environment configuration.
 
 Official references:
 
 - https://www.postgresql.org/docs/
+- https://www.postgresql.org/docs/release/18.4/
+- https://hub.docker.com/_/postgres
+- https://node-postgres.com/
 - https://orm.drizzle.team/docs/get-started/postgresql-new
 - https://orm.drizzle.team/docs/migrations
 

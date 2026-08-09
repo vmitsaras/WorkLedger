@@ -21,9 +21,11 @@ WorkLedger/
 │   ├── check-boundaries.test.mjs
 │   ├── check-phase-version.mjs
 │   ├── check-phase-version.test.mjs
+│   ├── check-postgres-dev.mjs
 │   ├── check-workspace-build.mjs
 │   ├── check-workspace.mjs
-│   └── check-workspace.test.mjs
+│   ├── check-workspace.test.mjs
+│   └── run-postgres-integration.mjs
 ├── tsconfig.json
 ├── vitest.config.ts
 ├── eslint.config.js
@@ -146,14 +148,18 @@ WorkLedger/
 ├── e2e/
 ├── infra/
 │   ├── docker/
+│   │   └── postgres/
+│   │       └── init/
+│   │           └── 001-workledger-local.sql
 │   ├── compose/
+│   │   └── postgres.dev.yml
 │   └── proxy-examples/
 └── .github/
     └── workflows/
         └── ci.yml
 ```
 
-`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells, `WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter adapters, and boundary fixtures/checks, and `WL-103` added the baseline test-runner, accessibility, Playwright, and CI files shown above. Feature folders, framework files beyond smoke harnesses, infrastructure, `apps/site`, and other descendants in this diagram remain phased targets rather than claims that they already exist.
+`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells, `WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter adapters, and boundary fixtures/checks, `WL-103` added the baseline test-runner, accessibility, Playwright, and CI files shown above, and `WL-104` added the local PostgreSQL Compose service plus database lifecycle scripts/tests. Feature folders, framework files beyond smoke harnesses, production infrastructure, `apps/site`, and other descendants in this diagram remain phased targets rather than claims that they already exist.
 
 ## Feature-folder rule
 

@@ -19,7 +19,9 @@
     "@workledger/domain": "workspace:*"
   },
   "devDependencies": {
+    "@types/pg": "8.20.0",
     "@workledger/config": "workspace:*",
-    "@workledger/test-utils": "workspace:*"
+    "@workledger/test-utils": "workspace:*",
+    "pg": "8.22.0"
   }
 }
