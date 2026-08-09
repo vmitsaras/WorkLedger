@@ -1,14 +1,14 @@
 # WorkLedger Project Status
 
 **Current phase:** Phase 1 — Repository foundation
-**Current milestone:** Environment, origin/proxy trust, secrets, and safe example configuration
-**Active task:** `WL-105`
+**Current milestone:** React Aria shadcn base, design tokens, focus, and reduced-motion foundation
+**Active task:** `WL-106`
 **Status:** Ready
 **Last verified:** 2026-08-09
 
 ## Current objective
 
-Implement validated environment configuration, canonical-origin handling, proxy-trust boundaries, secret requirements, and safe example configuration for the existing workspace. Do not begin React Aria design-system work, application schema design, Drizzle migrations, authentication storage, seed data, or production deployment behavior in `WL-105`.
+Initialize the React Aria shadcn base and a small WorkLedger design-token foundation with visible focus, reduced-motion behavior, and semantic button/link/field/dialog examples. Do not begin feature routes, application schema/migrations, authentication storage, or production deployment behavior in `WL-106`.
 
 ## Verified decisions
 
@@ -87,6 +87,9 @@ Implement validated environment configuration, canonical-origin handling, proxy-
 - `WL-104` creates only local non-production database roles and empty development/test databases; it does not add WorkLedger product tables, Drizzle migrations, authentication storage, seed data, production Compose, or deployment behavior.
 - `pg` `8.22.0` and `@types/pg` `8.20.0` are pinned for local host health checks and database integration tests. Drizzle remains deferred until real schema/migration work.
 - `WORKLEDGER_TEST_DATABASE_URL` opts the PostgreSQL lifecycle integration test into a real database connection; without it, the test skips. CI starts the same local Compose service, runs `db:verify`, sets the URL, and then runs the full quality gate.
+- API runtime configuration is server-only and is parsed with native Node `URL`, `net.isIP`, and byte-length primitives. `WORKLEDGER_ORIGIN` is the only source for canonical links; production requires an HTTPS origin, exact trusted-proxy IP addresses, a credentialed non-placeholder PostgreSQL URL, and a non-placeholder authentication secret of at least 32 bytes.
+- Fastify receives only the validated exact proxy-address list, never a broad proxy setting, CIDR, or hop count. Untrusted forwarded headers do not affect request protocol handling, and API health stays generic/no-store with CORS disabled by default.
+- `.env.example` contains only safe local PostgreSQL defaults and blank production-secret fields. `config:check` uses Node's native optional `.env` loading and outputs a redacted configuration summary.
 - Phase 0 passed with all seven roadmap criteria evidenced; the accepted catalog contains 85 contiguous single-outcome examples, and every remaining open decision has an explicit later owner/deadline.
 
 ## Work completed
@@ -111,26 +114,27 @@ Implement validated environment configuration, canonical-origin handling, proxy-
 - [x] Shared strict TypeScript/ESM, project references, ESLint/Prettier, and executable negative source-boundary fixtures configured (`WL-102`; see `docs/22-strict-tooling-and-boundaries.md`).
 - [x] Vitest projects, React Testing Library/jsdom component smoke tests, API/database integration harness smoke tests, Playwright Chromium E2E with axe, and baseline CI configured (`WL-103`; see `docs/23-test-projects-and-ci.md`).
 - [x] Local PostgreSQL Docker service, host health check, isolated test database lifecycle proof, and CI database startup configured (`WL-104`; see `docs/24-postgres-docker-dev.md`).
+- [x] API runtime configuration, canonical-origin helper, exact Fastify proxy trust, safe `.env.example`, redacted config check, and security-focused API tests configured (`WL-105`; see `docs/25-runtime-configuration.md`).
 
 ## Latest completed task
 
-### `WL-104` — Configure local PostgreSQL and Docker development environment
+### `WL-105` — Configure environment, origin/proxy trust, secrets, and safe example configuration
 
-- Changed: added `infra/compose/postgres.dev.yml`, PostgreSQL init SQL, root `db:*` scripts, host health and integration runners, `pg`/`@types/pg`, a real isolated database lifecycle test, CI PostgreSQL startup/cleanup, and the `WL-104` evidence document.
-- Verified: lockfile update, frozen install, workspace contract, lint/boundary scan, strict typecheck, ordinary integration suite, Docker Compose startup, `db:verify`, and the full `pnpm run verify` gate with `WORKLEDGER_TEST_DATABASE_URL` set all passed locally under pinned Node `24.18.0`/pnpm `11.20.0`.
-- Decisions: PostgreSQL is pinned to official `postgres:18.4-trixie` for local development; the volume mounts at `/var/lib/postgresql` to match PostgreSQL 18 Docker image expectations. The integration test skips when no test URL is set but runs in CI and local `db:test`/`db:verify`.
+- Changed: added the API runtime configuration/parser, canonical-link helper, Fastify server factory with exact proxy trust, safe root `.env.example`, redacted `config:check`, focused validation/proxy tests, and the `WL-105` evidence document.
+- Verified: `pnpm with 11.20.0 run config:check`, focused unit/integration tests, `format:check`, lint/boundary scan, strict typecheck, `db:verify` against local Docker PostgreSQL, and the full `pnpm with 11.20.0 run verify` gate all passed locally under pinned Node `24.18.0`/pnpm `11.20.0`.
+- Decisions: production configuration fails closed unless it declares the canonical HTTPS origin, one or more exact proxy addresses, credentialed PostgreSQL URL, and a suitable authentication secret. Canonical links never infer host/protocol from a request, and Fastify cannot trust forwarded headers from an unconfigured immediate peer.
 - Accessibility: no user interface changed. Existing component/E2E accessibility smoke checks still pass.
-- Security/data: local PostgreSQL binds only to `127.0.0.1`, uses explicit non-production credentials, redacts health-check labels, and creates only empty local databases plus disposable test schemas. No employee data, production secret, application schema, migration, authentication table, seed data, export, telemetry, or production deployment was added.
-- Remaining risk: environment validation, canonical origin/proxy trust, secret policy, safe `.env.example`, dependency/license/secret scanning, Drizzle schema/migrations, and production deployment remain later tasks.
-- Next task: `WL-105`.
+- Security/data: secrets and connection strings are omitted from checker output, health data, tests, browser source, and tracked configuration. No employee data, authentication storage, schema/migration, seed data, CORS policy expansion, proxy deployment, telemetry, or production container behavior was added.
+- Remaining risk: authentication/CSRF integration, dependency/license/secret scanning, Drizzle schema/migrations, and proxy/deployment implementation remain later tasks.
+- Next task: `WL-106`.
 
 ## Current blockers
 
-No `WL-105` blocker is known. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. Local PostgreSQL is configured; environment validation, canonical origins, proxy trust, and secret/example configuration remain to be implemented.
+No `WL-106` blocker is known. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. Local PostgreSQL and runtime configuration are configured; the React Aria base and design tokens remain to be implemented.
 
 ## Next task
 
-`WL-105 — Configure environment, origin/proxy trust, secrets, and safe example configuration.`
+`WL-106 — Initialize React Aria shadcn base and design tokens.`
 
 ## Update rules
 

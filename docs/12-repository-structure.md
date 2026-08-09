@@ -159,7 +159,7 @@ WorkLedger/
         └── ci.yml
 ```
 
-`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells, `WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter adapters, and boundary fixtures/checks, `WL-103` added the baseline test-runner, accessibility, Playwright, and CI files shown above, and `WL-104` added the local PostgreSQL Compose service plus database lifecycle scripts/tests. Feature folders, framework files beyond smoke harnesses, production infrastructure, `apps/site`, and other descendants in this diagram remain phased targets rather than claims that they already exist.
+`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells, `WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter adapters, and boundary fixtures/checks, `WL-103` added the baseline test-runner, accessibility, Playwright, and CI files shown above, `WL-104` added the local PostgreSQL Compose service plus database lifecycle scripts/tests, and `WL-105` added tracked-safe environment examples plus API runtime configuration and proxy-trust validation. Feature folders, framework files beyond smoke harnesses, production infrastructure, `apps/site`, and other descendants in this diagram remain phased targets rather than claims that they already exist.
 
 ## Feature-folder rule
 

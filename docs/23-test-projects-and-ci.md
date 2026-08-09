@@ -23,10 +23,11 @@
 
 | Command | Responsibility |
 |---|---|
+| `pnpm run config:check` | Builds the API shell, loads an optional ignored local `.env` through Node's native `--env-file-if-exists` option, validates runtime configuration, and prints only a redacted summary |
 | `pnpm run test` | Workspace contract, TypeScript build for public package exports, native Node contract tests, Vitest unit tests, and Vitest component tests |
 | `pnpm run test:integration` | Workspace contract, TypeScript build, API/database integration smoke tests |
 | `pnpm run test:e2e` | Workspace contract, TypeScript build, Chromium Playwright E2E smoke test with axe |
-| `pnpm run verify` | Full local quality gate: format, lint/boundaries, typecheck, unit/component, integration, E2E, and build |
+| `pnpm run verify` | Full local quality gate: runtime configuration, format, lint/boundaries, typecheck, unit/component, integration, E2E, and build |
 
 `test:build` exists so test commands can resolve internal package public exports from `dist` even when a developer runs a test command directly from a clean checkout.
 

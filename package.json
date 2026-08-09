@@ -22,6 +22,7 @@
     "toolchain:check": "node scripts/check-toolchain.mjs",
     "workspace:check": "pnpm run toolchain:check && node scripts/check-workspace.mjs && node scripts/check-phase-version.mjs",
     "phase:check": "node scripts/check-phase-version.mjs",
+    "config:check": "pnpm run test:build && node --env-file-if-exists=.env scripts/check-api-runtime-config.mjs",
     "db:up": "docker compose -f infra/compose/postgres.dev.yml up -d --wait",
     "db:down": "docker compose -f infra/compose/postgres.dev.yml down",
     "db:reset": "docker compose -f infra/compose/postgres.dev.yml down --volumes --remove-orphans",
@@ -37,7 +38,7 @@
     "test:integration": "pnpm run workspace:check && pnpm run test:build && vitest run --project integration",
     "test:e2e": "pnpm run workspace:check && pnpm run test:build && playwright test",
     "build": "pnpm run workspace:check && tsc --build --pretty false --force && node scripts/check-workspace-build.mjs",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
+    "verify": "pnpm config:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",

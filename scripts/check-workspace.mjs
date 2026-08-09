@@ -107,6 +107,7 @@ const REQUIRED_SCRIPTS = [
   'toolchain:check',
   'workspace:check',
   'phase:check',
+  'config:check',
   'db:up',
   'db:down',
   'db:reset',
@@ -124,6 +125,7 @@ const REQUIRED_SCRIPTS = [
 ];
 const SEMANTIC_VERSION_PATTERN = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/;
 const REQUIRED_CONFIGURATION_FILES = [
+  '.env.example',
   '.editorconfig',
   '.prettierignore',
   'eslint.config.js',
@@ -135,9 +137,12 @@ const REQUIRED_CONFIGURATION_FILES = [
   'packages/config/typescript/tsconfig.base.json',
   'packages/config/vitest/index.js',
   'playwright.config.ts',
+  'apps/api/src/config.ts',
+  'apps/api/src/server.ts',
   'infra/compose/postgres.dev.yml',
   'infra/docker/postgres/init/001-workledger-local.sql',
   'scripts/check-postgres-dev.mjs',
+  'scripts/check-api-runtime-config.mjs',
   'scripts/run-postgres-integration.mjs',
   'test/setup/vitest-dom.ts',
   'vitest.config.ts',

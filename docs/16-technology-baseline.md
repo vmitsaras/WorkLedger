@@ -30,7 +30,9 @@ At `WL-101` completion, TypeScript `7.0.2` was the only compiler dependency need
 
 `WL-103` pins the baseline test stack after checking stable package metadata and official support docs on 2026-08-07: Vitest `4.1.10`, jsdom `30.0.1`, `@vitejs/plugin-react` `6.0.4`, React/React DOM `19.2.8`, React Testing Library `16.3.2`, DOM Testing Library `10.4.1`, jest-dom `7.0.0`, user-event `14.6.1`, Playwright `1.61.1`, axe-core and `@axe-core/playwright` `4.12.1`, Fastify `5.10.0`, `@types/node` `24.13.3`, `@types/react` `19.2.17`, and `@types/react-dom` `19.2.3`. Vitest `5.0.0` was still beta, so it was excluded. Playwright supports the pinned Node 24 line; Fastify v5 requires Node 20+; Vite/plugin-react support Node 20.19+, 22.12+, or newer, which includes Node `24.18.0`.
 
-`WL-104` pins the local PostgreSQL development image to official `postgres:18.4-trixie` and adds `pg` `8.22.0` plus `@types/pg` `8.20.0` after checking stable package and upstream docs on 2026-08-09. Docker Compose owns only the local development/test service, binds PostgreSQL to loopback port `54329` by default, waits on `pg_isready`, and mounts the PostgreSQL 18 data volume at `/var/lib/postgresql`. Drizzle, generated migrations, product schema, production Compose, secrets, and environment validation remain later tasks.
+`WL-104` pins the local PostgreSQL development image to official `postgres:18.4-trixie` and adds `pg` `8.22.0` plus `@types/pg` `8.20.0` after checking stable package and upstream docs on 2026-08-09. Docker Compose owns only the local development/test service, binds PostgreSQL to loopback port `54329` by default, waits on `pg_isready`, and mounts the PostgreSQL 18 data volume at `/var/lib/postgresql`. Drizzle, generated migrations, product schema, and production Compose remain later tasks; `WL-105` owns the intentionally separate runtime configuration validation.
+
+`WL-105` adds no dependency. The API uses Node's stable WHATWG `URL`, `net.isIP`, and `Buffer.byteLength` capabilities to validate runtime configuration before use. This keeps secret/origin/proxy parsing out of the browser and avoids choosing a contract/schema library before the `D-200` Fastify contract spike. Fastify `5.10.0` receives only the validated exact proxy IP list; it never receives a broad trust setting or a hop count.
 
 Official references:
 
@@ -66,6 +68,9 @@ Official references:
 - https://node-postgres.com/apis/client
 - https://www.npmjs.com/package/pg
 - https://www.npmjs.com/package/@types/pg
+- https://nodejs.org/api/url.html
+- https://nodejs.org/api/net.html#netisipinput
+- https://fastify.dev/docs/v5.10.x/Reference/Server/#trustproxy
 
 ### React web
 
@@ -115,7 +120,7 @@ Official references:
 - PostgreSQL, locally bootstrapped by `WL-104` through `infra/compose/postgres.dev.yml`.
 - Drizzle ORM using the `pg`/node-postgres driver; Drizzle itself remains deferred until schema/migration work begins.
 - Drizzle Kit-generated SQL migrations committed to the repository once `WL-300` starts real schema work.
-- Local development/test databases use explicit non-production defaults and loopback-only exposure until `WL-105` introduces validated environment configuration.
+- Local development/test databases use explicit non-production defaults and loopback-only exposure. `WL-105` validates an optional development/test `WORKLEDGER_DATABASE_URL` and requires a non-placeholder credentialed PostgreSQL URL in production; database schema, migrations, and connection/pool creation remain deferred.
 
 Official references:
 

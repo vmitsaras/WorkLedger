@@ -28,7 +28,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-102` Configure strict TypeScript, linting, formatting, shared config, and executable import-boundary checks.
 - [x] `WL-103` Configure test projects and baseline CI.
 - [x] `WL-104` Configure local PostgreSQL and Docker development environment.
-- [ ] `WL-105` Configure environment, origin/proxy trust, secrets, and safe example configuration.
+- [x] `WL-105` Configure environment, origin/proxy trust, secrets, and safe example configuration.
 - [ ] `WL-106` Initialize React Aria shadcn base and design tokens.
 - [ ] `WL-107` Add public repository, setup, contribution, license, and verified security-reporting documentation.
 - [ ] `WL-108` Pass the Phase 1 exit gate.
