@@ -60,7 +60,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-205 | Calculate expected, worked, credited, and daily balance minutes | WL-201, WL-203 | Core example catalog passes | Done |
 | WL-206 | Split overnight sessions at local midnight and handle DST | WL-203, WL-205 | Spring-forward, fall-back, and overnight fixtures pass | Done |
 | WL-207 | Integrate paid/unpaid absence credit with daily calculation | WL-205 | Full, partial, holiday, zero-hour, and overlap tests pass | Done |
-| WL-208 | Calculate time-account ledger totals and explain sources | WL-205, WL-207 | Opening, daily, correction, adjustment sequences pass | Not started |
+| WL-208 | Calculate time-account ledger totals and explain sources | WL-205, WL-207 | Opening, daily, correction, adjustment sequences pass | Done |
 | WL-209 | Produce structured warnings and submission blockers | WL-201–WL-207 | Missing punch, schedule gap, unresolved correction, conflict codes pass | Not started |
 | WL-210 | Execute full domain example suite and domain-calculation review | WL-200–WL-209 | All documented cases map to tests; review checklist complete | Not started |
 | WL-211 | Execute Phase 2 gate review | WL-210 | Domain package dependency audit and gate evidence | Not started |

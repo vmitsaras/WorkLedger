@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 2 — Framework-independent domain engine
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 8 of 12 Phase 2 tasks complete
-**Current milestone:** Time-account ledger totals
-**Active task:** `WL-208`
+**Phase progress:** 9 of 12 Phase 2 tasks complete
+**Current milestone:** Structured warnings and submission blockers
+**Active task:** `WL-209`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Calculate framework-independent time-account ledger totals and explain their sources from an
-opening balance and append-only entries. Cover daily, correction, and adjustment sequences while
-deferring persistence, API, and UI behavior.
+Produce framework-independent structured calculation warnings and submission blockers from
+identified calculation facts. Cover missing punches, schedule gaps, unresolved corrections, and
+conflict behavior while deferring persistence, API, and UI behavior.
 
 ## Verified decisions
 
@@ -155,40 +155,41 @@ deferring persistence, API, and UI behavior.
   completed (`WL-206`; see `docs/35-local-date-interval-splitting.md`).
 - [x] Effective full/half/minute paid and unpaid absence effects, double-credit prevention, and
   daily-calculation inputs completed (`WL-207`; see `docs/36-daily-absence-effects.md`).
+- [x] Append-only time-account totals, source explanations, and daily/recalculation/adjustment
+  sequences completed (`WL-208`; see `docs/37-time-account-ledger-totals.md`).
 
 ## Latest completed task
 
-### `WL-207` — Integrate paid/unpaid absence credit with daily calculation
+### `WL-208` — Calculate time-account ledger totals and explain sources
 
-- Changed: added pure effective-absence coverage calculation that returns the explicit credit and
-  expected-reduction inputs used by daily arithmetic. It supports full, deterministic half, and
-  minute coverage with paid, unpaid, or neutral treatments.
-- Verified: focused Vitest coverage passes seven absence-effect tests for odd-minute half-day
-  partitioning, direct daily-calculation integration, paid-credit capping, exact minute/work
-  intersection, zero-hour behavior, coverage overlap, and work overlap. Strict domain TypeScript
-  build and `git diff --check` also pass.
-- Accessibility: not directly applicable because this task adds no UI or interaction. Explicit
-  calculation-source values enable later interfaces to explain absence effects without relying on
-  color or inferred state.
+- Changed: added a pure append-only time-account total calculator. It returns the opening balance,
+  aggregate entry total, closing balance, and ordered source explanations with running balances.
+- Verified: focused Vitest coverage passes six ledger tests for opening/daily/recalculation/post-lock
+  and manual-adjustment sequences, zero-minute posting evidence, duplicate source/entry rejection,
+  scope isolation, and immutable results. Strict domain TypeScript build and `git diff --check`
+  also pass.
+- Accessibility: not directly applicable because this task adds no UI or interaction. Ordered,
+  explicit source explanations support later accessible balance breakdowns without inferring state
+  from visualizations or prose.
 - Security/data: no persistence, API, logs, environment, network, employee data, authentication,
-  authorization, or browser state was introduced. The deterministic calculator does not create or
-  alter absence requests, entitlement history, or attendance source events.
-- Documentation: added `docs/36-daily-absence-effects.md` and reconciled the README, TODO, task
-  board, and project status.
-- Remaining risk: calculation warnings/status, ledger posting/totals, persistence, and audit
+  authorization, or browser state was introduced. The calculator never appends, mutates, or
+  authorizes ledger facts; it only derives totals from supplied typed values.
+- Documentation: added `docs/37-time-account-ledger-totals.md`, registered ledger error codes, and
+  reconciled the README, TODO, task board, and project status.
+- Remaining risk: calculation warnings/status, transactional posting, persistence, and audit
   atomicity remain deferred.
-- Next task: `WL-208`.
+- Next task: `WL-209`.
 
 ## Current blockers
 
-No `WL-208` blocker is known. The accepted daily calculation and effective absence inputs are
-sufficient for bounded ledger total calculation. D-201/D-202 remain owned before the first
-application schema migration, D-200/D-204 before the shared API contract, and D-502 before the
-production browser gate.
+No `WL-209` blocker is known. The accepted attendance, configuration, daily calculation, absence,
+and ledger inputs are sufficient for bounded warning/blocker classification. D-201/D-202 remain
+owned before the first application schema migration, D-200/D-204 before the shared API contract,
+and D-502 before the production browser gate.
 
 ## Next task
 
-`WL-208 — Calculate time-account ledger totals and explain sources.`
+`WL-209 — Produce structured warnings and submission blockers.`
 
 ## Update rules
 

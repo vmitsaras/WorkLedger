@@ -15,6 +15,17 @@ export {
   type EffectiveAbsenceEffect,
 } from './daily-absence-effects.js';
 export {
+  calculateTimeAccountLedger,
+  timeAccountEntryTypes,
+  type TimeAccountEntryType,
+  type TimeAccountEntryActor,
+  type TimeAccountLedgerEntry,
+  type TimeAccountLedgerEntryExplanation,
+  type TimeAccountLedgerError,
+  type TimeAccountLedgerInput,
+  type TimeAccountLedgerTotals,
+} from './time-account-ledger.js';
+export {
   splitAttendanceIntervalAtLocalMidnight,
   type LocalDateIntervalSegment,
   type LocalDateIntervalSplittingError,

@@ -5,15 +5,16 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 2 — 8 of 12 tasks complete**
+> **Current phase progress: Phase 2 — 9 of 12 tasks complete**
 
 Phase 1 passed its exit gate and the repository is now in **Phase 2: framework-independent domain
 engine**. The workspace, project boundaries, strict tooling, test and CI baseline, local PostgreSQL
 environment, runtime configuration, React Aria UI foundation, and contributor documentation are
 implemented. The domain now has primitives, effective-dated schedule/policy resolution,
 attendance-state transition validation, punch-event reconstruction, manual/corrected interval
-validation, daily minute calculation, local-date interval splitting, and effective paid/unpaid
-absence calculation; the next task is time-account ledger totals (`WL-208`).
+validation, daily minute calculation, local-date interval splitting, effective paid/unpaid absence
+calculation, and time-account ledger totals; the next task is structured warnings and submission
+blockers (`WL-209`).
 
 WorkLedger does not yet provide a complete domain engine, application database schema, authentication,
 product workflows, production deployment, or supported release. The runnable web page is an
@@ -174,6 +175,7 @@ versions and makes no response-time or production-support promise.
 | [docs/34-daily-attendance-calculation.md](docs/34-daily-attendance-calculation.md) | Daily expected/worked/credited/balance arithmetic evidence |
 | [docs/35-local-date-interval-splitting.md](docs/35-local-date-interval-splitting.md) | Local-midnight/DST interval attribution evidence |
 | [docs/36-daily-absence-effects.md](docs/36-daily-absence-effects.md) | Paid/unpaid absence-credit calculation evidence |
+| [docs/37-time-account-ledger-totals.md](docs/37-time-account-ledger-totals.md) | Posted time-account ledger-total evidence |
 
 ## License
 
