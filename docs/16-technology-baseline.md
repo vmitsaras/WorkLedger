@@ -127,7 +127,7 @@ Official references:
 - Drizzle ORM `0.45.2` using the pinned `pg`/node-postgres driver and Drizzle Kit `0.31.10` for generated, committed SQL migrations.
 - `WL-300` adds 28 initial application tables, PostgreSQL 18 native UUIDv7 defaults, generated schema metadata, and a custom generated migration for exclusion constraints, organization-consistency foreign keys, and append-only triggers that Drizzle does not express directly.
 - The database project alone uses `skipLibCheck` for Drizzle `0.45.2` declarations that are not compatible with the pinned TypeScript `7.0.2` across unused database drivers. WorkLedger source remains strictly checked, and the Drizzle schema is not exported from the package public boundary.
-- Local development/test databases use explicit non-production defaults and loopback-only exposure. `WL-105` validates an optional development/test `WORKLEDGER_DATABASE_URL` and requires a non-placeholder credentialed PostgreSQL URL in production; repository/pool construction remains owned by `WL-301`.
+- Local development/test databases use explicit non-production defaults and loopback-only exposure. `WL-105` validates an optional development/test `WORKLEDGER_DATABASE_URL` and requires a non-placeholder credentialed PostgreSQL URL in production. `WL-301` now owns bounded `pg` pool construction and exposes repositories only inside transaction callbacks; Drizzle, SQL, schemas, and unrestricted clients stay internal to `packages/database`.
 
 Official references:
 

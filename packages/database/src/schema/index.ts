@@ -84,12 +84,13 @@ export const periodStatus = pgEnum('period_status', [
   'LOCKED',
 ]);
 export const timeAccountEntryType = pgEnum('time_account_entry_type', [
-  'OPENING',
+  'OPENING_BALANCE',
   'DAILY_DELTA',
   'DAILY_RECALCULATION_DELTA',
-  'CORRECTION',
   'POST_LOCK_ADJUSTMENT',
+  'MANUAL_ADMINISTRATIVE_ADJUSTMENT',
 ]);
+export const ledgerActorKind = pgEnum('ledger_actor_kind', ['ACCOUNT', 'SYSTEM']);
 export const leaveEntitlementEntryType = pgEnum('leave_entitlement_entry_type', [
   'ALLOCATION',
   'RESERVATION',
@@ -657,19 +658,23 @@ export const timeAccountEntries = pgTable(
     minutes: integer('minutes').notNull(),
     sourceId: uuid('source_id').notNull(),
     sourceFingerprint: varchar('source_fingerprint', { length: 64 }).notNull(),
+    actorKind: ledgerActorKind('actor_kind').notNull(),
+    actorId: varchar('actor_id', { length: 128 }).notNull(),
+    explanationCode: varchar('explanation_code', { length: 128 }).notNull(),
     postedAt: timestamp('posted_at', { mode: 'string', withTimezone: true }).notNull(),
     createdAt: createdAt(),
   },
   (table) => [
-    uniqueIndex('time_account_entries_employee_type_source_uidx').on(
-      table.employeeId,
-      table.entryType,
-      table.sourceId,
-    ),
+    uniqueIndex('time_account_entries_employee_source_uidx').on(table.employeeId, table.sourceId),
     index('time_account_entries_employee_date_idx').on(table.employeeId, table.localDate),
+    check('time_account_entries_actor_id_not_blank', sql`length(btrim(${table.actorId})) > 0`),
+    check(
+      'time_account_entries_explanation_not_blank',
+      sql`length(btrim(${table.explanationCode})) > 0`,
+    ),
     check(
       'time_account_entries_non_zero_minutes',
-      sql`${table.minutes} <> 0 or ${table.entryType} = 'OPENING'`,
+      sql`${table.minutes} <> 0 or ${table.entryType} = 'OPENING_BALANCE'`,
     ),
     check(
       'time_account_entries_fingerprint_hex',

@@ -2,16 +2,17 @@
 
 **Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 1 of 10 Phase 3 tasks complete
-**Current milestone:** Repository interfaces and transaction boundaries
-**Active task:** `WL-301`
+**Phase progress:** 2 of 10 Phase 3 tasks complete
+**Current milestone:** Better Auth credential and session profile
+**Active task:** `WL-302`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Define narrow repository interfaces and implement PostgreSQL transaction boundary helpers without
-leaking Drizzle rows, query builders, or unrestricted clients outside `packages/database`.
+Integrate the accepted Better Auth invite-only credential, database-backed session, CSRF/origin,
+reset, freshness, rate-limit, and revocation profile without outsourcing WorkLedger roles or domain
+authorization.
 
 ## Verified decisions
 
@@ -89,6 +90,9 @@ leaking Drizzle rows, query builders, or unrestricted clients outside `packages/
 - Application/domain records use PostgreSQL 18 native UUIDv7 defaults while domain and contract identifiers remain opaque strings; UUID generation time is not business chronology or authorization evidence.
 - Daily projections persist as explicit-rebuild, versioned employee/date query caches with source fingerprints and reconciled minute totals; raw facts, append-only ledgers, and immutable approved snapshots remain authoritative.
 - Drizzle ORM `0.45.2` and Drizzle Kit `0.31.10` own the internal database schema and generated migrations; PostgreSQL-only custom migration SQL adds effective-range exclusions, organization-consistency foreign keys, and immutable-history triggers.
+- `@workledger/database` exposes one domain-facing root with repositories available only inside transaction callbacks; Drizzle schemas, rows, SQL/query builders, `pg` pools, and unrestricted clients remain internal, and an emitted-declaration test enforces the public closure.
+- Repository operations are organization-scoped; attendance mutation supports `FOR UPDATE` head locking plus optimistic revision/event-sequence advancement, projection replacement requires the exact next version, and time-account rows map the canonical actor/explanation/source ledger contract.
+- Transactions default to `READ COMMITTED`, permit explicit `REPEATABLE READ` or `SERIALIZABLE`, and retry only explicit database-only callbacks two to five times for PostgreSQL serialization/deadlock codes; callbacks with external effects must not enable retry.
 - Local PostgreSQL development uses Docker Compose at `infra/compose/postgres.dev.yml`, official `postgres:18.4-trixie`, loopback-only host binding on port `54329` by default, a `pg_isready` health check, and the PostgreSQL 18 Docker image's `/var/lib/postgresql` volume layout.
 - `WL-104` creates only local non-production database roles and empty development/test databases; it does not add WorkLedger product tables, Drizzle migrations, authentication storage, seed data, production Compose, or deployment behavior.
 - `pg` `8.22.0` and `@types/pg` `8.20.0` are pinned for database access/tests; `WL-300` adds Drizzle ORM `0.45.2` and Drizzle Kit `0.31.10` for the internal schema and generated migrations.
@@ -168,35 +172,41 @@ leaking Drizzle rows, query builders, or unrestricted clients outside `packages/
 - [x] Initial 28-table PostgreSQL schema, UUIDv7 identifiers, explicit daily-projection persistence,
   generated/custom migrations, integrity constraints, immutable triggers, and clean migration proof
   completed (`WL-300`; see `docs/41-initial-postgresql-schema.md`).
+- [x] Narrow domain-facing repositories, bounded pool construction, atomic transaction callbacks,
+  attendance locking/stale-write detection, safe persisted-value mapping, explicit database-only
+  retries, and executable public-boundary proof completed (`WL-301`; see
+  `docs/42-repositories-and-transactions.md`).
 
 ## Latest completed task
 
-### `WL-300` — Design and implement initial PostgreSQL schema and generated migrations
+### `WL-301` — Define repository interfaces and implement transaction boundary helpers
 
-- Changed: resolved D-201/D-202; added the internal Drizzle schema, 28 initial application tables,
-  generated migration metadata/SQL, PostgreSQL integrity migration, and explicit `esbuild`
-  install-script allowlist required by Drizzle Kit.
-- Verified: database typecheck and three schema unit tests pass. PostgreSQL 18 cleanly applies both
-  migrations in an isolated schema and proves UUIDv7 defaults, all 28 tables, overlap rejection,
-  immutable punches, and projection reconciliation constraints.
+- Changed: added the bounded database factory, public transaction/repository contracts, internal
+  Drizzle implementations, safe persisted-domain mapping, isolated migrated fixtures, attendance
+  row locking/optimistic advancement, projection version replacement, ledger mapping, and explicit
+  database-only retry behavior.
+- Verified: database typecheck, unit/boundary tests, migration tests, and real PostgreSQL repository
+  integration tests pass. The emitted public declaration closure contains no SQL/Drizzle/pg/schema
+  implementation types; rollback, stale revision, cross-organization scope, and retry behavior are
+  exercised.
 - Accessibility: no user interface changed; not applicable to this persistence-only slice.
-- Security/data: composite organization foreign keys prevent cross-organization links; raw events,
-  decisions, effects, ledgers, snapshots, and post-lock adjustments reject update/delete. No seed or
-  retained personal data was created.
-- Documentation: resolved D-201/D-202 and added `docs/41-initial-postgresql-schema.md`, including the
-  forward-recovery/backup rollback strategy and deferred schema owners.
-- Remaining risk: repository transaction/locking behavior is not implemented; auth, authorization,
-  audit audience separation, and full idempotency behavior remain later Phase 3 tasks.
-- Next task: `WL-301`.
+- Security/data: repository reads include organization scope, configuration/value errors exclude
+  secrets and persisted values, automatic retries are bounded/opt-in, and isolated test schemas are
+  removed. Authorization remains an application/API responsibility.
+- Documentation: added `docs/42-repositories-and-transactions.md` and synchronized the schema,
+  architecture, baseline, repository structure, README, roadmap checklist, and task board.
+- Remaining risk: authentication, application authorization, audience-separated audit, safe API
+  errors, and full idempotency behavior remain later Phase 3 tasks.
+- Next task: `WL-302`.
 
 ## Current blockers
 
-No `WL-301` blocker is known. D-200/D-204 remain owned before the shared API contract, and D-502
+No `WL-302` blocker is known. D-200/D-204 remain owned before the shared API contract, and D-502
 before the production browser gate.
 
 ## Next task
 
-`WL-301 — Define repository interfaces and implement transaction boundary helpers.`
+`WL-302 — Integrate the accepted Better Auth credential, session, CSRF, reset, and revocation profile.`
 
 ## Update rules
 

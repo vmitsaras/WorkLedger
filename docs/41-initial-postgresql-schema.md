@@ -34,8 +34,8 @@ feature-specific workflow additions by their owning tasks. Their future migratio
 this schema's organization and immutable-history constraints.
 
 The Drizzle schema is internal to `packages/database`; it is deliberately not exported from the
-package root. API/application code will receive narrow repository methods in `WL-301`, never rows,
-query builders, or an unrestricted client.
+package root. `WL-301` now exposes narrow repository methods only inside transaction callbacks,
+never rows, query builders, SQL values, or an unrestricted client.
 
 ## Integrity and indexes
 
@@ -51,6 +51,8 @@ query builders, or an unrestricted client.
 - Database checks enforce schedule minute bounds, positive versions/sequences, half-open ranges,
   absence coverage shape, fingerprint shape, JSON container shape, and daily arithmetic
   reconciliation.
+- Time-account entries use the canonical Phase 2 entry types, explicit account/system actor
+  provenance, an explanation code, and one unique source identity per employee.
 
 The database constraints support but do not replace domain validation or API authorization.
 Transactions, row locking, state transitions, current-manager scope, self-action checks, and safe
@@ -83,5 +85,6 @@ prove forward recovery on a production-shaped copy.
 
 ## Remaining work
 
-`WL-301` owns repository interfaces, mappings, pool construction, and transaction helpers. The
-current schema does not authorize direct SQL or Drizzle access outside `packages/database`.
+`WL-301` completed repository interfaces, domain-value mappings, bounded pool construction, row
+locking, and transaction helpers; see `docs/42-repositories-and-transactions.md`. Authentication,
+authorization, audit, and idempotency behavior remain owned by their later Phase 3 tasks.

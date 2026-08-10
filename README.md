@@ -5,16 +5,17 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 3 — 1 of 10 tasks complete**
+> **Current phase progress: Phase 3 — 2 of 10 tasks complete**
 
 Phase 2 passed its exit gate and the repository is now in **Phase 3: data, authentication, and API
 foundation**. The workspace, project boundaries, strict tooling, test and CI baseline, local
 PostgreSQL environment, runtime configuration, React Aria UI foundation, contributor documentation,
-framework-independent domain engine, and initial PostgreSQL schema/generated migrations are
-implemented. The next task is repository interfaces and transaction boundaries (`WL-301`).
+framework-independent domain engine, initial PostgreSQL schema/generated migrations, and narrow
+repository/transaction boundary are implemented. The next task is the accepted Better Auth
+credential and session profile (`WL-302`).
 
-WorkLedger does not yet provide repository-backed application services, authentication, product
-workflows, production deployment, or a supported release. The runnable web page is an isolated
+WorkLedger does not yet provide authenticated application services, product workflows, production
+deployment, or a supported release. The runnable web page is an isolated
 development preview of foundation components, not the WorkLedger application.
 
 ## Current status
@@ -176,6 +177,8 @@ versions and makes no response-time or production-support promise.
 | [docs/38-calculation-signals.md](docs/38-calculation-signals.md) | Structured warning and submission-blocker evidence |
 | [docs/39-domain-example-review.md](docs/39-domain-example-review.md) | Phase 2 fixture mapping and invariant review |
 | [docs/40-phase-2-gate-review.md](docs/40-phase-2-gate-review.md) | Phase 2 exit-gate evidence |
+| [docs/41-initial-postgresql-schema.md](docs/41-initial-postgresql-schema.md) | Initial Drizzle schema, migrations, constraints, and recovery evidence |
+| [docs/42-repositories-and-transactions.md](docs/42-repositories-and-transactions.md) | Repository API, transaction, locking, retry, and public-boundary evidence |
 
 ## License
 

@@ -1,29 +1,14 @@
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 --> statement-breakpoint
-ALTER TABLE "employment_periods" ADD CONSTRAINT "employment_periods_no_overlap" EXCLUDE USING gist (
-  "employee_id" WITH =,
-  daterange("starts_on", "ends_on", '[)') WITH &&
-);
+ALTER TABLE "employment_periods" ADD CONSTRAINT "employment_periods_no_overlap" EXCLUDE USING gist ("employee_id" WITH =, daterange("starts_on", "ends_on", '[)') WITH &&);
 --> statement-breakpoint
-ALTER TABLE "team_assignments" ADD CONSTRAINT "team_assignments_no_overlap" EXCLUDE USING gist (
-  "employee_id" WITH =,
-  daterange("starts_on", "ends_on", '[)') WITH &&
-);
+ALTER TABLE "team_assignments" ADD CONSTRAINT "team_assignments_no_overlap" EXCLUDE USING gist ("employee_id" WITH =, daterange("starts_on", "ends_on", '[)') WITH &&);
 --> statement-breakpoint
-ALTER TABLE "manager_assignments" ADD CONSTRAINT "manager_assignments_no_overlap" EXCLUDE USING gist (
-  "employee_id" WITH =,
-  daterange("starts_on", "ends_on", '[)') WITH &&
-);
+ALTER TABLE "manager_assignments" ADD CONSTRAINT "manager_assignments_no_overlap" EXCLUDE USING gist ("employee_id" WITH =, daterange("starts_on", "ends_on", '[)') WITH &&);
 --> statement-breakpoint
-ALTER TABLE "schedule_assignments" ADD CONSTRAINT "schedule_assignments_no_overlap" EXCLUDE USING gist (
-  "employee_id" WITH =,
-  daterange("starts_on", "ends_on", '[)') WITH &&
-);
+ALTER TABLE "schedule_assignments" ADD CONSTRAINT "schedule_assignments_no_overlap" EXCLUDE USING gist ("employee_id" WITH =, daterange("starts_on", "ends_on", '[)') WITH &&);
 --> statement-breakpoint
-ALTER TABLE "policy_assignments" ADD CONSTRAINT "policy_assignments_no_overlap" EXCLUDE USING gist (
-  "employee_id" WITH =,
-  daterange("starts_on", "ends_on", '[)') WITH &&
-);
+ALTER TABLE "policy_assignments" ADD CONSTRAINT "policy_assignments_no_overlap" EXCLUDE USING gist ("employee_id" WITH =, daterange("starts_on", "ends_on", '[)') WITH &&);
 --> statement-breakpoint
 ALTER TABLE "employees" ADD CONSTRAINT "employees_organization_identity_unique" UNIQUE ("organization_id", "id");
 --> statement-breakpoint
@@ -91,14 +76,7 @@ ALTER TABLE "approved_monthly_snapshots" ADD CONSTRAINT "approved_monthly_snapsh
 --> statement-breakpoint
 ALTER TABLE "post_lock_adjustments" ADD CONSTRAINT "post_lock_adjustments_snapshot_organization_fk" FOREIGN KEY ("organization_id", "monthly_snapshot_id") REFERENCES "approved_monthly_snapshots" ("organization_id", "id");
 --> statement-breakpoint
-CREATE FUNCTION reject_immutable_record_change() RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  RAISE EXCEPTION 'immutable WorkLedger record in table % cannot be changed', TG_TABLE_NAME
-    USING ERRCODE = '55000';
-END;
-$$;
+CREATE FUNCTION reject_immutable_record_change() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'immutable WorkLedger record in table % cannot be changed', TG_TABLE_NAME USING ERRCODE = '55000'; END; $$;
 --> statement-breakpoint
 CREATE TRIGGER punch_events_immutable BEFORE UPDATE OR DELETE ON "punch_events" FOR EACH ROW EXECUTE FUNCTION reject_immutable_record_change();
 --> statement-breakpoint

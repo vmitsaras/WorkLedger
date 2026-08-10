@@ -5,9 +5,10 @@ CREATE TYPE "public"."calculation_status" AS ENUM('PROVISIONAL', 'INCOMPLETE', '
 CREATE TYPE "public"."decision_action" AS ENUM('APPROVE', 'REJECT', 'REQUEST_CHANGES', 'ACKNOWLEDGE', 'WITHDRAW', 'CANCEL');--> statement-breakpoint
 CREATE TYPE "public"."employee_status" AS ENUM('ACTIVE', 'INACTIVE');--> statement-breakpoint
 CREATE TYPE "public"."leave_entitlement_entry_type" AS ENUM('ALLOCATION', 'RESERVATION', 'RESERVATION_RELEASE', 'DEDUCTION', 'RESTORATION', 'EXPIRY', 'ADJUSTMENT');--> statement-breakpoint
+CREATE TYPE "public"."ledger_actor_kind" AS ENUM('ACCOUNT', 'SYSTEM');--> statement-breakpoint
 CREATE TYPE "public"."period_status" AS ENUM('OPEN', 'SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED', 'LOCKED');--> statement-breakpoint
 CREATE TYPE "public"."punch_event_type" AS ENUM('CLOCK_IN', 'BREAK_START', 'BREAK_END', 'CLOCK_OUT');--> statement-breakpoint
-CREATE TYPE "public"."time_account_entry_type" AS ENUM('OPENING', 'DAILY_DELTA', 'DAILY_RECALCULATION_DELTA', 'CORRECTION', 'POST_LOCK_ADJUSTMENT');--> statement-breakpoint
+CREATE TYPE "public"."time_account_entry_type" AS ENUM('OPENING_BALANCE', 'DAILY_DELTA', 'DAILY_RECALCULATION_DELTA', 'POST_LOCK_ADJUSTMENT', 'MANUAL_ADMINISTRATIVE_ADJUSTMENT');--> statement-breakpoint
 CREATE TYPE "public"."workflow_status" AS ENUM('SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED', 'WITHDRAWN');--> statement-breakpoint
 CREATE TABLE "absence_coverage_segments" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
@@ -340,9 +341,14 @@ CREATE TABLE "time_account_entries" (
 	"minutes" integer NOT NULL,
 	"source_id" uuid NOT NULL,
 	"source_fingerprint" varchar(64) NOT NULL,
+	"actor_kind" "ledger_actor_kind" NOT NULL,
+	"actor_id" varchar(128) NOT NULL,
+	"explanation_code" varchar(128) NOT NULL,
 	"posted_at" timestamp with time zone NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "time_account_entries_non_zero_minutes" CHECK ("time_account_entries"."minutes" <> 0 or "time_account_entries"."entry_type" = 'OPENING'),
+	CONSTRAINT "time_account_entries_actor_id_not_blank" CHECK (length(btrim("time_account_entries"."actor_id")) > 0),
+	CONSTRAINT "time_account_entries_explanation_not_blank" CHECK (length(btrim("time_account_entries"."explanation_code")) > 0),
+	CONSTRAINT "time_account_entries_non_zero_minutes" CHECK ("time_account_entries"."minutes" <> 0 or "time_account_entries"."entry_type" = 'OPENING_BALANCE'),
 	CONSTRAINT "time_account_entries_fingerprint_hex" CHECK ("time_account_entries"."source_fingerprint" ~ '^[0-9a-f]{64}$')
 );
 --> statement-breakpoint
@@ -472,7 +478,7 @@ CREATE UNIQUE INDEX "punch_events_employee_command_sequence_uidx" ON "punch_even
 CREATE INDEX "schedule_assignments_employee_dates_idx" ON "schedule_assignments" USING btree ("employee_id","starts_on","ends_on");--> statement-breakpoint
 CREATE INDEX "team_assignments_employee_dates_idx" ON "team_assignments" USING btree ("employee_id","starts_on","ends_on");--> statement-breakpoint
 CREATE UNIQUE INDEX "teams_organization_name_uidx" ON "teams" USING btree ("organization_id","name");--> statement-breakpoint
-CREATE UNIQUE INDEX "time_account_entries_employee_type_source_uidx" ON "time_account_entries" USING btree ("employee_id","entry_type","source_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "time_account_entries_employee_source_uidx" ON "time_account_entries" USING btree ("employee_id","source_id");--> statement-breakpoint
 CREATE INDEX "time_account_entries_employee_date_idx" ON "time_account_entries" USING btree ("employee_id","local_date");--> statement-breakpoint
 CREATE UNIQUE INDEX "time_policies_organization_name_version_uidx" ON "time_policies" USING btree ("organization_id","name","version");--> statement-breakpoint
 CREATE UNIQUE INDEX "weekly_schedules_organization_name_version_uidx" ON "weekly_schedules" USING btree ("organization_id","name","version");

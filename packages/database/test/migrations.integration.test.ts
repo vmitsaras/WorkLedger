@@ -1,44 +1,8 @@
-import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
-
-import pg from 'pg';
 
 import { createDatabaseHarnessState } from '@workledger/test-utils';
 
-const { Client } = pg;
-const packageDirectory = fileURLToPath(new URL('..', import.meta.url));
-const migrationFiles = ['0000_initial_schema.sql', '0001_integrity_constraints.sql'] as const;
-const statementBreakpoint = '--> statement-breakpoint';
-
-function createIsolatedSchemaName(): string {
-  return `wl_migration_${randomUUID().replaceAll('-', '')}`;
-}
-
-function quoteIdentifier(identifier: string): string {
-  if (!/^[a-z_][a-z0-9_]*$/.test(identifier)) {
-    throw new Error(`Unsafe PostgreSQL identifier: ${identifier}`);
-  }
-
-  return `"${identifier}"`;
-}
-
-async function loadMigrationStatements(schemaIdentifier: string): Promise<readonly string[]> {
-  const statements: string[] = [];
-
-  for (const migrationFile of migrationFiles) {
-    const sql = await readFile(`${packageDirectory}/migrations/${migrationFile}`, 'utf8');
-    statements.push(
-      ...sql
-        .replaceAll('"public".', `${schemaIdentifier}.`)
-        .split(statementBreakpoint)
-        .map((statement) => statement.trim())
-        .filter(Boolean),
-    );
-  }
-
-  return statements;
-}
+import { createMigratedPostgresFixture } from './postgres-fixture.js';
 
 const databaseHarness = createDatabaseHarnessState(process.env);
 const integrationTest = databaseHarness.enabled ? test : test.skip;
@@ -46,24 +10,10 @@ const integrationTest = databaseHarness.enabled ? test : test.skip;
 integrationTest(
   `applies the initial migrations and enforces core invariants (${databaseHarness.safeLabel})`,
   async () => {
-    const schemaName = createIsolatedSchemaName();
-    const schemaIdentifier = quoteIdentifier(schemaName);
-    const client = new Client({
-      application_name: 'workledger-migration-integration-test',
-      connectionString: databaseHarness.url,
-      connectionTimeoutMillis: 5_000,
-    });
-
-    await client.connect();
+    const fixture = await createMigratedPostgresFixture(databaseHarness.url, 'migration');
+    const { client, schemaName } = fixture;
 
     try {
-      await client.query(`create schema ${schemaIdentifier}`);
-      await client.query(`set search_path to ${schemaIdentifier}, public`);
-
-      for (const statement of await loadMigrationStatements(schemaIdentifier)) {
-        await client.query(statement);
-      }
-
       const tableCount = await client.query<{ count: string }>(
         `select count(*) from information_schema.tables where table_schema = $1`,
         [schemaName],
@@ -142,9 +92,7 @@ integrationTest(
         ),
       ).rejects.toMatchObject({ code: '23514' });
     } finally {
-      await client.query('reset search_path');
-      await client.query(`drop schema if exists ${schemaIdentifier} cascade`);
-      await client.end();
+      await fixture.cleanup();
     }
   },
 );

@@ -22,7 +22,7 @@ describe('initial PostgreSQL schema', () => {
       'daily_projections_employee_date_uidx',
     );
     expect(getTableConfig(timeAccountEntries).indexes.map(({ config }) => config.name)).toContain(
-      'time_account_entries_employee_type_source_uidx',
+      'time_account_entries_employee_source_uidx',
     );
   });
 

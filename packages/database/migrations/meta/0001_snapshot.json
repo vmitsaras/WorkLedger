@@ -1,6 +1,6 @@
 {
-  "id": "cfdc6790-ec49-4295-b71f-b41a8910aaf4",
-  "prevId": "3ec98063-a8e5-43b0-ba9f-63888a0c255b",
+  "id": "3acdd090-8c64-4fb6-b1e2-9c191e050827",
+  "prevId": "e53d261c-ef40-4875-a4f2-2522412b0fb0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3266,6 +3266,25 @@
           "primaryKey": false,
           "notNull": true
         },
+        "actor_kind": {
+          "name": "actor_kind",
+          "type": "ledger_actor_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "explanation_code": {
+          "name": "explanation_code",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "posted_at": {
           "name": "posted_at",
           "type": "timestamp with time zone",
@@ -3281,17 +3300,11 @@
         }
       },
       "indexes": {
-        "time_account_entries_employee_type_source_uidx": {
-          "name": "time_account_entries_employee_type_source_uidx",
+        "time_account_entries_employee_source_uidx": {
+          "name": "time_account_entries_employee_source_uidx",
           "columns": [
             {
               "expression": "employee_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "entry_type",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3354,9 +3367,17 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "time_account_entries_actor_id_not_blank": {
+          "name": "time_account_entries_actor_id_not_blank",
+          "value": "length(btrim(\"time_account_entries\".\"actor_id\")) > 0"
+        },
+        "time_account_entries_explanation_not_blank": {
+          "name": "time_account_entries_explanation_not_blank",
+          "value": "length(btrim(\"time_account_entries\".\"explanation_code\")) > 0"
+        },
         "time_account_entries_non_zero_minutes": {
           "name": "time_account_entries_non_zero_minutes",
-          "value": "\"time_account_entries\".\"minutes\" <> 0 or \"time_account_entries\".\"entry_type\" = 'OPENING'"
+          "value": "\"time_account_entries\".\"minutes\" <> 0 or \"time_account_entries\".\"entry_type\" = 'OPENING_BALANCE'"
         },
         "time_account_entries_fingerprint_hex": {
           "name": "time_account_entries_fingerprint_hex",
@@ -3651,6 +3672,11 @@
         "ADJUSTMENT"
       ]
     },
+    "public.ledger_actor_kind": {
+      "name": "ledger_actor_kind",
+      "schema": "public",
+      "values": ["ACCOUNT", "SYSTEM"]
+    },
     "public.period_status": {
       "name": "period_status",
       "schema": "public",
@@ -3665,11 +3691,11 @@
       "name": "time_account_entry_type",
       "schema": "public",
       "values": [
-        "OPENING",
+        "OPENING_BALANCE",
         "DAILY_DELTA",
         "DAILY_RECALCULATION_DELTA",
-        "CORRECTION",
-        "POST_LOCK_ADJUSTMENT"
+        "POST_LOCK_ADJUSTMENT",
+        "MANUAL_ADMINISTRATIVE_ADJUSTMENT"
       ]
     },
     "public.workflow_status": {

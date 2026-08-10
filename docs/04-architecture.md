@@ -223,7 +223,9 @@ They should not depend on React or UI language.
 - idempotency records,
 - audit events.
 
-The exact schema is produced in Phase 3 after the domain interfaces are stable.
+`WL-300` produced the initial schema after the Phase 2 domain interfaces stabilized. Later Phase 3
+tasks extend it only through generated/committed migrations while preserving the accepted
+organization and immutable-history constraints.
 
 ## 9. Calculation persistence strategy
 

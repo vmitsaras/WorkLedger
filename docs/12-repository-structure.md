@@ -110,11 +110,13 @@ WorkLedger/
 │   │
 │   ├── database/
 │   │   ├── src/
+│   │   │   ├── client.ts
 │   │   │   ├── schema/
 │   │   │   ├── repositories/
 │   │   │   ├── transactions/
 │   │   │   ├── mapping/
-│   │   │   └── seed/
+│   │   │   ├── seed/             # Added with WL-307
+│   │   │   └── index.ts
 │   │   ├── migrations/
 │   │   └── test/
 │   │
