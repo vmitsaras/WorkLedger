@@ -5,14 +5,14 @@
 **Phase progress:** 10 of 12 Phase 2 tasks complete
 **Current milestone:** Domain example suite and calculation review
 **Active task:** `WL-210`
-**Status:** Ready
+**Status:** In progress
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Execute the full framework-independent domain example suite and calculation review. Map every
-accepted domain fixture to executable evidence and verify the Phase 2 invariants before the exit
-gate, while deferring persistence, API, and UI behavior.
+Review the framework-independent domain example suite and calculation invariants. The pure-domain
+evidence is mapped; completion awaits reconciliation of the catalog's later-phase workflow
+fixtures with the Phase 2 all-fixture acceptance criterion.
 
 ## Verified decisions
 

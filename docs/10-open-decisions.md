@@ -200,6 +200,27 @@ These were confirmed from repository evidence and the architecture ratification.
   future, and ambiguous-local-time behavior. `TODO.md` is normalized to the authoritative task
   board wording in the `WL-203` completion change.
 
+### D-107 — Phase 2 `WL-210` catalog acceptance boundary
+
+**Status:** Open; owner: project roadmap authority. Identified during `WL-210` review on
+2026-08-10.
+
+- `docs/11-example-calculation-catalog.md` requires every accepted `EX-001`–`EX-085` fixture to
+  become executable during Phase 2, while its fixtures include later-phase API/database behavior:
+  idempotency, transaction/audit writes, authorization, entitlement workflow, correction/period
+  state machines, snapshots, exports, and deactivation.
+- `docs/08-task-board.md` assigns those implementation surfaces to `WL-301`–`WL-306`,
+  `WL-400`–`WL-405`, `WL-503`–`WL-505`, `WL-600`–`WL-607`, `WL-800`–`WL-805`, and `WL-900`.
+  The phase-order rule prohibits implementing them early without explicit user override.
+- `docs/39-domain-example-review.md` maps every catalog fixture to current direct/partial
+  evidence or its later implementation owner. The pure-domain evidence is ready for review, but
+  `WL-210` cannot truthfully satisfy its literal all-fixture criterion until this discrepancy is
+  resolved.
+- Recommended resolution: revise `WL-210` to require executable coverage for the pure-domain
+  subset and an explicit mapping for later-phase fixtures, leaving each workflow fixture's final
+  executable evidence with its scheduled owner. An override to pull work forward must name the
+  specific vertical slices and accept their persistence/security/accessibility scope.
+
 ## Decisions blocking Phase 3
 
 ### D-200 — API contract implementation
