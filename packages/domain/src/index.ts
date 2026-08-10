@@ -5,6 +5,15 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  resolveManualLocalDateTime,
+  validateManualAttendanceInterval,
+  type AmbiguousLocalTimeError,
+  type AttendanceIntervalBounds,
+  type ManualAttendanceIntervalError,
+  type ManualAttendanceIntervalInput,
+  type ManualLocalDateTime,
+} from './manual-attendance-interval.js';
+export {
   reconstructAttendance,
   type AttendanceInterval,
   type AttendanceReconstruction,

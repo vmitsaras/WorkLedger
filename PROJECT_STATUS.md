@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 2 — Framework-independent domain engine
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 4 of 12 Phase 2 tasks complete
-**Current milestone:** Manual and corrected interval validation
-**Active task:** `WL-204`
+**Phase progress:** 5 of 12 Phase 2 tasks complete
+**Current milestone:** Daily attendance calculation
+**Active task:** `WL-205`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Validate framework-independent manual and corrected attendance intervals. Cover overlap, negative,
-future, ambiguous-local-time, and minute-precision behavior without beginning persistence, daily
-calculation, API, or UI behavior early.
+Calculate framework-independent daily expected, worked, credited, and balance minutes from
+resolved schedule/policy, reconstructed intervals, and approved source inputs. Preserve explicit
+incompleteness and defer persistence, API, and UI behavior.
 
 ## Verified decisions
 
@@ -146,41 +146,42 @@ calculation, API, or UI behavior early.
 - [x] Ordered immutable punch-event reconstruction, complete/open work sessions, break-free work
   intervals, and exact corruption/precision outcomes completed (`WL-203`; see
   `docs/32-attendance-reconstruction.md`).
+- [x] Manual/corrected local-time resolution, future/negative/precision validation, and half-open
+  interval overlap constraints completed (`WL-204`; see
+  `docs/33-manual-attendance-interval-validation.md`).
 
 ## Latest completed task
 
-### `WL-203` — Reconstruct work and break intervals from ordered immutable events
+### `WL-204` — Validate manual/corrected intervals and overlap constraints
 
-- Changed: added deterministic reconstruction from event sequence into immutable work sessions,
-  separate break-free work/break intervals, an explicit open interval for valid incomplete states,
-  and normalized sequence-order source events. The validator rejects duplicate/invalid sequences,
-  event-state violations, occurrence-time regressions, and non-minute source precision without a
-  partial result.
-- Verified: focused Vitest coverage passes 10 reconstruction tests for normal, multiple,
-  incomplete, confirmed-active-break, duplicate-order, invalid-state, precision, and
-  zero-duration cases. Strict domain TypeScript build and `git diff --check` also pass.
-- Accessibility: not directly applicable because this task adds no UI or interaction. Structured
-  incomplete/current-state output gives later layers a reliable basis for clear status messaging.
+- Changed: added explicit IANA-timezone resolution for minute-precision manual/corrected local
+  times, safe repeated-time offset choices, nonexistent-time rejection, and immutable interval
+  validation against an injected trusted bound and existing half-open intervals.
+- Verified: focused Vitest coverage passes seven manual-interval tests for unique/nonexistent/
+  ambiguous DST local times, explicit offset selection, precision, overlap, negative, future,
+  adjacency, and zero-duration cases. Strict domain TypeScript build and `git diff --check` also
+  pass.
+- Accessibility: not directly applicable because this task adds no UI or interaction. Stable
+  codes and the narrow safe offset list enable later form-level recovery without parsing prose.
 - Security/data: no persistence, API, logs, environment, network, employee data, authentication,
-  authorization, or browser state was introduced. Reconstruction reads supplied immutable facts
-  and cannot observe time, alter source events, or create a partial attendance effect.
-- Documentation: added `docs/32-attendance-reconstruction.md`, reconciled the roadmap/README,
-  TODO, task board, and project status, and resolved the stale `WL-204` TODO wording against the
-  authoritative task board in `docs/10-open-decisions.md`.
-- Remaining risk: manual/corrected interval validation, daily local-midnight splitting, duration
-  calculation, revision/idempotency validation, persistence, and audit atomicity remain deferred.
-- Next task: `WL-204`.
+  authorization, or browser state was introduced. The caller supplies a trusted latest occurrence
+  bound; the validator neither reads a live clock nor mutates a correction/event.
+- Documentation: added `docs/33-manual-attendance-interval-validation.md` and reconciled the
+  README, roadmap, TODO, task board, and project status.
+- Remaining risk: applied-correction history/approval, daily local-midnight splitting, duration
+  calculation, persistence, and audit atomicity remain deferred.
+- Next task: `WL-205`.
 
 ## Current blockers
 
-No `WL-204` blocker is known. The accepted manual-time and overlap contracts are sufficient for
-bounded interval validation. D-201/D-202 remain owned before the first application schema
-migration, D-200/D-204 before the shared API contract, and D-502 before the production browser
-gate.
+No `WL-205` blocker is known. The accepted schedule, interval, and calculation contracts are
+sufficient for bounded daily arithmetic. D-201/D-202 remain owned before the first application
+schema migration, D-200/D-204 before the shared API contract, and D-502 before the production
+browser gate.
 
 ## Next task
 
-`WL-204 — Validate manual/corrected intervals and overlap constraints.`
+`WL-205 — Calculate expected, worked, credited, and daily balance minutes.`
 
 ## Update rules
 
