@@ -66,7 +66,8 @@ Rules:
 |---|---|---:|
 | Authentication | `AUTH_REQUIRED` | 401 |
 | Authorization | `ACCESS_DENIED` | 403 |
-| Validation | `VALIDATION_FAILED` | 400 or 422, choose one consistently |
+| Malformed JSON | `MALFORMED_REQUEST` | 400 |
+| Validation | `VALIDATION_FAILED` | 422 |
 | Not found | `EMPLOYEE_NOT_FOUND` | 404 |
 | Domain conflict | `ATTENDANCE_ALREADY_WORKING` | 409 |
 | Concurrency conflict | `RECORD_VERSION_CONFLICT` | 409 |
@@ -92,6 +93,11 @@ For the MVP, a request explicitly naming an unauthorized employee or resource re
 - `AUTH_CSRF_INVALID`
 - `AUTH_ORIGIN_INVALID`
 - `RATE_LIMITED`
+- `MALFORMED_REQUEST`
+- `REQUEST_TOO_LARGE`
+- `UNSUPPORTED_MEDIA_TYPE`
+- `VALIDATION_FAILED`
+- `ROUTE_NOT_FOUND`
 
 `AUTH_INVALID_CREDENTIALS` is the only normal sign-in failure code for an unknown, inactive, deactivated, or incorrectly authenticated account. Reset/invitation errors do not distinguish malformed, expired, consumed, superseded, or wrong-purpose grants and never echo the submitted identifier or grant. `RATE_LIMITED` may provide safe retry timing but no account-existence signal.
 
@@ -204,7 +210,8 @@ Every attendance mutation requires exactly one `Idempotency-Key` HTTP header. Do
 
 - The value is an opaque, client-generated string matching `[A-Za-z0-9._~-]{16,128}`; a UUID is valid.
 - A missing header returns `IDEMPOTENCY_KEY_REQUIRED`; a duplicated, malformed, too-short, or too-long value returns `IDEMPOTENCY_KEY_INVALID`.
-- Validation-status selection remains `D-204`; malformed/invalid key failures are not stored as terminal idempotency outcomes.
+- Malformed/invalid key failures use the accepted `422` validation status and are not stored as
+  terminal idempotency outcomes.
 - Raw keys and fingerprints are not written to URLs, analytics, audit events, or normal application logs.
 
 ### Scope and fingerprint

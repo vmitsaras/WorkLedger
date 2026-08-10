@@ -97,6 +97,9 @@ Owns:
 
 Contracts are not domain entities. Avoid exposing database rows directly.
 
+ADR 0012 selects strict Zod schemas as the single transport source. Fastify validation, response
+serialization, inferred TypeScript types, and generated OpenAPI 3.1 derive from those schemas.
+
 ### `packages/database`
 
 Owns:

@@ -2,17 +2,16 @@
 
 **Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 4 of 10 Phase 3 tasks complete
-**Current milestone:** Shared API contract and safe errors
-**Active task:** `WL-304`
+**Phase progress:** 5 of 10 Phase 3 tasks complete
+**Current milestone:** Append-only audience-separated audit foundation
+**Active task:** `WL-305`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Implement shared request/response schemas, stable safe error envelopes, request identifiers,
-validation behavior, and transport mapping on top of the completed authentication and authorization
-foundations.
+Implement append-only domain/security audit persistence with audience separation, field
+minimization, atomic write support, safe querying, and hostile-text/redaction evidence.
 
 ## Verified decisions
 
@@ -71,6 +70,9 @@ foundations.
 - Production uses one canonical HTTPS origin, secure host-only cookies, enabled Better Auth checks, WorkLedger session-bound CSRF protection, protected-response no-store caching, and no sensitive browser persistence.
 - Better Auth `1.6.26` owns invite-only credentials and technical sessions only; WorkLedger pins its security-sensitive options, stores sessions and atomic throttle buckets in PostgreSQL, protects reset identifiers at rest, and recursively strips credential/token fields from auth responses.
 - Account-employee links and application-role assignments preserve history outside Better Auth; every authorization decision resolves active account/employee capability, current roles, organization, current direct-manager scope, and prohibited self-actions from PostgreSQL before applying a deny-by-default policy.
+- Strict Zod contracts are the single transport source for Fastify validation, response
+  serialization, inferred types, and generated OpenAPI 3.1; schema failures return `422`, malformed
+  JSON returns `400`, and every response receives a server-owned UUID request identifier.
 - Caddy is the reference production proxy while the observable TLS, trusted-header, network-isolation, health, and security-header contract remains proxy-agnostic.
 - Each deployment must own an explicit retention profile by data class; ordinary deletion never destroys source, ledger, snapshot, or required audit integrity, and restored sessions/grants are invalidated before activation.
 - The canonical repository is the existing public `vmitsaras/WorkLedger` GitHub project and WorkLedger-owned source/documentation uses the existing MIT license.
@@ -186,37 +188,41 @@ foundations.
   scope, deny-by-default self/reports/HR/technical policies, scope-before-pagination, and immediate
   session invalidation completed (`WL-303`; see
   `docs/44-application-authorization-foundation.md`).
+- [x] Strict shared Zod envelopes, inferred transport types, server-owned request IDs, `400`/`422`
+  validation separation, non-leaking Fastify error mapping, response serialization, and internal
+  OpenAPI 3.1 generation completed (`WL-304`; see
+  `docs/45-shared-api-contract-foundation.md` and ADR 0012).
 
 ## Latest completed task
 
-### `WL-303` — Implement application roles and scoped authorization
+### `WL-304` — Implement API error envelope and validation conventions
 
-- Changed: added historical account-employee links and role assignments, authorization repository
-  operations, current employment/manager resolution, central action policies, composed transaction
-  service, scoped collection queries, and transactional session invalidation.
-- Verified: policy and PostgreSQL permission-matrix tests cover owner, inactive/missing capability,
-  current/former/unrelated manager, HR, technical-only system administrator, combined-role
-  self-denial, cross-organization targets, scope-before-pagination, role change, and unlink history.
-- Accessibility: no user interface changed. Permission-denied route focus, announcement, and
-  recovery behavior remain owned by `WL-400`.
-- Security/data: roles never enter Better Auth sessions; explicit targets deny by default, manager
-  scope is resolved inside the authorization transaction, HR/technical access stays separated, and
-  sensitive account/role/session changes require session freshness, while link/role changes revoke
-  sessions without deleting history.
-- Documentation: added `docs/44-application-authorization-foundation.md` and synchronized schema,
-  architecture, repository, authentication, README, roadmap checklist, and task-board memory.
-- Remaining risk: public API error/validation mapping, authorization/security audit events,
-  lifecycle command endpoints, and purpose-specific DTO serialization remain later tasks.
-- Next task: `WL-304`.
+- Changed: added strict shared Zod envelope/error schemas, inferred transport types, a server-owned
+  UUID request-ID contract, Fastify validation/serialization compilers, OpenAPI 3.1 generation, and
+  centralized safe application/transport/internal error mapping.
+- Verified: contract and API tests cover strict schemas, bounded recovery context, `400` malformed
+  JSON, `422` field errors, unknown-field/input redaction, safe conflicts, invalid-context fallback,
+  unknown/serialization failures, server-owned request IDs, and generated OpenAPI without exposure.
+- Accessibility: no user interface changed. Stable field paths, codes, and correction messages now
+  support the later linked error-summary, focus, and announcement behavior.
+- Security/data: submitted values, unknown keys, provider messages, stack/SQL/path details, and
+  attacker request IDs are never trusted or returned; every error is no-store and invalid declared
+  recovery context falls back to generic `500 INTERNAL_ERROR`.
+- Documentation: accepted ADR 0012, resolved D-200/D-204, added
+  `docs/45-shared-api-contract-foundation.md`, and synchronized API/error, architecture, repository,
+  README, roadmap checklist, and task-board memory.
+- Remaining risk: purpose-specific feature DTOs, public OpenAPI/typed-client exposure, audit events,
+  and idempotency persistence remain later tasks.
+- Next task: `WL-305`.
 
 ## Current blockers
 
-No `WL-304` blocker is known. D-200/D-204 remain owned by the shared API contract, and D-502
-before the production browser gate.
+No `WL-305` blocker is known. D-200 and D-204 are resolved by ADR 0012; D-502 remains open before
+the production browser gate.
 
 ## Next task
 
-`WL-304 — Implement API error envelope and validation conventions.`
+`WL-305 — Implement separated domain/security audit persistence.`
 
 ## Update rules
 

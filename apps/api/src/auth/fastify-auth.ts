@@ -11,6 +11,7 @@ export function registerAuthenticationRoutes(
 ): void {
   app.route({
     method: ['GET', 'POST'],
+    schema: { hide: true },
     url: '/api/auth/*',
     async handler(request, reply) {
       const authRequest = createAuthRequest(request, config);

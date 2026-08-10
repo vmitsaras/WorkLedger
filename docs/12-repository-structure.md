@@ -192,6 +192,10 @@ authorization service. Historical account links and role assignments plus their 
 repository remain internal to `packages/database`; Better Auth sessions remain free of domain
 permission claims.
 
+`WL-304` added `packages/contracts/src/api.ts` for strict shared Zod envelopes/error contracts and
+`apps/api/src/http` for request identifiers, Zod Fastify compilers, OpenAPI generation, and safe
+transport error mapping. OpenAPI is generated for regression testing but is not yet a public route.
+
 ## Feature-folder rule
 
 Create a feature folder only when work begins on that feature. Avoid empty speculative architecture.

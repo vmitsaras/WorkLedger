@@ -11,6 +11,12 @@ export {
   summarizeRuntimeConfig,
 } from './config.js';
 export { createApiServer } from './server.js';
+export { WorkLedgerApiError, type ApiErrorStatusCode } from './http/errors.js';
+export {
+  createRequestId,
+  registerHttpFoundation,
+  WORKLEDGER_OPENAPI_VERSION,
+} from './http/foundation.js';
 export {
   AUTH_SECURITY_PROFILE,
   createAuthOptions,

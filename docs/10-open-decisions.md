@@ -221,30 +221,20 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-200 — API contract implementation
 
-**Status:** Open; owner `WL-304`. Resolve from a bounded spike at the start of that task before implementing the shared contract/serialization/OpenAPI path.
+**Status:** Resolved by `WL-304`; see ADR 0012.
 
-Evaluate:
-
-- Zod-based Fastify type provider and OpenAPI generation, or
-- JSON Schema/TypeBox contracts with generated client.
-
-Acceptance criteria:
-
-- one source for request/response validation,
-- reliable Fastify serialization,
-- generated or inferred TypeScript types,
-- stable OpenAPI,
-- no duplicated manual interfaces.
-
-Do not choose solely for fashion; create an ADR from a small spike.
+- Strict Zod schemas in `packages/contracts` are the single request/response source.
+- Fastify uses the Zod type provider for inferred types, validation, and response serialization.
+- The same schemas generate stable OpenAPI 3.1 through `@fastify/swagger`; public exposure and a
+  typed client remain `WL-308`.
 
 
 ### D-204 — Validation HTTP status
 
-**Status:** Open; owner `WL-304`. Resolve together with D-200 before the first WorkLedger validation/error contract is accepted.
+**Status:** Resolved by `WL-304`; see ADR 0012.
 
-- Choose one status for semantic request validation and use it consistently.
-- Recommended: `422 Unprocessable Content` for syntactically valid JSON that fails field/semantic validation; reserve `400` for malformed requests.
+- Syntactically valid JSON that fails request-schema validation returns `422 VALIDATION_FAILED`.
+- Malformed JSON returns `400 MALFORMED_REQUEST`.
 
 ### D-201 — Database identifier type
 
