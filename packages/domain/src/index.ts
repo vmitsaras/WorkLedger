@@ -5,6 +5,16 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  absenceTimeTreatments,
+  calculateDailyAbsenceEffects,
+  type AbsenceTimeTreatment,
+  type DailyAbsenceCalculationInputs,
+  type DailyAbsenceEffectsError,
+  type DailyAbsenceEffectsInput,
+  type EffectiveAbsenceCoverage,
+  type EffectiveAbsenceEffect,
+} from './daily-absence-effects.js';
+export {
   splitAttendanceIntervalAtLocalMidnight,
   type LocalDateIntervalSegment,
   type LocalDateIntervalSplittingError,
