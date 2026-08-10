@@ -5,6 +5,13 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  calculateDailyAttendance,
+  type DailyAttendanceCalculation,
+  type DailyAttendanceCalculationError,
+  type DailyAttendanceCalculationInput,
+  type DailyWorkInterval,
+} from './daily-attendance-calculation.js';
+export {
   resolveManualLocalDateTime,
   validateManualAttendanceInterval,
   type AmbiguousLocalTimeError,

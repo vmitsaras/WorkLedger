@@ -57,7 +57,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-202 | Implement attendance-state transition validation | WL-200 | All valid/invalid transitions have stable result codes | Done |
 | WL-203 | Reconstruct work and break intervals from ordered immutable events | WL-202 | Normal, multiple-session, incomplete, duplicate-order tests pass | Done |
 | WL-204 | Validate manual/corrected intervals and overlap constraints | WL-200, WL-203 | Overlap, negative, future, ambiguous-local-time cases covered | Done |
-| WL-205 | Calculate expected, worked, credited, and daily balance minutes | WL-201, WL-203 | Core example catalog passes | Not started |
+| WL-205 | Calculate expected, worked, credited, and daily balance minutes | WL-201, WL-203 | Core example catalog passes | Done |
 | WL-206 | Split overnight sessions at local midnight and handle DST | WL-203, WL-205 | Spring-forward, fall-back, and overnight fixtures pass | Not started |
 | WL-207 | Integrate paid/unpaid absence credit with daily calculation | WL-205 | Full, partial, holiday, zero-hour, and overlap tests pass | Not started |
 | WL-208 | Calculate time-account ledger totals and explain sources | WL-205, WL-207 | Opening, daily, correction, adjustment sequences pass | Not started |
