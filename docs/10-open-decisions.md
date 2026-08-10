@@ -71,7 +71,9 @@ These were confirmed from repository evidence and the architecture ratification.
 
 - The canonical product and repository display name is `WorkLedger`; the current remote is `https://github.com/vmitsaras/WorkLedger` and GitHub reports it as public.
 - Public visibility is accepted from the planning stage. It does not authorize pushing changes, publishing packages/images, creating releases, or deploying an instance; those remain separately permissioned workflows.
-- Until Phase 1 replaces the planning-only README, the repository must state honestly that no runnable application exists. `WL-107` owns verified setup, contribution, license, and security-reporting instructions before the foundation gate.
+- `WL-107` replaced the planning-oriented README with verified setup, contribution, license, and
+  private security-reporting instructions. It distinguishes the runnable foundation preview from a
+  product application and states that no supported release or production deployment exists.
 - Public changes must keep examples secret-free and use the dependency, generated-artifact, security, and documentation checks assigned to the relevant task.
 
 ### D-002 — License

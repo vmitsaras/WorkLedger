@@ -25,7 +25,7 @@ Repository evidence:
 
 | Decision | Accepted result | Implementation owner |
 |---|---|---|
-| D-001 | Public `vmitsaras/WorkLedger` repository; public visibility grants no release/push/package/deployment authority | `WL-107` replaces the planning README and records contributor/security-reporting workflows |
+| D-001 | Public `vmitsaras/WorkLedger` repository; public visibility grants no release/push/package/deployment authority | `WL-107` replaced the planning README and recorded contributor/private-security-reporting workflows |
 | D-002 | Existing root MIT license retained; package metadata uses SPDX `MIT`; third-party notices remain separate | `WL-100`, `WL-107`, release reviews |
 | D-004 | Root, apps, and packages are private/internal; `@workledger/*` plus `workspace:*`; no npm release tooling | `WL-100`–`WL-102` |
 | Workspace | pnpm, one root lockfile, no Turborepo, cycles fail | `WL-100` |

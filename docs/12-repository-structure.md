@@ -5,6 +5,9 @@ This is the target shape after Phase 1. Do not create all feature folders before
 ```text
 WorkLedger/
 ├── AGENTS.md
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── LICENSE
 ├── README.md
 ├── PROJECT_STATUS.md
 ├── TODO.md
@@ -159,7 +162,17 @@ WorkLedger/
         └── ci.yml
 ```
 
-`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells, `WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter adapters, and boundary fixtures/checks, `WL-103` added the baseline test-runner, accessibility, Playwright, and CI files shown above, `WL-104` added the local PostgreSQL Compose service plus database lifecycle scripts/tests, and `WL-105` added tracked-safe environment examples plus API runtime configuration and proxy-trust validation. Feature folders, framework files beyond smoke harnesses, production infrastructure, `apps/site`, and other descendants in this diagram remain phased targets rather than claims that they already exist.
+`WL-100` created the root workspace foundation, `WL-101` created the eight typed project shells,
+`WL-102` added the root/project TypeScript configs, shared config surfaces, formatter/linter
+adapters, and boundary fixtures/checks, `WL-103` added the baseline test-runner, accessibility,
+Playwright, and CI files shown above, `WL-104` added the local PostgreSQL Compose service plus
+database lifecycle scripts/tests, `WL-105` added tracked-safe environment examples plus API runtime
+configuration and proxy-trust validation, `WL-106` added the React Aria/Tailwind component
+foundation, and `WL-107` added the public setup, contribution, license, and private security-
+reporting documentation. Feature folders, framework files beyond the current foundation preview,
+production infrastructure, `apps/site`, and other descendants in this diagram remain phased targets
+rather than claims that they already exist. `WL-108` passed the Phase 1 gate with the evidence in
+`docs/28-phase-1-gate-review.md` and advanced the shared internal workspace version to `0.2.0`.
 
 ## Feature-folder rule
 

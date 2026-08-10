@@ -1,16 +1,19 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 1 — Repository foundation
-**Project readiness:** Stage 2 of 5 — Foundation in progress
-**Phase progress:** 7 of 9 Phase 1 tasks complete
-**Current milestone:** Public repository and contributor documentation
-**Active task:** `WL-107`
+**Current phase:** Phase 2 — Framework-independent domain engine
+**Project readiness:** Stage 3 of 5 — Core engine and platform in progress
+**Phase progress:** 0 of 12 Phase 2 tasks complete
+**Current milestone:** Domain primitives and result types
+**Active task:** `WL-200`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Write verified public repository status, local setup, scripts, package-boundary, contribution, license, and security-reporting documentation. Do not overstate runnable features, support, deployment, or release readiness in `WL-107`.
+Define framework-independent domain primitives for identifiers, integer minutes, instants, local
+dates, half-open date ranges, IANA timezone identifiers, and stable result/error types. Reject
+invalid construction and document serialization boundaries without starting schedule, attendance,
+calculation, persistence, API, or UI behavior early.
 
 ## Verified decisions
 
@@ -72,19 +75,19 @@ Write verified public repository status, local setup, scripts, package-boundary,
 - The canonical repository is the existing public `vmitsaras/WorkLedger` GitHub project and WorkLedger-owned source/documentation uses the existing MIT license.
 - Root, app, and package manifests remain private/internal for the MVP; internal names use `@workledger/*` and cross-workspace edges use `workspace:*`, with no npm publication workflow.
 - The accepted dependency graph keeps domain, contracts, UI, and config independent; database may import domain; web may import UI/contracts; API composes domain/contracts/database; test-utils is test-only.
-- Cross-project deep/sibling-source imports, app imports, undeclared path-alias edges, workspace cycles, production test/config imports, and browser imports of authoritative domain/database/server code are prohibited and must fail executable Phase 1 checks.
+- Cross-project deep/sibling-source imports, app imports, undeclared path-alias edges, workspace cycles, production test/config imports, and browser imports of authoritative domain/database/server code are prohibited and fail executable checks.
 - pnpm with one root lockfile and no Turborepo is sufficient for the initial workspace; new production projects, dependency edges, orchestration, or package publication require an ADR.
 - The root toolchain is pinned to Node `24.18.0` LTS and pnpm `11.20.0` stable; the generated lockfile records the Node runtime integrity variants.
 - The exact workspace is two non-importable application shells plus six packages with explicit exports; five expose only their typed root and config also exposes its accepted tooling surfaces. `apps/site` remains deferred to Phase 11.
 - The eight accepted internal edges resolve through `@workledger/*` package roots and emit typed ESM entries; no sibling-source or deep import exists in the scaffold.
-- TypeScript `7.0.2` is governed by a shared strict composite configuration; the root solution and per-project references must exactly mirror the eight runtime edges and cannot use path aliases.
+- TypeScript `7.0.2` is governed by a shared strict composite configuration; the root solution and per-project references exactly mirror the eight runtime edges and cannot use path aliases.
 - Seven explicit development-only `@workledger/config` edges provide shared TypeScript configuration without making config production runtime code.
 - Four explicit test-only `@workledger/test-utils` development edges allow API, web, database, and UI tests to use shared harness helpers while production imports remain prohibited.
 - ESLint `10.8.0` checks JavaScript/tooling, Prettier `3.9.6` checks code/config formatting, and `es-module-lexer` `2.3.1` powers repository-owned source-boundary checks. Current `typescript-eslint` is not installed because its `<6.1.0` TypeScript peer range excludes TypeScript 7.
 - Root commands reject a mismatched active toolchain, missing/unexpected or non-private workspace projects/configuration, alternate/nested lockfiles, wrong/non-`workspace:*` internal edges, TypeScript-reference drift/path aliases, dependency cycles, application exports, package export drift, forbidden/deep/app/test/config/browser-server source imports, and package-publication paths.
-- Every completed zero-indexed phase gate requires the shared root/workspace version `0.<completed phase-gate count>.0`; the executable phase-version check reads `TODO.md`, rejects skipped gates and manifest drift, and does not authorize package publication, tagging, deployment, or release creation.
+- Every completed zero-indexed phase gate requires the shared root/workspace version `0.<completed phase-gate count>.0`; Phase 1 completion sets all nine manifests to `0.2.0` without authorizing publication, tagging, deployment, or release creation.
 - Vitest `4.1.10` owns unit, component, and integration projects; React/React DOM `19.2.8`, React Testing Library `16.3.2`, jsdom `30.0.1`, axe-core `4.12.1`, Playwright `1.61.1`, and Fastify `5.10.0` are pinned for the baseline harnesses.
-- The root quality gate now runs native contract tests, Vitest unit/component tests, Vitest integration tests, Chromium Playwright E2E with axe, and a GitHub Actions workflow that mirrors `pnpm run verify`.
+- The root quality gate runs native contract tests, Vitest unit/component tests, Vitest integration tests, Chromium Playwright E2E with axe, and a GitHub Actions workflow that mirrors `pnpm run verify`.
 - Local PostgreSQL development uses Docker Compose at `infra/compose/postgres.dev.yml`, official `postgres:18.4-trixie`, loopback-only host binding on port `54329` by default, a `pg_isready` health check, and the PostgreSQL 18 Docker image's `/var/lib/postgresql` volume layout.
 - `WL-104` creates only local non-production database roles and empty development/test databases; it does not add WorkLedger product tables, Drizzle migrations, authentication storage, seed data, production Compose, or deployment behavior.
 - `pg` `8.22.0` and `@types/pg` `8.20.0` are pinned for local host health checks and database integration tests. Drizzle remains deferred until real schema/migration work.
@@ -99,7 +102,11 @@ Write verified public repository status, local setup, scripts, package-boundary,
 - shadcn's current `info` command requires source aliases that conflict with ADR `0011`; WorkLedger retains alias-free relative UI imports and explicitly requests/adapts React Aria registry source instead (`D-007`).
 - `skipLibCheck` is scoped to the UI and web projects for an upstream React Aria/React 19.2 optional-DOM-property declaration conflict; WorkLedger source remains strictly checked.
 - `@babel/parser` `8.0.4` extends repository-owned source-boundary checks to TypeScript/TSX imports because `es-module-lexer` does not parse JSX and the pinned native TypeScript 7 package exposes no compiler parser API.
+- Fresh-clone commands use `pnpm with 11.20.0` to select the accepted package manager and managed Node `24.18.0` runtime even when the host shell starts with another version; direct project commands reject a mismatched active toolchain.
+- The public README distinguishes the runnable React Aria foundation preview from an application, supported demo, release, or production deployment and documents every current root script.
+- GitHub Private Vulnerability Reporting is enabled for the public `vmitsaras/WorkLedger` repository. `SECURITY.md` provides the private route while promising no supported version, response deadline, remediation deadline, or production support.
 - Phase 0 passed with all seven roadmap criteria evidenced; the accepted catalog contains 85 contiguous single-outcome examples, and every remaining open decision has an explicit later owner/deadline.
+- Phase 1 passed all eight repository-foundation criteria with a clean-source frozen install, local and database-enabled quality gates, an actual successful CI run, executable ADR `0011` boundaries, and criterion-by-criterion evidence in `docs/28-phase-1-gate-review.md`.
 
 ## Work completed
 
@@ -125,26 +132,47 @@ Write verified public repository status, local setup, scripts, package-boundary,
 - [x] Local PostgreSQL Docker service, host health check, isolated test database lifecycle proof, and CI database startup configured (`WL-104`; see `docs/24-postgres-docker-dev.md`).
 - [x] API runtime configuration, canonical-origin helper, exact Fastify proxy trust, safe `.env.example`, redacted config check, and security-focused API tests configured (`WL-105`; see `docs/25-runtime-configuration.md`).
 - [x] React Aria shadcn metadata, local semantic UI wrappers, Tailwind/Vite preview, WorkLedger tokens, visible focus, forced-colors support, reduced motion, and browser/component accessibility evidence configured (`WL-106`; see `docs/26-ui-foundation.md`).
+- [x] Public status/setup/script/package-boundary documentation, contribution guidance, MIT license explanation, and verified private vulnerability-reporting workflow completed (`WL-107`; see `docs/27-public-repository-documentation.md`).
+- [x] Phase 1 passed with all eight gate criteria, clean-source and database-enabled verification, successful canonical CI evidence, and shared version `0.2.0` (`WL-108`; see `docs/28-phase-1-gate-review.md`).
 
 ## Latest completed task
 
-### `WL-106` — Initialize the React Aria shadcn base and design tokens
+### `WL-108` — Execute the Phase 1 gate review
 
-- Changed: added current `aria-nova` shadcn metadata, local React Aria button/link/text-field/dialog wrappers, CVA variants, WorkLedger design and motion tokens, forced-colors behavior, a Vite/Tailwind foundation preview, real-browser Playwright hosting, and `WL-106` evidence documentation.
-- Verified: `pnpm with 11.20.0 run verify`, strict typecheck, 24 native tooling tests, 14 unit/component tests, integration tests, the Vite production build, two Chromium keyboard/focus/axe/reduced-motion tests, and desktop/narrow visual review passed. The opt-in real PostgreSQL lifecycle test skipped because its database URL was unset; `docs/26-ui-foundation.md` records the evidence.
-- Decisions: ADR `0011` remains stronger than shadcn CLI source-alias convenience. React Aria registry source must be requested with the Aria base and adapted to alias-free local imports (`D-007`).
-- Accessibility: semantic roles/names and field descriptions, visible focus, dialog initial focus/Escape/trigger restoration, minimum targets, axe, reduced motion, forced-colors fallbacks, and narrow reflow are covered proportionally to this foundation slice.
-- Security/data: the preview contains no personal, attendance, authentication, or server data and adds no persistence, network request, browser storage, logging, schema, or deployment behavior.
-- Remaining risk: manual screen-reader and Windows forced-colors checks remain later review gates; the two browser projects carry a documented upstream declaration-only `skipLibCheck` override.
-- Next task: `WL-107`.
+- Changed: recorded a criterion-by-criterion Phase 1 review, checked the canonical roadmap/task
+  gate, advanced the root and eight private workspace manifests to internal version `0.2.0`, and
+  moved project memory to Phase 2 / `WL-200` without adding domain behavior.
+- Verified: a clean current-source snapshot with no `.git`, dependencies, or build output passed the
+  frozen lockfile install using pnpm `11.20.0` and Node `24.18.0`; its full quality stages passed,
+  including 24 native tests, 14 unit/component tests, 4 non-database integration tests with 1
+  documented skip, 2 Chromium tests, and the eight-entry/Vite build. The working tree separately
+  passed PostgreSQL health/lifecycle and a database-enabled `verify` with all 5 integration tests.
+- CI: canonical GitHub Actions run `31330985670` passed frozen install, Chromium setup, PostgreSQL
+  startup/lifecycle, the full workspace verification, and cleanup. The checked-in workflow still
+  mirrors the local gate; the current uncommitted state has not been represented as a remote run.
+- Accessibility: visible focus, semantic button/link/field/dialog examples, keyboard dialog focus
+  behavior, axe, minimum targets, reduced motion, forced-colors fallbacks, and narrow reflow have
+  proportional foundation evidence. This is not application-wide WCAG conformance.
+- Security/data: runtime configuration stays server-only and redacted, proxy trust remains exact,
+  PostgreSQL is loopback-only with non-production roles, packages remain private, publication paths
+  fail checks, and no product schema, employee data, authentication, persistence, telemetry,
+  release, or deployment was added.
+- Remaining risk: manual screen-reader and Windows forced-colors checks remain later feature/release
+  gates; UI/web retain the documented declaration-only `skipLibCheck` override. Phase 2 must keep
+  domain primitives runtime-neutral and must not pull persistence, environment, network, or UI
+  concerns into `packages/domain`.
+- Next task: `WL-200`.
 
 ## Current blockers
 
-No `WL-107` blocker is known. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. The repository foundation is implemented through the UI layer; public setup and contributor documentation remain to be reconciled with verified behavior.
+No `WL-200` blocker is known. D-201/D-202 remain owned before the first application schema
+migration, D-200/D-204 before the shared API contract, and D-502 before the production browser gate;
+none changes the bounded domain-primitive task.
 
 ## Next task
 
-`WL-107 — Write public repository status, setup, contribution, license, and security-reporting documentation.`
+`WL-200 — Define domain primitives: IDs, minutes, instants, local dates, date ranges, timezone IDs,
+and result/error types.`
 
 ## Update rules
 

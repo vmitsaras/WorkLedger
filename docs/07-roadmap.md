@@ -25,9 +25,9 @@ ready to release.
 | 4 of 5 | Product workflows | Phases 4–9 | Employee, manager, absence, closure, reporting, and administration workflows pass their gates |
 | 5 of 5 | Production and release | Phases 10–11 | Production hardening, self-hosting, accessibility, operations, public documentation, and release gates pass |
 
-The current label is **Stage 2 of 5 — Foundation in progress**. Phase 1 has **7 of 9 tasks
-complete**. The project is not release-ready, and the workspace version remains governed by the
-phase-completion rule above.
+The current label is **Stage 3 of 5 — Core engine and platform in progress**. Phase 1 passed its
+gate, and Phase 2 has **0 of 12 tasks complete**. The project is not release-ready; the shared
+workspace version is `0.2.0` under the phase-completion rule above.
 
 ---
 
@@ -89,16 +89,17 @@ Create a strict, reproducible monorepo and development environment without imple
 
 ## Exit gate
 
-- [ ] Fresh clone installs from the lockfile.
-- [ ] Web and API health placeholders run locally.
-- [ ] PostgreSQL starts and can be reached by an integration test.
-- [ ] `format:check`, lint, typecheck, baseline tests, and build pass.
-- [ ] CI runs the same checks.
-- [ ] UI foundation includes visible focus, reduced-motion tokens, and a semantic link/button example.
-- [ ] No feature or calculation logic has leaked into scaffold files.
-- [ ] Representative forbidden cross-package/deep imports fail in automated boundary checks; all workspace projects remain private/internal.
+- [x] Fresh clone installs from the lockfile.
+- [x] Web and API health placeholders run locally.
+- [x] PostgreSQL starts and can be reached by an integration test.
+- [x] `format:check`, lint, typecheck, baseline tests, and build pass.
+- [x] CI runs the same checks.
+- [x] UI foundation includes visible focus, reduced-motion tokens, and a semantic link/button example.
+- [x] No feature or calculation logic has leaked into scaffold files.
+- [x] Representative forbidden cross-package/deep imports fail in automated boundary checks; all workspace projects remain private/internal.
 
-**Gate evidence:** command output, CI result, and setup documentation.
+**Gate evidence:** `docs/28-phase-1-gate-review.md`, the successful canonical CI run linked there,
+the `WL-100`–`WL-107` evidence records, and updated `PROJECT_STATUS.md`.
 
 ---
 

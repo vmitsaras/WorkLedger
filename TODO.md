@@ -30,8 +30,8 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-104` Configure local PostgreSQL and Docker development environment.
 - [x] `WL-105` Configure environment, origin/proxy trust, secrets, and safe example configuration.
 - [x] `WL-106` Initialize React Aria shadcn base and design tokens.
-- [ ] `WL-107` Add public repository, setup, contribution, license, and verified security-reporting documentation.
-- [ ] `WL-108` Pass the Phase 1 exit gate.
+- [x] `WL-107` Add public repository, setup, contribution, license, and verified security-reporting documentation.
+- [x] `WL-108` Pass the Phase 1 exit gate.
 
 ## Phase 2 — Domain engine
 
