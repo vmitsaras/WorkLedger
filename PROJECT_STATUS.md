@@ -2,18 +2,18 @@
 
 **Current phase:** Phase 2 — Framework-independent domain engine
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 12 Phase 2 tasks complete
-**Current milestone:** Domain primitives and result types
-**Active task:** `WL-200`
+**Phase progress:** 1 of 12 Phase 2 tasks complete
+**Current milestone:** Effective-dated schedule and policy resolution
+**Active task:** `WL-201`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Define framework-independent domain primitives for identifiers, integer minutes, instants, local
-dates, half-open date ranges, IANA timezone identifiers, and stable result/error types. Reject
-invalid construction and document serialization boundaries without starting schedule, attendance,
-calculation, persistence, API, or UI behavior early.
+Implement framework-independent effective-dated weekly schedules and time policies using the
+accepted half-open local-date primitives. Resolve exactly one applicable version for a target date
+and return stable structured failures for gaps, overlaps, and invalid configuration without starting
+attendance reconstruction, daily calculation, persistence, API, or UI behavior early.
 
 ## Verified decisions
 
@@ -107,6 +107,10 @@ calculation, persistence, API, or UI behavior early.
 - GitHub Private Vulnerability Reporting is enabled for the public `vmitsaras/WorkLedger` repository. `SECURITY.md` provides the private route while promising no supported version, response deadline, remediation deadline, or production support.
 - Phase 0 passed with all seven roadmap criteria evidenced; the accepted catalog contains 85 contiguous single-outcome examples, and every remaining open decision has an explicit later owner/deadline.
 - Phase 1 passed all eight repository-foundation criteria with a clean-source frozen install, local and database-enabled quality gates, an actual successful CI run, executable ADR `0011` boundaries, and criterion-by-criterion evidence in `docs/28-phase-1-gate-review.md`.
+- Domain primitives are construction-only branded values: opaque 1–128 character identifier tokens, safe-integer signed/non-negative minutes, canonical UTC instants, exact ISO local dates, named IANA timezone identifiers, and immutable half-open/open-ended local-date ranges.
+- Primitive construction returns discriminated `Result` values with stable non-leaking codes; invalid values are never trimmed, rounded, coerced, or exposed in error payloads.
+- Node `24.18.0` has no global Temporal implementation, so `packages/domain` directly pins `@js-temporal/polyfill` `0.5.1`; it adds no WorkLedger package edge or environment, filesystem, network, persistence, framework, or UI access.
+- Domain values serialize without brand wrappers: IDs/time values as strings, minutes as integers, open range ends as explicit `null`, successes as `{ ok: true, value }`, and failures as `{ ok: false, error }`. The independent API contract remains owned by `WL-304`.
 
 ## Work completed
 
@@ -134,45 +138,45 @@ calculation, persistence, API, or UI behavior early.
 - [x] React Aria shadcn metadata, local semantic UI wrappers, Tailwind/Vite preview, WorkLedger tokens, visible focus, forced-colors support, reduced motion, and browser/component accessibility evidence configured (`WL-106`; see `docs/26-ui-foundation.md`).
 - [x] Public status/setup/script/package-boundary documentation, contribution guidance, MIT license explanation, and verified private vulnerability-reporting workflow completed (`WL-107`; see `docs/27-public-repository-documentation.md`).
 - [x] Phase 1 passed with all eight gate criteria, clean-source and database-enabled verification, successful canonical CI evidence, and shared version `0.2.0` (`WL-108`; see `docs/28-phase-1-gate-review.md`).
+- [x] Branded IDs/minutes/Temporal values, immutable half-open date ranges, stable result/error types, serialization boundaries, and focused construction tests completed (`WL-200`; see `docs/29-domain-primitives.md`).
 
 ## Latest completed task
 
-### `WL-108` — Execute the Phase 1 gate review
+### `WL-200` — Define domain primitives and result/error types
 
-- Changed: recorded a criterion-by-criterion Phase 1 review, checked the canonical roadmap/task
-  gate, advanced the root and eight private workspace manifests to internal version `0.2.0`, and
-  moved project memory to Phase 2 / `WL-200` without adding domain behavior.
-- Verified: a clean current-source snapshot with no `.git`, dependencies, or build output passed the
-  frozen lockfile install using pnpm `11.20.0` and Node `24.18.0`; its full quality stages passed,
-  including 24 native tests, 14 unit/component tests, 4 non-database integration tests with 1
-  documented skip, 2 Chromium tests, and the eight-entry/Vite build. The working tree separately
-  passed PostgreSQL health/lifecycle and a database-enabled `verify` with all 5 integration tests.
-- CI: canonical GitHub Actions run `31330985670` passed frozen install, Chromium setup, PostgreSQL
-  startup/lifecycle, the full workspace verification, and cleanup. The checked-in workflow still
-  mirrors the local gate; the current uncommitted state has not been represented as a remote run.
-- Accessibility: visible focus, semantic button/link/field/dialog examples, keyboard dialog focus
-  behavior, axe, minimum targets, reduced motion, forced-colors fallbacks, and narrow reflow have
-  proportional foundation evidence. This is not application-wide WCAG conformance.
-- Security/data: runtime configuration stays server-only and redacted, proxy trust remains exact,
-  PostgreSQL is loopback-only with non-production roles, packages remain private, publication paths
-  fail checks, and no product schema, employee data, authentication, persistence, telemetry,
-  release, or deployment was added.
-- Remaining risk: manual screen-reader and Windows forced-colors checks remain later feature/release
-  gates; UI/web retain the documented declaration-only `skipLibCheck` override. Phase 2 must keep
-  domain primitives runtime-neutral and must not pull persistence, environment, network, or UI
-  concerns into `packages/domain`.
-- Next task: `WL-200`.
+- Changed: added the public `@workledger/domain` primitive API for opaque entity-branded IDs,
+  signed/non-negative integer minutes, canonical instants, ISO local dates, named timezone IDs,
+  immutable half-open/open-ended date ranges, and generic discriminated result/error values. Added
+  the directly owned Temporal polyfill dependency and updated the exact source-census fixture.
+- Verified: `pnpm with 11.20.0 run verify` passed configuration, formatting, ESLint, the 43-file /
+  87-import boundary scan, strict composite typechecking, 24 native tests, 21 unit/component tests,
+  4 non-database integration tests with 1 documented PostgreSQL opt-in skip, 2 Chromium tests, the
+  Vite build, and all eight typed public entries. The first full run correctly stopped on the prior
+  37-file / 75-import census expectation; updating that exact fixture produced the clean full run.
+- Accessibility: not directly applicable because this task adds no UI or interaction. Existing
+  semantic, keyboard, focus, axe, reduced-motion, and browser foundation tests remained green.
+- Security/data: constructors accept unknown inputs, reject coercion and unsafe ID shapes, and use
+  stable errors that do not echo rejected values. The polyfill performs deterministic in-process
+  time validation only; no persistence, network, filesystem, environment, employee data, logging,
+  authentication, authorization, API, or browser state was introduced.
+- Documentation: added `docs/29-domain-primitives.md`, recorded the dependency/runtime evidence in
+  the technology baseline, reconciled the README/roadmap/structure/status/TODO/task board, and kept
+  `D-201` plus independent API DTO/schema ownership explicitly open for their assigned tasks.
+- Remaining risk: physical ID generation/storage remains `D-201`; persisted timezone rule-version
+  evidence and cross-runtime production validation remain later tasks. Business-specific minute
+  bounds, punch precision, DST/local-time resolution, and calculations are deliberately deferred.
+- Next task: `WL-201`.
 
 ## Current blockers
 
-No `WL-200` blocker is known. D-201/D-202 remain owned before the first application schema
-migration, D-200/D-204 before the shared API contract, and D-502 before the production browser gate;
-none changes the bounded domain-primitive task.
+No `WL-201` blocker is known. The accepted weekly schedule, policy, half-open effective-date,
+gap/overlap, holiday, and version-history contracts are sufficient for the bounded resolver task.
+D-201/D-202 remain owned before the first application schema migration, D-200/D-204 before the
+shared API contract, and D-502 before the production browser gate.
 
 ## Next task
 
-`WL-200 — Define domain primitives: IDs, minutes, instants, local dates, date ranges, timezone IDs,
-and result/error types.`
+`WL-201 — Implement effective-dated schedule and policy resolution.`
 
 ## Update rules
 

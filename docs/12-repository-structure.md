@@ -173,6 +173,8 @@ reporting documentation. Feature folders, framework files beyond the current fou
 production infrastructure, `apps/site`, and other descendants in this diagram remain phased targets
 rather than claims that they already exist. `WL-108` passed the Phase 1 gate with the evidence in
 `docs/28-phase-1-gate-review.md` and advanced the shared internal workspace version to `0.2.0`.
+`WL-200` then created only `packages/domain/src/shared` for the first bounded domain slice; later
+feature folders remain uncreated until their owning tasks begin.
 
 ## Feature-folder rule
 

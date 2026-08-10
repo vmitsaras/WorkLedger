@@ -169,9 +169,17 @@ Official references:
 - Maintained Temporal polyfill where selected browsers/runtimes lack complete support.
 - `@internationalized/date` at React Aria control boundaries.
 
+`WL-200` pins `@js-temporal/polyfill` `0.5.1` in `packages/domain`. The accepted Node `24.18.0`
+runtime has no global `Temporal`, while the package's stable release supports the repository
+baseline and provides its own TypeScript declarations. Domain code imports the polyfill explicitly;
+it does not modify a runtime global. See `docs/29-domain-primitives.md` for the construction and
+serialization boundary.
+
 Official references:
 
 - https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Temporal
+- https://www.npmjs.com/package/@js-temporal/polyfill
+- https://github.com/js-temporal/temporal-polyfill
 - https://react-spectrum.adobe.com/internationalized/date/
 
 Do not assume native Temporal support is universal merely because some modern browsers support it. Browser support must be checked during Phase 1 and again before production release.

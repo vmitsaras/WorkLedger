@@ -5,14 +5,15 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 2 — 0 of 12 tasks complete**
+> **Current phase progress: Phase 2 — 1 of 12 tasks complete**
 
 Phase 1 passed its exit gate and the repository is now in **Phase 2: framework-independent domain
 engine**. The workspace, project boundaries, strict tooling, test and CI baseline, local PostgreSQL
 environment, runtime configuration, React Aria UI foundation, and contributor documentation are
-implemented. The next task is domain primitives (`WL-200`).
+implemented. Domain primitives and stable result/error types are now implemented; the next task is
+effective-dated schedule and policy resolution (`WL-201`).
 
-WorkLedger does not yet provide a domain engine, application database schema, authentication,
+WorkLedger does not yet provide a complete domain engine, application database schema, authentication,
 product workflows, production deployment, or supported release. The runnable web page is an
 isolated development preview of foundation components, not the WorkLedger application.
 
@@ -21,7 +22,7 @@ isolated development preview of foundation components, not the WorkLedger applic
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) records the active task, verified decisions, and blockers.
 - [TODO.md](TODO.md) and [docs/08-task-board.md](docs/08-task-board.md) define dependency-ordered
   work.
-- [docs/07-roadmap.md](docs/07-roadmap.md) defines the readiness stages and phase gates. “Stage 2
+- [docs/07-roadmap.md](docs/07-roadmap.md) defines the readiness stages and phase gates. “Stage 3
   of 5” describes the kind of work underway; it is not a release-readiness claim.
 - [AGENTS.md](AGENTS.md), accepted ADRs, and the planning documents are the implementation
   contract.
@@ -163,6 +164,7 @@ versions and makes no response-time or production-support promise.
 | [docs/10-open-decisions.md](docs/10-open-decisions.md) | Resolved and still-owned decisions |
 | [docs/12-repository-structure.md](docs/12-repository-structure.md) | Intended repository layout and package-boundary summary |
 | [docs/20-workspace-foundation.md](docs/20-workspace-foundation.md) through [docs/28-phase-1-gate-review.md](docs/28-phase-1-gate-review.md) | Phase 1 task and gate evidence |
+| [docs/29-domain-primitives.md](docs/29-domain-primitives.md) | Domain primitive construction, errors, dependency, tests, and serialization evidence |
 
 ## License
 

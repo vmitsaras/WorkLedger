@@ -52,7 +52,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-200 | Define domain primitives: IDs, minutes, instants, local dates, date ranges, timezone IDs, result/error types | WL-108 | Invalid construction rejected; serialization boundaries documented | Not started |
+| WL-200 | Define domain primitives: IDs, minutes, instants, local dates, date ranges, timezone IDs, result/error types | WL-108 | Invalid construction rejected; serialization boundaries documented | Done |
 | WL-201 | Implement effective-dated schedule and policy resolution | WL-200 | Gaps/overlaps/date-boundary tests pass | Not started |
 | WL-202 | Implement attendance-state transition validation | WL-200 | All valid/invalid transitions have stable result codes | Not started |
 | WL-203 | Reconstruct work and break intervals from ordered immutable events | WL-202 | Normal, multiple-session, incomplete, duplicate-order tests pass | Not started |
