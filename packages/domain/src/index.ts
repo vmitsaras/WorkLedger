@@ -5,6 +5,21 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  attendanceCommands,
+  attendanceStates,
+  punchEventTypes,
+  validAttendanceActions,
+  validateAttendanceTransition,
+  type AttendanceCommand,
+  type AttendanceCommandInput,
+  type AttendanceState,
+  type AttendanceTransition,
+  type AttendanceTransitionError,
+  type ClockOutAttendanceCommandInput,
+  type PunchEventType,
+  type SimpleAttendanceCommandInput,
+} from './attendance-transition.js';
+export {
   createLocalDateRange,
   localDateRangeContains,
   type InvalidLocalDateRangeError,

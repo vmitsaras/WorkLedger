@@ -2,18 +2,17 @@
 
 **Current phase:** Phase 2 — Framework-independent domain engine
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 2 of 12 Phase 2 tasks complete
-**Current milestone:** Attendance-state transition validation
-**Active task:** `WL-202`
+**Phase progress:** 3 of 12 Phase 2 tasks complete
+**Current milestone:** Punch-event reconstruction
+**Active task:** `WL-203`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Implement framework-independent attendance-state transition validation from the accepted
-`OFF_WORK`, `WORKING`, and `ON_BREAK` state machine. Return stable outcomes for every valid and
-invalid action without beginning event persistence, interval reconstruction, daily calculation,
-API, or UI behavior early.
+Reconstruct framework-independent work sessions and break-free work intervals from ordered
+immutable punch events. Cover normal sequences, multiple sessions, incomplete states, and invalid
+event ordering without beginning persistence, daily calculation, API, or UI behavior early.
 
 ## Verified decisions
 
@@ -141,41 +140,45 @@ API, or UI behavior early.
 - [x] Phase 1 passed with all eight gate criteria, clean-source and database-enabled verification, successful canonical CI evidence, and shared version `0.2.0` (`WL-108`; see `docs/28-phase-1-gate-review.md`).
 - [x] Branded IDs/minutes/Temporal values, immutable half-open date ranges, stable result/error types, serialization boundaries, and focused construction tests completed (`WL-200`; see `docs/29-domain-primitives.md`).
 - [x] Immutable weekly schedules, identity-only policy versions, effective-dated schedule/policy assignments, and exact gap/overlap/boundary resolution completed (`WL-201`; see `docs/30-effective-dated-time-configuration.md`).
+- [x] Immutable attendance states/actions, exact valid-action sets, and every accepted
+  transition/invalid-action outcome completed (`WL-202`; see
+  `docs/31-attendance-transition-validation.md`).
 
 ## Latest completed task
 
-### `WL-201` — Implement effective-dated schedule and policy resolution
+### `WL-202` — Implement attendance-state transition validation
 
-- Changed: added immutable seven-day schedules (integer weekday values `0`–`1440`), identity-only
-  policy versions, effective-dated schedule/policy assignments, and order-independent resolution
-  through the existing half-open local-date primitives. Resolution returns the ISO weekday and
-  expected schedule minutes only after exactly one schedule and policy assignment apply.
-- Verified: focused Vitest coverage passes six cases for malformed weekday configuration, explicit
-  zero-hour scheduling, half-open mid-month boundary selection, schedule/policy gaps, overlaps,
-  array-order independence, and combined resolution. Strict domain TypeScript build and `git diff
-  --check` also pass. The pinned `pnpm with 11.20.0` verification command could not start because
-  this sandbox cannot resolve the npm registry; no dependency was changed or downloaded.
-- Accessibility: not directly applicable because this task adds no UI or interaction. The resolver
-  gives later UI work stable codes rather than requiring prose parsing or an implicit default.
+- Changed: added a frozen transition matrix for the accepted `OFF_WORK`, `WORKING`, and
+  `ON_BREAK` states. The public domain API returns immutable next-state/event-type outcomes for
+  every valid ordinary action and exact stable codes for every invalid action. Confirmed clock-out
+  from an active break returns ordered `BREAK_END`, then `CLOCK_OUT` events.
+- Verified: focused Vitest coverage passes all 14 transition tests, including all successful and
+  invalid matrix rows, active-break confirmation, valid-action sets, event ordering, and runtime
+  immutability. Strict domain TypeScript build and `git diff --check` also pass. The pinned
+  `pnpm with 11.20.0` bootstrap could not start because this sandbox cannot resolve the npm
+  registry; no dependency was changed or downloaded.
+- Accessibility: not directly applicable because this task adds no UI or interaction. Stable
+  action sets and codes let later layers provide clear recovery text without parsing prose.
 - Security/data: no persistence, API, logs, environment, network, employee data, authentication,
-  authorization, or browser state was introduced. Frozen version objects and explicit gap/overlap
-  failures prevent accidental in-memory mutation or array-order-dependent configuration results.
-- Documentation: added `docs/30-effective-dated-time-configuration.md` and reconciled the README,
-  roadmap, repository structure, TODO, and task board.
-- Remaining risk: policy rule fields are intentionally deferred to their owning attendance,
-  calculation, absence, and warning tasks; persistence and historical snapshots remain later work.
-- Next task: `WL-202`.
+  authorization, or browser state was introduced. The validator cannot observe time or create a
+  partial attendance effect; its result remains input to a later authoritative transaction.
+- Documentation: added `docs/31-attendance-transition-validation.md` and reconciled the README,
+  TODO, task board, and project status.
+- Remaining risk: event reconstruction, trusted-clock capture, revision/idempotency validation,
+  event sequencing, persistence, and audit atomicity are deliberately deferred to their owning
+  tasks.
+- Next task: `WL-203`.
 
 ## Current blockers
 
-No `WL-202` blocker is known. The accepted attendance state/action matrix, immutable punch-event,
-revision, and idempotency contracts are sufficient for bounded transition validation. D-201/D-202
-remain owned before the first application schema migration, D-200/D-204 before the shared API
-contract, and D-502 before the production browser gate.
+No `WL-203` blocker is known. The accepted punch-event order, active-state behavior, and transition
+matrix are sufficient for bounded reconstruction. D-201/D-202 remain owned before the first
+application schema migration, D-200/D-204 before the shared API contract, and D-502 before the
+production browser gate.
 
 ## Next task
 
-`WL-202 — Implement attendance-state transition validation.`
+`WL-203 — Reconstruct work and break intervals from ordered immutable events.`
 
 ## Update rules
 
