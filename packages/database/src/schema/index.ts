@@ -44,6 +44,12 @@ const employeeId = () =>
     .references(() => employees.id);
 
 export const employeeStatus = pgEnum('employee_status', ['ACTIVE', 'INACTIVE']);
+export const applicationRole = pgEnum('application_role', [
+  'EMPLOYEE',
+  'MANAGER',
+  'HR_ADMINISTRATOR',
+  'SYSTEM_ADMINISTRATOR',
+]);
 export const attendanceState = pgEnum('attendance_state', ['OFF_WORK', 'WORKING', 'ON_BREAK']);
 export const punchEventType = pgEnum('punch_event_type', [
   'CLOCK_IN',
@@ -257,6 +263,59 @@ export const employmentPeriods = pgTable(
     check(
       'employment_periods_valid_range',
       sql`${table.endsOn} is null or ${table.startsOn} < ${table.endsOn}`,
+    ),
+  ],
+);
+
+export const accountEmployeeLinks = pgTable(
+  'account_employee_links',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => authUsers.id),
+    employeeId: employeeId(),
+    linkedAt: timestamp('linked_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+    unlinkedAt: timestamp('unlinked_at', { mode: 'date', withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('account_employee_links_active_user_uidx')
+      .on(table.userId)
+      .where(sql`${table.unlinkedAt} is null`),
+    uniqueIndex('account_employee_links_active_employee_uidx')
+      .on(table.employeeId)
+      .where(sql`${table.unlinkedAt} is null`),
+    index('account_employee_links_organization_user_idx').on(table.organizationId, table.userId),
+    check(
+      'account_employee_links_valid_interval',
+      sql`${table.unlinkedAt} is null or ${table.linkedAt} < ${table.unlinkedAt}`,
+    ),
+  ],
+);
+
+export const accountRoleAssignments = pgTable(
+  'account_role_assignments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => authUsers.id),
+    role: applicationRole('role').notNull(),
+    assignedAt: timestamp('assigned_at', { mode: 'date', withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    revokedAt: timestamp('revoked_at', { mode: 'date', withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('account_role_assignments_active_role_uidx')
+      .on(table.organizationId, table.userId, table.role)
+      .where(sql`${table.revokedAt} is null`),
+    index('account_role_assignments_organization_user_idx').on(table.organizationId, table.userId),
+    check(
+      'account_role_assignments_valid_interval',
+      sql`${table.revokedAt} is null or ${table.assignedAt} < ${table.revokedAt}`,
     ),
   ],
 );

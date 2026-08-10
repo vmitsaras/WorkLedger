@@ -27,6 +27,7 @@ const args = pnpmScript
       'packages/database/test/migrations.integration.test.ts',
       'packages/database/test/repositories.integration.test.ts',
       'apps/api/test/authentication.integration.test.ts',
+      'apps/api/test/authorization.integration.test.ts',
     ]
   : [
       'exec',
@@ -38,6 +39,7 @@ const args = pnpmScript
       'packages/database/test/migrations.integration.test.ts',
       'packages/database/test/repositories.integration.test.ts',
       'apps/api/test/authentication.integration.test.ts',
+      'apps/api/test/authorization.integration.test.ts',
     ];
 
 const child = spawn(command, args, {

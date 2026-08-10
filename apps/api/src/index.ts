@@ -27,6 +27,23 @@ export {
   validateCredentialPassword,
 } from './auth/password-policy.js';
 export { createSessionCsrfToken, verifySessionCsrfToken } from './auth/session-csrf.js';
+export {
+  authorizeAccountTarget,
+  authorizeEmployeeTarget,
+  authorizeInstallationAction,
+  employeeCollectionScope,
+  type AccountTargetAction,
+  type AuthorizationDecision,
+  type AuthorizationGrantScope,
+  type EmployeeTargetAction,
+  type InstallationAction,
+} from './authorization/policy.js';
+export {
+  createAuthorizationService,
+  type AuthorizationService,
+  type AuthorizedEmployeeCollection,
+  type EmployeeAuthorizationRequest,
+} from './authorization/service.js';
 export type { RuntimeConfig, RuntimeConfigSummary, RuntimeEnvironment } from './config.js';
 
 export const workspacePackage = '@workledger/api' as const;

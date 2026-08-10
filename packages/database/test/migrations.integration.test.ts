@@ -18,7 +18,7 @@ integrationTest(
         `select count(*) from information_schema.tables where table_schema = $1`,
         [schemaName],
       );
-      expect(Number(tableCount.rows[0]?.count)).toBe(33);
+      expect(Number(tableCount.rows[0]?.count)).toBe(35);
 
       const organization = await client.query<{ id: string }>(
         `insert into organizations (name, time_zone) values ($1, $2) returning id`,
@@ -39,6 +39,24 @@ integrationTest(
       );
       const employeeId = employee.rows[0]?.id;
       expect(employeeId).toBeTruthy();
+
+      const account = await client.query<{ id: string }>(
+        `insert into auth_users (name, email) values ('Migration Account', 'migration@example.test') returning id`,
+      );
+      await client.query(
+        `insert into account_employee_links (organization_id, user_id, employee_id) values ($1, $2, $3)`,
+        [organizationId, account.rows[0]?.id, employeeId],
+      );
+      const secondEmployee = await client.query<{ id: string }>(
+        `insert into employees (organization_id, employee_number, display_name) values ($1, 'WL-TEST-2', 'Second Migration Employee') returning id`,
+        [organizationId],
+      );
+      await expect(
+        client.query(
+          `insert into account_employee_links (organization_id, user_id, employee_id) values ($1, $2, $3)`,
+          [organizationId, account.rows[0]?.id, secondEmployee.rows[0]?.id],
+        ),
+      ).rejects.toMatchObject({ code: '23505' });
 
       await client.query(
         `insert into employment_periods (organization_id, employee_id, starts_on, ends_on) values ($1, $2, $3, $4)`,

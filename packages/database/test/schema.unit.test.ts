@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { getTableConfig } from 'drizzle-orm/pg-core';
 
 import {
+  accountEmployeeLinks,
+  accountRoleAssignments,
   approvedMonthlySnapshots,
   authAccounts,
   authSessions,
@@ -47,6 +49,18 @@ describe('initial PostgreSQL schema', () => {
     expect(getTableConfig(authUsers).columns.map(({ name }) => name)).not.toContain('role');
   });
 
+  it('keeps application roles and employee links outside Better Auth records', () => {
+    expect(getTableConfig(accountEmployeeLinks).indexes.map(({ config }) => config.name)).toEqual(
+      expect.arrayContaining([
+        'account_employee_links_active_employee_uidx',
+        'account_employee_links_active_user_uidx',
+      ]),
+    );
+    expect(
+      getTableConfig(accountRoleAssignments).indexes.map(({ config }) => config.name),
+    ).toContain('account_role_assignments_active_role_uidx');
+  });
+
   it('commits generated and custom migration metadata', () => {
     const journal = JSON.parse(
       readFileSync(`${packageDirectory}/migrations/meta/_journal.json`, 'utf8'),
@@ -56,6 +70,7 @@ describe('initial PostgreSQL schema', () => {
       '0000_initial_schema',
       '0001_integrity_constraints',
       '0002_auth_foundation',
+      '0003_authorization_foundation',
     ]);
   });
 });

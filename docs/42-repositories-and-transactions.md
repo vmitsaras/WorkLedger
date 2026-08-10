@@ -81,6 +81,7 @@ into the focus, announcement, and recovery behavior specified by the route and U
 
 ## Remaining work
 
-`WL-302` owns Better Auth credentials and database-backed session storage. Roles and authorization,
-safe API errors, audit persistence, and idempotency claims remain owned by `WL-303` through
-`WL-306`; this repository slice does not pre-authorize those workflows.
+`WL-302` owns Better Auth credentials and database-backed session storage. `WL-303` now adds the
+transaction-scoped authorization repository and central application policy. Safe API errors, audit
+persistence, and idempotency claims remain owned by `WL-304` through `WL-306`; ordinary domain
+repositories still do not pre-authorize their callers.

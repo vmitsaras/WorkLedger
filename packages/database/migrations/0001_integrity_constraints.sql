@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
 --> statement-breakpoint
 ALTER TABLE "employment_periods" ADD CONSTRAINT "employment_periods_no_overlap" EXCLUDE USING gist ("employee_id" WITH =, daterange("starts_on", "ends_on", '[)') WITH &&);
 --> statement-breakpoint

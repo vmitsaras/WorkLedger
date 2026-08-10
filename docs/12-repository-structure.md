@@ -185,8 +185,12 @@ their later tasks.
 `WL-302` added `apps/api/src/auth` for the credential/session composition boundary,
 `packages/database/src/auth-database.ts` for internal Better Auth persistence and authoritative
 session/throttle operations, and shared isolated PostgreSQL fixture support in
-`packages/test-utils/src/postgres.ts`. Employee authorization feature folders remain uncreated until
-`WL-303`.
+`packages/test-utils/src/postgres.ts`.
+
+`WL-303` added `apps/api/src/authorization` for the pure permission policy and composed
+authorization service. Historical account links and role assignments plus their transaction-scoped
+repository remain internal to `packages/database`; Better Auth sessions remain free of domain
+permission claims.
 
 ## Feature-folder rule
 

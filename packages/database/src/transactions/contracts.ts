@@ -1,5 +1,6 @@
 import type {
   AttendanceRepository,
+  AuthorizationRepository,
   DailyProjectionRepository,
   EmployeeRepository,
   OrganizationRepository,
@@ -20,6 +21,7 @@ export type TransactionOptions = Readonly<{
 
 export interface WorkLedgerTransaction {
   readonly attendance: AttendanceRepository;
+  readonly authorization: AuthorizationRepository;
   readonly dailyProjections: DailyProjectionRepository;
   readonly employees: EmployeeRepository;
   readonly organizations: OrganizationRepository;

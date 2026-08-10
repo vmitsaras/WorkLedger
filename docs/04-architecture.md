@@ -194,6 +194,7 @@ They should not depend on React or UI language.
 - Password reset, deactivation/unlink, and privileged-role changes revoke all sessions without deleting domain history.
 - Session/profile responses expose only safe opaque session IDs and minimum client context, never session/reset/CSRF tokens or authoritative domain permissions.
 - Better Auth session data never carries WorkLedger roles, employee scope, manager relationships, or permission decisions. `WL-303` resolves those from authoritative domain data on each request.
+- The `WL-303` authorization service resolves the account, active employee capability, current roles, organization, and current direct-manager relationship inside one transaction before applying a deny-by-default action policy. Scoped employee collections apply that policy in SQL before ordering, totals, or pagination.
 
 ## 7. Database design principles
 

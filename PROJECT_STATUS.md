@@ -2,16 +2,17 @@
 
 **Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 3 of 10 Phase 3 tasks complete
-**Current milestone:** Application authorization foundation
-**Active task:** `WL-303`
+**Phase progress:** 4 of 10 Phase 3 tasks complete
+**Current milestone:** Shared API contract and safe errors
+**Active task:** `WL-304`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Implement employee-account links, application roles, current-manager scope, permission policies,
-and authorization invalidation without placing domain permissions in Better Auth sessions.
+Implement shared request/response schemas, stable safe error envelopes, request identifiers,
+validation behavior, and transport mapping on top of the completed authentication and authorization
+foundations.
 
 ## Verified decisions
 
@@ -69,6 +70,7 @@ and authorization invalidation without placing domain permissions in Better Auth
 - Sessions are PostgreSQL-backed and immediately revocable; stateless/session caches and persistent remember-me are excluded, with 30-minute idle, 12-hour absolute, and 15-minute freshness boundaries.
 - Production uses one canonical HTTPS origin, secure host-only cookies, enabled Better Auth checks, WorkLedger session-bound CSRF protection, protected-response no-store caching, and no sensitive browser persistence.
 - Better Auth `1.6.26` owns invite-only credentials and technical sessions only; WorkLedger pins its security-sensitive options, stores sessions and atomic throttle buckets in PostgreSQL, protects reset identifiers at rest, and recursively strips credential/token fields from auth responses.
+- Account-employee links and application-role assignments preserve history outside Better Auth; every authorization decision resolves active account/employee capability, current roles, organization, current direct-manager scope, and prohibited self-actions from PostgreSQL before applying a deny-by-default policy.
 - Caddy is the reference production proxy while the observable TLS, trusted-header, network-isolation, health, and security-header contract remains proxy-agnostic.
 - Each deployment must own an explicit retention profile by data class; ordinary deletion never destroys source, ledger, snapshot, or required audit integrity, and restored sessions/grants are invalidated before activation.
 - The canonical repository is the existing public `vmitsaras/WorkLedger` GitHub project and WorkLedger-owned source/documentation uses the existing MIT license.
@@ -180,35 +182,41 @@ and authorization invalidation without placing domain permissions in Better Auth
   database-backed idle/absolute sessions, freshness, session-bound CSRF primitives, secure host-only
   cookies, strict PostgreSQL throttling, revocation, and Fastify integration completed (`WL-302`; see
   `docs/43-better-auth-credential-session-foundation.md`).
+- [x] Historical account-employee links and roles, active employment capability, current-manager
+  scope, deny-by-default self/reports/HR/technical policies, scope-before-pagination, and immediate
+  session invalidation completed (`WL-303`; see
+  `docs/44-application-authorization-foundation.md`).
 
 ## Latest completed task
 
-### `WL-302` — Integrate the accepted Better Auth credential and session profile
+### `WL-303` — Implement application roles and scoped authorization
 
-- Changed: pinned Better Auth `1.6.26`; added five authentication tables and migrations, the
-  Drizzle adapter boundary, atomic PostgreSQL throttle storage, Fastify auth mounting, password and
-  reset policy, safe session/CSRF wrappers, and shared isolated PostgreSQL test utilities.
-- Verified: strict option/unit tests and real PostgreSQL integration tests cover credentials,
-  generic failures, origin checks, cookie/cache behavior, idle/absolute/freshness, protected reset
-  storage, replay/expiry, reset revocation, and throttling.
-- Accessibility: no user interface changed. Accessible sign-in/recovery/reset presentation remains
-  owned by `WL-400`; responses provide stable behavior without exposing secrets.
-- Security/data: auth responses strip secrets, reset identifiers are hashed at the Drizzle boundary,
-  sessions and throttles are authoritative in PostgreSQL, and Better Auth owns no WorkLedger roles.
-- Documentation: added `docs/43-better-auth-credential-session-foundation.md` and synchronized the
-  schema, architecture, baseline, repository structure, README, roadmap checklist, and task board.
-- Remaining risk: application authorization, shared API errors, security audit, explicit reauth UI,
-  invitation lifecycle, and deployment mail handling remain later tasks.
-- Next task: `WL-303`.
+- Changed: added historical account-employee links and role assignments, authorization repository
+  operations, current employment/manager resolution, central action policies, composed transaction
+  service, scoped collection queries, and transactional session invalidation.
+- Verified: policy and PostgreSQL permission-matrix tests cover owner, inactive/missing capability,
+  current/former/unrelated manager, HR, technical-only system administrator, combined-role
+  self-denial, cross-organization targets, scope-before-pagination, role change, and unlink history.
+- Accessibility: no user interface changed. Permission-denied route focus, announcement, and
+  recovery behavior remain owned by `WL-400`.
+- Security/data: roles never enter Better Auth sessions; explicit targets deny by default, manager
+  scope is resolved inside the authorization transaction, HR/technical access stays separated, and
+  sensitive account/role/session changes require session freshness, while link/role changes revoke
+  sessions without deleting history.
+- Documentation: added `docs/44-application-authorization-foundation.md` and synchronized schema,
+  architecture, repository, authentication, README, roadmap checklist, and task-board memory.
+- Remaining risk: public API error/validation mapping, authorization/security audit events,
+  lifecycle command endpoints, and purpose-specific DTO serialization remain later tasks.
+- Next task: `WL-304`.
 
 ## Current blockers
 
-No `WL-303` blocker is known. D-200/D-204 remain owned before the shared API contract, and D-502
+No `WL-304` blocker is known. D-200/D-204 remain owned by the shared API contract, and D-502
 before the production browser gate.
 
 ## Next task
 
-`WL-303 — Implement application roles and scoped authorization.`
+`WL-304 — Implement API error envelope and validation conventions.`
 
 ## Update rules
 

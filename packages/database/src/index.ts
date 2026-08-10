@@ -14,20 +14,28 @@ export {
 } from './client.js';
 export { DatabaseValueError } from './mapping/domain-values.js';
 export type {
+  ApplicationRole,
   AdvanceAttendanceHeadInput,
   AppendPunchEvent,
   AppendTimeAccountEntryInput,
   AttendanceHeadRecord,
   AttendanceRepository,
+  AuthorizationActorRecord,
+  AuthorizationChangeInput,
+  AuthorizationRepository,
   DailyProjectionRecord,
   DailyProjectionRepository,
   DailyProjectionStatus,
   EmployeeRecord,
   EmployeeRepository,
+  EmployeeAuthorizationScope,
   EmployeeStatus,
   OrganizationRecord,
   OrganizationRepository,
+  LinkEmployeeInput,
+  ListAuthorizedEmployeesInput,
   ReplaceDailyProjectionInput,
+  ReplaceActiveRolesInput,
   StoredPunchEvent,
   TimeAccountRepository,
 } from './repositories/contracts.js';

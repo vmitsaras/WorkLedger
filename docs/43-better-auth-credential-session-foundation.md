@@ -82,7 +82,7 @@ environment-specific load verification.
 
 ## Remaining work
 
-`WL-303` adds employee-account links, WorkLedger roles, current-manager scope, permission policy,
-and invalidation on privilege changes. `WL-304` adds the shared API error/validation/CSRF envelope;
+`WL-303` completed employee-account links, WorkLedger roles, current-manager scope, permission
+policy, and invalidation on privilege changes. `WL-304` adds the shared API error/validation/CSRF envelope;
 `WL-305` adds audience-separated security audit; `WL-400` adds accessible sign-in, recovery, reset,
 reauthentication, and session-management UI; `WL-900` adds invitation and account lifecycle flows.

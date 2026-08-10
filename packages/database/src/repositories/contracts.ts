@@ -9,6 +9,38 @@ import type {
 
 export type EmployeeStatus = 'ACTIVE' | 'INACTIVE';
 export type DailyProjectionStatus = 'PROVISIONAL' | 'INCOMPLETE' | 'COMPLETE';
+export type ApplicationRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR';
+export type EmployeeAuthorizationScope = 'ORGANIZATION' | 'REPORTS' | 'SELF' | 'SELF_AND_REPORTS';
+
+export type AuthorizationActorRecord = Readonly<{
+  accountActive: boolean;
+  accountId: DomainId<'Account'>;
+  employeeCapabilityActive: boolean;
+  employeeId: DomainId<'Employee'> | null;
+  organizationId: DomainId<'Organization'>;
+  roles: readonly ApplicationRole[];
+}>;
+
+export type AuthorizationChangeInput = Readonly<{
+  accountId: DomainId<'Account'>;
+  changedAt: Instant;
+  organizationId: DomainId<'Organization'>;
+}>;
+
+export type LinkEmployeeInput = AuthorizationChangeInput &
+  Readonly<{ employeeId: DomainId<'Employee'> }>;
+
+export type ReplaceActiveRolesInput = AuthorizationChangeInput &
+  Readonly<{ roles: readonly ApplicationRole[] }>;
+
+export type ListAuthorizedEmployeesInput = Readonly<{
+  actorEmployeeId: DomainId<'Employee'> | null;
+  limit: number;
+  localDate: LocalDate;
+  offset: number;
+  organizationId: DomainId<'Organization'>;
+  scope: EmployeeAuthorizationScope;
+}>;
 
 export type OrganizationRecord = Readonly<{
   createdAt: Instant;
@@ -97,6 +129,26 @@ export interface EmployeeRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<EmployeeRecord | null>;
+}
+
+export interface AuthorizationRepository {
+  findActor(
+    organizationId: DomainId<'Organization'>,
+    accountId: DomainId<'Account'>,
+    localDate: LocalDate,
+  ): Promise<AuthorizationActorRecord | null>;
+  isCurrentManager(
+    organizationId: DomainId<'Organization'>,
+    managerEmployeeId: DomainId<'Employee'>,
+    employeeId: DomainId<'Employee'>,
+    localDate: LocalDate,
+  ): Promise<boolean>;
+  linkEmployee(input: LinkEmployeeInput): Promise<void>;
+  listAuthorizedEmployeeIds(
+    input: ListAuthorizedEmployeesInput,
+  ): Promise<readonly DomainId<'Employee'>[]>;
+  replaceActiveRoles(input: ReplaceActiveRolesInput): Promise<void>;
+  unlinkEmployee(input: AuthorizationChangeInput): Promise<boolean>;
 }
 
 export interface AttendanceRepository {

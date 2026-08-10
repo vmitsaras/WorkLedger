@@ -1,12 +1,18 @@
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import type { DomainId, TimeAccountEntryActor, TimeAccountLedgerEntry } from '@workledger/domain';
 
 import {
+  accountEmployeeLinks,
+  accountRoleAssignments,
+  authSessions,
+  authUsers,
   attendanceHeads,
   dailyProjections,
   employees,
+  employmentPeriods,
+  managerAssignments,
   organizations,
   punchEvents,
   timeAccountEntries,
@@ -25,13 +31,18 @@ import type {
   AppendTimeAccountEntryInput,
   AttendanceHeadRecord,
   AttendanceRepository,
+  AuthorizationActorRecord,
+  AuthorizationRepository,
   DailyProjectionRecord,
   DailyProjectionRepository,
   EmployeeRecord,
   EmployeeRepository,
+  LinkEmployeeInput,
+  ListAuthorizedEmployeesInput,
   OrganizationRecord,
   OrganizationRepository,
   ReplaceDailyProjectionInput,
+  ReplaceActiveRolesInput,
   StoredPunchEvent,
   TimeAccountRepository,
 } from './contracts.js';
@@ -43,6 +54,7 @@ export type RepositoryTransaction = Parameters<Parameters<RootDatabase['transact
 
 export function createTransactionRepositories(transaction: RepositoryTransaction): Readonly<{
   attendance: AttendanceRepository;
+  authorization: AuthorizationRepository;
   dailyProjections: DailyProjectionRepository;
   employees: EmployeeRepository;
   organizations: OrganizationRepository;
@@ -50,11 +62,250 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
 }> {
   return Object.freeze({
     attendance: new PostgresAttendanceRepository(transaction),
+    authorization: new PostgresAuthorizationRepository(transaction),
     dailyProjections: new PostgresDailyProjectionRepository(transaction),
     employees: new PostgresEmployeeRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
   });
+}
+
+class PostgresAuthorizationRepository implements AuthorizationRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async findActor(
+    organizationId: Parameters<AuthorizationRepository['findActor']>[0],
+    accountId: Parameters<AuthorizationRepository['findActor']>[1],
+    localDate: Parameters<AuthorizationRepository['findActor']>[2],
+  ): Promise<AuthorizationActorRecord | null> {
+    const [account] = await this.transaction
+      .select({
+        accountActive: authUsers.active,
+        accountId: authUsers.id,
+        employeeId: accountEmployeeLinks.employeeId,
+        employeeStatus: employees.status,
+      })
+      .from(authUsers)
+      .leftJoin(
+        accountEmployeeLinks,
+        and(
+          eq(accountEmployeeLinks.userId, authUsers.id),
+          eq(accountEmployeeLinks.organizationId, organizationId),
+          isNull(accountEmployeeLinks.unlinkedAt),
+        ),
+      )
+      .leftJoin(
+        employees,
+        and(
+          eq(employees.id, accountEmployeeLinks.employeeId),
+          eq(employees.organizationId, organizationId),
+        ),
+      )
+      .where(eq(authUsers.id, accountId))
+      .limit(1);
+
+    if (account === undefined) return null;
+
+    const roleRows = await this.transaction
+      .select({ role: accountRoleAssignments.role })
+      .from(accountRoleAssignments)
+      .where(
+        and(
+          eq(accountRoleAssignments.organizationId, organizationId),
+          eq(accountRoleAssignments.userId, accountId),
+          isNull(accountRoleAssignments.revokedAt),
+        ),
+      )
+      .orderBy(asc(accountRoleAssignments.role));
+
+    let hasCurrentEmployment = false;
+    if (account.employeeId !== null) {
+      const [employment] = await this.transaction
+        .select({ id: employmentPeriods.id })
+        .from(employmentPeriods)
+        .where(
+          and(
+            eq(employmentPeriods.organizationId, organizationId),
+            eq(employmentPeriods.employeeId, account.employeeId),
+            lte(employmentPeriods.startsOn, localDate),
+            or(isNull(employmentPeriods.endsOn), gt(employmentPeriods.endsOn, localDate)),
+          ),
+        )
+        .limit(1);
+      hasCurrentEmployment = employment !== undefined;
+    }
+
+    return Object.freeze({
+      accountActive: account.accountActive,
+      accountId: mapDomainId<'Account'>(account.accountId, 'auth_users', 'id'),
+      employeeCapabilityActive:
+        account.accountActive && account.employeeStatus === 'ACTIVE' && hasCurrentEmployment,
+      employeeId:
+        account.employeeId === null
+          ? null
+          : mapDomainId<'Employee'>(account.employeeId, 'account_employee_links', 'employee_id'),
+      organizationId,
+      roles: Object.freeze(roleRows.map(({ role }) => role)),
+    });
+  }
+
+  async isCurrentManager(
+    organizationId: Parameters<AuthorizationRepository['isCurrentManager']>[0],
+    managerEmployeeId: Parameters<AuthorizationRepository['isCurrentManager']>[1],
+    employeeId: Parameters<AuthorizationRepository['isCurrentManager']>[2],
+    localDate: Parameters<AuthorizationRepository['isCurrentManager']>[3],
+  ): Promise<boolean> {
+    const [row] = await this.transaction
+      .select({ id: managerAssignments.id })
+      .from(managerAssignments)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.id, managerAssignments.employeeId),
+          eq(employees.organizationId, organizationId),
+          eq(employees.status, 'ACTIVE'),
+        ),
+      )
+      .where(
+        and(
+          eq(managerAssignments.organizationId, organizationId),
+          eq(managerAssignments.employeeId, employeeId),
+          eq(managerAssignments.managerEmployeeId, managerEmployeeId),
+          lte(managerAssignments.startsOn, localDate),
+          or(isNull(managerAssignments.endsOn), gt(managerAssignments.endsOn, localDate)),
+          sql`exists (
+            select 1 from ${employmentPeriods}
+            where ${employmentPeriods.organizationId} = ${organizationId}
+              and ${employmentPeriods.employeeId} = ${employeeId}
+              and ${employmentPeriods.startsOn} <= ${localDate}
+              and (${employmentPeriods.endsOn} is null or ${employmentPeriods.endsOn} > ${localDate})
+          )`,
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
+  }
+
+  async linkEmployee(input: LinkEmployeeInput): Promise<void> {
+    await this.transaction.insert(accountEmployeeLinks).values({
+      employeeId: input.employeeId,
+      linkedAt: new Date(input.changedAt),
+      organizationId: input.organizationId,
+      userId: input.accountId,
+    });
+    await this.transaction.delete(authSessions).where(eq(authSessions.userId, input.accountId));
+  }
+
+  async listAuthorizedEmployeeIds(
+    input: ListAuthorizedEmployeesInput,
+  ): Promise<readonly ReturnType<typeof mapEmployeeId>[]> {
+    const scopeCondition = employeeScopeCondition(input);
+    const rows = await this.transaction
+      .selectDistinct({ employeeId: employees.id })
+      .from(employees)
+      .leftJoin(
+        managerAssignments,
+        and(
+          eq(managerAssignments.organizationId, input.organizationId),
+          eq(managerAssignments.employeeId, employees.id),
+          lte(managerAssignments.startsOn, input.localDate),
+          or(isNull(managerAssignments.endsOn), gt(managerAssignments.endsOn, input.localDate)),
+        ),
+      )
+      .where(and(eq(employees.organizationId, input.organizationId), scopeCondition))
+      .orderBy(asc(employees.id))
+      .limit(input.limit)
+      .offset(input.offset);
+
+    return Object.freeze(rows.map(({ employeeId }) => mapEmployeeId(employeeId)));
+  }
+
+  async replaceActiveRoles(input: ReplaceActiveRolesInput): Promise<void> {
+    const requestedRoles = [...new Set(input.roles)].sort();
+    const currentRows = await this.transaction
+      .select({ role: accountRoleAssignments.role })
+      .from(accountRoleAssignments)
+      .where(
+        and(
+          eq(accountRoleAssignments.organizationId, input.organizationId),
+          eq(accountRoleAssignments.userId, input.accountId),
+          isNull(accountRoleAssignments.revokedAt),
+        ),
+      );
+    const currentRoles = currentRows.map(({ role }) => role);
+    const removedRoles = currentRoles.filter((role) => !requestedRoles.includes(role));
+    const addedRoles = requestedRoles.filter((role) => !currentRoles.includes(role));
+    if (removedRoles.length === 0 && addedRoles.length === 0) return;
+
+    const changedAt = new Date(input.changedAt);
+    if (removedRoles.length > 0) {
+      await this.transaction
+        .update(accountRoleAssignments)
+        .set({ revokedAt: changedAt })
+        .where(
+          and(
+            eq(accountRoleAssignments.organizationId, input.organizationId),
+            eq(accountRoleAssignments.userId, input.accountId),
+            isNull(accountRoleAssignments.revokedAt),
+            inArray(accountRoleAssignments.role, removedRoles),
+          ),
+        );
+    }
+    if (addedRoles.length > 0) {
+      await this.transaction.insert(accountRoleAssignments).values(
+        addedRoles.map((role) => ({
+          assignedAt: changedAt,
+          organizationId: input.organizationId,
+          role,
+          userId: input.accountId,
+        })),
+      );
+    }
+    await this.transaction.delete(authSessions).where(eq(authSessions.userId, input.accountId));
+  }
+
+  async unlinkEmployee(
+    input: Parameters<AuthorizationRepository['unlinkEmployee']>[0],
+  ): Promise<boolean> {
+    const rows = await this.transaction
+      .update(accountEmployeeLinks)
+      .set({ unlinkedAt: new Date(input.changedAt) })
+      .where(
+        and(
+          eq(accountEmployeeLinks.organizationId, input.organizationId),
+          eq(accountEmployeeLinks.userId, input.accountId),
+          isNull(accountEmployeeLinks.unlinkedAt),
+        ),
+      )
+      .returning({ id: accountEmployeeLinks.id });
+    if (rows.length === 0) return false;
+    await this.transaction.delete(authSessions).where(eq(authSessions.userId, input.accountId));
+    return true;
+  }
+}
+
+function employeeScopeCondition(input: ListAuthorizedEmployeesInput) {
+  if (input.scope === 'ORGANIZATION') return sql`true`;
+  if (input.actorEmployeeId === null) return sql`false`;
+  if (input.scope === 'SELF') return eq(employees.id, input.actorEmployeeId);
+  const reportCondition = and(
+    eq(managerAssignments.managerEmployeeId, input.actorEmployeeId),
+    eq(employees.status, 'ACTIVE'),
+    sql`exists (
+      select 1 from ${employmentPeriods}
+      where ${employmentPeriods.organizationId} = ${input.organizationId}
+        and ${employmentPeriods.employeeId} = ${employees.id}
+        and ${employmentPeriods.startsOn} <= ${input.localDate}
+        and (${employmentPeriods.endsOn} is null or ${employmentPeriods.endsOn} > ${input.localDate})
+    )`,
+  );
+  return input.scope === 'REPORTS'
+    ? reportCondition
+    : or(eq(employees.id, input.actorEmployeeId), reportCondition);
+}
+
+function mapEmployeeId(value: string) {
+  return mapDomainId<'Employee'>(value, 'employees', 'id');
 }
 
 class PostgresOrganizationRepository implements OrganizationRepository {

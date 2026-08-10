@@ -39,6 +39,11 @@ accounts, sessions, protected verification grants, and rate-limit buckets. The c
 schema now has 33 tables. Reset identifiers are encoded to SHA-256 before SQL storage and lookup;
 session constraints enforce expiry after creation and no later than 12 hours after creation.
 
+`WL-303` added historical account-employee links and application-role assignments through
+`0003_authorization_foundation.sql`, bringing the migrated schema to 35 tables. Partial unique
+indexes enforce one active link in either direction and one active role row per account/role;
+organization-consistency and interval constraints support authoritative authorization resolution.
+
 The Drizzle schema is internal to `packages/database`; it is deliberately not exported from the
 package root. `WL-301` now exposes narrow repository methods only inside transaction callbacks,
 never rows, query builders, SQL values, or an unrestricted client.
@@ -94,4 +99,5 @@ prove forward recovery on a production-shaped copy.
 `WL-301` completed repository interfaces, domain-value mappings, bounded pool construction, row
 locking, and transaction helpers; see `docs/42-repositories-and-transactions.md`. Authentication is
 completed by `WL-302`; authorization, audit, and idempotency behavior remain owned by their later
-Phase 3 tasks. See `docs/43-better-auth-credential-session-foundation.md`.
+Phase 3 tasks. See `docs/43-better-auth-credential-session-foundation.md` and
+`docs/44-application-authorization-foundation.md`.
