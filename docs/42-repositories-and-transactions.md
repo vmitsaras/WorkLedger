@@ -6,7 +6,7 @@
 ## Public persistence boundary
 
 `@workledger/database` exposes one package root. Its public API contains the database factory,
-bounded configuration and transaction errors, domain-facing records, five repository interfaces,
+bounded configuration and transaction errors, domain-facing records, seven repository interfaces,
 and the transaction callback contract. Drizzle schemas, inferred rows, query builders, SQL values,
 the `pg` pool, and the unrestricted transaction client remain internal.
 
@@ -21,6 +21,12 @@ The initial repository surface is deliberately narrow:
   immutable event append, and ordered event reads;
 - daily projections support organization-scoped reads and exact next-version replacement; and
 - time-account entries support append and deterministic organization-scoped reads.
+
+`WL-303` added authoritative authorization resolution. `WL-305` adds a physically separated audit
+repository: domain/security append methods share the caller's transaction, while employee-domain
+and organization-security queries expose different record types and enforce bounded pagination.
+Audit facts are allowlisted and validated before SQL; invalid errors identify only the field, never
+the rejected value.
 
 Authorization is not inferred from repository scoping. `WL-303` must still apply actor/resource
 policy before calling these methods.
@@ -81,7 +87,7 @@ into the focus, announcement, and recovery behavior specified by the route and U
 
 ## Remaining work
 
-`WL-302` owns Better Auth credentials and database-backed session storage. `WL-303` now adds the
-transaction-scoped authorization repository and central application policy. Safe API errors, audit
-persistence, and idempotency claims remain owned by `WL-304` through `WL-306`; ordinary domain
-repositories still do not pre-authorize their callers.
+`WL-302` owns Better Auth credentials and database-backed session storage. `WL-303` adds the
+transaction-scoped authorization repository and central application policy. `WL-304` and `WL-305`
+complete safe API errors and audit persistence; idempotency claims remain owned by `WL-306`.
+Ordinary domain repositories still do not pre-authorize their callers.

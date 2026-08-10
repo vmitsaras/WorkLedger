@@ -11,6 +11,111 @@ export type EmployeeStatus = 'ACTIVE' | 'INACTIVE';
 export type DailyProjectionStatus = 'PROVISIONAL' | 'INCOMPLETE' | 'COMPLETE';
 export type ApplicationRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR';
 export type EmployeeAuthorizationScope = 'ORGANIZATION' | 'REPORTS' | 'SELF' | 'SELF_AND_REPORTS';
+export type AuditOutcome = 'SUCCESS' | 'DENIED' | 'FAILURE';
+export type DomainAuditTargetKind =
+  | 'EMPLOYEE'
+  | 'ATTENDANCE'
+  | 'CORRECTION_REQUEST'
+  | 'ABSENCE_REQUEST'
+  | 'MONTHLY_PERIOD'
+  | 'TIME_ACCOUNT'
+  | 'LEAVE_ENTITLEMENT'
+  | 'TEAM'
+  | 'ASSIGNMENT'
+  | 'CONFIGURATION'
+  | 'EXPORT';
+export type SecurityAuditTargetKind =
+  | 'ACCOUNT'
+  | 'SESSION'
+  | 'AUTHENTICATION'
+  | 'INVITATION'
+  | 'RECOVERY'
+  | 'AUTHORIZATION'
+  | 'EXPORT'
+  | 'OPERATIONS'
+  | 'BACKUP'
+  | 'SECRET'
+  | 'NOTIFICATION_DELIVERY';
+
+export type AuditActor =
+  | Readonly<{
+      accountId: DomainId<'Account'>;
+      kind: 'ACCOUNT';
+      role: ApplicationRole | null;
+    }>
+  | Readonly<{
+      kind: 'SYSTEM';
+      systemProcess: DomainId<'SystemProcess'>;
+    }>;
+
+export type DomainAuditFacts = Readonly<{
+  attendanceRevision?: number;
+  effectiveDate?: LocalDate;
+  eventCount?: number;
+  minutes?: number;
+  nextStatus?: string;
+  previousStatus?: string;
+  sourceCount?: number;
+  version?: number;
+}>;
+
+export type SecurityAuditFacts = Readonly<{
+  authenticationMethod?: string;
+  changedRole?: ApplicationRole;
+  failureCategory?: string;
+  httpStatus?: number;
+  sessionId?: DomainId<'Session'>;
+  scope?: string;
+}>;
+
+export type DomainAuditEventRecord = Readonly<{
+  actionCode: string;
+  actor: AuditActor;
+  facts: DomainAuditFacts;
+  id: DomainId<'DomainAuditEvent'>;
+  occurredAt: Instant;
+  organizationId: DomainId<'Organization'>;
+  outcome: AuditOutcome;
+  privileged: boolean;
+  reasonCode: string | null;
+  requestId: DomainId<'Request'> | null;
+  restrictedReasonId: DomainId<'RestrictedReason'> | null;
+  subjectEmployeeId: DomainId<'Employee'> | null;
+  targetId: string;
+  targetKind: DomainAuditTargetKind;
+}>;
+
+export type SecurityAuditEventRecord = Readonly<{
+  actionCode: string;
+  actor: AuditActor;
+  facts: SecurityAuditFacts;
+  id: DomainId<'SecurityAuditEvent'>;
+  occurredAt: Instant;
+  organizationId: DomainId<'Organization'>;
+  outcome: AuditOutcome;
+  privileged: boolean;
+  reasonCode: string | null;
+  requestId: DomainId<'Request'> | null;
+  targetAccountId: DomainId<'Account'> | null;
+  targetId: string;
+  targetKind: SecurityAuditTargetKind;
+}>;
+
+export type AppendDomainAuditEventInput = Omit<DomainAuditEventRecord, 'id'>;
+export type AppendSecurityAuditEventInput = Omit<SecurityAuditEventRecord, 'id'>;
+
+export type ListDomainAuditEventsInput = Readonly<{
+  limit: number;
+  offset: number;
+  organizationId: DomainId<'Organization'>;
+  subjectEmployeeId: DomainId<'Employee'>;
+}>;
+
+export type ListSecurityAuditEventsInput = Readonly<{
+  limit: number;
+  offset: number;
+  organizationId: DomainId<'Organization'>;
+}>;
 
 export type AuthorizationActorRecord = Readonly<{
   accountActive: boolean;
@@ -122,6 +227,15 @@ export type AppendTimeAccountEntryInput = Readonly<{
 
 export interface OrganizationRepository {
   findById(organizationId: DomainId<'Organization'>): Promise<OrganizationRecord | null>;
+}
+
+export interface AuditRepository {
+  appendDomain(input: AppendDomainAuditEventInput): Promise<DomainAuditEventRecord>;
+  appendSecurity(input: AppendSecurityAuditEventInput): Promise<SecurityAuditEventRecord>;
+  listDomainForEmployee(
+    input: ListDomainAuditEventsInput,
+  ): Promise<readonly DomainAuditEventRecord[]>;
+  listSecurity(input: ListSecurityAuditEventsInput): Promise<readonly SecurityAuditEventRecord[]>;
 }
 
 export interface EmployeeRepository {

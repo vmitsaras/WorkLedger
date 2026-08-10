@@ -196,6 +196,10 @@ permission claims.
 `apps/api/src/http` for request identifiers, Zod Fastify compilers, OpenAPI generation, and safe
 transport error mapping. OpenAPI is generated for regression testing but is not yet a public route.
 
+`WL-305` added `packages/database/src/repositories/audit-values.ts` for minimized fact validation
+and `apps/api/src/audit` for authorization-composed domain/security history queries. The two audit
+tables and query surfaces remain separate by design.
+
 ## Feature-folder rule
 
 Create a feature folder only when work begins on that feature. Avoid empty speculative architecture.

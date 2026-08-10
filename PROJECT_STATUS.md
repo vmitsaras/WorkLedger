@@ -2,16 +2,17 @@
 
 **Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 5 of 10 Phase 3 tasks complete
-**Current milestone:** Append-only audience-separated audit foundation
-**Active task:** `WL-305`
+**Phase progress:** 6 of 10 Phase 3 tasks complete
+**Current milestone:** Attendance-command idempotency persistence
+**Active task:** `WL-306`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Implement append-only domain/security audit persistence with audience separation, field
-minimization, atomic write support, safe querying, and hostile-text/redaction evidence.
+Implement scoped, protected idempotency-key persistence and replay behavior for attendance
+mutations, including fingerprint conflicts, concurrency, terminal outcome snapshots, and atomic
+source/audit integration.
 
 ## Verified decisions
 
@@ -73,6 +74,9 @@ minimization, atomic write support, safe querying, and hostile-text/redaction ev
 - Strict Zod contracts are the single transport source for Fastify validation, response
   serialization, inferred types, and generated OpenAPI 3.1; schema failures return `422`, malformed
   JSON returns `400`, and every response receives a server-owned UUID request identifier.
+- Domain and security audit evidence uses separate append-only tables, fact allowlists, repository
+  record types, and authorization-composed query paths; source actions and audit evidence can commit
+  atomically, and neither HR nor system roles gain the other audience implicitly.
 - Caddy is the reference production proxy while the observable TLS, trusted-header, network-isolation, health, and security-header contract remains proxy-agnostic.
 - Each deployment must own an explicit retention profile by data class; ordinary deletion never destroys source, ledger, snapshot, or required audit integrity, and restored sessions/grants are invalidated before activation.
 - The canonical repository is the existing public `vmitsaras/WorkLedger` GitHub project and WorkLedger-owned source/documentation uses the existing MIT license.
@@ -192,37 +196,40 @@ minimization, atomic write support, safe querying, and hostile-text/redaction ev
   validation separation, non-leaking Fastify error mapping, response serialization, and internal
   OpenAPI 3.1 generation completed (`WL-304`; see
   `docs/45-shared-api-contract-foundation.md` and ADR 0012).
+- [x] Physically separated append-only domain/security audit streams, actor-at-action attribution,
+  minimized fact allowlists, immutable triggers, transaction-scoped append methods, and
+  authorization-composed audience queries completed (`WL-305`; see
+  `docs/46-audit-persistence-foundation.md`).
 
 ## Latest completed task
 
-### `WL-304` — Implement API error envelope and validation conventions
+### `WL-305` — Implement separated domain/security audit persistence
 
-- Changed: added strict shared Zod envelope/error schemas, inferred transport types, a server-owned
-  UUID request-ID contract, Fastify validation/serialization compilers, OpenAPI 3.1 generation, and
-  centralized safe application/transport/internal error mapping.
-- Verified: contract and API tests cover strict schemas, bounded recovery context, `400` malformed
-  JSON, `422` field errors, unknown-field/input redaction, safe conflicts, invalid-context fallback,
-  unknown/serialization failures, server-owned request IDs, and generated OpenAPI without exposure.
-- Accessibility: no user interface changed. Stable field paths, codes, and correction messages now
-  support the later linked error-summary, focus, and announcement behavior.
-- Security/data: submitted values, unknown keys, provider messages, stack/SQL/path details, and
-  attacker request IDs are never trusted or returned; every error is no-store and invalid declared
-  recovery context falls back to generic `500 INTERNAL_ERROR`.
-- Documentation: accepted ADR 0012, resolved D-200/D-204, added
-  `docs/45-shared-api-contract-foundation.md`, and synchronized API/error, architecture, repository,
-  README, roadmap checklist, and task-board memory.
-- Remaining risk: purpose-specific feature DTOs, public OpenAPI/typed-client exposure, audit events,
-  and idempotency persistence remain later tasks.
-- Next task: `WL-305`.
+- Changed: added two audience-specific tables/enums/indexes, immutable triggers, actor-at-action
+  attribution, minimized fact validators, transaction-scoped append/query repositories, and an API
+  service composing domain/security reads with authoritative authorization.
+- Verified: schema/PostgreSQL tests cover 37-table clean migration, immutable/cross-organization
+  constraints, hostile input rejection, source-plus-audit rollback, scope-before-pagination,
+  owner/current/former manager behavior, and HR/system audience separation.
+- Accessibility: no user interface changed. Stored codes/identifiers remain structured plain text;
+  semantic history tables, focus, reflow, and error behavior remain owned by later feature views.
+- Security/data: arbitrary metadata and free text have no audit field; facts are allowlisted and
+  bounded, rejected values are never echoed, separate types/tables prevent accidental audience
+  union, and system administrators receive no domain payload through the composed service.
+- Documentation: added `docs/46-audit-persistence-foundation.md` and synchronized schema,
+  repository, architecture, structure, README, roadmap checklist, and task-board memory.
+- Remaining risk: later feature/authentication/operations services must append their required audit
+  events, purpose-specific audit DTOs/routes remain unimplemented, and host/database superusers stay
+  trusted operational actors.
+- Next task: `WL-306`.
 
 ## Current blockers
 
-No `WL-305` blocker is known. D-200 and D-204 are resolved by ADR 0012; D-502 remains open before
-the production browser gate.
+No `WL-306` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-305 — Implement separated domain/security audit persistence.`
+`WL-306 — Implement idempotency storage for clock mutations.`
 
 ## Update rules
 

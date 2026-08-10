@@ -216,6 +216,10 @@ Domain audit and security/technical audit use separate authorization/projections
 
 Required security events include sign-in success/failure in non-enumerating form, recovery/invitation request and completion, password reset, session revoke/expiry, account activation/deactivation, privileged role change/bootstrap, repeated authorization denial, export, backup/restore/upgrade outcome, and secret rotation. Failed unknown-account attempts use generic/aggregated metadata rather than creating a discoverable person record.
 
+`WL-305` implements the separated append/query persistence boundary and minimized fact allowlists;
+see `docs/46-audit-persistence-foundation.md`. Later feature producers remain responsible for
+appending each required event in the same transaction as its source action where applicable.
+
 ### Operational logs and diagnostics
 
 Operational logs answer service-health questions, not employee activity questions. Allowlisted structured fields include timestamp, level, service/version family, generic route template, HTTP status, stable safe error code, request ID, latency, dependency category, and opaque actor/account ID only when necessary.

@@ -5,15 +5,16 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 3 — 5 of 10 tasks complete**
+> **Current phase progress: Phase 3 — 6 of 10 tasks complete**
 
 Phase 2 passed its exit gate and the repository is now in **Phase 3: data, authentication, and API
 foundation**. The workspace, project boundaries, strict tooling, test and CI baseline, local
 PostgreSQL environment, runtime configuration, React Aria UI foundation, contributor documentation,
 framework-independent domain engine, initial PostgreSQL schema/generated migrations, narrow
-repository/transaction boundary, accepted Better Auth credential/session foundation, and
-deny-by-default application authorization, and shared Zod/Fastify API contract and safe error
-boundary are implemented. The next task is separated domain/security audit persistence (`WL-305`).
+repository/transaction boundary, accepted Better Auth credential/session foundation,
+deny-by-default application authorization, shared Zod/Fastify API contract and safe error boundary,
+and append-only audience-separated audit foundation are implemented. The next task is idempotency
+storage for clock mutations (`WL-306`).
 
 WorkLedger does not yet provide authenticated application services, product workflows, production
 deployment, or a supported release. The runnable web page is an isolated
@@ -183,6 +184,7 @@ versions and makes no response-time or production-support promise.
 | [docs/43-better-auth-credential-session-foundation.md](docs/43-better-auth-credential-session-foundation.md) | Credential, reset, session, cookie, CSRF, throttling, and revocation evidence |
 | [docs/44-application-authorization-foundation.md](docs/44-application-authorization-foundation.md) | Account links, roles, current-manager scope, policy, and invalidation evidence |
 | [docs/45-shared-api-contract-foundation.md](docs/45-shared-api-contract-foundation.md) | Zod envelopes, validation statuses, request IDs, safe errors, and OpenAPI generation evidence |
+| [docs/46-audit-persistence-foundation.md](docs/46-audit-persistence-foundation.md) | Domain/security audit separation, minimization, immutability, atomicity, and query authorization evidence |
 
 ## License
 

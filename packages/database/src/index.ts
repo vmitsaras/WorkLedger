@@ -13,11 +13,17 @@ export {
   type WorkLedgerDatabaseConfiguration,
 } from './client.js';
 export { DatabaseValueError } from './mapping/domain-values.js';
+export { AuditValueError } from './repositories/audit-values.js';
 export type {
+  AppendDomainAuditEventInput,
+  AppendSecurityAuditEventInput,
   ApplicationRole,
   AdvanceAttendanceHeadInput,
   AppendPunchEvent,
   AppendTimeAccountEntryInput,
+  AuditActor,
+  AuditOutcome,
+  AuditRepository,
   AttendanceHeadRecord,
   AttendanceRepository,
   AuthorizationActorRecord,
@@ -26,6 +32,9 @@ export type {
   DailyProjectionRecord,
   DailyProjectionRepository,
   DailyProjectionStatus,
+  DomainAuditEventRecord,
+  DomainAuditFacts,
+  DomainAuditTargetKind,
   EmployeeRecord,
   EmployeeRepository,
   EmployeeAuthorizationScope,
@@ -34,8 +43,13 @@ export type {
   OrganizationRepository,
   LinkEmployeeInput,
   ListAuthorizedEmployeesInput,
+  ListDomainAuditEventsInput,
+  ListSecurityAuditEventsInput,
   ReplaceDailyProjectionInput,
   ReplaceActiveRolesInput,
+  SecurityAuditEventRecord,
+  SecurityAuditFacts,
+  SecurityAuditTargetKind,
   StoredPunchEvent,
   TimeAccountRepository,
 } from './repositories/contracts.js';

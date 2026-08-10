@@ -55,7 +55,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-302` Integrate the accepted Better Auth credential, session, CSRF, reset, and revocation profile.
 - [x] `WL-303` Implement application roles and scoped authorization.
 - [x] `WL-304` Implement API error envelope and validation conventions.
-- [ ] `WL-305` Implement separated domain/security audit persistence.
+- [x] `WL-305` Implement separated domain/security audit persistence.
 - [ ] `WL-306` Implement idempotency storage for clock mutations.
 - [ ] `WL-307` Implement seed organization and realistic personas.
 - [ ] `WL-308` Generate or expose OpenAPI safely.

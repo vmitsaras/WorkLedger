@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import type { DomainId, TimeAccountEntryActor, TimeAccountLedgerEntry } from '@workledger/domain';
@@ -10,11 +10,13 @@ import {
   authUsers,
   attendanceHeads,
   dailyProjections,
+  domainAuditEvents,
   employees,
   employmentPeriods,
   managerAssignments,
   organizations,
   punchEvents,
+  securityAuditEvents,
   timeAccountEntries,
 } from '../schema/index.js';
 import {
@@ -27,6 +29,9 @@ import {
 } from '../mapping/domain-values.js';
 import type {
   AdvanceAttendanceHeadInput,
+  ApplicationRole,
+  AuditActor,
+  AuditRepository,
   AppendPunchEvent,
   AppendTimeAccountEntryInput,
   AttendanceHeadRecord,
@@ -35,6 +40,7 @@ import type {
   AuthorizationRepository,
   DailyProjectionRecord,
   DailyProjectionRepository,
+  DomainAuditEventRecord,
   EmployeeRecord,
   EmployeeRepository,
   LinkEmployeeInput,
@@ -43,9 +49,17 @@ import type {
   OrganizationRepository,
   ReplaceDailyProjectionInput,
   ReplaceActiveRolesInput,
+  SecurityAuditEventRecord,
   StoredPunchEvent,
   TimeAccountRepository,
 } from './contracts.js';
+import {
+  AuditValueError,
+  parseDomainAuditFacts,
+  parseSecurityAuditFacts,
+  validateDomainAuditInput,
+  validateSecurityAuditInput,
+} from './audit-values.js';
 
 import * as schema from '../schema/index.js';
 
@@ -53,6 +67,7 @@ type RootDatabase = NodePgDatabase<typeof schema>;
 export type RepositoryTransaction = Parameters<Parameters<RootDatabase['transaction']>[0]>[0];
 
 export function createTransactionRepositories(transaction: RepositoryTransaction): Readonly<{
+  audit: AuditRepository;
   attendance: AttendanceRepository;
   authorization: AuthorizationRepository;
   dailyProjections: DailyProjectionRepository;
@@ -61,6 +76,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   timeAccount: TimeAccountRepository;
 }> {
   return Object.freeze({
+    audit: new PostgresAuditRepository(transaction),
     attendance: new PostgresAttendanceRepository(transaction),
     authorization: new PostgresAuthorizationRepository(transaction),
     dailyProjections: new PostgresDailyProjectionRepository(transaction),
@@ -68,6 +84,94 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     organizations: new PostgresOrganizationRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
   });
+}
+
+class PostgresAuditRepository implements AuditRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async appendDomain(
+    input: Parameters<AuditRepository['appendDomain']>[0],
+  ): Promise<DomainAuditEventRecord> {
+    validateDomainAuditInput(input);
+    const [row] = await this.transaction
+      .insert(domainAuditEvents)
+      .values({
+        actionCode: input.actionCode,
+        ...auditActorColumns(input.actor),
+        facts: { ...input.facts },
+        occurredAt: input.occurredAt,
+        organizationId: input.organizationId,
+        outcome: input.outcome,
+        privileged: input.privileged,
+        reasonCode: input.reasonCode,
+        requestId: input.requestId,
+        restrictedReasonId: input.restrictedReasonId,
+        subjectEmployeeId: input.subjectEmployeeId,
+        targetId: input.targetId,
+        targetKind: input.targetKind,
+      })
+      .returning();
+    if (row === undefined) throw new DatabaseValueError('domain_audit_events', 'id');
+    return mapDomainAuditEvent(row);
+  }
+
+  async appendSecurity(
+    input: Parameters<AuditRepository['appendSecurity']>[0],
+  ): Promise<SecurityAuditEventRecord> {
+    validateSecurityAuditInput(input);
+    const [row] = await this.transaction
+      .insert(securityAuditEvents)
+      .values({
+        actionCode: input.actionCode,
+        ...auditActorColumns(input.actor),
+        facts: { ...input.facts },
+        occurredAt: input.occurredAt,
+        organizationId: input.organizationId,
+        outcome: input.outcome,
+        privileged: input.privileged,
+        reasonCode: input.reasonCode,
+        requestId: input.requestId,
+        targetAccountId: input.targetAccountId,
+        targetId: input.targetId,
+        targetKind: input.targetKind,
+      })
+      .returning();
+    if (row === undefined) throw new DatabaseValueError('security_audit_events', 'id');
+    return mapSecurityAuditEvent(row);
+  }
+
+  async listDomainForEmployee(
+    input: Parameters<AuditRepository['listDomainForEmployee']>[0],
+  ): Promise<readonly DomainAuditEventRecord[]> {
+    validateAuditPage(input.limit, input.offset);
+    const rows = await this.transaction
+      .select()
+      .from(domainAuditEvents)
+      .where(
+        and(
+          eq(domainAuditEvents.organizationId, input.organizationId),
+          eq(domainAuditEvents.subjectEmployeeId, input.subjectEmployeeId),
+        ),
+      )
+      .orderBy(desc(domainAuditEvents.occurredAt), desc(domainAuditEvents.id))
+      .limit(input.limit)
+      .offset(input.offset);
+    return Object.freeze(rows.map(mapDomainAuditEvent));
+  }
+
+  async listSecurity(
+    input: Parameters<AuditRepository['listSecurity']>[0],
+  ): Promise<readonly SecurityAuditEventRecord[]> {
+    validateAuditPage(input.limit, input.offset);
+    const rows = await this.transaction
+      .select()
+      .from(securityAuditEvents)
+      .where(eq(securityAuditEvents.organizationId, input.organizationId))
+      .orderBy(desc(securityAuditEvents.occurredAt), desc(securityAuditEvents.id))
+      .limit(input.limit)
+      .offset(input.offset);
+    return Object.freeze(rows.map(mapSecurityAuditEvent));
+  }
 }
 
 class PostgresAuthorizationRepository implements AuthorizationRepository {
@@ -687,6 +791,133 @@ function mapTimeAccountEntry(row: typeof timeAccountEntries.$inferSelect): TimeA
       'employee_id',
     ),
   });
+}
+
+function auditActorColumns(actor: AuditActor) {
+  return actor.kind === 'ACCOUNT'
+    ? {
+        actorAccountId: actor.accountId,
+        actorKind: actor.kind,
+        actorRole: actor.role,
+        actorSystemProcess: null,
+      }
+    : {
+        actorAccountId: null,
+        actorKind: actor.kind,
+        actorRole: null,
+        actorSystemProcess: actor.systemProcess,
+      };
+}
+
+function mapDomainAuditEvent(row: typeof domainAuditEvents.$inferSelect): DomainAuditEventRecord {
+  return Object.freeze({
+    actionCode: row.actionCode,
+    actor: mapAuditActor(row, 'domain_audit_events'),
+    facts: parseDomainAuditFacts(row.facts),
+    id: mapDomainId<'DomainAuditEvent'>(row.id, 'domain_audit_events', 'id'),
+    occurredAt: mapInstant(row.occurredAt, 'domain_audit_events', 'occurred_at'),
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'domain_audit_events',
+      'organization_id',
+    ),
+    outcome: row.outcome,
+    privileged: row.privileged,
+    reasonCode: row.reasonCode,
+    requestId:
+      row.requestId === null
+        ? null
+        : mapDomainId<'Request'>(row.requestId, 'domain_audit_events', 'request_id'),
+    restrictedReasonId:
+      row.restrictedReasonId === null
+        ? null
+        : mapDomainId<'RestrictedReason'>(
+            row.restrictedReasonId,
+            'domain_audit_events',
+            'restricted_reason_id',
+          ),
+    subjectEmployeeId:
+      row.subjectEmployeeId === null
+        ? null
+        : mapDomainId<'Employee'>(
+            row.subjectEmployeeId,
+            'domain_audit_events',
+            'subject_employee_id',
+          ),
+    targetId: row.targetId,
+    targetKind: row.targetKind,
+  });
+}
+
+function mapSecurityAuditEvent(
+  row: typeof securityAuditEvents.$inferSelect,
+): SecurityAuditEventRecord {
+  return Object.freeze({
+    actionCode: row.actionCode,
+    actor: mapAuditActor(row, 'security_audit_events'),
+    facts: parseSecurityAuditFacts(row.facts),
+    id: mapDomainId<'SecurityAuditEvent'>(row.id, 'security_audit_events', 'id'),
+    occurredAt: mapInstant(row.occurredAt, 'security_audit_events', 'occurred_at'),
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'security_audit_events',
+      'organization_id',
+    ),
+    outcome: row.outcome,
+    privileged: row.privileged,
+    reasonCode: row.reasonCode,
+    requestId:
+      row.requestId === null
+        ? null
+        : mapDomainId<'Request'>(row.requestId, 'security_audit_events', 'request_id'),
+    targetAccountId:
+      row.targetAccountId === null
+        ? null
+        : mapDomainId<'Account'>(row.targetAccountId, 'security_audit_events', 'target_account_id'),
+    targetId: row.targetId,
+    targetKind: row.targetKind,
+  });
+}
+
+function mapAuditActor(
+  row: Readonly<{
+    actorAccountId: string | null;
+    actorKind: 'ACCOUNT' | 'SYSTEM';
+    actorRole: ApplicationRole | null;
+    actorSystemProcess: string | null;
+  }>,
+  table: 'domain_audit_events' | 'security_audit_events',
+): AuditActor {
+  if (row.actorKind === 'ACCOUNT' && row.actorAccountId !== null) {
+    return Object.freeze({
+      accountId: mapDomainId<'Account'>(row.actorAccountId, table, 'actor_account_id'),
+      kind: 'ACCOUNT' as const,
+      role: row.actorRole,
+    });
+  }
+  if (row.actorKind === 'SYSTEM' && row.actorSystemProcess !== null) {
+    return Object.freeze({
+      kind: 'SYSTEM' as const,
+      systemProcess: mapDomainId<'SystemProcess'>(
+        row.actorSystemProcess,
+        table,
+        'actor_system_process',
+      ),
+    });
+  }
+  throw new DatabaseValueError(table, 'actor_kind');
+}
+
+function validateAuditPage(limit: number, offset: number): void {
+  if (
+    !Number.isSafeInteger(limit) ||
+    limit < 1 ||
+    limit > 100 ||
+    !Number.isSafeInteger(offset) ||
+    offset < 0
+  ) {
+    throw new AuditValueError('pagination');
+  }
 }
 
 function mapTimeAccountActor(kind: 'ACCOUNT' | 'SYSTEM', actorId: string): TimeAccountEntryActor {

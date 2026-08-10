@@ -18,7 +18,7 @@ integrationTest(
         `select count(*) from information_schema.tables where table_schema = $1`,
         [schemaName],
       );
-      expect(Number(tableCount.rows[0]?.count)).toBe(35);
+      expect(Number(tableCount.rows[0]?.count)).toBe(37);
 
       const organization = await client.query<{ id: string }>(
         `insert into organizations (name, time_zone) values ($1, $2) returning id`,
@@ -102,6 +102,55 @@ integrationTest(
           punch.rows[0]?.id,
         ]),
       ).rejects.toMatchObject({ code: '55000' });
+
+      const domainAudit = await client.query<{ id: string }>(
+        `insert into domain_audit_events
+          (organization_id, actor_kind, actor_account_id, actor_role, action_code, outcome,
+           subject_employee_id, target_kind, target_id, facts, occurred_at)
+         values ($1, 'ACCOUNT', $2, 'HR_ADMINISTRATOR', 'EMPLOYEE_UPDATED', 'SUCCESS',
+                 $3, 'EMPLOYEE', $5, '{}'::jsonb, $4)
+         returning id`,
+        [organizationId, account.rows[0]?.id, employeeId, '2026-01-02T10:00:00Z', employeeId],
+      );
+      await expect(
+        client.query(`update domain_audit_events set outcome = 'FAILURE' where id = $1`, [
+          domainAudit.rows[0]?.id,
+        ]),
+      ).rejects.toMatchObject({ code: '55000' });
+      await expect(
+        client.query(
+          `insert into domain_audit_events
+            (organization_id, actor_kind, actor_system_process, action_code, outcome,
+             subject_employee_id, target_kind, target_id, facts, occurred_at)
+           values ($1, 'SYSTEM', 'audit-test', 'AUDIT_TEST', 'SUCCESS', $2,
+                   'EMPLOYEE', $4, '{}'::jsonb, $3)`,
+          [otherOrganization.rows[0]?.id, employeeId, '2026-01-02T10:01:00Z', employeeId],
+        ),
+      ).rejects.toMatchObject({ code: '23503' });
+      const securityAudit = await client.query<{ id: string }>(
+        `insert into security_audit_events
+          (organization_id, actor_kind, actor_system_process, action_code, outcome,
+           target_kind, target_id, facts, occurred_at)
+         values ($1, 'SYSTEM', 'audit-test', 'SIGN_IN_FAILED', 'FAILURE',
+                 'AUTHENTICATION', 'authentication-attempt', '{}'::jsonb, $2)
+         returning id`,
+        [organizationId, '2026-01-02T10:02:00Z'],
+      );
+      await expect(
+        client.query(`delete from security_audit_events where id = $1`, [
+          securityAudit.rows[0]?.id,
+        ]),
+      ).rejects.toMatchObject({ code: '55000' });
+      await expect(
+        client.query(
+          `insert into security_audit_events
+            (organization_id, actor_kind, actor_system_process, action_code, outcome,
+             target_kind, target_id, facts, occurred_at)
+           values ($1, 'SYSTEM', 'audit-test', 'AUDIT_TEST', 'SUCCESS',
+                   'AUTHENTICATION', $2, '{}'::jsonb, $3)`,
+          [organizationId, '</script>', '2026-01-02T10:03:00Z'],
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
 
       await expect(
         client.query(

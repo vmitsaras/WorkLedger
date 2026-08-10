@@ -11,6 +11,13 @@ export {
   summarizeRuntimeConfig,
 } from './config.js';
 export { createApiServer } from './server.js';
+export {
+  createAuditService,
+  type DomainAuditQuery,
+  type DomainAuditQueryResult,
+  type SecurityAuditQuery,
+  type SecurityAuditQueryResult,
+} from './audit/service.js';
 export { WorkLedgerApiError, type ApiErrorStatusCode } from './http/errors.js';
 export {
   createRequestId,

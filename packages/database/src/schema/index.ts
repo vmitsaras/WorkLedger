@@ -108,6 +108,34 @@ export const timeAccountEntryType = pgEnum('time_account_entry_type', [
   'MANUAL_ADMINISTRATIVE_ADJUSTMENT',
 ]);
 export const ledgerActorKind = pgEnum('ledger_actor_kind', ['ACCOUNT', 'SYSTEM']);
+export const auditActorKind = pgEnum('audit_actor_kind', ['ACCOUNT', 'SYSTEM']);
+export const auditOutcome = pgEnum('audit_outcome', ['SUCCESS', 'DENIED', 'FAILURE']);
+export const domainAuditTargetKind = pgEnum('domain_audit_target_kind', [
+  'EMPLOYEE',
+  'ATTENDANCE',
+  'CORRECTION_REQUEST',
+  'ABSENCE_REQUEST',
+  'MONTHLY_PERIOD',
+  'TIME_ACCOUNT',
+  'LEAVE_ENTITLEMENT',
+  'TEAM',
+  'ASSIGNMENT',
+  'CONFIGURATION',
+  'EXPORT',
+]);
+export const securityAuditTargetKind = pgEnum('security_audit_target_kind', [
+  'ACCOUNT',
+  'SESSION',
+  'AUTHENTICATION',
+  'INVITATION',
+  'RECOVERY',
+  'AUTHORIZATION',
+  'EXPORT',
+  'OPERATIONS',
+  'BACKUP',
+  'SECRET',
+  'NOTIFICATION_DELIVERY',
+]);
 export const leaveEntitlementEntryType = pgEnum('leave_entitlement_entry_type', [
   'ALLOCATION',
   'RESERVATION',
@@ -1004,5 +1032,112 @@ export const idempotencyRecords = pgTable(
       'idempotency_records_terminal_shape',
       sql`not ${table.terminal} or (${table.outcome} is not null and ${table.completedAt} is not null)`,
     ),
+  ],
+);
+
+export const domainAuditEvents = pgTable(
+  'domain_audit_events',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    actorKind: auditActorKind('actor_kind').notNull(),
+    actorAccountId: uuid('actor_account_id').references(() => authUsers.id),
+    actorSystemProcess: varchar('actor_system_process', { length: 128 }),
+    actorRole: applicationRole('actor_role'),
+    actionCode: varchar('action_code', { length: 80 }).notNull(),
+    outcome: auditOutcome('outcome').notNull(),
+    subjectEmployeeId: uuid('subject_employee_id').references(() => employees.id),
+    targetKind: domainAuditTargetKind('target_kind').notNull(),
+    targetId: varchar('target_id', { length: 160 }).notNull(),
+    reasonCode: varchar('reason_code', { length: 80 }),
+    restrictedReasonId: uuid('restricted_reason_id'),
+    facts: jsonb('facts').$type<Readonly<Record<string, unknown>>>().default({}).notNull(),
+    requestId: uuid('request_id'),
+    privileged: boolean('privileged').default(false).notNull(),
+    occurredAt: timestamp('occurred_at', { mode: 'string', withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('domain_audit_events_organization_time_idx').on(
+      table.organizationId,
+      table.occurredAt,
+      table.id,
+    ),
+    index('domain_audit_events_employee_time_idx').on(
+      table.organizationId,
+      table.subjectEmployeeId,
+      table.occurredAt,
+      table.id,
+    ),
+    check(
+      'domain_audit_events_actor_shape',
+      sql`(${table.actorKind} = 'ACCOUNT' and ${table.actorAccountId} is not null and ${table.actorSystemProcess} is null) or (${table.actorKind} = 'SYSTEM' and ${table.actorAccountId} is null and ${table.actorSystemProcess} is not null and ${table.actorRole} is null)`,
+    ),
+    check(
+      'domain_audit_events_action_code_token',
+      sql`${table.actionCode} ~ '^[A-Z][A-Z0-9_]{0,79}$'`,
+    ),
+    check(
+      'domain_audit_events_target_id_token',
+      sql`${table.targetId} ~ '^[A-Za-z0-9][A-Za-z0-9._:~-]{0,159}$'`,
+    ),
+    check(
+      'domain_audit_events_reason_code_token',
+      sql`${table.reasonCode} is null or ${table.reasonCode} ~ '^[A-Z][A-Z0-9_]{0,79}$'`,
+    ),
+    check('domain_audit_events_facts_object', sql`jsonb_typeof(${table.facts}) = 'object'`),
+    check('domain_audit_events_facts_size', sql`octet_length(${table.facts}::text) <= 4096`),
+  ],
+);
+
+export const securityAuditEvents = pgTable(
+  'security_audit_events',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    actorKind: auditActorKind('actor_kind').notNull(),
+    actorAccountId: uuid('actor_account_id').references(() => authUsers.id),
+    actorSystemProcess: varchar('actor_system_process', { length: 128 }),
+    actorRole: applicationRole('actor_role'),
+    actionCode: varchar('action_code', { length: 80 }).notNull(),
+    outcome: auditOutcome('outcome').notNull(),
+    targetAccountId: uuid('target_account_id').references(() => authUsers.id),
+    targetKind: securityAuditTargetKind('target_kind').notNull(),
+    targetId: varchar('target_id', { length: 160 }).notNull(),
+    reasonCode: varchar('reason_code', { length: 80 }),
+    facts: jsonb('facts').$type<Readonly<Record<string, unknown>>>().default({}).notNull(),
+    requestId: uuid('request_id'),
+    privileged: boolean('privileged').default(false).notNull(),
+    occurredAt: timestamp('occurred_at', { mode: 'string', withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('security_audit_events_organization_time_idx').on(
+      table.organizationId,
+      table.occurredAt,
+      table.id,
+    ),
+    index('security_audit_events_account_time_idx').on(
+      table.organizationId,
+      table.targetAccountId,
+      table.occurredAt,
+      table.id,
+    ),
+    check(
+      'security_audit_events_actor_shape',
+      sql`(${table.actorKind} = 'ACCOUNT' and ${table.actorAccountId} is not null and ${table.actorSystemProcess} is null) or (${table.actorKind} = 'SYSTEM' and ${table.actorAccountId} is null and ${table.actorSystemProcess} is not null and ${table.actorRole} is null)`,
+    ),
+    check(
+      'security_audit_events_action_code_token',
+      sql`${table.actionCode} ~ '^[A-Z][A-Z0-9_]{0,79}$'`,
+    ),
+    check(
+      'security_audit_events_target_id_token',
+      sql`${table.targetId} ~ '^[A-Za-z0-9][A-Za-z0-9._:~-]{0,159}$'`,
+    ),
+    check(
+      'security_audit_events_reason_code_token',
+      sql`${table.reasonCode} is null or ${table.reasonCode} ~ '^[A-Z][A-Z0-9_]{0,79}$'`,
+    ),
+    check('security_audit_events_facts_object', sql`jsonb_typeof(${table.facts}) = 'object'`),
+    check('security_audit_events_facts_size', sql`octet_length(${table.facts}::text) <= 4096`),
   ],
 );

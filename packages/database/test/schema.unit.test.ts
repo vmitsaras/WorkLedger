@@ -11,8 +11,10 @@ import {
   authSessions,
   authUsers,
   dailyProjections,
+  domainAuditEvents,
   employmentPeriods,
   punchEvents,
+  securityAuditEvents,
   timeAccountEntries,
 } from '../src/schema/index.js';
 
@@ -61,6 +63,17 @@ describe('initial PostgreSQL schema', () => {
     ).toContain('account_role_assignments_active_role_uidx');
   });
 
+  it('separates domain and security audit storage with audience-specific indexes', () => {
+    expect(getTableConfig(domainAuditEvents).name).toBe('domain_audit_events');
+    expect(getTableConfig(securityAuditEvents).name).toBe('security_audit_events');
+    expect(getTableConfig(domainAuditEvents).indexes.map(({ config }) => config.name)).toContain(
+      'domain_audit_events_employee_time_idx',
+    );
+    expect(getTableConfig(securityAuditEvents).indexes.map(({ config }) => config.name)).toContain(
+      'security_audit_events_account_time_idx',
+    );
+  });
+
   it('commits generated and custom migration metadata', () => {
     const journal = JSON.parse(
       readFileSync(`${packageDirectory}/migrations/meta/_journal.json`, 'utf8'),
@@ -71,6 +84,7 @@ describe('initial PostgreSQL schema', () => {
       '0001_integrity_constraints',
       '0002_auth_foundation',
       '0003_authorization_foundation',
+      '0004_audit_foundation',
     ]);
   });
 });

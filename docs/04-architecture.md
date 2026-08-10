@@ -19,6 +19,7 @@ reference Caddy / equivalent trusted reverse proxy
          └── apps/api — Fastify
                 ├── authentication/session adapter
                 ├── authorization policies
+                ├── audience-separated audit query service
                 ├── application services
                 ├── domain package
                 ├── repositories / transactions
@@ -99,6 +100,10 @@ Contracts are not domain entities. Avoid exposing database rows directly.
 
 ADR 0012 selects strict Zod schemas as the single transport source. Fastify validation, response
 serialization, inferred TypeScript types, and generated OpenAPI 3.1 derive from those schemas.
+
+Domain and security audit persistence use separate record types, tables, repository queries, and
+authorization paths. Audit append methods share the originating application transaction; audit is
+evidence of a source action, not a replacement for source history.
 
 ### `packages/database`
 
