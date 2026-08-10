@@ -1,18 +1,18 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 2 — Framework-independent domain engine
+**Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 11 of 12 Phase 2 tasks complete
-**Current milestone:** Phase 2 exit gate
-**Active task:** `WL-211`
+**Phase progress:** 0 of 10 Phase 3 tasks complete
+**Current milestone:** Initial PostgreSQL schema and generated migrations
+**Active task:** `WL-300`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Execute the Phase 2 exit gate: review the domain package dependency boundary, the pure-domain
-fixture evidence, invariant coverage, documentation, and all required verification results. Bump
-the shared workspace version only if the gate passes.
+Design and implement the initial PostgreSQL schema and generated migrations. Resolve the physical
+identifier and daily-projection persistence decisions before accepting constraints, indexes,
+repositories, or migration artifacts.
 
 ## Verified decisions
 
@@ -161,38 +161,37 @@ the shared workspace version only if the gate passes.
   (`WL-209`; see `docs/38-calculation-signals.md`).
 - [x] Pure-domain fixture evidence, full catalog owner mapping, and invariant review completed
   (`WL-210`; see `docs/39-domain-example-review.md`).
+- [x] Phase 2 domain package boundary, fixture mapping, invariant review, and quality gate passed
+  with shared internal version `0.3.0` (`WL-211`; see `docs/40-phase-2-gate-review.md`).
 
 ## Latest completed task
 
-### `WL-210` — Execute full domain example suite and domain-calculation review
+### `WL-211` — Execute Phase 2 gate review
 
-- Changed: reviewed all 85 accepted fixtures against the Phase 2 domain surface. The mapping
-  identifies direct pure-domain evidence and retains idempotency, workflow, persistence,
-  authorization, export, and UI fixtures with their planned later owners.
-- Verified: the domain review confirms applicable time, calculation, absence-effect, ledger, and
-  structured-signal invariants. The complete local format, lint, strict TypeScript, boundary,
-  unit/component, workspace, phase-version, and typed-entry checks pass.
-- Accessibility: no UI changed. The review preserves structured source/error/warning output needed
-  for later accessible recovery and explanation surfaces.
-- Security/data: no persistence or sensitive data surface was introduced. The mapping explicitly
-  leaves authorization, audit, privacy DTO, export, and transaction evidence with their owning
-  phases instead of claiming unsupported coverage.
-- Documentation: added `docs/39-domain-example-review.md`, reconciled the catalog criterion, and
-  recorded/resolved the scope contradiction in `docs/10-open-decisions.md`.
-- Remaining risk: the Phase 2 gate review and version bump remain; later workflow fixtures still
-  require executable evidence when their scheduled implementation tasks begin.
-- Next task: `WL-211`.
+- Changed: completed the Phase 2 exit audit and advanced every workspace manifest from `0.2.0` to
+  `0.3.0` under the mandatory phase-version rule. Added the detailed gate evidence.
+- Verified: formatting, linting, strict TypeScript, source boundaries, 95 unit/component tests,
+  integration baseline, isolated Chromium checks, workspace/phase-version/typed-entry validation,
+  and the production web build passed. The domain package remains framework-independent.
+- Accessibility: no product UI changed. The isolated Chromium UI-foundation checks pass; complete
+  product accessibility remains owned by its later workflow gates.
+- Security/data: no product data surface was added. Database/auth/API/persistence controls remain
+  unimplemented and explicitly next-phase work; no gate result is a production-readiness claim.
+- Documentation: added `docs/40-phase-2-gate-review.md` and reconciled the README, TODO, task
+  board, project status, and phase-version record.
+- Remaining risk: Phase 3 must resolve D-201/D-202 and introduce schema, repositories,
+  authentication, authorization, API, audit, and transactional evidence before product workflows.
+- Next task: `WL-300`.
 
 ## Current blockers
 
-No `WL-211` blocker is known. The completed domain slices, fixture mapping, and invariant review
-are ready for the exit-gate audit. D-201/D-202 remain owned before the first application schema
-migration, D-200/D-204 before the shared API contract, and D-502 before the production browser
-gate.
+No `WL-300` blocker is known. D-201/D-202 are explicitly owned by the initial schema task and must
+be resolved before migration acceptance. D-200/D-204 remain owned before the shared API contract,
+and D-502 before the production browser gate.
 
 ## Next task
 
-`WL-211 — Execute the Phase 2 exit gate review.`
+`WL-300 — Design and implement the initial PostgreSQL schema and generated migrations.`
 
 ## Update rules
 

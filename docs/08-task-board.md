@@ -63,7 +63,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-208 | Calculate time-account ledger totals and explain sources | WL-205, WL-207 | Opening, daily, correction, adjustment sequences pass | Done |
 | WL-209 | Produce structured warnings and submission blockers | WL-201–WL-207 | Missing punch, schedule gap, unresolved correction, conflict codes pass | Done |
 | WL-210 | Execute full domain example suite and domain-calculation review | WL-200–WL-209 | Pure-domain fixtures have executable evidence; every catalog fixture maps to a scheduled owner; review checklist complete | Done |
-| WL-211 | Execute Phase 2 gate review | WL-210 | Domain package dependency audit and gate evidence | Not started |
+| WL-211 | Execute Phase 2 gate review | WL-210 | Domain package dependency audit and gate evidence | Done |
 
 ---
 
