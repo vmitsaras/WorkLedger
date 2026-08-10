@@ -2,8 +2,8 @@
 
 **Task:** `WL-210`
 
-**Status:** In progress — the pure-domain evidence is reviewed, but the task's literal
-all-fixture acceptance criterion cannot be completed within Phase 2.
+**Outcome:** Complete. The pure-domain evidence is reviewed and every catalog fixture maps either
+to direct current evidence or to its scheduled later workflow owner.
 
 ## Review result
 
@@ -69,9 +69,10 @@ The review cannot attest to application transactions, persistence constraints, a
 idempotency, audit history, entitlement effects, snapshots, exports, or UI accessibility because
 those surfaces are intentionally absent from this phase.
 
-## Required resolution
+## Accepted resolution
 
-`WL-210` must be reconciled before `WL-211` can begin. Either narrow its acceptance criterion to
-the pure-domain fixtures identified above, with deferred fixtures retaining their later owners, or
-explicitly authorize bringing those later-phase vertical slices forward. The current roadmap's
-phase-order rule prohibits the latter by default.
+The project accepted the documented review boundary on 2026-08-10: `WL-210` requires executable
+evidence for the pure-domain subset plus an explicit mapping for every later workflow fixture.
+Deferred fixtures retain their listed implementation owner and require executable evidence when
+that owner is reached. This preserves the 85 accepted outcomes without pulling persistence,
+authorization, API, export, or UI work ahead of the roadmap.

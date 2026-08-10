@@ -45,7 +45,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-207` Implement absence credit integration.
 - [x] `WL-208` Implement time-account ledger calculations.
 - [x] `WL-209` Implement warning and incompleteness detection.
-- [ ] `WL-210` Complete domain example and property-oriented tests.
+- [x] `WL-210` Complete domain example and property-oriented tests.
 - [ ] `WL-211` Pass the Phase 2 exit gate.
 
 ## Phase 3 — Data, authentication, and API foundation

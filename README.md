@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 2 — 10 of 12 tasks complete**
+> **Current phase progress: Phase 2 — 11 of 12 tasks complete**
 
 Phase 1 passed its exit gate and the repository is now in **Phase 2: framework-independent domain
 engine**. The workspace, project boundaries, strict tooling, test and CI baseline, local PostgreSQL
@@ -13,8 +13,8 @@ environment, runtime configuration, React Aria UI foundation, and contributor do
 implemented. The domain now has primitives, effective-dated schedule/policy resolution,
 attendance-state transition validation, punch-event reconstruction, manual/corrected interval
 validation, daily minute calculation, local-date interval splitting, effective paid/unpaid absence
-calculation, time-account ledger totals, and structured calculation signals; the next task is the
-full domain example suite and calculation review (`WL-210`).
+calculation, time-account ledger totals, structured calculation signals, and a reviewed
+example-to-evidence map; the next task is the Phase 2 exit gate (`WL-211`).
 
 WorkLedger does not yet provide a complete domain engine, application database schema, authentication,
 product workflows, production deployment, or supported release. The runnable web page is an
@@ -177,6 +177,7 @@ versions and makes no response-time or production-support promise.
 | [docs/36-daily-absence-effects.md](docs/36-daily-absence-effects.md) | Paid/unpaid absence-credit calculation evidence |
 | [docs/37-time-account-ledger-totals.md](docs/37-time-account-ledger-totals.md) | Posted time-account ledger-total evidence |
 | [docs/38-calculation-signals.md](docs/38-calculation-signals.md) | Structured warning and submission-blocker evidence |
+| [docs/39-domain-example-review.md](docs/39-domain-example-review.md) | Phase 2 fixture mapping and invariant review |
 
 ## License
 

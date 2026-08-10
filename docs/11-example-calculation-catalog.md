@@ -2,7 +2,7 @@
 
 These examples are planning fixtures. During Phase 2, each accepted case must become an executable test with controlled clocks, exact Temporal values, inputs, outputs, and structured warning/error codes.
 
-Phase 0 accepts all 85 single-outcome planning fixtures, `EX-001` through `EX-085`. `WL-006` owns the 35 attendance/calculation cases, `WL-007` owns the 27 absence/entitlement cases, `WL-008` owns the 20 correction/monthly cases, and `WL-003`/`WL-010` own the three reporting/security cases. IDs stay stable even though topic grouping is not numeric. `WL-210` must map every applicable case to executable evidence; later implementation choices may add detail but cannot turn an accepted outcome back into alternatives silently.
+Phase 0 accepts all 85 single-outcome planning fixtures, `EX-001` through `EX-085`. `WL-006` owns the 35 attendance/calculation cases, `WL-007` owns the 27 absence/entitlement cases, `WL-008` owns the 20 correction/monthly cases, and `WL-003`/`WL-010` own the three reporting/security cases. IDs stay stable even though topic grouping is not numeric. `WL-210` maps every fixture to direct pure-domain evidence or its scheduled later workflow owner; each owner must add executable evidence when its implementation surface exists. Later implementation choices may add detail but cannot turn an accepted outcome back into alternatives silently.
 
 Unless a case overrides it:
 

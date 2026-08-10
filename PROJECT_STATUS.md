@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 2 — Framework-independent domain engine
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 10 of 12 Phase 2 tasks complete
-**Current milestone:** Domain example suite and calculation review
-**Active task:** `WL-210`
-**Status:** In progress
+**Phase progress:** 11 of 12 Phase 2 tasks complete
+**Current milestone:** Phase 2 exit gate
+**Active task:** `WL-211`
+**Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Review the framework-independent domain example suite and calculation invariants. The pure-domain
-evidence is mapped; completion awaits reconciliation of the catalog's later-phase workflow
-fixtures with the Phase 2 all-fixture acceptance criterion.
+Execute the Phase 2 exit gate: review the domain package dependency boundary, the pure-domain
+fixture evidence, invariant coverage, documentation, and all required verification results. Bump
+the shared workspace version only if the gate passes.
 
 ## Verified decisions
 
@@ -159,38 +159,40 @@ fixtures with the Phase 2 all-fixture acceptance criterion.
   sequences completed (`WL-208`; see `docs/37-time-account-ledger-totals.md`).
 - [x] Structured calculation warnings, submission blockers, and stable code ordering completed
   (`WL-209`; see `docs/38-calculation-signals.md`).
+- [x] Pure-domain fixture evidence, full catalog owner mapping, and invariant review completed
+  (`WL-210`; see `docs/39-domain-example-review.md`).
 
 ## Latest completed task
 
-### `WL-209` — Produce structured warnings and submission blockers
+### `WL-210` — Execute full domain example suite and domain-calculation review
 
-- Changed: added a pure calculation-signal classifier that returns canonical warning and
-  submission-blocker codes from explicit attendance, configuration, source, and balance facts.
-- Verified: focused Vitest coverage passes six signal tests for holiday/zero-hour precedence,
-  absence work, threshold signals, missing-punch/configuration/correction conflict sets,
-  unavailable final amounts, de-duplication, and immutable ordering. Strict domain TypeScript
-  build and `git diff --check` also pass.
-- Accessibility: not directly applicable because this task adds no UI or interaction. Stable codes
-  let later interfaces provide precise textual recovery guidance without parsing localized prose.
-- Security/data: no persistence, API, logs, environment, network, employee data, authentication,
-  authorization, or browser state was introduced. Input facts and output codes omit sensitive
-  absence/correction details.
-- Documentation: added `docs/38-calculation-signals.md`, registered source-state blocker codes,
-  and reconciled the README, TODO, task board, and project status.
-- Remaining risk: final calculation-status assembly, transactional posting, persistence, and audit
-  atomicity remain deferred.
-- Next task: `WL-210`.
+- Changed: reviewed all 85 accepted fixtures against the Phase 2 domain surface. The mapping
+  identifies direct pure-domain evidence and retains idempotency, workflow, persistence,
+  authorization, export, and UI fixtures with their planned later owners.
+- Verified: the domain review confirms applicable time, calculation, absence-effect, ledger, and
+  structured-signal invariants. The complete local format, lint, strict TypeScript, boundary,
+  unit/component, workspace, phase-version, and typed-entry checks pass.
+- Accessibility: no UI changed. The review preserves structured source/error/warning output needed
+  for later accessible recovery and explanation surfaces.
+- Security/data: no persistence or sensitive data surface was introduced. The mapping explicitly
+  leaves authorization, audit, privacy DTO, export, and transaction evidence with their owning
+  phases instead of claiming unsupported coverage.
+- Documentation: added `docs/39-domain-example-review.md`, reconciled the catalog criterion, and
+  recorded/resolved the scope contradiction in `docs/10-open-decisions.md`.
+- Remaining risk: the Phase 2 gate review and version bump remain; later workflow fixtures still
+  require executable evidence when their scheduled implementation tasks begin.
+- Next task: `WL-211`.
 
 ## Current blockers
 
-No `WL-210` blocker is known. The completed domain slices and accepted fixture catalog are
-sufficient for executable-example mapping and invariant review. D-201/D-202 remain owned before
-the first application schema migration, D-200/D-204 before the shared API contract, and D-502
-before the production browser gate.
+No `WL-211` blocker is known. The completed domain slices, fixture mapping, and invariant review
+are ready for the exit-gate audit. D-201/D-202 remain owned before the first application schema
+migration, D-200/D-204 before the shared API contract, and D-502 before the production browser
+gate.
 
 ## Next task
 
-`WL-210 — Execute full domain example suite and domain-calculation review.`
+`WL-211 — Execute the Phase 2 exit gate review.`
 
 ## Update rules
 

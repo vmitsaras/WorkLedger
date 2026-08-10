@@ -202,8 +202,7 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-107 — Phase 2 `WL-210` catalog acceptance boundary
 
-**Status:** Open; owner: project roadmap authority. Identified during `WL-210` review on
-2026-08-10.
+**Status:** Resolved by the user's continuation directive on 2026-08-10.
 
 - `docs/11-example-calculation-catalog.md` requires every accepted `EX-001`–`EX-085` fixture to
   become executable during Phase 2, while its fixtures include later-phase API/database behavior:
@@ -213,13 +212,10 @@ These were confirmed from repository evidence and the architecture ratification.
   `WL-400`–`WL-405`, `WL-503`–`WL-505`, `WL-600`–`WL-607`, `WL-800`–`WL-805`, and `WL-900`.
   The phase-order rule prohibits implementing them early without explicit user override.
 - `docs/39-domain-example-review.md` maps every catalog fixture to current direct/partial
-  evidence or its later implementation owner. The pure-domain evidence is ready for review, but
-  `WL-210` cannot truthfully satisfy its literal all-fixture criterion until this discrepancy is
-  resolved.
-- Recommended resolution: revise `WL-210` to require executable coverage for the pure-domain
-  subset and an explicit mapping for later-phase fixtures, leaving each workflow fixture's final
-  executable evidence with its scheduled owner. An override to pull work forward must name the
-  specific vertical slices and accept their persistence/security/accessibility scope.
+  evidence or its later implementation owner.
+- `WL-210` now requires executable coverage for the pure-domain subset and an explicit mapping for
+  later-phase fixtures. Each workflow fixture retains its scheduled owner for final executable
+  evidence; no later vertical slice is pulled forward.
 
 ## Decisions blocking Phase 3
 
