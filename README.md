@@ -5,15 +5,15 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 2 — 6 of 12 tasks complete**
+> **Current phase progress: Phase 2 — 7 of 12 tasks complete**
 
 Phase 1 passed its exit gate and the repository is now in **Phase 2: framework-independent domain
 engine**. The workspace, project boundaries, strict tooling, test and CI baseline, local PostgreSQL
 environment, runtime configuration, React Aria UI foundation, and contributor documentation are
 implemented. The domain now has primitives, effective-dated schedule/policy resolution,
 attendance-state transition validation, punch-event reconstruction, manual/corrected interval
-validation, and daily minute calculation; the next task is overnight and DST-aware splitting
-(`WL-206`).
+validation, daily minute calculation, and local-date interval splitting; the next task is paid and
+unpaid absence-credit integration (`WL-207`).
 
 WorkLedger does not yet provide a complete domain engine, application database schema, authentication,
 product workflows, production deployment, or supported release. The runnable web page is an
@@ -172,6 +172,7 @@ versions and makes no response-time or production-support promise.
 | [docs/32-attendance-reconstruction.md](docs/32-attendance-reconstruction.md) | Punch-event reconstruction, incomplete sessions, and stable-outcome evidence |
 | [docs/33-manual-attendance-interval-validation.md](docs/33-manual-attendance-interval-validation.md) | Manual local-time resolution and interval-overlap validation evidence |
 | [docs/34-daily-attendance-calculation.md](docs/34-daily-attendance-calculation.md) | Daily expected/worked/credited/balance arithmetic evidence |
+| [docs/35-local-date-interval-splitting.md](docs/35-local-date-interval-splitting.md) | Local-midnight/DST interval attribution evidence |
 
 ## License
 

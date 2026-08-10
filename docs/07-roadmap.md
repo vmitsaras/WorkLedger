@@ -26,7 +26,7 @@ ready to release.
 | 5 of 5 | Production and release | Phases 10–11 | Production hardening, self-hosting, accessibility, operations, public documentation, and release gates pass |
 
 The current label is **Stage 3 of 5 — Core engine and platform in progress**. Phase 1 passed its
-gate, and Phase 2 has **6 of 12 tasks complete**. The project is not release-ready; the shared
+gate, and Phase 2 has **7 of 12 tasks complete**. The project is not release-ready; the shared
 workspace version is `0.2.0` under the phase-completion rule above.
 
 ---

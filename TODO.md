@@ -41,7 +41,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-203` Implement punch-to-session reconstruction.
 - [x] `WL-204` Validate manual/corrected intervals and overlap constraints.
 - [x] `WL-205` Implement daily expected, worked, credited, and balance minutes.
-- [ ] `WL-206` Implement overnight and timezone-aware day splitting.
+- [x] `WL-206` Implement overnight and timezone-aware day splitting.
 - [ ] `WL-207` Implement absence credit integration.
 - [ ] `WL-208` Implement time-account ledger calculations.
 - [ ] `WL-209` Implement warning and incompleteness detection.

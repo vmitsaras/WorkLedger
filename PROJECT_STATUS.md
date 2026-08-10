@@ -2,16 +2,17 @@
 
 **Current phase:** Phase 2 — Framework-independent domain engine
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 6 of 12 Phase 2 tasks complete
-**Current milestone:** Overnight and DST-aware splitting
-**Active task:** `WL-206`
+**Phase progress:** 7 of 12 Phase 2 tasks complete
+**Current milestone:** Absence-credit integration
+**Active task:** `WL-207`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Split framework-independent work and break intervals across organization-local midnight with exact
-Temporal DST behavior. Preserve source session linkage and defer persistence, API, and UI behavior.
+Integrate framework-independent paid and unpaid absence effects with daily calculation without
+double crediting work. Cover full, partial, holiday, zero-hour, and overlap behavior while
+deferring persistence, API, and UI behavior.
 
 ## Verified decisions
 
@@ -150,38 +151,40 @@ Temporal DST behavior. Preserve source session linkage and defer persistence, AP
   `docs/33-manual-attendance-interval-validation.md`).
 - [x] Resolved-schedule daily expected/worked/credited/balance arithmetic and structured source
   failures completed (`WL-205`; see `docs/34-daily-attendance-calculation.md`).
+- [x] Organization-local midnight splitting, DST-safe exact segments, and source-interval linkage
+  completed (`WL-206`; see `docs/35-local-date-interval-splitting.md`).
 
 ## Latest completed task
 
-### `WL-205` — Calculate expected, worked, credited, and daily balance minutes
+### `WL-206` — Split overnight sessions at local midnight and handle DST
 
-- Changed: added an immutable daily minute breakdown that resolves schedule/policy assignment,
-  sums validated break-free work intervals, applies explicit effective reduction/credit/adjustment
-  inputs, and calculates signed flexible-time balance without rounding or hidden caps.
-- Verified: focused Vitest coverage passes ten daily-calculation tests for normal/positive/negative
-  time, holiday reduction, effective source arithmetic, overlap, negative interval, invalid source
-  set, and schedule-gap cases. Strict domain TypeScript build and `git diff --check` also pass.
-- Accessibility: not directly applicable because this task adds no UI or interaction. Structured
-  minute fields and codes let later layers explain calculations without parsing prose.
+- Changed: added generic source-preserving work/break interval splitting at each organization-local
+  midnight. The splitter uses Temporal calendar/timezone boundaries, retains exact instant bounds,
+  and never assumes a local day has 1,440 elapsed minutes.
+- Verified: focused Vitest coverage passes seven splitter tests for overnight work, cross-midnight
+  break provenance, spring-forward/fall-back elapsed intervals, zero duration, and invalid source
+  bounds. Strict domain TypeScript build and `git diff --check` also pass.
+- Accessibility: not directly applicable because this task adds no UI or interaction. Local-date
+  segments provide later views with stable attributable data rather than timezone-derived prose.
 - Security/data: no persistence, API, logs, environment, network, employee data, authentication,
-  authorization, or browser state was introduced. The calculator reads caller-supplied source
-  values only and has no live-clock or side-effect capability.
-- Documentation: added `docs/34-daily-attendance-calculation.md` and reconciled the README,
+  authorization, or browser state was introduced. The splitter is deterministic from supplied
+  source bounds and timezone; it does not read a clock or change source history.
+- Documentation: added `docs/35-local-date-interval-splitting.md` and reconciled the README,
   roadmap, TODO, task board, and project status.
-- Remaining risk: local-midnight/DST attribution, absence-effect construction, calculation status/
-  blockers, posting, persistence, and audit atomicity remain deferred.
-- Next task: `WL-206`.
+- Remaining risk: absence-effect construction, calculation status/blockers, posting, persistence,
+  and audit atomicity remain deferred.
+- Next task: `WL-207`.
 
 ## Current blockers
 
-No `WL-206` blocker is known. The accepted source interval, organization-timezone, and Temporal
-contracts are sufficient for bounded daily attribution. D-201/D-202 remain owned before the first
-application schema migration, D-200/D-204 before the shared API contract, and D-502 before the
-production browser gate.
+No `WL-207` blocker is known. The accepted absence coverage/time-effect contract and daily
+calculation inputs are sufficient for bounded credit integration. D-201/D-202 remain owned before
+the first application schema migration, D-200/D-204 before the shared API contract, and D-502
+before the production browser gate.
 
 ## Next task
 
-`WL-206 — Split overnight sessions at local midnight and handle DST.`
+`WL-207 — Integrate paid/unpaid absence credit with daily calculation.`
 
 ## Update rules
 

@@ -5,6 +5,12 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  splitAttendanceIntervalAtLocalMidnight,
+  type LocalDateIntervalSegment,
+  type LocalDateIntervalSplittingError,
+  type SourceAttendanceInterval,
+} from './local-date-interval-splitting.js';
+export {
   calculateDailyAttendance,
   type DailyAttendanceCalculation,
   type DailyAttendanceCalculationError,
