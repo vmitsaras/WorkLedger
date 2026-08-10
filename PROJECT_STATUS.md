@@ -2,18 +2,18 @@
 
 **Current phase:** Phase 2 — Framework-independent domain engine
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 1 of 12 Phase 2 tasks complete
-**Current milestone:** Effective-dated schedule and policy resolution
-**Active task:** `WL-201`
+**Phase progress:** 2 of 12 Phase 2 tasks complete
+**Current milestone:** Attendance-state transition validation
+**Active task:** `WL-202`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Implement framework-independent effective-dated weekly schedules and time policies using the
-accepted half-open local-date primitives. Resolve exactly one applicable version for a target date
-and return stable structured failures for gaps, overlaps, and invalid configuration without starting
-attendance reconstruction, daily calculation, persistence, API, or UI behavior early.
+Implement framework-independent attendance-state transition validation from the accepted
+`OFF_WORK`, `WORKING`, and `ON_BREAK` state machine. Return stable outcomes for every valid and
+invalid action without beginning event persistence, interval reconstruction, daily calculation,
+API, or UI behavior early.
 
 ## Verified decisions
 
@@ -111,6 +111,7 @@ attendance reconstruction, daily calculation, persistence, API, or UI behavior e
 - Primitive construction returns discriminated `Result` values with stable non-leaking codes; invalid values are never trimmed, rounded, coerced, or exposed in error payloads.
 - Node `24.18.0` has no global Temporal implementation, so `packages/domain` directly pins `@js-temporal/polyfill` `0.5.1`; it adds no WorkLedger package edge or environment, filesystem, network, persistence, framework, or UI access.
 - Domain values serialize without brand wrappers: IDs/time values as strings, minutes as integers, open range ends as explicit `null`, successes as `{ ok: true, value }`, and failures as `{ ok: false, error }`. The independent API contract remains owned by `WL-304`.
+- Weekly schedules validate seven explicit `0`–`1440` weekday-minute values, where zero remains a deliberate zero-hour day. Schedule and policy assignments resolve only through half-open local-date ranges, return stable gaps/overlaps without array-order fallback, and preserve immutable version references.
 
 ## Work completed
 
@@ -139,44 +140,42 @@ attendance reconstruction, daily calculation, persistence, API, or UI behavior e
 - [x] Public status/setup/script/package-boundary documentation, contribution guidance, MIT license explanation, and verified private vulnerability-reporting workflow completed (`WL-107`; see `docs/27-public-repository-documentation.md`).
 - [x] Phase 1 passed with all eight gate criteria, clean-source and database-enabled verification, successful canonical CI evidence, and shared version `0.2.0` (`WL-108`; see `docs/28-phase-1-gate-review.md`).
 - [x] Branded IDs/minutes/Temporal values, immutable half-open date ranges, stable result/error types, serialization boundaries, and focused construction tests completed (`WL-200`; see `docs/29-domain-primitives.md`).
+- [x] Immutable weekly schedules, identity-only policy versions, effective-dated schedule/policy assignments, and exact gap/overlap/boundary resolution completed (`WL-201`; see `docs/30-effective-dated-time-configuration.md`).
 
 ## Latest completed task
 
-### `WL-200` — Define domain primitives and result/error types
+### `WL-201` — Implement effective-dated schedule and policy resolution
 
-- Changed: added the public `@workledger/domain` primitive API for opaque entity-branded IDs,
-  signed/non-negative integer minutes, canonical instants, ISO local dates, named timezone IDs,
-  immutable half-open/open-ended date ranges, and generic discriminated result/error values. Added
-  the directly owned Temporal polyfill dependency and updated the exact source-census fixture.
-- Verified: `pnpm with 11.20.0 run verify` passed configuration, formatting, ESLint, the 43-file /
-  87-import boundary scan, strict composite typechecking, 24 native tests, 21 unit/component tests,
-  4 non-database integration tests with 1 documented PostgreSQL opt-in skip, 2 Chromium tests, the
-  Vite build, and all eight typed public entries. The first full run correctly stopped on the prior
-  37-file / 75-import census expectation; updating that exact fixture produced the clean full run.
-- Accessibility: not directly applicable because this task adds no UI or interaction. Existing
-  semantic, keyboard, focus, axe, reduced-motion, and browser foundation tests remained green.
-- Security/data: constructors accept unknown inputs, reject coercion and unsafe ID shapes, and use
-  stable errors that do not echo rejected values. The polyfill performs deterministic in-process
-  time validation only; no persistence, network, filesystem, environment, employee data, logging,
-  authentication, authorization, API, or browser state was introduced.
-- Documentation: added `docs/29-domain-primitives.md`, recorded the dependency/runtime evidence in
-  the technology baseline, reconciled the README/roadmap/structure/status/TODO/task board, and kept
-  `D-201` plus independent API DTO/schema ownership explicitly open for their assigned tasks.
-- Remaining risk: physical ID generation/storage remains `D-201`; persisted timezone rule-version
-  evidence and cross-runtime production validation remain later tasks. Business-specific minute
-  bounds, punch precision, DST/local-time resolution, and calculations are deliberately deferred.
-- Next task: `WL-201`.
+- Changed: added immutable seven-day schedules (integer weekday values `0`–`1440`), identity-only
+  policy versions, effective-dated schedule/policy assignments, and order-independent resolution
+  through the existing half-open local-date primitives. Resolution returns the ISO weekday and
+  expected schedule minutes only after exactly one schedule and policy assignment apply.
+- Verified: focused Vitest coverage passes six cases for malformed weekday configuration, explicit
+  zero-hour scheduling, half-open mid-month boundary selection, schedule/policy gaps, overlaps,
+  array-order independence, and combined resolution. Strict domain TypeScript build and `git diff
+  --check` also pass. The pinned `pnpm with 11.20.0` verification command could not start because
+  this sandbox cannot resolve the npm registry; no dependency was changed or downloaded.
+- Accessibility: not directly applicable because this task adds no UI or interaction. The resolver
+  gives later UI work stable codes rather than requiring prose parsing or an implicit default.
+- Security/data: no persistence, API, logs, environment, network, employee data, authentication,
+  authorization, or browser state was introduced. Frozen version objects and explicit gap/overlap
+  failures prevent accidental in-memory mutation or array-order-dependent configuration results.
+- Documentation: added `docs/30-effective-dated-time-configuration.md` and reconciled the README,
+  roadmap, repository structure, TODO, and task board.
+- Remaining risk: policy rule fields are intentionally deferred to their owning attendance,
+  calculation, absence, and warning tasks; persistence and historical snapshots remain later work.
+- Next task: `WL-202`.
 
 ## Current blockers
 
-No `WL-201` blocker is known. The accepted weekly schedule, policy, half-open effective-date,
-gap/overlap, holiday, and version-history contracts are sufficient for the bounded resolver task.
-D-201/D-202 remain owned before the first application schema migration, D-200/D-204 before the
-shared API contract, and D-502 before the production browser gate.
+No `WL-202` blocker is known. The accepted attendance state/action matrix, immutable punch-event,
+revision, and idempotency contracts are sufficient for bounded transition validation. D-201/D-202
+remain owned before the first application schema migration, D-200/D-204 before the shared API
+contract, and D-502 before the production browser gate.
 
 ## Next task
 
-`WL-201 — Implement effective-dated schedule and policy resolution.`
+`WL-202 — Implement attendance-state transition validation.`
 
 ## Update rules
 
