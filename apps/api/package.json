@@ -13,11 +13,14 @@
   "dependencies": {
     "@workledger/contracts": "workspace:*",
     "@workledger/database": "workspace:*",
-    "@workledger/domain": "workspace:*"
+    "@workledger/domain": "workspace:*",
+    "better-auth": "1.6.26"
   },
   "devDependencies": {
+    "@types/pg": "8.20.0",
     "@workledger/config": "workspace:*",
     "@workledger/test-utils": "workspace:*",
-    "fastify": "5.10.0"
+    "fastify": "5.10.0",
+    "pg": "8.22.0"
   }
 }

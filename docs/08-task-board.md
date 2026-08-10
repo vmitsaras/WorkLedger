@@ -73,7 +73,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 |---|---|---|---|---|
 | WL-300 | Design and implement initial PostgreSQL schema and generated migrations | WL-211 | Clean migration, rollback strategy note, constraints and indexes reviewed | Done |
 | WL-301 | Define repository interfaces and implement transaction boundary helpers | WL-300 | Repository integration tests and no SQL leakage outside database package | Done |
-| WL-302 | Integrate Better Auth invite-only credentials, database-backed sessions, CSRF/origin controls, reset/revocation profile, and auth test utilities | WL-300, WL-105 | Accepted password/cookie/timeout/freshness/reset/rate-limit/revocation/cache profile is pinned and passes integration tests | Not started |
+| WL-302 | Integrate Better Auth invite-only credentials, database-backed sessions, CSRF/origin controls, reset/revocation profile, and auth test utilities | WL-300, WL-105 | Accepted password/cookie/timeout/freshness/reset/rate-limit/revocation/cache profile is pinned and passes integration tests | Done |
 | WL-303 | Implement employee-account link, roles, manager scope, and authorization policy functions | WL-301, WL-302 | Permission matrix integration tests pass | Not started |
 | WL-304 | Implement API contract schemas, error envelope, request IDs, and safe error mapping | WL-101, WL-303 | Contract tests and non-leaking error tests pass | Not started |
 | WL-305 | Implement append-only, audience-separated domain/security audit persistence and querying foundation | WL-301, WL-303 | Atomic audit writes, field minimization, hostile-text, role separation, and redaction tests pass | Not started |

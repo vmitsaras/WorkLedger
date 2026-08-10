@@ -52,7 +52,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 - [x] `WL-300` Implement initial PostgreSQL schema and migrations.
 - [x] `WL-301` Implement repository interfaces and transaction boundaries.
-- [ ] `WL-302` Integrate the accepted Better Auth credential, session, CSRF, reset, and revocation profile.
+- [x] `WL-302` Integrate the accepted Better Auth credential, session, CSRF, reset, and revocation profile.
 - [ ] `WL-303` Implement application roles and scoped authorization.
 - [ ] `WL-304` Implement API error envelope and validation conventions.
 - [ ] `WL-305` Implement separated domain/security audit persistence.

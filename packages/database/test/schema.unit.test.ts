@@ -5,6 +5,9 @@ import { getTableConfig } from 'drizzle-orm/pg-core';
 
 import {
   approvedMonthlySnapshots,
+  authAccounts,
+  authSessions,
+  authUsers,
   dailyProjections,
   employmentPeriods,
   punchEvents,
@@ -33,6 +36,17 @@ describe('initial PostgreSQL schema', () => {
     expect(getTableConfig(employmentPeriods).name).toBe('employment_periods');
   });
 
+  it('maps the Better Auth persistence surface without exposing domain roles', () => {
+    expect(getTableConfig(authUsers).name).toBe('auth_users');
+    expect(getTableConfig(authSessions).indexes.map(({ config }) => config.name)).toContain(
+      'auth_sessions_token_uidx',
+    );
+    expect(getTableConfig(authAccounts).indexes.map(({ config }) => config.name)).toContain(
+      'auth_accounts_provider_account_uidx',
+    );
+    expect(getTableConfig(authUsers).columns.map(({ name }) => name)).not.toContain('role');
+  });
+
   it('commits generated and custom migration metadata', () => {
     const journal = JSON.parse(
       readFileSync(`${packageDirectory}/migrations/meta/_journal.json`, 'utf8'),
@@ -41,6 +55,7 @@ describe('initial PostgreSQL schema', () => {
     expect(journal.entries.map(({ tag }) => tag)).toEqual([
       '0000_initial_schema',
       '0001_integrity_constraints',
+      '0002_auth_foundation',
     ]);
   });
 });

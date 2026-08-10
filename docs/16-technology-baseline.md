@@ -140,9 +140,15 @@ Official references:
 
 ### Authentication
 
-- Better Auth for credentials and sessions.
-- PostgreSQL adapter/integration.
+- Better Auth `1.6.26` for credentials and sessions, pinned as the current stable release verified by
+  `WL-302`; prerelease `1.7` builds are excluded by the stable-only policy.
+- PostgreSQL Drizzle adapter/integration plus a WorkLedger-owned atomic custom rate-limit storage
+  implementation using the same internal authentication database boundary.
 - WorkLedger-owned authorization model.
+- `apps/api` alone uses `skipLibCheck` for Better Auth's published multi-runtime declarations, which
+  reference optional Bun, Cloudflare, and browser globals outside this Node-only project. WorkLedger
+  source remains strictly checked. This is separate from the database project's Drizzle declaration
+  override and must be re-evaluated on dependency upgrades.
 
 Official references:
 

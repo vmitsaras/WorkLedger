@@ -186,12 +186,14 @@ They should not depend on React or UI language.
 ## 6. Authentication
 
 - Better Auth handles invite-only credentials, password reset, verification where enabled, PostgreSQL-backed sessions, and secure cookies under ADR `0008` and `docs/06-security-operations.md` sections 6–8.
+- `WL-302` pins Better Auth `1.6.26`. `apps/api/src/auth` owns its security configuration, response sanitation, Fastify bridge, and safe session/CSRF facade; `packages/database` owns the internal adapter, authentication tables, authoritative session operations, protected verification identifiers, and atomic PostgreSQL rate-limit consumer.
 - Stateless sessions, secondary session storage, and Better Auth cookie/session caching are excluded from the MVP so revocation is authoritative on the next request.
 - Production is same-origin. Better Auth CSRF/origin/redirect checks stay enabled, and WorkLedger domain mutations additionally require the accepted session-bound CSRF contract.
 - WorkLedger stores employee identity, team, manager, and application roles separately.
 - A user account may link to one employee record in the MVP.
 - Password reset, deactivation/unlink, and privileged-role changes revoke all sessions without deleting domain history.
 - Session/profile responses expose only safe opaque session IDs and minimum client context, never session/reset/CSRF tokens or authoritative domain permissions.
+- Better Auth session data never carries WorkLedger roles, employee scope, manager relationships, or permission decisions. `WL-303` resolves those from authoritative domain data on each request.
 
 ## 7. Database design principles
 

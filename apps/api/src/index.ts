@@ -11,6 +11,22 @@ export {
   summarizeRuntimeConfig,
 } from './config.js';
 export { createApiServer } from './server.js';
+export {
+  AUTH_SECURITY_PROFILE,
+  createAuthOptions,
+  createWorkLedgerAuthentication,
+  type PasswordResetMessage,
+  type PasswordResetSender,
+  type SafeAuthSession,
+  type WorkLedgerAuthentication,
+} from './auth/authentication.js';
+export {
+  PASSWORD_MAXIMUM_LENGTH,
+  PASSWORD_MINIMUM_LENGTH,
+  PasswordPolicyError,
+  validateCredentialPassword,
+} from './auth/password-policy.js';
+export { createSessionCsrfToken, verifySessionCsrfToken } from './auth/session-csrf.js';
 export type { RuntimeConfig, RuntimeConfigSummary, RuntimeEnvironment } from './config.js';
 
 export const workspacePackage = '@workledger/api' as const;

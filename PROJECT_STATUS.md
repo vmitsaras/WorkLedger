@@ -2,17 +2,16 @@
 
 **Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 2 of 10 Phase 3 tasks complete
-**Current milestone:** Better Auth credential and session profile
-**Active task:** `WL-302`
+**Phase progress:** 3 of 10 Phase 3 tasks complete
+**Current milestone:** Application authorization foundation
+**Active task:** `WL-303`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Integrate the accepted Better Auth invite-only credential, database-backed session, CSRF/origin,
-reset, freshness, rate-limit, and revocation profile without outsourcing WorkLedger roles or domain
-authorization.
+Implement employee-account links, application roles, current-manager scope, permission policies,
+and authorization invalidation without placing domain permissions in Better Auth sessions.
 
 ## Verified decisions
 
@@ -69,6 +68,7 @@ authorization.
 - Invite-only credentials use 15–128 character passwords, local common-password rejection, 30-minute single-use reset grants, and 24-hour single-use invitation grants.
 - Sessions are PostgreSQL-backed and immediately revocable; stateless/session caches and persistent remember-me are excluded, with 30-minute idle, 12-hour absolute, and 15-minute freshness boundaries.
 - Production uses one canonical HTTPS origin, secure host-only cookies, enabled Better Auth checks, WorkLedger session-bound CSRF protection, protected-response no-store caching, and no sensitive browser persistence.
+- Better Auth `1.6.26` owns invite-only credentials and technical sessions only; WorkLedger pins its security-sensitive options, stores sessions and atomic throttle buckets in PostgreSQL, protects reset identifiers at rest, and recursively strips credential/token fields from auth responses.
 - Caddy is the reference production proxy while the observable TLS, trusted-header, network-isolation, health, and security-header contract remains proxy-agnostic.
 - Each deployment must own an explicit retention profile by data class; ordinary deletion never destroys source, ledger, snapshot, or required audit integrity, and restored sessions/grants are invalidated before activation.
 - The canonical repository is the existing public `vmitsaras/WorkLedger` GitHub project and WorkLedger-owned source/documentation uses the existing MIT license.
@@ -176,37 +176,39 @@ authorization.
   attendance locking/stale-write detection, safe persisted-value mapping, explicit database-only
   retries, and executable public-boundary proof completed (`WL-301`; see
   `docs/42-repositories-and-transactions.md`).
+- [x] Better Auth invite-only credentials, protected single-use reset grants, canonical reset URLs,
+  database-backed idle/absolute sessions, freshness, session-bound CSRF primitives, secure host-only
+  cookies, strict PostgreSQL throttling, revocation, and Fastify integration completed (`WL-302`; see
+  `docs/43-better-auth-credential-session-foundation.md`).
 
 ## Latest completed task
 
-### `WL-301` — Define repository interfaces and implement transaction boundary helpers
+### `WL-302` — Integrate the accepted Better Auth credential and session profile
 
-- Changed: added the bounded database factory, public transaction/repository contracts, internal
-  Drizzle implementations, safe persisted-domain mapping, isolated migrated fixtures, attendance
-  row locking/optimistic advancement, projection version replacement, ledger mapping, and explicit
-  database-only retry behavior.
-- Verified: database typecheck, unit/boundary tests, migration tests, and real PostgreSQL repository
-  integration tests pass. The emitted public declaration closure contains no SQL/Drizzle/pg/schema
-  implementation types; rollback, stale revision, cross-organization scope, and retry behavior are
-  exercised.
-- Accessibility: no user interface changed; not applicable to this persistence-only slice.
-- Security/data: repository reads include organization scope, configuration/value errors exclude
-  secrets and persisted values, automatic retries are bounded/opt-in, and isolated test schemas are
-  removed. Authorization remains an application/API responsibility.
-- Documentation: added `docs/42-repositories-and-transactions.md` and synchronized the schema,
-  architecture, baseline, repository structure, README, roadmap checklist, and task board.
-- Remaining risk: authentication, application authorization, audience-separated audit, safe API
-  errors, and full idempotency behavior remain later Phase 3 tasks.
-- Next task: `WL-302`.
+- Changed: pinned Better Auth `1.6.26`; added five authentication tables and migrations, the
+  Drizzle adapter boundary, atomic PostgreSQL throttle storage, Fastify auth mounting, password and
+  reset policy, safe session/CSRF wrappers, and shared isolated PostgreSQL test utilities.
+- Verified: strict option/unit tests and real PostgreSQL integration tests cover credentials,
+  generic failures, origin checks, cookie/cache behavior, idle/absolute/freshness, protected reset
+  storage, replay/expiry, reset revocation, and throttling.
+- Accessibility: no user interface changed. Accessible sign-in/recovery/reset presentation remains
+  owned by `WL-400`; responses provide stable behavior without exposing secrets.
+- Security/data: auth responses strip secrets, reset identifiers are hashed at the Drizzle boundary,
+  sessions and throttles are authoritative in PostgreSQL, and Better Auth owns no WorkLedger roles.
+- Documentation: added `docs/43-better-auth-credential-session-foundation.md` and synchronized the
+  schema, architecture, baseline, repository structure, README, roadmap checklist, and task board.
+- Remaining risk: application authorization, shared API errors, security audit, explicit reauth UI,
+  invitation lifecycle, and deployment mail handling remain later tasks.
+- Next task: `WL-303`.
 
 ## Current blockers
 
-No `WL-302` blocker is known. D-200/D-204 remain owned before the shared API contract, and D-502
+No `WL-303` blocker is known. D-200/D-204 remain owned before the shared API contract, and D-502
 before the production browser gate.
 
 ## Next task
 
-`WL-302 — Integrate the accepted Better Auth credential, session, CSRF, reset, and revocation profile.`
+`WL-303 — Implement application roles and scoped authorization.`
 
 ## Update rules
 

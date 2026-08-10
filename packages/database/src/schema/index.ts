@@ -1,7 +1,10 @@
 import { sql } from 'drizzle-orm';
+import { createHash } from 'node:crypto';
 import {
+  bigint,
   boolean,
   check,
+  customType,
   date,
   index,
   integer,
@@ -14,6 +17,14 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+
+const protectedVerificationIdentifier = customType<{
+  data: string;
+  driverData: string;
+}>({
+  dataType: () => 'varchar(512)',
+  toDriver: (value) => createHash('sha256').update(value, 'utf8').digest('hex'),
+});
 
 const identifier = (name: string) =>
   uuid(name)
@@ -100,6 +111,101 @@ export const leaveEntitlementEntryType = pgEnum('leave_entitlement_entry_type', 
   'EXPIRY',
   'ADJUSTMENT',
 ]);
+
+export const authUsers = pgTable(
+  'auth_users',
+  {
+    id: identifier('id').primaryKey(),
+    name: varchar('name', { length: 160 }).notNull(),
+    email: varchar('email', { length: 320 }).notNull(),
+    emailVerified: boolean('email_verified').default(false).notNull(),
+    image: text('image'),
+    active: boolean('active').default(true).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('auth_users_email_uidx').on(table.email),
+    index('auth_users_active_idx').on(table.active),
+    check('auth_users_name_not_blank', sql`length(btrim(${table.name})) > 0`),
+    check('auth_users_email_normalized', sql`${table.email} = lower(${table.email})`),
+  ],
+);
+
+export const authSessions = pgTable(
+  'auth_sessions',
+  {
+    id: identifier('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    token: varchar('token', { length: 255 }).notNull(),
+    expiresAt: timestamp('expires_at', { mode: 'date', withTimezone: true }).notNull(),
+    ipAddress: varchar('ip_address', { length: 64 }),
+    userAgent: varchar('user_agent', { length: 512 }),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('auth_sessions_token_uidx').on(table.token),
+    index('auth_sessions_user_expires_idx').on(table.userId, table.expiresAt),
+    check('auth_sessions_expiry_after_creation', sql`${table.expiresAt} > ${table.createdAt}`),
+    check(
+      'auth_sessions_absolute_lifetime',
+      sql`${table.expiresAt} <= ${table.createdAt} + interval '12 hours'`,
+    ),
+  ],
+);
+
+export const authAccounts = pgTable(
+  'auth_accounts',
+  {
+    id: identifier('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    accountId: varchar('account_id', { length: 255 }).notNull(),
+    providerId: varchar('provider_id', { length: 255 }).notNull(),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    idToken: text('id_token'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', {
+      mode: 'date',
+      withTimezone: true,
+    }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
+      mode: 'date',
+      withTimezone: true,
+    }),
+    scope: text('scope'),
+    password: text('password'),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('auth_accounts_provider_account_uidx').on(table.providerId, table.accountId),
+    index('auth_accounts_user_idx').on(table.userId),
+  ],
+);
+
+export const authVerifications = pgTable(
+  'auth_verifications',
+  {
+    id: identifier('id').primaryKey(),
+    identifier: protectedVerificationIdentifier('identifier').notNull(),
+    value: text('value').notNull(),
+    expiresAt: timestamp('expires_at', { mode: 'date', withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('auth_verifications_identifier_idx').on(table.identifier)],
+);
+
+export const authRateLimits = pgTable('auth_rate_limits', {
+  key: varchar('key', { length: 512 }).primaryKey(),
+  count: integer('count').notNull(),
+  lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
+});
 
 export const organizations = pgTable(
   'organizations',

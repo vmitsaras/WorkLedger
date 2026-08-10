@@ -6,6 +6,7 @@ export * from './api.js';
 export * from './clock.js';
 export * from './database.js';
 export * from './playwright.js';
+export * from './postgres.js';
 
 export const workspacePackage = '@workledger/test-utils' as const;
 export const workspaceDependencies = [contractsPackage, domainPackage] as const;

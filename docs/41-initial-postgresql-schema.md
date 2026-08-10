@@ -33,6 +33,12 @@ Authentication/session tables remain owned by `WL-302`, application-role/account
 feature-specific workflow additions by their owning tasks. Their future migrations must preserve
 this schema's organization and immutable-history constraints.
 
+`WL-302` subsequently added five internal authentication tables through
+`0002_auth_foundation.sql`: users, provider/credential
+accounts, sessions, protected verification grants, and rate-limit buckets. The complete migrated
+schema now has 33 tables. Reset identifiers are encoded to SHA-256 before SQL storage and lookup;
+session constraints enforce expiry after creation and no later than 12 hours after creation.
+
 The Drizzle schema is internal to `packages/database`; it is deliberately not exported from the
 package root. `WL-301` now exposes narrow repository methods only inside transaction callbacks,
 never rows, query builders, SQL values, or an unrestricted client.
@@ -86,5 +92,6 @@ prove forward recovery on a production-shaped copy.
 ## Remaining work
 
 `WL-301` completed repository interfaces, domain-value mappings, bounded pool construction, row
-locking, and transaction helpers; see `docs/42-repositories-and-transactions.md`. Authentication,
-authorization, audit, and idempotency behavior remain owned by their later Phase 3 tasks.
+locking, and transaction helpers; see `docs/42-repositories-and-transactions.md`. Authentication is
+completed by `WL-302`; authorization, audit, and idempotency behavior remain owned by their later
+Phase 3 tasks. See `docs/43-better-auth-credential-session-foundation.md`.

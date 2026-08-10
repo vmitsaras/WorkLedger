@@ -1,6 +1,11 @@
 import { workspacePackage as domainPackage } from '@workledger/domain';
 
 export {
+  createWorkLedgerAuthDatabase,
+  type WorkLedgerAuthDatabase,
+  type WorkLedgerAuthDatabaseConfiguration,
+} from './auth-database.js';
+export {
   createWorkLedgerDatabase,
   DatabaseClosedError,
   DatabaseConfigurationError,

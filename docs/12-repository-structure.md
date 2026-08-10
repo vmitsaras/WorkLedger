@@ -182,6 +182,12 @@ remain uncreated until their owning tasks begin. `WL-300` created the internal
 database schema tests; repositories, transactions, mappings, and seed folders remain owned by
 their later tasks.
 
+`WL-302` added `apps/api/src/auth` for the credential/session composition boundary,
+`packages/database/src/auth-database.ts` for internal Better Auth persistence and authoritative
+session/throttle operations, and shared isolated PostgreSQL fixture support in
+`packages/test-utils/src/postgres.ts`. Employee authorization feature folders remain uncreated until
+`WL-303`.
+
 ## Feature-folder rule
 
 Create a feature folder only when work begins on that feature. Avoid empty speculative architecture.

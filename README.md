@@ -5,14 +5,14 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 3 — 2 of 10 tasks complete**
+> **Current phase progress: Phase 3 — 3 of 10 tasks complete**
 
 Phase 2 passed its exit gate and the repository is now in **Phase 3: data, authentication, and API
 foundation**. The workspace, project boundaries, strict tooling, test and CI baseline, local
 PostgreSQL environment, runtime configuration, React Aria UI foundation, contributor documentation,
-framework-independent domain engine, initial PostgreSQL schema/generated migrations, and narrow
-repository/transaction boundary are implemented. The next task is the accepted Better Auth
-credential and session profile (`WL-302`).
+framework-independent domain engine, initial PostgreSQL schema/generated migrations, narrow
+repository/transaction boundary, and accepted Better Auth credential/session foundation are
+implemented. The next task is application roles and scoped authorization (`WL-303`).
 
 WorkLedger does not yet provide authenticated application services, product workflows, production
 deployment, or a supported release. The runnable web page is an isolated
@@ -179,6 +179,7 @@ versions and makes no response-time or production-support promise.
 | [docs/40-phase-2-gate-review.md](docs/40-phase-2-gate-review.md) | Phase 2 exit-gate evidence |
 | [docs/41-initial-postgresql-schema.md](docs/41-initial-postgresql-schema.md) | Initial Drizzle schema, migrations, constraints, and recovery evidence |
 | [docs/42-repositories-and-transactions.md](docs/42-repositories-and-transactions.md) | Repository API, transaction, locking, retry, and public-boundary evidence |
+| [docs/43-better-auth-credential-session-foundation.md](docs/43-better-auth-credential-session-foundation.md) | Credential, reset, session, cookie, CSRF, throttling, and revocation evidence |
 
 ## License
 
