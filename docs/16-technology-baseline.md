@@ -95,6 +95,12 @@ Official references:
 - Class Variance Authority for limited, typed component variants.
 - Local WorkLedger wrappers and stories.
 
+`WL-106` pins `react-aria-components` `1.20.0`, Tailwind CSS and `@tailwindcss/vite` `4.3.3`,
+Class Variance Authority `0.7.1`, and shadcn CLI schema/registry behavior observed at `4.16.2` on
+2026-08-10. The checked-in `aria-nova` metadata selects the React Aria base. See
+`docs/26-ui-foundation.md` for the source-alias constraint and the narrowly scoped upstream
+declaration compatibility override.
+
 Official references:
 
 - https://react-spectrum.adobe.com/react-aria/

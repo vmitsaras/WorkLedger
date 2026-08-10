@@ -2,15 +2,19 @@
 
 WorkLedger is a planned self-hosted application for working time, flexible-time balances, absence requests, approvals, corrections, and auditable monthly records in small and medium-sized office, remote, and hybrid organizations.
 
-Phase 0 has passed and this public repository is in **Phase 1: repository foundation**. `WL-100` established the private pnpm workspace, `WL-101` added its eight project shells, and `WL-102` added strict TypeScript project references, lint/format commands, and executable source-boundary fixtures. There is still no runnable application, framework integration, container, database schema, CI baseline, or supported release; `WL-103` is the active test-project and CI task.
+> **Project readiness: Stage 2 of 5 — Foundation in progress**<br>
+> **Current phase progress: 7 of 9 tasks complete**
+
+Phase 0 has passed and this public repository is in **Phase 1: repository foundation**. The workspace, project boundaries, strict tooling, test and CI baseline, local PostgreSQL environment, runtime configuration, and React Aria UI foundation are implemented. A development-only foundation preview is runnable, but WorkLedger does not yet provide product workflows, a domain engine, an application database schema, authentication, or a supported release. `WL-107` is the active public documentation task.
 
 ## Current status
 
 - Follow [PROJECT_STATUS.md](PROJECT_STATUS.md) for the active task and verified decisions.
 - Follow [TODO.md](TODO.md) and [docs/08-task-board.md](docs/08-task-board.md) for dependency-ordered work.
+- Read “Stage 2 of 5” as the current readiness stage, not as two completed stages or a release-readiness claim. The stage definitions live in [docs/07-roadmap.md](docs/07-roadmap.md#user-facing-readiness-scale).
 - Treat [AGENTS.md](AGENTS.md), accepted ADRs, and the planning documents as the implementation contract.
-- Begin Phase 1 only through the active bounded task in `PROJECT_STATUS.md`; passing the gate does not authorize skipping directly to application or feature scaffolding.
-- Root format, lint, typecheck, unit-contract, and build checks now exercise all applicable repository layers and enforce the accepted package graph. Integration/E2E runners, accessibility helpers, and CI remain `WL-103`; application-level claims begin only after their owning tasks create and test those layers.
+- Continue Phase 1 only through the active bounded task in `PROJECT_STATUS.md`; passing the gate does not authorize skipping directly to application or feature scaffolding.
+- Root format, lint, typecheck, unit, component, integration, browser, and build checks exercise the applicable repository layers and enforce the accepted package graph. Application-level claims begin only after their owning tasks create and test those layers.
 
 ## Delivery order
 

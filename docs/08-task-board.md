@@ -42,7 +42,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-103 | Configure Vitest projects, React Testing Library, API integration harness, Playwright, axe, and CI | WL-101, WL-102 | Baseline unit, component, integration, and E2E smoke tests pass in CI | Done |
 | WL-104 | Configure PostgreSQL Docker development service and test database lifecycle | WL-101 | Health check and isolated integration DB test pass | Done |
 | WL-105 | Implement validated environment, canonical-origin, proxy-trust, and secret schema plus safe `.env.example` | WL-101 | Missing/placeholder/invalid production config fails clearly; secrets stay out of repo/browser/logs | Done |
-| WL-106 | Initialize shadcn with React Aria base; add tokens, focus, reduced-motion, and semantic examples | WL-101, WL-102 | Story/tests for button, link, field, dialog; keyboard and axe pass | Ready |
+| WL-106 | Initialize shadcn with React Aria base; add tokens, focus, reduced-motion, and semantic examples | WL-101, WL-102 | Story/tests for button, link, field, dialog; keyboard and axe pass | Done |
 | WL-107 | Write public repository status, local setup, scripts, package boundaries, contribution, license, and verified security-reporting workflow | WL-100–WL-106 | Fresh-clone instructions verified; no runnable/release/security-support claim exceeds evidence | Not started |
 | WL-108 | Execute Phase 1 gate review | WL-100–WL-107 | All Phase 1 gate evidence recorded, including clean install and enforced ADR `0011` boundaries | Not started |
 

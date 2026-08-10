@@ -92,10 +92,16 @@ export const EXPECTED_CONFIG_EXPORTS = {
   './vitest': './vitest/index.js',
 };
 
+export const EXPECTED_UI_EXPORTS = {
+  ...EXPECTED_PACKAGE_EXPORTS,
+  './styles.css': './src/styles.css',
+};
+
 const EXPECTED_PROJECT_SCRIPTS = {
   build: 'tsc --build tsconfig.json --pretty false',
   typecheck: 'tsc --build tsconfig.json --pretty false',
 };
+export const EXPECTED_WEB_BUILD_SCRIPT = 'tsc --build tsconfig.json --pretty false && vite build';
 const INTERNAL_SCOPE = '@workledger/';
 const DEPENDENCY_FIELDS = [
   'dependencies',
@@ -146,6 +152,9 @@ const REQUIRED_CONFIGURATION_FILES = [
   'scripts/run-postgres-integration.mjs',
   'test/setup/vitest-dom.ts',
   'vitest.config.ts',
+  'components.json',
+  'apps/web/index.html',
+  'apps/web/vite.config.ts',
 ];
 const ALTERNATE_LOCKFILES = [
   'package-lock.json',
@@ -475,7 +484,11 @@ export function validateWorkspace(state) {
     if (manifest.private !== true) errors.push(`${directory} must be private.`);
     if (manifest.license !== 'MIT') errors.push(`${directory} must use the MIT license.`);
     if (manifest.type !== 'module') errors.push(`${directory} must use ESM.`);
-    for (const [scriptName, command] of Object.entries(EXPECTED_PROJECT_SCRIPTS)) {
+    const expectedProjectScripts = {
+      ...EXPECTED_PROJECT_SCRIPTS,
+      ...(directory === 'apps/web' ? { build: EXPECTED_WEB_BUILD_SCRIPT } : {}),
+    };
+    for (const [scriptName, command] of Object.entries(expectedProjectScripts)) {
       if (manifest.scripts?.[scriptName] !== command) {
         errors.push(`${directory} must define the standard ${scriptName} script.`);
       }
@@ -493,7 +506,11 @@ export function validateWorkspace(state) {
       }
     } else if (expectedProject?.kind === 'package') {
       const expectedExports =
-        directory === 'packages/config' ? EXPECTED_CONFIG_EXPORTS : EXPECTED_PACKAGE_EXPORTS;
+        directory === 'packages/config'
+          ? EXPECTED_CONFIG_EXPORTS
+          : directory === 'packages/ui'
+            ? EXPECTED_UI_EXPORTS
+            : EXPECTED_PACKAGE_EXPORTS;
       if (!isDeepStrictEqual(manifest.exports, expectedExports)) {
         errors.push(`${directory} must expose only its accepted explicit public surfaces.`);
       }

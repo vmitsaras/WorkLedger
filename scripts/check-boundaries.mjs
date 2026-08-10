@@ -3,6 +3,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { parse as parseJavaScript } from '@babel/parser';
 import { init, parse } from 'es-module-lexer';
 
 import { EXPECTED_PROJECTS } from './check-workspace.mjs';
@@ -48,6 +49,48 @@ function lineAtOffset(source, offset) {
     if (source[index] === '\n') line += 1;
   }
   return line;
+}
+
+function collectTypeScriptImports(relativeFile, source) {
+  const sourceFile = parseJavaScript(source, {
+    plugins: [/\.tsx$/.test(relativeFile) ? 'jsx' : null, 'typescript'].filter(Boolean),
+    sourceType: 'module',
+  });
+  const imports = [];
+
+  function addModuleSpecifier(moduleSpecifier, node) {
+    imports.push({
+      line: node.loc?.start.line ?? 1,
+      specifier: moduleSpecifier?.type === 'StringLiteral' ? moduleSpecifier.value : null,
+    });
+  }
+
+  function visit(node) {
+    if (!node || typeof node !== 'object') return;
+
+    if (
+      ['ImportDeclaration', 'ExportAllDeclaration', 'ExportNamedDeclaration'].includes(node.type) &&
+      node.source
+    ) {
+      addModuleSpecifier(node.source, node);
+    } else if (node.type === 'ImportExpression') {
+      addModuleSpecifier(node.source, node);
+    } else if (node.type === 'CallExpression' && node.callee?.type === 'Import') {
+      addModuleSpecifier(node.arguments?.[0], node);
+    }
+
+    for (const [key, value] of Object.entries(node)) {
+      if (['comments', 'errors', 'loc', 'tokens'].includes(key)) continue;
+      if (Array.isArray(value)) {
+        for (const child of value) visit(child);
+      } else {
+        visit(value);
+      }
+    }
+  }
+
+  visit(sourceFile);
+  return imports;
 }
 
 function createError(code, relativeFile, line, specifier, message) {
@@ -212,17 +255,28 @@ export async function validateSourceImports({
   const project = PROJECT_BY_DIRECTORY.get(projectDirectory);
   if (!project) throw new Error(`Unknown workspace project ${projectDirectory}.`);
 
-  await init;
-  const [imports] = parse(source);
+  const isTypeScript = /\.(?:cts|mts|ts|tsx)$/.test(relativeFile);
+  let imports;
+  if (isTypeScript) {
+    imports = collectTypeScriptImports(relativeFile, source);
+  } else {
+    await init;
+    const [parsedImports] = parse(source);
+    imports = parsedImports
+      .filter((importRecord) => importRecord.d !== -2)
+      .map((importRecord) => ({
+        line: lineAtOffset(source, importRecord.s),
+        specifier: importRecord.n,
+      }));
+  }
   const errors = [];
   let importCount = 0;
 
   for (const importRecord of imports) {
-    if (importRecord.d === -2) continue;
     importCount += 1;
 
-    const line = lineAtOffset(source, importRecord.s);
-    if (typeof importRecord.n !== 'string') {
+    const { line, specifier } = importRecord;
+    if (typeof specifier !== 'string') {
       errors.push(
         createError(
           'nonliteral-dynamic-import',
@@ -239,7 +293,7 @@ export async function validateSourceImports({
       project,
       relativeFile,
       repositoryDirectory,
-      specifier: importRecord.n,
+      specifier,
       line,
     });
     if (error) errors.push(error);

@@ -37,10 +37,11 @@
     "test": "pnpm run workspace:check && pnpm run test:build && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs scripts/check-phase-version.test.mjs && vitest run --project unit --project component",
     "test:integration": "pnpm run workspace:check && pnpm run test:build && vitest run --project integration",
     "test:e2e": "pnpm run workspace:check && pnpm run test:build && playwright test",
-    "build": "pnpm run workspace:check && tsc --build --pretty false --force && node scripts/check-workspace-build.mjs",
+    "build": "pnpm run workspace:check && tsc --build --pretty false --force && pnpm --filter @workledger/web exec vite build && node scripts/check-workspace-build.mjs",
     "verify": "pnpm config:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
   },
   "devDependencies": {
+    "@babel/parser": "8.0.4",
     "@playwright/test": "1.61.1",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.0",

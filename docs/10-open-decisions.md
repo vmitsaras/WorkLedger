@@ -119,6 +119,20 @@ These were confirmed from repository evidence and the architecture ratification.
 - Departments have no MVP data model, authorization effect, route, report, seed, or administration workflow.
 - Additional organization hierarchies require a later scoped feature and evidence of need.
 
+### D-007 — shadcn source alias boundary
+
+**Status:** Resolved by `WL-106` in favor of ADR `0011` package boundaries.
+
+- The root `components.json` uses the current `aria-nova` style identifier, which explicitly selects
+  the shadcn React Aria base.
+- The current shadcn `info` command requires TypeScript or package-import source aliases. WorkLedger
+  does not add them because the accepted executable boundary contract rejects alias, deep, and
+  sibling-source imports that can bypass package public roots.
+- React Aria shadcn source may still be retrieved with the base selected explicitly, copied into
+  `packages/ui`, converted to local relative imports, and reviewed as WorkLedger-owned source.
+- A future request for alias-based CLI installation requires an ADR change and matching executable
+  boundary rules; tool convenience alone is not sufficient justification.
+
 ## Resolved Phase 2 entry decisions
 
 ### D-100 — Credited-time representation

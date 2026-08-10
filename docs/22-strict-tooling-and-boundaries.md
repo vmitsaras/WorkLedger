@@ -89,14 +89,15 @@ Exact stable versions checked on 2026-08-05:
 | `@eslint/js` | `10.0.1` | ESLint-maintained recommended JavaScript rules; supports Node `>=24` |
 | Prettier | `3.9.6` | Deterministic code/config formatting; supports Node `>=14` |
 | `globals` | `17.9.0` | Maintained Node global definitions for ESLint; supports Node `>=18` |
-| `es-module-lexer` | `2.3.1` | Small module-specifier lexer for repository-owned source checks; exercised under Node `24.18.0` |
+| `es-module-lexer` | `2.3.1` | Small module-specifier lexer for repository-owned JavaScript source checks; exercised under Node `24.18.0` |
+| `@babel/parser` | `8.0.4` | TypeScript/TSX module parser added by `WL-106` because the lexer does not parse JSX and the pinned native TypeScript 7 package exposes no compiler parser API; used only to extract import/export specifiers |
 
 Primary references checked before installation:
 
 - TypeScript project references: <https://www.typescriptlang.org/docs/handbook/project-references.html>
 - ESLint flat configuration: <https://eslint.org/docs/latest/use/configure/configuration-files>
 - Prettier installation/configuration: <https://prettier.io/docs/install>, <https://prettier.io/docs/configuration>
-- Package metadata: <https://registry.npmjs.org/eslint/10.8.0>, <https://registry.npmjs.org/prettier/3.9.6>, <https://registry.npmjs.org/typescript-eslint/8.66.0>, <https://registry.npmjs.org/es-module-lexer/2.3.1>
+- Package metadata: <https://registry.npmjs.org/eslint/10.8.0>, <https://registry.npmjs.org/prettier/3.9.6>, <https://registry.npmjs.org/typescript-eslint/8.66.0>, <https://registry.npmjs.org/es-module-lexer/2.3.1>, <https://registry.npmjs.org/%40babel%2Fparser/8.0.4>
 
 ## 7. Verification evidence
 

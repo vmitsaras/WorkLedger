@@ -9,6 +9,8 @@ import {
   EXPECTED_PACKAGE_EXPORTS,
   EXPECTED_PACKAGE_MANAGER,
   EXPECTED_PROJECTS,
+  EXPECTED_UI_EXPORTS,
+  EXPECTED_WEB_BUILD_SCRIPT,
   EXPECTED_WORKSPACE_CONFIG,
   validateWorkspace,
 } from './check-workspace.mjs';
@@ -50,10 +52,15 @@ function createProject(expectedProject) {
           : structuredClone(
               expectedProject.directory === 'packages/config'
                 ? EXPECTED_CONFIG_EXPORTS
-                : EXPECTED_PACKAGE_EXPORTS,
+                : expectedProject.directory === 'packages/ui'
+                  ? EXPECTED_UI_EXPORTS
+                  : EXPECTED_PACKAGE_EXPORTS,
             ),
       scripts: {
-        build: 'tsc --build tsconfig.json --pretty false',
+        build:
+          expectedProject.directory === 'apps/web'
+            ? EXPECTED_WEB_BUILD_SCRIPT
+            : 'tsc --build tsconfig.json --pretty false',
         typecheck: 'tsc --build tsconfig.json --pretty false',
       },
       ...(expectedProject.runtimeDependencies.length > 0 ? { dependencies } : {}),

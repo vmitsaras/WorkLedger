@@ -12,6 +12,7 @@ const fixtureDirectory = path.join(repositoryRoot, 'scripts', 'fixtures', 'impor
 const negativeFixtures = [
   ['forbidden-edge.ts', 'apps/web', 'src/forbidden-edge.ts', 'forbidden-edge'],
   ['deep-import.ts', 'apps/api', 'src/deep-import.ts', 'deep-import'],
+  ['deep-import.tsx', 'apps/web', 'src/deep-import.tsx', 'deep-import'],
   ['application-import.ts', 'apps/api', 'src/application-import.ts', 'application-import'],
   [
     'production-test-utils.ts',
@@ -27,8 +28,8 @@ const negativeFixtures = [
 test('accepts every current workspace source import', async () => {
   assert.deepEqual(await checkWorkspaceBoundaries(repositoryRoot), {
     errors: [],
-    fileCount: 28,
-    importCount: 48,
+    fileCount: 37,
+    importCount: 75,
   });
 });
 

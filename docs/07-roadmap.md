@@ -11,6 +11,24 @@
 - Completing a phase exit-gate task requires one internal minor-version bump across the root and every workspace manifest. The version is `0.<completed phase-gate count>.0`: Phase 0 completion is `0.1.0`, Phase 1 completion is `0.2.0`, and so on.
 - `pnpm run phase:check` reads the phase-gate checkboxes in `TODO.md`, rejects skipped gates, and verifies the required workspace version. The version is an internal milestone, not permission to tag, publish, release, or deploy. Moving to `1.0.0` requires an ADR.
 
+## User-facing readiness scale
+
+This five-stage label supplements the technical phase and SemVer. It communicates the kind of work
+currently underway; reaching a stage does not mean that stage is complete or that the product is
+ready to release.
+
+| Stage | Label | Roadmap coverage | Completion condition |
+|---|---|---|---|
+| 1 of 5 | Product contract | Phase 0 | Product, domain, accessibility, security, and architecture contracts pass their gate |
+| 2 of 5 | Foundation | Phase 1 | Repository, tooling, test, data-service, configuration, UI-foundation, and contributor-documentation work passes its gate |
+| 3 of 5 | Core engine and platform | Phases 2–3 | Domain engine, persistence, authentication, authorization, audit, and API foundations pass their gates |
+| 4 of 5 | Product workflows | Phases 4–9 | Employee, manager, absence, closure, reporting, and administration workflows pass their gates |
+| 5 of 5 | Production and release | Phases 10–11 | Production hardening, self-hosting, accessibility, operations, public documentation, and release gates pass |
+
+The current label is **Stage 2 of 5 — Foundation in progress**. Phase 1 has **7 of 9 tasks
+complete**. The project is not release-ready, and the workspace version remains governed by the
+phase-completion rule above.
+
 ---
 
 # Phase 0 — Product and Domain Contract

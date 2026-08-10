@@ -1,14 +1,16 @@
 # WorkLedger Project Status
 
 **Current phase:** Phase 1 — Repository foundation
-**Current milestone:** React Aria shadcn base, design tokens, focus, and reduced-motion foundation
-**Active task:** `WL-106`
+**Project readiness:** Stage 2 of 5 — Foundation in progress
+**Phase progress:** 7 of 9 Phase 1 tasks complete
+**Current milestone:** Public repository and contributor documentation
+**Active task:** `WL-107`
 **Status:** Ready
-**Last verified:** 2026-08-09
+**Last verified:** 2026-08-10
 
 ## Current objective
 
-Initialize the React Aria shadcn base and a small WorkLedger design-token foundation with visible focus, reduced-motion behavior, and semantic button/link/field/dialog examples. Do not begin feature routes, application schema/migrations, authentication storage, or production deployment behavior in `WL-106`.
+Write verified public repository status, local setup, scripts, package-boundary, contribution, license, and security-reporting documentation. Do not overstate runnable features, support, deployment, or release readiness in `WL-107`.
 
 ## Verified decisions
 
@@ -90,6 +92,13 @@ Initialize the React Aria shadcn base and a small WorkLedger design-token founda
 - API runtime configuration is server-only and is parsed with native Node `URL`, `net.isIP`, and byte-length primitives. `WORKLEDGER_ORIGIN` is the only source for canonical links; production requires an HTTPS origin, exact trusted-proxy IP addresses, a credentialed non-placeholder PostgreSQL URL, and a non-placeholder authentication secret of at least 32 bytes.
 - Fastify receives only the validated exact proxy-address list, never a broad proxy setting, CIDR, or hop count. Untrusted forwarded headers do not affect request protocol handling, and API health stays generic/no-store with CORS disabled by default.
 - `.env.example` contains only safe local PostgreSQL defaults and blank production-secret fields. `config:check` uses Node's native optional `.env` loading and outputs a redacted configuration summary.
+- The UI foundation pins React Aria Components `1.20.0`, Tailwind CSS `4.3.3`, Class Variance Authority `0.7.1`, and current shadcn React Aria metadata through `style: "aria-nova"`.
+- `packages/ui` owns local semantic button, link, text-field, and dialog wrappers plus one explicit token stylesheet export; `apps/web` composes only the isolated Vite foundation preview.
+- Visible focus uses React Aria focus-visible state with outline/forced-colors support. Reduced motion removes dialog spatial animation and preserves immediate state feedback without a global animation-duration reset.
+- React Aria owns modal containment, Escape dismissal, initial dialog focus, and trigger focus restoration; component and Chromium tests cover semantics, keyboard behavior, axe, and reduced-motion computed styles.
+- shadcn's current `info` command requires source aliases that conflict with ADR `0011`; WorkLedger retains alias-free relative UI imports and explicitly requests/adapts React Aria registry source instead (`D-007`).
+- `skipLibCheck` is scoped to the UI and web projects for an upstream React Aria/React 19.2 optional-DOM-property declaration conflict; WorkLedger source remains strictly checked.
+- `@babel/parser` `8.0.4` extends repository-owned source-boundary checks to TypeScript/TSX imports because `es-module-lexer` does not parse JSX and the pinned native TypeScript 7 package exposes no compiler parser API.
 - Phase 0 passed with all seven roadmap criteria evidenced; the accepted catalog contains 85 contiguous single-outcome examples, and every remaining open decision has an explicit later owner/deadline.
 
 ## Work completed
@@ -115,26 +124,27 @@ Initialize the React Aria shadcn base and a small WorkLedger design-token founda
 - [x] Vitest projects, React Testing Library/jsdom component smoke tests, API/database integration harness smoke tests, Playwright Chromium E2E with axe, and baseline CI configured (`WL-103`; see `docs/23-test-projects-and-ci.md`).
 - [x] Local PostgreSQL Docker service, host health check, isolated test database lifecycle proof, and CI database startup configured (`WL-104`; see `docs/24-postgres-docker-dev.md`).
 - [x] API runtime configuration, canonical-origin helper, exact Fastify proxy trust, safe `.env.example`, redacted config check, and security-focused API tests configured (`WL-105`; see `docs/25-runtime-configuration.md`).
+- [x] React Aria shadcn metadata, local semantic UI wrappers, Tailwind/Vite preview, WorkLedger tokens, visible focus, forced-colors support, reduced motion, and browser/component accessibility evidence configured (`WL-106`; see `docs/26-ui-foundation.md`).
 
 ## Latest completed task
 
-### `WL-105` — Configure environment, origin/proxy trust, secrets, and safe example configuration
+### `WL-106` — Initialize the React Aria shadcn base and design tokens
 
-- Changed: added the API runtime configuration/parser, canonical-link helper, Fastify server factory with exact proxy trust, safe root `.env.example`, redacted `config:check`, focused validation/proxy tests, and the `WL-105` evidence document.
-- Verified: `pnpm with 11.20.0 run config:check`, focused unit/integration tests, `format:check`, lint/boundary scan, strict typecheck, `db:verify` against local Docker PostgreSQL, and the full `pnpm with 11.20.0 run verify` gate all passed locally under pinned Node `24.18.0`/pnpm `11.20.0`.
-- Decisions: production configuration fails closed unless it declares the canonical HTTPS origin, one or more exact proxy addresses, credentialed PostgreSQL URL, and a suitable authentication secret. Canonical links never infer host/protocol from a request, and Fastify cannot trust forwarded headers from an unconfigured immediate peer.
-- Accessibility: no user interface changed. Existing component/E2E accessibility smoke checks still pass.
-- Security/data: secrets and connection strings are omitted from checker output, health data, tests, browser source, and tracked configuration. No employee data, authentication storage, schema/migration, seed data, CORS policy expansion, proxy deployment, telemetry, or production container behavior was added.
-- Remaining risk: authentication/CSRF integration, dependency/license/secret scanning, Drizzle schema/migrations, and proxy/deployment implementation remain later tasks.
-- Next task: `WL-106`.
+- Changed: added current `aria-nova` shadcn metadata, local React Aria button/link/text-field/dialog wrappers, CVA variants, WorkLedger design and motion tokens, forced-colors behavior, a Vite/Tailwind foundation preview, real-browser Playwright hosting, and `WL-106` evidence documentation.
+- Verified: `pnpm with 11.20.0 run verify`, strict typecheck, 24 native tooling tests, 14 unit/component tests, integration tests, the Vite production build, two Chromium keyboard/focus/axe/reduced-motion tests, and desktop/narrow visual review passed. The opt-in real PostgreSQL lifecycle test skipped because its database URL was unset; `docs/26-ui-foundation.md` records the evidence.
+- Decisions: ADR `0011` remains stronger than shadcn CLI source-alias convenience. React Aria registry source must be requested with the Aria base and adapted to alias-free local imports (`D-007`).
+- Accessibility: semantic roles/names and field descriptions, visible focus, dialog initial focus/Escape/trigger restoration, minimum targets, axe, reduced motion, forced-colors fallbacks, and narrow reflow are covered proportionally to this foundation slice.
+- Security/data: the preview contains no personal, attendance, authentication, or server data and adds no persistence, network request, browser storage, logging, schema, or deployment behavior.
+- Remaining risk: manual screen-reader and Windows forced-colors checks remain later review gates; the two browser projects carry a documented upstream declaration-only `skipLibCheck` override.
+- Next task: `WL-107`.
 
 ## Current blockers
 
-No `WL-106` blocker is known. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. Local PostgreSQL and runtime configuration are configured; the React Aria base and design tokens remain to be implemented.
+No `WL-107` blocker is known. D-201/D-202, D-200/D-204, and D-502 retain their recorded later owners/deadlines. The repository foundation is implemented through the UI layer; public setup and contributor documentation remain to be reconciled with verified behavior.
 
 ## Next task
 
-`WL-106 — Initialize React Aria shadcn base and design tokens.`
+`WL-107 — Write public repository status, setup, contribution, license, and security-reporting documentation.`
 
 ## Update rules
 
