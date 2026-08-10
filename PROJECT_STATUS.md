@@ -2,17 +2,16 @@
 
 **Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 10 Phase 3 tasks complete
-**Current milestone:** Initial PostgreSQL schema and generated migrations
-**Active task:** `WL-300`
+**Phase progress:** 1 of 10 Phase 3 tasks complete
+**Current milestone:** Repository interfaces and transaction boundaries
+**Active task:** `WL-301`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Design and implement the initial PostgreSQL schema and generated migrations. Resolve the physical
-identifier and daily-projection persistence decisions before accepting constraints, indexes,
-repositories, or migration artifacts.
+Define narrow repository interfaces and implement PostgreSQL transaction boundary helpers without
+leaking Drizzle rows, query builders, or unrestricted clients outside `packages/database`.
 
 ## Verified decisions
 
@@ -87,9 +86,12 @@ repositories, or migration artifacts.
 - Every completed zero-indexed phase gate requires the shared root/workspace version `0.<completed phase-gate count>.0`; Phase 1 completion sets all nine manifests to `0.2.0` without authorizing publication, tagging, deployment, or release creation.
 - Vitest `4.1.10` owns unit, component, and integration projects; React/React DOM `19.2.8`, React Testing Library `16.3.2`, jsdom `30.0.1`, axe-core `4.12.1`, Playwright `1.61.1`, and Fastify `5.10.0` are pinned for the baseline harnesses.
 - The root quality gate runs native contract tests, Vitest unit/component tests, Vitest integration tests, Chromium Playwright E2E with axe, and a GitHub Actions workflow that mirrors `pnpm run verify`.
+- Application/domain records use PostgreSQL 18 native UUIDv7 defaults while domain and contract identifiers remain opaque strings; UUID generation time is not business chronology or authorization evidence.
+- Daily projections persist as explicit-rebuild, versioned employee/date query caches with source fingerprints and reconciled minute totals; raw facts, append-only ledgers, and immutable approved snapshots remain authoritative.
+- Drizzle ORM `0.45.2` and Drizzle Kit `0.31.10` own the internal database schema and generated migrations; PostgreSQL-only custom migration SQL adds effective-range exclusions, organization-consistency foreign keys, and immutable-history triggers.
 - Local PostgreSQL development uses Docker Compose at `infra/compose/postgres.dev.yml`, official `postgres:18.4-trixie`, loopback-only host binding on port `54329` by default, a `pg_isready` health check, and the PostgreSQL 18 Docker image's `/var/lib/postgresql` volume layout.
 - `WL-104` creates only local non-production database roles and empty development/test databases; it does not add WorkLedger product tables, Drizzle migrations, authentication storage, seed data, production Compose, or deployment behavior.
-- `pg` `8.22.0` and `@types/pg` `8.20.0` are pinned for local host health checks and database integration tests. Drizzle remains deferred until real schema/migration work.
+- `pg` `8.22.0` and `@types/pg` `8.20.0` are pinned for database access/tests; `WL-300` adds Drizzle ORM `0.45.2` and Drizzle Kit `0.31.10` for the internal schema and generated migrations.
 - `WORKLEDGER_TEST_DATABASE_URL` opts the PostgreSQL lifecycle integration test into a real database connection; without it, the test skips. CI starts the same local Compose service, runs `db:verify`, sets the URL, and then runs the full quality gate.
 - API runtime configuration is server-only and is parsed with native Node `URL`, `net.isIP`, and byte-length primitives. `WORKLEDGER_ORIGIN` is the only source for canonical links; production requires an HTTPS origin, exact trusted-proxy IP addresses, a credentialed non-placeholder PostgreSQL URL, and a non-placeholder authentication secret of at least 32 bytes.
 - Fastify receives only the validated exact proxy-address list, never a broad proxy setting, CIDR, or hop count. Untrusted forwarded headers do not affect request protocol handling, and API health stays generic/no-store with CORS disabled by default.
@@ -163,35 +165,38 @@ repositories, or migration artifacts.
   (`WL-210`; see `docs/39-domain-example-review.md`).
 - [x] Phase 2 domain package boundary, fixture mapping, invariant review, and quality gate passed
   with shared internal version `0.3.0` (`WL-211`; see `docs/40-phase-2-gate-review.md`).
+- [x] Initial 28-table PostgreSQL schema, UUIDv7 identifiers, explicit daily-projection persistence,
+  generated/custom migrations, integrity constraints, immutable triggers, and clean migration proof
+  completed (`WL-300`; see `docs/41-initial-postgresql-schema.md`).
 
 ## Latest completed task
 
-### `WL-211` — Execute Phase 2 gate review
+### `WL-300` — Design and implement initial PostgreSQL schema and generated migrations
 
-- Changed: completed the Phase 2 exit audit and advanced every workspace manifest from `0.2.0` to
-  `0.3.0` under the mandatory phase-version rule. Added the detailed gate evidence.
-- Verified: formatting, linting, strict TypeScript, source boundaries, 95 unit/component tests,
-  integration baseline, isolated Chromium checks, workspace/phase-version/typed-entry validation,
-  and the production web build passed. The domain package remains framework-independent.
-- Accessibility: no product UI changed. The isolated Chromium UI-foundation checks pass; complete
-  product accessibility remains owned by its later workflow gates.
-- Security/data: no product data surface was added. Database/auth/API/persistence controls remain
-  unimplemented and explicitly next-phase work; no gate result is a production-readiness claim.
-- Documentation: added `docs/40-phase-2-gate-review.md` and reconciled the README, TODO, task
-  board, project status, and phase-version record.
-- Remaining risk: Phase 3 must resolve D-201/D-202 and introduce schema, repositories,
-  authentication, authorization, API, audit, and transactional evidence before product workflows.
-- Next task: `WL-300`.
+- Changed: resolved D-201/D-202; added the internal Drizzle schema, 28 initial application tables,
+  generated migration metadata/SQL, PostgreSQL integrity migration, and explicit `esbuild`
+  install-script allowlist required by Drizzle Kit.
+- Verified: database typecheck and three schema unit tests pass. PostgreSQL 18 cleanly applies both
+  migrations in an isolated schema and proves UUIDv7 defaults, all 28 tables, overlap rejection,
+  immutable punches, and projection reconciliation constraints.
+- Accessibility: no user interface changed; not applicable to this persistence-only slice.
+- Security/data: composite organization foreign keys prevent cross-organization links; raw events,
+  decisions, effects, ledgers, snapshots, and post-lock adjustments reject update/delete. No seed or
+  retained personal data was created.
+- Documentation: resolved D-201/D-202 and added `docs/41-initial-postgresql-schema.md`, including the
+  forward-recovery/backup rollback strategy and deferred schema owners.
+- Remaining risk: repository transaction/locking behavior is not implemented; auth, authorization,
+  audit audience separation, and full idempotency behavior remain later Phase 3 tasks.
+- Next task: `WL-301`.
 
 ## Current blockers
 
-No `WL-300` blocker is known. D-201/D-202 are explicitly owned by the initial schema task and must
-be resolved before migration acceptance. D-200/D-204 remain owned before the shared API contract,
-and D-502 before the production browser gate.
+No `WL-301` blocker is known. D-200/D-204 remain owned before the shared API contract, and D-502
+before the production browser gate.
 
 ## Next task
 
-`WL-300 — Design and implement the initial PostgreSQL schema and generated migrations.`
+`WL-301 — Define repository interfaces and implement transaction boundary helpers.`
 
 ## Update rules
 

@@ -1,0 +1,838 @@
+import { sql } from 'drizzle-orm';
+import {
+  boolean,
+  check,
+  date,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
+
+const identifier = (name: string) =>
+  uuid(name)
+    .default(sql`uuidv7()`)
+    .notNull();
+const createdAt = () =>
+  timestamp('created_at', { mode: 'string', withTimezone: true }).defaultNow().notNull();
+const recordedAt = () =>
+  timestamp('recorded_at', { mode: 'string', withTimezone: true }).defaultNow().notNull();
+const organizationId = () =>
+  uuid('organization_id')
+    .notNull()
+    .references(() => organizations.id);
+const employeeId = () =>
+  uuid('employee_id')
+    .notNull()
+    .references(() => employees.id);
+
+export const employeeStatus = pgEnum('employee_status', ['ACTIVE', 'INACTIVE']);
+export const attendanceState = pgEnum('attendance_state', ['OFF_WORK', 'WORKING', 'ON_BREAK']);
+export const punchEventType = pgEnum('punch_event_type', [
+  'CLOCK_IN',
+  'BREAK_START',
+  'BREAK_END',
+  'CLOCK_OUT',
+]);
+export const calculationStatus = pgEnum('calculation_status', [
+  'PROVISIONAL',
+  'INCOMPLETE',
+  'COMPLETE',
+]);
+export const workflowStatus = pgEnum('workflow_status', [
+  'SUBMITTED',
+  'CHANGES_REQUESTED',
+  'APPROVED',
+  'REJECTED',
+  'WITHDRAWN',
+]);
+export const absenceRequestStatus = pgEnum('absence_request_status', [
+  'SUBMITTED',
+  'REPORTED',
+  'CHANGES_REQUESTED',
+  'APPROVED',
+  'REJECTED',
+  'WITHDRAWN',
+  'PARTIALLY_CANCELLED',
+  'CANCELLED',
+]);
+export const absenceCoverageKind = pgEnum('absence_coverage_kind', [
+  'FULL_DAY',
+  'FIRST_HALF',
+  'SECOND_HALF',
+  'MINUTE_INTERVAL',
+]);
+export const decisionAction = pgEnum('decision_action', [
+  'APPROVE',
+  'REJECT',
+  'REQUEST_CHANGES',
+  'ACKNOWLEDGE',
+  'WITHDRAW',
+  'CANCEL',
+]);
+export const periodStatus = pgEnum('period_status', [
+  'OPEN',
+  'SUBMITTED',
+  'CHANGES_REQUESTED',
+  'APPROVED',
+  'LOCKED',
+]);
+export const timeAccountEntryType = pgEnum('time_account_entry_type', [
+  'OPENING',
+  'DAILY_DELTA',
+  'DAILY_RECALCULATION_DELTA',
+  'CORRECTION',
+  'POST_LOCK_ADJUSTMENT',
+]);
+export const leaveEntitlementEntryType = pgEnum('leave_entitlement_entry_type', [
+  'ALLOCATION',
+  'RESERVATION',
+  'RESERVATION_RELEASE',
+  'DEDUCTION',
+  'RESTORATION',
+  'EXPIRY',
+  'ADJUSTMENT',
+]);
+
+export const organizations = pgTable(
+  'organizations',
+  {
+    id: identifier('id').primaryKey(),
+    name: varchar('name', { length: 160 }).notNull(),
+    timeZone: varchar('time_zone', { length: 255 }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [check('organizations_name_not_blank', sql`length(btrim(${table.name})) > 0`)],
+);
+
+export const employees = pgTable(
+  'employees',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeNumber: varchar('employee_number', { length: 64 }).notNull(),
+    displayName: varchar('display_name', { length: 160 }).notNull(),
+    status: employeeStatus('status').default('ACTIVE').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('employees_organization_employee_number_uidx').on(
+      table.organizationId,
+      table.employeeNumber,
+    ),
+    index('employees_organization_status_idx').on(table.organizationId, table.status),
+    check('employees_display_name_not_blank', sql`length(btrim(${table.displayName})) > 0`),
+  ],
+);
+
+export const employmentPeriods = pgTable(
+  'employment_periods',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    startsOn: date('starts_on', { mode: 'string' }).notNull(),
+    endsOn: date('ends_on', { mode: 'string' }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('employment_periods_employee_dates_idx').on(
+      table.employeeId,
+      table.startsOn,
+      table.endsOn,
+    ),
+    check(
+      'employment_periods_valid_range',
+      sql`${table.endsOn} is null or ${table.startsOn} < ${table.endsOn}`,
+    ),
+  ],
+);
+
+export const teams = pgTable(
+  'teams',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    name: varchar('name', { length: 160 }).notNull(),
+    active: boolean('active').default(true).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [uniqueIndex('teams_organization_name_uidx').on(table.organizationId, table.name)],
+);
+
+export const teamAssignments = pgTable(
+  'team_assignments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    teamId: uuid('team_id')
+      .notNull()
+      .references(() => teams.id),
+    startsOn: date('starts_on', { mode: 'string' }).notNull(),
+    endsOn: date('ends_on', { mode: 'string' }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('team_assignments_employee_dates_idx').on(table.employeeId, table.startsOn, table.endsOn),
+    check(
+      'team_assignments_valid_range',
+      sql`${table.endsOn} is null or ${table.startsOn} < ${table.endsOn}`,
+    ),
+  ],
+);
+
+export const managerAssignments = pgTable(
+  'manager_assignments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    managerEmployeeId: uuid('manager_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    startsOn: date('starts_on', { mode: 'string' }).notNull(),
+    endsOn: date('ends_on', { mode: 'string' }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('manager_assignments_employee_dates_idx').on(
+      table.employeeId,
+      table.startsOn,
+      table.endsOn,
+    ),
+    index('manager_assignments_manager_dates_idx').on(
+      table.managerEmployeeId,
+      table.startsOn,
+      table.endsOn,
+    ),
+    check('manager_assignments_not_self', sql`${table.employeeId} <> ${table.managerEmployeeId}`),
+    check(
+      'manager_assignments_valid_range',
+      sql`${table.endsOn} is null or ${table.startsOn} < ${table.endsOn}`,
+    ),
+  ],
+);
+
+export const weeklySchedules = pgTable(
+  'weekly_schedules',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    name: varchar('name', { length: 160 }).notNull(),
+    version: integer('version').notNull(),
+    mondayMinutes: integer('monday_minutes').notNull(),
+    tuesdayMinutes: integer('tuesday_minutes').notNull(),
+    wednesdayMinutes: integer('wednesday_minutes').notNull(),
+    thursdayMinutes: integer('thursday_minutes').notNull(),
+    fridayMinutes: integer('friday_minutes').notNull(),
+    saturdayMinutes: integer('saturday_minutes').notNull(),
+    sundayMinutes: integer('sunday_minutes').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('weekly_schedules_organization_name_version_uidx').on(
+      table.organizationId,
+      table.name,
+      table.version,
+    ),
+    check('weekly_schedules_positive_version', sql`${table.version} > 0`),
+    check(
+      'weekly_schedules_minutes_bounds',
+      sql`${table.mondayMinutes} between 0 and 1440 and ${table.tuesdayMinutes} between 0 and 1440 and ${table.wednesdayMinutes} between 0 and 1440 and ${table.thursdayMinutes} between 0 and 1440 and ${table.fridayMinutes} between 0 and 1440 and ${table.saturdayMinutes} between 0 and 1440 and ${table.sundayMinutes} between 0 and 1440`,
+    ),
+  ],
+);
+
+export const scheduleAssignments = pgTable(
+  'schedule_assignments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    scheduleId: uuid('schedule_id')
+      .notNull()
+      .references(() => weeklySchedules.id),
+    startsOn: date('starts_on', { mode: 'string' }).notNull(),
+    endsOn: date('ends_on', { mode: 'string' }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('schedule_assignments_employee_dates_idx').on(
+      table.employeeId,
+      table.startsOn,
+      table.endsOn,
+    ),
+    check(
+      'schedule_assignments_valid_range',
+      sql`${table.endsOn} is null or ${table.startsOn} < ${table.endsOn}`,
+    ),
+  ],
+);
+
+export const timePolicies = pgTable(
+  'time_policies',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    name: varchar('name', { length: 160 }).notNull(),
+    version: integer('version').notNull(),
+    rules: jsonb('rules').$type<Readonly<Record<string, unknown>>>().notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('time_policies_organization_name_version_uidx').on(
+      table.organizationId,
+      table.name,
+      table.version,
+    ),
+    check('time_policies_positive_version', sql`${table.version} > 0`),
+    check('time_policies_rules_object', sql`jsonb_typeof(${table.rules}) = 'object'`),
+  ],
+);
+
+export const policyAssignments = pgTable(
+  'policy_assignments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    policyId: uuid('policy_id')
+      .notNull()
+      .references(() => timePolicies.id),
+    startsOn: date('starts_on', { mode: 'string' }).notNull(),
+    endsOn: date('ends_on', { mode: 'string' }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('policy_assignments_employee_dates_idx').on(
+      table.employeeId,
+      table.startsOn,
+      table.endsOn,
+    ),
+    check(
+      'policy_assignments_valid_range',
+      sql`${table.endsOn} is null or ${table.startsOn} < ${table.endsOn}`,
+    ),
+  ],
+);
+
+export const holidays = pgTable(
+  'holidays',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    holidayDate: date('holiday_date', { mode: 'string' }).notNull(),
+    name: varchar('name', { length: 160 }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('holidays_organization_date_uidx').on(table.organizationId, table.holidayDate),
+  ],
+);
+
+export const attendanceHeads = pgTable(
+  'attendance_heads',
+  {
+    employeeId: employeeId().primaryKey(),
+    organizationId: organizationId(),
+    state: attendanceState('state').default('OFF_WORK').notNull(),
+    attendanceRevision: integer('attendance_revision').default(0).notNull(),
+    nextEventSequence: integer('next_event_sequence').default(1).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check('attendance_heads_non_negative_revision', sql`${table.attendanceRevision} >= 0`),
+    check('attendance_heads_positive_next_sequence', sql`${table.nextEventSequence} > 0`),
+  ],
+);
+
+export const punchEvents = pgTable(
+  'punch_events',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    eventSequence: integer('event_sequence').notNull(),
+    eventType: punchEventType('event_type').notNull(),
+    occurredAt: timestamp('occurred_at', { mode: 'string', withTimezone: true }).notNull(),
+    recordedAt: recordedAt(),
+    actorEmployeeId: uuid('actor_employee_id').references(() => employees.id),
+    commandId: uuid('command_id').notNull(),
+  },
+  (table) => [
+    uniqueIndex('punch_events_employee_sequence_uidx').on(table.employeeId, table.eventSequence),
+    index('punch_events_employee_occurred_idx').on(table.employeeId, table.occurredAt),
+    uniqueIndex('punch_events_employee_command_sequence_uidx').on(
+      table.employeeId,
+      table.commandId,
+      table.eventSequence,
+    ),
+    check('punch_events_positive_sequence', sql`${table.eventSequence} > 0`),
+  ],
+);
+
+export const correctionRequests = pgTable(
+  'correction_requests',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    requestedByEmployeeId: uuid('requested_by_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    localDate: date('local_date', { mode: 'string' }).notNull(),
+    status: workflowStatus('status').default('SUBMITTED').notNull(),
+    reason: text('reason').notNull(),
+    proposedInterpretation: jsonb('proposed_interpretation')
+      .$type<Readonly<Record<string, unknown>>>()
+      .notNull(),
+    version: integer('version').default(1).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('correction_requests_employee_date_status_idx').on(
+      table.employeeId,
+      table.localDate,
+      table.status,
+    ),
+    check('correction_requests_reason_not_blank', sql`length(btrim(${table.reason})) > 0`),
+    check('correction_requests_positive_version', sql`${table.version} > 0`),
+  ],
+);
+
+export const correctionDecisions = pgTable(
+  'correction_decisions',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    correctionRequestId: uuid('correction_request_id')
+      .notNull()
+      .references(() => correctionRequests.id),
+    actorEmployeeId: uuid('actor_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    action: decisionAction('action').notNull(),
+    reason: text('reason'),
+    decidedAt: timestamp('decided_at', { mode: 'string', withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('correction_decisions_request_decided_idx').on(
+      table.correctionRequestId,
+      table.decidedAt,
+    ),
+  ],
+);
+
+export const appliedCorrections = pgTable(
+  'applied_corrections',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    correctionRequestId: uuid('correction_request_id')
+      .notNull()
+      .references(() => correctionRequests.id),
+    correctionDecisionId: uuid('correction_decision_id')
+      .notNull()
+      .references(() => correctionDecisions.id),
+    employeeId: employeeId(),
+    localDate: date('local_date', { mode: 'string' }).notNull(),
+    version: integer('version').notNull(),
+    interpretation: jsonb('interpretation').$type<Readonly<Record<string, unknown>>>().notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('applied_corrections_request_version_uidx').on(
+      table.correctionRequestId,
+      table.version,
+    ),
+    index('applied_corrections_employee_date_idx').on(table.employeeId, table.localDate),
+    check('applied_corrections_positive_version', sql`${table.version} > 0`),
+  ],
+);
+
+export const absenceTypes = pgTable(
+  'absence_types',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    code: varchar('code', { length: 64 }).notNull(),
+    name: varchar('name', { length: 160 }).notNull(),
+    version: integer('version').notNull(),
+    active: boolean('active').default(true).notNull(),
+    policy: jsonb('policy').$type<Readonly<Record<string, unknown>>>().notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('absence_types_organization_code_version_uidx').on(
+      table.organizationId,
+      table.code,
+      table.version,
+    ),
+    check('absence_types_positive_version', sql`${table.version} > 0`),
+  ],
+);
+
+export const absenceRequests = pgTable(
+  'absence_requests',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    absenceTypeId: uuid('absence_type_id')
+      .notNull()
+      .references(() => absenceTypes.id),
+    requestedByEmployeeId: uuid('requested_by_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    status: absenceRequestStatus('status').notNull(),
+    version: integer('version').default(1).notNull(),
+    submittedAt: timestamp('submitted_at', { mode: 'string', withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('absence_requests_employee_status_submitted_idx').on(
+      table.employeeId,
+      table.status,
+      table.submittedAt,
+    ),
+    check('absence_requests_positive_version', sql`${table.version} > 0`),
+  ],
+);
+
+export const absenceCoverageSegments = pgTable(
+  'absence_coverage_segments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    absenceRequestId: uuid('absence_request_id')
+      .notNull()
+      .references(() => absenceRequests.id),
+    localDate: date('local_date', { mode: 'string' }).notNull(),
+    kind: absenceCoverageKind('kind').notNull(),
+    startsAtMinute: integer('starts_at_minute'),
+    endsAtMinute: integer('ends_at_minute'),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('absence_coverage_request_date_idx').on(table.absenceRequestId, table.localDate),
+    check(
+      'absence_coverage_minute_shape',
+      sql`(${table.kind} = 'MINUTE_INTERVAL' and ${table.startsAtMinute} between 0 and 1439 and ${table.endsAtMinute} between 1 and 1440 and ${table.startsAtMinute} < ${table.endsAtMinute}) or (${table.kind} <> 'MINUTE_INTERVAL' and ${table.startsAtMinute} is null and ${table.endsAtMinute} is null)`,
+    ),
+  ],
+);
+
+export const absenceDecisions = pgTable(
+  'absence_decisions',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    absenceRequestId: uuid('absence_request_id')
+      .notNull()
+      .references(() => absenceRequests.id),
+    actorEmployeeId: uuid('actor_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    action: decisionAction('action').notNull(),
+    reason: text('reason'),
+    decidedAt: timestamp('decided_at', { mode: 'string', withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('absence_decisions_request_decided_idx').on(table.absenceRequestId, table.decidedAt),
+  ],
+);
+
+export const absenceEffects = pgTable(
+  'absence_effects',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    absenceRequestId: uuid('absence_request_id')
+      .notNull()
+      .references(() => absenceRequests.id),
+    absenceCoverageSegmentId: uuid('absence_coverage_segment_id')
+      .notNull()
+      .references(() => absenceCoverageSegments.id),
+    sourceDecisionId: uuid('source_decision_id').references(() => absenceDecisions.id),
+    employeeId: employeeId(),
+    localDate: date('local_date', { mode: 'string' }).notNull(),
+    expectedReductionMinutes: integer('expected_reduction_minutes').notNull(),
+    creditMinutes: integer('credit_minutes').notNull(),
+    entitlementMinutes: integer('entitlement_minutes').notNull(),
+    effectVersion: integer('effect_version').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('absence_effects_segment_version_uidx').on(
+      table.absenceCoverageSegmentId,
+      table.effectVersion,
+    ),
+    index('absence_effects_employee_date_idx').on(table.employeeId, table.localDate),
+    check(
+      'absence_effects_non_negative_minutes',
+      sql`${table.expectedReductionMinutes} >= 0 and ${table.creditMinutes} >= 0 and ${table.entitlementMinutes} >= 0`,
+    ),
+    check('absence_effects_positive_version', sql`${table.effectVersion} > 0`),
+  ],
+);
+
+export const dailyProjections = pgTable(
+  'daily_projections',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    localDate: date('local_date', { mode: 'string' }).notNull(),
+    calculationStatus: calculationStatus('calculation_status').notNull(),
+    projectionVersion: integer('projection_version').notNull(),
+    engineVersion: varchar('engine_version', { length: 64 }).notNull(),
+    sourceFingerprint: varchar('source_fingerprint', { length: 64 }).notNull(),
+    expectedMinutes: integer('expected_minutes').notNull(),
+    workedMinutes: integer('worked_minutes').notNull(),
+    breakMinutes: integer('break_minutes').notNull(),
+    absenceCreditMinutes: integer('absence_credit_minutes').notNull(),
+    adjustmentMinutes: integer('adjustment_minutes').notNull(),
+    creditedMinutes: integer('credited_minutes').notNull(),
+    balanceMinutes: integer('balance_minutes').notNull(),
+    warningCodes: jsonb('warning_codes')
+      .$type<readonly string[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    sourceReferences: jsonb('source_references')
+      .$type<Readonly<Record<string, unknown>>>()
+      .notNull(),
+    calculatedAt: timestamp('calculated_at', { mode: 'string', withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('daily_projections_employee_date_uidx').on(table.employeeId, table.localDate),
+    index('daily_projections_organization_date_status_idx').on(
+      table.organizationId,
+      table.localDate,
+      table.calculationStatus,
+    ),
+    check('daily_projections_positive_version', sql`${table.projectionVersion} > 0`),
+    check('daily_projections_fingerprint_hex', sql`${table.sourceFingerprint} ~ '^[0-9a-f]{64}$'`),
+    check(
+      'daily_projections_non_negative_base_minutes',
+      sql`${table.expectedMinutes} >= 0 and ${table.workedMinutes} >= 0 and ${table.breakMinutes} >= 0 and ${table.absenceCreditMinutes} >= 0`,
+    ),
+    check(
+      'daily_projections_credited_reconciles',
+      sql`${table.creditedMinutes} = ${table.workedMinutes} + ${table.absenceCreditMinutes} + ${table.adjustmentMinutes}`,
+    ),
+    check(
+      'daily_projections_balance_reconciles',
+      sql`${table.balanceMinutes} = ${table.creditedMinutes} - ${table.expectedMinutes}`,
+    ),
+    check(
+      'daily_projections_warning_codes_array',
+      sql`jsonb_typeof(${table.warningCodes}) = 'array'`,
+    ),
+    check(
+      'daily_projections_sources_object',
+      sql`jsonb_typeof(${table.sourceReferences}) = 'object'`,
+    ),
+  ],
+);
+
+export const timeAccountEntries = pgTable(
+  'time_account_entries',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    localDate: date('local_date', { mode: 'string' }).notNull(),
+    entryType: timeAccountEntryType('entry_type').notNull(),
+    minutes: integer('minutes').notNull(),
+    sourceId: uuid('source_id').notNull(),
+    sourceFingerprint: varchar('source_fingerprint', { length: 64 }).notNull(),
+    postedAt: timestamp('posted_at', { mode: 'string', withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('time_account_entries_employee_type_source_uidx').on(
+      table.employeeId,
+      table.entryType,
+      table.sourceId,
+    ),
+    index('time_account_entries_employee_date_idx').on(table.employeeId, table.localDate),
+    check(
+      'time_account_entries_non_zero_minutes',
+      sql`${table.minutes} <> 0 or ${table.entryType} = 'OPENING'`,
+    ),
+    check(
+      'time_account_entries_fingerprint_hex',
+      sql`${table.sourceFingerprint} ~ '^[0-9a-f]{64}$'`,
+    ),
+  ],
+);
+
+export const leaveEntitlementEntries = pgTable(
+  'leave_entitlement_entries',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    absenceTypeId: uuid('absence_type_id')
+      .notNull()
+      .references(() => absenceTypes.id),
+    entryType: leaveEntitlementEntryType('entry_type').notNull(),
+    minutes: integer('minutes').notNull(),
+    sourceId: uuid('source_id').notNull(),
+    effectiveOn: date('effective_on', { mode: 'string' }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('leave_entitlement_entries_employee_type_source_uidx').on(
+      table.employeeId,
+      table.entryType,
+      table.sourceId,
+    ),
+    index('leave_entitlement_entries_employee_type_date_idx').on(
+      table.employeeId,
+      table.absenceTypeId,
+      table.effectiveOn,
+    ),
+  ],
+);
+
+export const monthlyPeriods = pgTable(
+  'monthly_periods',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    monthStart: date('month_start', { mode: 'string' }).notNull(),
+    status: periodStatus('status').default('OPEN').notNull(),
+    version: integer('version').default(1).notNull(),
+    submittedAt: timestamp('submitted_at', { mode: 'string', withTimezone: true }),
+    approvedAt: timestamp('approved_at', { mode: 'string', withTimezone: true }),
+    lockedAt: timestamp('locked_at', { mode: 'string', withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('monthly_periods_employee_month_uidx').on(table.employeeId, table.monthStart),
+    index('monthly_periods_organization_status_month_idx').on(
+      table.organizationId,
+      table.status,
+      table.monthStart,
+    ),
+    check('monthly_periods_first_day', sql`extract(day from ${table.monthStart}) = 1`),
+    check('monthly_periods_positive_version', sql`${table.version} > 0`),
+    check(
+      'monthly_periods_lock_shape',
+      sql`${table.status} <> 'LOCKED' or ${table.lockedAt} is not null`,
+    ),
+  ],
+);
+
+export const approvedMonthlySnapshots = pgTable(
+  'approved_monthly_snapshots',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    monthlyPeriodId: uuid('monthly_period_id')
+      .notNull()
+      .references(() => monthlyPeriods.id),
+    periodVersion: integer('period_version').notNull(),
+    schemaVersion: integer('schema_version').notNull(),
+    engineVersion: varchar('engine_version', { length: 64 }).notNull(),
+    sourceFingerprint: varchar('source_fingerprint', { length: 64 }).notNull(),
+    snapshotFingerprint: varchar('snapshot_fingerprint', { length: 64 }).notNull(),
+    approvedByEmployeeId: uuid('approved_by_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    approvedAt: timestamp('approved_at', { mode: 'string', withTimezone: true }).notNull(),
+    snapshot: jsonb('snapshot').$type<Readonly<Record<string, unknown>>>().notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('approved_monthly_snapshots_period_version_uidx').on(
+      table.monthlyPeriodId,
+      table.periodVersion,
+    ),
+    check(
+      'approved_monthly_snapshots_positive_versions',
+      sql`${table.periodVersion} > 0 and ${table.schemaVersion} > 0`,
+    ),
+    check(
+      'approved_monthly_snapshots_source_fingerprint_hex',
+      sql`${table.sourceFingerprint} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      'approved_monthly_snapshots_snapshot_fingerprint_hex',
+      sql`${table.snapshotFingerprint} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check('approved_monthly_snapshots_object', sql`jsonb_typeof(${table.snapshot}) = 'object'`),
+  ],
+);
+
+export const postLockAdjustments = pgTable(
+  'post_lock_adjustments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    monthlySnapshotId: uuid('monthly_snapshot_id')
+      .notNull()
+      .references(() => approvedMonthlySnapshots.id),
+    employeeId: employeeId(),
+    sourceId: uuid('source_id').notNull(),
+    localDate: date('local_date', { mode: 'string' }).notNull(),
+    minutes: integer('minutes').notNull(),
+    reason: text('reason').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('post_lock_adjustments_snapshot_source_uidx').on(
+      table.monthlySnapshotId,
+      table.sourceId,
+    ),
+    index('post_lock_adjustments_employee_date_idx').on(table.employeeId, table.localDate),
+    check('post_lock_adjustments_non_zero_minutes', sql`${table.minutes} <> 0`),
+    check('post_lock_adjustments_reason_not_blank', sql`length(btrim(${table.reason})) > 0`),
+  ],
+);
+
+export const idempotencyRecords = pgTable(
+  'idempotency_records',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    actorScope: varchar('actor_scope', { length: 160 }).notNull(),
+    command: varchar('command', { length: 80 }).notNull(),
+    idempotencyKeyHash: varchar('idempotency_key_hash', { length: 64 }).notNull(),
+    requestFingerprint: varchar('request_fingerprint', { length: 64 }).notNull(),
+    outcome: jsonb('outcome').$type<Readonly<Record<string, unknown>>>(),
+    terminal: boolean('terminal').default(false).notNull(),
+    createdAt: createdAt(),
+    completedAt: timestamp('completed_at', { mode: 'string', withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('idempotency_records_scope_command_key_uidx').on(
+      table.organizationId,
+      table.actorScope,
+      table.command,
+      table.idempotencyKeyHash,
+    ),
+    check('idempotency_records_key_hash_hex', sql`${table.idempotencyKeyHash} ~ '^[0-9a-f]{64}$'`),
+    check(
+      'idempotency_records_request_fingerprint_hex',
+      sql`${table.requestFingerprint} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      'idempotency_records_terminal_shape',
+      sql`not ${table.terminal} or (${table.outcome} is not null and ${table.completedAt} is not null)`,
+    ),
+  ],
+);

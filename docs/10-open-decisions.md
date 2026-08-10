@@ -248,21 +248,29 @@ Do not choose solely for fashion; create an ADR from a small spike.
 
 ### D-201 — Database identifier type
 
-**Status:** Open; owner `WL-300`. Resolve before generating the first application-schema migration.
+**Status:** Resolved by `WL-300`.
 
-- Proposed: UUIDv7 or another sortable opaque identifier for domain records.
-- Confirm PostgreSQL/runtime support and migration ergonomics during schema design.
+- Application/domain records use PostgreSQL `uuid` primary keys with the PostgreSQL 18 native
+  `uuidv7()` default. Stable domain identifiers remain opaque strings outside the persistence
+  boundary; UUID timestamp bits are never authorization, ordering, or business-time truth.
+- Caller-supplied UUIDs remain possible for deterministic import/test workflows, but normal inserts
+  use the database default. No UUID extension is required.
 
 ### D-202 — Calculation projection persistence
 
-**Status:** Open; owner `WL-300`, using the completed Phase 2 domain/test evidence. Resolve before the initial schema/migration is accepted.
+**Status:** Resolved by `WL-300`, using the completed Phase 2 domain/test evidence.
 
-Choose exact Phase 3/8 approach:
-
-- raw events remain authoritative,
-- daily projections may be stored for reports,
-- approved monthly snapshot is persisted and versioned,
-- rebuild behavior is explicit.
+- Raw punch events, applied interpretations, absence effects, and append-only ledgers remain the
+  authoritative facts.
+- One replaceable `daily_projections` row per employee/local date stores the calculation status,
+  engine/projection version, exact source fingerprint, explanatory source references, structured
+  warning codes, and reconciled minute totals. It is a query/report cache, never a ledger fact.
+- Projection rebuild is an explicit application/operations command. It recomputes from identified
+  sources, increments the projection version when persisted content changes, and never runs as an
+  unannounced side effect of a read.
+- Only `COMPLETE` eligible past projections may produce append-only time-account entries. Approved
+  monthly snapshots copy canonical versioned evidence into an immutable, independently
+  fingerprinted snapshot; later rebuilds cannot replace that snapshot.
 
 ### D-203 — Email delivery
 

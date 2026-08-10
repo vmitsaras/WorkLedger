@@ -175,7 +175,10 @@ rather than claims that they already exist. `WL-108` passed the Phase 1 gate wit
 `docs/28-phase-1-gate-review.md` and advanced the shared internal workspace version to `0.2.0`.
 `WL-200` then created `packages/domain/src/shared` for the first bounded domain slice, and
 `WL-201` added the pure `packages/domain/src/schedule-policy.ts` resolver. Later feature folders
-remain uncreated until their owning tasks begin.
+remain uncreated until their owning tasks begin. `WL-300` created the internal
+`packages/database/src/schema`, generated migration SQL/metadata, migration configuration, and
+database schema tests; repositories, transactions, mappings, and seed folders remain owned by
+their later tasks.
 
 ## Feature-folder rule
 

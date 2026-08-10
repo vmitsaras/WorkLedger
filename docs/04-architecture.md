@@ -237,7 +237,10 @@ Recommended:
 - Rebuild projections through an explicit process, never silently during arbitrary reads.
 - Preserve the `PROVISIONAL`, `INCOMPLETE`, and `COMPLETE` calculation-status distinction and the identified calculation source fingerprint.
 - Post only `COMPLETE` past dates: one idempotent base `DAILY_DELTA`, then append-only `DAILY_RECALCULATION_DELTA` differences for later unlocked source changes.
-- Keep posted ledger balance, projected balance, and incomplete-date blockers distinct. This is the accepted `D-105` lifecycle; `D-202` still owns the physical projection-persistence strategy.
+- Keep posted ledger balance, projected balance, and incomplete-date blockers distinct. This is the
+  accepted `D-105` lifecycle; `D-202`, resolved by `WL-300`, stores one explicit-rebuild,
+  source-fingerprinted employee/date projection while raw facts, ledgers, and approved snapshots
+  remain authoritative.
 
 ## 10. Error architecture
 

@@ -5,17 +5,17 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 3 — 0 of 10 tasks complete**
+> **Current phase progress: Phase 3 — 1 of 10 tasks complete**
 
 Phase 2 passed its exit gate and the repository is now in **Phase 3: data, authentication, and API
 foundation**. The workspace, project boundaries, strict tooling, test and CI baseline, local
 PostgreSQL environment, runtime configuration, React Aria UI foundation, contributor documentation,
-and framework-independent domain engine are implemented. The next task is the initial PostgreSQL
-schema and generated migrations (`WL-300`).
+framework-independent domain engine, and initial PostgreSQL schema/generated migrations are
+implemented. The next task is repository interfaces and transaction boundaries (`WL-301`).
 
-WorkLedger does not yet provide a complete domain engine, application database schema, authentication,
-product workflows, production deployment, or supported release. The runnable web page is an
-isolated development preview of foundation components, not the WorkLedger application.
+WorkLedger does not yet provide repository-backed application services, authentication, product
+workflows, production deployment, or a supported release. The runnable web page is an isolated
+development preview of foundation components, not the WorkLedger application.
 
 ## Current status
 

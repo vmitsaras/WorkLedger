@@ -16,7 +16,9 @@ savePrefix: ''
 disallowWorkspaceCycles: true
 engineStrict: true
 nodeVersion: ${EXPECTED_NODE_VERSION}
-pmOnFail: download`;
+pmOnFail: download
+allowBuilds:
+  esbuild: true`;
 
 export const EXPECTED_PROJECTS = [
   {
@@ -147,6 +149,10 @@ const REQUIRED_CONFIGURATION_FILES = [
   'apps/api/src/server.ts',
   'infra/compose/postgres.dev.yml',
   'infra/docker/postgres/init/001-workledger-local.sql',
+  'packages/database/drizzle.config.ts',
+  'packages/database/migrations/0000_initial_schema.sql',
+  'packages/database/migrations/0001_integrity_constraints.sql',
+  'packages/database/migrations/meta/_journal.json',
   'scripts/check-postgres-dev.mjs',
   'scripts/check-api-runtime-config.mjs',
   'scripts/run-postgres-integration.mjs',

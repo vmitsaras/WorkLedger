@@ -50,7 +50,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 3 — Data, authentication, and API foundation
 
-- [ ] `WL-300` Implement initial PostgreSQL schema and migrations.
+- [x] `WL-300` Implement initial PostgreSQL schema and migrations.
 - [ ] `WL-301` Implement repository interfaces and transaction boundaries.
 - [ ] `WL-302` Integrate the accepted Better Auth credential, session, CSRF, reset, and revocation profile.
 - [ ] `WL-303` Implement application roles and scoped authorization.

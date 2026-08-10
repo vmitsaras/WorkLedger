@@ -21,8 +21,8 @@ This document is the canonical implementation-neutral vocabulary and invariant r
 | Holiday expected-time and entitlement behavior | Accepted MVP default | A configured holiday reduces expected minutes to zero; default absence credit, expected reduction, and entitlement consumption for that date are zero while coverage remains visible. | `D-103`, resolved by `WL-006` and applied by `WL-007`. |
 | Organization timezone changes | Accepted MVP boundary | The timezone may change only before time-dependent employee facts exist; afterward ordinary changes are blocked. | `D-104`, resolved by `WL-006`. |
 | Daily time-account posting lifecycle | Accepted | Complete past dates post one base daily delta; later unlocked recalculation appends the difference, and locked changes use post-lock adjustment. | `D-105`, resolved by `WL-006` and mapped to `WL-208`. |
-| Physical identifier type | Open, non-conceptual | Affects migration and database ergonomics, not stable domain identity semantics. | `D-201`, resolve before Phase 3 schema. |
-| Daily projection persistence | Open | Determines rebuild/version behavior and persistence boundaries. | `D-202`, resolve before Phase 3 schema. |
+| Physical identifier type | Accepted, non-conceptual | PostgreSQL UUIDv7 keys provide opaque, time-ordered physical identity without changing domain identity semantics. | `D-201`, resolved by `WL-300`. |
+| Daily projection persistence | Accepted | One versioned replaceable employee/date projection is an explicit-rebuild query cache; raw facts, ledgers, and approved snapshots remain authoritative. | `D-202`, resolved by `WL-300`. |
 | Leave units, half-day definition, negative balance, sickness reporting, and unpaid-leave behavior | Accepted | Leave uses integer minutes; half-days partition date expectation; negative vacation approval needs a non-self HR override; sickness has a bounded retrospective window; unpaid leave reduces covered expectation by default. | `D-300`–`D-304`, resolved by `WL-007`. |
 | Month-lock timing and exact approved snapshot schema | Accepted | Approval creates one immutable snapshot; a separate eligible non-self manager lock transition makes it final, and post-lock effects reference that baseline. | `D-400` and `D-401`, resolved by `WL-008`. |
 | Retention/anonymization | Accepted contract; implementation remains a production gate | A deployment-owned class profile controls purge/minimization and backup expiry without cascade loss of ledger, snapshot, decision, or audit integrity. | `D-500`, resolved by `WL-010`; implement/verify in `WL-1007`. |
@@ -157,7 +157,9 @@ This document is the canonical implementation-neutral vocabulary and invariant r
 
 ## 8. Time, identity, and effective-date semantics
 
-- Domain identifiers are stable, opaque, organization-scoped, and never reused. Exact identifier type remains `D-201`.
+- Domain identifiers are stable, opaque, organization-scoped, and never reused. `D-201` maps
+  persisted application/domain identities to PostgreSQL UUIDv7 without exposing generation time as
+  domain meaning.
 - Date ranges use half-open semantics: `validFrom` is included and `validTo` is excluded; an absent end is open-ended.
 - Date-only values remain dates. Event occurrence, decision, submission, recording, and audit times are instants.
 - A punch event distinguishes the occurred instant from the later recorded/processing instant when they differ. Punch occurrence instants are minute-aligned; ordinary commands record the start of the trusted server minute while `recordedAt` retains normal instant precision.

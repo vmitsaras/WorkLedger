@@ -13,15 +13,18 @@
   },
   "scripts": {
     "build": "tsc --build tsconfig.json --pretty false",
+    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "typecheck": "tsc --build tsconfig.json --pretty false"
   },
   "dependencies": {
-    "@workledger/domain": "workspace:*"
+    "@workledger/domain": "workspace:*",
+    "drizzle-orm": "0.45.2",
+    "pg": "8.22.0"
   },
   "devDependencies": {
     "@types/pg": "8.20.0",
     "@workledger/config": "workspace:*",
     "@workledger/test-utils": "workspace:*",
-    "pg": "8.22.0"
+    "drizzle-kit": "0.31.10"
   }
 }
