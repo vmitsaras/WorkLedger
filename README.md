@@ -5,13 +5,14 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 2 — 3 of 12 tasks complete**
+> **Current phase progress: Phase 2 — 4 of 12 tasks complete**
 
 Phase 1 passed its exit gate and the repository is now in **Phase 2: framework-independent domain
 engine**. The workspace, project boundaries, strict tooling, test and CI baseline, local PostgreSQL
 environment, runtime configuration, React Aria UI foundation, and contributor documentation are
-implemented. The domain now has primitives, effective-dated schedule/policy resolution, and
-attendance-state transition validation; the next task is punch-event reconstruction (`WL-203`).
+implemented. The domain now has primitives, effective-dated schedule/policy resolution,
+attendance-state transition validation, and punch-event reconstruction; the next task is
+manual/corrected interval and overlap validation (`WL-204`).
 
 WorkLedger does not yet provide a complete domain engine, application database schema, authentication,
 product workflows, production deployment, or supported release. The runnable web page is an
@@ -167,6 +168,7 @@ versions and makes no response-time or production-support promise.
 | [docs/29-domain-primitives.md](docs/29-domain-primitives.md) | Domain primitive construction, errors, dependency, tests, and serialization evidence |
 | [docs/30-effective-dated-time-configuration.md](docs/30-effective-dated-time-configuration.md) | Effective-dated schedule and policy validation and resolution evidence |
 | [docs/31-attendance-transition-validation.md](docs/31-attendance-transition-validation.md) | Attendance state/action transition validation and stable-outcome evidence |
+| [docs/32-attendance-reconstruction.md](docs/32-attendance-reconstruction.md) | Punch-event reconstruction, incomplete sessions, and stable-outcome evidence |
 
 ## License
 

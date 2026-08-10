@@ -187,6 +187,19 @@ These were confirmed from repository evidence and the architecture ratification.
 - Locked changes use the post-lock adjustment workflow and preserve the approved snapshot.
 - Posted and projected balances remain separately labelled.
 
+### D-106 — Phase 2 `WL-204` task wording
+
+**Status:** Resolved by the repository task-authority rule on 2026-08-10.
+
+- `docs/08-task-board.md` declares itself authoritative for task IDs and dependencies and assigns
+  `WL-204` to manual/corrected interval validation and overlap constraints.
+- The compact `TODO.md` previously described `WL-204` as break and multiple-session calculations.
+  That wording conflicts with the task board and with `WL-203`'s accepted reconstruction evidence.
+- `WL-203` owns source-event reconstruction, including normal, multiple, and incomplete sessions.
+  `WL-204` owns manually entered/applied-correction interval validation, overlap, negative,
+  future, and ambiguous-local-time behavior. `TODO.md` is normalized to the authoritative task
+  board wording in the `WL-203` completion change.
+
 ## Decisions blocking Phase 3
 
 ### D-200 — API contract implementation

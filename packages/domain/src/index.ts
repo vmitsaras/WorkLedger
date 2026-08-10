@@ -5,6 +5,15 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  reconstructAttendance,
+  type AttendanceInterval,
+  type AttendanceReconstruction,
+  type AttendanceReconstructionError,
+  type OpenAttendanceInterval,
+  type PunchEvent,
+  type WorkSession,
+} from './attendance-reconstruction.js';
+export {
   attendanceCommands,
   attendanceStates,
   punchEventTypes,

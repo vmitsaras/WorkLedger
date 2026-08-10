@@ -38,8 +38,8 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-200` Implement domain primitives and branded value objects.
 - [x] `WL-201` Implement effective-dated schedules and policy resolution.
 - [x] `WL-202` Implement attendance transition validation.
-- [ ] `WL-203` Implement punch-to-session reconstruction.
-- [ ] `WL-204` Implement break and multiple-session calculations.
+- [x] `WL-203` Implement punch-to-session reconstruction.
+- [ ] `WL-204` Validate manual/corrected intervals and overlap constraints.
 - [ ] `WL-205` Implement daily expected, worked, credited, and balance minutes.
 - [ ] `WL-206` Implement overnight and timezone-aware day splitting.
 - [ ] `WL-207` Implement absence credit integration.
