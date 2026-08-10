@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 2 — Framework-independent domain engine
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 9 of 12 Phase 2 tasks complete
-**Current milestone:** Structured warnings and submission blockers
-**Active task:** `WL-209`
+**Phase progress:** 10 of 12 Phase 2 tasks complete
+**Current milestone:** Domain example suite and calculation review
+**Active task:** `WL-210`
 **Status:** Ready
 **Last verified:** 2026-08-10
 
 ## Current objective
 
-Produce framework-independent structured calculation warnings and submission blockers from
-identified calculation facts. Cover missing punches, schedule gaps, unresolved corrections, and
-conflict behavior while deferring persistence, API, and UI behavior.
+Execute the full framework-independent domain example suite and calculation review. Map every
+accepted domain fixture to executable evidence and verify the Phase 2 invariants before the exit
+gate, while deferring persistence, API, and UI behavior.
 
 ## Verified decisions
 
@@ -157,39 +157,40 @@ conflict behavior while deferring persistence, API, and UI behavior.
   daily-calculation inputs completed (`WL-207`; see `docs/36-daily-absence-effects.md`).
 - [x] Append-only time-account totals, source explanations, and daily/recalculation/adjustment
   sequences completed (`WL-208`; see `docs/37-time-account-ledger-totals.md`).
+- [x] Structured calculation warnings, submission blockers, and stable code ordering completed
+  (`WL-209`; see `docs/38-calculation-signals.md`).
 
 ## Latest completed task
 
-### `WL-208` — Calculate time-account ledger totals and explain sources
+### `WL-209` — Produce structured warnings and submission blockers
 
-- Changed: added a pure append-only time-account total calculator. It returns the opening balance,
-  aggregate entry total, closing balance, and ordered source explanations with running balances.
-- Verified: focused Vitest coverage passes six ledger tests for opening/daily/recalculation/post-lock
-  and manual-adjustment sequences, zero-minute posting evidence, duplicate source/entry rejection,
-  scope isolation, and immutable results. Strict domain TypeScript build and `git diff --check`
-  also pass.
-- Accessibility: not directly applicable because this task adds no UI or interaction. Ordered,
-  explicit source explanations support later accessible balance breakdowns without inferring state
-  from visualizations or prose.
+- Changed: added a pure calculation-signal classifier that returns canonical warning and
+  submission-blocker codes from explicit attendance, configuration, source, and balance facts.
+- Verified: focused Vitest coverage passes six signal tests for holiday/zero-hour precedence,
+  absence work, threshold signals, missing-punch/configuration/correction conflict sets,
+  unavailable final amounts, de-duplication, and immutable ordering. Strict domain TypeScript
+  build and `git diff --check` also pass.
+- Accessibility: not directly applicable because this task adds no UI or interaction. Stable codes
+  let later interfaces provide precise textual recovery guidance without parsing localized prose.
 - Security/data: no persistence, API, logs, environment, network, employee data, authentication,
-  authorization, or browser state was introduced. The calculator never appends, mutates, or
-  authorizes ledger facts; it only derives totals from supplied typed values.
-- Documentation: added `docs/37-time-account-ledger-totals.md`, registered ledger error codes, and
-  reconciled the README, TODO, task board, and project status.
-- Remaining risk: calculation warnings/status, transactional posting, persistence, and audit
+  authorization, or browser state was introduced. Input facts and output codes omit sensitive
+  absence/correction details.
+- Documentation: added `docs/38-calculation-signals.md`, registered source-state blocker codes,
+  and reconciled the README, TODO, task board, and project status.
+- Remaining risk: final calculation-status assembly, transactional posting, persistence, and audit
   atomicity remain deferred.
-- Next task: `WL-209`.
+- Next task: `WL-210`.
 
 ## Current blockers
 
-No `WL-209` blocker is known. The accepted attendance, configuration, daily calculation, absence,
-and ledger inputs are sufficient for bounded warning/blocker classification. D-201/D-202 remain
-owned before the first application schema migration, D-200/D-204 before the shared API contract,
-and D-502 before the production browser gate.
+No `WL-210` blocker is known. The completed domain slices and accepted fixture catalog are
+sufficient for executable-example mapping and invariant review. D-201/D-202 remain owned before
+the first application schema migration, D-200/D-204 before the shared API contract, and D-502
+before the production browser gate.
 
 ## Next task
 
-`WL-209 — Produce structured warnings and submission blockers.`
+`WL-210 — Execute full domain example suite and domain-calculation review.`
 
 ## Update rules
 

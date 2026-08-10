@@ -44,7 +44,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-206` Implement overnight and timezone-aware day splitting.
 - [x] `WL-207` Implement absence credit integration.
 - [x] `WL-208` Implement time-account ledger calculations.
-- [ ] `WL-209` Implement warning and incompleteness detection.
+- [x] `WL-209` Implement warning and incompleteness detection.
 - [ ] `WL-210` Complete domain example and property-oriented tests.
 - [ ] `WL-211` Pass the Phase 2 exit gate.
 

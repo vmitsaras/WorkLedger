@@ -184,6 +184,10 @@ Warnings are stable machine-readable values returned with calculation data; they
 
 Blocking calculation failures use their specific existing codes, including `ATTENDANCE_INCOMPLETE`, `ATTENDANCE_OVERLAP`, `ATTENDANCE_INVALID_EVENT_ORDER`, `SCHEDULE_NOT_ASSIGNED`, and `POLICY_NOT_ASSIGNED`. A blocked daily result has `calculationStatus: INCOMPLETE` and cannot expose final credited/balance values or post a ledger effect.
 
+Additional source-state blockers are `CORRECTION_UNRESOLVED`, `ABSENCE_APPROVAL_PENDING`, and
+`LEDGER_SOURCE_MISMATCH`. They identify the unresolved source category without exposing sensitive
+request, decision, or ledger detail.
+
 ## 7. Validation ownership
 
 - Client validation improves immediacy.

@@ -5,6 +5,16 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  calculateDailyCalculationSignals,
+  calculationBlockerCodes,
+  calculationWarningCodes,
+  type AttendanceCalculationConflictCode,
+  type CalculationBlockerCode,
+  type CalculationWarningCode,
+  type DailyCalculationSignals,
+  type DailyCalculationSignalsInput,
+} from './calculation-signals.js';
+export {
   absenceTimeTreatments,
   calculateDailyAbsenceEffects,
   type AbsenceTimeTreatment,
