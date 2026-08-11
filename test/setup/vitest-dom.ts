@@ -8,6 +8,11 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
   value: () => null,
 });
 
+Object.defineProperty(window, 'scrollTo', {
+  configurable: true,
+  value: () => undefined,
+});
+
 afterEach(() => {
   cleanup();
 });

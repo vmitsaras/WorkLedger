@@ -25,6 +25,9 @@ export {
   type DevelopmentSeedResult,
 } from './seed/development.js';
 export type {
+  AccountSelfContextRecord,
+  AccountSelfServiceRepository,
+  AccountSessionRecord,
   AppendDomainAuditEventInput,
   AppendSecurityAuditEventInput,
   ApplicationRole,

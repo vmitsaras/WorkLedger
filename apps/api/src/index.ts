@@ -42,6 +42,15 @@ export {
 } from './auth/password-policy.js';
 export { createSessionCsrfToken, verifySessionCsrfToken } from './auth/session-csrf.js';
 export {
+  createAccountSelfService,
+  parseRequestIdentifier,
+  parseRequestInstant,
+  parseSelfServiceIdentity,
+  summarizeUserAgent,
+  type AccountSelfService,
+  type SelfServiceIdentity,
+} from './account/self-service.js';
+export {
   authorizeAccountTarget,
   authorizeEmployeeTarget,
   authorizeInstallationAction,

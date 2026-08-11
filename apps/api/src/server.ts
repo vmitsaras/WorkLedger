@@ -3,6 +3,9 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
+import { createWorkLedgerDatabase } from '@workledger/database';
+
+import { registerAccountSelfServiceRoutes } from './account/routes.js';
 import type { RuntimeConfig } from './config.js';
 import { createWorkLedgerAuthentication } from './auth/authentication.js';
 import { registerAuthenticationRoutes } from './auth/fastify-auth.js';
@@ -28,8 +31,15 @@ export function createApiServer(config: RuntimeConfig): FastifyInstance {
         authSecret: config.authSecret,
         databaseUrl: config.databaseUrl,
       });
+      const database = createWorkLedgerDatabase({
+        applicationName: 'workledger-api',
+        connectionString: config.databaseUrl,
+      });
       registerAuthenticationRoutes(app, config, authentication);
-      app.addHook('onClose', async () => authentication.close());
+      registerAccountSelfServiceRoutes(app, config, authentication, database);
+      app.addHook('onClose', async () => {
+        await Promise.all([authentication.close(), database.close()]);
+      });
     }
 
     registerOpenApiRoute(app);

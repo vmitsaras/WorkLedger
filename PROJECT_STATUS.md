@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 4 — Employee attendance vertical slice
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 8 Phase 4 tasks complete
-**Current milestone:** Authenticated application shell and route boundaries
-**Active task:** `WL-400`
+**Phase progress:** 1 of 8 Phase 4 tasks complete
+**Current milestone:** Today attendance query and read model
+**Active task:** `WL-401`
 **Status:** Ready
 **Last verified:** 2026-08-11
 
 ## Current objective
 
-Build the authentication routes, application shell, read-only profile/session surface, skip link,
-responsive navigation, route boundaries, and permission gates on the completed Phase 3 foundation.
+Implement the Today application service, API endpoint, and TanStack Query client read model with
+correct attendance state, timeline, calculation, warnings, and authorization.
 
 ## Verified decisions
 
@@ -21,6 +21,9 @@ responsive navigation, route boundaries, and permission gates on the completed P
 - PostgreSQL source of truth.
 - React Aria plus shadcn React Aria source components and Tailwind.
 - TanStack Query for server state.
+- React Router `8.3.0` Data Mode owns route loaders, redirects, boundaries, permission gates, URL
+  restoration, titles, and route focus; TanStack Query `5.101.4` owns in-memory remote state and
+  mutations without browser persistence.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -28,6 +31,9 @@ responsive navigation, route boundaries, and permission gates on the completed P
 - Approval delegation is excluded from the MVP.
 - English is the only shipped MVP locale; formatting remains locale-aware.
 - Employee self-service profile data is read-only; HR-owned employment facts are not self-editable.
+- The self-context/profile transport exposes only active account, organization, employee summary,
+  current application roles, derived navigation areas, and minimized session/device summaries; IP
+  addresses and raw user-agent values never enter browser DTOs.
 - In-app notification records are core; external email delivery is optional and non-transactional.
 - Manager scope is current direct reports only and is evaluated when each request is handled.
 - Explicit unauthorized targets return `403`; scoped collections apply authorization before counts and pagination.
@@ -112,7 +118,9 @@ responsive navigation, route boundaries, and permission gates on the completed P
 - Fastify receives only the validated exact proxy-address list, never a broad proxy setting, CIDR, or hop count. Untrusted forwarded headers do not affect request protocol handling, and API health stays generic/no-store with CORS disabled by default.
 - `.env.example` contains only safe local PostgreSQL defaults and blank production-secret fields. `config:check` uses Node's native optional `.env` loading and outputs a redacted configuration summary.
 - The UI foundation pins React Aria Components `1.20.0`, Tailwind CSS `4.3.3`, Class Variance Authority `0.7.1`, and current shadcn React Aria metadata through `style: "aria-nova"`.
-- `packages/ui` owns local semantic button, link, text-field, and dialog wrappers plus one explicit token stylesheet export; `apps/web` composes only the isolated Vite foundation preview.
+- `packages/ui` owns local semantic button, link, text-field, dialog, and drawer wrappers plus one
+  explicit token stylesheet export; `apps/web` composes the authenticated Data Mode application
+  shell and route surfaces without importing authoritative domain or database code.
 - Visible focus uses React Aria focus-visible state with outline/forced-colors support. Reduced motion removes dialog spatial animation and preserves immediate state feedback without a global animation-duration reset.
 - React Aria owns modal containment, Escape dismissal, initial dialog focus, and trigger focus restoration; component and Chromium tests cover semantics, keyboard behavior, axe, and reduced-motion computed styles.
 - shadcn's current `info` command requires source aliases that conflict with ADR `0011`; WorkLedger retains alias-free relative UI imports and explicitly requests/adapts React Aria registry source instead (`D-007`).
@@ -220,36 +228,47 @@ responsive navigation, route boundaries, and permission gates on the completed P
 - [x] Phase 3 migration, authentication/deactivation, authorization, audit, idempotency, error,
   seed, OpenAPI, security, database-enabled quality, and version gates passed with shared internal
   version `0.4.0` (`WL-309`; see `docs/50-phase-3-gate-review.md`).
+- [x] Sign-in/recovery/reset routes, role-aware authenticated shell, read-only profile and minimized
+  session surface, self-session revocation, responsive drawer navigation, route boundaries,
+  permission gates, title/focus management, and axe/browser evidence completed (`WL-400`; see
+  `docs/51-authenticated-application-shell.md`).
 
 ## Latest completed task
 
-### `WL-309` — Pass the Phase 3 exit gate
+### `WL-400` — Build the authenticated application shell and route boundaries
 
-- Changed: added direct database-backed account-deactivation/session-invalidation evidence,
-  completed the Phase 3 gate review, and advanced all nine private manifests to `0.4.0`.
-- Verified: `db:verify` passed 8 files/9 tests; the database-enabled canonical gate passed 24
-  native tests, 124 unit/component tests, all 17 integration tests, 2 Chromium tests, OpenAPI drift,
-  formatting, lint, strict TypeScript, boundaries, and the production build.
-- Accessibility: no product UI changed. The existing semantic/focus/axe and reduced-motion browser
-  checks remain green; accessible authentication and route behavior begins with `WL-400`.
-- Security/data: the review confirms authoritative session/deactivation behavior, deny-by-default
-  authorization, audience-separated minimized audit, immutable/atomic evidence, protected
-  idempotency, non-leaking errors, and local-only seed guardrails without a production-readiness
-  claim.
-- Documentation: added `docs/50-phase-3-gate-review.md` and synchronized authentication evidence,
-  manifests, README, task board, TODO, and project status.
-- Remaining risk: product HTTP routes and UI must compose these foundations correctly; later tasks
-  still own route-level authorization/CSRF, workflow transactions, accessible recovery/focus,
-  production operations, backup/restore, and deployment evidence.
-- Next task: `WL-400`.
+- Changed: added shared self-context/profile/session contracts; PostgreSQL-backed self-service
+  repositories and Fastify routes; React Router Data Mode and TanStack Query; accessible
+  sign-in/recovery/reset, role-aware shell, mobile drawer, read-only profile/session controls,
+  permission/error boundaries, and deterministic title/focus behavior.
+- Verified: the database-enabled canonical gate passed 24 native checks, 129 unit/component tests,
+  18 integration tests, and four Chromium E2E scenarios plus formatting, lint/boundaries, strict
+  TypeScript, OpenAPI drift, and the production build. Coverage includes authentication errors,
+  reset-grant cleanup, navigation/focus, permission denial, profile minimization, session
+  freshness/ownership, current-session revocation, axe, responsive drawer, and reduced motion.
+- Accessibility: semantic landmarks, real links/buttons, a skip link, persistent headings,
+  error-summary focus, modal focus containment/restoration, route title/heading focus, forced-color
+  focus indicators, and reduced-motion behavior are covered. Desktop/mobile route boundaries were
+  also visually inspected with the API unavailable.
+- Security/data: reset grants are removed from URL/history and kept only in memory; remote state and
+  CSRF values are not persisted; profile/session DTOs exclude IP/raw user-agent data; session
+  revocation is owner-scoped, freshness-protected for other sessions, transactional with minimized
+  security audit evidence, and clears protected client state when current.
+- Documentation: added `docs/51-authenticated-application-shell.md`, regenerated selected OpenAPI
+  output, recorded exact dependency choices, and synchronized README, task board, TODO, and status.
+- Remaining risk: a coordinated local web/API listener and the production same-origin proxy remain
+  later deployment work; the Today screen is a route-owned placeholder until `WL-401`. The build is
+  green but reports one 509.16 kB minified entry-chunk warning; `WL-1001` owns measured performance
+  and code-splitting review before production.
+- Next task: `WL-401`.
 
 ## Current blockers
 
-No `WL-400` blocker is known. D-502 remains open before the production browser gate.
+No `WL-401` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-400 — Build authentication routes, application shell, profile/session surface, and route boundaries.`
+`WL-401 — Implement the Today query/application service/API/client query.`
 
 ## Update rules
 

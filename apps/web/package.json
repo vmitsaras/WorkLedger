@@ -13,20 +13,22 @@
     "typecheck": "tsc --build tsconfig.json --pretty false"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.101.4",
     "@workledger/contracts": "workspace:*",
     "@workledger/ui": "workspace:*",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-router": "8.3.0"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",
+    "@tailwindcss/vite": "4.3.3",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.0",
     "@testing-library/react": "16.3.2",
     "@testing-library/user-event": "14.6.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@tailwindcss/vite": "4.3.3",
     "@workledger/config": "workspace:*",
     "@workledger/test-utils": "workspace:*",
     "tailwindcss": "4.3.3",

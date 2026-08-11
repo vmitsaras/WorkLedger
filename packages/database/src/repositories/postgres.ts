@@ -3,7 +3,13 @@ import { createHash } from 'node:crypto';
 import { and, asc, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import type { DomainId, TimeAccountEntryActor, TimeAccountLedgerEntry } from '@workledger/domain';
+import {
+  localDateAtInstant,
+  parseTimeZoneId,
+  type DomainId,
+  type TimeAccountEntryActor,
+  type TimeAccountLedgerEntry,
+} from '@workledger/domain';
 
 import {
   accountEmployeeLinks,
@@ -31,6 +37,9 @@ import {
   mapSignedMinutes,
 } from '../mapping/domain-values.js';
 import type {
+  AccountSelfContextRecord,
+  AccountSelfServiceRepository,
+  AccountSessionRecord,
   AdvanceAttendanceHeadInput,
   ApplicationRole,
   AuditActor,
@@ -79,6 +88,7 @@ type RootDatabase = NodePgDatabase<typeof schema>;
 export type RepositoryTransaction = Parameters<Parameters<RootDatabase['transaction']>[0]>[0];
 
 export function createTransactionRepositories(transaction: RepositoryTransaction): Readonly<{
+  accountSelfService: AccountSelfServiceRepository;
   audit: AuditRepository;
   attendance: AttendanceRepository;
   attendanceIdempotency: AttendanceIdempotencyRepository;
@@ -89,6 +99,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   timeAccount: TimeAccountRepository;
 }> {
   return Object.freeze({
+    accountSelfService: new PostgresAccountSelfServiceRepository(transaction),
     audit: new PostgresAuditRepository(transaction),
     attendance: new PostgresAttendanceRepository(transaction),
     attendanceIdempotency: new PostgresAttendanceIdempotencyRepository(transaction),
@@ -98,6 +109,174 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     organizations: new PostgresOrganizationRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
   });
+}
+
+class PostgresAccountSelfServiceRepository implements AccountSelfServiceRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async deleteSession(
+    accountId: Parameters<AccountSelfServiceRepository['deleteSession']>[0],
+    sessionId: Parameters<AccountSelfServiceRepository['deleteSession']>[1],
+  ): Promise<boolean> {
+    const deleted = await this.transaction
+      .delete(authSessions)
+      .where(and(eq(authSessions.userId, accountId), eq(authSessions.id, sessionId)))
+      .returning({ id: authSessions.id });
+    return deleted.length === 1;
+  }
+
+  async findContext(
+    accountId: Parameters<AccountSelfServiceRepository['findContext']>[0],
+    at: Parameters<AccountSelfServiceRepository['findContext']>[1],
+  ): Promise<AccountSelfContextRecord | null> {
+    const [account] = await this.transaction
+      .select({
+        active: authUsers.active,
+        email: authUsers.email,
+        id: authUsers.id,
+        name: authUsers.name,
+      })
+      .from(authUsers)
+      .where(eq(authUsers.id, accountId))
+      .limit(1);
+    if (account === undefined) return null;
+
+    const [activeLink] = await this.transaction
+      .select({
+        employeeId: accountEmployeeLinks.employeeId,
+        organizationId: accountEmployeeLinks.organizationId,
+      })
+      .from(accountEmployeeLinks)
+      .where(
+        and(eq(accountEmployeeLinks.userId, accountId), isNull(accountEmployeeLinks.unlinkedAt)),
+      )
+      .limit(1);
+    const roleRows = await this.transaction
+      .select({
+        organizationId: accountRoleAssignments.organizationId,
+        role: accountRoleAssignments.role,
+      })
+      .from(accountRoleAssignments)
+      .where(
+        and(eq(accountRoleAssignments.userId, accountId), isNull(accountRoleAssignments.revokedAt)),
+      )
+      .orderBy(asc(accountRoleAssignments.role));
+
+    const organizationIds = new Set<string>();
+    if (activeLink !== undefined) organizationIds.add(activeLink.organizationId);
+    for (const roleRow of roleRows) organizationIds.add(roleRow.organizationId);
+    if (organizationIds.size === 0) return null;
+    if (organizationIds.size > 1) {
+      throw new DatabaseValueError('account_role_assignments', 'organization_id');
+    }
+    const organizationIdValue = [...organizationIds][0];
+    if (organizationIdValue === undefined) return null;
+    const organizationId = mapDomainId<'Organization'>(
+      organizationIdValue,
+      'account_role_assignments',
+      'organization_id',
+    );
+
+    const [organizationRow] = await this.transaction
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, organizationId))
+      .limit(1);
+    if (organizationRow === undefined) return null;
+    const timeZone = parseTimeZoneId(organizationRow.timeZone);
+    if (!timeZone.ok) throw new DatabaseValueError('organizations', 'time_zone');
+    const localDate = localDateAtInstant(at, timeZone.value);
+
+    let employee: EmployeeRecord | null = null;
+    let hasCurrentEmployment = false;
+    if (activeLink !== undefined && activeLink.organizationId === organizationId) {
+      const [employeeRow] = await this.transaction
+        .select()
+        .from(employees)
+        .where(
+          and(
+            eq(employees.organizationId, organizationId),
+            eq(employees.id, activeLink.employeeId),
+          ),
+        )
+        .limit(1);
+      if (employeeRow !== undefined) {
+        employee = mapEmployee(employeeRow);
+        const [employment] = await this.transaction
+          .select({ id: employmentPeriods.id })
+          .from(employmentPeriods)
+          .where(
+            and(
+              eq(employmentPeriods.organizationId, organizationId),
+              eq(employmentPeriods.employeeId, activeLink.employeeId),
+              lte(employmentPeriods.startsOn, localDate),
+              or(isNull(employmentPeriods.endsOn), gt(employmentPeriods.endsOn, localDate)),
+            ),
+          )
+          .limit(1);
+        hasCurrentEmployment = employment !== undefined;
+      }
+    }
+
+    return Object.freeze({
+      accountActive: account.active,
+      accountId: mapDomainId<'Account'>(account.id, 'auth_users', 'id'),
+      email: account.email,
+      employee,
+      employeeCapabilityActive:
+        account.active && employee?.status === 'ACTIVE' && hasCurrentEmployment,
+      name: account.name,
+      organization: mapOrganization(organizationRow),
+      roles: Object.freeze(roleRows.map(({ role }) => role)),
+    });
+  }
+
+  async listActiveSessions(
+    accountId: Parameters<AccountSelfServiceRepository['listActiveSessions']>[0],
+    at: Parameters<AccountSelfServiceRepository['listActiveSessions']>[1],
+  ): Promise<readonly AccountSessionRecord[]> {
+    const atDate = new Date(at);
+    const rows = await this.transaction
+      .select({
+        createdAt: authSessions.createdAt,
+        expiresAt: authSessions.expiresAt,
+        id: authSessions.id,
+        lastActiveAt: authSessions.updatedAt,
+        userAgent: authSessions.userAgent,
+        userId: authSessions.userId,
+      })
+      .from(authSessions)
+      .where(
+        and(
+          eq(authSessions.userId, accountId),
+          gt(authSessions.expiresAt, atDate),
+          sql`${authSessions.createdAt} + interval '12 hours' > ${atDate}::timestamptz`,
+        ),
+      )
+      .orderBy(desc(authSessions.updatedAt), desc(authSessions.id))
+      .limit(50);
+    return Object.freeze(rows.map(mapAccountSession));
+  }
+
+  async lockSession(
+    accountId: Parameters<AccountSelfServiceRepository['lockSession']>[0],
+    sessionId: Parameters<AccountSelfServiceRepository['lockSession']>[1],
+  ): Promise<AccountSessionRecord | null> {
+    const [row] = await this.transaction
+      .select({
+        createdAt: authSessions.createdAt,
+        expiresAt: authSessions.expiresAt,
+        id: authSessions.id,
+        lastActiveAt: authSessions.updatedAt,
+        userAgent: authSessions.userAgent,
+        userId: authSessions.userId,
+      })
+      .from(authSessions)
+      .where(and(eq(authSessions.userId, accountId), eq(authSessions.id, sessionId)))
+      .for('update')
+      .limit(1);
+    return row === undefined ? null : mapAccountSession(row);
+  }
 }
 
 class PostgresAttendanceIdempotencyRepository implements AttendanceIdempotencyRepository {
@@ -771,6 +950,24 @@ function mapEmployee(row: typeof employees.$inferSelect): EmployeeRecord {
     id: mapDomainId<'Employee'>(row.id, 'employees', 'id'),
     organizationId: mapDomainId<'Organization'>(row.organizationId, 'employees', 'organization_id'),
     status: row.status,
+  });
+}
+
+function mapAccountSession(row: {
+  createdAt: Date;
+  expiresAt: Date;
+  id: string;
+  lastActiveAt: Date;
+  userAgent: string | null;
+  userId: string;
+}): AccountSessionRecord {
+  return Object.freeze({
+    accountId: mapDomainId<'Account'>(row.userId, 'auth_sessions', 'user_id'),
+    createdAt: mapInstant(row.createdAt.toISOString(), 'auth_sessions', 'created_at'),
+    expiresAt: mapInstant(row.expiresAt.toISOString(), 'auth_sessions', 'expires_at'),
+    id: mapDomainId<'Session'>(row.id, 'auth_sessions', 'id'),
+    lastActiveAt: mapInstant(row.lastActiveAt.toISOString(), 'auth_sessions', 'updated_at'),
+    userAgent: row.userAgent,
   });
 }
 

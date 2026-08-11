@@ -80,9 +80,20 @@ Official references:
 - TanStack Query for server state.
 - React Hook Form plus Zod for complex forms.
 
+`WL-400` pins React Router `8.3.0` and TanStack Query `5.101.4` after checking their current stable
+releases and runtime compatibility on 2026-08-11. React Router Data Mode is required for nested
+route loaders, redirects, error/permission boundaries, route-owned title/focus behavior, and scroll
+restoration; native History APIs alone would duplicate those responsibilities. TanStack Query owns
+validated self-context/profile remote state, cache invalidation, and mutations in memory; hand-made
+fetch caching would create a second, less explicit server-state lifecycle. Neither dependency
+persists authentication or profile data. The current credential forms are intentionally simple and
+do not install React Hook Form; it remains selected for later complex workflows that demonstrate the
+need.
+
 Official references:
 
 - https://reactrouter.com/start/modes
+- https://reactrouter.com/start/data/installation
 - https://tanstack.com/query/latest/docs/framework/react/overview
 - https://react-hook-form.com/
 - https://zod.dev/

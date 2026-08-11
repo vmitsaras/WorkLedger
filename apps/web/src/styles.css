@@ -1,3 +1,201 @@
 @import 'tailwindcss';
 @source "../../../packages/ui/src";
 @import '@workledger/ui/styles.css';
+
+@layer base {
+  :root {
+    --wl-success: oklch(0.43 0.11 155);
+    --wl-success-surface: oklch(0.96 0.03 155);
+    --wl-danger-surface: oklch(0.97 0.025 27);
+  }
+
+  body,
+  #root {
+    min-width: 20rem;
+    min-height: 100dvh;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 15% 0%, oklch(0.92 0.04 225 / 0.58), transparent 28rem),
+      var(--wl-surface);
+  }
+
+  a,
+  button {
+    text-underline-offset: 0.2em;
+  }
+}
+
+@layer components {
+  .wl-skip-link {
+    position: fixed;
+    z-index: 100;
+    inset-block-start: 0.75rem;
+    inset-inline-start: 0.75rem;
+    translate: 0 -200%;
+    min-block-size: 2.75rem;
+    padding: 0.65rem 1rem;
+    border: 2px solid var(--wl-focus-ring);
+    border-radius: 0.6rem;
+    background: var(--wl-surface-raised);
+    color: var(--wl-text);
+    font-weight: 700;
+    transition: translate var(--wl-motion-duration-fast) var(--wl-motion-ease-standard);
+  }
+
+  .wl-skip-link:focus {
+    translate: 0;
+    outline: 3px solid var(--wl-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .wl-app-header {
+    position: sticky;
+    z-index: 30;
+    inset-block-start: 0;
+  }
+
+  .wl-shell-grid {
+    display: grid;
+    min-height: calc(100dvh - 4.25rem);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wl-desktop-navigation {
+    display: none;
+  }
+
+  .wl-mobile-navigation {
+    display: block;
+  }
+
+  .wl-nav-link {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.75rem;
+    color: var(--wl-text);
+    font-size: 0.925rem;
+    font-weight: 600;
+    text-decoration: none;
+    outline: none;
+  }
+
+  .wl-nav-link:hover {
+    background: var(--wl-surface-subtle);
+  }
+
+  .wl-nav-link:focus-visible,
+  .wl-brand-link:focus-visible,
+  .wl-text-button:focus-visible {
+    outline: 3px solid var(--wl-focus-ring);
+    outline-offset: 3px;
+  }
+
+  .wl-nav-link-active {
+    border-inline-start: 0.25rem solid var(--wl-action-primary);
+    background: color-mix(in oklab, var(--wl-action-primary) 10%, var(--wl-surface-raised));
+    padding-inline-start: 0.6rem;
+  }
+
+  .wl-panel {
+    border: 1px solid var(--wl-border);
+    border-radius: 1rem;
+    background: var(--wl-surface-raised);
+    padding: clamp(1.1rem, 3vw, 1.5rem);
+    box-shadow: var(--wl-shadow-card);
+  }
+
+  .wl-alert {
+    border-color: var(--wl-border-strong);
+    background: var(--wl-surface-subtle);
+    color: var(--wl-text);
+  }
+
+  .wl-alert-error {
+    border-color: var(--wl-danger);
+    background: var(--wl-danger-surface);
+  }
+
+  .wl-alert-success {
+    border-color: var(--wl-success);
+    background: var(--wl-success-surface);
+  }
+
+  .wl-alert a {
+    color: currentColor;
+    font-weight: 700;
+  }
+
+  .wl-auth-layout {
+    background:
+      linear-gradient(145deg, transparent 35%, oklch(0.89 0.045 225 / 0.72)), var(--wl-surface);
+  }
+
+  .wl-auth-card {
+    min-width: 0;
+  }
+
+  .wl-text-button {
+    min-height: 2.75rem;
+    border: 0;
+    border-radius: 0.4rem;
+    background: transparent;
+    color: var(--wl-link);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  [data-route-heading]:focus-visible {
+    outline: 3px solid var(--wl-focus-ring);
+    outline-offset: 0.35rem;
+    border-radius: 0.2rem;
+  }
+
+  @media (min-width: 64rem) {
+    .wl-shell-grid {
+      grid-template-columns: 17rem minmax(0, 1fr);
+    }
+
+    .wl-desktop-navigation {
+      position: sticky;
+      inset-block-start: 4.25rem;
+      display: block;
+      align-self: start;
+      min-height: calc(100dvh - 4.25rem);
+      max-height: calc(100dvh - 4.25rem);
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+      overscroll-behavior: contain;
+    }
+
+    .wl-mobile-navigation {
+      display: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .wl-nav-link-active {
+      border-color: Highlight;
+      background: Canvas;
+      color: CanvasText;
+    }
+
+    .wl-alert,
+    .wl-panel,
+    .wl-skip-link {
+      background: Canvas;
+      color: CanvasText;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wl-skip-link {
+      transition: none;
+    }
+  }
+}

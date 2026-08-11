@@ -80,6 +80,20 @@
     }
   }
 
+  @keyframes wl-drawer-in {
+    from {
+      opacity: 0;
+      transform: translateX(-0.75rem);
+    }
+  }
+
+  @keyframes wl-drawer-out {
+    to {
+      opacity: 0;
+      transform: translateX(-0.5rem);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     :root {
       --wl-motion-duration-fast: 1ms;

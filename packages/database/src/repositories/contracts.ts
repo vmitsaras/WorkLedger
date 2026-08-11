@@ -165,6 +165,26 @@ export type EmployeeRecord = Readonly<{
   status: EmployeeStatus;
 }>;
 
+export type AccountSelfContextRecord = Readonly<{
+  accountActive: boolean;
+  accountId: DomainId<'Account'>;
+  email: string;
+  employee: EmployeeRecord | null;
+  employeeCapabilityActive: boolean;
+  name: string;
+  organization: OrganizationRecord;
+  roles: readonly ApplicationRole[];
+}>;
+
+export type AccountSessionRecord = Readonly<{
+  accountId: DomainId<'Account'>;
+  createdAt: Instant;
+  expiresAt: Instant;
+  id: DomainId<'Session'>;
+  lastActiveAt: Instant;
+  userAgent: string | null;
+}>;
+
 export type AttendanceHeadRecord = Readonly<{
   attendanceRevision: number;
   employeeId: DomainId<'Employee'>;
@@ -296,6 +316,22 @@ export interface EmployeeRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<EmployeeRecord | null>;
+}
+
+export interface AccountSelfServiceRepository {
+  deleteSession(accountId: DomainId<'Account'>, sessionId: DomainId<'Session'>): Promise<boolean>;
+  findContext(
+    accountId: DomainId<'Account'>,
+    at: Instant,
+  ): Promise<AccountSelfContextRecord | null>;
+  listActiveSessions(
+    accountId: DomainId<'Account'>,
+    at: Instant,
+  ): Promise<readonly AccountSessionRecord[]>;
+  lockSession(
+    accountId: DomainId<'Account'>,
+    sessionId: DomainId<'Session'>,
+  ): Promise<AccountSessionRecord | null>;
 }
 
 export interface AuthorizationRepository {

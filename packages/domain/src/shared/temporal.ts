@@ -70,6 +70,13 @@ export function parseTimeZoneId(input: unknown): Result<TimeZoneId, InvalidTimeZ
   }
 }
 
+export function localDateAtInstant(instant: Instant, timeZone: TimeZoneId): LocalDate {
+  return Temporal.Instant.from(instant)
+    .toZonedDateTimeISO(timeZone)
+    .toPlainDate()
+    .toString() as LocalDate;
+}
+
 export function compareLocalDates(left: LocalDate, right: LocalDate): -1 | 0 | 1 {
   if (left < right) return -1;
   if (left > right) return 1;

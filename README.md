@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 4 — 0 of 8 tasks complete**
+> **Current phase progress: Phase 4 — 1 of 8 tasks complete**
 
 Phase 3 passed its exit gate and the repository is now in **Phase 4: employee attendance vertical
 slice**. The workspace, project boundaries, strict tooling, test and CI baseline, local
@@ -14,13 +14,14 @@ framework-independent domain engine, initial PostgreSQL schema/generated migrati
 repository/transaction boundary, accepted Better Auth credential/session foundation,
 deny-by-default application authorization, shared Zod/Fastify API contract and safe error boundary,
 append-only audience-separated audit foundation, protected attendance idempotency claim/replay
-persistence, a deterministic local-only Northstar development seed, and reproducible hardened
-OpenAPI JSON exposure are implemented and passed the database-enabled Phase 3 gate. The next task
-is the authenticated application shell and route-boundary slice (`WL-400`).
+persistence, a deterministic local-only Northstar development seed, reproducible hardened OpenAPI
+JSON exposure, and the authenticated application shell/profile/session slice are implemented. The
+next task is the Today attendance query/read model (`WL-401`).
 
-WorkLedger does not yet provide an authenticated application shell, attendance product workflow,
-production deployment, or supported release. The runnable web page is an isolated development
-preview of foundation components, not the WorkLedger application.
+WorkLedger does not yet provide an attendance product workflow, coordinated local web/API process,
+production deployment, or supported release. The web development server renders the application
+routes and safe service-unavailable boundaries; authenticated flows are exercised against mocked
+browser transport and a real PostgreSQL-backed API integration surface in the automated tests.
 
 ## Current status
 
@@ -67,14 +68,15 @@ development defaults when no `.env` exists. It runs the PostgreSQL integration t
 `WORKLEDGER_TEST_DATABASE_URL` is set; use the next section to exercise that lifecycle.
 The tracked `.env.example` contains local defaults only and is not a deployment template.
 
-To view the development-only component preview:
+To view the development-only web application surface:
 
 ```sh
 pnpm with 11.20.0 --filter @workledger/web dev
 ```
 
-Vite serves the preview at `http://127.0.0.1:5173` by default. There is no runnable product API or
-end-to-end WorkLedger workflow yet.
+Vite serves the web application at `http://127.0.0.1:5173` by default. A separately composed
+same-origin API listener is not shipped yet, so local browser routes that need the API show their
+service-unavailable boundary. There is no end-to-end attendance workflow yet.
 
 ## Local PostgreSQL
 

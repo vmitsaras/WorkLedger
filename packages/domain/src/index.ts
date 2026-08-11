@@ -106,6 +106,7 @@ export {
 } from './shared/result.js';
 export {
   compareLocalDates,
+  localDateAtInstant,
   parseInstant,
   parseLocalDate,
   parseTimeZoneId,

@@ -1,3 +1,5 @@
+import { PASSWORD_MAXIMUM_LENGTH, PASSWORD_MINIMUM_LENGTH } from '@workledger/contracts';
+
 const COMMON_PASSWORDS = new Set([
   '123456789012345',
   'adminadminadmin',
@@ -12,8 +14,7 @@ const COMMON_PASSWORDS = new Set([
   'workledgerworkledger',
 ]);
 
-export const PASSWORD_MINIMUM_LENGTH = 15;
-export const PASSWORD_MAXIMUM_LENGTH = 128;
+export { PASSWORD_MAXIMUM_LENGTH, PASSWORD_MINIMUM_LENGTH };
 
 export type PasswordPolicyFailure = 'PASSWORD_TOO_SHORT' | 'PASSWORD_TOO_LONG' | 'PASSWORD_COMMON';
 

@@ -1,17 +1,16 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider } from 'react-router/dom';
 
-import { FoundationPreview } from '@workledger/ui';
-
+import { createWorkLedgerQueryClient } from './app/query.js';
+import { captureResetGrant } from './app/reset-grant.js';
+import { createWorkLedgerRouter } from './app/router.js';
 import './styles.css';
 
-function Application() {
-  return (
-    <main id="main-content" className="mx-auto min-h-dvh w-full max-w-5xl px-5 py-12 sm:px-8">
-      <FoundationPreview />
-    </main>
-  );
-}
+captureResetGrant();
+const queryClient = createWorkLedgerQueryClient();
+const router = createWorkLedgerRouter(queryClient);
 
 const rootElement = document.querySelector('#root');
 
@@ -21,6 +20,8 @@ if (!(rootElement instanceof HTMLElement)) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <Application />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>,
 );

@@ -15,7 +15,13 @@ export const OPENAPI_ARTIFACT_PATH = path.resolve(
 );
 
 export async function generateOpenApiArtifact() {
-  const app = createApiServer(createRuntimeConfig({ WORKLEDGER_ENVIRONMENT: 'test' }));
+  const app = createApiServer(
+    createRuntimeConfig({
+      WORKLEDGER_AUTH_SECRET: 'openapi-generation-secret-with-more-than-thirty-two-bytes',
+      WORKLEDGER_DATABASE_URL: 'postgres://openapi:openapi@127.0.0.1:1/workledger_openapi',
+      WORKLEDGER_ENVIRONMENT: 'test',
+    }),
+  );
 
   try {
     await app.ready();

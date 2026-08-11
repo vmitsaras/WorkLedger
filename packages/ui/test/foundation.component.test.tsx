@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
-import { FoundationPreview } from '../src/index.js';
+import { Drawer, FoundationPreview } from '../src/index.js';
 
 test('renders semantic button, link, and described field examples', async () => {
   const { container } = render(<FoundationPreview />);
@@ -36,5 +36,23 @@ test('opens and closes the dialog from the keyboard', async () => {
   expect(
     screen.queryByRole('dialog', { name: 'Review before continuing' }),
   ).not.toBeInTheDocument();
+  await waitFor(() => expect(trigger).toHaveFocus());
+});
+
+test('moves focus into the navigation drawer and restores it to the trigger', async () => {
+  const user = userEvent.setup();
+  const { container } = render(
+    <Drawer title="Navigation" triggerLabel="Menu">
+      <a href="/today">Today</a>
+    </Drawer>,
+  );
+
+  const trigger = screen.getByRole('button', { name: 'Menu' });
+  trigger.focus();
+  await user.keyboard('{Enter}');
+  expect(screen.getByRole('dialog', { name: 'Navigation' })).toHaveFocus();
+  await expectNoAxeViolations(container);
+
+  await user.keyboard('{Escape}');
   await waitFor(() => expect(trigger).toHaveFocus());
 });
