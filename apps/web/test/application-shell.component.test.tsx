@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
@@ -124,6 +124,106 @@ test('renders the role-aware shell and focuses each completed route navigation',
   const timeHeading = await screen.findByRole('heading', { name: 'My time' });
   await waitFor(() => expect(timeHeading).toHaveFocus());
   expect(document.title).toBe('My time | WorkLedger');
+  await expectNoAxeViolations(container);
+});
+
+test('explains the daily arithmetic and preserves attendance event order in semantic groups', async () => {
+  const completedSequence: TodayAttendance = {
+    ...TODAY_ATTENDANCE,
+    attendance: {
+      activeSince: null,
+      attendanceRevision: 4,
+      state: 'OFF_WORK',
+      validActions: ['CLOCK_IN'],
+    },
+    calculation: {
+      ...TODAY_ATTENDANCE.calculation,
+      estimate:
+        TODAY_ATTENDANCE.calculation.estimate === null
+          ? null
+          : {
+              ...TODAY_ATTENDANCE.calculation.estimate,
+              adjustmentMinutes: -30,
+              balanceMinutes: -315,
+              creditedMinutes: 165,
+            },
+    },
+    timeline: [
+      ...TODAY_ATTENDANCE.timeline,
+      {
+        id: '123e4567-e89b-42d3-a456-426614174204',
+        occurredAt: '2026-08-11T09:15:00Z',
+        type: 'CLOCK_OUT',
+      },
+    ],
+  };
+  vi.stubGlobal('fetch', authenticatedFetch(completedSequence));
+  const { container } = renderApplication('/today');
+
+  await screen.findByRole('heading', { name: 'Off work' });
+  const breakdown = screen.getByRole('region', { name: 'Calculation breakdown' });
+  expect(within(breakdown).getByRole('heading', { name: 'Expected time' })).toBeVisible();
+  expect(within(breakdown).getByRole('heading', { name: 'Credited time' })).toBeVisible();
+  expect(within(breakdown).getByRole('heading', { name: 'Estimated balance' })).toBeVisible();
+  expect(breakdown).toHaveTextContent(
+    'Expected time equals 8h 00m scheduled, minus 0h 00m public-holiday reduction, minus 0h 00m absence reduction: 8h 00m.',
+  );
+  expect(breakdown).toHaveTextContent(
+    'Credited time equals 3h 15m worked, plus 0h 00m absence credit, minus 0h 30m approved adjustments: 2h 45m.',
+  );
+  expect(breakdown).toHaveTextContent(
+    'Estimated balance equals 2h 45m credited, minus 8h 00m expected: −5h 15m.',
+  );
+  expect(breakdown).toHaveTextContent('Approved adjustments−0h 30m');
+  expect(breakdown).toHaveTextContent(
+    'Break time is already excluded from worked time and is not subtracted again.',
+  );
+
+  const timeline = screen.getByRole('region', { name: 'Today’s timeline' });
+  expect(timeline).toHaveTextContent('Times are shown in Europe/Berlin');
+  expect(timeline).toHaveTextContent('Events sharing one time keep their recorded order.');
+  const events = within(timeline).getAllByRole('listitem');
+  expect(events).toHaveLength(4);
+  expect(events.map((event) => event.textContent)).toEqual([
+    'Clocked in9:00 AMWork session started.',
+    'Break started11:00 AMWorking time paused.',
+    'Break ended11:15 AMWorking time resumed.',
+    'Clocked out11:15 AMWork session ended.',
+  ]);
+  await expectNoAxeViolations(container);
+});
+
+test('explains zero expected time before presenting credited work', async () => {
+  const holidayToday: TodayAttendance = {
+    ...TODAY_ATTENDANCE,
+    calculation: {
+      blockers: [],
+      estimate: {
+        absenceCreditMinutes: 0,
+        absenceExpectedReductionMinutes: 0,
+        adjustmentMinutes: 0,
+        balanceMinutes: 60,
+        breakMinutes: 0,
+        creditedMinutes: 60,
+        expectedMinutes: 0,
+        holidayExpectedReductionMinutes: 480,
+        scheduledMinutes: 480,
+        workedMinutes: 60,
+      },
+      holidayName: 'German Unity Day',
+      status: 'PROVISIONAL',
+      warnings: ['WORK_ON_HOLIDAY', 'WORK_ON_ZERO_EXPECTED_DAY'],
+    },
+  };
+  vi.stubGlobal('fetch', authenticatedFetch(holidayToday));
+  const { container } = renderApplication('/today');
+
+  expect(await screen.findByRole('heading', { name: '+1h 00m' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Why expected time is zero' })).toBeVisible();
+  expect(
+    screen.getByText(/German Unity Day reduces today’s scheduled expectation to zero/u),
+  ).toBeVisible();
+  expect(screen.getByText(/not labelled as payroll overtime/u)).toBeVisible();
   await expectNoAxeViolations(container);
 });
 

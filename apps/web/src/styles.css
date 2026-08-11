@@ -154,8 +154,46 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
   }
 
-  .wl-calculation-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  .wl-today-grid > * {
+    min-inline-size: 0;
+  }
+
+  .wl-calculation-groups {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+
+  .wl-zero-expected-note {
+    overflow-wrap: anywhere;
+  }
+
+  .wl-timeline-list {
+    padding: clamp(1.1rem, 3vw, 1.5rem);
+  }
+
+  .wl-timeline-item {
+    grid-template-columns: 0.75rem minmax(0, 1fr);
+    padding-block: 1rem;
+  }
+
+  .wl-timeline-item:first-child {
+    padding-block-start: 0;
+  }
+
+  .wl-timeline-item:last-child {
+    padding-block-end: 0;
+  }
+
+  .wl-timeline-item + .wl-timeline-item {
+    border-block-start: 1px solid var(--wl-border);
+  }
+
+  .wl-timeline-marker {
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    margin-block-start: 0.35rem;
+    border: 2px solid var(--wl-action-primary);
+    border-radius: 999px;
+    background: var(--wl-surface-raised);
   }
 
   [data-route-heading]:focus-visible {
@@ -195,9 +233,15 @@
 
     .wl-alert,
     .wl-panel,
-    .wl-skip-link {
+    .wl-skip-link,
+    .wl-zero-expected-note {
       background: Canvas;
       color: CanvasText;
+    }
+
+    .wl-timeline-marker {
+      border-color: Highlight;
+      background: Canvas;
     }
   }
 

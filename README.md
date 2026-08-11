@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 4 — 4 of 8 tasks complete**
+> **Current phase progress: Phase 4 — 5 of 8 tasks complete**
 
 Phase 3 passed its exit gate and the repository is now in **Phase 4: employee attendance vertical
 slice**. The workspace, project boundaries, strict tooling, test and CI baseline, local
@@ -16,9 +16,10 @@ deny-by-default application authorization, shared Zod/Fastify API contract and s
 append-only audience-separated audit foundation, protected attendance idempotency claim/replay
 persistence, a deterministic local-only Northstar development seed, reproducible hardened OpenAPI
 JSON exposure, the authenticated application shell/profile/session slice, the authorized
-organization-local Today attendance read model, and the protected end-to-end clock-in, break,
-resume, and clock-out sequence are implemented. The next task is the Today timeline/list and daily
-calculation-breakdown refinement (`WL-404`).
+organization-local Today attendance read model, protected end-to-end clock-in/break/resume/clock-out
+sequence, and explainable responsive Today timeline and daily calculation breakdown are implemented.
+The next task is attendance resilience across retry, stale, offline, and dependency states
+(`WL-405`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe
@@ -205,6 +206,7 @@ versions and makes no response-time or production-support promise.
 | [docs/52-today-attendance-read-model.md](docs/52-today-attendance-read-model.md) | Authorized Today state, timeline, provisional calculation, warning, responsive, and API evidence |
 | [docs/53-clock-in-mutation.md](docs/53-clock-in-mutation.md) | Authorized idempotent clock-in transaction, replay, audit, UI feedback, and concurrency evidence |
 | [docs/54-attendance-command-sequence.md](docs/54-attendance-command-sequence.md) | Full protected attendance command sequence, active-break confirmation, ordered events, and accessible feedback evidence |
+| [docs/55-today-timeline-calculation.md](docs/55-today-timeline-calculation.md) | Explainable daily arithmetic, semantic ordered event history, timezone context, and 320 px responsive evidence |
 
 ## License
 

@@ -104,8 +104,8 @@ focus, hover distinction, forced-colors support, and reduced-motion behavior.
 
 ## Deferred ownership
 
-- `WL-404` owns the next refinement of the attendance timeline/list and calculation-breakdown
-  experience now that the complete source-event sequence exists.
+- `WL-404` completes the attendance timeline/list and calculation-breakdown experience documented
+  in `docs/55-today-timeline-calculation.md`.
 - `WL-405` owns bounded unknown-result retry, offline/reconnect handling, polling, and broader
   cross-tab/device refresh. Attendance intents remain memory-only and are never queued offline.
 - `WL-406` owns the phase-wide manual keyboard, screen-reader, touch, zoom/reflow, forced-colors,

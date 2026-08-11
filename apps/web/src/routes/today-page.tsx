@@ -9,8 +9,6 @@ import type {
   CalculationBlockerCode,
   CalculationWarningCode,
   TodayAttendance,
-  TodayAttendanceEstimate,
-  TodayTimelineEvent,
 } from '@workledger/contracts';
 import { Button, Dialog } from '@workledger/ui';
 
@@ -21,9 +19,12 @@ import {
   executeAttendanceCommand,
   type AttendanceCommandIntent,
 } from '../app/api-client.js';
+import { formatDuration, formatLocalDate, formatTime } from '../app/date-time-format.js';
 import { todayAttendanceQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
+import { DailyTimeBreakdown } from '../components/daily-time-breakdown.js';
 import { PageHeader } from '../components/page-header.js';
+import { TodayAttendanceTimeline } from '../components/today-attendance-timeline.js';
 
 const STATE_LABELS: Readonly<Record<AttendanceState, string>> = {
   OFF_WORK: 'Off work',
@@ -36,13 +37,6 @@ const ACTION_LABELS: Readonly<Record<AttendanceCommand, string>> = {
   CLOCK_OUT: 'Clock out',
   RESUME: 'Resume work',
   START_BREAK: 'Start break',
-};
-
-const EVENT_LABELS: Readonly<Record<TodayTimelineEvent['type'], string>> = {
-  BREAK_END: 'Break ended',
-  BREAK_START: 'Break started',
-  CLOCK_IN: 'Clocked in',
-  CLOCK_OUT: 'Clocked out',
 };
 
 const WARNING_MESSAGES: Readonly<Record<CalculationWarningCode, string>> = {
@@ -267,7 +261,7 @@ function renderTodayReady({
       : `${STATE_LABELS[attendance.state]} since ${formatTime(attendance.activeSince, today.timeZone)}.`;
 
   return (
-    <section className="grid gap-8">
+    <section className="grid max-w-6xl gap-8">
       <PageHeader
         eyebrow={formatLocalDate(today.localDate)}
         title="Today"
@@ -284,7 +278,7 @@ function renderTodayReady({
 
       <div className="wl-today-grid grid gap-6">
         <section
-          className="wl-panel grid content-start gap-5"
+          className="wl-panel grid min-w-0 content-start gap-5"
           aria-labelledby="current-status-title"
         >
           <div className="grid gap-1">
@@ -333,7 +327,10 @@ function renderTodayReady({
           </div>
         </section>
 
-        <section className="wl-panel grid content-start gap-5" aria-labelledby="calculation-title">
+        <section
+          className="wl-panel grid min-w-0 content-start gap-5"
+          aria-labelledby="calculation-title"
+        >
           <div className="grid gap-1">
             <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
               {calculation.status === 'PROVISIONAL'
@@ -343,7 +340,7 @@ function renderTodayReady({
             <h2 id="calculation-title" className="m-0 text-3xl font-bold">
               {calculation.estimate === null
                 ? 'Not available'
-                : formatMinutes(calculation.estimate.balanceMinutes)}
+                : formatDuration(calculation.estimate.balanceMinutes, true)}
             </h2>
             <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
               {calculation.estimate === null
@@ -352,7 +349,7 @@ function renderTodayReady({
             </p>
           </div>
           {calculation.holidayName === null ? null : (
-            <p className="m-0 rounded-lg bg-[var(--wl-surface-subtle)] p-3 text-sm font-semibold">
+            <p className="m-0 min-w-0 [overflow-wrap:anywhere] rounded-lg bg-[var(--wl-surface-subtle)] p-3 text-sm font-semibold">
               Public holiday: {calculation.holidayName}
             </p>
           )}
@@ -362,11 +359,16 @@ function renderTodayReady({
       <CalculationMessages blockers={calculation.blockers} warnings={calculation.warnings} />
 
       {calculation.estimate === null ? null : (
-        <CalculationBreakdown estimate={calculation.estimate} />
+        <DailyTimeBreakdown
+          estimate={calculation.estimate}
+          holidayName={calculation.holidayName}
+          status={calculation.status}
+        />
       )}
 
-      <Timeline
+      <TodayAttendanceTimeline
         events={today.timeline}
+        localDate={today.localDate}
         timeZone={today.timeZone}
         truncated={today.timelineTruncated}
       />
@@ -493,89 +495,6 @@ function CalculationMessages({
   );
 }
 
-function CalculationBreakdown({ estimate }: Readonly<{ estimate: TodayAttendanceEstimate }>) {
-  const entries: readonly (readonly [string, number])[] = [
-    ['Scheduled time', estimate.scheduledMinutes],
-    ['Public-holiday reduction', -estimate.holidayExpectedReductionMinutes],
-    ['Absence reduction', -estimate.absenceExpectedReductionMinutes],
-    ['Expected time', estimate.expectedMinutes],
-    ['Worked time', estimate.workedMinutes],
-    ['Break time', estimate.breakMinutes],
-    ['Absence credit', estimate.absenceCreditMinutes],
-    ['Approved adjustments', estimate.adjustmentMinutes],
-    ['Credited time', estimate.creditedMinutes],
-    ['Estimated balance', estimate.balanceMinutes],
-  ];
-  return (
-    <section className="grid gap-4" aria-labelledby="calculation-breakdown-title">
-      <div className="grid gap-1">
-        <h2 id="calculation-breakdown-title" className="m-0 text-2xl font-bold">
-          Calculation breakdown
-        </h2>
-        <p className="m-0 max-w-2xl text-sm leading-6 text-[var(--wl-text-muted)]">
-          Every value is shown in hours and minutes. Reductions lower expected time; credits and
-          adjustments affect credited time.
-        </p>
-      </div>
-      <dl className="wl-panel wl-calculation-grid m-0 grid gap-x-8 gap-y-0">
-        {entries.map(([term, minutes]) => (
-          <div
-            key={term}
-            className="flex min-w-0 items-baseline justify-between gap-4 border-b border-[var(--wl-border)] py-3 last:border-0"
-          >
-            <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">{term}</dt>
-            <dd className="m-0 shrink-0 font-bold tabular-nums">{formatMinutes(minutes)}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-}
-
-function Timeline({
-  events,
-  timeZone,
-  truncated,
-}: Readonly<{
-  events: readonly TodayTimelineEvent[];
-  timeZone: string;
-  truncated: boolean;
-}>) {
-  return (
-    <section className="grid gap-4" aria-labelledby="today-timeline-title">
-      <div className="grid gap-1">
-        <h2 id="today-timeline-title" className="m-0 text-2xl font-bold">
-          Today’s timeline
-        </h2>
-        <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-          Immutable attendance events in recorded order.
-        </p>
-      </div>
-      {events.length === 0 ? (
-        <div className="wl-panel">
-          <p className="m-0">No attendance events have been recorded today.</p>
-        </div>
-      ) : (
-        <ol className="m-0 grid list-none gap-3 p-0">
-          {events.map((event) => (
-            <li key={event.id} className="wl-panel flex items-baseline justify-between gap-4 py-4">
-              <span className="font-semibold">{EVENT_LABELS[event.type]}</span>
-              <time className="shrink-0 tabular-nums" dateTime={event.occurredAt}>
-                {formatTime(event.occurredAt, timeZone)}
-              </time>
-            </li>
-          ))}
-        </ol>
-      )}
-      {truncated ? (
-        <p className="wl-alert wl-alert-error m-0 rounded-xl border p-4 text-sm">
-          The timeline is too long to show completely. The calculation is marked incomplete.
-        </p>
-      ) : null}
-    </section>
-  );
-}
-
 function isAuthenticationError(error: unknown): boolean {
   return (
     error instanceof ApiClientError &&
@@ -677,28 +596,4 @@ function pendingActionLabel(command: AttendanceCommand): string {
     case 'CLOCK_OUT':
       return 'Clocking out…';
   }
-}
-
-function formatLocalDate(localDate: string): string {
-  const [year, month, day] = localDate.split('-').map(Number);
-  if (year === undefined || month === undefined || day === undefined) return localDate;
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeZone: 'UTC' }).format(
-    new Date(Date.UTC(year, month - 1, day)),
-  );
-}
-
-function formatTime(value: string, timeZone: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone,
-  }).format(new Date(value));
-}
-
-function formatMinutes(minutes: number): string {
-  const sign = minutes < 0 ? '−' : minutes > 0 ? '+' : '';
-  const absolute = Math.abs(minutes);
-  const hours = Math.floor(absolute / 60);
-  const remaining = absolute % 60;
-  return `${sign}${hours}h ${remaining.toString().padStart(2, '0')}m`;
 }

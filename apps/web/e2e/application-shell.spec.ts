@@ -251,6 +251,64 @@ test('completes the attendance sequence by keyboard with protected intents and b
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('keeps the calculation explanation and event history readable at 320px', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({
+      json: success({
+        ...TODAY_ATTENDANCE,
+        calculation: {
+          blockers: [],
+          estimate: {
+            ...TODAY_ATTENDANCE.calculation.estimate,
+            balanceMinutes: 60,
+            breakMinutes: 15,
+            creditedMinutes: 60,
+            expectedMinutes: 0,
+            holidayExpectedReductionMinutes: 480,
+            workedMinutes: 60,
+          },
+          holidayName: 'Donaudampfschifffahrtsgesellschaft Appreciation Day',
+          status: 'PROVISIONAL',
+          warnings: ['WORK_ON_HOLIDAY', 'WORK_ON_ZERO_EXPECTED_DAY'],
+        },
+        timeline: [
+          ...TODAY_ATTENDANCE.timeline,
+          {
+            id: '123e4567-e89b-42d3-a456-426614174202',
+            occurredAt: '2026-08-11T08:45:00Z',
+            type: 'BREAK_START',
+          },
+          {
+            id: '123e4567-e89b-42d3-a456-426614174203',
+            occurredAt: '2026-08-11T09:00:00Z',
+            type: 'BREAK_END',
+          },
+        ],
+      }),
+      status: 200,
+    });
+  });
+
+  await page.goto('/today');
+  await expect(page.getByRole('heading', { name: 'Why expected time is zero' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Expected time', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Credited time', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Estimated balance', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Today’s timeline' }).getByRole('listitem'),
+  ).toHaveCount(3);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('captures the reset grant in memory and removes it from browser history immediately', async ({
   page,
 }) => {

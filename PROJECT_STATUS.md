@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 4 — Employee attendance vertical slice
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 4 of 8 Phase 4 tasks complete
-**Current milestone:** Today timeline and calculation detail
-**Active task:** `WL-404`
+**Phase progress:** 5 of 8 Phase 4 tasks complete
+**Current milestone:** Attendance resilience and recovery
+**Active task:** `WL-405`
 **Status:** Ready
 **Last verified:** 2026-08-11
 
 ## Current objective
 
-Refine the Today attendance timeline/list and daily calculation breakdown so the complete command
-sequence remains explainable, responsive, and accessible from source events through provisional
-integer-minute totals.
+Implement stale-state convergence, duplicate/replay and unknown-result retry, offline/reconnect,
+dependency-error recovery, and broader tab/device refresh behavior without optimistic or queued
+attendance effects.
 
 ## Verified decisions
 
@@ -70,6 +70,12 @@ integer-minute totals.
 - The Today screen renders only authoritative valid actions, disables the complete control group for
   one pending in-memory intent, and uses a controlled modal for deliberate active-break clock-out;
   cancel/Escape causes no attendance effect and confirmed submission creates a new intent key.
+- Today calculation detail groups server-provided integer minutes into expected, credited, and
+  estimated-balance description lists with explicit natural-language equations; the browser
+  formats but does not derive authoritative totals.
+- Today attendance history is a semantic ordered list with event meaning, organization-local date,
+  IANA timezone, and same-time recorded-order context. Intrinsic cards and wrapped labels reflow
+  without horizontal page overflow at the automated 320 px boundary.
 - Punch occurrence/manual attendance inputs use minute precision; interval, daily, policy, and display calculations apply no later rounding.
 - Daily calculations have identified inputs and `PROVISIONAL`, `INCOMPLETE`, or `COMPLETE` status; only complete past dates may post.
 - Holiday dates reduce expected and default absence consumption/credit to zero while preserving actual worked credit.
@@ -266,41 +272,44 @@ integer-minute totals.
   command service; exact event ordering; cross-command replay/conflict behavior; accessible valid
   actions and confirmation; and full API/browser sequence evidence completed (`WL-403`; see
   `docs/54-attendance-command-sequence.md`).
+- [x] Focused explainable calculation groups, semantic ordered attendance history, zero-expected
+  holiday explanation, signed adjustment presentation, timezone/order context, long-label wrapping,
+  and 320 px reflow/axe evidence completed (`WL-404`; see
+  `docs/55-today-timeline-calculation.md`).
 
 ## Latest completed task
 
-### `WL-403` — Implement start-break, resume, and clock-out end to end
+### `WL-404` — Build the Today timeline and calculation breakdown
 
-- Changed: generalized the clock-in service and typed client into one command boundary; added strict
-  start-break, resume, and clock-out contracts/routes/OpenAPI operations; preserved exact
-  command/result event correlations; implemented atomic active-break closure; and rendered only
-  authoritative valid actions with pending feedback and a controlled confirmation dialog.
-- Verified: the database-enabled canonical gate passes 24 native checks, 147 unit/component tests,
-  21 integration tests, and five Chromium scenarios plus OpenAPI drift, formatting,
+- Changed: extracted focused date/time formatting, daily-breakdown, and attendance-history
+  components; grouped server-provided amounts into expected, credited, and signed-balance equations;
+  added break and zero-expected explanations; enriched event meaning/timezone/order context; and
+  hardened intrinsic layout and long holiday-name wrapping.
+- Verified: the database-enabled canonical gate passes 24 native checks, 149 unit/component tests,
+  21 integration tests, and six Chromium scenarios plus reproducible OpenAPI, formatting,
   lint/boundaries, strict TypeScript, and the production build.
-- Accessibility: every command uses a semantic button, visible disabled pending label, one result
-  region, authoritative refetch, and conditional logical focus. React Aria owns modal containment,
-  Escape/cancel behavior, and trigger restoration; component and full keyboard Chromium paths pass
-  axe. The shared primary action token was darkened to meet settled-state contrast.
-- Security/data: every route enforces origin, session, session-bound CSRF, active capability, and
-  `ATTENDANCE_CLOCK` authorization before claim/replay and rechecks inside the transaction. One
-  confirmed on-break decision creates two ordered immutable events, one revision increment, one
-  minimized audit event, and one terminal outcome; changed or cross-command key reuse has no effect.
-- Documentation: added `docs/54-attendance-command-sequence.md`, regenerated the OpenAPI artifact,
-  linked prior Today/clock-in evidence, and synchronized README, task board, TODO, and status.
-- Remaining risk: bounded unknown-result retry, offline/reconnect behavior, polling, and broader
-  cross-tab/device coordination remain `WL-405`; the phase-wide manual assistive-technology review
-  remains `WL-406`. The build chunk-size warning remains owned by measured performance task
-  `WL-1001`.
-- Next task: `WL-404`.
+- Accessibility: headings and description lists expose the arithmetic in reading order; one ordered
+  list preserves immutable event order and semantic times; decorative markers are hidden; no chart,
+  custom keyboard model, or unnecessary ARIA was added. Component and 320 px Chromium paths pass
+  axe, and the established 390 px/mobile and desktop paths remain green.
+- Security/data: the strict Today contract and permission-scoped query remain unchanged. The client
+  formats server-provided values and event instants without deriving authoritative totals, exposing
+  new identity/source fields, persisting protected data, or performing JavaScript date arithmetic.
+- Documentation: added `docs/55-today-timeline-calculation.md`, linked prior Today/command evidence,
+  and synchronized README, task board, TODO, and status.
+- Remaining risk: lost-response retry, offline/reconnect, stale-tab/device convergence, polling, and
+  dependency recovery remain `WL-405`; actual browser zoom, translated-content, forced-colors, and
+  screen-reader manual review remain `WL-406`. The build chunk-size warning and bounded-history
+  scale remain owned by `WL-1001`.
+- Next task: `WL-405`.
 
 ## Current blockers
 
-No `WL-404` blocker is known. D-502 remains open before the production browser gate.
+No `WL-405` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-404 — Build the Today attendance timeline/list and daily calculation breakdown.`
+`WL-405 — Implement stale, duplicate/replay, retry, offline, and dependency-error recovery.`
 
 ## Update rules
 
