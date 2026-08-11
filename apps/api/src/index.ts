@@ -24,6 +24,7 @@ export {
   registerHttpFoundation,
   WORKLEDGER_OPENAPI_VERSION,
 } from './http/foundation.js';
+export { registerOpenApiRoute, WORKLEDGER_OPENAPI_PATH } from './http/openapi.js';
 export {
   AUTH_SECURITY_PROFILE,
   createAuthOptions,

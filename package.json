@@ -30,6 +30,8 @@
     "db:test": "pnpm run test:build && node scripts/run-postgres-integration.mjs",
     "db:verify": "pnpm run db:check && pnpm run db:test",
     "db:seed:development": "pnpm run test:build && node packages/database/dist/seed/development-cli.js",
+    "openapi:generate": "pnpm run test:build && node scripts/generate-openapi.mjs",
+    "openapi:check": "pnpm run test:build && node scripts/generate-openapi.mjs --check",
     "format": "prettier --write . --ignore-unknown",
     "format:check": "pnpm run workspace:check && prettier --check . --ignore-unknown",
     "lint": "pnpm run workspace:check && eslint . --max-warnings 0 && node scripts/check-boundaries.mjs",
@@ -39,7 +41,7 @@
     "test:integration": "pnpm run workspace:check && pnpm run test:build && vitest run --project integration",
     "test:e2e": "pnpm run workspace:check && pnpm run test:build && playwright test",
     "build": "pnpm run workspace:check && tsc --build --pretty false --force && pnpm --filter @workledger/web exec vite build && node scripts/check-workspace-build.mjs",
-    "verify": "pnpm config:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
+    "verify": "pnpm config:check && pnpm openapi:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
   },
   "devDependencies": {
     "@babel/parser": "8.0.4",

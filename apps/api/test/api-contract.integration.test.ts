@@ -142,6 +142,42 @@ test('generates fresh server-owned request IDs and stable OpenAPI 3.1', async ()
     });
     expect(document.paths).toHaveProperty('/v1/contract-example');
     expect(document.paths).not.toHaveProperty('/openapi.json');
+
+    const openApiResponse = await app.inject({
+      method: 'GET',
+      url: '/openapi.json',
+      headers: { origin: 'https://untrusted.example.test' },
+    });
+    expect(openApiResponse.statusCode).toBe(200);
+    expect(openApiResponse.headers['cache-control']).toBe('no-store');
+    expect(openApiResponse.headers['content-type']).toMatch(/^application\/json/u);
+    expect(openApiResponse.headers['x-content-type-options']).toBe('nosniff');
+    expect(openApiResponse.headers['access-control-allow-origin']).toBeUndefined();
+    expect(openApiResponse.json()).toEqual(document);
+  } finally {
+    await app.close();
+  }
+});
+
+test('keeps authentication internals and runtime secrets out of OpenAPI', async () => {
+  const databaseUrl =
+    'postgres://openapi-user:openapi-password@127.0.0.1:54329/workledger-openapi-test';
+  const authSecret = 'openapi-auth-secret-with-32-safe-bytes';
+  const app = createApiServer(
+    createRuntimeConfig({
+      WORKLEDGER_AUTH_SECRET: authSecret,
+      WORKLEDGER_DATABASE_URL: databaseUrl,
+      WORKLEDGER_ENVIRONMENT: 'test',
+    }),
+  );
+
+  try {
+    await app.ready();
+    const serializedDocument = JSON.stringify(app.swagger());
+
+    expect(serializedDocument).not.toContain('/api/auth');
+    expect(serializedDocument).not.toContain('openapi-password');
+    expect(serializedDocument).not.toContain(authSecret);
   } finally {
     await app.close();
   }

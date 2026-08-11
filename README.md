@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 3 — 8 of 10 tasks complete**
+> **Current phase progress: Phase 3 — 9 of 10 tasks complete**
 
 Phase 2 passed its exit gate and the repository is now in **Phase 3: data, authentication, and API
 foundation**. The workspace, project boundaries, strict tooling, test and CI baseline, local
@@ -14,8 +14,8 @@ framework-independent domain engine, initial PostgreSQL schema/generated migrati
 repository/transaction boundary, accepted Better Auth credential/session foundation,
 deny-by-default application authorization, shared Zod/Fastify API contract and safe error boundary,
 append-only audience-separated audit foundation, protected attendance idempotency claim/replay
-persistence, and a deterministic local-only Northstar development seed are implemented. The next
-task is stable OpenAPI exposure and typed-client evaluation (`WL-308`).
+persistence, a deterministic local-only Northstar development seed, and reproducible hardened
+OpenAPI JSON exposure are implemented. The next task is the Phase 3 exit-gate review (`WL-309`).
 
 WorkLedger does not yet provide authenticated application services, product workflows, production
 deployment, or a supported release. The runnable web page is an isolated
@@ -120,6 +120,8 @@ unless pnpm `11.20.0` is already the active package manager.
 | `pnpm run db:check` / `db:test` / `db:verify` | Check local connectivity, run the isolated lifecycle test, or run both. |
 | `pnpm run db:seed:development` | Explicitly migrate and insert/revalidate local-only deterministic Northstar data. |
 | `pnpm run db:reset` | Stop PostgreSQL and delete the local development volume and its data. |
+| `pnpm run openapi:generate` | Build the API and regenerate the tracked OpenAPI 3.1 artifact from selected route schemas. |
+| `pnpm run openapi:check` | Reject drift between the tracked artifact and a fresh in-process OpenAPI document. |
 
 CI performs a frozen install, installs Chromium, starts the same PostgreSQL service, verifies the
 database lifecycle, and runs `pnpm run verify`. See [.github/workflows/ci.yml](.github/workflows/ci.yml).
@@ -189,6 +191,9 @@ versions and makes no response-time or production-support promise.
 | [docs/44-application-authorization-foundation.md](docs/44-application-authorization-foundation.md) | Account links, roles, current-manager scope, policy, and invalidation evidence |
 | [docs/45-shared-api-contract-foundation.md](docs/45-shared-api-contract-foundation.md) | Zod envelopes, validation statuses, request IDs, safe errors, and OpenAPI generation evidence |
 | [docs/46-audit-persistence-foundation.md](docs/46-audit-persistence-foundation.md) | Domain/security audit separation, minimization, immutability, atomicity, and query authorization evidence |
+| [docs/47-attendance-idempotency-persistence.md](docs/47-attendance-idempotency-persistence.md) | Attendance mutation idempotency claim, conflict, replay, persistence, and concurrency evidence |
+| [docs/48-development-seed.md](docs/48-development-seed.md) | Deterministic local-only Northstar seed scenarios, guardrails, and verification evidence |
+| [docs/49-openapi-exposure.md](docs/49-openapi-exposure.md) | Hardened OpenAPI JSON exposure, reproducible artifact, and typed-client evaluation evidence |
 
 ## License
 

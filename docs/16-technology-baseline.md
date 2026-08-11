@@ -113,13 +113,20 @@ Official references:
 - Node.js supported LTS baseline, initially Node 22 or newer.
 - Fastify.
 - Schema validation and response serialization.
-- OpenAPI when the chosen schema integration is stable.
+- OpenAPI 3.1 generated from the selected Zod route schemas and exposed as hardened JSON.
+
+`WL-308` adds no dependency. It uses the already pinned `@fastify/swagger` integration plus native
+Node JSON/filesystem support for deterministic generation. `openapi-typescript` `7.13.0` was not
+installed because its TypeScript `^5.x` peer excludes the pinned TypeScript `7.0.2`; the broader
+`@hey-api/openapi-ts` `0.99.0` SDK generator remains pre-1.0 and disproportionate to the current
+selected operation surface. See `docs/49-openapi-exposure.md`.
 
 Official references:
 
 - https://fastify.dev/docs/latest/
 - https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/
 - https://fastify.dev/docs/latest/Reference/Type-Providers/
+- https://openapi-ts.dev/cli
 
 ### Database
 

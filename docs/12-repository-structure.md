@@ -18,6 +18,8 @@ WorkLedger/
 ├── package.json
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
+├── openapi/
+│   └── workledger.openapi.json
 ├── scripts/
 │   ├── check-toolchain.mjs
 │   ├── check-boundaries.mjs
@@ -28,6 +30,7 @@ WorkLedger/
 │   ├── check-workspace-build.mjs
 │   ├── check-workspace.mjs
 │   ├── check-workspace.test.mjs
+│   ├── generate-openapi.mjs
 │   └── run-postgres-integration.mjs
 ├── tsconfig.json
 ├── vitest.config.ts
@@ -194,7 +197,8 @@ permission claims.
 
 `WL-304` added `packages/contracts/src/api.ts` for strict shared Zod envelopes/error contracts and
 `apps/api/src/http` for request identifiers, Zod Fastify compilers, OpenAPI generation, and safe
-transport error mapping. OpenAPI is generated for regression testing but is not yet a public route.
+transport error mapping. `WL-308` now exposes the selected document through the hardened public
+route and reproducibility boundary described below.
 
 `WL-305` added `packages/database/src/repositories/audit-values.ts` for minimized fact validation
 and `apps/api/src/audit` for authorization-composed domain/security history queries. The two audit
@@ -204,6 +208,10 @@ tables and query surfaces remain separate by design.
 `WL-307` added `packages/database/src/seed` for the explicit local/test-only deterministic Northstar
 seed; it is not imported by application startup and rejects production/non-local development
 targets.
+
+`WL-308` added `apps/api/src/http/openapi.ts`, the generated `openapi/workledger.openapi.json`
+artifact, and a root generator/check script. The runtime document and tracked artifact derive from
+the same Zod/Fastify route schemas; neither is a second request/response contract source.
 
 ## Feature-folder rule
 

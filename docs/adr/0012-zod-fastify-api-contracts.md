@@ -22,8 +22,8 @@ language or require duplicated web adapters for this project.
   maintained.
 - `apps/api` installs the Zod validator and serializer compilers and registers OpenAPI 3.1
   generation before application routes.
-- The generated document is testable in process but is not exposed by a public route. Exposure and
-  typed-client generation remain owned by `WL-308`.
+- `WL-304` leaves the generated document testable in process but unexposed; `WL-308` owns the
+  follow-up exposure and typed-client evaluation.
 - Syntactically valid JSON that fails request-schema validation returns `422 VALIDATION_FAILED`.
   Malformed JSON returns `400 MALFORMED_REQUEST`.
 - Unknown object fields are rejected. Validation output uses bounded safe field codes and canonical
@@ -47,3 +47,10 @@ Pinned stable dependencies at acceptance are Zod `4.4.3`, `fastify-type-provider
 - Provider/OpenAPI upgrades require contract and generated-document regression tests.
 - Field-error presentation, focus movement, and localized user-facing prose remain web concerns;
   stable field codes and paths provide their transport input.
+
+## Implementation note
+
+`WL-308` exposes selected contracts as hardened JSON and adds a deterministic tracked artifact.
+Typed-client generation is deferred because the narrow mature generator's peer range excludes the
+pinned TypeScript 7 compiler and the broader candidate is pre-1.0; see
+`docs/49-openapi-exposure.md`. This does not change Zod schema ownership or add handwritten DTOs.

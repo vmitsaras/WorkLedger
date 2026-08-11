@@ -114,6 +114,8 @@ function createState() {
         'db:test': 'test command',
         'db:seed:development': 'test command',
         'db:verify': 'test command',
+        'openapi:generate': 'test command',
+        'openapi:check': 'test command',
         format: 'test command',
         'format:check': 'test command',
         lint: 'test command',

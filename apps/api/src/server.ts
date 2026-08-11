@@ -7,6 +7,7 @@ import type { RuntimeConfig } from './config.js';
 import { createWorkLedgerAuthentication } from './auth/authentication.js';
 import { registerAuthenticationRoutes } from './auth/fastify-auth.js';
 import { createRequestId, registerHttpFoundation } from './http/foundation.js';
+import { registerOpenApiRoute } from './http/openapi.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
 
@@ -31,13 +32,19 @@ export function createApiServer(config: RuntimeConfig): FastifyInstance {
       app.addHook('onClose', async () => authentication.close());
     }
 
+    registerOpenApiRoute(app);
+
     app.withTypeProvider<ZodTypeProvider>().get(
       '/health',
       {
         schema: {
+          description: 'Returns generic process health without dependency or deployment details.',
+          operationId: 'getHealth',
           response: {
             200: HEALTH_RESPONSE_SCHEMA,
           },
+          summary: 'Check API process health',
+          tags: ['Operations'],
         },
       },
       async (_request, reply) => {

@@ -221,12 +221,17 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-200 — API contract implementation
 
-**Status:** Resolved by `WL-304`; see ADR 0012.
+**Status:** Resolved by `WL-304` and `WL-308`; see ADR 0012 and
+`docs/49-openapi-exposure.md`.
 
 - Strict Zod schemas in `packages/contracts` are the single request/response source.
 - Fastify uses the Zod type provider for inferred types, validation, and response serialization.
-- The same schemas generate stable OpenAPI 3.1 through `@fastify/swagger`; public exposure and a
-  typed client remain `WL-308`.
+- The same schemas generate stable OpenAPI 3.1 through `@fastify/swagger`; `WL-308` exposes JSON at
+  `/openapi.json` and adds a deterministic tracked-artifact check.
+- Typed-client generation remains deferred because the narrow stable candidate excludes the
+  pinned TypeScript 7 compiler through its peer range, while the compatible SDK candidate is
+  pre-1.0 and disproportionate to the selected contract surface. No second handwritten transport
+  type source is introduced.
 
 
 ### D-204 — Validation HTTP status

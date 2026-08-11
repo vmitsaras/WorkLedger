@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 8 of 10 Phase 3 tasks complete
-**Current milestone:** Stable OpenAPI exposure and typed-client evaluation
-**Active task:** `WL-308`
+**Phase progress:** 9 of 10 Phase 3 tasks complete
+**Current milestone:** Phase 3 exit-gate review
+**Active task:** `WL-309`
 **Status:** Ready
 **Last verified:** 2026-08-11
 
 ## Current objective
 
-Evaluate the existing internal OpenAPI 3.1 artifact for stable public exposure and reproducible
-typed-client generation without introducing a second hand-written contract source.
+Execute the Phase 3 exit-gate review against migration, authentication/session/CSRF,
+authorization, audit, runtime configuration, idempotency, seed, and OpenAPI evidence.
 
 ## Verified decisions
 
@@ -73,6 +73,10 @@ typed-client generation without introducing a second hand-written contract sourc
 - Strict Zod contracts are the single transport source for Fastify validation, response
   serialization, inferred types, and generated OpenAPI 3.1; schema failures return `422`, malformed
   JSON returns `400`, and every response receives a server-owned UUID request identifier.
+- `GET /openapi.json` exposes only selected Zod/Fastify WorkLedger contracts as no-store JSON; a
+  canonical tracked OpenAPI artifact is regenerated and drift-checked without a second handwritten
+  transport source, while typed-client generation is deferred until a stable generator supports
+  the pinned TypeScript 7 toolchain.
 - Domain and security audit evidence uses separate append-only tables, fact allowlists, repository
   record types, and authorization-composed query paths; source actions and audit evidence can commit
   atomically, and neither HR nor system roles gain the other audience implicitly.
@@ -206,36 +210,37 @@ typed-client generation without introducing a second hand-written contract sourc
   attendance edges, balances, requests, privacy-safe locked history, audit evidence, guarded
   migration/CLI behavior, and repeat/drift tests completed (`WL-307`; see
   `docs/48-development-seed.md`).
+- [x] Hidden-from-spec public OpenAPI JSON, deterministic tracked artifact and drift gate,
+  authentication/secret exclusion tests, and evidence-based typed-client deferral completed
+  (`WL-308`; see `docs/49-openapi-exposure.md`).
 
 ## Latest completed task
 
-### `WL-307` — Implement seed organization and realistic personas
+### `WL-308` — Generate or expose OpenAPI safely
 
-- Changed: added stable Northstar organization/persona/configuration/source IDs, a one-transaction
-  seed service, dedicated migrator CLI, local role defaults, representative attendance/absence/
-  correction/balance/period/audit histories, and migration `0006` for accepted zero daily deltas.
-- Verified: independent fresh schemas produce equal summaries; repeat returns `ALREADY_PRESENT`;
-  drift/non-empty/production/non-local targets fail; credentials, current/former manager history,
-  entitlement arithmetic, snapshot privacy, migration application, and app-role reads pass.
-- Accessibility: no UI changed. Seeded states include realistic future accessibility-test inputs,
-  but the seed makes no claim that later screens, focus, announcements, or reflow exist.
-- Security/data: all identities are fictional; credentials are clearly development-only and stored
-  as scrypt hashes; production/non-loopback development targets are rejected; the CLI logs no SQL,
-  connection string, password, or seed payload on failure; sickness stays out of the snapshot.
-- Documentation: added `docs/48-development-seed.md`, resolved `D-205`, corrected Leon's
-  schedule-relative reservation, and synchronized setup, repository, operations, task-board,
-  README, and project-status memory.
-- Remaining risk: this seed is persistence evidence rather than implemented workflow behavior;
-  later feature tasks must add service/API/UI tests, and the safe demo-reset path remains `WL-1101`.
-- Next task: `WL-308`.
+- Changed: added the hidden-from-document `GET /openapi.json` route, deterministic key-sorted
+  `openapi/workledger.openapi.json`, generation/drift commands, and a verify/workspace contract.
+- Verified: the exposed and in-process documents are equal; the route remains absent from its own
+  paths; no-store, nosniff, content type, and no-CORS behavior pass; configured Better Auth paths,
+  database credentials, and authentication secrets stay absent; byte-for-byte regeneration passes.
+- Accessibility: no UI or interactive documentation surface changed; the artifact is
+  machine-readable developer documentation only.
+- Security/data: provider-owned authentication routes remain hidden, no environment-specific
+  server or secret value is emitted, and specification exposure grants no authorization.
+- Documentation: added `docs/49-openapi-exposure.md` and synchronized API foundation, dependency
+  policy, repository layout, commands, task board, README, and project-status memory.
+- Remaining risk: generated client adoption is deferred because the narrow mature generator's peer
+  range excludes TypeScript 7 and the broader compatible SDK generator is still pre-1.0; later
+  feature routes must keep adding purpose-specific Zod schemas and operation metadata.
+- Next task: `WL-309`.
 
 ## Current blockers
 
-No `WL-308` blocker is known. D-502 remains open before the production browser gate.
+No `WL-309` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-308 — Generate or expose OpenAPI safely.`
+`WL-309 — Execute the Phase 3 exit-gate review.`
 
 ## Update rules
 
