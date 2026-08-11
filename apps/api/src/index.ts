@@ -12,6 +12,12 @@ export {
 } from './config.js';
 export { createApiServer } from './server.js';
 export {
+  createTodayAttendanceService,
+  parseTodayAttendanceIdentity,
+  type TodayAttendanceIdentity,
+  type TodayAttendanceService,
+} from './attendance/today-service.js';
+export {
   createAuditService,
   type DomainAuditQuery,
   type DomainAuditQueryResult,

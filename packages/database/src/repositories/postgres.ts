@@ -1,10 +1,16 @@
 import { createHash } from 'node:crypto';
 
-import { and, asc, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import {
+  createLocalDateRange,
+  createPolicyAssignment,
+  createScheduleAssignment,
+  createTimePolicy,
+  createWeeklySchedule,
   localDateAtInstant,
+  parseNonNegativeMinutes,
   parseTimeZoneId,
   type DomainId,
   type TimeAccountEntryActor,
@@ -17,16 +23,25 @@ import {
   authSessions,
   authUsers,
   attendanceHeads,
+  absenceCoverageSegments,
+  absenceEffects,
+  absenceRequests,
+  correctionRequests,
   dailyProjections,
   domainAuditEvents,
   employees,
   employmentPeriods,
   idempotencyRecords,
+  holidays,
   managerAssignments,
   organizations,
+  policyAssignments,
   punchEvents,
+  scheduleAssignments,
   securityAuditEvents,
   timeAccountEntries,
+  timePolicies,
+  weeklySchedules,
 } from '../schema/index.js';
 import {
   DatabaseValueError,
@@ -66,6 +81,8 @@ import type {
   SecurityAuditEventRecord,
   StoredPunchEvent,
   TimeAccountRepository,
+  TodayAttendanceRepository,
+  TodayAttendanceSourceRecord,
 } from './contracts.js';
 import {
   AuditValueError,
@@ -97,6 +114,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   employees: EmployeeRepository;
   organizations: OrganizationRepository;
   timeAccount: TimeAccountRepository;
+  todayAttendance: TodayAttendanceRepository;
 }> {
   return Object.freeze({
     accountSelfService: new PostgresAccountSelfServiceRepository(transaction),
@@ -108,6 +126,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     employees: new PostgresEmployeeRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
+    todayAttendance: new PostgresTodayAttendanceRepository(transaction),
   });
 }
 
@@ -826,6 +845,283 @@ class PostgresAttendanceRepository implements AttendanceRepository {
 
     return Object.freeze(rows.map(mapStoredPunchEvent));
   }
+}
+
+const TODAY_SOURCE_EVENT_LIMIT = 500;
+
+class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async loadSource(
+    input: Parameters<TodayAttendanceRepository['loadSource']>[0],
+  ): Promise<TodayAttendanceSourceRecord> {
+    const [headRow] = await this.transaction
+      .select()
+      .from(attendanceHeads)
+      .where(
+        and(
+          eq(attendanceHeads.organizationId, input.organizationId),
+          eq(attendanceHeads.employeeId, input.employeeId),
+        ),
+      )
+      .limit(1);
+
+    const [anchorRow] = await this.transaction
+      .select({ eventSequence: punchEvents.eventSequence })
+      .from(punchEvents)
+      .where(
+        and(
+          eq(punchEvents.organizationId, input.organizationId),
+          eq(punchEvents.employeeId, input.employeeId),
+          eq(punchEvents.eventType, 'CLOCK_IN'),
+          lt(punchEvents.occurredAt, input.dayStartsAt),
+        ),
+      )
+      .orderBy(desc(punchEvents.eventSequence))
+      .limit(1);
+    const eventStart =
+      anchorRow === undefined
+        ? gte(punchEvents.occurredAt, input.dayStartsAt)
+        : gte(punchEvents.eventSequence, anchorRow.eventSequence);
+    const eventRows = await this.transaction
+      .select()
+      .from(punchEvents)
+      .where(
+        and(
+          eq(punchEvents.organizationId, input.organizationId),
+          eq(punchEvents.employeeId, input.employeeId),
+          eventStart,
+          lte(punchEvents.occurredAt, input.calculationAsOf),
+        ),
+      )
+      .orderBy(desc(punchEvents.eventSequence))
+      .limit(TODAY_SOURCE_EVENT_LIMIT + 1);
+    const timelineTruncated = eventRows.length > TODAY_SOURCE_EVENT_LIMIT;
+    const events = eventRows.slice(0, TODAY_SOURCE_EVENT_LIMIT).reverse().map(mapStoredPunchEvent);
+
+    const scheduleRows = await this.transaction
+      .select({
+        assignmentEndsOn: scheduleAssignments.endsOn,
+        assignmentId: scheduleAssignments.id,
+        assignmentStartsOn: scheduleAssignments.startsOn,
+        fridayMinutes: weeklySchedules.fridayMinutes,
+        mondayMinutes: weeklySchedules.mondayMinutes,
+        saturdayMinutes: weeklySchedules.saturdayMinutes,
+        scheduleId: weeklySchedules.id,
+        sundayMinutes: weeklySchedules.sundayMinutes,
+        thursdayMinutes: weeklySchedules.thursdayMinutes,
+        tuesdayMinutes: weeklySchedules.tuesdayMinutes,
+        wednesdayMinutes: weeklySchedules.wednesdayMinutes,
+      })
+      .from(scheduleAssignments)
+      .innerJoin(
+        weeklySchedules,
+        and(
+          eq(weeklySchedules.id, scheduleAssignments.scheduleId),
+          eq(weeklySchedules.organizationId, scheduleAssignments.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(scheduleAssignments.organizationId, input.organizationId),
+          eq(scheduleAssignments.employeeId, input.employeeId),
+          lte(scheduleAssignments.startsOn, input.localDate),
+          or(isNull(scheduleAssignments.endsOn), gt(scheduleAssignments.endsOn, input.localDate)),
+        ),
+      )
+      .orderBy(asc(scheduleAssignments.startsOn), asc(scheduleAssignments.id));
+    const mappedScheduleAssignments = scheduleRows.map((row) => {
+      const range = createLocalDateRange(
+        mapLocalDate(row.assignmentStartsOn, 'schedule_assignments', 'starts_on'),
+        row.assignmentEndsOn === null
+          ? null
+          : mapLocalDate(row.assignmentEndsOn, 'schedule_assignments', 'ends_on'),
+      );
+      const schedule = createWeeklySchedule(
+        mapDomainId<'WorkScheduleVersion'>(row.scheduleId, 'weekly_schedules', 'id'),
+        {
+          FRIDAY: row.fridayMinutes,
+          MONDAY: row.mondayMinutes,
+          SATURDAY: row.saturdayMinutes,
+          SUNDAY: row.sundayMinutes,
+          THURSDAY: row.thursdayMinutes,
+          TUESDAY: row.tuesdayMinutes,
+          WEDNESDAY: row.wednesdayMinutes,
+        },
+      );
+      if (!range.ok || !schedule.ok) {
+        throw new DatabaseValueError('schedule_assignments', 'effective_configuration');
+      }
+      const assignment = createScheduleAssignment(
+        mapDomainId<'ScheduleAssignment'>(row.assignmentId, 'schedule_assignments', 'id'),
+        range.value,
+        schedule.value,
+      );
+      if (!assignment.ok) throw new DatabaseValueError('schedule_assignments', 'id');
+      return assignment.value;
+    });
+
+    const policyRows = await this.transaction
+      .select({
+        assignmentEndsOn: policyAssignments.endsOn,
+        assignmentId: policyAssignments.id,
+        assignmentStartsOn: policyAssignments.startsOn,
+        policyId: timePolicies.id,
+        rules: timePolicies.rules,
+      })
+      .from(policyAssignments)
+      .innerJoin(
+        timePolicies,
+        and(
+          eq(timePolicies.id, policyAssignments.policyId),
+          eq(timePolicies.organizationId, policyAssignments.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(policyAssignments.organizationId, input.organizationId),
+          eq(policyAssignments.employeeId, input.employeeId),
+          lte(policyAssignments.startsOn, input.localDate),
+          or(isNull(policyAssignments.endsOn), gt(policyAssignments.endsOn, input.localDate)),
+        ),
+      )
+      .orderBy(asc(policyAssignments.startsOn), asc(policyAssignments.id));
+    const mappedPolicyAssignments = policyRows.map((row) => {
+      const range = createLocalDateRange(
+        mapLocalDate(row.assignmentStartsOn, 'policy_assignments', 'starts_on'),
+        row.assignmentEndsOn === null
+          ? null
+          : mapLocalDate(row.assignmentEndsOn, 'policy_assignments', 'ends_on'),
+      );
+      const policy = createTimePolicy(
+        mapDomainId<'TimePolicyVersion'>(row.policyId, 'time_policies', 'id'),
+      );
+      if (!range.ok || !policy.ok) {
+        throw new DatabaseValueError('policy_assignments', 'effective_configuration');
+      }
+      const assignment = createPolicyAssignment(
+        mapDomainId<'PolicyAssignment'>(row.assignmentId, 'policy_assignments', 'id'),
+        range.value,
+        policy.value,
+      );
+      if (!assignment.ok) throw new DatabaseValueError('policy_assignments', 'id');
+      return assignment.value;
+    });
+    const warningThreshold =
+      policyRows.length === 1 ? mapPolicyWarningThreshold(policyRows[0]?.rules) : null;
+
+    const [holidayRow] = await this.transaction
+      .select({ id: holidays.id, name: holidays.name })
+      .from(holidays)
+      .where(
+        and(
+          eq(holidays.organizationId, input.organizationId),
+          eq(holidays.holidayDate, input.localDate),
+        ),
+      )
+      .limit(1);
+
+    const absenceRows = await this.transaction
+      .select({
+        absenceCoverageSegmentId: absenceEffects.absenceCoverageSegmentId,
+        creditMinutes: absenceEffects.creditMinutes,
+        effectVersion: absenceEffects.effectVersion,
+        expectedReductionMinutes: absenceEffects.expectedReductionMinutes,
+      })
+      .from(absenceEffects)
+      .where(
+        and(
+          eq(absenceEffects.organizationId, input.organizationId),
+          eq(absenceEffects.employeeId, input.employeeId),
+          eq(absenceEffects.localDate, input.localDate),
+        ),
+      )
+      .orderBy(asc(absenceEffects.absenceCoverageSegmentId), desc(absenceEffects.effectVersion));
+    const latestAbsenceRows = new Map<string, (typeof absenceRows)[number]>();
+    for (const row of absenceRows) {
+      if (!latestAbsenceRows.has(row.absenceCoverageSegmentId)) {
+        latestAbsenceRows.set(row.absenceCoverageSegmentId, row);
+      }
+    }
+    const absenceCreditMinutes = mapSummedNonNegativeMinutes(
+      [...latestAbsenceRows.values()].map(({ creditMinutes }) => creditMinutes),
+      'credit_minutes',
+    );
+    const absenceExpectedReductionMinutes = mapSummedNonNegativeMinutes(
+      [...latestAbsenceRows.values()].map(
+        ({ expectedReductionMinutes }) => expectedReductionMinutes,
+      ),
+      'expected_reduction_minutes',
+    );
+
+    const [unresolvedCorrection] = await this.transaction
+      .select({ id: correctionRequests.id })
+      .from(correctionRequests)
+      .where(
+        and(
+          eq(correctionRequests.organizationId, input.organizationId),
+          eq(correctionRequests.employeeId, input.employeeId),
+          eq(correctionRequests.localDate, input.localDate),
+          inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED']),
+        ),
+      )
+      .limit(1);
+    const [unresolvedAbsence] = await this.transaction
+      .select({ id: absenceRequests.id })
+      .from(absenceRequests)
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.absenceRequestId, absenceRequests.id),
+          eq(absenceCoverageSegments.organizationId, absenceRequests.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(absenceRequests.organizationId, input.organizationId),
+          eq(absenceRequests.employeeId, input.employeeId),
+          eq(absenceRequests.status, 'SUBMITTED'),
+          eq(absenceCoverageSegments.localDate, input.localDate),
+        ),
+      )
+      .limit(1);
+
+    return Object.freeze({
+      absenceCreditMinutes,
+      absenceExpectedReductionMinutes,
+      events: Object.freeze(events),
+      flexNegativeThresholdMinutes: warningThreshold,
+      flexPositiveThresholdMinutes: warningThreshold,
+      hasUnresolvedApprovalRequiredAbsence: unresolvedAbsence !== undefined,
+      hasUnresolvedCorrection: unresolvedCorrection !== undefined,
+      head: headRow === undefined ? null : mapAttendanceHead(headRow),
+      holiday:
+        holidayRow === undefined
+          ? null
+          : Object.freeze({
+              id: mapDomainId<'Holiday'>(holidayRow.id, 'holidays', 'id'),
+              name: holidayRow.name,
+            }),
+      policyAssignments: Object.freeze(mappedPolicyAssignments),
+      scheduleAssignments: Object.freeze(mappedScheduleAssignments),
+      timelineTruncated,
+    });
+  }
+}
+
+function mapPolicyWarningThreshold(rules: Readonly<Record<string, unknown>> | undefined) {
+  if (rules === undefined) return null;
+  const value = rules['flexibleTimeWarningMinutes'];
+  if (value === undefined) return null;
+  const parsed = parseNonNegativeMinutes(value);
+  if (!parsed.ok) throw new DatabaseValueError('time_policies', 'rules');
+  return parsed.value;
+}
+
+function mapSummedNonNegativeMinutes(values: readonly number[], column: string) {
+  const parsed = parseNonNegativeMinutes(values.reduce((total, value) => total + value, 0));
+  if (!parsed.ok) throw new DatabaseValueError('absence_effects', column);
+  return parsed.value;
 }
 
 class PostgresDailyProjectionRepository implements DailyProjectionRepository {

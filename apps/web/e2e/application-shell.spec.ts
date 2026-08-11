@@ -11,6 +11,43 @@ const EMPLOYEE_CONTEXT = {
   organization: { name: 'Northstar Studio' },
   roles: ['EMPLOYEE'],
 };
+const TODAY_ATTENDANCE = {
+  asOf: '2026-08-11T09:30:00Z',
+  attendance: {
+    activeSince: '2026-08-11T09:15:00Z',
+    attendanceRevision: 3,
+    state: 'WORKING',
+    validActions: ['START_BREAK', 'CLOCK_OUT'],
+  },
+  calculation: {
+    blockers: [],
+    estimate: {
+      absenceCreditMinutes: 0,
+      absenceExpectedReductionMinutes: 0,
+      adjustmentMinutes: 0,
+      balanceMinutes: -285,
+      breakMinutes: 15,
+      creditedMinutes: 195,
+      expectedMinutes: 480,
+      holidayExpectedReductionMinutes: 0,
+      scheduledMinutes: 480,
+      workedMinutes: 195,
+    },
+    holidayName: null,
+    status: 'PROVISIONAL',
+    warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
+  },
+  localDate: '2026-08-11',
+  timeZone: 'Europe/Berlin',
+  timeline: [
+    {
+      id: '123e4567-e89b-42d3-a456-426614174201',
+      occurredAt: '2026-08-11T07:00:00Z',
+      type: 'CLOCK_IN',
+    },
+  ],
+  timelineTruncated: false,
+};
 
 test('signs in through the accessible form and focuses the destination route', async ({ page }) => {
   let authenticated = false;
@@ -33,7 +70,8 @@ test('signs in through the accessible form and focuses the destination route', a
 
   await expect(page).toHaveURL(/\/today$/u);
   await expect(page).toHaveTitle('Today | WorkLedger');
-  await expect(page.getByRole('heading', { name: 'Today' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -76,8 +114,13 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
       }),
     });
   });
+  await mockToday(page);
 
   await page.goto('/today');
+  await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
   await page.getByRole('button', { name: 'Menu' }).click();
   const dialog = page.getByRole('dialog', { name: 'Navigation' });
   await expect(dialog).toBeFocused();
@@ -154,6 +197,13 @@ async function mockContext(page: Page, isAuthenticated: () => boolean): Promise<
             status: 401,
           },
     );
+  });
+  await mockToday(page);
+}
+
+async function mockToday(page: Page): Promise<void> {
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({ json: success(TODAY_ATTENDANCE), status: 200 });
   });
 }
 

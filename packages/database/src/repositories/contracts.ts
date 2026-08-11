@@ -4,8 +4,11 @@ import type {
   DomainId,
   Instant,
   LocalDate,
+  NonNegativeMinutes,
+  PolicyAssignment,
   PunchEvent,
   PunchEventType,
+  ScheduleAssignment,
   TimeAccountLedgerEntry,
 } from '@workledger/domain';
 
@@ -204,6 +207,34 @@ export type StoredPunchEvent = Readonly<{
   recordedAt: Instant;
 }>;
 
+export type TodayHolidayRecord = Readonly<{
+  id: DomainId<'Holiday'>;
+  name: string;
+}>;
+
+export type TodayAttendanceSourceInput = Readonly<{
+  calculationAsOf: Instant;
+  dayStartsAt: Instant;
+  employeeId: DomainId<'Employee'>;
+  localDate: LocalDate;
+  organizationId: DomainId<'Organization'>;
+}>;
+
+export type TodayAttendanceSourceRecord = Readonly<{
+  absenceCreditMinutes: NonNegativeMinutes;
+  absenceExpectedReductionMinutes: NonNegativeMinutes;
+  events: readonly StoredPunchEvent[];
+  flexNegativeThresholdMinutes: NonNegativeMinutes | null;
+  flexPositiveThresholdMinutes: NonNegativeMinutes | null;
+  hasUnresolvedApprovalRequiredAbsence: boolean;
+  hasUnresolvedCorrection: boolean;
+  head: AttendanceHeadRecord | null;
+  holiday: TodayHolidayRecord | null;
+  policyAssignments: readonly PolicyAssignment[];
+  scheduleAssignments: readonly ScheduleAssignment[];
+  timelineTruncated: boolean;
+}>;
+
 export type AppendPunchEvent = Readonly<{
   actorEmployeeId: DomainId<'Employee'> | null;
   commandId: DomainId<'AttendanceCommand'>;
@@ -373,6 +404,10 @@ export interface AttendanceRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<AttendanceHeadRecord | null>;
+}
+
+export interface TodayAttendanceRepository {
+  loadSource(input: TodayAttendanceSourceInput): Promise<TodayAttendanceSourceRecord>;
 }
 
 export interface AttendanceIdempotencyRepository {

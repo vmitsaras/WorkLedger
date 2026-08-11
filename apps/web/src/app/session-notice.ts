@@ -6,8 +6,10 @@ export function setPendingSignInNotice(notice: SignInNotice): void {
   pendingNotice = notice;
 }
 
-export function takePendingSignInNotice(): SignInNotice | null {
-  const notice = pendingNotice;
-  pendingNotice = null;
-  return notice;
+export function readPendingSignInNotice(): SignInNotice | null {
+  return pendingNotice;
+}
+
+export function clearPendingSignInNotice(notice: SignInNotice): void {
+  if (pendingNotice === notice) pendingNotice = null;
 }

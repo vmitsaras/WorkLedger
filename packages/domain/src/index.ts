@@ -11,9 +11,17 @@ export {
   type AttendanceCalculationConflictCode,
   type CalculationBlockerCode,
   type CalculationWarningCode,
+  type ConfigurationCalculationConflictCode,
   type DailyCalculationSignals,
   type DailyCalculationSignalsInput,
 } from './calculation-signals.js';
+export {
+  calculateCurrentDayAttendance,
+  type CurrentDayAttendance,
+  type CurrentDayAttendanceEstimate,
+  type CurrentDayAttendanceInput,
+  type CurrentDayCalculationStatus,
+} from './current-day-attendance.js';
 export {
   absenceTimeTreatments,
   calculateDailyAbsenceEffects,
@@ -106,6 +114,8 @@ export {
 } from './shared/result.js';
 export {
   compareLocalDates,
+  floorInstantToMinute,
+  localDateInstantBounds,
   localDateAtInstant,
   parseInstant,
   parseLocalDate,
@@ -114,6 +124,7 @@ export {
   type InvalidInstantError,
   type InvalidLocalDateError,
   type InvalidTimeZoneIdError,
+  type LocalDateInstantBounds,
   type LocalDate,
   type TimeZoneId,
 } from './shared/temporal.js';

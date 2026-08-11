@@ -14,7 +14,10 @@ export const calculationBlockerCodes = Object.freeze([
   'ATTENDANCE_INVALID_EVENT_ORDER',
   'ATTENDANCE_INVALID_EVENT_PRECISION',
   'SCHEDULE_NOT_ASSIGNED',
+  'SCHEDULE_ASSIGNMENT_OVERLAP',
   'POLICY_NOT_ASSIGNED',
+  'POLICY_ASSIGNMENT_OVERLAP',
+  'POLICY_CONFIGURATION_INVALID',
   'CORRECTION_UNRESOLVED',
   'ABSENCE_APPROVAL_PENDING',
   'LEDGER_SOURCE_MISMATCH',
@@ -27,8 +30,14 @@ export type AttendanceCalculationConflictCode = Extract<
   'ATTENDANCE_OVERLAP' | 'ATTENDANCE_INVALID_EVENT_ORDER' | 'ATTENDANCE_INVALID_EVENT_PRECISION'
 >;
 
+export type ConfigurationCalculationConflictCode = Extract<
+  CalculationBlockerCode,
+  'SCHEDULE_ASSIGNMENT_OVERLAP' | 'POLICY_ASSIGNMENT_OVERLAP' | 'POLICY_CONFIGURATION_INVALID'
+>;
+
 export type DailyCalculationSignalsInput = Readonly<{
   attendanceConflictCodes: readonly AttendanceCalculationConflictCode[];
+  configurationConflictCodes?: readonly ConfigurationCalculationConflictCode[];
   dailyBalanceMinutes: SignedMinutes | null;
   expectedMinutes: NonNegativeMinutes | null;
   flexNegativeThresholdMinutes: NonNegativeMinutes | null;
@@ -63,6 +72,9 @@ export function calculateDailyCalculationSignals(
     submissionBlockers.add('ATTENDANCE_INCOMPLETE');
   }
   for (const conflictCode of input.attendanceConflictCodes) {
+    submissionBlockers.add(conflictCode);
+  }
+  for (const conflictCode of input.configurationConflictCodes ?? []) {
     submissionBlockers.add(conflictCode);
   }
   if (input.hasMissingSchedule) {

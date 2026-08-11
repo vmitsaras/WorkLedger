@@ -173,8 +173,10 @@ test('keeps authentication internals and runtime secrets out of OpenAPI', async 
 
   try {
     await app.ready();
-    const serializedDocument = JSON.stringify(app.swagger());
+    const document = app.swagger();
+    const serializedDocument = JSON.stringify(document);
 
+    expect(document.paths).toHaveProperty('/v1/me/attendance/today');
     expect(serializedDocument).not.toContain('/api/auth');
     expect(serializedDocument).not.toContain('openapi-password');
     expect(serializedDocument).not.toContain(authSecret);

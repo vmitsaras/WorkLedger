@@ -14,7 +14,11 @@ import {
 } from '../app/api-client.js';
 import { selfContextQuery } from '../app/query.js';
 import { clearResetGrant, readResetGrant } from '../app/reset-grant.js';
-import { setPendingSignInNotice, takePendingSignInNotice } from '../app/session-notice.js';
+import {
+  clearPendingSignInNotice,
+  readPendingSignInNotice,
+  setPendingSignInNotice,
+} from '../app/session-notice.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -59,8 +63,12 @@ export function SignInPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const [pending, setPending] = useState(false);
-  const [notice] = useState(takePendingSignInNotice);
+  const [notice] = useState(readPendingSignInNotice);
   const summaryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (notice !== null) clearPendingSignInNotice(notice);
+  }, [notice]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -366,7 +374,7 @@ function resetErrorMessage(error: unknown): string {
   return 'This recovery link is invalid, expired, or already used. Request a new link to continue.';
 }
 
-function noticeMessage(notice: ReturnType<typeof takePendingSignInNotice>): string {
+function noticeMessage(notice: ReturnType<typeof readPendingSignInNotice>): string {
   if (notice === 'SESSION_EXPIRED') return 'Your session expired. Sign in again to continue.';
   if (notice === 'PASSWORD_RESET')
     return 'Your password was updated. Sign in with the new password.';

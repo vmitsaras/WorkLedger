@@ -1,4 +1,3 @@
-import { fromNodeHeaders } from 'better-auth/node';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
@@ -13,6 +12,7 @@ import {
 import type { WorkLedgerDatabase } from '@workledger/database';
 
 import { AUTH_SECURITY_PROFILE, type WorkLedgerAuthentication } from '../auth/authentication.js';
+import { requestSessionError, requireRequestSession } from '../auth/request-session.js';
 import type { RuntimeConfig } from '../config.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import {
@@ -90,10 +90,9 @@ export function registerAccountSelfServiceRoutes(
       },
     },
     async (request, reply) => {
-      const headers = authenticationHeaders(request);
-      await requireIdentityFromHeaders(request, headers, authentication, 'ACTIVE');
+      const { headers } = await requireRequestSession(request, authentication, 'ACTIVE');
       const token = await authentication.issueCsrfToken(headers);
-      if (token === null) throw sessionError(request);
+      if (token === null) throw requestSessionError(request);
       reply.header('cache-control', 'private, no-store');
       return { data: { token }, meta: { requestId: request.id } };
     },
@@ -118,8 +117,12 @@ export function registerAccountSelfServiceRoutes(
     },
     async (request, reply) => {
       requireSameOrigin(request, config.canonicalOrigin);
-      const headers = authenticationHeaders(request);
-      const identity = await requireIdentityFromHeaders(request, headers, authentication, 'ACTIVE');
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      const identity = parseSelfServiceIdentity({
+        accountId: session.userId,
+        currentSessionId: session.id,
+        fresh: session.fresh,
+      });
       const csrf = request.headers['x-workledger-csrf'];
       if (typeof csrf !== 'string' || !(await authentication.verifyCsrfToken(headers, csrf))) {
         throw new WorkLedgerApiError({ code: 'AUTH_CSRF_INVALID', statusCode: 403 });
@@ -147,22 +150,7 @@ async function requireIdentity(
   authentication: WorkLedgerAuthentication,
   activity: 'ACTIVE' | 'PASSIVE',
 ) {
-  return requireIdentityFromHeaders(
-    request,
-    authenticationHeaders(request),
-    authentication,
-    activity,
-  );
-}
-
-async function requireIdentityFromHeaders(
-  request: FastifyRequest,
-  headers: Headers,
-  authentication: WorkLedgerAuthentication,
-  activity: 'ACTIVE' | 'PASSIVE',
-) {
-  const session = await authentication.getSession(headers, activity);
-  if (session === null) throw sessionError(request);
+  const { session } = await requireRequestSession(request, authentication, activity);
   return parseSelfServiceIdentity({
     accountId: session.userId,
     currentSessionId: session.id,
@@ -170,22 +158,8 @@ async function requireIdentityFromHeaders(
   });
 }
 
-function authenticationHeaders(request: FastifyRequest): Headers {
-  return fromNodeHeaders(request.headers);
-}
-
 function requestInstant() {
   return parseRequestInstant(new Date().toISOString());
-}
-
-function sessionError(request: FastifyRequest): WorkLedgerApiError {
-  const cookie = request.headers.cookie;
-  const hadSessionCookie =
-    typeof cookie === 'string' && cookie.includes(`${AUTH_SECURITY_PROFILE.sessionCookieName}=`);
-  return new WorkLedgerApiError({
-    code: hadSessionCookie ? 'AUTH_SESSION_EXPIRED' : 'AUTH_REQUIRED',
-    statusCode: 401,
-  });
 }
 
 function requireSameOrigin(request: FastifyRequest, canonicalOrigin: string): void {

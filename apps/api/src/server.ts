@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { createWorkLedgerDatabase } from '@workledger/database';
 
 import { registerAccountSelfServiceRoutes } from './account/routes.js';
+import { registerTodayAttendanceRoutes, type ApiClock } from './attendance/routes.js';
 import type { RuntimeConfig } from './config.js';
 import { createWorkLedgerAuthentication } from './auth/authentication.js';
 import { registerAuthenticationRoutes } from './auth/fastify-auth.js';
@@ -14,7 +15,10 @@ import { registerOpenApiRoute } from './http/openapi.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
 
-export function createApiServer(config: RuntimeConfig): FastifyInstance {
+export function createApiServer(
+  config: RuntimeConfig,
+  dependencies: Readonly<{ now?: ApiClock }> = {},
+): FastifyInstance {
   const app = Fastify({
     genReqId: createRequestId,
     logger: false,
@@ -37,6 +41,7 @@ export function createApiServer(config: RuntimeConfig): FastifyInstance {
       });
       registerAuthenticationRoutes(app, config, authentication);
       registerAccountSelfServiceRoutes(app, config, authentication, database);
+      registerTodayAttendanceRoutes(app, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {
         await Promise.all([authentication.close(), database.close()]);
       });

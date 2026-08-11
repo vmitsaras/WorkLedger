@@ -22,6 +22,11 @@ export type InvalidInstantError = DomainError<'INVALID_INSTANT'>;
 export type InvalidLocalDateError = DomainError<'INVALID_LOCAL_DATE'>;
 export type InvalidTimeZoneIdError = DomainError<'INVALID_TIME_ZONE_ID'>;
 
+export type LocalDateInstantBounds = Readonly<{
+  endsAt: Instant;
+  startsAt: Instant;
+}>;
+
 const INVALID_INSTANT = Object.freeze({ code: 'INVALID_INSTANT' } as const);
 const INVALID_LOCAL_DATE = Object.freeze({ code: 'INVALID_LOCAL_DATE' } as const);
 const INVALID_TIME_ZONE_ID = Object.freeze({ code: 'INVALID_TIME_ZONE_ID' } as const);
@@ -75,6 +80,30 @@ export function localDateAtInstant(instant: Instant, timeZone: TimeZoneId): Loca
     .toZonedDateTimeISO(timeZone)
     .toPlainDate()
     .toString() as LocalDate;
+}
+
+export function floorInstantToMinute(instant: Instant): Instant {
+  return Temporal.Instant.from(instant)
+    .round({
+      roundingMode: 'floor',
+      smallestUnit: 'minute',
+    })
+    .toString() as Instant;
+}
+
+export function localDateInstantBounds(
+  localDate: LocalDate,
+  timeZone: TimeZoneId,
+): LocalDateInstantBounds {
+  const startsAt = Temporal.PlainDate.from(localDate).toZonedDateTime(timeZone).toInstant();
+  const endsAt = Temporal.PlainDate.from(localDate)
+    .add({ days: 1 })
+    .toZonedDateTime(timeZone)
+    .toInstant();
+  return Object.freeze({
+    endsAt: endsAt.toString() as Instant,
+    startsAt: startsAt.toString() as Instant,
+  });
 }
 
 export function compareLocalDates(left: LocalDate, right: LocalDate): -1 | 0 | 1 {

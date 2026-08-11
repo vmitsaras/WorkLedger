@@ -6,9 +6,9 @@
 ## Public persistence boundary
 
 `@workledger/database` exposes one package root. Its public API contains the database factory,
-bounded configuration and transaction errors, domain-facing records, seven repository interfaces,
-and the transaction callback contract. Drizzle schemas, inferred rows, query builders, SQL values,
-the `pg` pool, and the unrestricted transaction client remain internal.
+bounded configuration and transaction errors, purpose-specific domain-facing records and
+repository interfaces, and the transaction callback contract. Drizzle schemas, inferred rows,
+query builders, SQL values, the `pg` pool, and the unrestricted transaction client remain internal.
 
 Repository results reconstruct branded domain identifiers, instants, local dates, and minute values.
 Invalid persisted values fail with `DatabaseValueError`, which identifies only the table and column;
@@ -27,6 +27,12 @@ repository: domain/security append methods share the caller's transaction, while
 and organization-security queries expose different record types and enforce bounded pagination.
 Audit facts are allowlisted and validated before SQL; invalid errors identify only the field, never
 the rejected value.
+
+`WL-401` adds one purpose-specific Today source repository. It loads a bounded attendance
+reconstruction source plus effective schedule/policy, holiday, latest absence-effect, and
+unresolved-workflow facts inside the caller's transaction. It does not expose a general query
+builder or authorize the caller; the Today application service applies the central self-target
+attendance policy before mapping the source.
 
 Authorization is not inferred from repository scoping. `WL-303` must still apply actor/resource
 policy before calling these methods.

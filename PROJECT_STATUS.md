@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 4 — Employee attendance vertical slice
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 1 of 8 Phase 4 tasks complete
-**Current milestone:** Today attendance query and read model
-**Active task:** `WL-401`
+**Phase progress:** 2 of 8 Phase 4 tasks complete
+**Current milestone:** Clock-in mutation
+**Active task:** `WL-402`
 **Status:** Ready
 **Last verified:** 2026-08-11
 
 ## Current objective
 
-Implement the Today application service, API endpoint, and TanStack Query client read model with
-correct attendance state, timeline, calculation, warnings, and authorization.
+Implement clock-in through the domain transition, serializable transaction, idempotency claim,
+immutable punch event, audit evidence, API contract, and accessible UI feedback.
 
 ## Verified decisions
 
@@ -21,6 +21,11 @@ correct attendance state, timeline, calculation, warnings, and authorization.
 - PostgreSQL source of truth.
 - React Aria plus shadcn React Aria source components and Tailwind.
 - TanStack Query for server state.
+- The Today query uses a trusted minute-aligned server instant and organization-local Temporal date
+  boundary; current-day values are explicitly provisional or incomplete and never final.
+- An older Today `attendanceRevision`, or older `asOf` value at the same revision, cannot replace
+  newer in-memory query data. Today responses are no-store and exclude employee/organization,
+  command, actor, absence-detail, and policy-detail identifiers.
 - React Router `8.3.0` Data Mode owns route loaders, redirects, boundaries, permission gates, URL
   restoration, titles, and route focus; TanStack Query `5.101.4` owns in-memory remote state and
   mutations without browser persistence.
@@ -232,43 +237,45 @@ correct attendance state, timeline, calculation, warnings, and authorization.
   session surface, self-session revocation, responsive drawer navigation, route boundaries,
   permission gates, title/focus management, and axe/browser evidence completed (`WL-400`; see
   `docs/51-authenticated-application-shell.md`).
+- [x] Authorized organization-local Today state, bounded immutable-event timeline, provisional or
+  incomplete calculation, warning/blocker presentation, revision-aware query cache, responsive
+  reflow, and API/browser evidence completed (`WL-401`; see
+  `docs/52-today-attendance-read-model.md`).
 
 ## Latest completed task
 
-### `WL-400` — Build the authenticated application shell and route boundaries
+### `WL-401` — Implement the Today query and attendance read model
 
-- Changed: added shared self-context/profile/session contracts; PostgreSQL-backed self-service
-  repositories and Fastify routes; React Router Data Mode and TanStack Query; accessible
-  sign-in/recovery/reset, role-aware shell, mobile drawer, read-only profile/session controls,
-  permission/error boundaries, and deterministic title/focus behavior.
-- Verified: the database-enabled canonical gate passed 24 native checks, 129 unit/component tests,
-  18 integration tests, and four Chromium E2E scenarios plus formatting, lint/boundaries, strict
-  TypeScript, OpenAPI drift, and the production build. Coverage includes authentication errors,
-  reset-grant cleanup, navigation/focus, permission denial, profile minimization, session
-  freshness/ownership, current-session revocation, axe, responsive drawer, and reduced motion.
-- Accessibility: semantic landmarks, real links/buttons, a skip link, persistent headings,
-  error-summary focus, modal focus containment/restoration, route title/heading focus, forced-color
-  focus indicators, and reduced-motion behavior are covered. Desktop/mobile route boundaries were
-  also visually inspected with the API unavailable.
-- Security/data: reset grants are removed from URL/history and kept only in memory; remote state and
-  CSRF values are not persisted; profile/session DTOs exclude IP/raw user-agent data; session
-  revocation is owner-scoped, freshness-protected for other sessions, transactional with minimized
-  security audit evidence, and clears protected client state when current.
-- Documentation: added `docs/51-authenticated-application-shell.md`, regenerated selected OpenAPI
-  output, recorded exact dependency choices, and synchronized README, task board, TODO, and status.
-- Remaining risk: a coordinated local web/API listener and the production same-origin proxy remain
-  later deployment work; the Today screen is a route-owned placeholder until `WL-401`. The build is
-  green but reports one 509.16 kB minified entry-chunk warning; `WL-1001` owns measured performance
-  and code-splitting review before production.
-- Next task: `WL-401`.
+- Changed: added strict Today contracts; domain current-day composition; a bounded PostgreSQL source
+  repository; an authorized transactional application service and `GET /v1/me/attendance/today`;
+  revision-aware TanStack Query data; and a semantic responsive Today state, estimate, messages,
+  calculation breakdown, timeline, empty/loading/error/retry surface.
+- Verified: the database-enabled canonical gate passed 24 native checks, 141 unit/component tests,
+  19 integration tests, and four Chromium scenarios plus OpenAPI drift, formatting,
+  lint/boundaries, strict TypeScript, and the production build.
+- Accessibility: the route uses one persistent focused `h1`, named progress, ordinary background
+  update text, one assertive dependency alert, semantic lists/description data, text-equivalent
+  state, and intrinsic grids preserving DOM order and 390 px reflow.
+- Security/data: each query re-resolves active self capability and applies `ATTENDANCE_READ`; the
+  source is organization/employee scoped and transaction-bound; no-store DTOs omit sensitive and
+  unnecessary identity/workflow/configuration data; session expiry clears in-memory state.
+- Documentation: added `docs/52-today-attendance-read-model.md`, updated calculation blocker
+  catalogs and repository evidence, regenerated selected OpenAPI output, and synchronized README,
+  task board, TODO, and status.
+- Remaining risk: exact absence/work intersection and approved adjustment sources arrive with their
+  owning workflows; Today does not guess those facts. The 500-event source bound becomes an
+  incomplete calculation when exceeded. Polling/offline/multi-device recovery remains `WL-405`.
+  The successful build reports a 521.48 kB minified entry-chunk warning; `WL-1001` owns measured
+  performance and justified code splitting.
+- Next task: `WL-402`.
 
 ## Current blockers
 
-No `WL-401` blocker is known. D-502 remains open before the production browser gate.
+No `WL-402` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-401 — Implement the Today query/application service/API/client query.`
+`WL-402 — Implement the clock-in command through domain, transaction, idempotency, audit, API, and UI.`
 
 ## Update rules
 

@@ -11,8 +11,9 @@ submission-blocker code sets from already identified daily calculation facts.
 
 - warnings: `WORK_ON_ZERO_EXPECTED_DAY`, `WORK_ON_HOLIDAY`, `WORK_DURING_ABSENCE`, and the
   positive/negative flexible-time threshold warnings;
-- submission blockers: incomplete or conflicting attendance, missing schedule/policy, unresolved
-  correction or approval-required absence, and source-to-ledger mismatch.
+- submission blockers: incomplete or conflicting attendance, missing/overlapping schedule or
+  policy assignments, invalid policy configuration, unresolved correction or approval-required
+  absence, and source-to-ledger mismatch.
 
 A holiday work fact produces `WORK_ON_HOLIDAY`, never the more generic zero-expected-day code.
 Threshold signals compare the supplied signed balance to the configured non-negative threshold but

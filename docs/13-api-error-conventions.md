@@ -188,7 +188,12 @@ Warnings are stable machine-readable values returned with calculation data; they
 
 `WORK_ON_HOLIDAY` supersedes the generic `WORK_ON_ZERO_EXPECTED_DAY` for the same date so one source condition does not produce duplicate warnings. Configured flexible-time threshold warnings are independent and never cap the calculated value.
 
-Blocking calculation failures use their specific existing codes, including `ATTENDANCE_INCOMPLETE`, `ATTENDANCE_OVERLAP`, `ATTENDANCE_INVALID_EVENT_ORDER`, `SCHEDULE_NOT_ASSIGNED`, and `POLICY_NOT_ASSIGNED`. A blocked daily result has `calculationStatus: INCOMPLETE` and cannot expose final credited/balance values or post a ledger effect.
+Blocking calculation failures use their specific existing codes, including
+`ATTENDANCE_INCOMPLETE`, `ATTENDANCE_OVERLAP`, `ATTENDANCE_INVALID_EVENT_ORDER`,
+`ATTENDANCE_INVALID_EVENT_PRECISION`, `SCHEDULE_NOT_ASSIGNED`,
+`SCHEDULE_ASSIGNMENT_OVERLAP`, `POLICY_NOT_ASSIGNED`, `POLICY_ASSIGNMENT_OVERLAP`, and
+`POLICY_CONFIGURATION_INVALID`. A blocked daily result has `calculationStatus: INCOMPLETE` and
+cannot expose final credited/balance values or post a ledger effect.
 
 Additional source-state blockers are `CORRECTION_UNRESOLVED`, `ABSENCE_APPROVAL_PENDING`, and
 `LEDGER_SOURCE_MISMATCH`. They identify the unresolved source category without exposing sensitive

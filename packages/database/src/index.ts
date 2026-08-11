@@ -72,6 +72,10 @@ export type {
   SecurityAuditTargetKind,
   StoredPunchEvent,
   TimeAccountRepository,
+  TodayAttendanceRepository,
+  TodayAttendanceSourceInput,
+  TodayAttendanceSourceRecord,
+  TodayHolidayRecord,
 } from './repositories/contracts.js';
 export type {
   TransactionIsolationLevel,

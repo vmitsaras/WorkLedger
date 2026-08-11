@@ -150,6 +150,14 @@
     cursor: pointer;
   }
 
+  .wl-today-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+
+  .wl-calculation-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  }
+
   [data-route-heading]:focus-visible {
     outline: 3px solid var(--wl-focus-ring);
     outline-offset: 0.35rem;

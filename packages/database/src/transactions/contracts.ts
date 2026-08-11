@@ -8,6 +8,7 @@ import type {
   EmployeeRepository,
   OrganizationRepository,
   TimeAccountRepository,
+  TodayAttendanceRepository,
 } from '../repositories/contracts.js';
 
 export type TransactionIsolationLevel = 'read committed' | 'repeatable read' | 'serializable';
@@ -32,6 +33,7 @@ export interface WorkLedgerTransaction {
   readonly employees: EmployeeRepository;
   readonly organizations: OrganizationRepository;
   readonly timeAccount: TimeAccountRepository;
+  readonly todayAttendance: TodayAttendanceRepository;
 }
 
 export interface WorkLedgerDatabase {

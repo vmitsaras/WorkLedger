@@ -89,7 +89,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
 | WL-400 | Build sign-in/recovery/reset routes, authenticated app shell, read-only profile/session surface, skip link, responsive navigation, route boundaries, and permission gates | WL-309, WL-106 | Authentication recovery, keyboard navigation, route title/focus, profile field boundary, own-session revocation/expiry, and axe tests pass | Done |
-| WL-401 | Implement Today query/application service/API/client query | WL-309, WL-211 | Correct state, timeline, calculation, warnings, and permissions | Not started |
+| WL-401 | Implement Today query/application service/API/client query | WL-309, WL-211 | Correct state, timeline, calculation, warnings, and permissions | Done |
 | WL-402 | Implement clock-in command through domain, transaction, idempotency, audit, API, and UI | WL-401 | Duplicate click/retry and unauthorized tests; accessible success feedback | Not started |
 | WL-403 | Implement break-start, break-end, and clock-out commands end to end | WL-402 | Full state sequence, on-break clock-out confirmation, conflict tests | Not started |
 | WL-404 | Build attendance timeline/list and daily calculation breakdown | WL-401–WL-403 | Values explainable; textual alternative; responsive behavior | Not started |

@@ -7,6 +7,7 @@ import {
   apiRecoveryContextSchema,
   createSuccessEnvelopeSchema,
   selfProfileEnvelopeSchema,
+  todayAttendanceEnvelopeSchema,
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
@@ -51,6 +52,51 @@ test('keeps self-profile and session transport fields purpose-minimized', () => 
         ...profile.data,
         sessions: [{ ...profile.data.sessions[0], ipAddress: '192.0.2.1' }],
       },
+    }),
+  ).toThrow();
+});
+
+test('keeps the Today contract provisional, bounded, and free of account identity fields', () => {
+  const response = {
+    data: {
+      asOf: '2026-08-11T10:30:00Z',
+      attendance: {
+        activeSince: '2026-08-11T08:00:00Z',
+        attendanceRevision: 1,
+        state: 'WORKING',
+        validActions: ['START_BREAK', 'CLOCK_OUT'],
+      },
+      calculation: {
+        blockers: [],
+        estimate: {
+          absenceCreditMinutes: 0,
+          absenceExpectedReductionMinutes: 0,
+          adjustmentMinutes: 0,
+          balanceMinutes: -390,
+          breakMinutes: 0,
+          creditedMinutes: 90,
+          expectedMinutes: 480,
+          holidayExpectedReductionMinutes: 0,
+          scheduledMinutes: 480,
+          workedMinutes: 90,
+        },
+        holidayName: null,
+        status: 'PROVISIONAL',
+        warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
+      },
+      localDate: '2026-08-11',
+      timeZone: 'Europe/Berlin',
+      timeline: [{ id: 'punch-1', occurredAt: '2026-08-11T08:00:00Z', type: 'CLOCK_IN' }],
+      timelineTruncated: false,
+    },
+    meta: { requestId: randomUUID() },
+  };
+
+  expect(todayAttendanceEnvelopeSchema.parse(response)).toEqual(response);
+  expect(() =>
+    todayAttendanceEnvelopeSchema.parse({
+      ...response,
+      data: { ...response.data, employeeId: 'not-for-browser-transport' },
     }),
   ).toThrow();
 });

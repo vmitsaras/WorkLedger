@@ -4,15 +4,18 @@ import {
   revokeSelfSessionEnvelopeSchema,
   selfContextEnvelopeSchema,
   selfProfileEnvelopeSchema,
+  todayAttendanceEnvelopeSchema,
   type ApiErrorCode,
   type SelfContext,
   type SelfProfile,
+  type TodayAttendance,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
   constructor(
     readonly code: ApiErrorCode | 'AUTH_PASSWORD_POLICY_REJECTED' | 'DEPENDENCY_FAILURE',
     readonly status: number,
+    readonly requestId?: string,
   ) {
     super(code);
     this.name = 'ApiClientError';
@@ -31,6 +34,13 @@ export async function loadSelfContext(): Promise<SelfContext> {
 export async function loadSelfProfile(): Promise<SelfProfile> {
   const body = await requestJson('/v1/me/profile');
   const parsed = selfProfileEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadTodayAttendance(signal?: AbortSignal): Promise<TodayAttendance> {
+  const body = await requestJson('/v1/me/attendance/today', signal === undefined ? {} : { signal });
+  const parsed = todayAttendanceEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }
@@ -133,6 +143,7 @@ async function requestJson(path: string, init: RequestInit = {}): Promise<unknow
   throw new ApiClientError(
     parsedError.success ? parsedError.data.error.code : 'DEPENDENCY_FAILURE',
     response.status,
+    parsedError.success ? parsedError.data.error.requestId : undefined,
   );
 }
 

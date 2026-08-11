@@ -5,7 +5,7 @@ import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } 
 import type { NavigationArea, SelfContext } from '@workledger/contracts';
 
 import { ApiClientError, clearSessionMemory } from './api-client.js';
-import { selfContextQuery, selfProfileQuery } from './query.js';
+import { selfContextQuery, selfProfileQuery, todayAttendanceQuery } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
 import { ApplicationShell } from '../components/application-shell.js';
@@ -18,6 +18,7 @@ import {
 import { PlaceholderPage } from '../routes/placeholder-page.js';
 import { ProfilePage } from '../routes/profile-page.js';
 import { RootNotFoundPage, RouteBoundary } from '../routes/route-boundary.js';
+import { TodayPage } from '../routes/today-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -28,13 +29,6 @@ type PlaceholderRoute = Readonly<{
 }>;
 
 const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
-  {
-    area: 'EMPLOYEE',
-    description: 'Current attendance state, today’s time calculation, warnings, and clock actions.',
-    milestone: 'WL-401 through WL-405',
-    path: 'today',
-    title: 'Today',
-  },
   {
     area: 'EMPLOYEE',
     description: 'Weekly and monthly time records with explainable flexible-time balances.',
@@ -194,6 +188,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
           errorElement: <RouteBoundary />,
           children: [
             {
+              path: 'today',
+              loader: createTodayLoader(queryClient),
+              element: <TodayPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Today' },
+            },
+            {
               path: 'profile',
               loader: createProfileLoader(queryClient),
               element: <ProfilePage />,
@@ -298,6 +299,15 @@ function createProfileLoader(queryClient: QueryClient): LoaderFunction {
       if (isAuthenticationError(error)) return expireSession(queryClient, error);
       throw error;
     }
+  };
+}
+
+function createTodayLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
+    void queryClient.prefetchQuery(todayAttendanceQuery());
+    return null;
   };
 }
 
