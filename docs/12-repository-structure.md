@@ -200,6 +200,11 @@ transport error mapping. OpenAPI is generated for regression testing but is not 
 and `apps/api/src/audit` for authorization-composed domain/security history queries. The two audit
 tables and query surfaces remain separate by design.
 
+`WL-306` added the protected attendance idempotency repository and terminal outcome validation.
+`WL-307` added `packages/database/src/seed` for the explicit local/test-only deterministic Northstar
+seed; it is not imported by application startup and rejects production/non-local development
+targets.
+
 ## Feature-folder rule
 
 Create a feature folder only when work begins on that feature. Avoid empty speculative architecture.

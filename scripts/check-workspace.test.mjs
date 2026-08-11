@@ -112,6 +112,7 @@ function createState() {
         'db:reset': 'test command',
         'db:check': 'test command',
         'db:test': 'test command',
+        'db:seed:development': 'test command',
         'db:verify': 'test command',
         format: 'test command',
         'format:check': 'test command',

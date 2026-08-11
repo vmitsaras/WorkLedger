@@ -29,6 +29,7 @@
     "db:check": "node scripts/check-postgres-dev.mjs",
     "db:test": "pnpm run test:build && node scripts/run-postgres-integration.mjs",
     "db:verify": "pnpm run db:check && pnpm run db:test",
+    "db:seed:development": "pnpm run test:build && node packages/database/dist/seed/development-cli.js",
     "format": "prettier --write . --ignore-unknown",
     "format:check": "pnpm run workspace:check && prettier --check . --ignore-unknown",
     "lint": "pnpm run workspace:check && eslint . --max-warnings 0 && node scripts/check-boundaries.mjs",

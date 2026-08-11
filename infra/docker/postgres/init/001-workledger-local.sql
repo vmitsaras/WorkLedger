@@ -17,6 +17,9 @@ $$;
 
 ALTER DATABASE workledger_dev OWNER TO workledger_migrator;
 GRANT CONNECT ON DATABASE workledger_dev TO workledger_app;
+GRANT USAGE ON SCHEMA public TO workledger_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE workledger_migrator IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO workledger_app;
 
 SELECT 'CREATE DATABASE workledger_test OWNER workledger_test'
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'workledger_test')\gexec

@@ -77,8 +77,8 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-303 | Implement employee-account link, roles, manager scope, and authorization policy functions | WL-301, WL-302 | Permission matrix integration tests pass | Done |
 | WL-304 | Implement API contract schemas, error envelope, request IDs, and safe error mapping | WL-101, WL-303 | Contract tests and non-leaking error tests pass | Done |
 | WL-305 | Implement append-only, audience-separated domain/security audit persistence and querying foundation | WL-301, WL-303 | Atomic audit writes, field minimization, hostile-text, role separation, and redaction tests pass | Done |
-| WL-306 | Implement idempotency-key persistence and replay behavior | WL-301, WL-304 | Same-key replay and conflicting-request tests pass | Not started |
-| WL-307 | Implement realistic seed organization, users, schedules, balances, requests, and locked history | WL-300–WL-306 | Seed is deterministic and covers scenario catalog | Not started |
+| WL-306 | Implement idempotency-key persistence and replay behavior | WL-301, WL-304 | Same-key replay and conflicting-request tests pass | Done |
+| WL-307 | Implement realistic seed organization, users, schedules, balances, requests, and locked history | WL-300–WL-306 | Seed is deterministic and covers scenario catalog | Done |
 | WL-308 | Expose OpenAPI and typed client generation if stable with selected contracts | WL-304 | Generated artifact reproducible; no duplicate hand-written types | Not started |
 | WL-309 | Execute Phase 3 gate review | WL-300–WL-308 | Migration, accepted auth/session/CSRF profile, authorization, audit, secret/config, and idempotency evidence | Not started |
 

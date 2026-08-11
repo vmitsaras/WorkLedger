@@ -14,6 +14,16 @@ export {
 } from './client.js';
 export { DatabaseValueError } from './mapping/domain-values.js';
 export { AuditValueError } from './repositories/audit-values.js';
+export { IdempotencyValueError } from './repositories/idempotency-values.js';
+export {
+  DEVELOPMENT_SEED_ANCHOR_DATE,
+  DEVELOPMENT_SEED_ORGANIZATION_ID,
+  DevelopmentSeedError,
+  seedDevelopmentDatabase,
+  type DevelopmentSeedConfiguration,
+  type DevelopmentSeedEnvironment,
+  type DevelopmentSeedResult,
+} from './seed/development.js';
 export type {
   AppendDomainAuditEventInput,
   AppendSecurityAuditEventInput,
@@ -24,11 +34,18 @@ export type {
   AuditActor,
   AuditOutcome,
   AuditRepository,
+  AttendanceIdempotencyClaim,
+  AttendanceIdempotencyErrorSnapshot,
+  AttendanceIdempotencyOutcome,
+  AttendanceIdempotencyRepository,
+  AttendanceIdempotencySuccessSnapshot,
   AttendanceHeadRecord,
   AttendanceRepository,
   AuthorizationActorRecord,
   AuthorizationChangeInput,
   AuthorizationRepository,
+  ClaimAttendanceIdempotencyInput,
+  CompleteAttendanceIdempotencyInput,
   DailyProjectionRecord,
   DailyProjectionRepository,
   DailyProjectionStatus,

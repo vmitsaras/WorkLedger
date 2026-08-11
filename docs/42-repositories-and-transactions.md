@@ -88,6 +88,8 @@ into the focus, announcement, and recovery behavior specified by the route and U
 ## Remaining work
 
 `WL-302` owns Better Auth credentials and database-backed session storage. `WL-303` adds the
-transaction-scoped authorization repository and central application policy. `WL-304` and `WL-305`
-complete safe API errors and audit persistence; idempotency claims remain owned by `WL-306`.
-Ordinary domain repositories still do not pre-authorize their callers.
+transaction-scoped authorization repository and central application policy. `WL-304`, `WL-305`,
+and `WL-306` complete safe API errors, audit persistence, and protected attendance idempotency
+claims/replay. Later attendance application services compose those boundaries in the accepted
+authorization and transaction order. Ordinary domain repositories still do not pre-authorize
+their callers.

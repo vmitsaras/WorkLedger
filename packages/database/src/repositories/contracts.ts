@@ -1,9 +1,11 @@
 import type {
+  AttendanceCommand,
   AttendanceState,
   DomainId,
   Instant,
   LocalDate,
   PunchEvent,
+  PunchEventType,
   TimeAccountLedgerEntry,
 } from '@workledger/domain';
 
@@ -225,6 +227,57 @@ export type AppendTimeAccountEntryInput = Readonly<{
   sourceFingerprint: string;
 }>;
 
+export type AttendanceIdempotencySuccessSnapshot = Readonly<{
+  attendanceRevision: number;
+  command: AttendanceCommand;
+  createdEvents: readonly Readonly<{
+    id: DomainId<'PunchEvent'>;
+    type: PunchEventType;
+  }>[];
+  occurredAt: Instant;
+  resultingState: AttendanceState;
+  validActions: readonly AttendanceCommand[];
+}>;
+
+export type AttendanceIdempotencyErrorSnapshot = Readonly<{
+  attendanceRevision?: number;
+  code: string;
+  currentState?: AttendanceState;
+  requiresBreakConfirmation?: boolean;
+  validActions?: readonly AttendanceCommand[];
+}>;
+
+export type AttendanceIdempotencyOutcome =
+  | Readonly<{ kind: 'ERROR'; error: AttendanceIdempotencyErrorSnapshot }>
+  | Readonly<{ kind: 'SUCCESS'; data: AttendanceIdempotencySuccessSnapshot }>;
+
+export type ClaimAttendanceIdempotencyInput = Readonly<{
+  actorAccountId: DomainId<'Account'>;
+  command: AttendanceCommand;
+  employeeId: DomainId<'Employee'>;
+  idempotencyKey: string;
+  organizationId: DomainId<'Organization'>;
+  requestFingerprint: string;
+}>;
+
+export type AttendanceIdempotencyClaim =
+  | Readonly<{ kind: 'CLAIMED'; recordId: DomainId<'IdempotencyRecord'> }>
+  | Readonly<{ kind: 'CONFLICT' }>
+  | Readonly<{
+      kind: 'REPLAY';
+      originalHttpStatus: number;
+      outcome: AttendanceIdempotencyOutcome;
+    }>;
+
+export type CompleteAttendanceIdempotencyInput = Readonly<{
+  command: AttendanceCommand;
+  completedAt: Instant;
+  originalHttpStatus: number;
+  outcome: AttendanceIdempotencyOutcome;
+  recordId: DomainId<'IdempotencyRecord'>;
+  requestFingerprint: string;
+}>;
+
 export interface OrganizationRepository {
   findById(organizationId: DomainId<'Organization'>): Promise<OrganizationRecord | null>;
 }
@@ -284,6 +337,11 @@ export interface AttendanceRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<AttendanceHeadRecord | null>;
+}
+
+export interface AttendanceIdempotencyRepository {
+  claim(input: ClaimAttendanceIdempotencyInput): Promise<AttendanceIdempotencyClaim>;
+  complete(input: CompleteAttendanceIdempotencyInput): Promise<boolean>;
 }
 
 export interface DailyProjectionRepository {

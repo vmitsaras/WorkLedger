@@ -81,6 +81,21 @@ integrationTest(
       );
       await expect(
         client.query(
+          `insert into idempotency_records
+            (organization_id, actor_account_id, employee_id, command,
+             idempotency_key_hash, request_fingerprint)
+           values ($1, $2, $3, 'CLOCK_IN', $4, $5)`,
+          [
+            otherOrganization.rows[0]?.id,
+            account.rows[0]?.id,
+            employeeId,
+            'f'.repeat(64),
+            'e'.repeat(64),
+          ],
+        ),
+      ).rejects.toMatchObject({ code: '23503' });
+      await expect(
+        client.query(
           `insert into daily_projections (organization_id, employee_id, local_date, calculation_status, projection_version, engine_version, source_fingerprint, expected_minutes, worked_minutes, break_minutes, absence_credit_minutes, adjustment_minutes, credited_minutes, balance_minutes, source_references, calculated_at) values ($1, $2, $3, 'COMPLETE', 1, 'test', $4, 480, 480, 0, 0, 0, 480, 0, '{}'::jsonb, $5)`,
           [
             otherOrganization.rows[0]?.id,

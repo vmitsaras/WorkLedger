@@ -270,6 +270,19 @@ These were confirmed from repository evidence and the architecture ratification.
 - Phase 3 may define the outbound interface/fake needed by integration tests but does not add a production SMTP dependency.
 - `WL-704` implements durable generic in-app notifications and may add the optional privacy-safe SMTP adapter. Delivery failure/retry never changes the committed domain outcome.
 
+### D-205 — Part-time seed reservation arithmetic
+
+**Status:** Resolved by `WL-307` from the accepted schedule-relative entitlement contract.
+
+- `docs/14-seed-scenarios.md` originally required Leon to work 360 minutes Monday–Thursday while a
+  weekend-spanning two-obligation-date vacation reserved 960 minutes. Those requirements cannot
+  both satisfy schedule-relative integer-minute entitlement consumption.
+- The deterministic seed preserves Leon's accepted six-hour schedule and the cross-weekend story.
+  Its covered Thursday and Monday obligations total 720 minutes, so the seed appends
+  `RESERVATION -720` against an `ALLOCATION +4800`, yielding projected remaining 4,080.
+- This reconciliation changes no domain rule: day equivalents remain presentation only, and a seed
+  cannot use a fixed 480-minute day to bypass an employee's effective schedule.
+
 ## Resolved Phase 6 entry decisions
 
 ### D-300 — Vacation entitlement unit

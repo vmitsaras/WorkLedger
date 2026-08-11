@@ -2,17 +2,16 @@
 
 **Current phase:** Phase 3 — Data, authentication, and API foundation
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 6 of 10 Phase 3 tasks complete
-**Current milestone:** Attendance-command idempotency persistence
-**Active task:** `WL-306`
+**Phase progress:** 8 of 10 Phase 3 tasks complete
+**Current milestone:** Stable OpenAPI exposure and typed-client evaluation
+**Active task:** `WL-308`
 **Status:** Ready
-**Last verified:** 2026-08-10
+**Last verified:** 2026-08-11
 
 ## Current objective
 
-Implement scoped, protected idempotency-key persistence and replay behavior for attendance
-mutations, including fingerprint conflicts, concurrency, terminal outcome snapshots, and atomic
-source/audit integration.
+Evaluate the existing internal OpenAPI 3.1 artifact for stable public exposure and reproducible
+typed-client generation without introducing a second hand-written contract source.
 
 ## Verified decisions
 
@@ -200,36 +199,43 @@ source/audit integration.
   minimized fact allowlists, immutable triggers, transaction-scoped append methods, and
   authorization-composed audience queries completed (`WL-305`; see
   `docs/46-audit-persistence-foundation.md`).
+- [x] Protected organization/account/key attendance claims, exact fingerprint conflict handling,
+  typed terminal snapshots, immutable completion, rollback retry, and concurrent replay completed
+  (`WL-306`; see `docs/47-attendance-idempotency-persistence.md`).
+- [x] Explicit local/test-only Northstar seed with deterministic personas, effective schedules,
+  attendance edges, balances, requests, privacy-safe locked history, audit evidence, guarded
+  migration/CLI behavior, and repeat/drift tests completed (`WL-307`; see
+  `docs/48-development-seed.md`).
 
 ## Latest completed task
 
-### `WL-305` — Implement separated domain/security audit persistence
+### `WL-307` — Implement seed organization and realistic personas
 
-- Changed: added two audience-specific tables/enums/indexes, immutable triggers, actor-at-action
-  attribution, minimized fact validators, transaction-scoped append/query repositories, and an API
-  service composing domain/security reads with authoritative authorization.
-- Verified: schema/PostgreSQL tests cover 37-table clean migration, immutable/cross-organization
-  constraints, hostile input rejection, source-plus-audit rollback, scope-before-pagination,
-  owner/current/former manager behavior, and HR/system audience separation.
-- Accessibility: no user interface changed. Stored codes/identifiers remain structured plain text;
-  semantic history tables, focus, reflow, and error behavior remain owned by later feature views.
-- Security/data: arbitrary metadata and free text have no audit field; facts are allowlisted and
-  bounded, rejected values are never echoed, separate types/tables prevent accidental audience
-  union, and system administrators receive no domain payload through the composed service.
-- Documentation: added `docs/46-audit-persistence-foundation.md` and synchronized schema,
-  repository, architecture, structure, README, roadmap checklist, and task-board memory.
-- Remaining risk: later feature/authentication/operations services must append their required audit
-  events, purpose-specific audit DTOs/routes remain unimplemented, and host/database superusers stay
-  trusted operational actors.
-- Next task: `WL-306`.
+- Changed: added stable Northstar organization/persona/configuration/source IDs, a one-transaction
+  seed service, dedicated migrator CLI, local role defaults, representative attendance/absence/
+  correction/balance/period/audit histories, and migration `0006` for accepted zero daily deltas.
+- Verified: independent fresh schemas produce equal summaries; repeat returns `ALREADY_PRESENT`;
+  drift/non-empty/production/non-local targets fail; credentials, current/former manager history,
+  entitlement arithmetic, snapshot privacy, migration application, and app-role reads pass.
+- Accessibility: no UI changed. Seeded states include realistic future accessibility-test inputs,
+  but the seed makes no claim that later screens, focus, announcements, or reflow exist.
+- Security/data: all identities are fictional; credentials are clearly development-only and stored
+  as scrypt hashes; production/non-loopback development targets are rejected; the CLI logs no SQL,
+  connection string, password, or seed payload on failure; sickness stays out of the snapshot.
+- Documentation: added `docs/48-development-seed.md`, resolved `D-205`, corrected Leon's
+  schedule-relative reservation, and synchronized setup, repository, operations, task-board,
+  README, and project-status memory.
+- Remaining risk: this seed is persistence evidence rather than implemented workflow behavior;
+  later feature tasks must add service/API/UI tests, and the safe demo-reset path remains `WL-1101`.
+- Next task: `WL-308`.
 
 ## Current blockers
 
-No `WL-306` blocker is known. D-502 remains open before the production browser gate.
+No `WL-308` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-306 — Implement idempotency storage for clock mutations.`
+`WL-308 — Generate or expose OpenAPI safely.`
 
 ## Update rules
 

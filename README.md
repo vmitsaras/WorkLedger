@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 3 — 6 of 10 tasks complete**
+> **Current phase progress: Phase 3 — 8 of 10 tasks complete**
 
 Phase 2 passed its exit gate and the repository is now in **Phase 3: data, authentication, and API
 foundation**. The workspace, project boundaries, strict tooling, test and CI baseline, local
@@ -13,8 +13,9 @@ PostgreSQL environment, runtime configuration, React Aria UI foundation, contrib
 framework-independent domain engine, initial PostgreSQL schema/generated migrations, narrow
 repository/transaction boundary, accepted Better Auth credential/session foundation,
 deny-by-default application authorization, shared Zod/Fastify API contract and safe error boundary,
-and append-only audience-separated audit foundation are implemented. The next task is idempotency
-storage for clock mutations (`WL-306`).
+append-only audience-separated audit foundation, protected attendance idempotency claim/replay
+persistence, and a deterministic local-only Northstar development seed are implemented. The next
+task is stable OpenAPI exposure and typed-client evaluation (`WL-308`).
 
 WorkLedger does not yet provide authenticated application services, product workflows, production
 deployment, or a supported release. The runnable web page is an isolated
@@ -76,11 +77,13 @@ end-to-end WorkLedger workflow yet.
 
 ## Local PostgreSQL
 
-The local Compose service uses explicit non-production credentials, binds to
-`127.0.0.1:54329` by default, and contains no WorkLedger product schema or seed data.
+The local Compose service uses explicit non-production credentials and binds to
+`127.0.0.1:54329` by default. Product migrations and deterministic Northstar data are created only
+when the explicit development-seed command is run.
 
 ```sh
 pnpm with 11.20.0 run db:up
+pnpm with 11.20.0 run db:seed:development
 pnpm with 11.20.0 run db:verify
 WORKLEDGER_TEST_DATABASE_URL=postgres://workledger_test:workledger_test_password@127.0.0.1:54329/workledger_test pnpm with 11.20.0 run verify
 pnpm with 11.20.0 run db:down
@@ -115,6 +118,7 @@ unless pnpm `11.20.0` is already the active package manager.
 | `pnpm run build` | Build all typed projects and the web preview, then verify emitted public entries. |
 | `pnpm run db:up` / `db:down` | Start or stop the local PostgreSQL service; stopping preserves its volume. |
 | `pnpm run db:check` / `db:test` / `db:verify` | Check local connectivity, run the isolated lifecycle test, or run both. |
+| `pnpm run db:seed:development` | Explicitly migrate and insert/revalidate local-only deterministic Northstar data. |
 | `pnpm run db:reset` | Stop PostgreSQL and delete the local development volume and its data. |
 
 CI performs a frozen install, installs Chromium, starts the same PostgreSQL service, verifies the

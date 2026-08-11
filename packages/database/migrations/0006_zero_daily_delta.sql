@@ -1,0 +1,2 @@
+ALTER TABLE "time_account_entries" DROP CONSTRAINT "time_account_entries_non_zero_minutes";--> statement-breakpoint
+ALTER TABLE "time_account_entries" ADD CONSTRAINT "time_account_entries_non_zero_minutes" CHECK ("time_account_entries"."minutes" <> 0 or "time_account_entries"."entry_type" in ('OPENING_BALANCE', 'DAILY_DELTA'));

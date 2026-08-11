@@ -13,6 +13,7 @@ import {
   dailyProjections,
   domainAuditEvents,
   employmentPeriods,
+  idempotencyRecords,
   punchEvents,
   securityAuditEvents,
   timeAccountEntries,
@@ -74,6 +75,18 @@ describe('initial PostgreSQL schema', () => {
     );
   });
 
+  it('scopes attendance idempotency by organization, actor account, and protected key', () => {
+    expect(getTableConfig(idempotencyRecords).indexes.map(({ config }) => config.name)).toEqual(
+      expect.arrayContaining([
+        'idempotency_records_scope_key_uidx',
+        'idempotency_records_employee_created_idx',
+      ]),
+    );
+    expect(getTableConfig(idempotencyRecords).columns.map(({ name }) => name)).not.toContain(
+      'actor_scope',
+    );
+  });
+
   it('commits generated and custom migration metadata', () => {
     const journal = JSON.parse(
       readFileSync(`${packageDirectory}/migrations/meta/_journal.json`, 'utf8'),
@@ -85,6 +98,8 @@ describe('initial PostgreSQL schema', () => {
       '0002_auth_foundation',
       '0003_authorization_foundation',
       '0004_audit_foundation',
+      '0005_idempotency_foundation',
+      '0006_zero_daily_delta',
     ]);
   });
 });

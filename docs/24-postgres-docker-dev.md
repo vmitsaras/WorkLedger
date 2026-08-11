@@ -54,6 +54,11 @@ The Compose service binds PostgreSQL only to `127.0.0.1` and uses explicit non-p
 
 The integration test uses a generated schema name, creates only a disposable probe table, and drops the schema in a `finally` block before verifying that the namespace is gone. It does not create WorkLedger domain tables, migrations, employee records, seed data, auth tables, or audit records.
 
+`WL-307` adds an explicit development-seed command. The local migrator owns tables it creates;
+Compose initialization grants the normal application role schema usage and default
+select/insert/update/delete privileges on those future tables. Production role provisioning remains
+a separate deployment responsibility and must not reuse these development credentials.
+
 ## 5. CI behavior
 
 GitHub Actions now starts the same Compose service used locally, runs `pnpm run db:verify`, sets `WORKLEDGER_TEST_DATABASE_URL`, and then runs `pnpm run verify`. The PostgreSQL service is stopped in an `always()` cleanup step.

@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { and, asc, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
@@ -13,6 +15,7 @@ import {
   domainAuditEvents,
   employees,
   employmentPeriods,
+  idempotencyRecords,
   managerAssignments,
   organizations,
   punchEvents,
@@ -35,6 +38,8 @@ import type {
   AppendPunchEvent,
   AppendTimeAccountEntryInput,
   AttendanceHeadRecord,
+  AttendanceIdempotencyClaim,
+  AttendanceIdempotencyRepository,
   AttendanceRepository,
   AuthorizationActorRecord,
   AuthorizationRepository,
@@ -60,6 +65,13 @@ import {
   validateDomainAuditInput,
   validateSecurityAuditInput,
 } from './audit-values.js';
+import {
+  IdempotencyValueError,
+  parseAttendanceIdempotencyOutcome,
+  validateIdempotencyKey,
+  validateOriginalHttpStatus,
+  validateRequestFingerprint,
+} from './idempotency-values.js';
 
 import * as schema from '../schema/index.js';
 
@@ -69,6 +81,7 @@ export type RepositoryTransaction = Parameters<Parameters<RootDatabase['transact
 export function createTransactionRepositories(transaction: RepositoryTransaction): Readonly<{
   audit: AuditRepository;
   attendance: AttendanceRepository;
+  attendanceIdempotency: AttendanceIdempotencyRepository;
   authorization: AuthorizationRepository;
   dailyProjections: DailyProjectionRepository;
   employees: EmployeeRepository;
@@ -78,12 +91,110 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   return Object.freeze({
     audit: new PostgresAuditRepository(transaction),
     attendance: new PostgresAttendanceRepository(transaction),
+    attendanceIdempotency: new PostgresAttendanceIdempotencyRepository(transaction),
     authorization: new PostgresAuthorizationRepository(transaction),
     dailyProjections: new PostgresDailyProjectionRepository(transaction),
     employees: new PostgresEmployeeRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
   });
+}
+
+class PostgresAttendanceIdempotencyRepository implements AttendanceIdempotencyRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async claim(
+    input: Parameters<AttendanceIdempotencyRepository['claim']>[0],
+  ): Promise<AttendanceIdempotencyClaim> {
+    validateIdempotencyKey(input.idempotencyKey);
+    validateRequestFingerprint(input.requestFingerprint);
+    const idempotencyKeyHash = createHash('sha256')
+      .update(input.idempotencyKey, 'utf8')
+      .digest('hex');
+    const [inserted] = await this.transaction
+      .insert(idempotencyRecords)
+      .values({
+        actorAccountId: input.actorAccountId,
+        command: input.command,
+        employeeId: input.employeeId,
+        idempotencyKeyHash,
+        organizationId: input.organizationId,
+        requestFingerprint: input.requestFingerprint,
+      })
+      .onConflictDoNothing()
+      .returning({ id: idempotencyRecords.id });
+
+    if (inserted !== undefined) {
+      return Object.freeze({
+        kind: 'CLAIMED',
+        recordId: mapDomainId<'IdempotencyRecord'>(inserted.id, 'idempotency_records', 'id'),
+      });
+    }
+
+    const [existing] = await this.transaction
+      .select({
+        originalHttpStatus: idempotencyRecords.originalHttpStatus,
+        outcome: idempotencyRecords.outcome,
+        requestFingerprint: idempotencyRecords.requestFingerprint,
+        terminal: idempotencyRecords.terminal,
+      })
+      .from(idempotencyRecords)
+      .where(
+        and(
+          eq(idempotencyRecords.organizationId, input.organizationId),
+          eq(idempotencyRecords.actorAccountId, input.actorAccountId),
+          eq(idempotencyRecords.idempotencyKeyHash, idempotencyKeyHash),
+        ),
+      )
+      .for('update')
+      .limit(1);
+    if (existing === undefined) throw new DatabaseValueError('idempotency_records', 'claim');
+    if (existing.requestFingerprint !== input.requestFingerprint) {
+      return Object.freeze({ kind: 'CONFLICT' });
+    }
+    if (!existing.terminal || existing.originalHttpStatus === null || existing.outcome === null) {
+      throw new DatabaseValueError('idempotency_records', 'terminal');
+    }
+    return Object.freeze({
+      kind: 'REPLAY',
+      originalHttpStatus: existing.originalHttpStatus,
+      outcome: parseAttendanceIdempotencyOutcome(existing.outcome),
+    });
+  }
+
+  async complete(
+    input: Parameters<AttendanceIdempotencyRepository['complete']>[0],
+  ): Promise<boolean> {
+    validateRequestFingerprint(input.requestFingerprint);
+    validateOriginalHttpStatus(input.originalHttpStatus);
+    const outcome = parseAttendanceIdempotencyOutcome(input.outcome);
+    if (
+      (outcome.kind === 'SUCCESS' &&
+        (outcome.data.command !== input.command || input.originalHttpStatus >= 300)) ||
+      (outcome.kind === 'ERROR' &&
+        (input.originalHttpStatus < 400 || input.originalHttpStatus >= 500))
+    ) {
+      throw new IdempotencyValueError('outcome');
+    }
+    const rows = await this.transaction
+      .update(idempotencyRecords)
+      .set({
+        completedAt: input.completedAt,
+        originalHttpStatus: input.originalHttpStatus,
+        outcome,
+        terminal: true,
+      })
+      .where(
+        and(
+          eq(idempotencyRecords.id, input.recordId),
+          eq(idempotencyRecords.command, input.command),
+          eq(idempotencyRecords.requestFingerprint, input.requestFingerprint),
+          eq(idempotencyRecords.terminal, false),
+        ),
+      )
+      .returning({ id: idempotencyRecords.id });
+    return rows.length === 1;
+  }
 }
 
 class PostgresAuditRepository implements AuditRepository {

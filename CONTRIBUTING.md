@@ -39,6 +39,7 @@ Docker is needed only for the local PostgreSQL lifecycle path:
 
 ```sh
 pnpm with 11.20.0 run db:up
+pnpm with 11.20.0 run db:seed:development
 pnpm with 11.20.0 run db:verify
 pnpm with 11.20.0 run db:down
 ```

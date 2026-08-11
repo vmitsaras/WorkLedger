@@ -31,7 +31,8 @@ The development seed must tell a coherent product story and expose edge cases. D
 - Part-time: Monday–Thursday 6 hours, Friday off.
 - Negative balance from one short day.
 - Has a pending vacation request crossing a weekend.
-- Seed available entitlement is 4,800 minutes; the pending request reserves 960 and projects 3,840 remaining.
+- Seed available entitlement is 4,800 minutes; the weekend-spanning request covers two 360-minute
+  obligation dates, reserves 720, and projects 4,080 remaining (`D-205`).
 
 ### Sofia Marin — Employee
 

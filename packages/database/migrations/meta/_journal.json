@@ -36,6 +36,20 @@
       "when": 1786398481845,
       "tag": "0004_audit_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786399444284,
+      "tag": "0005_idempotency_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786438362532,
+      "tag": "0006_zero_daily_delta",
+      "breakpoints": true
     }
   ]
 }

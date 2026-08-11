@@ -867,7 +867,7 @@ export const timeAccountEntries = pgTable(
     ),
     check(
       'time_account_entries_non_zero_minutes',
-      sql`${table.minutes} <> 0 or ${table.entryType} = 'OPENING_BALANCE'`,
+      sql`${table.minutes} <> 0 or ${table.entryType} in ('OPENING_BALANCE', 'DAILY_DELTA')`,
     ),
     check(
       'time_account_entries_fingerprint_hex',
@@ -1007,21 +1007,33 @@ export const idempotencyRecords = pgTable(
   {
     id: identifier('id').primaryKey(),
     organizationId: organizationId(),
-    actorScope: varchar('actor_scope', { length: 160 }).notNull(),
+    actorAccountId: uuid('actor_account_id')
+      .notNull()
+      .references(() => authUsers.id),
+    employeeId: employeeId(),
     command: varchar('command', { length: 80 }).notNull(),
     idempotencyKeyHash: varchar('idempotency_key_hash', { length: 64 }).notNull(),
     requestFingerprint: varchar('request_fingerprint', { length: 64 }).notNull(),
-    outcome: jsonb('outcome').$type<Readonly<Record<string, unknown>>>(),
+    outcome: jsonb('outcome').$type<unknown>(),
+    originalHttpStatus: integer('original_http_status'),
     terminal: boolean('terminal').default(false).notNull(),
     createdAt: createdAt(),
     completedAt: timestamp('completed_at', { mode: 'string', withTimezone: true }),
   },
   (table) => [
-    uniqueIndex('idempotency_records_scope_command_key_uidx').on(
+    uniqueIndex('idempotency_records_scope_key_uidx').on(
       table.organizationId,
-      table.actorScope,
-      table.command,
+      table.actorAccountId,
       table.idempotencyKeyHash,
+    ),
+    index('idempotency_records_employee_created_idx').on(
+      table.organizationId,
+      table.employeeId,
+      table.createdAt,
+    ),
+    check(
+      'idempotency_records_command_allowed',
+      sql`${table.command} in ('CLOCK_IN', 'START_BREAK', 'RESUME', 'CLOCK_OUT')`,
     ),
     check('idempotency_records_key_hash_hex', sql`${table.idempotencyKeyHash} ~ '^[0-9a-f]{64}$'`),
     check(
@@ -1030,7 +1042,17 @@ export const idempotencyRecords = pgTable(
     ),
     check(
       'idempotency_records_terminal_shape',
-      sql`not ${table.terminal} or (${table.outcome} is not null and ${table.completedAt} is not null)`,
+      sql`(
+        not ${table.terminal}
+        and ${table.outcome} is null
+        and ${table.originalHttpStatus} is null
+        and ${table.completedAt} is null
+      ) or (
+        ${table.terminal}
+        and ${table.outcome} is not null
+        and ${table.originalHttpStatus} between 200 and 599
+        and ${table.completedAt} is not null
+      )`,
     ),
   ],
 );

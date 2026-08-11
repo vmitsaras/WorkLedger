@@ -122,6 +122,7 @@ const REQUIRED_SCRIPTS = [
   'db:check',
   'db:test',
   'db:verify',
+  'db:seed:development',
   'format',
   'format:check',
   'lint',
