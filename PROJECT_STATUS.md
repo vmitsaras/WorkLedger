@@ -1,17 +1,17 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 3 — Data, authentication, and API foundation
+**Current phase:** Phase 4 — Employee attendance vertical slice
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 9 of 10 Phase 3 tasks complete
-**Current milestone:** Phase 3 exit-gate review
-**Active task:** `WL-309`
+**Phase progress:** 0 of 8 Phase 4 tasks complete
+**Current milestone:** Authenticated application shell and route boundaries
+**Active task:** `WL-400`
 **Status:** Ready
 **Last verified:** 2026-08-11
 
 ## Current objective
 
-Execute the Phase 3 exit-gate review against migration, authentication/session/CSRF,
-authorization, audit, runtime configuration, idempotency, seed, and OpenAPI evidence.
+Build the authentication routes, application shell, read-only profile/session surface, skip link,
+responsive navigation, route boundaries, and permission gates on the completed Phase 3 foundation.
 
 ## Verified decisions
 
@@ -123,6 +123,10 @@ authorization, audit, runtime configuration, idempotency, seed, and OpenAPI evid
 - GitHub Private Vulnerability Reporting is enabled for the public `vmitsaras/WorkLedger` repository. `SECURITY.md` provides the private route while promising no supported version, response deadline, remediation deadline, or production support.
 - Phase 0 passed with all seven roadmap criteria evidenced; the accepted catalog contains 85 contiguous single-outcome examples, and every remaining open decision has an explicit later owner/deadline.
 - Phase 1 passed all eight repository-foundation criteria with a clean-source frozen install, local and database-enabled quality gates, an actual successful CI run, executable ADR `0011` boundaries, and criterion-by-criterion evidence in `docs/28-phase-1-gate-review.md`.
+- Phase 3 passed all seven roadmap criteria with clean/repeatable migrations, the accepted
+  authentication/session/CSRF profile, deactivation proof, authoritative permission-matrix
+  coverage, atomic immutable event/audit evidence, concurrent idempotent replay, non-leaking
+  transport errors, deterministic seed scenarios, and shared internal version `0.4.0`.
 - Domain primitives are construction-only branded values: opaque 1–128 character identifier tokens, safe-integer signed/non-negative minutes, canonical UTC instants, exact ISO local dates, named IANA timezone identifiers, and immutable half-open/open-ended local-date ranges.
 - Primitive construction returns discriminated `Result` values with stable non-leaking codes; invalid values are never trimmed, rounded, coerced, or exposed in error payloads.
 - Node `24.18.0` has no global Temporal implementation, so `packages/domain` directly pins `@js-temporal/polyfill` `0.5.1`; it adds no WorkLedger package edge or environment, filesystem, network, persistence, framework, or UI access.
@@ -213,34 +217,39 @@ authorization, audit, runtime configuration, idempotency, seed, and OpenAPI evid
 - [x] Hidden-from-spec public OpenAPI JSON, deterministic tracked artifact and drift gate,
   authentication/secret exclusion tests, and evidence-based typed-client deferral completed
   (`WL-308`; see `docs/49-openapi-exposure.md`).
+- [x] Phase 3 migration, authentication/deactivation, authorization, audit, idempotency, error,
+  seed, OpenAPI, security, database-enabled quality, and version gates passed with shared internal
+  version `0.4.0` (`WL-309`; see `docs/50-phase-3-gate-review.md`).
 
 ## Latest completed task
 
-### `WL-308` — Generate or expose OpenAPI safely
+### `WL-309` — Pass the Phase 3 exit gate
 
-- Changed: added the hidden-from-document `GET /openapi.json` route, deterministic key-sorted
-  `openapi/workledger.openapi.json`, generation/drift commands, and a verify/workspace contract.
-- Verified: the exposed and in-process documents are equal; the route remains absent from its own
-  paths; no-store, nosniff, content type, and no-CORS behavior pass; configured Better Auth paths,
-  database credentials, and authentication secrets stay absent; byte-for-byte regeneration passes.
-- Accessibility: no UI or interactive documentation surface changed; the artifact is
-  machine-readable developer documentation only.
-- Security/data: provider-owned authentication routes remain hidden, no environment-specific
-  server or secret value is emitted, and specification exposure grants no authorization.
-- Documentation: added `docs/49-openapi-exposure.md` and synchronized API foundation, dependency
-  policy, repository layout, commands, task board, README, and project-status memory.
-- Remaining risk: generated client adoption is deferred because the narrow mature generator's peer
-  range excludes TypeScript 7 and the broader compatible SDK generator is still pre-1.0; later
-  feature routes must keep adding purpose-specific Zod schemas and operation metadata.
-- Next task: `WL-309`.
+- Changed: added direct database-backed account-deactivation/session-invalidation evidence,
+  completed the Phase 3 gate review, and advanced all nine private manifests to `0.4.0`.
+- Verified: `db:verify` passed 8 files/9 tests; the database-enabled canonical gate passed 24
+  native tests, 124 unit/component tests, all 17 integration tests, 2 Chromium tests, OpenAPI drift,
+  formatting, lint, strict TypeScript, boundaries, and the production build.
+- Accessibility: no product UI changed. The existing semantic/focus/axe and reduced-motion browser
+  checks remain green; accessible authentication and route behavior begins with `WL-400`.
+- Security/data: the review confirms authoritative session/deactivation behavior, deny-by-default
+  authorization, audience-separated minimized audit, immutable/atomic evidence, protected
+  idempotency, non-leaking errors, and local-only seed guardrails without a production-readiness
+  claim.
+- Documentation: added `docs/50-phase-3-gate-review.md` and synchronized authentication evidence,
+  manifests, README, task board, TODO, and project status.
+- Remaining risk: product HTTP routes and UI must compose these foundations correctly; later tasks
+  still own route-level authorization/CSRF, workflow transactions, accessible recovery/focus,
+  production operations, backup/restore, and deployment evidence.
+- Next task: `WL-400`.
 
 ## Current blockers
 
-No `WL-309` blocker is known. D-502 remains open before the production browser gate.
+No `WL-400` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-309 — Execute the Phase 3 exit-gate review.`
+`WL-400 — Build authentication routes, application shell, profile/session surface, and route boundaries.`
 
 ## Update rules
 

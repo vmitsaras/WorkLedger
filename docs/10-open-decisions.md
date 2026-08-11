@@ -288,6 +288,17 @@ These were confirmed from repository evidence and the architecture ratification.
 - This reconciliation changes no domain rule: day equivalents remain presentation only, and a seed
   cannot use a fixed 480-minute day to bypass an employee's effective schedule.
 
+### D-206 — Roadmap phase-gate checkbox drift
+
+**Status:** Resolved by `WL-309` from canonical task and gate-review evidence.
+
+- `TODO.md`, `PROJECT_STATUS.md`, and `docs/40-phase-2-gate-review.md` already recorded the Phase 2
+  gate as passed with version `0.3.0`, but the individual Phase 2 criteria in `docs/07-roadmap.md`
+  remained unchecked.
+- `WL-309` reconciles those stale Phase 2 boxes and the newly passed Phase 3 boxes to their accepted
+  criterion-by-criterion reviews. This is documentation-state normalization only; it changes no
+  domain rule, implementation evidence, dependency, or historical version.
+
 ## Resolved Phase 6 entry decisions
 
 ### D-300 — Vacation entitlement unit

@@ -1,9 +1,9 @@
 # Contributing to WorkLedger
 
-Thank you for considering a contribution. WorkLedger is completing its data, authentication, and
-API foundation; it is not a supported time-recording application or a production-ready deployment.
-Proposals should match the active roadmap task and the accepted product, domain, accessibility,
-security, and architecture contracts.
+Thank you for considering a contribution. WorkLedger is beginning its first authenticated employee
+attendance vertical slice; it is not a supported time-recording application or a production-ready
+deployment. Proposals should match the active roadmap task and the accepted product, domain,
+accessibility, security, and architecture contracts.
 
 Review and merge are not guaranteed. A small, evidence-backed change that completes one accepted
 outcome is easier to assess than a broad feature or refactor.

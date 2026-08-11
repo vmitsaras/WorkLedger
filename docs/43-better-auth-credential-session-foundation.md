@@ -72,8 +72,10 @@ hash/verify behavior, and session-bound CSRF behavior. PostgreSQL integration te
 migrations and exercise canonical-origin rejection, invite-only sign-up denial, generic credential
 and recovery failures, secret-free responses, cookie attributes, passive/active/absolute/fresh
 session behavior, protected reset storage, replay/expiry, reset revocation, and five-attempt
-route throttling. The shared PostgreSQL fixture was moved to `@workledger/test-utils` so database
-and API integration tests use one isolated-schema lifecycle without crossing source boundaries.
+route throttling. `WL-309` adds direct deactivation evidence: the account becomes inactive, its
+sessions are deleted atomically, and its prior cookie resolves to no session. The shared PostgreSQL
+fixture was moved to `@workledger/test-utils` so database and API integration tests use one
+isolated-schema lifecycle without crossing source boundaries.
 
 A local three-sample benchmark on the pinned Node `24.18.0` runtime measured Better Auth's default
 scrypt hash at 38 ms, 36 ms, and 37 ms on the development host. This is implementation evidence,

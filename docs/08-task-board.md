@@ -80,7 +80,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-306 | Implement idempotency-key persistence and replay behavior | WL-301, WL-304 | Same-key replay and conflicting-request tests pass | Done |
 | WL-307 | Implement realistic seed organization, users, schedules, balances, requests, and locked history | WL-300–WL-306 | Seed is deterministic and covers scenario catalog | Done |
 | WL-308 | Expose OpenAPI and typed client generation if stable with selected contracts | WL-304 | Generated artifact reproducible; no duplicate hand-written types | Done |
-| WL-309 | Execute Phase 3 gate review | WL-300–WL-308 | Migration, accepted auth/session/CSRF profile, authorization, audit, secret/config, and idempotency evidence | Not started |
+| WL-309 | Execute Phase 3 gate review | WL-300–WL-308 | Migration, accepted auth/session/CSRF profile, authorization, audit, secret/config, and idempotency evidence | Done |
 
 ---
 

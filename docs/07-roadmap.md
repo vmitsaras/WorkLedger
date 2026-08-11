@@ -126,13 +126,13 @@ Implement the authoritative calculation and state rules before API persistence o
 
 ## Exit gate
 
-- [ ] All documented example calculations pass as executable tests.
-- [ ] Spring-forward and fall-back cases pass.
-- [ ] Overnight sessions split correctly.
-- [ ] Invalid transition and overlap cases are rejected with stable codes.
-- [ ] Domain package has no framework, database, environment, network, or UI dependency.
-- [ ] Results are deterministic when supplied the same inputs and clock.
-- [ ] Coverage prioritizes decision branches and invariants rather than an arbitrary percentage alone.
+- [x] All documented example calculations pass as executable tests.
+- [x] Spring-forward and fall-back cases pass.
+- [x] Overnight sessions split correctly.
+- [x] Invalid transition and overlap cases are rejected with stable codes.
+- [x] Domain package has no framework, database, environment, network, or UI dependency.
+- [x] Results are deterministic when supplied the same inputs and clock.
+- [x] Coverage prioritizes decision branches and invariants rather than an arbitrary percentage alone.
 
 **Gate evidence:** domain test report and domain-calculation review.
 
@@ -160,13 +160,13 @@ Persist domain facts safely, authenticate users, enforce scoped authorization, a
 
 ## Exit gate
 
-- [ ] Migrations apply to a clean database and are repeatable in tests.
-- [ ] Authentication success, failure, reset/session basics, and deactivation are tested.
-- [ ] Permission matrix has API tests for owner, scoped manager, unrelated actor, HR, and system administrator.
-- [ ] A transaction can append an immutable event and audit entry atomically.
-- [ ] Repeated idempotency key returns the original result.
-- [ ] Errors expose stable codes without sensitive internals.
-- [ ] Seed data covers the scenarios in `docs/14-seed-scenarios.md`.
+- [x] Migrations apply to a clean database and are repeatable in tests.
+- [x] Authentication success, failure, reset/session basics, and deactivation are tested.
+- [x] Permission matrix has API tests for owner, scoped manager, unrelated actor, HR, and system administrator.
+- [x] A transaction can append an immutable event and audit entry atomically.
+- [x] Repeated idempotency key returns the original result.
+- [x] Errors expose stable codes without sensitive internals.
+- [x] Seed data covers the scenarios in `docs/14-seed-scenarios.md`.
 
 **Gate evidence:** migration test, integration test suite, and security review.
 

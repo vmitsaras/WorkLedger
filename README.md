@@ -5,21 +5,22 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 3 — 9 of 10 tasks complete**
+> **Current phase progress: Phase 4 — 0 of 8 tasks complete**
 
-Phase 2 passed its exit gate and the repository is now in **Phase 3: data, authentication, and API
-foundation**. The workspace, project boundaries, strict tooling, test and CI baseline, local
+Phase 3 passed its exit gate and the repository is now in **Phase 4: employee attendance vertical
+slice**. The workspace, project boundaries, strict tooling, test and CI baseline, local
 PostgreSQL environment, runtime configuration, React Aria UI foundation, contributor documentation,
 framework-independent domain engine, initial PostgreSQL schema/generated migrations, narrow
 repository/transaction boundary, accepted Better Auth credential/session foundation,
 deny-by-default application authorization, shared Zod/Fastify API contract and safe error boundary,
 append-only audience-separated audit foundation, protected attendance idempotency claim/replay
 persistence, a deterministic local-only Northstar development seed, and reproducible hardened
-OpenAPI JSON exposure are implemented. The next task is the Phase 3 exit-gate review (`WL-309`).
+OpenAPI JSON exposure are implemented and passed the database-enabled Phase 3 gate. The next task
+is the authenticated application shell and route-boundary slice (`WL-400`).
 
-WorkLedger does not yet provide authenticated application services, product workflows, production
-deployment, or a supported release. The runnable web page is an isolated
-development preview of foundation components, not the WorkLedger application.
+WorkLedger does not yet provide an authenticated application shell, attendance product workflow,
+production deployment, or supported release. The runnable web page is an isolated development
+preview of foundation components, not the WorkLedger application.
 
 ## Current status
 
@@ -194,6 +195,7 @@ versions and makes no response-time or production-support promise.
 | [docs/47-attendance-idempotency-persistence.md](docs/47-attendance-idempotency-persistence.md) | Attendance mutation idempotency claim, conflict, replay, persistence, and concurrency evidence |
 | [docs/48-development-seed.md](docs/48-development-seed.md) | Deterministic local-only Northstar seed scenarios, guardrails, and verification evidence |
 | [docs/49-openapi-exposure.md](docs/49-openapi-exposure.md) | Hardened OpenAPI JSON exposure, reproducible artifact, and typed-client evaluation evidence |
+| [docs/50-phase-3-gate-review.md](docs/50-phase-3-gate-review.md) | Phase 3 migration, authentication, authorization, audit, idempotency, seed, security, and quality-gate evidence |
 
 ## License
 

@@ -59,7 +59,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-306` Implement idempotency storage for clock mutations.
 - [x] `WL-307` Implement seed organization and realistic personas.
 - [x] `WL-308` Generate or expose OpenAPI safely.
-- [ ] `WL-309` Pass the Phase 3 exit gate.
+- [x] `WL-309` Pass the Phase 3 exit gate.
 
 ## Phase 4 — Employee attendance vertical slice
 

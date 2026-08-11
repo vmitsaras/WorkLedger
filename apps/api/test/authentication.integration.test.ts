@@ -2,6 +2,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { fileURLToPath } from 'node:url';
 import type pg from 'pg';
 
+import { createWorkLedgerAuthDatabase } from '@workledger/database';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createWorkLedgerAuthentication } from '../src/auth/authentication.js';
@@ -253,6 +254,47 @@ integrationTest(
         rateLimitedStatuses.push(response.statusCode);
       }
       expect(rateLimitedStatuses).toEqual([401, 401, 401, 401, 401, 429]);
+
+      const deactivatedEmail = 'deactivated@example.test';
+      const deactivatedUserId = await createCredentialUser(fixture.client, deactivatedEmail);
+      const deactivationSignIn = await app.inject({
+        method: 'POST',
+        url: '/api/auth/sign-in/email',
+        remoteAddress: '198.51.100.40',
+        headers: { 'content-type': 'application/json', origin: ORIGIN },
+        payload: { email: deactivatedEmail, password: PASSWORD },
+      });
+      expect(deactivationSignIn.statusCode).toBe(200);
+      const deactivatedCookie = readSetCookie(deactivationSignIn.headers['set-cookie']).split(
+        ';',
+        1,
+      )[0];
+      if (deactivatedCookie === undefined) throw new Error('Expected a deactivation test cookie.');
+
+      const authDatabase = createWorkLedgerAuthDatabase({ connectionString: fixture.databaseUrl });
+      try {
+        await authDatabase.deactivateUser(deactivatedUserId);
+      } finally {
+        await authDatabase.close();
+      }
+      expect(
+        await fixture.client.query(`select id from auth_sessions where user_id = $1`, [
+          deactivatedUserId,
+        ]),
+      ).toHaveProperty('rowCount', 0);
+      expect(
+        await fixture.client.query(`select active from auth_users where id = $1 and active`, [
+          deactivatedUserId,
+        ]),
+      ).toHaveProperty('rowCount', 0);
+
+      const deactivatedSession = await app.inject({
+        method: 'GET',
+        url: '/api/auth/get-session',
+        headers: { cookie: deactivatedCookie, origin: ORIGIN },
+      });
+      expect(deactivatedSession.statusCode).toBe(200);
+      expect(deactivatedSession.json()).toBeNull();
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -260,11 +302,11 @@ integrationTest(
   },
 );
 
-async function createCredentialUser(client: pg.Client): Promise<string> {
+async function createCredentialUser(client: pg.Client, email = EMAIL): Promise<string> {
   const passwordHash = await hashPassword(PASSWORD);
   const user = await client.query<{ id: string }>(
     `insert into auth_users (name, email, email_verified) values ($1, $2, true) returning id`,
-    ['Employee Account', EMAIL],
+    ['Employee Account', email],
   );
   const userId = user.rows[0]?.id;
   if (userId === undefined) throw new Error('Expected an authentication user.');
