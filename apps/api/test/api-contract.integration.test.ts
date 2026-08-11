@@ -177,6 +177,12 @@ test('keeps authentication internals and runtime secrets out of OpenAPI', async 
     const serializedDocument = JSON.stringify(document);
 
     expect(document.paths).toHaveProperty('/v1/me/attendance/today');
+    expect(document.paths).toHaveProperty('/v1/me/attendance/clock-in');
+    expect(document.paths['/v1/me/attendance/clock-in']?.post?.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ in: 'header', name: 'idempotency-key', required: true }),
+      ]),
+    );
     expect(serializedDocument).not.toContain('/api/auth');
     expect(serializedDocument).not.toContain('openapi-password');
     expect(serializedDocument).not.toContain(authSecret);

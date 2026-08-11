@@ -2,16 +2,17 @@
 
 **Current phase:** Phase 4 — Employee attendance vertical slice
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 2 of 8 Phase 4 tasks complete
-**Current milestone:** Clock-in mutation
-**Active task:** `WL-402`
+**Phase progress:** 3 of 8 Phase 4 tasks complete
+**Current milestone:** Remaining clock mutations
+**Active task:** `WL-403`
 **Status:** Ready
 **Last verified:** 2026-08-11
 
 ## Current objective
 
-Implement clock-in through the domain transition, serializable transaction, idempotency claim,
-immutable punch event, audit evidence, API contract, and accessible UI feedback.
+Implement start-break, resume, and clock-out through the accepted domain transitions, serializable
+idempotent transactions, immutable punch events, audit evidence, API contracts, accessible controls,
+and active-break clock-out confirmation.
 
 ## Verified decisions
 
@@ -51,6 +52,17 @@ immutable punch event, audit evidence, API contract, and accessible UI feedback.
 - Ordinary clock actions use one trusted server occurrence instant and strictly increasing per-employee event sequence numbers.
 - Every attendance command carries the latest `attendanceRevision`; one successful command increments it once, while rejection and replay do not.
 - Every attendance mutation requires a scoped, fingerprinted `Idempotency-Key`; matching retries replay the terminal outcome and attendance keys do not expire in the MVP.
+- `POST /v1/me/attendance/clock-in` authorizes active self capability before strict request
+  validation, repeats that decision inside one serializable transaction, and atomically commits one
+  immutable punch, one revision increment, one minimized audit event, and one terminal outcome.
+- Concurrent matching clock-in requests produce one original result and one terminal replay;
+  wrapped Drizzle/PostgreSQL serialization and deadlock codes remain eligible only for bounded
+  database-only transaction retry.
+- Clock-in captures one trusted minute only after lock/revision/state validation, rejects server
+  clock regression with a complete rollback, and never accepts a client occurrence instant.
+- The Today clock-in form uses one memory-only intent key, visible disabled pending state, no
+  optimistic attendance claim, authoritative refetch, one result announcement, and logical status
+  focus when the initiating control becomes invalid.
 - Confirmed on-break clock-out atomically appends `BREAK_END` then `CLOCK_OUT` at one instant and increments the attendance revision once.
 - Punch occurrence/manual attendance inputs use minute precision; interval, daily, policy, and display calculations apply no later rounding.
 - Daily calculations have identified inputs and `PROVISIONAL`, `INCOMPLETE`, or `COMPLETE` status; only complete past dates may post.
@@ -241,41 +253,45 @@ immutable punch event, audit evidence, API contract, and accessible UI feedback.
   incomplete calculation, warning/blocker presentation, revision-aware query cache, responsive
   reflow, and API/browser evidence completed (`WL-401`; see
   `docs/52-today-attendance-read-model.md`).
+- [x] Authorized clock-in contract, serializable idempotent transaction, trusted occurrence,
+  immutable punch/revision/audit atomicity, terminal replay/conflict behavior, and accessible
+  pending/result/refetch/focus UI completed (`WL-402`; see `docs/53-clock-in-mutation.md`).
 
 ## Latest completed task
 
-### `WL-401` — Implement the Today query and attendance read model
+### `WL-402` — Implement clock-in end to end
 
-- Changed: added strict Today contracts; domain current-day composition; a bounded PostgreSQL source
-  repository; an authorized transactional application service and `GET /v1/me/attendance/today`;
-  revision-aware TanStack Query data; and a semantic responsive Today state, estimate, messages,
-  calculation breakdown, timeline, empty/loading/error/retry surface.
-- Verified: the database-enabled canonical gate passed 24 native checks, 141 unit/component tests,
-  19 integration tests, and four Chromium scenarios plus OpenAPI drift, formatting,
+- Changed: added strict clock-in request/result contracts and selected OpenAPI; shared same-origin
+  and session-CSRF enforcement; an authorized serializable command service with canonical
+  fingerprint, protected claim/replay, head/latest-event validation, trusted Temporal occurrence,
+  immutable punch, revision, audit, and terminal completion; wrapped SQLSTATE retry recognition;
+  and the Today clock-in form/client mutation.
+- Verified: the database-enabled canonical gate passes 24 native checks, 145 unit/component tests,
+  20 integration tests, and five Chromium scenarios plus OpenAPI drift, formatting,
   lint/boundaries, strict TypeScript, and the production build.
-- Accessibility: the route uses one persistent focused `h1`, named progress, ordinary background
-  update text, one assertive dependency alert, semantic lists/description data, text-equivalent
-  state, and intrinsic grids preserving DOM order and 390 px reflow.
-- Security/data: each query re-resolves active self capability and applies `ATTENDANCE_READ`; the
-  source is organization/employee scoped and transaction-bound; no-store DTOs omit sensitive and
-  unnecessary identity/workflow/configuration data; session expiry clears in-memory state.
-- Documentation: added `docs/52-today-attendance-read-model.md`, updated calculation blocker
-  catalogs and repository evidence, regenerated selected OpenAPI output, and synchronized README,
-  task board, TODO, and status.
-- Remaining risk: exact absence/work intersection and approved adjustment sources arrive with their
-  owning workflows; Today does not guess those facts. The 500-event source bound becomes an
-  incomplete calculation when exceeded. Polling/offline/multi-device recovery remains `WL-405`.
-  The successful build reports a 521.48 kB minified entry-chunk warning; `WL-1001` owns measured
-  performance and justified code splitting.
-- Next task: `WL-402`.
+- Accessibility: one semantic form/native button exposes visible disabled pending text without an
+  optimistic state; success uses one polite status, stale conflict uses one safe alert, and
+  authoritative refetch moves focus to `Working` only when the prior action disappears. Component
+  and keyboard Chromium paths pass axe.
+- Security/data: origin, session, session-bound CSRF, active employee capability, and
+  `ATTENDANCE_CLOCK` authorization precede claim/replay; the transaction rechecks permission and
+  commits one organization-scoped event/revision/audit/outcome. Raw keys, fingerprints, protected
+  identity, and client time stay out of URLs, audit, logs, persistent browser state, and DTOs.
+- Documentation: added `docs/53-clock-in-mutation.md`, regenerated the required-header OpenAPI
+  artifact, aligned architecture endpoint examples, and synchronized README, task board, TODO, and
+  status.
+- Remaining risk: break, resume, and clock-out controls remain `WL-403`; bounded unknown-result
+  retry, offline/reconnect behavior, polling, and broader cross-tab/device coordination remain
+  `WL-405`. The build chunk-size warning remains owned by measured performance task `WL-1001`.
+- Next task: `WL-403`.
 
 ## Current blockers
 
-No `WL-402` blocker is known. D-502 remains open before the production browser gate.
+No `WL-403` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-402 — Implement the clock-in command through domain, transaction, idempotency, audit, API, and UI.`
+`WL-403 — Implement start-break, resume, and clock-out commands end to end.`
 
 ## Update rules
 

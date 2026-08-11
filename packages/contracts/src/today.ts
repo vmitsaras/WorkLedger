@@ -86,10 +86,34 @@ export const todayAttendanceSchema = z.strictObject({
 
 export const todayAttendanceEnvelopeSchema = createSuccessEnvelopeSchema(todayAttendanceSchema);
 
+export const clockInRequestSchema = z.strictObject({
+  expectedAttendanceRevision: z.number().int().safe().min(0),
+});
+
+export const clockInResultSchema = z.strictObject({
+  attendanceRevision: z.number().int().safe().min(1),
+  command: z.literal('CLOCK_IN'),
+  createdEvents: z
+    .array(
+      z.strictObject({
+        id: opaqueIdentifierSchema,
+        type: z.literal('CLOCK_IN'),
+      }),
+    )
+    .length(1),
+  occurredAt: instantSchema,
+  resultingState: z.literal('WORKING'),
+  validActions: z.array(attendanceCommandSchema).max(3),
+});
+
+export const clockInEnvelopeSchema = createSuccessEnvelopeSchema(clockInResultSchema);
+
 export type AttendanceCommand = z.infer<typeof attendanceCommandSchema>;
 export type AttendanceState = z.infer<typeof attendanceStateSchema>;
 export type CalculationBlockerCode = z.infer<typeof calculationBlockerCodeSchema>;
 export type CalculationWarningCode = z.infer<typeof calculationWarningCodeSchema>;
+export type ClockInRequest = z.infer<typeof clockInRequestSchema>;
+export type ClockInResult = z.infer<typeof clockInResultSchema>;
 export type TodayAttendance = z.infer<typeof todayAttendanceSchema>;
 export type TodayAttendanceEstimate = z.infer<typeof todayAttendanceEstimateSchema>;
 export type TodayTimelineEvent = z.infer<typeof todayTimelineEventSchema>;

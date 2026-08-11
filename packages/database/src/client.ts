@@ -178,6 +178,17 @@ function resolveTransactionOptions(options?: TransactionOptions): Readonly<{
 }
 
 function isRetryableTransactionError(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null || !('code' in error)) return false;
-  return typeof error.code === 'string' && RETRYABLE_TRANSACTION_CODES.has(error.code);
+  let current = error;
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (typeof current !== 'object' || current === null) return false;
+    if (
+      'code' in current &&
+      typeof current.code === 'string' &&
+      RETRYABLE_TRANSACTION_CODES.has(current.code)
+    ) {
+      return true;
+    }
+    current = 'cause' in current ? current.cause : undefined;
+  }
+  return false;
 }

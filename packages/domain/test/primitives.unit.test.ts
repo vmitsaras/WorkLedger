@@ -1,4 +1,5 @@
 import {
+  compareInstants,
   createLocalDateRange,
   failure,
   localDateRangeContains,
@@ -64,10 +65,13 @@ test('accepts only safe integer minutes and distinguishes signed from non-negati
 });
 
 test('canonicalizes offset instants to UTC without requiring minute alignment', () => {
-  expect(expectSuccess(parseInstant('2026-08-10T12:34:56+02:00'))).toBe('2026-08-10T10:34:56Z');
-  expect(expectSuccess(parseInstant('2026-08-10T12:34:56.123456789Z'))).toBe(
-    '2026-08-10T12:34:56.123456789Z',
-  );
+  const earlier = expectSuccess(parseInstant('2026-08-10T12:34:56+02:00'));
+  const later = expectSuccess(parseInstant('2026-08-10T12:34:56.123456789Z'));
+  expect(earlier).toBe('2026-08-10T10:34:56Z');
+  expect(later).toBe('2026-08-10T12:34:56.123456789Z');
+  expect(compareInstants(earlier, later)).toBe(-1);
+  expect(compareInstants(later, earlier)).toBe(1);
+  expect(compareInstants(later, later)).toBe(0);
 
   expectFailureCode(parseInstant('2026-08-10T12:34:56'), 'INVALID_INSTANT');
   expectFailureCode(parseInstant('not-an-instant'), 'INVALID_INSTANT');

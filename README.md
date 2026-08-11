@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 4 — 2 of 8 tasks complete**
+> **Current phase progress: Phase 4 — 3 of 8 tasks complete**
 
 Phase 3 passed its exit gate and the repository is now in **Phase 4: employee attendance vertical
 slice**. The workspace, project boundaries, strict tooling, test and CI baseline, local
@@ -15,11 +15,11 @@ repository/transaction boundary, accepted Better Auth credential/session foundat
 deny-by-default application authorization, shared Zod/Fastify API contract and safe error boundary,
 append-only audience-separated audit foundation, protected attendance idempotency claim/replay
 persistence, a deterministic local-only Northstar development seed, reproducible hardened OpenAPI
-JSON exposure, the authenticated application shell/profile/session slice, and the authorized
-organization-local Today attendance read model are implemented. The next task is the clock-in
-mutation (`WL-402`).
+JSON exposure, the authenticated application shell/profile/session slice, the authorized
+organization-local Today attendance read model, and the protected end-to-end clock-in mutation are
+implemented. The next task is the remaining break, resume, and clock-out mutations (`WL-403`).
 
-WorkLedger does not yet provide an attendance product workflow, coordinated local web/API process,
+WorkLedger does not yet provide the complete attendance sequence, coordinated local web/API process,
 production deployment, or supported release. The web development server renders the application
 routes and safe service-unavailable boundaries; authenticated flows are exercised against mocked
 browser transport and a real PostgreSQL-backed API integration surface in the automated tests.
@@ -77,8 +77,8 @@ pnpm with 11.20.0 --filter @workledger/web dev
 
 Vite serves the web application at `http://127.0.0.1:5173` by default. A separately composed
 same-origin API listener is not shipped yet, so local browser routes that need the API show their
-service-unavailable boundary. The Today read model is implemented, but no end-to-end clock mutation
-workflow exists yet.
+service-unavailable boundary. The Today read model and clock-in path are implemented; break, resume,
+and clock-out still belong to the next attendance slice.
 
 ## Local PostgreSQL
 
@@ -202,6 +202,7 @@ versions and makes no response-time or production-support promise.
 | [docs/50-phase-3-gate-review.md](docs/50-phase-3-gate-review.md) | Phase 3 migration, authentication, authorization, audit, idempotency, seed, security, and quality-gate evidence |
 | [docs/51-authenticated-application-shell.md](docs/51-authenticated-application-shell.md) | Authenticated routes, role-aware shell, profile/session, permission, focus, and recovery evidence |
 | [docs/52-today-attendance-read-model.md](docs/52-today-attendance-read-model.md) | Authorized Today state, timeline, provisional calculation, warning, responsive, and API evidence |
+| [docs/53-clock-in-mutation.md](docs/53-clock-in-mutation.md) | Authorized idempotent clock-in transaction, replay, audit, UI feedback, and concurrency evidence |
 
 ## License
 

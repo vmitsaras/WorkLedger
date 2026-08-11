@@ -1,11 +1,14 @@
 import {
   apiErrorEnvelopeSchema,
+  clockInEnvelopeSchema,
   csrfBootstrapEnvelopeSchema,
   revokeSelfSessionEnvelopeSchema,
   selfContextEnvelopeSchema,
   selfProfileEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   type ApiErrorCode,
+  type ApiRecoveryContext,
+  type ClockInResult,
   type SelfContext,
   type SelfProfile,
   type TodayAttendance,
@@ -16,6 +19,8 @@ export class ApiClientError extends Error {
     readonly code: ApiErrorCode | 'AUTH_PASSWORD_POLICY_REJECTED' | 'DEPENDENCY_FAILURE',
     readonly status: number,
     readonly requestId?: string,
+    readonly context?: ApiRecoveryContext,
+    readonly idempotentReplay?: boolean,
   ) {
     super(code);
     this.name = 'ApiClientError';
@@ -43,6 +48,29 @@ export async function loadTodayAttendance(signal?: AbortSignal): Promise<TodayAt
   const parsed = todayAttendanceEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
+}
+
+export async function clockIn(
+  expectedAttendanceRevision: number,
+  idempotencyKey: string,
+): Promise<ClockInResult> {
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/me/attendance/clock-in', {
+    body: JSON.stringify({ expectedAttendanceRevision }),
+    headers: {
+      'content-type': 'application/json',
+      'idempotency-key': idempotencyKey,
+      'x-workledger-csrf': token,
+    },
+    method: 'POST',
+  });
+  const parsed = clockInEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export function createAttendanceIntentKey(): string {
+  return globalThis.crypto.randomUUID();
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
@@ -144,6 +172,8 @@ async function requestJson(path: string, init: RequestInit = {}): Promise<unknow
     parsedError.success ? parsedError.data.error.code : 'DEPENDENCY_FAILURE',
     response.status,
     parsedError.success ? parsedError.data.error.requestId : undefined,
+    parsedError.success ? parsedError.data.error.context : undefined,
+    parsedError.success ? parsedError.data.meta?.idempotentReplay : undefined,
   );
 }
 

@@ -58,6 +58,10 @@ export function registerHttpFoundation(app: FastifyInstance): void {
     reply.header('cache-control', 'private, no-store');
 
     if (hasZodFastifySchemaValidationErrors(error)) {
+      const idempotencyHeaderCode = attendanceIdempotencyHeaderError(error.validation);
+      if (idempotencyHeaderCode !== null) {
+        return sendError(reply, request, 422, idempotencyHeaderCode);
+      }
       return sendError(reply, request, 422, 'VALIDATION_FAILED', {
         fields: mapValidationFields(error.validation),
       });
@@ -125,6 +129,16 @@ function sendError(
     },
   } as const;
   return reply.status(500).send(fallbackEnvelope);
+}
+
+function attendanceIdempotencyHeaderError(
+  issues: readonly ZodFastifySchemaValidationError[],
+): 'IDEMPOTENCY_KEY_INVALID' | 'IDEMPOTENCY_KEY_REQUIRED' | null {
+  const issue = issues.find(({ instancePath }) => instancePath === '/idempotency-key');
+  if (issue === undefined) return null;
+  return issue.keyword === 'invalid_type' && issue.message?.includes('undefined') === true
+    ? 'IDEMPOTENCY_KEY_REQUIRED'
+    : 'IDEMPOTENCY_KEY_INVALID';
 }
 
 function mapValidationFields(issues: readonly ZodFastifySchemaValidationError[]): ApiFieldErrors {

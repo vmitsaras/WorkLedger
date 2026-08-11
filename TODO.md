@@ -65,7 +65,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 - [x] `WL-400` Build authentication routes, application shell, profile/session surface, and route boundaries.
 - [x] `WL-401` Build Today query and attendance state endpoint.
-- [ ] `WL-402` Build clock-in mutation end to end.
+- [x] `WL-402` Build clock-in mutation end to end.
 - [ ] `WL-403` Build break, resume, and clock-out mutations end to end.
 - [ ] `WL-404` Build Today timeline and calculation breakdown.
 - [ ] `WL-405` Add duplicate, retry, stale-state, offline, and error handling.

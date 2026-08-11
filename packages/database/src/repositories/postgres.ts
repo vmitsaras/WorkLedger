@@ -809,6 +809,22 @@ class PostgresAttendanceRepository implements AttendanceRepository {
     return Object.freeze(rows.map(mapStoredPunchEvent));
   }
 
+  async findLatestPunchEvent(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ): Promise<StoredPunchEvent | null> {
+    const [row] = await this.transaction
+      .select()
+      .from(punchEvents)
+      .where(
+        and(eq(punchEvents.organizationId, organizationId), eq(punchEvents.employeeId, employeeId)),
+      )
+      .orderBy(desc(punchEvents.eventSequence))
+      .limit(1);
+
+    return row === undefined ? null : mapStoredPunchEvent(row);
+  }
+
   async advanceHead(input: AdvanceAttendanceHeadInput): Promise<AttendanceHeadRecord | null> {
     const [row] = await this.transaction
       .update(attendanceHeads)

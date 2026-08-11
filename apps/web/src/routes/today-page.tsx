@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 
 import type {
@@ -13,7 +13,12 @@ import type {
 } from '@workledger/contracts';
 import { Button } from '@workledger/ui';
 
-import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
+import {
+  ApiClientError,
+  clearSessionMemory,
+  clockIn,
+  createAttendanceIntentKey,
+} from '../app/api-client.js';
 import { todayAttendanceQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
@@ -63,28 +68,98 @@ const BLOCKER_MESSAGES: Readonly<Record<CalculationBlockerCode, string>> = {
   SCHEDULE_NOT_ASSIGNED: 'No work schedule is assigned for today.',
 };
 
+type ClockInFeedback = Readonly<{
+  intentKey: string;
+  kind: 'ERROR' | 'SUCCESS';
+  message: string;
+  requestId?: string;
+  resultingRevision?: number;
+}>;
+
 export function TodayPage() {
   const query = useQuery(todayAttendanceQuery());
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const authenticationError = isAuthenticationError(query.error);
+  const statusHeadingRef = useRef<HTMLHeadingElement>(null);
+  const focusedIntentRef = useRef<string | null>(null);
+  const [clockInFeedback, setClockInFeedback] = useState<ClockInFeedback | null>(null);
+  const clockInMutation = useMutation({
+    mutationFn: ({
+      expectedAttendanceRevision,
+      intentKey,
+    }: Readonly<{ expectedAttendanceRevision: number; intentKey: string }>) =>
+      clockIn(expectedAttendanceRevision, intentKey),
+    onError: async (error, variables) => {
+      if (isAuthenticationError(error)) return;
+      setClockInFeedback(clockInErrorFeedback(error, variables.intentKey));
+      await queryClient.invalidateQueries({ queryKey: todayAttendanceQuery().queryKey });
+    },
+    onSuccess: async (result, variables) => {
+      setClockInFeedback(
+        Object.freeze({
+          intentKey: variables.intentKey,
+          kind: 'SUCCESS',
+          message: `Clocked in at ${formatTime(result.occurredAt, query.data?.timeZone ?? 'UTC')}.`,
+          resultingRevision: result.attendanceRevision,
+        }),
+      );
+      await queryClient.invalidateQueries({ queryKey: todayAttendanceQuery().queryKey });
+    },
+  });
+  const authenticationError =
+    isAuthenticationError(query.error) || isAuthenticationError(clockInMutation.error);
 
   useEffect(() => {
     if (!authenticationError) return;
     clearSessionMemory();
     queryClient.clear();
-    if (query.error instanceof ApiClientError && query.error.code === 'AUTH_SESSION_EXPIRED') {
+    if (
+      [query.error, clockInMutation.error].some(
+        (error) => error instanceof ApiClientError && error.code === 'AUTH_SESSION_EXPIRED',
+      )
+    ) {
       setPendingSignInNotice('SESSION_EXPIRED');
     }
     void navigate('/sign-in', { replace: true });
-  }, [authenticationError, navigate, query.error, queryClient]);
+  }, [authenticationError, clockInMutation.error, navigate, query.error, queryClient]);
+
+  useEffect(() => {
+    if (
+      clockInFeedback === null ||
+      focusedIntentRef.current === clockInFeedback.intentKey ||
+      query.data === undefined ||
+      query.data?.attendance.state === 'OFF_WORK'
+    ) {
+      return;
+    }
+    if (
+      clockInFeedback.resultingRevision !== undefined &&
+      query.data.attendance.attendanceRevision < clockInFeedback.resultingRevision
+    ) {
+      return;
+    }
+    statusHeadingRef.current?.focus();
+    focusedIntentRef.current = clockInFeedback.intentKey;
+  }, [clockInFeedback, query.data]);
 
   if (query.isPending || authenticationError) return renderTodayLoading();
   if (query.isError) {
     return renderTodayLoadError({ error: query.error, retry: () => void query.refetch() });
   }
 
-  return renderTodayReady({ today: query.data, updating: query.isFetching });
+  return renderTodayReady({
+    clockInFeedback,
+    clockInPending: clockInMutation.isPending,
+    onClockIn: (expectedAttendanceRevision) => {
+      const intentKey = createAttendanceIntentKey();
+      focusedIntentRef.current = null;
+      setClockInFeedback(null);
+      clockInMutation.mutate({ expectedAttendanceRevision, intentKey });
+    },
+    statusHeadingRef,
+    today: query.data,
+    updating: query.isFetching,
+  });
 }
 
 function renderTodayLoading() {
@@ -137,9 +212,20 @@ function renderTodayLoadError({ error, retry }: Readonly<{ error: unknown; retry
 }
 
 function renderTodayReady({
+  clockInFeedback,
+  clockInPending,
+  onClockIn,
+  statusHeadingRef,
   today,
   updating,
-}: Readonly<{ today: TodayAttendance; updating: boolean }>) {
+}: Readonly<{
+  clockInFeedback: ClockInFeedback | null;
+  clockInPending: boolean;
+  onClockIn: (expectedAttendanceRevision: number) => void;
+  statusHeadingRef: RefObject<HTMLHeadingElement | null>;
+  today: TodayAttendance;
+  updating: boolean;
+}>) {
   const attendance = today.attendance;
   const calculation = today.calculation;
   const activeDescription =
@@ -172,7 +258,12 @@ function renderTodayReady({
             <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
               Current status
             </p>
-            <h2 id="current-status-title" className="m-0 text-3xl font-bold">
+            <h2
+              ref={statusHeadingRef}
+              id="current-status-title"
+              className="m-0 text-3xl font-bold outline-none focus-visible:rounded-sm focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]"
+              tabIndex={-1}
+            >
               {STATE_LABELS[attendance.state]}
             </h2>
             <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">{activeDescription}</p>
@@ -180,9 +271,39 @@ function renderTodayReady({
           <div className="grid gap-1 border-t border-[var(--wl-border)] pt-4">
             <h3 className="m-0 text-sm font-bold">Available next</h3>
             <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-              {attendance.validActions.map((action) => ACTION_LABELS[action]).join(' or ')}. Clock
-              controls arrive in the next attendance slice.
+              {attendance.validActions.map((action) => ACTION_LABELS[action]).join(' or ')}.
             </p>
+            {attendance.validActions.includes('CLOCK_IN') ? (
+              <form
+                className="mt-3"
+                aria-busy={clockInPending}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!clockInPending) onClockIn(attendance.attendanceRevision);
+                }}
+              >
+                <Button type="submit" isDisabled={clockInPending}>
+                  {clockInPending ? 'Clocking in…' : 'Clock in'}
+                </Button>
+              </form>
+            ) : null}
+            {clockInFeedback === null ? null : (
+              <div
+                className={
+                  clockInFeedback.kind === 'ERROR'
+                    ? 'wl-alert wl-alert-error mt-3 grid gap-1 rounded-xl border p-3'
+                    : 'wl-alert mt-3 grid gap-1 rounded-xl border p-3'
+                }
+                role={clockInFeedback.kind === 'ERROR' ? 'alert' : 'status'}
+              >
+                <p className="m-0 text-sm font-semibold">{clockInFeedback.message}</p>
+                {clockInFeedback.requestId === undefined ? null : (
+                  <p className="m-0 break-all text-xs">
+                    Request reference: {clockInFeedback.requestId}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -352,6 +473,54 @@ function isAuthenticationError(error: unknown): boolean {
     error instanceof ApiClientError &&
     ['AUTH_REQUIRED', 'AUTH_SESSION_EXPIRED'].includes(error.code)
   );
+}
+
+function clockInErrorFeedback(error: unknown, intentKey: string): ClockInFeedback {
+  if (error instanceof ApiClientError) {
+    if (error.code === 'ATTENDANCE_STATE_CHANGED') {
+      const currentState = error.context?.['currentState'];
+      const stateLabel =
+        typeof currentState === 'string' && currentState in STATE_LABELS
+          ? STATE_LABELS[currentState as AttendanceState].toLowerCase()
+          : 'updated';
+      return Object.freeze({
+        intentKey,
+        kind: 'ERROR',
+        message: `No clock-in was recorded. Attendance changed in another tab or device. Current status: ${stateLabel}.`,
+        ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
+      });
+    }
+    if (error.code === 'ATTENDANCE_ALREADY_WORKING') {
+      return Object.freeze({
+        intentKey,
+        kind: 'ERROR',
+        message: 'No clock-in was recorded because the current status is already working.',
+        ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
+      });
+    }
+    if (error.code === 'IDEMPOTENCY_KEY_CONFLICT') {
+      return Object.freeze({
+        intentKey,
+        kind: 'ERROR',
+        message:
+          'No clock-in was recorded because this request could not be matched safely. Review the current status before trying again.',
+        ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
+      });
+    }
+    return Object.freeze({
+      intentKey,
+      kind: 'ERROR',
+      message:
+        'WorkLedger could not confirm whether clock-in was recorded. Review the refreshed current status before trying again.',
+      ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
+    });
+  }
+  return Object.freeze({
+    intentKey,
+    kind: 'ERROR',
+    message:
+      'WorkLedger could not confirm whether clock-in was recorded. Review the refreshed current status before trying again.',
+  });
 }
 
 function formatLocalDate(localDate: string): string {

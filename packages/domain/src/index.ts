@@ -113,6 +113,7 @@ export {
   type Success,
 } from './shared/result.js';
 export {
+  compareInstants,
   compareLocalDates,
   floorInstantToMinute,
   localDateInstantBounds,

@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
@@ -9,6 +9,7 @@ import type { SelfContext, SelfProfile, TodayAttendance } from '@workledger/cont
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { createWorkLedgerQueryClient, todayAttendanceQuery } from '../src/app/query.js';
+import { clearSessionMemory } from '../src/app/api-client.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
@@ -69,6 +70,7 @@ const TODAY_ATTENDANCE: TodayAttendance = {
 };
 
 afterEach(() => {
+  clearSessionMemory();
   vi.unstubAllGlobals();
 });
 
@@ -149,6 +151,152 @@ test('shows an incomplete calculation without inventing an estimate', async () =
   expect(screen.getByRole('heading', { name: 'Not available' })).toBeVisible();
   expect(screen.getByText('No work schedule is assigned for today.')).toBeVisible();
   expect(screen.getByText('No attendance events have been recorded today.')).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('clocks in once, keeps the pending control stable, refetches authoritative state, and announces one result', async () => {
+  const offWorkToday = todayWithAttendance('OFF_WORK', 0);
+  const workingToday = todayWithAttendance('WORKING', 1);
+  let clockedIn = false;
+  let clockInRequests = 0;
+  let submittedKey = '';
+  let completeClockIn: (response: Response) => void = () => {
+    throw new Error('Clock-in request was not pending.');
+  };
+  const pendingClockIn = new Promise<Response>((resolve) => {
+    completeClockIn = resolve;
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') {
+        return successResponse(clockedIn ? workingToday : offWorkToday);
+      }
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(43) });
+      if (path === '/v1/me/attendance/clock-in' && init?.method === 'POST') {
+        clockInRequests += 1;
+        const headers = new Headers(init.headers);
+        submittedKey = headers.get('idempotency-key') ?? '';
+        expect(headers.get('x-workledger-csrf')).toBe('c'.repeat(43));
+        expect(JSON.parse(String(init.body))).toEqual({ expectedAttendanceRevision: 0 });
+        return pendingClockIn;
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/today');
+
+  const clockInButton = await screen.findByRole('button', { name: 'Clock in' });
+  await user.click(clockInButton);
+  const pendingButton = screen.getByRole('button', { name: 'Clocking in…' });
+  expect(pendingButton).toBeDisabled();
+  expect(pendingButton.closest('form')).toHaveAttribute('aria-busy', 'true');
+  fireEvent.click(pendingButton);
+  expect(clockInRequests).toBe(1);
+  expect(submittedKey).toMatch(/^[0-9a-f-]{36}$/u);
+
+  clockedIn = true;
+  completeClockIn(
+    successResponse({
+      attendanceRevision: 1,
+      command: 'CLOCK_IN',
+      createdEvents: [{ id: 'punch-clock-in-1', type: 'CLOCK_IN' }],
+      occurredAt: '2026-08-11T09:30:00Z',
+      resultingState: 'WORKING',
+      validActions: ['START_BREAK', 'CLOCK_OUT'],
+    }),
+  );
+
+  const workingHeading = await screen.findByRole('heading', { name: 'Working' });
+  await waitFor(() => expect(workingHeading).toHaveFocus());
+  expect(screen.getAllByRole('status')).toHaveLength(1);
+  expect(screen.getByRole('status')).toHaveTextContent('Clocked in at 11:30 AM.');
+  expect(screen.queryByRole('button', { name: 'Clock in' })).not.toBeInTheDocument();
+  expect(clockInRequests).toBe(1);
+  await expectNoAxeViolations(container);
+});
+
+test('recovers from a stale clock-in with one safe alert and logical status focus', async () => {
+  const offWorkToday = todayWithAttendance('OFF_WORK', 0);
+  const workingToday = todayWithAttendance('WORKING', 1);
+  let serverToday = offWorkToday;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') return successResponse(serverToday);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'd'.repeat(43) });
+      if (path === '/v1/me/attendance/clock-in' && init?.method === 'POST') {
+        serverToday = workingToday;
+        return Response.json(
+          {
+            error: {
+              code: 'ATTENDANCE_STATE_CHANGED',
+              context: {
+                attendanceRevision: 1,
+                currentState: 'WORKING',
+                validActions: ['START_BREAK', 'CLOCK_OUT'],
+              },
+              message: 'The request could not be completed.',
+              requestId: REQUEST_ID,
+            },
+          },
+          { status: 409 },
+        );
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/today');
+
+  await user.click(await screen.findByRole('button', { name: 'Clock in' }));
+  const alert = await screen.findByRole('alert');
+  expect(alert).toHaveTextContent(
+    'No clock-in was recorded. Attendance changed in another tab or device. Current status: working.',
+  );
+  expect(alert).toHaveTextContent(`Request reference: ${REQUEST_ID}`);
+  const workingHeading = screen.getByRole('heading', { name: 'Working' });
+  await waitFor(() => expect(workingHeading).toHaveFocus());
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  await expectNoAxeViolations(container);
+});
+
+test('clears the Today mutation state and announces recovery when the clock-in session expires', async () => {
+  const offWorkToday = todayWithAttendance('OFF_WORK', 0);
+  let sessionExpired = false;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') {
+        return sessionExpired
+          ? authenticationErrorResponse('AUTH_SESSION_EXPIRED')
+          : successResponse(EMPLOYEE_CONTEXT);
+      }
+      if (path === '/v1/me/attendance/today') return successResponse(offWorkToday);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'e'.repeat(43) });
+      if (path === '/v1/me/attendance/clock-in' && init?.method === 'POST') {
+        sessionExpired = true;
+        return authenticationErrorResponse('AUTH_SESSION_EXPIRED');
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/today');
+
+  await user.click(await screen.findByRole('button', { name: 'Clock in' }));
+  const signInHeading = await screen.findByRole('heading', { name: 'Sign in' });
+  await waitFor(() => expect(signInHeading).toHaveFocus());
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Your session expired. Sign in again to continue.',
+  );
+  expect(screen.queryByRole('button', { name: 'Clock in' })).not.toBeInTheDocument();
   await expectNoAxeViolations(container);
 });
 
@@ -318,6 +466,38 @@ function authenticatedFetch(today: TodayAttendance = TODAY_ATTENDANCE) {
     if (path === '/v1/me/attendance/today') return successResponse(today);
     throw new Error(`Unexpected test request: ${path}`);
   });
+}
+
+function todayWithAttendance(
+  state: 'OFF_WORK' | 'WORKING',
+  attendanceRevision: number,
+): TodayAttendance {
+  const working = state === 'WORKING';
+  return {
+    ...TODAY_ATTENDANCE,
+    attendance: {
+      activeSince: working ? '2026-08-11T09:30:00Z' : null,
+      attendanceRevision,
+      state,
+      validActions: working ? ['START_BREAK', 'CLOCK_OUT'] : ['CLOCK_IN'],
+    },
+    calculation: {
+      ...TODAY_ATTENDANCE.calculation,
+      estimate:
+        TODAY_ATTENDANCE.calculation.estimate === null
+          ? null
+          : {
+              ...TODAY_ATTENDANCE.calculation.estimate,
+              breakMinutes: 0,
+              creditedMinutes: 0,
+              workedMinutes: 0,
+            },
+      warnings: [],
+    },
+    timeline: working
+      ? [{ id: 'punch-clock-in-1', occurredAt: '2026-08-11T09:30:00Z', type: 'CLOCK_IN' }]
+      : [],
+  };
 }
 
 function requestPath(input: RequestInfo | URL): string {

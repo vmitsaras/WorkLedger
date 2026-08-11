@@ -12,9 +12,13 @@ import {
 import type { WorkLedgerDatabase } from '@workledger/database';
 
 import { AUTH_SECURITY_PROFILE, type WorkLedgerAuthentication } from '../auth/authentication.js';
-import { requestSessionError, requireRequestSession } from '../auth/request-session.js';
+import {
+  requestSessionError,
+  requireRequestCsrf,
+  requireRequestSession,
+  requireSameOrigin,
+} from '../auth/request-session.js';
 import type { RuntimeConfig } from '../config.js';
-import { WorkLedgerApiError } from '../http/errors.js';
 import {
   createAccountSelfService,
   parseRequestIdentifier,
@@ -123,10 +127,7 @@ export function registerAccountSelfServiceRoutes(
         currentSessionId: session.id,
         fresh: session.fresh,
       });
-      const csrf = request.headers['x-workledger-csrf'];
-      if (typeof csrf !== 'string' || !(await authentication.verifyCsrfToken(headers, csrf))) {
-        throw new WorkLedgerApiError({ code: 'AUTH_CSRF_INVALID', statusCode: 403 });
-      }
+      await requireRequestCsrf(request, authentication, headers);
 
       const result = await selfService.revokeSession(identity, {
         at: requestInstant(),
@@ -160,17 +161,4 @@ async function requireIdentity(
 
 function requestInstant() {
   return parseRequestInstant(new Date().toISOString());
-}
-
-function requireSameOrigin(request: FastifyRequest, canonicalOrigin: string): void {
-  const origin = request.headers.origin;
-  if (origin === canonicalOrigin) return;
-  if (origin === undefined && typeof request.headers.referer === 'string') {
-    try {
-      if (new URL(request.headers.referer).origin === canonicalOrigin) return;
-    } catch {
-      // The safe error below intentionally does not echo the submitted header.
-    }
-  }
-  throw new WorkLedgerApiError({ code: 'AUTH_ORIGIN_INVALID', statusCode: 403 });
 }

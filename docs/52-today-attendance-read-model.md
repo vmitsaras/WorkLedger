@@ -97,9 +97,9 @@ alone.
 
 ## Deferred ownership
 
-- `WL-402` and `WL-403` add idempotent clock mutations and deliberate action feedback. This task
-  exposes valid next actions as text but does not render non-functional clock controls or claim an
-  optimistic state.
+- `WL-402` adds the idempotent `CLOCK_IN` mutation and deliberate action feedback described in
+  `docs/53-clock-in-mutation.md`. `WL-403` adds break, resume, clock-out, and active-break
+  confirmation; unavailable actions remain truthful text rather than non-functional controls.
 - `WL-404` enriches the timeline and calculation-detail workflow after all clock transitions exist.
 - `WL-405` owns polling, offline behavior, cross-tab/device refresh, and mutation retry conflicts.
 - Absence workflow work will provide exact effective coverage/work-intersection facts for

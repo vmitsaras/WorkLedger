@@ -5,6 +5,8 @@ import { z } from 'zod';
 import {
   apiErrorEnvelopeSchema,
   apiRecoveryContextSchema,
+  clockInEnvelopeSchema,
+  clockInRequestSchema,
   createSuccessEnvelopeSchema,
   selfProfileEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
@@ -97,6 +99,37 @@ test('keeps the Today contract provisional, bounded, and free of account identit
     todayAttendanceEnvelopeSchema.parse({
       ...response,
       data: { ...response.data, employeeId: 'not-for-browser-transport' },
+    }),
+  ).toThrow();
+});
+
+test('keeps clock-in input strict and returns only its authoritative semantic outcome', () => {
+  expect(clockInRequestSchema.parse({ expectedAttendanceRevision: 0 })).toEqual({
+    expectedAttendanceRevision: 0,
+  });
+  expect(() =>
+    clockInRequestSchema.parse({
+      clientOccurredAt: '2026-08-11T08:00:00Z',
+      expectedAttendanceRevision: 0,
+    }),
+  ).toThrow();
+
+  const response = {
+    data: {
+      attendanceRevision: 1,
+      command: 'CLOCK_IN',
+      createdEvents: [{ id: 'punch-1', type: 'CLOCK_IN' }],
+      occurredAt: '2026-08-11T08:00:00Z',
+      resultingState: 'WORKING',
+      validActions: ['START_BREAK', 'CLOCK_OUT'],
+    },
+    meta: { idempotentReplay: true, requestId: randomUUID() },
+  };
+  expect(clockInEnvelopeSchema.parse(response)).toEqual(response);
+  expect(() =>
+    clockInEnvelopeSchema.parse({
+      ...response,
+      data: { ...response.data, organizationId: 'not-for-browser-transport' },
     }),
   ).toThrow();
 });

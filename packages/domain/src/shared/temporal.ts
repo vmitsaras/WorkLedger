@@ -91,6 +91,10 @@ export function floorInstantToMinute(instant: Instant): Instant {
     .toString() as Instant;
 }
 
+export function compareInstants(left: Instant, right: Instant): -1 | 0 | 1 {
+  return Temporal.Instant.compare(left, right);
+}
+
 export function localDateInstantBounds(
   localDate: LocalDate,
   timeZone: TimeZoneId,

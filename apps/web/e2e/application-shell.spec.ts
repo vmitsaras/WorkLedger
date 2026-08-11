@@ -75,6 +75,73 @@ test('signs in through the accessible form and focuses the destination route', a
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('clocks in by keyboard, sends protected intent metadata, and focuses the authoritative status', async ({
+  page,
+}) => {
+  let clockedIn = false;
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({
+      json: success(
+        clockedIn
+          ? {
+              ...TODAY_ATTENDANCE,
+              attendance: {
+                activeSince: '2026-08-11T09:30:00Z',
+                attendanceRevision: 1,
+                state: 'WORKING',
+                validActions: ['START_BREAK', 'CLOCK_OUT'],
+              },
+            }
+          : {
+              ...TODAY_ATTENDANCE,
+              attendance: {
+                activeSince: null,
+                attendanceRevision: 0,
+                state: 'OFF_WORK',
+                validActions: ['CLOCK_IN'],
+              },
+              timeline: [],
+            },
+      ),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'k'.repeat(43) }) });
+  });
+  await page.route('**/v1/me/attendance/clock-in', async (route) => {
+    expect(route.request().headers()['x-workledger-csrf']).toBe('k'.repeat(43));
+    expect(route.request().headers()['idempotency-key']).toMatch(/^[0-9a-f-]{36}$/u);
+    expect(route.request().postDataJSON()).toEqual({ expectedAttendanceRevision: 0 });
+    clockedIn = true;
+    await route.fulfill({
+      json: success({
+        attendanceRevision: 1,
+        command: 'CLOCK_IN',
+        createdEvents: [{ id: 'punch-clock-in-1', type: 'CLOCK_IN' }],
+        occurredAt: '2026-08-11T09:30:00Z',
+        resultingState: 'WORKING',
+        validActions: ['START_BREAK', 'CLOCK_OUT'],
+      }),
+      status: 200,
+    });
+  });
+
+  await page.goto('/today');
+  const clockInButton = page.getByRole('button', { name: 'Clock in' });
+  await clockInButton.focus();
+  await page.keyboard.press('Enter');
+
+  const workingHeading = page.getByRole('heading', { name: 'Working' });
+  await expect(workingHeading).toBeFocused();
+  await expect(page.getByRole('status')).toContainText('Clocked in at');
+  await expect(clockInButton).toBeHidden();
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('captures the reset grant in memory and removes it from browser history immediately', async ({
   page,
 }) => {

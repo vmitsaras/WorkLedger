@@ -19,6 +19,33 @@ export async function requireRequestSession(
   return Object.freeze({ headers, session });
 }
 
+export function requireSameOrigin(request: FastifyRequest, canonicalOrigin: string): void {
+  const origin = request.headers.origin;
+  if (origin === canonicalOrigin) return;
+  if (origin === undefined && typeof request.headers.referer === 'string') {
+    try {
+      if (new URL(request.headers.referer).origin === canonicalOrigin) return;
+    } catch {
+      // The safe error below intentionally does not echo the submitted header.
+    }
+  }
+  throw new WorkLedgerApiError({ code: 'AUTH_ORIGIN_INVALID', statusCode: 403 });
+}
+
+export async function requireRequestCsrf(
+  request: FastifyRequest,
+  authentication: WorkLedgerAuthentication,
+  authenticationHeaders: Headers,
+): Promise<void> {
+  const csrf = request.headers['x-workledger-csrf'];
+  if (
+    typeof csrf !== 'string' ||
+    !(await authentication.verifyCsrfToken(authenticationHeaders, csrf))
+  ) {
+    throw new WorkLedgerApiError({ code: 'AUTH_CSRF_INVALID', statusCode: 403 });
+  }
+}
+
 export function requestSessionError(request: FastifyRequest): WorkLedgerApiError {
   const cookie = request.headers.cookie;
   const hadSessionCookie =

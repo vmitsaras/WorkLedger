@@ -396,6 +396,10 @@ export interface AttendanceRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<void>;
+  findLatestPunchEvent(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ): Promise<StoredPunchEvent | null>;
   listPunchEvents(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,

@@ -162,10 +162,10 @@ Prefer domain-oriented commands over generic CRUD where rules matter.
 
 Examples:
 
-- `POST /v1/attendance/clock-in`
-- `POST /v1/attendance/start-break`
-- `POST /v1/attendance/end-break`
-- `POST /v1/attendance/clock-out`
+- `POST /v1/me/attendance/clock-in`
+- `POST /v1/me/attendance/start-break`
+- `POST /v1/me/attendance/end-break`
+- `POST /v1/me/attendance/clock-out`
 - `GET /v1/me/attendance/today`
 - `GET /v1/me/time-records`
 - `POST /v1/correction-requests`
