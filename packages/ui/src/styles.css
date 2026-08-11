@@ -13,8 +13,8 @@
     --wl-text-muted: oklch(0.44 0.025 248);
     --wl-border: oklch(0.82 0.018 248);
     --wl-border-strong: oklch(0.6 0.025 248);
-    --wl-action-primary: oklch(0.45 0.13 225);
-    --wl-action-primary-hover: oklch(0.38 0.12 225);
+    --wl-action-primary: oklch(0.36 0.12 225);
+    --wl-action-primary-hover: oklch(0.3 0.1 225);
     --wl-action-primary-text: oklch(0.99 0 0);
     --wl-link: oklch(0.4 0.14 225);
     --wl-link-hover: oklch(0.32 0.12 225);

@@ -102,8 +102,8 @@ create duplicate announcements for one intent.
 
 ## Deferred ownership
 
-- `WL-403` adds `START_BREAK`, `RESUME`, and `CLOCK_OUT`, including active-break confirmation. The
-  current UI truthfully lists those valid next actions but does not render non-functional controls.
+- `WL-403` completes `START_BREAK`, `RESUME`, and `CLOCK_OUT`, including active-break confirmation,
+  through the shared boundary documented in `docs/54-attendance-command-sequence.md`.
 - `WL-405` owns bounded unknown-result retry, offline/reconnect behavior, polling, and broader
   cross-tab/device coordination. This slice does not queue offline events or automatically retry a
   browser mutation.

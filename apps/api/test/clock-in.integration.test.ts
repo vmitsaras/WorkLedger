@@ -285,6 +285,290 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `runs the complete attendance sequence with stale contenders and atomic active-break clock-out (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'attendance_sequence',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+
+    try {
+      const employee = await createClockInEmployee(fixture.client);
+      const cookie = await signIn(app);
+      const csrf = await getCsrf(app, cookie);
+
+      const clockIn = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        'clock-in-sequence-intent-0001',
+        '/v1/me/attendance/clock-in',
+        { expectedAttendanceRevision: 0 },
+      );
+      expect(clockIn.statusCode).toBe(200);
+
+      const invalidConfirmationField = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        'start-break-invalid-field-0001',
+        '/v1/me/attendance/start-break',
+        { confirmActiveBreak: true, expectedAttendanceRevision: 1 },
+      );
+      expect(invalidConfirmationField.statusCode).toBe(422);
+      expect(invalidConfirmationField.json()).toMatchObject({
+        error: { code: 'VALIDATION_FAILED' },
+      });
+
+      const breakKeys = ['start-break-contender-a-0001', 'start-break-contender-b-0001'] as const;
+      const breakContenders = await Promise.all(
+        breakKeys.map((key) =>
+          attendanceRequest(app, cookie, csrf, key, '/v1/me/attendance/start-break', {
+            expectedAttendanceRevision: 1,
+          }),
+        ),
+      );
+      expect(breakContenders.map((response) => response.statusCode).sort()).toEqual([200, 409]);
+      const successfulBreakIndex = breakContenders.findIndex(
+        (response) => response.statusCode === 200,
+      );
+      expect(successfulBreakIndex).toBeGreaterThanOrEqual(0);
+      const successfulBreak = breakContenders[successfulBreakIndex];
+      const successfulBreakKey = breakKeys[successfulBreakIndex];
+      if (successfulBreak === undefined || successfulBreakKey === undefined) {
+        throw new Error('Expected one successful break contender.');
+      }
+      expect(successfulBreak.json()).toMatchObject({
+        data: {
+          attendanceRevision: 2,
+          command: 'START_BREAK',
+          createdEvents: [{ type: 'BREAK_START' }],
+          resultingState: 'ON_BREAK',
+          validActions: ['RESUME', 'CLOCK_OUT'],
+        },
+      });
+      const staleBreak = breakContenders.find((response) => response.statusCode === 409);
+      expect(staleBreak?.json()).toMatchObject({
+        error: {
+          code: 'ATTENDANCE_STATE_CHANGED',
+          context: { attendanceRevision: 2, currentState: 'ON_BREAK' },
+        },
+      });
+
+      const crossCommandKeyReuse = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        successfulBreakKey,
+        '/v1/me/attendance/end-break',
+        { expectedAttendanceRevision: 2 },
+      );
+      expect(crossCommandKeyReuse.statusCode).toBe(409);
+      expect(crossCommandKeyReuse.json()).toMatchObject({
+        error: { code: 'IDEMPOTENCY_KEY_CONFLICT' },
+      });
+
+      const resume = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        'resume-sequence-intent-000001',
+        '/v1/me/attendance/end-break',
+        { expectedAttendanceRevision: 2 },
+      );
+      expect(resume.statusCode).toBe(200);
+      expect(resume.json()).toMatchObject({
+        data: {
+          attendanceRevision: 3,
+          command: 'RESUME',
+          createdEvents: [{ type: 'BREAK_END' }],
+          resultingState: 'WORKING',
+        },
+      });
+
+      const secondBreak = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        'start-break-sequence-intent-0002',
+        '/v1/me/attendance/start-break',
+        { expectedAttendanceRevision: 3 },
+      );
+      expect(secondBreak.statusCode).toBe(200);
+
+      const confirmationKey = 'clock-out-confirmation-intent-001';
+      const confirmationRequired = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        confirmationKey,
+        '/v1/me/attendance/clock-out',
+        { expectedAttendanceRevision: 4 },
+      );
+      expect(confirmationRequired.statusCode).toBe(409);
+      expect(confirmationRequired.json()).toMatchObject({
+        error: {
+          code: 'ATTENDANCE_BREAK_CONFIRMATION_REQUIRED',
+          context: {
+            attendanceRevision: 4,
+            currentState: 'ON_BREAK',
+            requiresBreakConfirmation: true,
+          },
+        },
+      });
+      const normalizedFalseReplay = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        confirmationKey,
+        '/v1/me/attendance/clock-out',
+        { confirmActiveBreak: false, expectedAttendanceRevision: 4 },
+      );
+      expect(normalizedFalseReplay.statusCode).toBe(409);
+      expect(normalizedFalseReplay.json()).toMatchObject({
+        error: { code: 'ATTENDANCE_BREAK_CONFIRMATION_REQUIRED' },
+        meta: { idempotentReplay: true },
+      });
+      const changedConfirmation = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        confirmationKey,
+        '/v1/me/attendance/clock-out',
+        { confirmActiveBreak: true, expectedAttendanceRevision: 4 },
+      );
+      expect(changedConfirmation.statusCode).toBe(409);
+      expect(changedConfirmation.json()).toMatchObject({
+        error: { code: 'IDEMPOTENCY_KEY_CONFLICT' },
+      });
+
+      const confirmedClockOutKey = 'clock-out-confirmed-intent-0001';
+      const confirmedClockOut = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        confirmedClockOutKey,
+        '/v1/me/attendance/clock-out',
+        { confirmActiveBreak: true, expectedAttendanceRevision: 4 },
+      );
+      expect(confirmedClockOut.statusCode).toBe(200);
+      expect(confirmedClockOut.json()).toMatchObject({
+        data: {
+          attendanceRevision: 5,
+          command: 'CLOCK_OUT',
+          createdEvents: [{ type: 'BREAK_END' }, { type: 'CLOCK_OUT' }],
+          resultingState: 'OFF_WORK',
+          validActions: ['CLOCK_IN'],
+        },
+      });
+      const confirmedReplay = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        confirmedClockOutKey,
+        '/v1/me/attendance/clock-out',
+        { confirmActiveBreak: true, expectedAttendanceRevision: 4 },
+      );
+      expect(confirmedReplay.statusCode).toBe(200);
+      expect(confirmedReplay.json()).toMatchObject({ meta: { idempotentReplay: true } });
+
+      const secondClockIn = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        'clock-in-sequence-intent-0002',
+        '/v1/me/attendance/clock-in',
+        { expectedAttendanceRevision: 5 },
+      );
+      expect(secondClockIn.statusCode).toBe(200);
+      const ordinaryClockOut = await attendanceRequest(
+        app,
+        cookie,
+        csrf,
+        'clock-out-working-intent-0001',
+        '/v1/me/attendance/clock-out',
+        { expectedAttendanceRevision: 6 },
+      );
+      expect(ordinaryClockOut.statusCode).toBe(200);
+      expect(ordinaryClockOut.json()).toMatchObject({
+        data: {
+          attendanceRevision: 7,
+          command: 'CLOCK_OUT',
+          createdEvents: [{ type: 'CLOCK_OUT' }],
+          resultingState: 'OFF_WORK',
+        },
+      });
+
+      const stored = await fixture.client.query<{
+        attendance_revision: number;
+        event_types: string[];
+        next_event_sequence: number;
+        state: string;
+      }>(
+        `select h.attendance_revision, h.next_event_sequence, h.state,
+                array_agg(p.event_type::text order by p.event_sequence) as event_types
+         from attendance_heads h
+         join punch_events p on p.employee_id = h.employee_id
+         where h.employee_id = $1
+         group by h.attendance_revision, h.next_event_sequence, h.state`,
+        [employee.employeeId],
+      );
+      expect(stored.rows[0]).toEqual({
+        attendance_revision: 7,
+        event_types: [
+          'CLOCK_IN',
+          'BREAK_START',
+          'BREAK_END',
+          'BREAK_START',
+          'BREAK_END',
+          'CLOCK_OUT',
+          'CLOCK_IN',
+          'CLOCK_OUT',
+        ],
+        next_event_sequence: 9,
+        state: 'OFF_WORK',
+      });
+      const auditCounts = await fixture.client.query<{ action_code: string; count: string }>(
+        `select action_code, count(*)::text as count
+         from domain_audit_events
+         where subject_employee_id = $1
+         group by action_code
+         order by action_code`,
+        [employee.employeeId],
+      );
+      expect(auditCounts.rows).toEqual([
+        { action_code: 'ATTENDANCE_CLOCK_IN', count: '2' },
+        { action_code: 'ATTENDANCE_CLOCK_OUT', count: '2' },
+        { action_code: 'ATTENDANCE_RESUME', count: '1' },
+        { action_code: 'ATTENDANCE_START_BREAK', count: '2' },
+      ]);
+      const multiEventAudit = await fixture.client.query<{ count: string }>(
+        `select count(*)::text as count
+         from domain_audit_events
+         where subject_employee_id = $1
+           and action_code = 'ATTENDANCE_CLOCK_OUT'
+           and facts->>'eventCount' = '2'`,
+        [employee.employeeId],
+      );
+      expect(multiEventAudit.rows[0]?.count).toBe('1');
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createClockInEmployee(
   client: pg.PoolClient,
 ): Promise<Readonly<{ employeeId: string; organizationId: string }>> {
@@ -375,6 +659,29 @@ function clockInRequest(
     url: '/v1/me/attendance/clock-in',
     headers: mutationHeaders(cookie, csrf, idempotencyKey),
     payload: { expectedAttendanceRevision },
+  });
+}
+
+function attendanceRequest(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  csrf: string,
+  idempotencyKey: string,
+  url:
+    | '/v1/me/attendance/clock-in'
+    | '/v1/me/attendance/clock-out'
+    | '/v1/me/attendance/end-break'
+    | '/v1/me/attendance/start-break',
+  payload: Readonly<{
+    confirmActiveBreak?: boolean;
+    expectedAttendanceRevision: number;
+  }>,
+) {
+  return app.inject({
+    method: 'POST',
+    url,
+    headers: mutationHeaders(cookie, csrf, idempotencyKey),
+    payload,
   });
 }
 

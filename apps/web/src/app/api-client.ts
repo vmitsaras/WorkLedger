@@ -1,14 +1,18 @@
 import {
   apiErrorEnvelopeSchema,
   clockInEnvelopeSchema,
+  clockOutEnvelopeSchema,
   csrfBootstrapEnvelopeSchema,
+  resumeAttendanceEnvelopeSchema,
   revokeSelfSessionEnvelopeSchema,
   selfContextEnvelopeSchema,
   selfProfileEnvelopeSchema,
+  startBreakEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   type ApiErrorCode,
   type ApiRecoveryContext,
-  type ClockInResult,
+  type AttendanceCommand,
+  type AttendanceCommandResult,
   type SelfContext,
   type SelfProfile,
   type TodayAttendance,
@@ -50,27 +54,79 @@ export async function loadTodayAttendance(signal?: AbortSignal): Promise<TodayAt
   return parsed.data.data;
 }
 
-export async function clockIn(
-  expectedAttendanceRevision: number,
-  idempotencyKey: string,
-): Promise<ClockInResult> {
+type SimpleAttendanceIntent = Readonly<{
+  command: Exclude<AttendanceCommand, 'CLOCK_OUT'>;
+  expectedAttendanceRevision: number;
+  idempotencyKey: string;
+}>;
+
+type ClockOutAttendanceIntent = Readonly<{
+  command: 'CLOCK_OUT';
+  confirmActiveBreak?: boolean;
+  expectedAttendanceRevision: number;
+  idempotencyKey: string;
+}>;
+
+export type AttendanceCommandIntent = SimpleAttendanceIntent | ClockOutAttendanceIntent;
+
+const ATTENDANCE_COMMAND_PATHS: Readonly<Record<AttendanceCommand, string>> = Object.freeze({
+  CLOCK_IN: '/v1/me/attendance/clock-in',
+  CLOCK_OUT: '/v1/me/attendance/clock-out',
+  RESUME: '/v1/me/attendance/end-break',
+  START_BREAK: '/v1/me/attendance/start-break',
+});
+
+export async function executeAttendanceCommand(
+  intent: AttendanceCommandIntent,
+): Promise<AttendanceCommandResult> {
   const token = await getCsrfToken();
-  const body = await requestJson('/v1/me/attendance/clock-in', {
-    body: JSON.stringify({ expectedAttendanceRevision }),
+  const requestBody =
+    intent.command === 'CLOCK_OUT'
+      ? {
+          ...(intent.confirmActiveBreak === undefined
+            ? {}
+            : { confirmActiveBreak: intent.confirmActiveBreak }),
+          expectedAttendanceRevision: intent.expectedAttendanceRevision,
+        }
+      : { expectedAttendanceRevision: intent.expectedAttendanceRevision };
+  const body = await requestJson(ATTENDANCE_COMMAND_PATHS[intent.command], {
+    body: JSON.stringify(requestBody),
     headers: {
       'content-type': 'application/json',
-      'idempotency-key': idempotencyKey,
+      'idempotency-key': intent.idempotencyKey,
       'x-workledger-csrf': token,
     },
     method: 'POST',
   });
-  const parsed = clockInEnvelopeSchema.safeParse(body);
-  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
-  return parsed.data.data;
+  switch (intent.command) {
+    case 'CLOCK_IN':
+      return parseAttendanceEnvelope(clockInEnvelopeSchema.safeParse(body), intent.command);
+    case 'START_BREAK':
+      return parseAttendanceEnvelope(startBreakEnvelopeSchema.safeParse(body), intent.command);
+    case 'RESUME':
+      return parseAttendanceEnvelope(
+        resumeAttendanceEnvelopeSchema.safeParse(body),
+        intent.command,
+      );
+    case 'CLOCK_OUT':
+      return parseAttendanceEnvelope(clockOutEnvelopeSchema.safeParse(body), intent.command);
+  }
 }
 
 export function createAttendanceIntentKey(): string {
   return globalThis.crypto.randomUUID();
+}
+
+function parseAttendanceEnvelope(
+  parsed: Readonly<
+    { success: false } | { success: true; data: Readonly<{ data: AttendanceCommandResult }> }
+  >,
+  command: AttendanceCommand,
+): AttendanceCommandResult {
+  if (!parsed.success || parsed.data.data.command !== command) {
+    throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  }
+  return parsed.data.data;
 }
 
 export async function signIn(email: string, password: string): Promise<void> {

@@ -90,30 +90,80 @@ export const clockInRequestSchema = z.strictObject({
   expectedAttendanceRevision: z.number().int().safe().min(0),
 });
 
-export const clockInResultSchema = z.strictObject({
-  attendanceRevision: z.number().int().safe().min(1),
-  command: z.literal('CLOCK_IN'),
-  createdEvents: z
-    .array(
-      z.strictObject({
-        id: opaqueIdentifierSchema,
-        type: z.literal('CLOCK_IN'),
-      }),
-    )
-    .length(1),
-  occurredAt: instantSchema,
-  resultingState: z.literal('WORKING'),
-  validActions: z.array(attendanceCommandSchema).max(3),
+export const startBreakRequestSchema = clockInRequestSchema;
+export const resumeAttendanceRequestSchema = clockInRequestSchema;
+export const clockOutRequestSchema = z.strictObject({
+  confirmActiveBreak: z.boolean().optional(),
+  expectedAttendanceRevision: z.number().int().safe().min(0),
 });
 
+const attendanceResultShape = {
+  attendanceRevision: z.number().int().safe().min(1),
+  occurredAt: instantSchema,
+  validActions: z.array(attendanceCommandSchema).max(3),
+};
+
+const punchResult = <Type extends (typeof PUNCH_EVENT_TYPES)[number]>(type: Type) =>
+  z.strictObject({ id: opaqueIdentifierSchema, type: z.literal(type) });
+
+export const clockInResultSchema = z.strictObject({
+  ...attendanceResultShape,
+  command: z.literal('CLOCK_IN'),
+  createdEvents: z.tuple([punchResult('CLOCK_IN')]),
+  resultingState: z.literal('WORKING'),
+});
+
+export const startBreakResultSchema = z.strictObject({
+  ...attendanceResultShape,
+  command: z.literal('START_BREAK'),
+  createdEvents: z.tuple([punchResult('BREAK_START')]),
+  resultingState: z.literal('ON_BREAK'),
+});
+
+export const resumeAttendanceResultSchema = z.strictObject({
+  ...attendanceResultShape,
+  command: z.literal('RESUME'),
+  createdEvents: z.tuple([punchResult('BREAK_END')]),
+  resultingState: z.literal('WORKING'),
+});
+
+export const clockOutResultSchema = z.strictObject({
+  ...attendanceResultShape,
+  command: z.literal('CLOCK_OUT'),
+  createdEvents: z.union([
+    z.tuple([punchResult('CLOCK_OUT')]),
+    z.tuple([punchResult('BREAK_END'), punchResult('CLOCK_OUT')]),
+  ]),
+  resultingState: z.literal('OFF_WORK'),
+});
+
+export const attendanceCommandResultSchema = z.discriminatedUnion('command', [
+  clockInResultSchema,
+  startBreakResultSchema,
+  resumeAttendanceResultSchema,
+  clockOutResultSchema,
+]);
+
 export const clockInEnvelopeSchema = createSuccessEnvelopeSchema(clockInResultSchema);
+export const startBreakEnvelopeSchema = createSuccessEnvelopeSchema(startBreakResultSchema);
+export const resumeAttendanceEnvelopeSchema = createSuccessEnvelopeSchema(
+  resumeAttendanceResultSchema,
+);
+export const clockOutEnvelopeSchema = createSuccessEnvelopeSchema(clockOutResultSchema);
 
 export type AttendanceCommand = z.infer<typeof attendanceCommandSchema>;
+export type AttendanceCommandResult = z.infer<typeof attendanceCommandResultSchema>;
 export type AttendanceState = z.infer<typeof attendanceStateSchema>;
 export type CalculationBlockerCode = z.infer<typeof calculationBlockerCodeSchema>;
 export type CalculationWarningCode = z.infer<typeof calculationWarningCodeSchema>;
 export type ClockInRequest = z.infer<typeof clockInRequestSchema>;
 export type ClockInResult = z.infer<typeof clockInResultSchema>;
+export type ClockOutRequest = z.infer<typeof clockOutRequestSchema>;
+export type ClockOutResult = z.infer<typeof clockOutResultSchema>;
+export type ResumeAttendanceRequest = z.infer<typeof resumeAttendanceRequestSchema>;
+export type ResumeAttendanceResult = z.infer<typeof resumeAttendanceResultSchema>;
+export type StartBreakRequest = z.infer<typeof startBreakRequestSchema>;
+export type StartBreakResult = z.infer<typeof startBreakResultSchema>;
 export type TodayAttendance = z.infer<typeof todayAttendanceSchema>;
 export type TodayAttendanceEstimate = z.infer<typeof todayAttendanceEstimateSchema>;
 export type TodayTimelineEvent = z.infer<typeof todayTimelineEventSchema>;

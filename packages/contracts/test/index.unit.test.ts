@@ -7,8 +7,12 @@ import {
   apiRecoveryContextSchema,
   clockInEnvelopeSchema,
   clockInRequestSchema,
+  clockOutEnvelopeSchema,
+  clockOutRequestSchema,
   createSuccessEnvelopeSchema,
+  resumeAttendanceEnvelopeSchema,
   selfProfileEnvelopeSchema,
+  startBreakEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   workspaceDependencies,
   workspacePackage,
@@ -130,6 +134,75 @@ test('keeps clock-in input strict and returns only its authoritative semantic ou
     clockInEnvelopeSchema.parse({
       ...response,
       data: { ...response.data, organizationId: 'not-for-browser-transport' },
+    }),
+  ).toThrow();
+});
+
+test('keeps break, resume, and clock-out outcomes correlated with exact immutable events', () => {
+  const meta = { idempotentReplay: false, requestId: randomUUID() };
+  const base = {
+    attendanceRevision: 2,
+    occurredAt: '2026-08-11T12:00:00Z',
+  };
+
+  expect(
+    startBreakEnvelopeSchema.parse({
+      data: {
+        ...base,
+        command: 'START_BREAK',
+        createdEvents: [{ id: 'punch-2', type: 'BREAK_START' }],
+        resultingState: 'ON_BREAK',
+        validActions: ['RESUME', 'CLOCK_OUT'],
+      },
+      meta,
+    }),
+  ).toMatchObject({ data: { command: 'START_BREAK', resultingState: 'ON_BREAK' } });
+
+  expect(
+    resumeAttendanceEnvelopeSchema.parse({
+      data: {
+        ...base,
+        command: 'RESUME',
+        createdEvents: [{ id: 'punch-3', type: 'BREAK_END' }],
+        resultingState: 'WORKING',
+        validActions: ['START_BREAK', 'CLOCK_OUT'],
+      },
+      meta,
+    }),
+  ).toMatchObject({ data: { command: 'RESUME', resultingState: 'WORKING' } });
+
+  expect(clockOutRequestSchema.parse({ expectedAttendanceRevision: 4 })).toEqual({
+    expectedAttendanceRevision: 4,
+  });
+  expect(
+    clockOutRequestSchema.parse({ confirmActiveBreak: true, expectedAttendanceRevision: 4 }),
+  ).toEqual({ confirmActiveBreak: true, expectedAttendanceRevision: 4 });
+  expect(() =>
+    clockInRequestSchema.parse({ confirmActiveBreak: true, expectedAttendanceRevision: 4 }),
+  ).toThrow();
+
+  const confirmedClockOut = {
+    data: {
+      ...base,
+      attendanceRevision: 5,
+      command: 'CLOCK_OUT',
+      createdEvents: [
+        { id: 'punch-4', type: 'BREAK_END' },
+        { id: 'punch-5', type: 'CLOCK_OUT' },
+      ],
+      resultingState: 'OFF_WORK',
+      validActions: ['CLOCK_IN'],
+    },
+    meta,
+  };
+  expect(clockOutEnvelopeSchema.parse(confirmedClockOut)).toEqual(confirmedClockOut);
+  expect(() =>
+    clockOutEnvelopeSchema.parse({
+      ...confirmedClockOut,
+      data: {
+        ...confirmedClockOut.data,
+        createdEvents: [...confirmedClockOut.data.createdEvents].reverse(),
+      },
     }),
   ).toThrow();
 });

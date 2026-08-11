@@ -75,37 +75,32 @@ test('signs in through the accessible form and focuses the destination route', a
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('clocks in by keyboard, sends protected intent metadata, and focuses the authoritative status', async ({
+test('completes the attendance sequence by keyboard with protected intents and break confirmation', async ({
   page,
 }) => {
-  let clockedIn = false;
+  let attendanceState: 'OFF_WORK' | 'ON_BREAK' | 'WORKING' = 'OFF_WORK';
+  let attendanceRevision = 0;
+  const timeline: Array<{ id: string; occurredAt: string; type: string }> = [];
   await page.route('**/v1/me/context', async (route) => {
     await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
   });
   await page.route('**/v1/me/attendance/today', async (route) => {
     await route.fulfill({
-      json: success(
-        clockedIn
-          ? {
-              ...TODAY_ATTENDANCE,
-              attendance: {
-                activeSince: '2026-08-11T09:30:00Z',
-                attendanceRevision: 1,
-                state: 'WORKING',
-                validActions: ['START_BREAK', 'CLOCK_OUT'],
-              },
-            }
-          : {
-              ...TODAY_ATTENDANCE,
-              attendance: {
-                activeSince: null,
-                attendanceRevision: 0,
-                state: 'OFF_WORK',
-                validActions: ['CLOCK_IN'],
-              },
-              timeline: [],
-            },
-      ),
+      json: success({
+        ...TODAY_ATTENDANCE,
+        attendance: {
+          activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
+          attendanceRevision,
+          state: attendanceState,
+          validActions:
+            attendanceState === 'OFF_WORK'
+              ? ['CLOCK_IN']
+              : attendanceState === 'WORKING'
+                ? ['START_BREAK', 'CLOCK_OUT']
+                : ['RESUME', 'CLOCK_OUT'],
+        },
+        timeline,
+      }),
       status: 200,
     });
   });
@@ -116,7 +111,13 @@ test('clocks in by keyboard, sends protected intent metadata, and focuses the au
     expect(route.request().headers()['x-workledger-csrf']).toBe('k'.repeat(43));
     expect(route.request().headers()['idempotency-key']).toMatch(/^[0-9a-f-]{36}$/u);
     expect(route.request().postDataJSON()).toEqual({ expectedAttendanceRevision: 0 });
-    clockedIn = true;
+    attendanceState = 'WORKING';
+    attendanceRevision = 1;
+    timeline.push({
+      id: 'punch-clock-in-1',
+      occurredAt: '2026-08-11T09:30:00Z',
+      type: 'CLOCK_IN',
+    });
     await route.fulfill({
       json: success({
         attendanceRevision: 1,
@@ -125,6 +126,83 @@ test('clocks in by keyboard, sends protected intent metadata, and focuses the au
         occurredAt: '2026-08-11T09:30:00Z',
         resultingState: 'WORKING',
         validActions: ['START_BREAK', 'CLOCK_OUT'],
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/attendance/start-break', async (route) => {
+    expect(route.request().headers()['x-workledger-csrf']).toBe('k'.repeat(43));
+    expect(route.request().headers()['idempotency-key']).toMatch(/^[0-9a-f-]{36}$/u);
+    expect(route.request().postDataJSON()).toEqual({
+      expectedAttendanceRevision: attendanceRevision,
+    });
+    attendanceRevision += 1;
+    attendanceState = 'ON_BREAK';
+    timeline.push({
+      id: `punch-break-start-${attendanceRevision}`,
+      occurredAt: '2026-08-11T10:00:00Z',
+      type: 'BREAK_START',
+    });
+    await route.fulfill({
+      json: success({
+        attendanceRevision,
+        command: 'START_BREAK',
+        createdEvents: [{ id: `punch-break-start-${attendanceRevision}`, type: 'BREAK_START' }],
+        occurredAt: '2026-08-11T10:00:00Z',
+        resultingState: 'ON_BREAK',
+        validActions: ['RESUME', 'CLOCK_OUT'],
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/attendance/end-break', async (route) => {
+    expect(route.request().headers()['x-workledger-csrf']).toBe('k'.repeat(43));
+    expect(route.request().headers()['idempotency-key']).toMatch(/^[0-9a-f-]{36}$/u);
+    expect(route.request().postDataJSON()).toEqual({
+      expectedAttendanceRevision: attendanceRevision,
+    });
+    attendanceRevision += 1;
+    attendanceState = 'WORKING';
+    timeline.push({
+      id: `punch-break-end-${attendanceRevision}`,
+      occurredAt: '2026-08-11T10:15:00Z',
+      type: 'BREAK_END',
+    });
+    await route.fulfill({
+      json: success({
+        attendanceRevision,
+        command: 'RESUME',
+        createdEvents: [{ id: `punch-break-end-${attendanceRevision}`, type: 'BREAK_END' }],
+        occurredAt: '2026-08-11T10:15:00Z',
+        resultingState: 'WORKING',
+        validActions: ['START_BREAK', 'CLOCK_OUT'],
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/attendance/clock-out', async (route) => {
+    expect(route.request().headers()['x-workledger-csrf']).toBe('k'.repeat(43));
+    expect(route.request().headers()['idempotency-key']).toMatch(/^[0-9a-f-]{36}$/u);
+    expect(route.request().postDataJSON()).toEqual({
+      confirmActiveBreak: true,
+      expectedAttendanceRevision: attendanceRevision,
+    });
+    attendanceRevision += 1;
+    attendanceState = 'OFF_WORK';
+    const occurredAt = '2026-08-11T10:30:00Z';
+    const createdEvents = [
+      { id: `punch-break-end-${attendanceRevision}`, type: 'BREAK_END' },
+      { id: `punch-clock-out-${attendanceRevision}`, type: 'CLOCK_OUT' },
+    ];
+    timeline.push(...createdEvents.map((event) => ({ ...event, occurredAt })));
+    await route.fulfill({
+      json: success({
+        attendanceRevision,
+        command: 'CLOCK_OUT',
+        createdEvents,
+        occurredAt,
+        resultingState: 'OFF_WORK',
+        validActions: ['CLOCK_IN'],
       }),
       status: 200,
     });
@@ -139,6 +217,37 @@ test('clocks in by keyboard, sends protected intent metadata, and focuses the au
   await expect(workingHeading).toBeFocused();
   await expect(page.getByRole('status')).toContainText('Clocked in at');
   await expect(clockInButton).toBeHidden();
+
+  const startBreak = page.getByRole('button', { name: 'Start break' });
+  await startBreak.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'On break', exact: true })).toBeFocused();
+  await expect(page.getByRole('status')).toContainText('Break started at');
+
+  const resumeWork = page.getByRole('button', { name: 'Resume work' });
+  await resumeWork.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Working' })).toBeFocused();
+  await expect(page.getByRole('status')).toContainText('Resumed work at');
+
+  await page.getByRole('button', { name: 'Start break' }).press('Enter');
+  await expect(page.getByRole('heading', { name: 'On break', exact: true })).toBeFocused();
+  const clockOut = page.getByRole('button', { name: 'Clock out', exact: true });
+  await clockOut.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog', { name: 'Clock out while on break?' })).toBeFocused();
+  await expect(page.locator('.wl-dialog-modal')).toHaveCSS('opacity', '1');
+  await expectPageToHaveNoAxeViolations(page);
+  await page.keyboard.press('Escape');
+  await expect(clockOut).toBeFocused();
+
+  await page.keyboard.press('Enter');
+  const confirmClockOut = page.getByRole('button', { name: 'Close break and clock out' });
+  await confirmClockOut.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Off work' })).toBeFocused();
+  await expect(page.getByRole('status')).toContainText('Clocked out at');
+  await expect(page.getByRole('button', { name: 'Clock in' })).toBeVisible();
   await expectPageToHaveNoAxeViolations(page);
 });
 

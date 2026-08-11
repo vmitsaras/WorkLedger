@@ -13,6 +13,7 @@ import { clearSessionMemory } from '../src/app/api-client.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
+let routerSequence = 0;
 const EMPLOYEE_CONTEXT: SelfContext = {
   account: { email: 'emma@northstar.test', name: 'Emma Reed' },
   defaultPath: '/today',
@@ -216,6 +217,123 @@ test('clocks in once, keeps the pending control stable, refetches authoritative 
   expect(screen.getByRole('status')).toHaveTextContent('Clocked in at 11:30 AM.');
   expect(screen.queryByRole('button', { name: 'Clock in' })).not.toBeInTheDocument();
   expect(clockInRequests).toBe(1);
+  await expectNoAxeViolations(container);
+});
+
+test('starts and ends breaks and confirms active-break clock-out with stable keyboard focus', async () => {
+  let serverToday = todayWithAttendance('WORKING', 1);
+  let clockOutRequests = 0;
+  let completeClockOut: (response: Response) => void = () => {
+    throw new Error('Clock-out request was not pending.');
+  };
+  const pendingClockOut = new Promise<Response>((resolve) => {
+    completeClockOut = resolve;
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') return successResponse(serverToday);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'b'.repeat(43) });
+      const headers = new Headers(init?.headers);
+      if (path.startsWith('/v1/me/attendance/') && init?.method === 'POST') {
+        expect(headers.get('x-workledger-csrf')).toBe('b'.repeat(43));
+        expect(headers.get('idempotency-key')).toMatch(/^[0-9a-f-]{36}$/u);
+      }
+      if (path === '/v1/me/attendance/start-break' && init?.method === 'POST') {
+        const expectedAttendanceRevision = serverToday.attendance.attendanceRevision;
+        expect(JSON.parse(String(init.body))).toEqual({ expectedAttendanceRevision });
+        const nextRevision = expectedAttendanceRevision + 1;
+        serverToday = todayWithAttendance('ON_BREAK', nextRevision);
+        return successResponse({
+          attendanceRevision: nextRevision,
+          command: 'START_BREAK',
+          createdEvents: [{ id: `break-start-${nextRevision}`, type: 'BREAK_START' }],
+          occurredAt: '2026-08-11T10:00:00Z',
+          resultingState: 'ON_BREAK',
+          validActions: ['RESUME', 'CLOCK_OUT'],
+        });
+      }
+      if (path === '/v1/me/attendance/end-break' && init?.method === 'POST') {
+        expect(JSON.parse(String(init.body))).toEqual({ expectedAttendanceRevision: 2 });
+        serverToday = todayWithAttendance('WORKING', 3);
+        return successResponse({
+          attendanceRevision: 3,
+          command: 'RESUME',
+          createdEvents: [{ id: 'break-end-3', type: 'BREAK_END' }],
+          occurredAt: '2026-08-11T10:15:00Z',
+          resultingState: 'WORKING',
+          validActions: ['START_BREAK', 'CLOCK_OUT'],
+        });
+      }
+      if (path === '/v1/me/attendance/clock-out' && init?.method === 'POST') {
+        clockOutRequests += 1;
+        expect(JSON.parse(String(init.body))).toEqual({
+          confirmActiveBreak: true,
+          expectedAttendanceRevision: 4,
+        });
+        return pendingClockOut;
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/today');
+
+  const todayHeading = await screen.findByRole('heading', { name: 'Today' });
+  await waitFor(() => expect(todayHeading).toHaveFocus());
+  await user.click(await screen.findByRole('button', { name: 'Start break' }));
+  const onBreakHeading = await screen.findByRole('heading', { name: 'On break' });
+  await waitFor(() => expect(onBreakHeading).toHaveFocus());
+  expect(screen.getByRole('status')).toHaveTextContent('Break started at 12:00 PM.');
+
+  await user.click(screen.getByRole('button', { name: 'Resume work' }));
+  const workingHeading = await screen.findByRole('heading', { name: 'Working' });
+  await waitFor(() => expect(workingHeading).toHaveFocus());
+  expect(screen.getByRole('status')).toHaveTextContent('Resumed work at 12:15 PM.');
+
+  await user.click(screen.getByRole('button', { name: 'Start break' }));
+  await screen.findByRole('heading', { name: 'On break' });
+  const clockOutTrigger = screen.getByRole('button', { name: 'Clock out' });
+  clockOutTrigger.focus();
+  await user.keyboard('{Enter}');
+  const dialog = screen.getByRole('dialog', { name: 'Clock out while on break?' });
+  expect(dialog).toHaveFocus();
+  expect(dialog).toHaveTextContent(
+    'WorkLedger will close your active break and clock you out at the same recorded instant.',
+  );
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(clockOutTrigger).toHaveFocus());
+  expect(clockOutRequests).toBe(0);
+
+  await user.keyboard('{Enter}');
+  await user.click(screen.getByRole('button', { name: 'Close break and clock out' }));
+  expect(screen.getByRole('button', { name: 'Clocking out…' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+  expect(screen.getByRole('dialog', { name: 'Clock out while on break?' })).toBeVisible();
+  expect(clockOutRequests).toBe(1);
+
+  serverToday = todayWithAttendance('OFF_WORK', 5);
+  completeClockOut(
+    successResponse({
+      attendanceRevision: 5,
+      command: 'CLOCK_OUT',
+      createdEvents: [
+        { id: 'break-end-5', type: 'BREAK_END' },
+        { id: 'clock-out-5', type: 'CLOCK_OUT' },
+      ],
+      occurredAt: '2026-08-11T10:30:00Z',
+      resultingState: 'OFF_WORK',
+      validActions: ['CLOCK_IN'],
+    }),
+  );
+
+  const offWorkHeading = await screen.findByRole('heading', { name: 'Off work' });
+  await waitFor(() => expect(offWorkHeading).toHaveFocus());
+  expect(screen.getByRole('status')).toHaveTextContent('Clocked out at 12:30 PM.');
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(clockOutRequests).toBe(1);
   await expectNoAxeViolations(container);
 });
 
@@ -426,7 +544,9 @@ test('keeps profile fields read-only and clears protected state after current-se
 function renderApplication(initialEntry: string) {
   const queryClient = createWorkLedgerQueryClient();
   const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
-    initialEntries: [initialEntry],
+    initialEntries: [
+      { key: `component-test-${(routerSequence += 1).toString()}`, pathname: initialEntry },
+    ],
   });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -469,17 +589,22 @@ function authenticatedFetch(today: TodayAttendance = TODAY_ATTENDANCE) {
 }
 
 function todayWithAttendance(
-  state: 'OFF_WORK' | 'WORKING',
+  state: 'OFF_WORK' | 'ON_BREAK' | 'WORKING',
   attendanceRevision: number,
 ): TodayAttendance {
-  const working = state === 'WORKING';
+  const active = state !== 'OFF_WORK';
   return {
     ...TODAY_ATTENDANCE,
     attendance: {
-      activeSince: working ? '2026-08-11T09:30:00Z' : null,
+      activeSince: active ? '2026-08-11T09:30:00Z' : null,
       attendanceRevision,
       state,
-      validActions: working ? ['START_BREAK', 'CLOCK_OUT'] : ['CLOCK_IN'],
+      validActions:
+        state === 'WORKING'
+          ? ['START_BREAK', 'CLOCK_OUT']
+          : state === 'ON_BREAK'
+            ? ['RESUME', 'CLOCK_OUT']
+            : ['CLOCK_IN'],
     },
     calculation: {
       ...TODAY_ATTENDANCE.calculation,
@@ -494,7 +619,7 @@ function todayWithAttendance(
             },
       warnings: [],
     },
-    timeline: working
+    timeline: active
       ? [{ id: 'punch-clock-in-1', occurredAt: '2026-08-11T09:30:00Z', type: 'CLOCK_IN' }]
       : [],
   };

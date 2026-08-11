@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 4 — Employee attendance vertical slice
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 3 of 8 Phase 4 tasks complete
-**Current milestone:** Remaining clock mutations
-**Active task:** `WL-403`
+**Phase progress:** 4 of 8 Phase 4 tasks complete
+**Current milestone:** Today timeline and calculation detail
+**Active task:** `WL-404`
 **Status:** Ready
 **Last verified:** 2026-08-11
 
 ## Current objective
 
-Implement start-break, resume, and clock-out through the accepted domain transitions, serializable
-idempotent transactions, immutable punch events, audit evidence, API contracts, accessible controls,
-and active-break clock-out confirmation.
+Refine the Today attendance timeline/list and daily calculation breakdown so the complete command
+sequence remains explainable, responsive, and accessible from source events through provisional
+integer-minute totals.
 
 ## Verified decisions
 
@@ -64,6 +64,12 @@ and active-break clock-out confirmation.
   optimistic attendance claim, authoritative refetch, one result announcement, and logical status
   focus when the initiating control becomes invalid.
 - Confirmed on-break clock-out atomically appends `BREAK_END` then `CLOCK_OUT` at one instant and increments the attendance revision once.
+- `START_BREAK`, `RESUME`, and `CLOCK_OUT` share clock-in's preflight and in-transaction
+  authorization, serializable idempotency, head/revision/source validation, trusted occurrence,
+  immutable event, minimized audit, and terminal replay boundary.
+- The Today screen renders only authoritative valid actions, disables the complete control group for
+  one pending in-memory intent, and uses a controlled modal for deliberate active-break clock-out;
+  cancel/Escape causes no attendance effect and confirmed submission creates a new intent key.
 - Punch occurrence/manual attendance inputs use minute precision; interval, daily, policy, and display calculations apply no later rounding.
 - Daily calculations have identified inputs and `PROVISIONAL`, `INCOMPLETE`, or `COMPLETE` status; only complete past dates may post.
 - Holiday dates reduce expected and default absence consumption/credit to zero while preserving actual worked credit.
@@ -256,42 +262,45 @@ and active-break clock-out confirmation.
 - [x] Authorized clock-in contract, serializable idempotent transaction, trusted occurrence,
   immutable punch/revision/audit atomicity, terminal replay/conflict behavior, and accessible
   pending/result/refetch/focus UI completed (`WL-402`; see `docs/53-clock-in-mutation.md`).
+- [x] Start-break, resume, and ordinary/active-break clock-out contracts; one shared protected
+  command service; exact event ordering; cross-command replay/conflict behavior; accessible valid
+  actions and confirmation; and full API/browser sequence evidence completed (`WL-403`; see
+  `docs/54-attendance-command-sequence.md`).
 
 ## Latest completed task
 
-### `WL-402` — Implement clock-in end to end
+### `WL-403` — Implement start-break, resume, and clock-out end to end
 
-- Changed: added strict clock-in request/result contracts and selected OpenAPI; shared same-origin
-  and session-CSRF enforcement; an authorized serializable command service with canonical
-  fingerprint, protected claim/replay, head/latest-event validation, trusted Temporal occurrence,
-  immutable punch, revision, audit, and terminal completion; wrapped SQLSTATE retry recognition;
-  and the Today clock-in form/client mutation.
-- Verified: the database-enabled canonical gate passes 24 native checks, 145 unit/component tests,
-  20 integration tests, and five Chromium scenarios plus OpenAPI drift, formatting,
+- Changed: generalized the clock-in service and typed client into one command boundary; added strict
+  start-break, resume, and clock-out contracts/routes/OpenAPI operations; preserved exact
+  command/result event correlations; implemented atomic active-break closure; and rendered only
+  authoritative valid actions with pending feedback and a controlled confirmation dialog.
+- Verified: the database-enabled canonical gate passes 24 native checks, 147 unit/component tests,
+  21 integration tests, and five Chromium scenarios plus OpenAPI drift, formatting,
   lint/boundaries, strict TypeScript, and the production build.
-- Accessibility: one semantic form/native button exposes visible disabled pending text without an
-  optimistic state; success uses one polite status, stale conflict uses one safe alert, and
-  authoritative refetch moves focus to `Working` only when the prior action disappears. Component
-  and keyboard Chromium paths pass axe.
-- Security/data: origin, session, session-bound CSRF, active employee capability, and
-  `ATTENDANCE_CLOCK` authorization precede claim/replay; the transaction rechecks permission and
-  commits one organization-scoped event/revision/audit/outcome. Raw keys, fingerprints, protected
-  identity, and client time stay out of URLs, audit, logs, persistent browser state, and DTOs.
-- Documentation: added `docs/53-clock-in-mutation.md`, regenerated the required-header OpenAPI
-  artifact, aligned architecture endpoint examples, and synchronized README, task board, TODO, and
-  status.
-- Remaining risk: break, resume, and clock-out controls remain `WL-403`; bounded unknown-result
-  retry, offline/reconnect behavior, polling, and broader cross-tab/device coordination remain
-  `WL-405`. The build chunk-size warning remains owned by measured performance task `WL-1001`.
-- Next task: `WL-403`.
+- Accessibility: every command uses a semantic button, visible disabled pending label, one result
+  region, authoritative refetch, and conditional logical focus. React Aria owns modal containment,
+  Escape/cancel behavior, and trigger restoration; component and full keyboard Chromium paths pass
+  axe. The shared primary action token was darkened to meet settled-state contrast.
+- Security/data: every route enforces origin, session, session-bound CSRF, active capability, and
+  `ATTENDANCE_CLOCK` authorization before claim/replay and rechecks inside the transaction. One
+  confirmed on-break decision creates two ordered immutable events, one revision increment, one
+  minimized audit event, and one terminal outcome; changed or cross-command key reuse has no effect.
+- Documentation: added `docs/54-attendance-command-sequence.md`, regenerated the OpenAPI artifact,
+  linked prior Today/clock-in evidence, and synchronized README, task board, TODO, and status.
+- Remaining risk: bounded unknown-result retry, offline/reconnect behavior, polling, and broader
+  cross-tab/device coordination remain `WL-405`; the phase-wide manual assistive-technology review
+  remains `WL-406`. The build chunk-size warning remains owned by measured performance task
+  `WL-1001`.
+- Next task: `WL-404`.
 
 ## Current blockers
 
-No `WL-403` blocker is known. D-502 remains open before the production browser gate.
+No `WL-404` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-403 — Implement start-break, resume, and clock-out commands end to end.`
+`WL-404 — Build the Today attendance timeline/list and daily calculation breakdown.`
 
 ## Update rules
 

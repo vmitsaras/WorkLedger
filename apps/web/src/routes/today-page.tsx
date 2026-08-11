@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 
 import type {
   AttendanceCommand,
+  AttendanceCommandResult,
   AttendanceState,
   CalculationBlockerCode,
   CalculationWarningCode,
@@ -11,13 +12,14 @@ import type {
   TodayAttendanceEstimate,
   TodayTimelineEvent,
 } from '@workledger/contracts';
-import { Button } from '@workledger/ui';
+import { Button, Dialog } from '@workledger/ui';
 
 import {
   ApiClientError,
   clearSessionMemory,
-  clockIn,
   createAttendanceIntentKey,
+  executeAttendanceCommand,
+  type AttendanceCommandIntent,
 } from '../app/api-client.js';
 import { todayAttendanceQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
@@ -68,7 +70,8 @@ const BLOCKER_MESSAGES: Readonly<Record<CalculationBlockerCode, string>> = {
   SCHEDULE_NOT_ASSIGNED: 'No work schedule is assigned for today.',
 };
 
-type ClockInFeedback = Readonly<{
+type AttendanceFeedback = Readonly<{
+  command: AttendanceCommand;
   intentKey: string;
   kind: 'ERROR' | 'SUCCESS';
   message: string;
@@ -82,24 +85,27 @@ export function TodayPage() {
   const navigate = useNavigate();
   const statusHeadingRef = useRef<HTMLHeadingElement>(null);
   const focusedIntentRef = useRef<string | null>(null);
-  const [clockInFeedback, setClockInFeedback] = useState<ClockInFeedback | null>(null);
-  const clockInMutation = useMutation({
-    mutationFn: ({
-      expectedAttendanceRevision,
-      intentKey,
-    }: Readonly<{ expectedAttendanceRevision: number; intentKey: string }>) =>
-      clockIn(expectedAttendanceRevision, intentKey),
+  const [attendanceFeedback, setAttendanceFeedback] = useState<AttendanceFeedback | null>(null);
+  const [clockOutConfirmationOpen, setClockOutConfirmationOpen] = useState(false);
+  const attendanceMutation = useMutation({
+    mutationFn: executeAttendanceCommand,
     onError: async (error, variables) => {
+      setClockOutConfirmationOpen(false);
       if (isAuthenticationError(error)) return;
-      setClockInFeedback(clockInErrorFeedback(error, variables.intentKey));
+      setAttendanceFeedback(attendanceErrorFeedback(error, variables));
       await queryClient.invalidateQueries({ queryKey: todayAttendanceQuery().queryKey });
     },
     onSuccess: async (result, variables) => {
-      setClockInFeedback(
+      setClockOutConfirmationOpen(false);
+      setAttendanceFeedback(
         Object.freeze({
-          intentKey: variables.intentKey,
+          command: variables.command,
+          intentKey: variables.idempotencyKey,
           kind: 'SUCCESS',
-          message: `Clocked in at ${formatTime(result.occurredAt, query.data?.timeZone ?? 'UTC')}.`,
+          message: attendanceSuccessMessage(
+            result,
+            formatTime(result.occurredAt, query.data?.timeZone ?? 'UTC'),
+          ),
           resultingRevision: result.attendanceRevision,
         }),
       );
@@ -107,40 +113,44 @@ export function TodayPage() {
     },
   });
   const authenticationError =
-    isAuthenticationError(query.error) || isAuthenticationError(clockInMutation.error);
+    isAuthenticationError(query.error) || isAuthenticationError(attendanceMutation.error);
 
   useEffect(() => {
     if (!authenticationError) return;
     clearSessionMemory();
     queryClient.clear();
     if (
-      [query.error, clockInMutation.error].some(
+      [query.error, attendanceMutation.error].some(
         (error) => error instanceof ApiClientError && error.code === 'AUTH_SESSION_EXPIRED',
       )
     ) {
       setPendingSignInNotice('SESSION_EXPIRED');
     }
     void navigate('/sign-in', { replace: true });
-  }, [authenticationError, clockInMutation.error, navigate, query.error, queryClient]);
+  }, [attendanceMutation.error, authenticationError, navigate, query.error, queryClient]);
+
+  useEffect(() => {
+    if (query.data?.attendance.state !== 'ON_BREAK') setClockOutConfirmationOpen(false);
+  }, [query.data?.attendance.state]);
 
   useEffect(() => {
     if (
-      clockInFeedback === null ||
-      focusedIntentRef.current === clockInFeedback.intentKey ||
+      attendanceFeedback === null ||
+      focusedIntentRef.current === attendanceFeedback.intentKey ||
       query.data === undefined ||
-      query.data?.attendance.state === 'OFF_WORK'
+      query.data.attendance.validActions.includes(attendanceFeedback.command)
     ) {
       return;
     }
     if (
-      clockInFeedback.resultingRevision !== undefined &&
-      query.data.attendance.attendanceRevision < clockInFeedback.resultingRevision
+      attendanceFeedback.resultingRevision !== undefined &&
+      query.data.attendance.attendanceRevision < attendanceFeedback.resultingRevision
     ) {
       return;
     }
     statusHeadingRef.current?.focus();
-    focusedIntentRef.current = clockInFeedback.intentKey;
-  }, [clockInFeedback, query.data]);
+    focusedIntentRef.current = attendanceFeedback.intentKey;
+  }, [attendanceFeedback, query.data]);
 
   if (query.isPending || authenticationError) return renderTodayLoading();
   if (query.isError) {
@@ -148,14 +158,29 @@ export function TodayPage() {
   }
 
   return renderTodayReady({
-    clockInFeedback,
-    clockInPending: clockInMutation.isPending,
-    onClockIn: (expectedAttendanceRevision) => {
+    attendanceFeedback,
+    clockOutConfirmationOpen,
+    onAttendanceCommand: (command, expectedAttendanceRevision, confirmActiveBreak) => {
       const intentKey = createAttendanceIntentKey();
       focusedIntentRef.current = null;
-      setClockInFeedback(null);
-      clockInMutation.mutate({ expectedAttendanceRevision, intentKey });
+      setAttendanceFeedback(null);
+      if (command === 'CLOCK_OUT') {
+        attendanceMutation.mutate({
+          command,
+          ...(confirmActiveBreak === undefined ? {} : { confirmActiveBreak }),
+          expectedAttendanceRevision,
+          idempotencyKey: intentKey,
+        });
+        return;
+      }
+      attendanceMutation.mutate({
+        command,
+        expectedAttendanceRevision,
+        idempotencyKey: intentKey,
+      });
     },
+    pendingIntent: attendanceMutation.isPending ? attendanceMutation.variables : null,
+    setClockOutConfirmationOpen,
     statusHeadingRef,
     today: query.data,
     updating: query.isFetching,
@@ -212,16 +237,24 @@ function renderTodayLoadError({ error, retry }: Readonly<{ error: unknown; retry
 }
 
 function renderTodayReady({
-  clockInFeedback,
-  clockInPending,
-  onClockIn,
+  attendanceFeedback,
+  clockOutConfirmationOpen,
+  onAttendanceCommand,
+  pendingIntent,
+  setClockOutConfirmationOpen,
   statusHeadingRef,
   today,
   updating,
 }: Readonly<{
-  clockInFeedback: ClockInFeedback | null;
-  clockInPending: boolean;
-  onClockIn: (expectedAttendanceRevision: number) => void;
+  attendanceFeedback: AttendanceFeedback | null;
+  clockOutConfirmationOpen: boolean;
+  onAttendanceCommand: (
+    command: AttendanceCommand,
+    expectedAttendanceRevision: number,
+    confirmActiveBreak?: boolean,
+  ) => void;
+  pendingIntent: AttendanceCommandIntent | null;
+  setClockOutConfirmationOpen: (isOpen: boolean) => void;
   statusHeadingRef: RefObject<HTMLHeadingElement | null>;
   today: TodayAttendance;
   updating: boolean;
@@ -273,33 +306,26 @@ function renderTodayReady({
             <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
               {attendance.validActions.map((action) => ACTION_LABELS[action]).join(' or ')}.
             </p>
-            {attendance.validActions.includes('CLOCK_IN') ? (
-              <form
-                className="mt-3"
-                aria-busy={clockInPending}
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!clockInPending) onClockIn(attendance.attendanceRevision);
-                }}
-              >
-                <Button type="submit" isDisabled={clockInPending}>
-                  {clockInPending ? 'Clocking in…' : 'Clock in'}
-                </Button>
-              </form>
-            ) : null}
-            {clockInFeedback === null ? null : (
+            <AttendanceControls
+              attendance={attendance}
+              clockOutConfirmationOpen={clockOutConfirmationOpen}
+              onAttendanceCommand={onAttendanceCommand}
+              pendingIntent={pendingIntent}
+              setClockOutConfirmationOpen={setClockOutConfirmationOpen}
+            />
+            {attendanceFeedback === null ? null : (
               <div
                 className={
-                  clockInFeedback.kind === 'ERROR'
+                  attendanceFeedback.kind === 'ERROR'
                     ? 'wl-alert wl-alert-error mt-3 grid gap-1 rounded-xl border p-3'
                     : 'wl-alert mt-3 grid gap-1 rounded-xl border p-3'
                 }
-                role={clockInFeedback.kind === 'ERROR' ? 'alert' : 'status'}
+                role={attendanceFeedback.kind === 'ERROR' ? 'alert' : 'status'}
               >
-                <p className="m-0 text-sm font-semibold">{clockInFeedback.message}</p>
-                {clockInFeedback.requestId === undefined ? null : (
+                <p className="m-0 text-sm font-semibold">{attendanceFeedback.message}</p>
+                {attendanceFeedback.requestId === undefined ? null : (
                   <p className="m-0 break-all text-xs">
-                    Request reference: {clockInFeedback.requestId}
+                    Request reference: {attendanceFeedback.requestId}
                   </p>
                 )}
               </div>
@@ -345,6 +371,88 @@ function renderTodayReady({
         truncated={today.timelineTruncated}
       />
     </section>
+  );
+}
+
+function AttendanceControls({
+  attendance,
+  clockOutConfirmationOpen,
+  onAttendanceCommand,
+  pendingIntent,
+  setClockOutConfirmationOpen,
+}: Readonly<{
+  attendance: TodayAttendance['attendance'];
+  clockOutConfirmationOpen: boolean;
+  onAttendanceCommand: (
+    command: AttendanceCommand,
+    expectedAttendanceRevision: number,
+    confirmActiveBreak?: boolean,
+  ) => void;
+  pendingIntent: AttendanceCommandIntent | null;
+  setClockOutConfirmationOpen: (isOpen: boolean) => void;
+}>) {
+  return (
+    <div className="mt-3 flex flex-wrap gap-3">
+      {attendance.validActions.map((action, index) => {
+        const isPendingAction = pendingIntent?.command === action;
+        const label = isPendingAction ? pendingActionLabel(action) : ACTION_LABELS[action];
+        const variant = index === 0 ? 'primary' : 'secondary';
+
+        if (action === 'CLOCK_OUT' && attendance.state === 'ON_BREAK') {
+          return (
+            <Dialog
+              key={action}
+              actions={({ close }) => (
+                <>
+                  <Button variant="secondary" isDisabled={pendingIntent !== null} onPress={close}>
+                    Cancel
+                  </Button>
+                  <Button
+                    isDisabled={pendingIntent !== null}
+                    onPress={() =>
+                      onAttendanceCommand('CLOCK_OUT', attendance.attendanceRevision, true)
+                    }
+                  >
+                    {isPendingAction ? 'Clocking out…' : 'Close break and clock out'}
+                  </Button>
+                </>
+              )}
+              isDismissable={pendingIntent === null}
+              isOpen={clockOutConfirmationOpen}
+              onOpenChange={(isOpen) => {
+                if (pendingIntent === null || isOpen) setClockOutConfirmationOpen(isOpen);
+              }}
+              title="Clock out while on break?"
+              triggerIsDisabled={pendingIntent !== null}
+              triggerLabel={label}
+              triggerVariant={variant}
+            >
+              <p className="m-0">
+                WorkLedger will close your active break and clock you out at the same recorded
+                instant. Cancel to leave your attendance unchanged.
+              </p>
+            </Dialog>
+          );
+        }
+
+        return (
+          <form
+            key={action}
+            aria-busy={isPendingAction}
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (pendingIntent === null) {
+                onAttendanceCommand(action, attendance.attendanceRevision);
+              }
+            }}
+          >
+            <Button type="submit" variant={variant} isDisabled={pendingIntent !== null}>
+              {label}
+            </Button>
+          </form>
+        );
+      })}
+    </div>
   );
 }
 
@@ -475,7 +583,29 @@ function isAuthenticationError(error: unknown): boolean {
   );
 }
 
-function clockInErrorFeedback(error: unknown, intentKey: string): ClockInFeedback {
+function attendanceSuccessMessage(result: AttendanceCommandResult, formattedTime: string): string {
+  switch (result.command) {
+    case 'CLOCK_IN':
+      return `Clocked in at ${formattedTime}.`;
+    case 'START_BREAK':
+      return `Break started at ${formattedTime}.`;
+    case 'RESUME':
+      return `Resumed work at ${formattedTime}.`;
+    case 'CLOCK_OUT':
+      return `Clocked out at ${formattedTime}.`;
+  }
+}
+
+function attendanceErrorFeedback(
+  error: unknown,
+  intent: AttendanceCommandIntent,
+): AttendanceFeedback {
+  const base = {
+    command: intent.command,
+    intentKey: intent.idempotencyKey,
+    kind: 'ERROR',
+  } as const;
+  const outcome = attendanceOutcomeNoun(intent.command);
   if (error instanceof ApiClientError) {
     if (error.code === 'ATTENDANCE_STATE_CHANGED') {
       const currentState = error.context?.['currentState'];
@@ -484,43 +614,69 @@ function clockInErrorFeedback(error: unknown, intentKey: string): ClockInFeedbac
           ? STATE_LABELS[currentState as AttendanceState].toLowerCase()
           : 'updated';
       return Object.freeze({
-        intentKey,
-        kind: 'ERROR',
-        message: `No clock-in was recorded. Attendance changed in another tab or device. Current status: ${stateLabel}.`,
+        ...base,
+        message: `No ${outcome} was recorded. Attendance changed in another tab or device. Current status: ${stateLabel}.`,
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
-    if (error.code === 'ATTENDANCE_ALREADY_WORKING') {
+    if (error.code === 'ATTENDANCE_BREAK_CONFIRMATION_REQUIRED') {
       return Object.freeze({
-        intentKey,
-        kind: 'ERROR',
-        message: 'No clock-in was recorded because the current status is already working.',
+        ...base,
+        message:
+          'No clock-out was recorded. Confirm that the active break should close before clocking out.',
+        ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
+      });
+    }
+    if (error.code.startsWith('ATTENDANCE_')) {
+      return Object.freeze({
+        ...base,
+        message: `No ${outcome} was recorded because that action is not valid for the current attendance state.`,
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
     if (error.code === 'IDEMPOTENCY_KEY_CONFLICT') {
       return Object.freeze({
-        intentKey,
-        kind: 'ERROR',
-        message:
-          'No clock-in was recorded because this request could not be matched safely. Review the current status before trying again.',
+        ...base,
+        message: `No ${outcome} was recorded because this request could not be matched safely. Review the current status before trying again.`,
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
     return Object.freeze({
-      intentKey,
-      kind: 'ERROR',
-      message:
-        'WorkLedger could not confirm whether clock-in was recorded. Review the refreshed current status before trying again.',
+      ...base,
+      message: `WorkLedger could not confirm whether ${outcome} was recorded. Review the refreshed current status before trying again.`,
       ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
     });
   }
   return Object.freeze({
-    intentKey,
-    kind: 'ERROR',
-    message:
-      'WorkLedger could not confirm whether clock-in was recorded. Review the refreshed current status before trying again.',
+    ...base,
+    message: `WorkLedger could not confirm whether ${outcome} was recorded. Review the refreshed current status before trying again.`,
   });
+}
+
+function attendanceOutcomeNoun(command: AttendanceCommand): string {
+  switch (command) {
+    case 'CLOCK_IN':
+      return 'clock-in';
+    case 'START_BREAK':
+      return 'break start';
+    case 'RESUME':
+      return 'resume';
+    case 'CLOCK_OUT':
+      return 'clock-out';
+  }
+}
+
+function pendingActionLabel(command: AttendanceCommand): string {
+  switch (command) {
+    case 'CLOCK_IN':
+      return 'Clocking in…';
+    case 'START_BREAK':
+      return 'Starting break…';
+    case 'RESUME':
+      return 'Resuming work…';
+    case 'CLOCK_OUT':
+      return 'Clocking out…';
+  }
 }
 
 function formatLocalDate(localDate: string): string {

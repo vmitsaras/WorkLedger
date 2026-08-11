@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
@@ -6,7 +6,18 @@ import {
   apiErrorEnvelopeSchema,
   clockInEnvelopeSchema,
   clockInRequestSchema,
+  clockOutEnvelopeSchema,
+  clockOutRequestSchema,
+  resumeAttendanceEnvelopeSchema,
+  resumeAttendanceRequestSchema,
+  startBreakEnvelopeSchema,
+  startBreakRequestSchema,
   todayAttendanceEnvelopeSchema,
+  type AttendanceCommandResult,
+  type ClockInResult,
+  type ClockOutResult,
+  type ResumeAttendanceResult,
+  type StartBreakResult,
 } from '@workledger/contracts';
 import { parseInstant } from '@workledger/domain';
 import type { WorkLedgerDatabase } from '@workledger/database';
@@ -20,11 +31,12 @@ import {
 import type { RuntimeConfig } from '../config.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import {
-  createClockInService,
-  parseClockInIdentity,
-  parseClockInRequestId,
-  type ClockInIdentity,
-} from './clock-in-service.js';
+  createAttendanceCommandService,
+  parseAttendanceCommandIdentity,
+  parseAttendanceCommandRequestId,
+  type AttendanceCommandIdentity,
+  type AttendanceCommandOperationResult,
+} from './attendance-command-service.js';
 import { createTodayAttendanceService, parseTodayAttendanceIdentity } from './today-service.js';
 
 export type ApiClock = () => string;
@@ -34,8 +46,8 @@ const attendanceMutationHeadersSchema = z.looseObject({
 });
 const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9._~-]{16,128}$/u;
 
-type PreparedClockInRequest = Readonly<{
-  identity: ClockInIdentity;
+type PreparedAttendanceRequest = Readonly<{
+  identity: AttendanceCommandIdentity;
   requestedAt: ReturnType<typeof requireInstant>;
 }>;
 
@@ -48,8 +60,19 @@ export function registerAttendanceRoutes(
 ): void {
   const api = app.withTypeProvider<ZodTypeProvider>();
   const todayService = createTodayAttendanceService(database);
-  const clockInService = createClockInService(database, now);
-  const preparedClockInRequests = new WeakMap<FastifyRequest, PreparedClockInRequest>();
+  const attendanceCommandService = createAttendanceCommandService(database, now);
+  const preparedAttendanceRequests = new WeakMap<FastifyRequest, PreparedAttendanceRequest>();
+  const prepareAttendanceRequest = async (request: FastifyRequest) => {
+    requireSameOrigin(request, config.canonicalOrigin);
+    const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+    await requireRequestCsrf(request, authentication, headers);
+    const prepared = Object.freeze({
+      identity: parseAttendanceCommandIdentity(session.userId, session.fresh),
+      requestedAt: requireInstant(now()),
+    });
+    await attendanceCommandService.authorize(prepared.identity, prepared.requestedAt);
+    preparedAttendanceRequests.set(request, prepared);
+  };
 
   api.get(
     '/v1/me/attendance/today',
@@ -81,17 +104,7 @@ export function registerAttendanceRoutes(
   api.post(
     '/v1/me/attendance/clock-in',
     {
-      preValidation: async (request) => {
-        requireSameOrigin(request, config.canonicalOrigin);
-        const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
-        await requireRequestCsrf(request, authentication, headers);
-        const prepared = Object.freeze({
-          identity: parseClockInIdentity(session.userId, session.fresh),
-          requestedAt: requireInstant(now()),
-        });
-        await clockInService.authorize(prepared.identity, prepared.requestedAt);
-        preparedClockInRequests.set(request, prepared);
-      },
+      preValidation: prepareAttendanceRequest,
       schema: {
         body: clockInRequestSchema,
         description:
@@ -111,35 +124,198 @@ export function registerAttendanceRoutes(
       },
     },
     async (request, reply) => {
-      const prepared = preparedClockInRequests.get(request);
-      preparedClockInRequests.delete(request);
-      if (prepared === undefined) {
-        throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
-      }
-      const result = await clockInService.clockIn(prepared.identity, {
+      const prepared = requirePreparedAttendanceRequest(request, preparedAttendanceRequests);
+      const result = await attendanceCommandService.execute(prepared.identity, {
         ...request.body,
+        command: 'CLOCK_IN',
         idempotencyKey: requireIdempotencyKey(request),
-        requestId: parseClockInRequestId(request.id),
+        requestId: parseAttendanceCommandRequestId(request.id),
         requestedAt: prepared.requestedAt,
       });
-      reply.header('cache-control', 'private, no-store');
-      if (result.kind === 'ERROR') {
-        throw new WorkLedgerApiError({
-          code: result.code,
-          ...(result.context === undefined ? {} : { context: result.context }),
-          ...(result.idempotentReplay ? { idempotentReplay: true } : {}),
-          statusCode: 409,
-        });
-      }
-      return {
-        data: result.data,
-        meta: {
-          ...(result.idempotentReplay ? { idempotentReplay: true } : {}),
-          requestId: request.id,
-        },
-      };
+      const data = requireSuccessfulAttendanceResult(result, 'CLOCK_IN');
+      return attendanceSuccessReply(reply, data, result.idempotentReplay, request.id);
     },
   );
+
+  api.post(
+    '/v1/me/attendance/start-break',
+    {
+      preValidation: prepareAttendanceRequest,
+      schema: {
+        body: startBreakRequestSchema,
+        description:
+          'Starts a break for the authorized current employee using a required opaque Idempotency-Key header, optimistic attendance revision, trusted server occurrence minute, and atomic audit evidence.',
+        headers: attendanceMutationHeadersSchema,
+        operationId: 'startBreakForCurrentEmployee',
+        response: attendanceMutationResponses(startBreakEnvelopeSchema),
+        summary: 'Start break for current employee',
+        tags: ['Attendance'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = requirePreparedAttendanceRequest(request, preparedAttendanceRequests);
+      const result = await attendanceCommandService.execute(prepared.identity, {
+        ...request.body,
+        command: 'START_BREAK',
+        idempotencyKey: requireIdempotencyKey(request),
+        requestId: parseAttendanceCommandRequestId(request.id),
+        requestedAt: prepared.requestedAt,
+      });
+      const data = requireSuccessfulAttendanceResult(result, 'START_BREAK');
+      return attendanceSuccessReply(reply, data, result.idempotentReplay, request.id);
+    },
+  );
+
+  api.post(
+    '/v1/me/attendance/end-break',
+    {
+      preValidation: prepareAttendanceRequest,
+      schema: {
+        body: resumeAttendanceRequestSchema,
+        description:
+          'Resumes work by ending the authorized current employee break using a required opaque Idempotency-Key header, optimistic attendance revision, trusted server occurrence minute, and atomic audit evidence.',
+        headers: attendanceMutationHeadersSchema,
+        operationId: 'resumeCurrentEmployeeAttendance',
+        response: attendanceMutationResponses(resumeAttendanceEnvelopeSchema),
+        summary: 'Resume work for current employee',
+        tags: ['Attendance'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = requirePreparedAttendanceRequest(request, preparedAttendanceRequests);
+      const result = await attendanceCommandService.execute(prepared.identity, {
+        ...request.body,
+        command: 'RESUME',
+        idempotencyKey: requireIdempotencyKey(request),
+        requestId: parseAttendanceCommandRequestId(request.id),
+        requestedAt: prepared.requestedAt,
+      });
+      const data = requireSuccessfulAttendanceResult(result, 'RESUME');
+      return attendanceSuccessReply(reply, data, result.idempotentReplay, request.id);
+    },
+  );
+
+  api.post(
+    '/v1/me/attendance/clock-out',
+    {
+      preValidation: prepareAttendanceRequest,
+      schema: {
+        body: clockOutRequestSchema,
+        description:
+          'Clocks out the authorized current employee, requiring explicit confirmation while on break and atomically closing that break before clock-out at one trusted server occurrence minute.',
+        headers: attendanceMutationHeadersSchema,
+        operationId: 'clockOutCurrentEmployee',
+        response: attendanceMutationResponses(clockOutEnvelopeSchema),
+        summary: 'Clock out current employee',
+        tags: ['Attendance'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = requirePreparedAttendanceRequest(request, preparedAttendanceRequests);
+      const result = await attendanceCommandService.execute(prepared.identity, {
+        command: 'CLOCK_OUT',
+        ...(request.body.confirmActiveBreak === undefined
+          ? {}
+          : { confirmActiveBreak: request.body.confirmActiveBreak }),
+        expectedAttendanceRevision: request.body.expectedAttendanceRevision,
+        idempotencyKey: requireIdempotencyKey(request),
+        requestId: parseAttendanceCommandRequestId(request.id),
+        requestedAt: prepared.requestedAt,
+      });
+      const data = requireSuccessfulAttendanceResult(result, 'CLOCK_OUT');
+      return attendanceSuccessReply(reply, data, result.idempotentReplay, request.id);
+    },
+  );
+}
+
+function attendanceMutationResponses<Schema extends z.ZodType>(successSchema: Schema) {
+  return {
+    200: successSchema,
+    401: apiErrorEnvelopeSchema,
+    403: apiErrorEnvelopeSchema,
+    409: apiErrorEnvelopeSchema,
+    422: apiErrorEnvelopeSchema,
+    503: apiErrorEnvelopeSchema,
+  };
+}
+
+function requirePreparedAttendanceRequest(
+  request: FastifyRequest,
+  preparedRequests: WeakMap<FastifyRequest, PreparedAttendanceRequest>,
+): PreparedAttendanceRequest {
+  const prepared = preparedRequests.get(request);
+  preparedRequests.delete(request);
+  if (prepared === undefined) {
+    throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  }
+  return prepared;
+}
+
+function requireSuccessfulAttendanceResult(
+  result: AttendanceCommandOperationResult,
+  command: 'CLOCK_IN',
+): ClockInResult;
+function requireSuccessfulAttendanceResult(
+  result: AttendanceCommandOperationResult,
+  command: 'START_BREAK',
+): StartBreakResult;
+function requireSuccessfulAttendanceResult(
+  result: AttendanceCommandOperationResult,
+  command: 'RESUME',
+): ResumeAttendanceResult;
+function requireSuccessfulAttendanceResult(
+  result: AttendanceCommandOperationResult,
+  command: 'CLOCK_OUT',
+): ClockOutResult;
+function requireSuccessfulAttendanceResult(
+  result: AttendanceCommandOperationResult,
+  command: AttendanceCommandResult['command'],
+): AttendanceCommandResult {
+  if (result.kind === 'ERROR') {
+    throw new WorkLedgerApiError({
+      code: result.code,
+      ...(result.context === undefined ? {} : { context: result.context }),
+      ...(result.idempotentReplay ? { idempotentReplay: true } : {}),
+      statusCode: 409,
+    });
+  }
+  if (result.data.command !== command) {
+    throw internalAttendanceRouteError();
+  }
+  switch (command) {
+    case 'CLOCK_IN':
+      if (result.data.command !== 'CLOCK_IN') throw internalAttendanceRouteError();
+      return result.data;
+    case 'START_BREAK':
+      if (result.data.command !== 'START_BREAK') throw internalAttendanceRouteError();
+      return result.data;
+    case 'RESUME':
+      if (result.data.command !== 'RESUME') throw internalAttendanceRouteError();
+      return result.data;
+    case 'CLOCK_OUT':
+      if (result.data.command !== 'CLOCK_OUT') throw internalAttendanceRouteError();
+      return result.data;
+  }
+}
+
+function attendanceSuccessReply<Result extends AttendanceCommandResult>(
+  reply: FastifyReply,
+  data: Result,
+  idempotentReplay: boolean,
+  requestId: string,
+) {
+  reply.header('cache-control', 'private, no-store');
+  return {
+    data,
+    meta: {
+      ...(idempotentReplay ? { idempotentReplay: true } : {}),
+      requestId,
+    },
+  };
+}
+
+function internalAttendanceRouteError(): WorkLedgerApiError {
+  return new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
 }
 
 function requireInstant(value: string) {

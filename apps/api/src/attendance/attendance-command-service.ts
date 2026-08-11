@@ -2,11 +2,11 @@ import { createHash, randomUUID } from 'node:crypto';
 
 import {
   apiErrorCodeSchema,
-  clockInResultSchema,
+  attendanceCommandResultSchema,
   type ApiErrorCode,
   type ApiRecoveryContext,
-  type ClockInRequest,
-  type ClockInResult,
+  type AttendanceCommand,
+  type AttendanceCommandResult,
 } from '@workledger/contracts';
 import {
   compareInstants,
@@ -15,6 +15,7 @@ import {
   parseInstant,
   validAttendanceActions,
   validateAttendanceTransition,
+  type AttendanceCommandInput,
   type DomainId,
   type Instant,
 } from '@workledger/domain';
@@ -31,21 +32,22 @@ import type {
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 
-export type ClockInIdentity = Readonly<{
+export type AttendanceCommandIdentity = Readonly<{
   accountId: DomainId<'Account'>;
   sessionFresh: boolean;
 }>;
 
-export type ClockInCommand = ClockInRequest &
+export type ExecuteAttendanceCommand = AttendanceCommandInput &
   Readonly<{
+    expectedAttendanceRevision: number;
     idempotencyKey: string;
     requestId: DomainId<'Request'>;
     requestedAt: Instant;
   }>;
 
-export type ClockInOperationResult =
+export type AttendanceCommandOperationResult =
   | Readonly<{
-      data: ClockInResult;
+      data: AttendanceCommandResult;
       idempotentReplay: boolean;
       kind: 'SUCCESS';
     }>
@@ -56,26 +58,36 @@ export type ClockInOperationResult =
       kind: 'ERROR';
     }>;
 
-export interface ClockInService {
-  authorize(identity: ClockInIdentity, at: Instant): Promise<void>;
-  clockIn(identity: ClockInIdentity, command: ClockInCommand): Promise<ClockInOperationResult>;
+export interface AttendanceCommandService {
+  authorize(identity: AttendanceCommandIdentity, at: Instant): Promise<void>;
+  execute(
+    identity: AttendanceCommandIdentity,
+    command: ExecuteAttendanceCommand,
+  ): Promise<AttendanceCommandOperationResult>;
 }
 
-export function createClockInService(
+const AUDIT_ACTIONS: Readonly<Record<AttendanceCommand, string>> = Object.freeze({
+  CLOCK_IN: 'ATTENDANCE_CLOCK_IN',
+  CLOCK_OUT: 'ATTENDANCE_CLOCK_OUT',
+  RESUME: 'ATTENDANCE_RESUME',
+  START_BREAK: 'ATTENDANCE_START_BREAK',
+});
+
+export function createAttendanceCommandService(
   database: WorkLedgerDatabase,
   now: () => string,
-): ClockInService {
-  const service: ClockInService = {
+): AttendanceCommandService {
+  const service: AttendanceCommandService = {
     async authorize(identity, at) {
       await database.transaction(async (transaction) => {
         const context = requireActiveEmployeeContext(
           await transaction.accountSelfService.findContext(identity.accountId, at),
         );
-        requireClockInAuthorization(context, identity);
+        requireAttendanceAuthorization(context, identity);
       });
     },
 
-    async clockIn(identity, command) {
+    async execute(identity, command) {
       return database.transaction(
         async (transaction) => {
           const context = requireActiveEmployeeContext(
@@ -84,20 +96,20 @@ export function createClockInService(
               command.requestedAt,
             ),
           );
-          requireClockInAuthorization(context, identity);
+          requireAttendanceAuthorization(context, identity);
           const employee = context.employee;
           if (employee === null) {
             throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
           }
-          const requestFingerprint = createClockInFingerprint({
+          const requestFingerprint = createAttendanceFingerprint({
             actorAccountId: context.accountId,
+            command,
             employeeId: employee.id,
-            expectedAttendanceRevision: command.expectedAttendanceRevision,
             organizationId: context.organization.id,
           });
           const claim = await transaction.attendanceIdempotency.claim({
             actorAccountId: context.accountId,
-            command: 'CLOCK_IN',
+            command: command.command,
             employeeId: employee.id,
             idempotencyKey: command.idempotencyKey,
             organizationId: context.organization.id,
@@ -111,33 +123,38 @@ export function createClockInService(
               kind: 'ERROR',
             });
           }
-          if (claim.kind === 'REPLAY') return replayClockInOutcome(claim);
+          if (claim.kind === 'REPLAY') return replayAttendanceOutcome(claim, command.command);
 
           await transaction.attendance.ensureHead(context.organization.id, employee.id);
           const head = await transaction.attendance.lockHead(context.organization.id, employee.id);
-          if (head === null) throw internalClockInError();
+          if (head === null) throw internalAttendanceError();
 
           if (head.attendanceRevision !== command.expectedAttendanceRevision) {
-            return completeClockInError(transaction, {
+            return completeAttendanceError(transaction, {
+              attendanceRevision: head.attendanceRevision,
               claimId: claim.recordId,
               code: 'ATTENDANCE_STATE_CHANGED',
+              command: command.command,
               completedAt: requireServiceInstant(now()),
               currentState: head.state,
               requestFingerprint,
-              attendanceRevision: head.attendanceRevision,
               validActions: validAttendanceActions(head.state),
             });
           }
 
-          const transition = validateAttendanceTransition(head.state, { command: 'CLOCK_IN' });
+          const transition = validateAttendanceTransition(head.state, transitionInput(command));
           if (!transition.ok) {
-            return completeClockInError(transaction, {
+            return completeAttendanceError(transaction, {
+              attendanceRevision: head.attendanceRevision,
               claimId: claim.recordId,
               code: transition.error.code,
+              command: command.command,
               completedAt: requireServiceInstant(now()),
               currentState: head.state,
+              ...(transition.error.code === 'ATTENDANCE_BREAK_CONFIRMATION_REQUIRED'
+                ? { requiresBreakConfirmation: true }
+                : {}),
               requestFingerprint,
-              attendanceRevision: head.attendanceRevision,
               validActions: validAttendanceActions(head.state),
             });
           }
@@ -147,20 +164,20 @@ export function createClockInService(
             employee.id,
           );
           if ((latestEvent?.event.eventSequence ?? 0) !== head.nextEventSequence - 1) {
-            throw internalClockInError();
+            throw internalAttendanceError();
           }
           const parsedOccurrence = parseInstant(now());
-          if (!parsedOccurrence.ok) throw internalClockInError();
+          if (!parsedOccurrence.ok) throw internalAttendanceError();
           const occurredAt = floorInstantToMinute(parsedOccurrence.value);
           if (
             latestEvent !== null &&
             compareInstants(occurredAt, latestEvent.event.occurredAt) < 0
           ) {
-            throw internalClockInError();
+            throw internalAttendanceError();
           }
 
           const commandId = parseDomainId<'AttendanceCommand'>(randomUUID());
-          if (!commandId.ok) throw internalClockInError();
+          if (!commandId.ok) throw internalAttendanceError();
           const storedEvents = await transaction.attendance.appendPunchEvents(
             context.organization.id,
             employee.id,
@@ -182,10 +199,12 @@ export function createClockInService(
             nextState: transition.value.nextState,
             organizationId: context.organization.id,
           });
-          if (advancedHead === null || storedEvents.length !== 1) throw internalClockInError();
+          if (advancedHead === null || storedEvents.length !== transition.value.eventTypes.length) {
+            throw internalAttendanceError();
+          }
 
           await transaction.audit.appendDomain({
-            actionCode: 'ATTENDANCE_CLOCK_IN',
+            actionCode: AUDIT_ACTIONS[command.command],
             actor: {
               accountId: context.accountId,
               kind: 'ACCOUNT',
@@ -213,7 +232,7 @@ export function createClockInService(
             kind: 'SUCCESS',
             data: Object.freeze({
               attendanceRevision: advancedHead.attendanceRevision,
-              command: 'CLOCK_IN',
+              command: command.command,
               createdEvents: Object.freeze(
                 storedEvents.map((event) =>
                   Object.freeze({ id: event.id, type: event.event.type }),
@@ -226,7 +245,7 @@ export function createClockInService(
           });
           if (
             !(await transaction.attendanceIdempotency.complete({
-              command: 'CLOCK_IN',
+              command: command.command,
               completedAt: parsedOccurrence.value,
               originalHttpStatus: 200,
               outcome,
@@ -234,10 +253,10 @@ export function createClockInService(
               requestFingerprint,
             }))
           ) {
-            throw internalClockInError();
+            throw internalAttendanceError();
           }
 
-          return successfulClockIn(outcome.data, false);
+          return successfulAttendance(outcome.data, command.command, false);
         },
         {
           isolationLevel: 'serializable',
@@ -249,10 +268,10 @@ export function createClockInService(
   return Object.freeze(service);
 }
 
-export function parseClockInIdentity(
+export function parseAttendanceCommandIdentity(
   accountIdValue: string,
   sessionFresh: boolean,
-): ClockInIdentity {
+): AttendanceCommandIdentity {
   const accountId = parseDomainId<'Account'>(accountIdValue);
   if (!accountId.ok) {
     throw new WorkLedgerApiError({ code: 'AUTH_SESSION_EXPIRED', statusCode: 401 });
@@ -260,24 +279,42 @@ export function parseClockInIdentity(
   return Object.freeze({ accountId: accountId.value, sessionFresh });
 }
 
-export function parseClockInRequestId(value: string): DomainId<'Request'> {
+export function parseAttendanceCommandRequestId(value: string): DomainId<'Request'> {
   const requestId = parseDomainId<'Request'>(value);
-  if (!requestId.ok) throw internalClockInError();
+  if (!requestId.ok) throw internalAttendanceError();
   return requestId.value;
 }
 
-function createClockInFingerprint(
+function transitionInput(command: ExecuteAttendanceCommand): AttendanceCommandInput {
+  return command.command === 'CLOCK_OUT'
+    ? Object.freeze({
+        command: command.command,
+        ...(command.confirmActiveBreak === undefined
+          ? {}
+          : { confirmActiveBreak: command.confirmActiveBreak }),
+      })
+    : Object.freeze({ command: command.command });
+}
+
+function createAttendanceFingerprint(
   input: Readonly<{
     actorAccountId: DomainId<'Account'>;
+    command: ExecuteAttendanceCommand;
     employeeId: DomainId<'Employee'>;
-    expectedAttendanceRevision: number;
     organizationId: DomainId<'Organization'>;
   }>,
 ): string {
+  const body =
+    input.command.command === 'CLOCK_OUT'
+      ? {
+          confirmActiveBreak: input.command.confirmActiveBreak ?? false,
+          expectedAttendanceRevision: input.command.expectedAttendanceRevision,
+        }
+      : { expectedAttendanceRevision: input.command.expectedAttendanceRevision };
   const canonical = JSON.stringify({
     actorAccountId: input.actorAccountId,
-    body: { expectedAttendanceRevision: input.expectedAttendanceRevision },
-    command: 'CLOCK_IN',
+    body,
+    command: input.command.command,
     employeeId: input.employeeId,
     method: 'POST',
     organizationId: input.organizationId,
@@ -285,28 +322,33 @@ function createClockInFingerprint(
   return createHash('sha256').update(canonical, 'utf8').digest('hex');
 }
 
-async function completeClockInError(
+async function completeAttendanceError(
   transaction: WorkLedgerTransaction,
   input: Readonly<{
     attendanceRevision: number;
     claimId: DomainId<'IdempotencyRecord'>;
     code: string;
+    command: AttendanceCommand;
     completedAt: Instant;
     currentState: NonNullable<AttendanceIdempotencyErrorSnapshot['currentState']>;
     requestFingerprint: string;
+    requiresBreakConfirmation?: boolean;
     validActions: NonNullable<AttendanceIdempotencyErrorSnapshot['validActions']>;
   }>,
-): Promise<ClockInOperationResult> {
+): Promise<AttendanceCommandOperationResult> {
   const error = Object.freeze({
     attendanceRevision: input.attendanceRevision,
     code: input.code,
     currentState: input.currentState,
+    ...(input.requiresBreakConfirmation === undefined
+      ? {}
+      : { requiresBreakConfirmation: input.requiresBreakConfirmation }),
     validActions: Object.freeze([...input.validActions]),
   });
   const outcome: AttendanceIdempotencyOutcome = Object.freeze({ kind: 'ERROR', error });
   if (
     !(await transaction.attendanceIdempotency.complete({
-      command: 'CLOCK_IN',
+      command: input.command,
       completedAt: input.completedAt,
       originalHttpStatus: 409,
       outcome,
@@ -314,41 +356,43 @@ async function completeClockInError(
       requestFingerprint: input.requestFingerprint,
     }))
   ) {
-    throw internalClockInError();
+    throw internalAttendanceError();
   }
-  return failedClockIn(error, false);
+  return failedAttendance(error, false);
 }
 
-function replayClockInOutcome(
+function replayAttendanceOutcome(
   claim: Readonly<{
     originalHttpStatus: number;
     outcome: AttendanceIdempotencyOutcome;
   }>,
-): ClockInOperationResult {
+  command: AttendanceCommand,
+): AttendanceCommandOperationResult {
   if (claim.outcome.kind === 'SUCCESS' && claim.originalHttpStatus === 200) {
-    return successfulClockIn(claim.outcome.data, true);
+    return successfulAttendance(claim.outcome.data, command, true);
   }
   if (claim.outcome.kind === 'ERROR' && claim.originalHttpStatus === 409) {
-    return failedClockIn(claim.outcome.error, true);
+    return failedAttendance(claim.outcome.error, true);
   }
-  throw internalClockInError();
+  throw internalAttendanceError();
 }
 
-function successfulClockIn(
+function successfulAttendance(
   snapshot: AttendanceIdempotencySuccessSnapshot,
+  command: AttendanceCommand,
   idempotentReplay: boolean,
-): ClockInOperationResult {
-  const result = clockInResultSchema.safeParse(snapshot);
-  if (!result.success) throw internalClockInError();
+): AttendanceCommandOperationResult {
+  const result = attendanceCommandResultSchema.safeParse(snapshot);
+  if (!result.success || result.data.command !== command) throw internalAttendanceError();
   return Object.freeze({ data: result.data, idempotentReplay, kind: 'SUCCESS' });
 }
 
-function failedClockIn(
+function failedAttendance(
   snapshot: AttendanceIdempotencyErrorSnapshot,
   idempotentReplay: boolean,
-): ClockInOperationResult {
+): AttendanceCommandOperationResult {
   const parsedCode = apiErrorCodeSchema.safeParse(snapshot.code);
-  if (!parsedCode.success) throw internalClockInError();
+  if (!parsedCode.success) throw internalAttendanceError();
   return Object.freeze({
     code: parsedCode.data,
     context: Object.freeze({
@@ -378,9 +422,9 @@ function requireActiveEmployeeContext(
   return context;
 }
 
-function requireClockInAuthorization(
+function requireAttendanceAuthorization(
   context: AccountSelfContextRecord,
-  identity: ClockInIdentity,
+  identity: AttendanceCommandIdentity,
 ): void {
   const employee = context.employee;
   if (employee === null) {
@@ -413,12 +457,12 @@ function attendanceActorRole(roles: readonly ApplicationRole[]): ApplicationRole
   );
 }
 
-function internalClockInError(): WorkLedgerApiError {
+function internalAttendanceError(): WorkLedgerApiError {
   return new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
 }
 
 function requireServiceInstant(value: string): Instant {
   const instant = parseInstant(value);
-  if (!instant.ok) throw internalClockInError();
+  if (!instant.ok) throw internalAttendanceError();
   return instant.value;
 }
