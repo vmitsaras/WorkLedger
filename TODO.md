@@ -69,7 +69,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-403` Build break, resume, and clock-out mutations end to end.
 - [x] `WL-404` Build Today timeline and calculation breakdown.
 - [x] `WL-405` Add duplicate, retry, stale-state, offline, and error handling.
-- [ ] `WL-406` Complete keyboard, screen-reader, mobile, and reduced-motion tests.
+- [x] `WL-406` Complete keyboard, screen-reader, mobile, and reduced-motion tests.
 - [ ] `WL-407` Pass the Phase 4 exit gate.
 
 ## Phase 5 — Time records and corrections

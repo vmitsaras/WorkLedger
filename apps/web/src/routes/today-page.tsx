@@ -424,7 +424,7 @@ function renderTodayReady({
             <h2
               ref={statusHeadingRef}
               id="current-status-title"
-              className="m-0 text-3xl font-bold outline-none focus-visible:rounded-sm focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]"
+              className="m-0 text-3xl font-bold outline-none focus-visible:rounded-sm focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]"
               tabIndex={-1}
             >
               {STATE_LABELS[attendance.state]}

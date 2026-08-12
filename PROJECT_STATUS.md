@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 4 — Employee attendance vertical slice
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 6 of 8 Phase 4 tasks complete
-**Current milestone:** Employee-attendance accessibility and mobile review
-**Active task:** `WL-406`
+**Phase progress:** 7 of 8 Phase 4 tasks complete
+**Current milestone:** Phase 4 exit-gate review
+**Active task:** `WL-407`
 **Status:** Ready
-**Last verified:** 2026-08-11
+**Last verified:** 2026-08-12
 
 ## Current objective
 
-Execute the phase-wide keyboard, screen-reader, touch, zoom/reflow, forced-colors, reduced-motion,
-long-content, and additional viewport review for the complete employee-attendance slice.
+Execute the complete Phase 4 vertical-slice exit-gate review, reconcile all attendance evidence, and
+apply the required `0.5.0` internal milestone version if the gate passes.
 
 ## Verified decisions
 
@@ -286,39 +286,42 @@ long-content, and additional viewport review for the complete employee-attendanc
   polling, focus/tab/device convergence, terminal-conflict non-retry, persistent dependency
   recovery, and race/retry browser evidence completed (`WL-405`; see
   `docs/56-attendance-resilience-recovery.md`).
+- [x] Phase-wide keyboard, accessibility-tree announcement smoke, touch-emulation, 200%-width
+  reflow proxy, forced-colors focus/boundary, reduced-motion, long-content, and ten-viewport review
+  completed (`WL-406`; see `docs/57-employee-attendance-accessibility-review.md`).
 
 ## Latest completed task
 
-### `WL-405` — Implement attendance resilience and recovery
+### `WL-406` — Execute employee-attendance accessibility and mobile review
 
-- Changed: added 30-second foreground polling plus always-on focus/reconnect refetch, explicit
-  browser online state, non-paused attendance mutations, bounded same-key retry for online
-  transport/`5xx` failures, offline and reconnect gating, persistent background dependency
-  recovery, newer-device revision feedback, and one focused attendance-control/recovery component.
+- Changed: corrected the application-shell heading outline so route content begins with its `h1`,
+  made shared React Aria and programmatic focus outlines explicitly solid, and expanded the
+  Chromium accessibility matrix with forced-colors, touch, motion, heading, target-size, and
+  ten-width reflow coverage.
 - Verified: the database-enabled canonical gate passes 24 native checks, 153 unit/component tests,
-  21 integration tests, and nine Chromium scenarios plus reproducible OpenAPI, formatting,
+  21 integration tests, and 12 Chromium scenarios plus reproducible OpenAPI, formatting,
   lint/boundaries, strict TypeScript, and the production build.
-- Accessibility: polling and retry loops are silent; offline/dependency failures use concise visible
-  recovery; ordinary device convergence uses one polite status; and focus moves to current status
-  only when a refreshed state removes the focused clock action. Component and Chromium paths pass
-  axe.
-- Security/data: idempotency keys remain memory-only headers, automatic retry reuses the identical
-  intent, terminal conflicts are not retried, offline actions cannot queue, and the strict Today/API,
-  authorization, CSRF, no-store, and revision-aware cache boundaries remain unchanged.
-- Documentation: added `docs/56-attendance-resilience-recovery.md` and synchronized README, task
-  board, TODO, prior Today ownership, and status.
-- Remaining risk: actual screen-reader, touch, 200% zoom/reflow, forced-colors, reduced-motion,
-  long/translated-content, and additional viewport review remain `WL-406`. The build chunk-size
-  warning and bounded-history scale remain owned by `WL-1001`.
-- Next task: `WL-406`.
+- Accessibility: keyboard completes the full attendance sequence and dialog flow; accessibility-tree
+  and announcement contracts cover pending/success/conflict/replay/offline/dependency/device
+  outcomes; Today reflows from 320 through 1920 px; touch targets exceed 24 × 24 px; forced colors
+  paint visible boundaries/focus; and reduced motion removes spatial animation without changing the
+  workflow. Actual named OS screen-reader and physical-device output is not claimed.
+- Security/data: only presentation semantics, focus CSS, tests, and documentation changed. No API,
+  storage, authentication, authorization, cache, audit, or telemetry boundary changed.
+- Documentation: added `docs/57-employee-attendance-accessibility-review.md` and synchronized README,
+  task board, TODO, the prior resilience note, and project status.
+- Remaining risk: D-502 still owns supported browser/version targets; actual OS screen-reader/browser,
+  physical touch-device, and browser-chrome zoom checks remain release-level manual confirmation.
+  The existing bundle warning and bounded-history scale remain owned by `WL-1001`.
+- Next task: `WL-407`.
 
 ## Current blockers
 
-No `WL-406` blocker is known. D-502 remains open before the production browser gate.
+No `WL-407` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-406 — Execute the employee-attendance accessibility and mobile review.`
+`WL-407 — Execute the Phase 4 exit-gate review.`
 
 ## Update rules
 

@@ -19,7 +19,7 @@ export function PageHeader({ children, description, eyebrow, title }: PageHeader
         data-route-focus-key="route-heading"
         data-route-heading
         tabIndex={-1}
-        className="m-0 max-w-3xl text-3xl font-bold tracking-[-0.025em] text-[var(--wl-text)] outline-none sm:text-4xl"
+        className="m-0 max-w-3xl text-3xl font-bold tracking-[-0.025em] text-[var(--wl-text)] outline-none focus-visible:outline-solid sm:text-4xl"
       >
         {title}
       </h1>

@@ -196,7 +196,8 @@
     background: var(--wl-surface-raised);
   }
 
-  [data-route-heading]:focus-visible {
+  [data-route-heading]:focus-visible,
+  #current-status-title:focus-visible {
     outline: 3px solid var(--wl-focus-ring);
     outline-offset: 0.35rem;
     border-radius: 0.2rem;

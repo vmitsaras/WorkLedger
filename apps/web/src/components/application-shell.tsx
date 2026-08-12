@@ -104,13 +104,10 @@ function NavigationLists({
             const items = NAVIGATION_ITEMS.filter((item) => item.area === area);
             if (items.length === 0) return null;
             return (
-              <div key={area} aria-labelledby={`${mode}-${area}-navigation`} className="grid gap-2">
-                <h2
-                  id={`${mode}-${area}-navigation`}
-                  className="m-0 px-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--wl-text-muted)]"
-                >
+              <div key={area} className="grid gap-2">
+                <p className="m-0 px-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--wl-text-muted)]">
                   {AREA_LABELS[area]}
-                </h2>
+                </p>
                 <ul className="m-0 grid list-none gap-1 p-0" role="list">
                   {items.map((item) => (
                     <li key={item.to}>

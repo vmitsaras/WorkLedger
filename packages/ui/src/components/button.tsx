@@ -9,7 +9,7 @@ export const buttonVariants = cva(
     'wl-control inline-flex min-h-10 min-w-10 items-center justify-center gap-2 rounded-lg border px-4 py-2',
     'text-sm font-semibold leading-5 no-underline outline-none',
     'transition-[background-color,border-color,color,transform] duration-[var(--wl-motion-duration-fast)] ease-[var(--wl-motion-ease-standard)]',
-    'data-[focus-visible]:outline-3 data-[focus-visible]:outline-offset-3 data-[focus-visible]:outline-[var(--wl-focus-ring)]',
+    'data-[focus-visible]:outline-3 data-[focus-visible]:outline-solid data-[focus-visible]:outline-offset-3 data-[focus-visible]:outline-[var(--wl-focus-ring)]',
     'data-[pressed]:translate-y-px data-[disabled]:cursor-not-allowed data-[disabled]:opacity-55',
   ],
   {

@@ -47,8 +47,9 @@ controls, offline startup/transition, reconnect failure, multiple tabs, and stal
 
 The implementation adds no custom keyboard model, animation, timer announcement, toast-only
 feedback, or ARIA-disabled simulation. Disabled native buttons are accompanied by visible recovery
-text so their unavailability is not hidden from users. The phase-wide screen-reader, forced-colors,
-zoom, touch, translated-content, and additional viewport review remains `WL-406`.
+text so their unavailability is not hidden from users. The phase-wide screen-reader smoke,
+forced-colors, zoom/reflow, touch-emulation, long-content, and additional viewport review was
+completed by `WL-406`; see `docs/57-employee-attendance-accessibility-review.md`.
 
 The Today route delegates the cohesive action-control, confirmation, offline, reconnect, and
 dependency panels to a focused feature component. This keeps transport/revision orchestration in
@@ -81,8 +82,8 @@ employee capability, organization scope, or endpoint authorization.
 
 ## Deferred ownership
 
-- `WL-406` owns the phase-wide manual keyboard, screen-reader, touch, 200% zoom/reflow,
-  forced-colors, reduced-motion, long/translated-content, and additional viewport review.
+- `WL-406` completed the phase-wide keyboard, accessibility-tree, touch-emulation, zoom/reflow,
+  forced-colors, reduced-motion, long-content, and additional viewport review.
 - `WL-407` owns the Phase 4 exit gate and version milestone after that review passes.
 - `WL-1001` retains the existing production-scale/bundle-splitting work; the 30-second foreground
   query is bounded by one current employee and the existing 500-event Today source limit.

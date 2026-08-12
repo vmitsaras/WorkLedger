@@ -6,6 +6,9 @@ test('defines visible focus, reduced-motion, and forced-colors foundations', asy
   const styles = await readFile(stylesUrl, 'utf8');
 
   expect(styles).toContain('--wl-focus-ring:');
+  expect(styles).toContain('.wl-control[data-focus-visible]');
+  expect(styles).toContain('outline-style: solid;');
+  expect(styles).toContain('@keyframes wl-dialog-in');
   expect(styles).toContain('@media (prefers-reduced-motion: reduce)');
   expect(styles).toContain('transform: none !important;');
   expect(styles).toContain('@media (forced-colors: active)');

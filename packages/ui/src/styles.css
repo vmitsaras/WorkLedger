@@ -51,6 +51,12 @@
   .wl-field input {
     -webkit-tap-highlight-color: transparent;
   }
+
+  .wl-control[data-focus-visible],
+  .wl-link[data-focus-visible],
+  .wl-field input[data-focus-visible] {
+    outline-style: solid;
+  }
 }
 
 @layer workledger.motion {

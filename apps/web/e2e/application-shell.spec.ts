@@ -476,6 +476,164 @@ test('keeps the calculation explanation and event history readable at 320px', as
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('preserves the Today task order, target sizes, and reflow across supported widths', async ({
+  page,
+}) => {
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await mockToday(page);
+  await page.goto('/today');
+
+  const supportedWidths = [320, 360, 390, 430, 640, 768, 1024, 1280, 1440, 1920];
+  for (const width of supportedWidths) {
+    await test.step(`${width.toString()}px viewport`, async () => {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+
+      for (const action of ['Start break', 'Clock out']) {
+        const bounds = await page.getByRole('button', { name: action, exact: true }).boundingBox();
+        expect(bounds).not.toBeNull();
+        expect(bounds?.width).toBeGreaterThanOrEqual(24);
+        expect(bounds?.height).toBeGreaterThanOrEqual(24);
+      }
+    });
+  }
+
+  const headings = await page.getByRole('heading').allTextContents();
+  expect(headings[0]).toBe('Today');
+  expect(
+    await page.evaluate(() => {
+      const currentStatus = document.querySelector('#current-status-title')?.closest('section');
+      const calculation = document.querySelector('#calculation-title')?.closest('section');
+      return (
+        currentStatus !== null &&
+        calculation !== null &&
+        Boolean(
+          currentStatus.compareDocumentPosition(calculation) & Node.DOCUMENT_POSITION_FOLLOWING,
+        )
+      );
+    }),
+  ).toBe(true);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('keeps text, controls, focus, and boundaries perceivable in forced colors', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await mockToday(page);
+
+  await page.goto('/today');
+  const startBreak = page.getByRole('button', { name: 'Start break' });
+  const clockOut = page.getByRole('button', { name: 'Clock out', exact: true });
+  await startBreak.focus();
+  await page.keyboard.press('Tab');
+  await expect(clockOut).toBeFocused();
+  await expect(clockOut).toHaveAttribute('data-focus-visible', 'true');
+  await expect(page.getByText('Current status', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Warnings' })).toBeVisible();
+
+  const forcedColorStyles = await clockOut.evaluate((button) => {
+    const styles = getComputedStyle(button);
+    return {
+      backgroundColor: styles.backgroundColor,
+      borderColor: styles.borderColor,
+      outlineColor: styles.outlineColor,
+      outlineStyle: styles.outlineStyle,
+    };
+  });
+  expect(forcedColorStyles.borderColor).not.toBe('transparent');
+  expect(forcedColorStyles.borderColor).not.toBe(forcedColorStyles.backgroundColor);
+  expect(forcedColorStyles.outlineColor).not.toBe('transparent');
+  expect(forcedColorStyles.outlineStyle).not.toBe('none');
+  // Axe's contrast calculation does not resolve Chromium's emulated system colors reliably.
+  // Normal-color axe coverage runs in every other critical-flow scenario.
+});
+
+test('completes the primary attendance action with touch input', async ({ browser, baseURL }) => {
+  if (baseURL === undefined) throw new Error('Playwright baseURL is required for the touch test.');
+  const context = await browser.newContext({
+    baseURL,
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  let attendanceState: 'OFF_WORK' | 'WORKING' = 'OFF_WORK';
+  let attendanceRevision = 0;
+  try {
+    await page.route('**/v1/me/context', async (route) => {
+      await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+    });
+    await page.route('**/v1/me/attendance/today', async (route) => {
+      await route.fulfill({
+        json: success({
+          ...TODAY_ATTENDANCE,
+          attendance: {
+            activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
+            attendanceRevision,
+            state: attendanceState,
+            validActions:
+              attendanceState === 'OFF_WORK' ? ['CLOCK_IN'] : ['START_BREAK', 'CLOCK_OUT'],
+          },
+          timeline: [],
+        }),
+        status: 200,
+      });
+    });
+    await page.route('**/v1/me/csrf', async (route) => {
+      await route.fulfill({ json: success({ token: 't'.repeat(43) }), status: 200 });
+    });
+    await page.route('**/v1/me/attendance/clock-in', async (route) => {
+      expect(route.request().headers()['x-workledger-csrf']).toBe('t'.repeat(43));
+      attendanceState = 'WORKING';
+      attendanceRevision = 1;
+      await route.fulfill({
+        json: success({
+          attendanceRevision,
+          command: 'CLOCK_IN',
+          createdEvents: [{ id: 'touch-clock-in', type: 'CLOCK_IN' }],
+          occurredAt: '2026-08-11T09:30:00Z',
+          resultingState: 'WORKING',
+          validActions: ['START_BREAK', 'CLOCK_OUT'],
+        }),
+        status: 200,
+      });
+    });
+
+    await page.goto('/today');
+    const clockIn = page.getByRole('button', { name: 'Clock in' });
+    const bounds = await clockIn.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds?.width).toBeGreaterThanOrEqual(24);
+    expect(bounds?.height).toBeGreaterThanOrEqual(24);
+    await clockIn.tap();
+
+    await expect(page.getByRole('heading', { name: 'Working' })).toBeFocused();
+    await expect(page.getByRole('status')).toContainText('Clocked in at');
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    await expectPageToHaveNoAxeViolations(page);
+  } finally {
+    await context.close();
+  }
+});
+
 test('captures the reset grant in memory and removes it from browser history immediately', async ({
   page,
 }) => {
@@ -527,6 +685,10 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
   await expect(dialog).toBeFocused();
   await expect(page.locator('.wl-dialog-modal')).toHaveCSS('animation-name', 'none');
   await expect(page.locator('.wl-dialog-modal')).toHaveCSS('transform', 'none');
+  await expect(dialog.getByRole('button', { name: 'Close' })).toHaveCSS(
+    'transition-duration',
+    '0.001s',
+  );
 
   await dialog.getByRole('link', { name: 'Team', exact: true }).click();
   await expect(dialog).toBeHidden();
