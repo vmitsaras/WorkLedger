@@ -1,17 +1,18 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 4 — Employee attendance vertical slice
+**Current phase:** Phase 5 — Time records and corrections
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 7 of 8 Phase 4 tasks complete
-**Current milestone:** Phase 4 exit-gate review
-**Active task:** `WL-407`
+**Phase progress:** 0 of 7 Phase 5 tasks complete
+**Current milestone:** Historical time and flexible-balance foundations
+**Active task:** `WL-500`
 **Status:** Ready
 **Last verified:** 2026-08-12
 
 ## Current objective
 
-Execute the complete Phase 4 vertical-slice exit-gate review, reconcile all attendance evidence, and
-apply the required `0.5.0` internal milestone version if the gate passes.
+Implement My Time week/month queries and the flexible-time balance/ledger portion of My Balances
+with URL-owned non-sensitive date/view/pagination state, correct posted/projected totals,
+explainable entries, and scoped API/database behavior.
 
 ## Verified decisions
 
@@ -289,39 +290,42 @@ apply the required `0.5.0` internal milestone version if the gate passes.
 - [x] Phase-wide keyboard, accessibility-tree announcement smoke, touch-emulation, 200%-width
   reflow proxy, forced-colors focus/boundary, reduced-motion, long-content, and ten-viewport review
   completed (`WL-406`; see `docs/57-employee-attendance-accessibility-review.md`).
+- [x] Phase 4 web/API/database/domain/audit flow, duplicate/lost-response safety, device convergence,
+  announcements, keyboard/mobile completion, recovery states, explainable balance, database-enabled
+  canonical quality, and shared `0.5.0` version gate passed (`WL-407`; see
+  `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
 
-### `WL-406` — Execute employee-attendance accessibility and mobile review
+### `WL-407` — Execute the Phase 4 exit-gate review
 
-- Changed: corrected the application-shell heading outline so route content begins with its `h1`,
-  made shared React Aria and programmatic focus outlines explicitly solid, and expanded the
-  Chromium accessibility matrix with forced-colors, touch, motion, heading, target-size, and
-  ten-width reflow coverage.
+- Changed: reconciled all seven Phase 4 exit criteria with direct domain, PostgreSQL/API, browser,
+  audit, security, and accessibility evidence; checked the canonical roadmap and task gate; and
+  advanced the root plus all eight private workspace manifests to internal version `0.5.0`.
 - Verified: the database-enabled canonical gate passes 24 native checks, 153 unit/component tests,
   21 integration tests, and 12 Chromium scenarios plus reproducible OpenAPI, formatting,
   lint/boundaries, strict TypeScript, and the production build.
-- Accessibility: keyboard completes the full attendance sequence and dialog flow; accessibility-tree
-  and announcement contracts cover pending/success/conflict/replay/offline/dependency/device
-  outcomes; Today reflows from 320 through 1920 px; touch targets exceed 24 × 24 px; forced colors
-  paint visible boundaries/focus; and reduced motion removes spatial animation without changing the
-  workflow. Actual named OS screen-reader and physical-device output is not claimed.
-- Security/data: only presentation semantics, focus CSS, tests, and documentation changed. No API,
-  storage, authentication, authorization, cache, audit, or telemetry boundary changed.
-- Documentation: added `docs/57-employee-attendance-accessibility-review.md` and synchronized README,
-  task board, TODO, the prior resilience note, and project status.
+- Accessibility: the gate confirms the full keyboard/touch attendance sequence, modal focus,
+  concise status/alert behavior, silent polling/retry, route and status focus, ordinary-mode axe,
+  forced colors, reduced motion, long content, and 320–1920 px reflow. Actual named OS
+  screen-reader/browser and physical-device output is not claimed.
+- Security/data: the gate adds no runtime data path. Attendance remains API-authorized,
+  origin/CSRF-protected, serializable, idempotent, immutable, minimized, private/no-store, and free
+  of offline mutation queues or persistent browser state.
+- Documentation: added `docs/58-phase-4-gate-review.md` and synchronized README, roadmap, task board,
+  TODO, manifests, and project status.
 - Remaining risk: D-502 still owns supported browser/version targets; actual OS screen-reader/browser,
   physical touch-device, and browser-chrome zoom checks remain release-level manual confirmation.
   The existing bundle warning and bounded-history scale remain owned by `WL-1001`.
-- Next task: `WL-407`.
+- Next task: `WL-500`.
 
 ## Current blockers
 
-No `WL-407` blocker is known. D-502 remains open before the production browser gate.
+No `WL-500` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-407 — Execute the Phase 4 exit-gate review.`
+`WL-500 — Implement My Time and the flexible-time portion of My Balances.`
 
 ## Update rules
 

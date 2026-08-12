@@ -193,13 +193,13 @@ Deliver a complete, reliable Today workflow from database through API to accessi
 
 ## Exit gate
 
-- [ ] The complete attendance flow works across web, API, database, domain, audit, and tests.
-- [ ] Duplicate clicks and lost responses do not duplicate events.
-- [ ] Two tabs/devices converge on server truth.
-- [ ] Current state and result are announced appropriately without timer spam.
-- [ ] Keyboard-only and mobile completion pass.
-- [ ] Loading, offline, conflict, permission, and server-error states exist.
-- [ ] The user can explain the displayed daily balance.
+- [x] The complete attendance flow works across web, API, database, domain, audit, and tests.
+- [x] Duplicate clicks and lost responses do not duplicate events.
+- [x] Two tabs/devices converge on server truth.
+- [x] Current state and result are announced appropriately without timer spam.
+- [x] Keyboard-only and mobile completion pass.
+- [x] Loading, offline, conflict, permission, and server-error states exist.
+- [x] The user can explain the displayed daily balance.
 
 **Gate evidence:** Playwright flow, API integration tests, axe checks, and manual accessibility notes.
 

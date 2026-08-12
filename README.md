@@ -209,6 +209,7 @@ versions and makes no response-time or production-support promise.
 | [docs/55-today-timeline-calculation.md](docs/55-today-timeline-calculation.md) | Explainable daily arithmetic, semantic ordered event history, timezone context, and 320 px responsive evidence |
 | [docs/56-attendance-resilience-recovery.md](docs/56-attendance-resilience-recovery.md) | Same-key retry, offline non-queuing, tab/device convergence, dependency recovery, and focus evidence |
 | [docs/57-employee-attendance-accessibility-review.md](docs/57-employee-attendance-accessibility-review.md) | Phase-wide keyboard, announcement, reflow, touch, forced-colors, reduced-motion, and viewport evidence |
+| [docs/58-phase-4-gate-review.md](docs/58-phase-4-gate-review.md) | Phase 4 vertical-slice exit criteria, cross-cutting review, verification, versioning, and Phase 5 handoff |
 
 ## License
 
