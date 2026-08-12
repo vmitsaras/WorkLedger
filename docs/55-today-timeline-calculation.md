@@ -84,8 +84,9 @@ screen-reader manual passes remain part of the phase-wide `WL-406` review.
 
 ## Deferred ownership
 
-- `WL-405` owns lost-response retry, offline/reconnect behavior, duplicate/replay presentation,
-  stale tabs/devices, polling, and broader dependency-error recovery.
+- `WL-405` completes lost-response retry, offline/reconnect behavior, duplicate/replay presentation,
+  stale tabs/devices, polling, and broader dependency-error recovery as documented in
+  `docs/56-attendance-resilience-recovery.md`.
 - `WL-406` owns the phase-wide manual keyboard, screen-reader, touch, 200% zoom/reflow,
   forced-colors, reduced-motion, long/translated-text, and additional viewport review.
 - `WL-1001` owns measured large-history performance and any justified archival, pagination,

@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 4 — 5 of 8 tasks complete**
+> **Current phase progress: Phase 4 — 6 of 8 tasks complete**
 
 Phase 3 passed its exit gate and the repository is now in **Phase 4: employee attendance vertical
 slice**. The workspace, project boundaries, strict tooling, test and CI baseline, local
@@ -17,9 +17,9 @@ append-only audience-separated audit foundation, protected attendance idempotenc
 persistence, a deterministic local-only Northstar development seed, reproducible hardened OpenAPI
 JSON exposure, the authenticated application shell/profile/session slice, the authorized
 organization-local Today attendance read model, protected end-to-end clock-in/break/resume/clock-out
-sequence, and explainable responsive Today timeline and daily calculation breakdown are implemented.
-The next task is attendance resilience across retry, stale, offline, and dependency states
-(`WL-405`).
+sequence, explainable responsive Today timeline and daily calculation breakdown, and attendance
+retry/offline/stale-device/dependency recovery are implemented. The next task is the phase-wide
+employee-attendance accessibility and mobile review (`WL-406`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe
@@ -207,6 +207,7 @@ versions and makes no response-time or production-support promise.
 | [docs/53-clock-in-mutation.md](docs/53-clock-in-mutation.md) | Authorized idempotent clock-in transaction, replay, audit, UI feedback, and concurrency evidence |
 | [docs/54-attendance-command-sequence.md](docs/54-attendance-command-sequence.md) | Full protected attendance command sequence, active-break confirmation, ordered events, and accessible feedback evidence |
 | [docs/55-today-timeline-calculation.md](docs/55-today-timeline-calculation.md) | Explainable daily arithmetic, semantic ordered event history, timezone context, and 320 px responsive evidence |
+| [docs/56-attendance-resilience-recovery.md](docs/56-attendance-resilience-recovery.md) | Same-key retry, offline non-queuing, tab/device convergence, dependency recovery, and focus evidence |
 
 ## License
 

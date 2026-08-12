@@ -106,7 +106,8 @@ focus, hover distinction, forced-colors support, and reduced-motion behavior.
 
 - `WL-404` completes the attendance timeline/list and calculation-breakdown experience documented
   in `docs/55-today-timeline-calculation.md`.
-- `WL-405` owns bounded unknown-result retry, offline/reconnect handling, polling, and broader
-  cross-tab/device refresh. Attendance intents remain memory-only and are never queued offline.
+- `WL-405` completes bounded unknown-result retry, offline/reconnect handling, polling, and broader
+  cross-tab/device refresh as documented in `docs/56-attendance-resilience-recovery.md`.
+  Attendance intents remain memory-only and are never queued offline.
 - `WL-406` owns the phase-wide manual keyboard, screen-reader, touch, zoom/reflow, forced-colors,
   and reduced-motion review.

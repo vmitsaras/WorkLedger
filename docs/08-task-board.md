@@ -93,7 +93,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-402 | Implement clock-in command through domain, transaction, idempotency, audit, API, and UI | WL-401 | Duplicate click/retry and unauthorized tests; accessible success feedback | Done |
 | WL-403 | Implement break-start, break-end, and clock-out commands end to end | WL-402 | Full state sequence, on-break clock-out confirmation, conflict tests | Done |
 | WL-404 | Build attendance timeline/list and daily calculation breakdown | WL-401–WL-403 | Values explainable; textual alternative; responsive behavior | Done |
-| WL-405 | Implement stale state, two-tab/device refresh, offline, retry, and dependency-error states | WL-402, WL-403 | E2E race/retry scenarios and clear recovery UI | Not started |
+| WL-405 | Implement stale state, two-tab/device refresh, offline, retry, and dependency-error states | WL-402, WL-403 | E2E race/retry scenarios and clear recovery UI | Done |
 | WL-406 | Execute employee-attendance accessibility and mobile review | WL-400–WL-405 | Keyboard, screen-reader smoke, zoom, forced colors, reduced motion | Not started |
 | WL-407 | Execute Phase 4 gate review | WL-406 | Full vertical-slice evidence recorded | Not started |
 

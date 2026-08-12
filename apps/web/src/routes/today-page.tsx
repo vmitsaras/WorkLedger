@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react';
+import { onlineManager, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 
 import type {
@@ -10,7 +10,7 @@ import type {
   CalculationWarningCode,
   TodayAttendance,
 } from '@workledger/contracts';
-import { Button, Dialog } from '@workledger/ui';
+import { Button } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -24,19 +24,18 @@ import { todayAttendanceQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { DailyTimeBreakdown } from '../components/daily-time-breakdown.js';
 import { PageHeader } from '../components/page-header.js';
+import {
+  ATTENDANCE_ACTION_LABELS,
+  AttendanceRecovery,
+  TodayAttendanceControls,
+  type AttendanceRecoveryMode,
+} from '../components/today-attendance-controls.js';
 import { TodayAttendanceTimeline } from '../components/today-attendance-timeline.js';
 
 const STATE_LABELS: Readonly<Record<AttendanceState, string>> = {
   OFF_WORK: 'Off work',
   ON_BREAK: 'On break',
   WORKING: 'Working',
-};
-
-const ACTION_LABELS: Readonly<Record<AttendanceCommand, string>> = {
-  CLOCK_IN: 'Clock in',
-  CLOCK_OUT: 'Clock out',
-  RESUME: 'Resume work',
-  START_BREAK: 'Start break',
 };
 
 const WARNING_MESSAGES: Readonly<Record<CalculationWarningCode, string>> = {
@@ -64,25 +63,36 @@ const BLOCKER_MESSAGES: Readonly<Record<CalculationBlockerCode, string>> = {
   SCHEDULE_NOT_ASSIGNED: 'No work schedule is assigned for today.',
 };
 
+const ATTENDANCE_AUTOMATIC_RETRY_LIMIT = 2;
+const ATTENDANCE_RETRY_BASE_DELAY_MS = 250;
+const ATTENDANCE_RETRY_MAX_DELAY_MS = 1_000;
+
 type AttendanceFeedback = Readonly<{
   command: AttendanceCommand;
   intentKey: string;
-  kind: 'ERROR' | 'SUCCESS';
+  kind: 'ERROR' | 'INFO' | 'SUCCESS';
   message: string;
   requestId?: string;
   resultingRevision?: number;
+  shouldFocusStatus: boolean;
 }>;
 
 export function TodayPage() {
   const query = useQuery(todayAttendanceQuery());
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const isOnline = useOnlineStatus();
   const statusHeadingRef = useRef<HTMLHeadingElement>(null);
+  const attendanceControlsRef = useRef<HTMLDivElement>(null);
+  const focusedActionRef = useRef<AttendanceCommand | null>(null);
   const focusedIntentRef = useRef<string | null>(null);
+  const previousAttendanceRef = useRef<TodayAttendance['attendance'] | null>(null);
   const [attendanceFeedback, setAttendanceFeedback] = useState<AttendanceFeedback | null>(null);
   const [clockOutConfirmationOpen, setClockOutConfirmationOpen] = useState(false);
+  const [requiresReconnectRefresh, setRequiresReconnectRefresh] = useState(false);
   const attendanceMutation = useMutation({
     mutationFn: executeAttendanceCommand,
+    networkMode: 'always',
     onError: async (error, variables) => {
       setClockOutConfirmationOpen(false);
       if (isAuthenticationError(error)) return;
@@ -101,10 +111,14 @@ export function TodayPage() {
             formatTime(result.occurredAt, query.data?.timeZone ?? 'UTC'),
           ),
           resultingRevision: result.attendanceRevision,
+          shouldFocusStatus: true,
         }),
       );
       await queryClient.invalidateQueries({ queryKey: todayAttendanceQuery().queryKey });
     },
+    retry: (failureCount, error) => shouldRetryAttendanceCommand(failureCount, error),
+    retryDelay: (failureCount) =>
+      Math.min(ATTENDANCE_RETRY_BASE_DELAY_MS * 2 ** failureCount, ATTENDANCE_RETRY_MAX_DELAY_MS),
   });
   const authenticationError =
     isAuthenticationError(query.error) || isAuthenticationError(attendanceMutation.error);
@@ -128,8 +142,73 @@ export function TodayPage() {
   }, [query.data?.attendance.state]);
 
   useEffect(() => {
+    const handleFocus = (event: FocusEvent) => {
+      if (
+        event.target instanceof Node &&
+        (attendanceControlsRef.current?.contains(event.target) ||
+          (event.target instanceof Element && event.target.closest('.wl-dialog-modal') !== null))
+      ) {
+        return;
+      }
+      focusedActionRef.current = null;
+    };
+    document.addEventListener('focusin', handleFocus);
+    return () => document.removeEventListener('focusin', handleFocus);
+  }, []);
+
+  useEffect(() => {
+    if (!isOnline) {
+      setRequiresReconnectRefresh(true);
+      setClockOutConfirmationOpen(false);
+      setAttendanceFeedback(null);
+      return;
+    }
+    if (!requiresReconnectRefresh) return;
+    let active = true;
+    void query.refetch().then((result) => {
+      if (active && result.isSuccess) setRequiresReconnectRefresh(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [isOnline, query.refetch, requiresReconnectRefresh]);
+
+  useEffect(() => {
+    const nextAttendance = query.data?.attendance;
+    if (nextAttendance === undefined) return;
+    const previousAttendance = previousAttendanceRef.current;
+    previousAttendanceRef.current = nextAttendance;
+    if (
+      previousAttendance === null ||
+      nextAttendance.attendanceRevision <= previousAttendance.attendanceRevision ||
+      attendanceMutation.isPending ||
+      (attendanceFeedback !== null &&
+        (attendanceFeedback.resultingRevision === undefined ||
+          nextAttendance.attendanceRevision <= attendanceFeedback.resultingRevision))
+    ) {
+      return;
+    }
+
+    const focusedAction = focusedActionRef.current;
+    const shouldFocusStatus =
+      focusedAction !== null && !nextAttendance.validActions.includes(focusedAction);
+    setAttendanceFeedback(
+      Object.freeze({
+        command: focusedAction ?? previousAttendance.validActions[0] ?? 'CLOCK_IN',
+        intentKey: `attendance-refresh-${nextAttendance.attendanceRevision.toString()}`,
+        kind: 'INFO',
+        message: `Attendance changed in another tab or device. Current status: ${STATE_LABELS[nextAttendance.state].toLowerCase()}.`,
+        resultingRevision: nextAttendance.attendanceRevision,
+        shouldFocusStatus,
+      }),
+    );
+    if (shouldFocusStatus) focusedActionRef.current = null;
+  }, [attendanceFeedback?.resultingRevision, attendanceMutation.isPending, query.data?.attendance]);
+
+  useEffect(() => {
     if (
       attendanceFeedback === null ||
+      !attendanceFeedback.shouldFocusStatus ||
       focusedIntentRef.current === attendanceFeedback.intentKey ||
       query.data === undefined ||
       query.data.attendance.validActions.includes(attendanceFeedback.command)
@@ -146,15 +225,39 @@ export function TodayPage() {
     focusedIntentRef.current = attendanceFeedback.intentKey;
   }, [attendanceFeedback, query.data]);
 
-  if (query.isPending || authenticationError) return renderTodayLoading();
-  if (query.isError) {
+  if ((query.isPending && isOnline) || authenticationError) return renderTodayLoading();
+  if (query.isPending) return renderTodayOffline();
+  if (query.isError && query.data === undefined) {
     return renderTodayLoadError({ error: query.error, retry: () => void query.refetch() });
   }
 
+  const retryToday = () => {
+    void query.refetch().then((result) => {
+      if (isOnline && result.isSuccess) setRequiresReconnectRefresh(false);
+    });
+  };
+  const recoveryMode = !isOnline
+    ? 'OFFLINE'
+    : requiresReconnectRefresh
+      ? query.isError
+        ? 'DEPENDENCY'
+        : 'RECONNECTING'
+      : query.isError
+        ? 'DEPENDENCY'
+        : null;
+  const attendanceControlsDisabled = recoveryMode !== null;
+
   return renderTodayReady({
     attendanceFeedback,
+    attendanceControlsDisabled,
+    attendanceControlsRef,
     clockOutConfirmationOpen,
+    dependencyError: query.isError ? query.error : null,
+    onActionFocus: (command) => {
+      focusedActionRef.current = command;
+    },
     onAttendanceCommand: (command, expectedAttendanceRevision, confirmActiveBreak) => {
+      if (attendanceControlsDisabled || !onlineManager.isOnline()) return;
       const intentKey = createAttendanceIntentKey();
       focusedIntentRef.current = null;
       setAttendanceFeedback(null);
@@ -174,11 +277,32 @@ export function TodayPage() {
       });
     },
     pendingIntent: attendanceMutation.isPending ? attendanceMutation.variables : null,
+    recoveryMode,
+    retryToday,
     setClockOutConfirmationOpen,
     statusHeadingRef,
     today: query.data,
     updating: query.isFetching,
   });
+}
+
+function renderTodayOffline() {
+  return (
+    <section className="grid max-w-3xl gap-6">
+      <PageHeader
+        eyebrow="Attendance"
+        title="Today"
+        description="Reconnect to load your current attendance state. No clock action can be sent or queued while you are offline."
+      />
+      <div className="wl-alert wl-alert-error grid gap-1 rounded-xl border p-4" role="alert">
+        <h2 className="m-0 text-lg font-bold">You’re offline</h2>
+        <p className="m-0 text-sm leading-6">
+          WorkLedger will refresh your status after the connection returns before enabling any
+          attendance action.
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function renderTodayLoading() {
@@ -232,22 +356,34 @@ function renderTodayLoadError({ error, retry }: Readonly<{ error: unknown; retry
 
 function renderTodayReady({
   attendanceFeedback,
+  attendanceControlsDisabled,
+  attendanceControlsRef,
   clockOutConfirmationOpen,
+  dependencyError,
+  onActionFocus,
   onAttendanceCommand,
   pendingIntent,
+  recoveryMode,
+  retryToday,
   setClockOutConfirmationOpen,
   statusHeadingRef,
   today,
   updating,
 }: Readonly<{
   attendanceFeedback: AttendanceFeedback | null;
+  attendanceControlsDisabled: boolean;
+  attendanceControlsRef: RefObject<HTMLDivElement | null>;
   clockOutConfirmationOpen: boolean;
+  dependencyError: unknown;
+  onActionFocus: (command: AttendanceCommand) => void;
   onAttendanceCommand: (
     command: AttendanceCommand,
     expectedAttendanceRevision: number,
     confirmActiveBreak?: boolean,
   ) => void;
   pendingIntent: AttendanceCommandIntent | null;
+  recoveryMode: AttendanceRecoveryMode;
+  retryToday: () => void;
   setClockOutConfirmationOpen: (isOpen: boolean) => void;
   statusHeadingRef: RefObject<HTMLHeadingElement | null>;
   today: TodayAttendance;
@@ -298,15 +434,22 @@ function renderTodayReady({
           <div className="grid gap-1 border-t border-[var(--wl-border)] pt-4">
             <h3 className="m-0 text-sm font-bold">Available next</h3>
             <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-              {attendance.validActions.map((action) => ACTION_LABELS[action]).join(' or ')}.
+              {attendance.validActions
+                .map((action) => ATTENDANCE_ACTION_LABELS[action])
+                .join(' or ')}
+              .
             </p>
-            <AttendanceControls
+            <TodayAttendanceControls
               attendance={attendance}
+              controlsDisabled={attendanceControlsDisabled}
+              controlsRef={attendanceControlsRef}
               clockOutConfirmationOpen={clockOutConfirmationOpen}
+              onActionFocus={onActionFocus}
               onAttendanceCommand={onAttendanceCommand}
               pendingIntent={pendingIntent}
               setClockOutConfirmationOpen={setClockOutConfirmationOpen}
             />
+            <AttendanceRecovery error={dependencyError} mode={recoveryMode} retry={retryToday} />
             {attendanceFeedback === null ? null : (
               <div
                 className={
@@ -314,7 +457,9 @@ function renderTodayReady({
                     ? 'wl-alert wl-alert-error mt-3 grid gap-1 rounded-xl border p-3'
                     : 'wl-alert mt-3 grid gap-1 rounded-xl border p-3'
                 }
-                role={attendanceFeedback.kind === 'ERROR' ? 'alert' : 'status'}
+                role={
+                  attendanceFeedback.kind === 'ERROR' && recoveryMode === null ? 'alert' : 'status'
+                }
               >
                 <p className="m-0 text-sm font-semibold">{attendanceFeedback.message}</p>
                 {attendanceFeedback.requestId === undefined ? null : (
@@ -376,88 +521,6 @@ function renderTodayReady({
   );
 }
 
-function AttendanceControls({
-  attendance,
-  clockOutConfirmationOpen,
-  onAttendanceCommand,
-  pendingIntent,
-  setClockOutConfirmationOpen,
-}: Readonly<{
-  attendance: TodayAttendance['attendance'];
-  clockOutConfirmationOpen: boolean;
-  onAttendanceCommand: (
-    command: AttendanceCommand,
-    expectedAttendanceRevision: number,
-    confirmActiveBreak?: boolean,
-  ) => void;
-  pendingIntent: AttendanceCommandIntent | null;
-  setClockOutConfirmationOpen: (isOpen: boolean) => void;
-}>) {
-  return (
-    <div className="mt-3 flex flex-wrap gap-3">
-      {attendance.validActions.map((action, index) => {
-        const isPendingAction = pendingIntent?.command === action;
-        const label = isPendingAction ? pendingActionLabel(action) : ACTION_LABELS[action];
-        const variant = index === 0 ? 'primary' : 'secondary';
-
-        if (action === 'CLOCK_OUT' && attendance.state === 'ON_BREAK') {
-          return (
-            <Dialog
-              key={action}
-              actions={({ close }) => (
-                <>
-                  <Button variant="secondary" isDisabled={pendingIntent !== null} onPress={close}>
-                    Cancel
-                  </Button>
-                  <Button
-                    isDisabled={pendingIntent !== null}
-                    onPress={() =>
-                      onAttendanceCommand('CLOCK_OUT', attendance.attendanceRevision, true)
-                    }
-                  >
-                    {isPendingAction ? 'Clocking out…' : 'Close break and clock out'}
-                  </Button>
-                </>
-              )}
-              isDismissable={pendingIntent === null}
-              isOpen={clockOutConfirmationOpen}
-              onOpenChange={(isOpen) => {
-                if (pendingIntent === null || isOpen) setClockOutConfirmationOpen(isOpen);
-              }}
-              title="Clock out while on break?"
-              triggerIsDisabled={pendingIntent !== null}
-              triggerLabel={label}
-              triggerVariant={variant}
-            >
-              <p className="m-0">
-                WorkLedger will close your active break and clock you out at the same recorded
-                instant. Cancel to leave your attendance unchanged.
-              </p>
-            </Dialog>
-          );
-        }
-
-        return (
-          <form
-            key={action}
-            aria-busy={isPendingAction}
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (pendingIntent === null) {
-                onAttendanceCommand(action, attendance.attendanceRevision);
-              }
-            }}
-          >
-            <Button type="submit" variant={variant} isDisabled={pendingIntent !== null}>
-              {label}
-            </Button>
-          </form>
-        );
-      })}
-    </div>
-  );
-}
-
 function CalculationMessages({
   blockers,
   warnings,
@@ -502,6 +565,23 @@ function isAuthenticationError(error: unknown): boolean {
   );
 }
 
+function useOnlineStatus(): boolean {
+  return useSyncExternalStore(
+    (notify) => onlineManager.subscribe(notify),
+    () => onlineManager.isOnline(),
+    () => true,
+  );
+}
+
+function shouldRetryAttendanceCommand(failureCount: number, error: unknown): boolean {
+  return (
+    failureCount < ATTENDANCE_AUTOMATIC_RETRY_LIMIT &&
+    onlineManager.isOnline() &&
+    error instanceof ApiClientError &&
+    (error.status === 0 || error.status >= 500)
+  );
+}
+
 function attendanceSuccessMessage(result: AttendanceCommandResult, formattedTime: string): string {
   switch (result.command) {
     case 'CLOCK_IN':
@@ -523,6 +603,7 @@ function attendanceErrorFeedback(
     command: intent.command,
     intentKey: intent.idempotencyKey,
     kind: 'ERROR',
+    shouldFocusStatus: true,
   } as const;
   const outcome = attendanceOutcomeNoun(intent.command);
   if (error instanceof ApiClientError) {
@@ -582,18 +663,5 @@ function attendanceOutcomeNoun(command: AttendanceCommand): string {
       return 'resume';
     case 'CLOCK_OUT':
       return 'clock-out';
-  }
-}
-
-function pendingActionLabel(command: AttendanceCommand): string {
-  switch (command) {
-    case 'CLOCK_IN':
-      return 'Clocking in…';
-    case 'START_BREAK':
-      return 'Starting break…';
-    case 'RESUME':
-      return 'Resuming work…';
-    case 'CLOCK_OUT':
-      return 'Clocking out…';
   }
 }

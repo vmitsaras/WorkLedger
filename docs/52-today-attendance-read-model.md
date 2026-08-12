@@ -102,7 +102,8 @@ alone.
   confirmation as documented in `docs/54-attendance-command-sequence.md`.
 - `WL-404` completes the explainable timeline and calculation-detail presentation documented in
   `docs/55-today-timeline-calculation.md`.
-- `WL-405` owns polling, offline behavior, cross-tab/device refresh, and mutation retry conflicts.
+- `WL-405` completes polling, offline behavior, cross-tab/device refresh, and mutation retry
+  recovery as documented in `docs/56-attendance-resilience-recovery.md`.
 - Absence workflow work will provide exact effective coverage/work-intersection facts for
   `WORK_DURING_ABSENCE`; correction/post-lock workflows will provide approved adjustment sources.
   The read model does not infer either fact from unrelated minute totals.

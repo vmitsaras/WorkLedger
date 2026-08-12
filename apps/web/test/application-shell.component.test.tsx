@@ -1,5 +1,5 @@
-import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { onlineManager, QueryClientProvider } from '@tanstack/react-query';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
@@ -72,6 +72,7 @@ const TODAY_ATTENDANCE: TodayAttendance = {
 
 afterEach(() => {
   clearSessionMemory();
+  onlineManager.setOnline(true);
   vi.unstubAllGlobals();
 });
 
@@ -441,6 +442,7 @@ test('recovers from a stale clock-in with one safe alert and logical status focu
   const offWorkToday = todayWithAttendance('OFF_WORK', 0);
   const workingToday = todayWithAttendance('WORKING', 1);
   let serverToday = offWorkToday;
+  let clockInRequests = 0;
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -449,6 +451,7 @@ test('recovers from a stale clock-in with one safe alert and logical status focu
       if (path === '/v1/me/attendance/today') return successResponse(serverToday);
       if (path === '/v1/me/csrf') return successResponse({ token: 'd'.repeat(43) });
       if (path === '/v1/me/attendance/clock-in' && init?.method === 'POST') {
+        clockInRequests += 1;
         serverToday = workingToday;
         return Response.json(
           {
@@ -481,6 +484,152 @@ test('recovers from a stale clock-in with one safe alert and logical status focu
   const workingHeading = screen.getByRole('heading', { name: 'Working' });
   await waitFor(() => expect(workingHeading).toHaveFocus());
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  expect(clockInRequests).toBe(1);
+  await expectNoAxeViolations(container);
+});
+
+test('retries a lost attendance response with the same key and announces the replay once', async () => {
+  let serverToday = todayWithAttendance('OFF_WORK', 0);
+  const submittedKeys: string[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') return successResponse(serverToday);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'r'.repeat(43) });
+      if (path === '/v1/me/attendance/clock-in' && init?.method === 'POST') {
+        submittedKeys.push(new Headers(init.headers).get('idempotency-key') ?? '');
+        serverToday = todayWithAttendance('WORKING', 1);
+        if (submittedKeys.length === 1) throw new TypeError('Response connection was lost.');
+        return successResponse({
+          attendanceRevision: 1,
+          command: 'CLOCK_IN',
+          createdEvents: [{ id: 'punch-clock-in-replay', type: 'CLOCK_IN' }],
+          occurredAt: '2026-08-11T09:30:00Z',
+          resultingState: 'WORKING',
+          validActions: ['START_BREAK', 'CLOCK_OUT'],
+        });
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/today');
+
+  await user.click(await screen.findByRole('button', { name: 'Clock in' }));
+  expect(await screen.findByRole('status')).toHaveTextContent('Clocked in at 11:30 AM.');
+  expect(screen.getAllByRole('status')).toHaveLength(1);
+  expect(submittedKeys).toHaveLength(2);
+  expect(submittedKeys[0]).toMatch(/^[0-9a-f-]{36}$/u);
+  expect(submittedKeys[1]).toBe(submittedKeys[0]);
+  await expectNoAxeViolations(container);
+});
+
+test('never queues an offline attendance action and refetches before enabling controls', async () => {
+  const offWorkToday = todayWithAttendance('OFF_WORK', 0);
+  let todayRequests = 0;
+  let clockInRequests = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') {
+        todayRequests += 1;
+        return successResponse(offWorkToday);
+      }
+      if (path === '/v1/me/attendance/clock-in' && init?.method === 'POST') {
+        clockInRequests += 1;
+        throw new Error('An offline clock-in must not be submitted.');
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/today');
+
+  const clockIn = await screen.findByRole('button', { name: 'Clock in' });
+  const requestsBeforeOffline = todayRequests;
+  act(() => onlineManager.setOnline(false));
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Attendance actions are disabled and will not be queued.',
+  );
+  expect(clockIn).toBeDisabled();
+  fireEvent.click(clockIn);
+  expect(clockInRequests).toBe(0);
+
+  act(() => onlineManager.setOnline(true));
+  await waitFor(() => expect(clockIn).toBeEnabled());
+  expect(todayRequests).toBeGreaterThan(requestsBeforeOffline);
+  expect(clockInRequests).toBe(0);
+  expect(screen.queryByText('You’re offline.')).not.toBeInTheDocument();
+  await expectNoAxeViolations(container);
+});
+
+test('refreshes a changed device state on focus and moves focus only from a removed action', async () => {
+  let serverToday = todayWithAttendance('OFF_WORK', 0);
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') return successResponse(serverToday);
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const { container, queryClient } = renderApplication('/today');
+
+  const clockIn = await screen.findByRole('button', { name: 'Clock in' });
+  await waitFor(() =>
+    expect(screen.getByRole('heading', { name: 'Today', exact: true })).toHaveFocus(),
+  );
+  act(() => clockIn.focus());
+  expect(clockIn).toHaveFocus();
+  serverToday = todayWithAttendance('WORKING', 1);
+  await act(() => queryClient.refetchQueries({ queryKey: todayAttendanceQuery().queryKey }));
+
+  const workingHeading = await screen.findByRole('heading', { name: 'Working' });
+  await waitFor(() => expect(workingHeading).toHaveFocus());
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'Attendance changed in another tab or device. Current status: working.',
+  );
+  expect(screen.queryByRole('button', { name: 'Clock in' })).not.toBeInTheDocument();
+  await expectNoAxeViolations(container);
+});
+
+test('keeps stale attendance visible but disables actions while a background refresh fails', async () => {
+  let failRefresh = false;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') {
+        return failRefresh
+          ? apiErrorResponse('DATABASE_UNAVAILABLE', 503)
+          : successResponse(TODAY_ATTENDANCE);
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container, queryClient } = renderApplication('/today');
+
+  const startBreak = await screen.findByRole('button', { name: 'Start break' });
+  failRefresh = true;
+  await act(() => queryClient.refetchQueries({ queryKey: todayAttendanceQuery().queryKey }));
+  const alert = await screen.findByRole('alert');
+  expect(alert).toHaveTextContent(
+    'WorkLedger could not refresh your current attendance. Actions remain disabled.',
+  );
+  expect(alert).toHaveTextContent(`Request reference: ${REQUEST_ID}`);
+  expect(startBreak).toBeDisabled();
+
+  failRefresh = false;
+  await user.click(within(alert).getByRole('button', { name: 'Try again' }));
+  await waitFor(() => expect(startBreak).toBeEnabled());
+  expect(screen.getByRole('heading', { name: 'Working' })).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -648,11 +797,12 @@ function renderApplication(initialEntry: string) {
       { key: `component-test-${(routerSequence += 1).toString()}`, pathname: initialEntry },
     ],
   });
-  return render(
+  const rendered = render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+  return { ...rendered, queryClient };
 }
 
 function successResponse(data: unknown): Response {

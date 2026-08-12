@@ -251,6 +251,173 @@ test('completes the attendance sequence by keyboard with protected intents and b
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('retries a lost clock-in response with one key and one accessible result', async ({
+  page,
+}) => {
+  let attendanceState: 'OFF_WORK' | 'WORKING' = 'OFF_WORK';
+  let attendanceRevision = 0;
+  const submittedKeys: string[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({
+      json: success({
+        ...TODAY_ATTENDANCE,
+        attendance: {
+          activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
+          attendanceRevision,
+          state: attendanceState,
+          validActions:
+            attendanceState === 'OFF_WORK' ? ['CLOCK_IN'] : ['START_BREAK', 'CLOCK_OUT'],
+        },
+        timeline:
+          attendanceState === 'OFF_WORK'
+            ? []
+            : [
+                {
+                  id: 'punch-clock-in-replay',
+                  occurredAt: '2026-08-11T09:30:00Z',
+                  type: 'CLOCK_IN',
+                },
+              ],
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'r'.repeat(43) }) });
+  });
+  await page.route('**/v1/me/attendance/clock-in', async (route) => {
+    submittedKeys.push(route.request().headers()['idempotency-key'] ?? '');
+    attendanceState = 'WORKING';
+    attendanceRevision = 1;
+    if (submittedKeys.length === 1) {
+      await route.abort('connectionreset');
+      return;
+    }
+    await route.fulfill({
+      json: {
+        ...success({
+          attendanceRevision: 1,
+          command: 'CLOCK_IN',
+          createdEvents: [{ id: 'punch-clock-in-replay', type: 'CLOCK_IN' }],
+          occurredAt: '2026-08-11T09:30:00Z',
+          resultingState: 'WORKING',
+          validActions: ['START_BREAK', 'CLOCK_OUT'],
+        }),
+        meta: { idempotentReplay: true, requestId: REQUEST_ID },
+      },
+      status: 200,
+    });
+  });
+
+  await page.goto('/today');
+  await page.getByRole('button', { name: 'Clock in' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Working' })).toBeFocused();
+  await expect(page.getByRole('status')).toHaveCount(1);
+  await expect(page.getByRole('status')).toContainText('Clocked in at');
+  expect(submittedKeys).toHaveLength(2);
+  expect(submittedKeys[0]).toMatch(/^[0-9a-f-]{36}$/u);
+  expect(submittedKeys[1]).toBe(submittedKeys[0]);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('does not queue attendance offline and converges before enabling a new action', async ({
+  context,
+  page,
+}) => {
+  let attendanceState: 'OFF_WORK' | 'WORKING' = 'OFF_WORK';
+  let attendanceRevision = 0;
+  let clockInRequests = 0;
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({
+      json: success({
+        ...TODAY_ATTENDANCE,
+        attendance: {
+          activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
+          attendanceRevision,
+          state: attendanceState,
+          validActions:
+            attendanceState === 'OFF_WORK' ? ['CLOCK_IN'] : ['START_BREAK', 'CLOCK_OUT'],
+        },
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/attendance/clock-in', async (route) => {
+    clockInRequests += 1;
+    await route.fulfill({ json: {}, status: 500 });
+  });
+
+  await page.goto('/today');
+  const clockIn = page.getByRole('button', { name: 'Clock in' });
+  await clockIn.focus();
+  await context.setOffline(true);
+  await expect(page.getByRole('alert')).toContainText(
+    'Attendance actions are disabled and will not be queued.',
+  );
+  await expect(clockIn).toBeDisabled();
+  await clockIn.evaluate((button) => button.click());
+  expect(clockInRequests).toBe(0);
+
+  attendanceState = 'WORKING';
+  attendanceRevision = 1;
+  await context.setOffline(false);
+
+  const workingHeading = page.getByRole('heading', { name: 'Working' });
+  await expect(workingHeading).toBeFocused();
+  await expect(page.getByRole('status')).toContainText(
+    'Attendance changed in another tab or device. Current status: working.',
+  );
+  await expect(page.getByRole('button', { name: 'Start break' })).toBeEnabled();
+  expect(clockInRequests).toBe(0);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('refreshes a focused stale tab when attendance changes on another device', async ({
+  page,
+}) => {
+  let attendanceState: 'OFF_WORK' | 'WORKING' = 'OFF_WORK';
+  let attendanceRevision = 0;
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({
+      json: success({
+        ...TODAY_ATTENDANCE,
+        attendance: {
+          activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
+          attendanceRevision,
+          state: attendanceState,
+          validActions:
+            attendanceState === 'OFF_WORK' ? ['CLOCK_IN'] : ['START_BREAK', 'CLOCK_OUT'],
+        },
+      }),
+      status: 200,
+    });
+  });
+
+  await page.goto('/today');
+  const clockIn = page.getByRole('button', { name: 'Clock in' });
+  await clockIn.focus();
+  attendanceState = 'WORKING';
+  attendanceRevision = 1;
+  await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')));
+
+  await expect(page.getByRole('heading', { name: 'Working' })).toBeFocused();
+  await expect(page.getByRole('status')).toContainText(
+    'Attendance changed in another tab or device. Current status: working.',
+  );
+  await expect(clockIn).toBeHidden();
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('keeps the calculation explanation and event history readable at 320px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 });
   await page.route('**/v1/me/context', async (route) => {

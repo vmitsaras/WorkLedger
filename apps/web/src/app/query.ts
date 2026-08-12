@@ -4,6 +4,8 @@ import { todayAttendanceSchema } from '@workledger/contracts';
 
 import { loadSelfContext, loadSelfProfile, loadTodayAttendance } from './api-client.js';
 
+const TODAY_ATTENDANCE_REFRESH_INTERVAL_MS = 30 * 1_000;
+
 export function createWorkLedgerQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
@@ -29,6 +31,10 @@ export const todayAttendanceQuery = () =>
   queryOptions({
     queryFn: ({ signal }) => loadTodayAttendance(signal),
     queryKey: ['self', 'attendance', 'today'] as const,
+    refetchInterval: TODAY_ATTENDANCE_REFRESH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
+    refetchOnReconnect: 'always',
+    refetchOnWindowFocus: 'always',
     structuralSharing: preferNewestTodayAttendance,
   });
 

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { onlineManager, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router/dom';
 
 import { createWorkLedgerQueryClient } from './app/query.js';
@@ -9,6 +9,7 @@ import { createWorkLedgerRouter } from './app/router.js';
 import './styles.css';
 
 captureResetGrant();
+onlineManager.setOnline(globalThis.navigator.onLine);
 const queryClient = createWorkLedgerQueryClient();
 const router = createWorkLedgerRouter(queryClient);
 

@@ -2,17 +2,16 @@
 
 **Current phase:** Phase 4 — Employee attendance vertical slice
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 5 of 8 Phase 4 tasks complete
-**Current milestone:** Attendance resilience and recovery
-**Active task:** `WL-405`
+**Phase progress:** 6 of 8 Phase 4 tasks complete
+**Current milestone:** Employee-attendance accessibility and mobile review
+**Active task:** `WL-406`
 **Status:** Ready
 **Last verified:** 2026-08-11
 
 ## Current objective
 
-Implement stale-state convergence, duplicate/replay and unknown-result retry, offline/reconnect,
-dependency-error recovery, and broader tab/device refresh behavior without optimistic or queued
-attendance effects.
+Execute the phase-wide keyboard, screen-reader, touch, zoom/reflow, forced-colors, reduced-motion,
+long-content, and additional viewport review for the complete employee-attendance slice.
 
 ## Verified decisions
 
@@ -76,6 +75,13 @@ attendance effects.
 - Today attendance history is a semantic ordered list with event meaning, organization-local date,
   IANA timezone, and same-time recorded-order context. Intrinsic cards and wrapped labels reflow
   without horizontal page overflow at the automated 320 px boundary.
+- Today polls every 30 seconds only in the foreground and always refetches on tab return or
+  reconnect. Newer device revisions cannot be replaced by older snapshots; if a refresh removes
+  the focused action, current-status focus and one polite device-change message preserve context.
+- Attendance mutations never pause into an offline queue. Online transport/`5xx` failures receive
+  at most two automatic retries with the same memory-only idempotency key; terminal `4xx` outcomes
+  are not retried. Offline/reconnect and dependency states disable actions until one authoritative
+  refresh succeeds.
 - Punch occurrence/manual attendance inputs use minute precision; interval, daily, policy, and display calculations apply no later rounding.
 - Daily calculations have identified inputs and `PROVISIONAL`, `INCOMPLETE`, or `COMPLETE` status; only complete past dates may post.
 - Holiday dates reduce expected and default absence consumption/credit to zero while preserving actual worked credit.
@@ -276,40 +282,43 @@ attendance effects.
   holiday explanation, signed adjustment presentation, timezone/order context, long-label wrapping,
   and 320 px reflow/axe evidence completed (`WL-404`; see
   `docs/55-today-timeline-calculation.md`).
+- [x] Same-key lost-response retry, offline non-queuing, reconnect-before-enable, foreground
+  polling, focus/tab/device convergence, terminal-conflict non-retry, persistent dependency
+  recovery, and race/retry browser evidence completed (`WL-405`; see
+  `docs/56-attendance-resilience-recovery.md`).
 
 ## Latest completed task
 
-### `WL-404` — Build the Today timeline and calculation breakdown
+### `WL-405` — Implement attendance resilience and recovery
 
-- Changed: extracted focused date/time formatting, daily-breakdown, and attendance-history
-  components; grouped server-provided amounts into expected, credited, and signed-balance equations;
-  added break and zero-expected explanations; enriched event meaning/timezone/order context; and
-  hardened intrinsic layout and long holiday-name wrapping.
-- Verified: the database-enabled canonical gate passes 24 native checks, 149 unit/component tests,
-  21 integration tests, and six Chromium scenarios plus reproducible OpenAPI, formatting,
+- Changed: added 30-second foreground polling plus always-on focus/reconnect refetch, explicit
+  browser online state, non-paused attendance mutations, bounded same-key retry for online
+  transport/`5xx` failures, offline and reconnect gating, persistent background dependency
+  recovery, newer-device revision feedback, and one focused attendance-control/recovery component.
+- Verified: the database-enabled canonical gate passes 24 native checks, 153 unit/component tests,
+  21 integration tests, and nine Chromium scenarios plus reproducible OpenAPI, formatting,
   lint/boundaries, strict TypeScript, and the production build.
-- Accessibility: headings and description lists expose the arithmetic in reading order; one ordered
-  list preserves immutable event order and semantic times; decorative markers are hidden; no chart,
-  custom keyboard model, or unnecessary ARIA was added. Component and 320 px Chromium paths pass
-  axe, and the established 390 px/mobile and desktop paths remain green.
-- Security/data: the strict Today contract and permission-scoped query remain unchanged. The client
-  formats server-provided values and event instants without deriving authoritative totals, exposing
-  new identity/source fields, persisting protected data, or performing JavaScript date arithmetic.
-- Documentation: added `docs/55-today-timeline-calculation.md`, linked prior Today/command evidence,
-  and synchronized README, task board, TODO, and status.
-- Remaining risk: lost-response retry, offline/reconnect, stale-tab/device convergence, polling, and
-  dependency recovery remain `WL-405`; actual browser zoom, translated-content, forced-colors, and
-  screen-reader manual review remain `WL-406`. The build chunk-size warning and bounded-history
-  scale remain owned by `WL-1001`.
-- Next task: `WL-405`.
+- Accessibility: polling and retry loops are silent; offline/dependency failures use concise visible
+  recovery; ordinary device convergence uses one polite status; and focus moves to current status
+  only when a refreshed state removes the focused clock action. Component and Chromium paths pass
+  axe.
+- Security/data: idempotency keys remain memory-only headers, automatic retry reuses the identical
+  intent, terminal conflicts are not retried, offline actions cannot queue, and the strict Today/API,
+  authorization, CSRF, no-store, and revision-aware cache boundaries remain unchanged.
+- Documentation: added `docs/56-attendance-resilience-recovery.md` and synchronized README, task
+  board, TODO, prior Today ownership, and status.
+- Remaining risk: actual screen-reader, touch, 200% zoom/reflow, forced-colors, reduced-motion,
+  long/translated-content, and additional viewport review remain `WL-406`. The build chunk-size
+  warning and bounded-history scale remain owned by `WL-1001`.
+- Next task: `WL-406`.
 
 ## Current blockers
 
-No `WL-405` blocker is known. D-502 remains open before the production browser gate.
+No `WL-406` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-405 — Implement stale, duplicate/replay, retry, offline, and dependency-error recovery.`
+`WL-406 — Execute the employee-attendance accessibility and mobile review.`
 
 ## Update rules
 
