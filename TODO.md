@@ -91,7 +91,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-604` Build partial-day and hourly absence support.
 - [x] `WL-605` Build personal calendar plus accessible agenda alternative.
 - [x] `WL-606` Build cancellation workflow and balance reversal.
-- [ ] `WL-607` Pass the Phase 6 exit gate.
+- [x] `WL-607` Pass the Phase 6 exit gate.
 
 ## Phase 7 — Manager approvals and team availability
 

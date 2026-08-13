@@ -1,16 +1,16 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 6 — Absence and leave balances
+**Current phase:** Phase 7 — Manager approvals and team availability
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 7 of 8 Phase 6 tasks complete
-**Current milestone:** Phase 6 exit gate
-**Active task:** `WL-607`
+**Phase progress:** 0 of 4 Phase 7 tasks complete
+**Current milestone:** Manager approval inbox
+**Active task:** `WL-700`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Pass the Phase 6 exit gate required by `WL-607`.
+Implement the manager approval inbox required by `WL-700`.
 
 ## Verified decisions
 
@@ -294,6 +294,27 @@ Pass the Phase 6 exit gate required by `WL-607`.
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-607` — Pass the Phase 6 exit gate
+
+- Changed: completed the Phase 6 evidence review across absence policy, entitlement balances,
+  coverage/overlap, privacy-safe sickness, personal calendar/agenda, and cancellation reversal;
+  recorded the review in `docs/73-phase-6-gate-review.md`; and advanced every workspace manifest
+  together to the internal `0.7.0` milestone.
+- Verified: workspace, source-boundary, phase-version, strict TypeScript, format, OpenAPI,
+  emitted-entry, and production-build checks pass. The suite has 189 unit/component tests, 30
+  database-enabled integration tests, and 12 Chromium browser scenarios passing.
+- Accessibility: the reviewed employee workflows use native form/control semantics, labelled
+  validation and outcomes, explicit text status, equivalent calendar/agenda information, keyboard
+  and touch completion, forced-colors behavior, and responsive/axe coverage.
+- Security/data: review confirms active/self and current-manager-or-HR scope at API boundaries,
+  non-self decisions, CSRF/same-origin/no-store controls, serializable workflows, append-only
+  source and ledger evidence, locked-period routing, and sickness-data minimization.
+- Documentation: added `docs/73-phase-6-gate-review.md` and synchronized the phase board, TODO,
+  project status, OpenAPI artifact, and phase-gate version.
+- Remaining risk: Phase 7 must build the manager approval inbox without widening privacy or direct
+  manager scope. The known Vite main-chunk warning remains owned by `WL-1001`.
+- Next task: `WL-700`.
 
 ### `WL-605` — Build personal calendar and accessible agenda alternative
 

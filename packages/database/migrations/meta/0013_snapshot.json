@@ -88,12 +88,8 @@
           "name": "absence_cancellation_decisions_organization_id_organizations_id_fk",
           "tableFrom": "absence_cancellation_decisions",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -101,12 +97,8 @@
           "name": "absence_cancellation_decisions_absence_cancellation_id_absence_cancellations_id_fk",
           "tableFrom": "absence_cancellation_decisions",
           "tableTo": "absence_cancellations",
-          "columnsFrom": [
-            "absence_cancellation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_cancellation_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -114,12 +106,8 @@
           "name": "absence_cancellation_decisions_actor_employee_id_employees_id_fk",
           "tableFrom": "absence_cancellation_decisions",
           "tableTo": "employees",
-          "columnsFrom": [
-            "actor_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -210,12 +198,8 @@
           "name": "absence_cancellation_segments_organization_id_organizations_id_fk",
           "tableFrom": "absence_cancellation_segments",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -223,12 +207,8 @@
           "name": "absence_cancellation_segments_absence_cancellation_id_absence_cancellations_id_fk",
           "tableFrom": "absence_cancellation_segments",
           "tableTo": "absence_cancellations",
-          "columnsFrom": [
-            "absence_cancellation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_cancellation_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -236,12 +216,8 @@
           "name": "absence_cancellation_segments_absence_coverage_segment_id_absence_coverage_segments_id_fk",
           "tableFrom": "absence_cancellation_segments",
           "tableTo": "absence_coverage_segments",
-          "columnsFrom": [
-            "absence_coverage_segment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_coverage_segment_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -364,12 +340,8 @@
           "name": "absence_cancellations_organization_id_organizations_id_fk",
           "tableFrom": "absence_cancellations",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -377,12 +349,8 @@
           "name": "absence_cancellations_absence_request_id_absence_requests_id_fk",
           "tableFrom": "absence_cancellations",
           "tableTo": "absence_requests",
-          "columnsFrom": [
-            "absence_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -390,12 +358,8 @@
           "name": "absence_cancellations_employee_id_employees_id_fk",
           "tableFrom": "absence_cancellations",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -403,12 +367,8 @@
           "name": "absence_cancellations_requested_by_employee_id_employees_id_fk",
           "tableFrom": "absence_cancellations",
           "tableTo": "employees",
-          "columnsFrom": [
-            "requested_by_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["requested_by_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -508,12 +468,8 @@
           "name": "absence_coverage_segments_organization_id_organizations_id_fk",
           "tableFrom": "absence_coverage_segments",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -521,12 +477,8 @@
           "name": "absence_coverage_segments_absence_request_id_absence_requests_id_fk",
           "tableFrom": "absence_coverage_segments",
           "tableTo": "absence_requests",
-          "columnsFrom": [
-            "absence_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -626,12 +578,8 @@
           "name": "absence_decisions_organization_id_organizations_id_fk",
           "tableFrom": "absence_decisions",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -639,12 +587,8 @@
           "name": "absence_decisions_absence_request_id_absence_requests_id_fk",
           "tableFrom": "absence_decisions",
           "tableTo": "absence_requests",
-          "columnsFrom": [
-            "absence_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -652,12 +596,8 @@
           "name": "absence_decisions_actor_employee_id_employees_id_fk",
           "tableFrom": "absence_decisions",
           "tableTo": "employees",
-          "columnsFrom": [
-            "actor_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -796,12 +736,8 @@
           "name": "absence_effects_organization_id_organizations_id_fk",
           "tableFrom": "absence_effects",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -809,12 +745,8 @@
           "name": "absence_effects_absence_request_id_absence_requests_id_fk",
           "tableFrom": "absence_effects",
           "tableTo": "absence_requests",
-          "columnsFrom": [
-            "absence_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -822,12 +754,8 @@
           "name": "absence_effects_absence_coverage_segment_id_absence_coverage_segments_id_fk",
           "tableFrom": "absence_effects",
           "tableTo": "absence_coverage_segments",
-          "columnsFrom": [
-            "absence_coverage_segment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_coverage_segment_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -835,12 +763,8 @@
           "name": "absence_effects_source_decision_id_absence_decisions_id_fk",
           "tableFrom": "absence_effects",
           "tableTo": "absence_decisions",
-          "columnsFrom": [
-            "source_decision_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_decision_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -848,12 +772,8 @@
           "name": "absence_effects_employee_id_employees_id_fk",
           "tableFrom": "absence_effects",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -970,12 +890,8 @@
           "name": "absence_requests_organization_id_organizations_id_fk",
           "tableFrom": "absence_requests",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -983,12 +899,8 @@
           "name": "absence_requests_employee_id_employees_id_fk",
           "tableFrom": "absence_requests",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -996,12 +908,8 @@
           "name": "absence_requests_absence_type_id_absence_types_id_fk",
           "tableFrom": "absence_requests",
           "tableTo": "absence_types",
-          "columnsFrom": [
-            "absence_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1009,12 +917,8 @@
           "name": "absence_requests_requested_by_employee_id_employees_id_fk",
           "tableFrom": "absence_requests",
           "tableTo": "employees",
-          "columnsFrom": [
-            "requested_by_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["requested_by_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1153,12 +1057,8 @@
           "name": "absence_types_organization_id_organizations_id_fk",
           "tableFrom": "absence_types",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1281,12 +1181,8 @@
           "name": "account_employee_links_organization_id_organizations_id_fk",
           "tableFrom": "account_employee_links",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1294,12 +1190,8 @@
           "name": "account_employee_links_user_id_auth_users_id_fk",
           "tableFrom": "account_employee_links",
           "tableTo": "auth_users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1307,12 +1199,8 @@
           "name": "account_employee_links_employee_id_employees_id_fk",
           "tableFrom": "account_employee_links",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1428,12 +1316,8 @@
           "name": "account_role_assignments_organization_id_organizations_id_fk",
           "tableFrom": "account_role_assignments",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1441,12 +1325,8 @@
           "name": "account_role_assignments_user_id_auth_users_id_fk",
           "tableFrom": "account_role_assignments",
           "tableTo": "auth_users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1572,12 +1452,8 @@
           "name": "applied_corrections_organization_id_organizations_id_fk",
           "tableFrom": "applied_corrections",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1585,12 +1461,8 @@
           "name": "applied_corrections_correction_request_id_correction_requests_id_fk",
           "tableFrom": "applied_corrections",
           "tableTo": "correction_requests",
-          "columnsFrom": [
-            "correction_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["correction_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1598,12 +1470,8 @@
           "name": "applied_corrections_correction_decision_id_correction_decisions_id_fk",
           "tableFrom": "applied_corrections",
           "tableTo": "correction_decisions",
-          "columnsFrom": [
-            "correction_decision_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["correction_decision_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1611,12 +1479,8 @@
           "name": "applied_corrections_employee_id_employees_id_fk",
           "tableFrom": "applied_corrections",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1739,12 +1603,8 @@
           "name": "approved_monthly_snapshots_organization_id_organizations_id_fk",
           "tableFrom": "approved_monthly_snapshots",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1752,12 +1612,8 @@
           "name": "approved_monthly_snapshots_monthly_period_id_monthly_periods_id_fk",
           "tableFrom": "approved_monthly_snapshots",
           "tableTo": "monthly_periods",
-          "columnsFrom": [
-            "monthly_period_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["monthly_period_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1765,12 +1621,8 @@
           "name": "approved_monthly_snapshots_approved_by_employee_id_employees_id_fk",
           "tableFrom": "approved_monthly_snapshots",
           "tableTo": "employees",
-          "columnsFrom": [
-            "approved_by_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["approved_by_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1850,12 +1702,8 @@
           "name": "attendance_heads_employee_id_employees_id_fk",
           "tableFrom": "attendance_heads",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1863,12 +1711,8 @@
           "name": "attendance_heads_organization_id_organizations_id_fk",
           "tableFrom": "attendance_heads",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2017,12 +1861,8 @@
           "name": "auth_accounts_user_id_auth_users_id_fk",
           "tableFrom": "auth_accounts",
           "tableTo": "auth_users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2163,12 +2003,8 @@
           "name": "auth_sessions_user_id_auth_users_id_fk",
           "tableFrom": "auth_sessions",
           "tableTo": "auth_users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2446,12 +2282,8 @@
           "name": "correction_decisions_organization_id_organizations_id_fk",
           "tableFrom": "correction_decisions",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2459,12 +2291,8 @@
           "name": "correction_decisions_correction_request_id_correction_requests_id_fk",
           "tableFrom": "correction_decisions",
           "tableTo": "correction_requests",
-          "columnsFrom": [
-            "correction_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["correction_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2472,12 +2300,8 @@
           "name": "correction_decisions_actor_employee_id_employees_id_fk",
           "tableFrom": "correction_decisions",
           "tableTo": "employees",
-          "columnsFrom": [
-            "actor_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2598,12 +2422,8 @@
           "name": "correction_requests_organization_id_organizations_id_fk",
           "tableFrom": "correction_requests",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2611,12 +2431,8 @@
           "name": "correction_requests_employee_id_employees_id_fk",
           "tableFrom": "correction_requests",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2624,12 +2440,8 @@
           "name": "correction_requests_requested_by_employee_id_employees_id_fk",
           "tableFrom": "correction_requests",
           "tableTo": "employees",
-          "columnsFrom": [
-            "requested_by_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["requested_by_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2820,12 +2632,8 @@
           "name": "daily_projections_organization_id_organizations_id_fk",
           "tableFrom": "daily_projections",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2833,12 +2641,8 @@
           "name": "daily_projections_employee_id_employees_id_fk",
           "tableFrom": "daily_projections",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3059,12 +2863,8 @@
           "name": "domain_audit_events_organization_id_organizations_id_fk",
           "tableFrom": "domain_audit_events",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3072,12 +2872,8 @@
           "name": "domain_audit_events_actor_account_id_auth_users_id_fk",
           "tableFrom": "domain_audit_events",
           "tableTo": "auth_users",
-          "columnsFrom": [
-            "actor_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3085,12 +2881,8 @@
           "name": "domain_audit_events_subject_employee_id_employees_id_fk",
           "tableFrom": "domain_audit_events",
           "tableTo": "employees",
-          "columnsFrom": [
-            "subject_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subject_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3220,12 +3012,8 @@
           "name": "employees_organization_id_organizations_id_fk",
           "tableFrom": "employees",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3318,12 +3106,8 @@
           "name": "employment_periods_organization_id_organizations_id_fk",
           "tableFrom": "employment_periods",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3331,12 +3115,8 @@
           "name": "employment_periods_employee_id_employees_id_fk",
           "tableFrom": "employment_periods",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3417,12 +3197,8 @@
           "name": "holidays_organization_id_organizations_id_fk",
           "tableFrom": "holidays",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3574,12 +3350,8 @@
           "name": "idempotency_records_organization_id_organizations_id_fk",
           "tableFrom": "idempotency_records",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3587,12 +3359,8 @@
           "name": "idempotency_records_actor_account_id_auth_users_id_fk",
           "tableFrom": "idempotency_records",
           "tableTo": "auth_users",
-          "columnsFrom": [
-            "actor_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3600,12 +3368,8 @@
           "name": "idempotency_records_employee_id_employees_id_fk",
           "tableFrom": "idempotency_records",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3762,12 +3526,8 @@
           "name": "leave_entitlement_entries_organization_id_organizations_id_fk",
           "tableFrom": "leave_entitlement_entries",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3775,12 +3535,8 @@
           "name": "leave_entitlement_entries_employee_id_employees_id_fk",
           "tableFrom": "leave_entitlement_entries",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3788,12 +3544,8 @@
           "name": "leave_entitlement_entries_absence_type_id_absence_types_id_fk",
           "tableFrom": "leave_entitlement_entries",
           "tableTo": "absence_types",
-          "columnsFrom": [
-            "absence_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["absence_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3801,14 +3553,8 @@
           "name": "leave_entitlement_entries_absence_type_organization_fk",
           "tableFrom": "leave_entitlement_entries",
           "tableTo": "absence_types",
-          "columnsFrom": [
-            "organization_id",
-            "absence_type_id"
-          ],
-          "columnsTo": [
-            "organization_id",
-            "id"
-          ],
+          "columnsFrom": ["organization_id", "absence_type_id"],
+          "columnsTo": ["organization_id", "id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3929,12 +3675,8 @@
           "name": "manager_assignments_organization_id_organizations_id_fk",
           "tableFrom": "manager_assignments",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3942,12 +3684,8 @@
           "name": "manager_assignments_employee_id_employees_id_fk",
           "tableFrom": "manager_assignments",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3955,12 +3693,8 @@
           "name": "manager_assignments_manager_employee_id_employees_id_fk",
           "tableFrom": "manager_assignments",
           "tableTo": "employees",
-          "columnsFrom": [
-            "manager_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["manager_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4105,12 +3839,8 @@
           "name": "monthly_periods_organization_id_organizations_id_fk",
           "tableFrom": "monthly_periods",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4118,12 +3848,8 @@
           "name": "monthly_periods_employee_id_employees_id_fk",
           "tableFrom": "monthly_periods",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4274,12 +4000,8 @@
           "name": "policy_assignments_organization_id_organizations_id_fk",
           "tableFrom": "policy_assignments",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4287,12 +4009,8 @@
           "name": "policy_assignments_employee_id_employees_id_fk",
           "tableFrom": "policy_assignments",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4300,12 +4018,8 @@
           "name": "policy_assignments_policy_id_time_policies_id_fk",
           "tableFrom": "policy_assignments",
           "tableTo": "time_policies",
-          "columnsFrom": [
-            "policy_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["policy_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4431,12 +4145,8 @@
           "name": "post_lock_adjustments_organization_id_organizations_id_fk",
           "tableFrom": "post_lock_adjustments",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4444,12 +4154,8 @@
           "name": "post_lock_adjustments_monthly_snapshot_id_approved_monthly_snapshots_id_fk",
           "tableFrom": "post_lock_adjustments",
           "tableTo": "approved_monthly_snapshots",
-          "columnsFrom": [
-            "monthly_snapshot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["monthly_snapshot_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4457,12 +4163,8 @@
           "name": "post_lock_adjustments_employee_id_employees_id_fk",
           "tableFrom": "post_lock_adjustments",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4620,12 +4322,8 @@
           "name": "punch_events_organization_id_organizations_id_fk",
           "tableFrom": "punch_events",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4633,12 +4331,8 @@
           "name": "punch_events_employee_id_employees_id_fk",
           "tableFrom": "punch_events",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4646,12 +4340,8 @@
           "name": "punch_events_actor_employee_id_employees_id_fk",
           "tableFrom": "punch_events",
           "tableTo": "employees",
-          "columnsFrom": [
-            "actor_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4750,12 +4440,8 @@
           "name": "schedule_assignments_organization_id_organizations_id_fk",
           "tableFrom": "schedule_assignments",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4763,12 +4449,8 @@
           "name": "schedule_assignments_employee_id_employees_id_fk",
           "tableFrom": "schedule_assignments",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4776,12 +4458,8 @@
           "name": "schedule_assignments_schedule_id_weekly_schedules_id_fk",
           "tableFrom": "schedule_assignments",
           "tableTo": "weekly_schedules",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4972,12 +4650,8 @@
           "name": "security_audit_events_organization_id_organizations_id_fk",
           "tableFrom": "security_audit_events",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4985,12 +4659,8 @@
           "name": "security_audit_events_actor_account_id_auth_users_id_fk",
           "tableFrom": "security_audit_events",
           "tableTo": "auth_users",
-          "columnsFrom": [
-            "actor_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4998,12 +4668,8 @@
           "name": "security_audit_events_target_account_id_auth_users_id_fk",
           "tableFrom": "security_audit_events",
           "tableTo": "auth_users",
-          "columnsFrom": [
-            "target_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["target_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5122,12 +4788,8 @@
           "name": "team_assignments_organization_id_organizations_id_fk",
           "tableFrom": "team_assignments",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5135,12 +4797,8 @@
           "name": "team_assignments_employee_id_employees_id_fk",
           "tableFrom": "team_assignments",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5148,12 +4806,8 @@
           "name": "team_assignments_team_id_teams_id_fk",
           "tableFrom": "team_assignments",
           "tableTo": "teams",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5235,12 +4889,8 @@
           "name": "teams_organization_id_organizations_id_fk",
           "tableFrom": "teams",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5387,12 +5037,8 @@
           "name": "time_account_entries_organization_id_organizations_id_fk",
           "tableFrom": "time_account_entries",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5400,12 +5046,8 @@
           "name": "time_account_entries_employee_id_employees_id_fk",
           "tableFrom": "time_account_entries",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5510,12 +5152,8 @@
           "name": "time_policies_organization_id_organizations_id_fk",
           "tableFrom": "time_policies",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5648,12 +5286,8 @@
           "name": "weekly_schedules_organization_id_organizations_id_fk",
           "tableFrom": "weekly_schedules",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5678,33 +5312,17 @@
     "public.absence_cancellation_decision_action": {
       "name": "absence_cancellation_decision_action",
       "schema": "public",
-      "values": [
-        "APPROVE",
-        "REJECT",
-        "REQUEST_CHANGES",
-        "WITHDRAW"
-      ]
+      "values": ["APPROVE", "REJECT", "REQUEST_CHANGES", "WITHDRAW"]
     },
     "public.absence_cancellation_status": {
       "name": "absence_cancellation_status",
       "schema": "public",
-      "values": [
-        "PENDING_DECISION",
-        "CHANGES_REQUESTED",
-        "APPROVED",
-        "REJECTED",
-        "WITHDRAWN"
-      ]
+      "values": ["PENDING_DECISION", "CHANGES_REQUESTED", "APPROVED", "REJECTED", "WITHDRAWN"]
     },
     "public.absence_coverage_kind": {
       "name": "absence_coverage_kind",
       "schema": "public",
-      "values": [
-        "FULL_DAY",
-        "FIRST_HALF",
-        "SECOND_HALF",
-        "MINUTE_INTERVAL"
-      ]
+      "values": ["FULL_DAY", "FIRST_HALF", "SECOND_HALF", "MINUTE_INTERVAL"]
     },
     "public.absence_request_status": {
       "name": "absence_request_status",
@@ -5724,59 +5342,32 @@
     "public.application_role": {
       "name": "application_role",
       "schema": "public",
-      "values": [
-        "EMPLOYEE",
-        "MANAGER",
-        "HR_ADMINISTRATOR",
-        "SYSTEM_ADMINISTRATOR"
-      ]
+      "values": ["EMPLOYEE", "MANAGER", "HR_ADMINISTRATOR", "SYSTEM_ADMINISTRATOR"]
     },
     "public.attendance_state": {
       "name": "attendance_state",
       "schema": "public",
-      "values": [
-        "OFF_WORK",
-        "WORKING",
-        "ON_BREAK"
-      ]
+      "values": ["OFF_WORK", "WORKING", "ON_BREAK"]
     },
     "public.audit_actor_kind": {
       "name": "audit_actor_kind",
       "schema": "public",
-      "values": [
-        "ACCOUNT",
-        "SYSTEM"
-      ]
+      "values": ["ACCOUNT", "SYSTEM"]
     },
     "public.audit_outcome": {
       "name": "audit_outcome",
       "schema": "public",
-      "values": [
-        "SUCCESS",
-        "DENIED",
-        "FAILURE"
-      ]
+      "values": ["SUCCESS", "DENIED", "FAILURE"]
     },
     "public.calculation_status": {
       "name": "calculation_status",
       "schema": "public",
-      "values": [
-        "PROVISIONAL",
-        "INCOMPLETE",
-        "COMPLETE"
-      ]
+      "values": ["PROVISIONAL", "INCOMPLETE", "COMPLETE"]
     },
     "public.decision_action": {
       "name": "decision_action",
       "schema": "public",
-      "values": [
-        "APPROVE",
-        "REJECT",
-        "REQUEST_CHANGES",
-        "ACKNOWLEDGE",
-        "WITHDRAW",
-        "CANCEL"
-      ]
+      "values": ["APPROVE", "REJECT", "REQUEST_CHANGES", "ACKNOWLEDGE", "WITHDRAW", "CANCEL"]
     },
     "public.domain_audit_target_kind": {
       "name": "domain_audit_target_kind",
@@ -5798,10 +5389,7 @@
     "public.employee_status": {
       "name": "employee_status",
       "schema": "public",
-      "values": [
-        "ACTIVE",
-        "INACTIVE"
-      ]
+      "values": ["ACTIVE", "INACTIVE"]
     },
     "public.leave_entitlement_entry_type": {
       "name": "leave_entitlement_entry_type",
@@ -5820,31 +5408,17 @@
     "public.ledger_actor_kind": {
       "name": "ledger_actor_kind",
       "schema": "public",
-      "values": [
-        "ACCOUNT",
-        "SYSTEM"
-      ]
+      "values": ["ACCOUNT", "SYSTEM"]
     },
     "public.period_status": {
       "name": "period_status",
       "schema": "public",
-      "values": [
-        "OPEN",
-        "SUBMITTED",
-        "CHANGES_REQUESTED",
-        "APPROVED",
-        "LOCKED"
-      ]
+      "values": ["OPEN", "SUBMITTED", "CHANGES_REQUESTED", "APPROVED", "LOCKED"]
     },
     "public.punch_event_type": {
       "name": "punch_event_type",
       "schema": "public",
-      "values": [
-        "CLOCK_IN",
-        "BREAK_START",
-        "BREAK_END",
-        "CLOCK_OUT"
-      ]
+      "values": ["CLOCK_IN", "BREAK_START", "BREAK_END", "CLOCK_OUT"]
     },
     "public.security_audit_target_kind": {
       "name": "security_audit_target_kind",
@@ -5877,13 +5451,7 @@
     "public.workflow_status": {
       "name": "workflow_status",
       "schema": "public",
-      "values": [
-        "SUBMITTED",
-        "CHANGES_REQUESTED",
-        "APPROVED",
-        "REJECTED",
-        "WITHDRAWN"
-      ]
+      "values": ["SUBMITTED", "CHANGES_REQUESTED", "APPROVED", "REJECTED", "WITHDRAWN"]
     }
   },
   "schemas": {},
