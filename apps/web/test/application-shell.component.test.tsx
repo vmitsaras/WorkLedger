@@ -109,6 +109,7 @@ const MY_TIME: MyTime = {
   period: { endDate: '2026-08-16', startDate: '2026-08-10', view: 'WEEK' },
   records: [
     {
+      attention: { blockers: [], warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'] },
       balanceMinutes: 30,
       creditedMinutes: 510,
       expectedMinutes: 480,
@@ -117,6 +118,7 @@ const MY_TIME: MyTime = {
       status: 'COMPLETE',
     },
     {
+      attention: { blockers: [], warnings: [] },
       balanceMinutes: null,
       creditedMinutes: null,
       expectedMinutes: null,
@@ -130,6 +132,10 @@ const MY_TIME: MyTime = {
 };
 
 const DAILY_TIME_RECORD: DailyTimeRecord = {
+  attention: {
+    blockers: [],
+    warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
+  },
   calculation: {
     absenceCreditMinutes: 0,
     adjustmentMinutes: 0,
@@ -259,12 +265,17 @@ test('presents a daily record with calculation, exact session intervals, and off
   expect(screen.getByText(/Intervals that cross midnight/u)).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Recorded events' })).toBeVisible();
   expect(screen.getByText(/Recorded order 4/u)).toBeVisible();
+  expect(screen.getByText('Negative flexible-time threshold reached')).toBeVisible();
+  expect(
+    screen.getByRole('link', { name: /Review your posted and projected flexible-time balance/u }),
+  ).toHaveAttribute('href', '/my-time#flexible-time-heading');
   await expectNoAxeViolations(container);
 });
 
 test('explains incomplete overnight record slices without presenting a final calculation', async () => {
   const overnightRecord: DailyTimeRecord = {
     ...DAILY_TIME_RECORD,
+    attention: { blockers: ['ATTENDANCE_INCOMPLETE'], warnings: [] },
     events: [{ occurredAt: '2026-08-12T00:30:00Z', sequence: 5, type: 'CLOCK_OUT' }],
     localDate: '2026-08-12',
     sessions: [
@@ -291,6 +302,11 @@ test('explains incomplete overnight record slices without presenting a final cal
       'This record is incomplete. Its calculation is not a final posted result.',
     ),
   ).toBeVisible();
+  expect(screen.getByText('Attendance entry incomplete')).toBeVisible();
+  expect(screen.getByRole('link', { name: /Review the recorded events/u })).toHaveAttribute(
+    'href',
+    '#events-heading',
+  );
   expect(screen.getByText('Continues from the previous local date.')).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Calculation' })).toBeVisible();
   await expectNoAxeViolations(container);
@@ -419,7 +435,10 @@ test('shows an incomplete calculation without inventing an estimate', async () =
 
   expect(await screen.findByRole('heading', { name: 'Off work' })).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Not available' })).toBeVisible();
-  expect(screen.getByText('No work schedule is assigned for today.')).toBeVisible();
+  expect(screen.getByText('Work schedule missing')).toBeVisible();
+  expect(
+    screen.getByText(/Ask your organization administrator to assign a work schedule/u),
+  ).toBeVisible();
   expect(screen.getByText('No attendance events have been recorded today.')).toBeVisible();
   await expectNoAxeViolations(container);
 });

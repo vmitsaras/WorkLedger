@@ -16,6 +16,7 @@ import type { AccountSelfContextRecord, WorkLedgerDatabase } from '@workledger/d
 
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import { normalizeStoredWarningCodes } from './calculation-attention.js';
 
 export type MyTimeIdentity = Readonly<{
   accountId: DomainId<'Account'>;
@@ -115,6 +116,7 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
           const projection = projectionsByDate.get(localDate);
           if (projection === undefined) {
             return Object.freeze({
+              attention: Object.freeze({ blockers: [], warnings: [] }),
               balanceMinutes: null,
               creditedMinutes: null,
               expectedMinutes: null,
@@ -124,6 +126,10 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
             });
           }
           return Object.freeze({
+            attention: Object.freeze({
+              blockers: [],
+              warnings: normalizeStoredWarningCodes(projection.warningCodes),
+            }),
             balanceMinutes: projection.balanceMinutes,
             creditedMinutes: projection.creditedMinutes,
             expectedMinutes: projection.expectedMinutes,

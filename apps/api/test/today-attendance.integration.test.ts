@@ -226,9 +226,12 @@ integrationTest(
         'COMPLETE',
         -285,
       );
-      await fixture.client.query(`update daily_projections set break_minutes = 15 where id = $1`, [
-        projectionId,
-      ]);
+      await fixture.client.query(
+        `update daily_projections
+         set break_minutes = 15, warning_codes = '["FLEX_NEGATIVE_THRESHOLD_EXCEEDED"]'::jsonb
+         where id = $1`,
+        [projectionId],
+      );
       await fixture.client.query(
         `update attendance_heads
          set attendance_revision = 4, next_event_sequence = 5, state = 'OFF_WORK',
@@ -254,6 +257,10 @@ integrationTest(
       expect(response.headers['cache-control']).toBe('private, no-store');
       expect(response.json()).toMatchObject({
         data: {
+          attention: {
+            blockers: [],
+            warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
+          },
           calculation: {
             balanceMinutes: -285,
             breakMinutes: 15,
@@ -311,6 +318,55 @@ integrationTest(
         headers: { cookie, origin: ORIGIN },
       });
       expect(missing.statusCode).toBe(404);
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
+integrationTest(
+  `identifies an unfinished attendance entry with a stable blocker (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'daily_time_attention',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+
+    try {
+      const employee = await createTodayEmployee(fixture.client);
+      const projectionId = await insertProjection(
+        fixture.client,
+        employee,
+        '2026-02-03',
+        'INCOMPLETE',
+        -285,
+      );
+      const cookie = await signIn(app);
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/me/time-records/${projectionId}`,
+        headers: { cookie, origin: ORIGIN },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        data: {
+          attention: { blockers: ['ATTENDANCE_INCOMPLETE'], warnings: [] },
+          status: 'INCOMPLETE',
+        },
+      });
+      expect(response.payload).not.toContain('sourceFingerprint');
     } finally {
       await app.close();
       await fixture.cleanup();

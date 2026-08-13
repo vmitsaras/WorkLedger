@@ -1,4 +1,8 @@
-import type { DailyTimeRecord } from '@workledger/contracts';
+import type {
+  CalculationBlockerCode,
+  DailyTimeAttention,
+  DailyTimeRecord,
+} from '@workledger/contracts';
 import {
   elapsedMinutesBetweenInstants,
   localDateAtInstant,
@@ -7,6 +11,7 @@ import {
   parseTimeZoneId,
   reconstructAttendance,
   splitAttendanceIntervalAtLocalMidnight,
+  type AttendanceReconstruction,
   type DomainId,
   type Instant,
 } from '@workledger/domain';
@@ -14,6 +19,7 @@ import type { AccountSelfContextRecord, WorkLedgerDatabase } from '@workledger/d
 
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import { normalizeStoredWarningCodes } from './calculation-attention.js';
 
 export type DailyTimeIdentity = Readonly<{
   accountId: DomainId<'Account'>;
@@ -80,6 +86,10 @@ export function createDailyTimeService(database: WorkLedgerDatabase): DailyTimeS
         const reconstruction = reconstructAttendance(events.map(({ event }) => event));
         if (!reconstruction.ok) {
           return Object.freeze({
+            attention: Object.freeze({
+              blockers: [mapReconstructionBlocker(reconstruction.error.code)],
+              warnings: normalizeStoredWarningCodes(projection.warningCodes),
+            }),
             calculation: null,
             events: events
               .filter(
@@ -120,6 +130,11 @@ export function createDailyTimeService(database: WorkLedgerDatabase): DailyTimeS
           .map((session) => Object.freeze(session));
 
         return Object.freeze({
+          attention: buildDailyAttention(
+            projection.warningCodes,
+            projection.calculationStatus,
+            reconstruction.value,
+          ),
           calculation: Object.freeze({
             absenceCreditMinutes: projection.absenceCreditMinutes,
             adjustmentMinutes: projection.adjustmentMinutes,
@@ -149,6 +164,26 @@ export function createDailyTimeService(database: WorkLedgerDatabase): DailyTimeS
       });
     },
   });
+}
+
+function buildDailyAttention(
+  warningCodes: readonly string[],
+  calculationStatus: DailyTimeRecord['status'],
+  reconstruction: AttendanceReconstruction,
+): DailyTimeAttention {
+  const hasOpenSession = reconstruction.sessions.some((session) => session.openInterval !== null);
+  const blockers: CalculationBlockerCode[] =
+    calculationStatus === 'INCOMPLETE' && hasOpenSession ? ['ATTENDANCE_INCOMPLETE'] : [];
+  return Object.freeze({
+    blockers,
+    warnings: normalizeStoredWarningCodes(warningCodes),
+  });
+}
+
+function mapReconstructionBlocker(
+  code: 'ATTENDANCE_INVALID_EVENT_ORDER' | 'ATTENDANCE_INVALID_EVENT_PRECISION',
+): CalculationBlockerCode {
+  return code;
 }
 
 export function parseDailyTimeIdentity(

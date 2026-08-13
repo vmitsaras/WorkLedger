@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { createSuccessEnvelopeSchema } from './api.js';
+import { calculationBlockerCodeSchema, calculationWarningCodeSchema } from './today.js';
 
 export const MY_TIME_VIEWS = ['WEEK', 'MONTH'] as const;
 export const TIME_RECORD_STATUSES = ['NO_RECORD', 'PROVISIONAL', 'INCOMPLETE', 'COMPLETE'] as const;
@@ -25,7 +26,13 @@ export const myTimeQuerySchema = z.strictObject({
   view: z.enum(MY_TIME_VIEWS).default('WEEK'),
 });
 
+export const dailyTimeAttentionSchema = z.strictObject({
+  blockers: z.array(calculationBlockerCodeSchema).max(12),
+  warnings: z.array(calculationWarningCodeSchema).max(5),
+});
+
 export const timeRecordSchema = z.strictObject({
+  attention: dailyTimeAttentionSchema,
   balanceMinutes: signedMinuteSchema.nullable(),
   creditedMinutes: minuteSchema.nullable(),
   expectedMinutes: minuteSchema.nullable(),
@@ -64,6 +71,7 @@ export const dailyTimeCalculationSchema = z.strictObject({
 });
 
 export const dailyTimeRecordSchema = z.strictObject({
+  attention: dailyTimeAttentionSchema,
   calculation: dailyTimeCalculationSchema.nullable(),
   events: z.array(dailyTimeEventSchema).max(500),
   localDate: dateSchema,
@@ -120,6 +128,7 @@ export const myTimeEnvelopeSchema = createSuccessEnvelopeSchema(myTimeSchema);
 export const dailyTimeRecordEnvelopeSchema = createSuccessEnvelopeSchema(dailyTimeRecordSchema);
 
 export type FlexibleTimeBalance = z.infer<typeof flexibleTimeBalanceSchema>;
+export type DailyTimeAttention = z.infer<typeof dailyTimeAttentionSchema>;
 export type DailyTimeRecord = z.infer<typeof dailyTimeRecordSchema>;
 export type MyTime = z.infer<typeof myTimeSchema>;
 export type MyTimeQuery = z.infer<typeof myTimeQuerySchema>;

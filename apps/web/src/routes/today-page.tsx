@@ -6,8 +6,6 @@ import type {
   AttendanceCommand,
   AttendanceCommandResult,
   AttendanceState,
-  CalculationBlockerCode,
-  CalculationWarningCode,
   TodayAttendance,
 } from '@workledger/contracts';
 import { Button } from '@workledger/ui';
@@ -23,6 +21,7 @@ import { formatDuration, formatLocalDate, formatTime } from '../app/date-time-fo
 import { todayAttendanceQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { DailyTimeBreakdown } from '../components/daily-time-breakdown.js';
+import { CalculationAttention } from '../components/calculation-attention.js';
 import { PageHeader } from '../components/page-header.js';
 import {
   ATTENDANCE_ACTION_LABELS,
@@ -36,31 +35,6 @@ const STATE_LABELS: Readonly<Record<AttendanceState, string>> = {
   OFF_WORK: 'Off work',
   ON_BREAK: 'On break',
   WORKING: 'Working',
-};
-
-const WARNING_MESSAGES: Readonly<Record<CalculationWarningCode, string>> = {
-  FLEX_NEGATIVE_THRESHOLD_EXCEEDED:
-    'Today’s estimated balance is below your configured flexible-time warning threshold.',
-  FLEX_POSITIVE_THRESHOLD_EXCEEDED:
-    'Today’s estimated balance is above your configured flexible-time warning threshold.',
-  WORK_DURING_ABSENCE: 'Recorded work overlaps an absence credited for today.',
-  WORK_ON_HOLIDAY: 'Work is recorded on a public holiday.',
-  WORK_ON_ZERO_EXPECTED_DAY: 'Work is recorded on a day with no expected working time.',
-};
-
-const BLOCKER_MESSAGES: Readonly<Record<CalculationBlockerCode, string>> = {
-  ABSENCE_APPROVAL_PENDING: 'An absence affecting today is awaiting approval.',
-  ATTENDANCE_INCOMPLETE: 'Today’s attendance source is incomplete.',
-  ATTENDANCE_INVALID_EVENT_ORDER: 'Today’s attendance events are not in a valid order.',
-  ATTENDANCE_INVALID_EVENT_PRECISION: 'An attendance event is not aligned to a whole minute.',
-  ATTENDANCE_OVERLAP: 'Today’s attendance contains overlapping work intervals.',
-  CORRECTION_UNRESOLVED: 'A correction affecting today is still unresolved.',
-  LEDGER_SOURCE_MISMATCH: 'The calculation source does not match its recorded ledger entry.',
-  POLICY_ASSIGNMENT_OVERLAP: 'More than one time policy is assigned for today.',
-  POLICY_CONFIGURATION_INVALID: 'Today’s assigned time policy is not valid.',
-  POLICY_NOT_ASSIGNED: 'No time policy is assigned for today.',
-  SCHEDULE_ASSIGNMENT_OVERLAP: 'More than one work schedule is assigned for today.',
-  SCHEDULE_NOT_ASSIGNED: 'No work schedule is assigned for today.',
 };
 
 const ATTENDANCE_AUTOMATIC_RETRY_LIMIT = 2;
@@ -501,7 +475,12 @@ function renderTodayReady({
         </section>
       </div>
 
-      <CalculationMessages blockers={calculation.blockers} warnings={calculation.warnings} />
+      <CalculationAttention
+        attention={{ blockers: calculation.blockers, warnings: calculation.warnings }}
+        balanceHref="/my-time#flexible-time-heading"
+        calculationHref="#calculation-breakdown-title"
+        eventHref="#today-timeline-title"
+      />
 
       {calculation.estimate === null ? null : (
         <DailyTimeBreakdown
@@ -517,43 +496,6 @@ function renderTodayReady({
         timeZone={today.timeZone}
         truncated={today.timelineTruncated}
       />
-    </section>
-  );
-}
-
-function CalculationMessages({
-  blockers,
-  warnings,
-}: Readonly<{
-  blockers: readonly CalculationBlockerCode[];
-  warnings: readonly CalculationWarningCode[];
-}>) {
-  if (blockers.length === 0 && warnings.length === 0) return null;
-  return (
-    <section className="grid gap-4" aria-labelledby="today-attention-title">
-      <h2 id="today-attention-title" className="m-0 text-2xl font-bold">
-        Needs attention
-      </h2>
-      {blockers.length === 0 ? null : (
-        <div className="wl-alert wl-alert-error rounded-xl border p-4">
-          <h3 className="m-0 text-lg font-bold">Calculation blockers</h3>
-          <ul className="mb-0 mt-2 grid gap-2 pl-5">
-            {blockers.map((blocker) => (
-              <li key={blocker}>{BLOCKER_MESSAGES[blocker]}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {warnings.length === 0 ? null : (
-        <div className="wl-alert rounded-xl border p-4">
-          <h3 className="m-0 text-lg font-bold">Warnings</h3>
-          <ul className="mb-0 mt-2 grid gap-2 pl-5">
-            {warnings.map((warning) => (
-              <li key={warning}>{WARNING_MESSAGES[warning]}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </section>
   );
 }

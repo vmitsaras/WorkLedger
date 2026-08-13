@@ -136,6 +136,9 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                   <th scope="col" className="p-3">
                     Balance
                   </th>
+                  <th scope="col" className="p-3">
+                    Attention
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -168,6 +171,22 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                       {record.balanceMinutes === null
                         ? '—'
                         : formatDuration(record.balanceMinutes, true)}
+                    </td>
+                    <td className="p-3">
+                      {record.attention.warnings.length === 0 ? (
+                        record.status === 'INCOMPLETE' ? (
+                          'Review incomplete record'
+                        ) : (
+                          '—'
+                        )
+                      ) : record.recordId === null ? (
+                        `${record.attention.warnings.length.toString()} warning${record.attention.warnings.length === 1 ? '' : 's'}`
+                      ) : (
+                        <Link to={`/time-records/${encodeURIComponent(record.recordId)}`}>
+                          {record.attention.warnings.length.toString()} warning
+                          {record.attention.warnings.length === 1 ? '' : 's'} — review details
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}

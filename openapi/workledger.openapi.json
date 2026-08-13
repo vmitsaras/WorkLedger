@@ -7123,6 +7123,48 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
+                              "attention": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "blockers": {
+                                    "items": {
+                                      "enum": [
+                                        "ATTENDANCE_INCOMPLETE",
+                                        "ATTENDANCE_OVERLAP",
+                                        "ATTENDANCE_INVALID_EVENT_ORDER",
+                                        "ATTENDANCE_INVALID_EVENT_PRECISION",
+                                        "SCHEDULE_NOT_ASSIGNED",
+                                        "SCHEDULE_ASSIGNMENT_OVERLAP",
+                                        "POLICY_NOT_ASSIGNED",
+                                        "POLICY_ASSIGNMENT_OVERLAP",
+                                        "POLICY_CONFIGURATION_INVALID",
+                                        "CORRECTION_UNRESOLVED",
+                                        "ABSENCE_APPROVAL_PENDING",
+                                        "LEDGER_SOURCE_MISMATCH"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "maxItems": 12,
+                                    "type": "array"
+                                  },
+                                  "warnings": {
+                                    "items": {
+                                      "enum": [
+                                        "WORK_ON_ZERO_EXPECTED_DAY",
+                                        "WORK_ON_HOLIDAY",
+                                        "WORK_DURING_ABSENCE",
+                                        "FLEX_POSITIVE_THRESHOLD_EXCEEDED",
+                                        "FLEX_NEGATIVE_THRESHOLD_EXCEEDED"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "maxItems": 5,
+                                    "type": "array"
+                                  }
+                                },
+                                "required": ["blockers", "warnings"],
+                                "type": "object"
+                              },
                               "balanceMinutes": {
                                 "anyOf": [
                                   {
@@ -7162,6 +7204,7 @@
                               }
                             },
                             "required": [
+                              "attention",
                               "balanceMinutes",
                               "creditedMinutes",
                               "expectedMinutes",
@@ -7977,6 +8020,48 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
+                        "attention": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "blockers": {
+                              "items": {
+                                "enum": [
+                                  "ATTENDANCE_INCOMPLETE",
+                                  "ATTENDANCE_OVERLAP",
+                                  "ATTENDANCE_INVALID_EVENT_ORDER",
+                                  "ATTENDANCE_INVALID_EVENT_PRECISION",
+                                  "SCHEDULE_NOT_ASSIGNED",
+                                  "SCHEDULE_ASSIGNMENT_OVERLAP",
+                                  "POLICY_NOT_ASSIGNED",
+                                  "POLICY_ASSIGNMENT_OVERLAP",
+                                  "POLICY_CONFIGURATION_INVALID",
+                                  "CORRECTION_UNRESOLVED",
+                                  "ABSENCE_APPROVAL_PENDING",
+                                  "LEDGER_SOURCE_MISMATCH"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 12,
+                              "type": "array"
+                            },
+                            "warnings": {
+                              "items": {
+                                "enum": [
+                                  "WORK_ON_ZERO_EXPECTED_DAY",
+                                  "WORK_ON_HOLIDAY",
+                                  "WORK_DURING_ABSENCE",
+                                  "FLEX_POSITIVE_THRESHOLD_EXCEEDED",
+                                  "FLEX_NEGATIVE_THRESHOLD_EXCEEDED"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 5,
+                              "type": "array"
+                            }
+                          },
+                          "required": ["blockers", "warnings"],
+                          "type": "object"
+                        },
                         "calculation": {
                           "anyOf": [
                             {
@@ -8139,6 +8224,7 @@
                         "timeZone": { "maxLength": 255, "minLength": 1, "type": "string" }
                       },
                       "required": [
+                        "attention",
                         "calculation",
                         "events",
                         "localDate",

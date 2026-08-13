@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 5 — Time records and corrections
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 2 of 7 Phase 5 tasks complete
-**Current milestone:** Structured warnings and missing-entry actions
-**Active task:** `WL-502`
+**Phase progress:** 3 of 7 Phase 5 tasks complete
+**Current milestone:** Employee correction request workflow
+**Active task:** `WL-503`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement structured warning and missing-entry actions on top of daily record detail. Stable warning
-codes must map to precise, accessible UI and recovery actions without parsing prose or exposing
-private absence detail.
+Implement the employee correction-request form and submission workflow. It must preserve immutable
+attendance facts, validate a focused proposed correction and reason, show accessible errors, and
+create auditable request evidence without applying a result before approval.
 
 ## Verified decisions
 
@@ -297,6 +297,26 @@ private absence detail.
 
 ## Latest completed task
 
+### `WL-502` — Build structured warning and missing-entry actions
+
+- Changed: exposed structured attention on My Time summaries and daily detail; mapped stable
+  warning/blocker codes to shared explanation and recovery guidance; and linked reviewable policy
+  warnings to the relevant record, calculation, event list, or flexible-time balance.
+- Verified: formatting, ESLint, boundaries, strict composite TypeScript, reproducible OpenAPI, all
+  157 unit/component tests, all 24 database-enabled integration tests across 14 files, all 12
+  Chromium scenarios, and the production web build pass.
+- Accessibility: semantic named attention groups and lists retain warning/blocker text without
+  relying on color. Review destinations are real links; organization-owned and pending-workflow
+  issues are clear text, not misleading disabled controls.
+- Security/data: only existing minimized warning codes are transported. Unknown stored codes fail
+  safely; guidance never exposes absence category, sickness detail, policy/source identifiers,
+  correction content, employee IDs, or actor data.
+- Documentation: added `docs/61-time-record-attention.md` and synchronized the task board, TODO,
+  and status.
+- Remaining risk: `WL-503` owns correction request creation and audit; `WL-504`–`WL-505` own the
+  review, approval, and applied adjustment path.
+- Next task: `WL-503`.
+
 ### `WL-501` — Build daily record details and accessible timeline/list
 
 - Changed: added a self-only daily-record contract, projection lookup, immutable punch-event
@@ -338,11 +358,11 @@ private absence detail.
 
 ## Current blockers
 
-No `WL-502` blocker is known. D-502 remains open before the production browser gate.
+No `WL-503` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-502 — Build structured warning and missing-entry actions.`
+`WL-503 — Build employee correction request form and submission.`
 
 ## Update rules
 

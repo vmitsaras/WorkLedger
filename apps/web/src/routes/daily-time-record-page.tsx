@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router';
 import { ApiClientError } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
 import { dailyTimeRecordQuery } from '../app/query.js';
+import { CalculationAttention } from '../components/calculation-attention.js';
 import { PageHeader } from '../components/page-header.js';
 
 const EVENT_LABELS = {
@@ -59,6 +60,12 @@ export function DailyTimeRecordPage() {
           ? 'This record is incomplete. Its calculation is not a final posted result.'
           : 'This completed record shows immutable events and exact elapsed intervals.'}
       </p>
+      <CalculationAttention
+        attention={record.attention}
+        balanceHref="/my-time#flexible-time-heading"
+        calculationHref="#daily-calculation-heading"
+        eventHref="#events-heading"
+      />
       {record.calculation === null ? (
         <p className="wl-alert wl-alert-error m-0 rounded-xl border p-4" role="alert">
           This record’s attendance events cannot be reconstructed. No calculation detail is shown.
