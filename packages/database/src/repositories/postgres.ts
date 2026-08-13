@@ -28,6 +28,7 @@ import {
   absenceEffects,
   absenceRequests,
   correctionRequests,
+  correctionDecisions,
   dailyProjections,
   domainAuditEvents,
   employees,
@@ -70,6 +71,8 @@ import type {
   AuthorizationRepository,
   CorrectionRequestRecord,
   CorrectionRequestRepository,
+  CorrectionReviewRecord,
+  DecideCorrectionRequestInput,
   DailyProjectionRecord,
   DailyProjectionRepository,
   DomainAuditEventRecord,
@@ -1306,6 +1309,86 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
     if (row === undefined) throw new DatabaseValueError('correction_requests', 'id');
     return mapCorrectionRequest(row);
   }
+
+  async listPendingForEmployees(
+    organizationId: DomainId<'Organization'>,
+    employeeIds: readonly DomainId<'Employee'>[],
+  ): Promise<readonly CorrectionReviewRecord[]> {
+    if (employeeIds.length === 0) return Object.freeze([]);
+    const rows = await this.transaction
+      .select({ request: correctionRequests, employeeDisplayName: employees.displayName })
+      .from(correctionRequests)
+      .innerJoin(employees, eq(employees.id, correctionRequests.employeeId))
+      .where(
+        and(
+          eq(correctionRequests.organizationId, organizationId),
+          inArray(correctionRequests.employeeId, [...employeeIds]),
+          inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED']),
+        ),
+      )
+      .orderBy(asc(correctionRequests.createdAt), asc(correctionRequests.id));
+    return Object.freeze(
+      rows.map((row) => mapCorrectionReview(row.request, row.employeeDisplayName)),
+    );
+  }
+
+  async findForReview(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'CorrectionRequest'>,
+  ): Promise<CorrectionReviewRecord | null> {
+    const [row] = await this.transaction
+      .select({ request: correctionRequests, employeeDisplayName: employees.displayName })
+      .from(correctionRequests)
+      .innerJoin(employees, eq(employees.id, correctionRequests.employeeId))
+      .where(
+        and(
+          eq(correctionRequests.organizationId, organizationId),
+          eq(correctionRequests.id, requestId),
+        ),
+      )
+      .limit(1);
+    return row === undefined ? null : mapCorrectionReview(row.request, row.employeeDisplayName);
+  }
+
+  async decide(input: DecideCorrectionRequestInput): Promise<CorrectionReviewRecord | null> {
+    const status =
+      input.action === 'APPROVE'
+        ? 'APPROVED'
+        : input.action === 'REJECT'
+          ? 'REJECTED'
+          : 'CHANGES_REQUESTED';
+    const [updated] = await this.transaction
+      .update(correctionRequests)
+      .set({ status, version: sql`${correctionRequests.version} + 1` })
+      .where(
+        and(
+          eq(correctionRequests.organizationId, input.organizationId),
+          eq(correctionRequests.id, input.requestId),
+          eq(correctionRequests.version, input.expectedVersion),
+          inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED']),
+        ),
+      )
+      .returning();
+    if (updated === undefined) return null;
+    await this.transaction.insert(correctionDecisions).values({
+      action: input.action,
+      actorEmployeeId: input.actorEmployeeId,
+      correctionRequestId: input.requestId,
+      organizationId: input.organizationId,
+      reason: input.reason,
+      decidedAt: sql`now()`,
+    });
+    return mapCorrectionReview(
+      updated,
+      (
+        await this.transaction
+          .select({ displayName: employees.displayName })
+          .from(employees)
+          .where(eq(employees.id, updated.employeeId))
+          .limit(1)
+      )[0]?.displayName ?? '',
+    );
+  }
 }
 
 class PostgresTimeAccountRepository implements TimeAccountRepository {
@@ -1540,6 +1623,13 @@ function mapCorrectionRequest(
     status: row.status,
     version: row.version,
   });
+}
+
+function mapCorrectionReview(
+  row: typeof correctionRequests.$inferSelect,
+  employeeDisplayName: string,
+): CorrectionReviewRecord {
+  return Object.freeze({ ...mapCorrectionRequest(row), employeeDisplayName });
 }
 
 function mapWarningCode(value: unknown): string {

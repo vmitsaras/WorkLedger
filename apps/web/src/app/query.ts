@@ -5,6 +5,7 @@ import { todayAttendanceSchema, type MyTimeQuery } from '@workledger/contracts';
 import {
   loadDailyTimeRecord,
   loadMyTime,
+  loadManagerCorrectionQueue,
   loadSelfContext,
   loadSelfProfile,
   loadTodayAttendance,
@@ -54,6 +55,12 @@ export const dailyTimeRecordQuery = (recordId: string) =>
   queryOptions({
     queryFn: ({ signal }) => loadDailyTimeRecord(recordId, signal),
     queryKey: ['self', 'time-record', recordId] as const,
+  });
+
+export const managerCorrectionQueueQuery = () =>
+  queryOptions({
+    queryFn: ({ signal }) => loadManagerCorrectionQueue(signal),
+    queryKey: ['manager', 'correction-requests'] as const,
   });
 
 function preferNewestTodayAttendance(previous: unknown, next: unknown): unknown {

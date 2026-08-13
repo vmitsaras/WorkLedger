@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 5 — Time records and corrections
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 4 of 7 Phase 5 tasks complete
-**Current milestone:** Manager correction review and comparison
-**Active task:** `WL-504`
+**Phase progress:** 5 of 7 Phase 5 tasks complete
+**Current milestone:** Apply approved correction and recalculate
+**Active task:** `WL-505`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement the manager correction queue, original/proposed comparison, and non-self decision
-workflow. It must preserve the immutable request snapshot, constrain manager scope to current
-reports, and not apply a result before the dedicated approval/application task.
+Apply approved corrections as versioned interpretations/adjustments and recalculate eligible daily
+projections without mutating raw attendance facts. Locked-period behavior must use the dedicated
+post-lock adjustment path.
 
 ## Verified decisions
 
@@ -297,6 +297,22 @@ reports, and not apply a result before the dedicated approval/application task.
 
 ## Latest completed task
 
+### `WL-504` — Build manager correction review and comparison
+
+- Changed: added a current-report-scoped manager queue, original/proposed comparison, versioned
+  approve/reject/request-changes endpoint, decision persistence, and domain audit evidence.
+- Verified: strict TypeScript, ESLint, boundary checks, and PostgreSQL/API integration verification
+  of current-manager scope, decision persistence, and zero applied-correction rows passed.
+- Accessibility: the queue and review comparison use headings, text labels, keyboard-operable
+  controls, visible pending state, and a clear statement that a decision does not yet apply time.
+- Security/data: manager relationship and the non-self policy are rechecked in the transaction;
+  version/state conflicts produce no effect. The decision reason is retained in the decision record
+  but omitted from audit facts.
+- Documentation: added `docs/63-manager-correction-review.md` and synchronized project memory.
+- Remaining risk: `WL-505` must apply only an approved correction through a versioned
+  interpretation/recalculation or locked-period adjustment path.
+- Next task: `WL-505`.
+
 ### `WL-503` — Build employee correction request form and submission
 
 - Changed: added the self-only correction submission contract and API, a request repository and
@@ -378,11 +394,11 @@ reports, and not apply a result before the dedicated approval/application task.
 
 ## Current blockers
 
-No `WL-504` blocker is known. D-502 remains open before the production browser gate.
+No `WL-505` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-504 — Build manager correction review and comparison.`
+`WL-505 — Preserve original values and apply approved adjustment.`
 
 ## Update rules
 

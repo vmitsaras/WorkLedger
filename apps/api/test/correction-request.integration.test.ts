@@ -14,6 +14,8 @@ const ORIGIN = 'https://ledger.example.test';
 const AUTH_SECRET = 'correction-request-secret-with-more-than-thirty-two-bytes';
 const EMAIL = 'correction@example.test';
 const PASSWORD = 'safe correction request passphrase 2026';
+const MANAGER_EMAIL = 'manager-correction@example.test';
+const MANAGER_PASSWORD = 'safe manager correction passphrase 2026';
 const NOW = '2026-02-03T10:30:45Z';
 const repositoryDirectory = fileURLToPath(new URL('../../..', import.meta.url));
 const migrationFiles = [
@@ -110,6 +112,52 @@ integrationTest(
         action_code: 'CORRECTION_REQUEST_SUBMITTED',
         reason_code: 'EMPLOYEE_SUBMITTED',
       });
+      const manager = await createManager(fixture.client, employee);
+      const managerCookie = await signIn(app, MANAGER_EMAIL, MANAGER_PASSWORD);
+      const queue = await app.inject({
+        method: 'GET',
+        url: '/v1/manager/correction-requests',
+        headers: { cookie: managerCookie, origin: ORIGIN },
+      });
+      expect(queue.statusCode).toBe(200);
+      expect(queue.json()).toMatchObject({
+        data: {
+          items: [
+            {
+              employeeDisplayName: 'Correction Employee',
+              id: response.json<{ data: { id: string } }>().data.id,
+              status: 'SUBMITTED',
+              version: 1,
+            },
+          ],
+        },
+      });
+      const managerCsrf = await app.inject({
+        method: 'GET',
+        url: '/v1/me/csrf',
+        headers: { cookie: managerCookie, origin: ORIGIN },
+      });
+      const decision = await app.inject({
+        method: 'POST',
+        url: `/v1/manager/correction-requests/${response.json<{ data: { id: string } }>().data.id}/decision`,
+        headers: {
+          'content-type': 'application/json',
+          cookie: managerCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': managerCsrf.json<{ data: { token: string } }>().data.token,
+        },
+        payload: {
+          action: 'APPROVE',
+          expectedVersion: 1,
+          reason: 'The proposed interval matches the submitted evidence.',
+        },
+      });
+      expect(decision.statusCode).toBe(200);
+      expect(decision.json()).toMatchObject({ data: { status: 'APPROVED', version: 2 } });
+      const applicationCount = await fixture.client.query<{ count: string }>(
+        'select count(*) from applied_corrections',
+      );
+      expect(applicationCount.rows[0]?.count).toBe('0');
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -169,12 +217,52 @@ async function insertProjection(
   return requiredId(projection.rows[0]?.id);
 }
 
-async function signIn(app: ReturnType<typeof createApiServer>): Promise<string> {
+async function createManager(
+  client: pg.PoolClient,
+  employee: Readonly<{ employeeId: string; organizationId: string }>,
+) {
+  const account = await client.query<{ id: string }>(
+    `insert into auth_users (name, email, email_verified, active) values ('Correction Manager', $1, true, true) returning id`,
+    [MANAGER_EMAIL],
+  );
+  const accountId = requiredId(account.rows[0]?.id);
+  await client.query(
+    `insert into auth_accounts (user_id, account_id, provider_id, password) values ($1, $2, 'credential', $3)`,
+    [accountId, accountId, await hashPassword(MANAGER_PASSWORD)],
+  );
+  const manager = await client.query<{ id: string }>(
+    `insert into employees (organization_id, employee_number, display_name, status) values ($1, 'COR-MGR-001', 'Correction Manager', 'ACTIVE') returning id`,
+    [employee.organizationId],
+  );
+  const employeeId = requiredId(manager.rows[0]?.id);
+  await client.query(
+    `insert into employment_periods (organization_id, employee_id, starts_on) values ($1, $2, '2025-01-01')`,
+    [employee.organizationId, employeeId],
+  );
+  await client.query(
+    `insert into account_employee_links (organization_id, user_id, employee_id) values ($1, $2, $3)`,
+    [employee.organizationId, accountId, employeeId],
+  );
+  await client.query(
+    `insert into account_role_assignments (organization_id, user_id, role) values ($1, $2, 'MANAGER')`,
+    [employee.organizationId, accountId],
+  );
+  await client.query(
+    `insert into manager_assignments (organization_id, employee_id, manager_employee_id, starts_on) values ($1, $2, $3, '2025-01-01')`,
+    [employee.organizationId, employee.employeeId, employeeId],
+  );
+}
+
+async function signIn(
+  app: ReturnType<typeof createApiServer>,
+  email = EMAIL,
+  password = PASSWORD,
+): Promise<string> {
   const response = await app.inject({
     method: 'POST',
     url: '/api/auth/sign-in/email',
     headers: { 'content-type': 'application/json', origin: ORIGIN },
-    payload: { email: EMAIL, password: PASSWORD },
+    payload: { email, password },
   });
   expect(response.statusCode).toBe(200);
   const setCookie = Array.isArray(response.headers['set-cookie'])

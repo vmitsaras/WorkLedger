@@ -16,6 +16,7 @@ export type EmployeeStatus = 'ACTIVE' | 'INACTIVE';
 export type DailyProjectionStatus = 'PROVISIONAL' | 'INCOMPLETE' | 'COMPLETE';
 export type CorrectionRequestStatus =
   'SUBMITTED' | 'CHANGES_REQUESTED' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
+export type CorrectionDecisionAction = 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES';
 export type ApplicationRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR';
 export type EmployeeAuthorizationScope = 'ORGANIZATION' | 'REPORTS' | 'SELF' | 'SELF_AND_REPORTS';
 export type AuditOutcome = 'SUCCESS' | 'DENIED' | 'FAILURE';
@@ -290,6 +291,16 @@ export type CorrectionRequestRecord = Readonly<{
 }>;
 
 export type SubmitCorrectionRequestInput = Omit<CorrectionRequestRecord, 'id' | 'createdAt'>;
+export type CorrectionReviewRecord = CorrectionRequestRecord &
+  Readonly<{ employeeDisplayName: string }>;
+export type DecideCorrectionRequestInput = Readonly<{
+  action: CorrectionDecisionAction;
+  actorEmployeeId: DomainId<'Employee'>;
+  expectedVersion: number;
+  organizationId: DomainId<'Organization'>;
+  reason: string;
+  requestId: DomainId<'CorrectionRequest'>;
+}>;
 
 export type AppendTimeAccountEntryInput = Readonly<{
   entry: TimeAccountLedgerEntry;
@@ -468,6 +479,15 @@ export interface DailyProjectionRepository {
 }
 
 export interface CorrectionRequestRepository {
+  decide(input: DecideCorrectionRequestInput): Promise<CorrectionReviewRecord | null>;
+  findForReview(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'CorrectionRequest'>,
+  ): Promise<CorrectionReviewRecord | null>;
+  listPendingForEmployees(
+    organizationId: DomainId<'Organization'>,
+    employeeIds: readonly DomainId<'Employee'>[],
+  ): Promise<readonly CorrectionReviewRecord[]>;
   submit(input: SubmitCorrectionRequestInput): Promise<CorrectionRequestRecord>;
 }
 

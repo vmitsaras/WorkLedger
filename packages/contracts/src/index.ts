@@ -6,11 +6,18 @@ export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
   correctionRequestIntervalInputSchema,
+  correctionDecisionEnvelopeSchema,
+  correctionDecisionRequestSchema,
+  correctionReviewItemSchema,
+  correctionReviewQueueEnvelopeSchema,
+  correctionReviewQueueSchema,
   submitCorrectionRequestEnvelopeSchema,
   submitCorrectionRequestSchema,
   submittedCorrectionRequestSchema,
   type SubmitCorrectionRequest,
   type SubmittedCorrectionRequest,
+  type CorrectionDecisionRequest,
+  type CorrectionReviewItem,
 } from './corrections.js';
 
 export {

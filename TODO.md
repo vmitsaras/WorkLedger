@@ -78,7 +78,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-501` Build daily record details and accessible timeline/list.
 - [x] `WL-502` Build missing-entry and policy-warning presentation.
 - [x] `WL-503` Build correction request workflow.
-- [ ] `WL-504` Build manager correction review and comparison.
+- [x] `WL-504` Build manager correction review and comparison.
 - [ ] `WL-505` Preserve original values and apply approved adjustment.
 - [ ] `WL-506` Pass the Phase 5 exit gate.
 

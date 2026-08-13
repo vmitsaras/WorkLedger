@@ -22,6 +22,7 @@ import { TodayPage } from '../routes/today-page.js';
 import { MyTimePage } from '../routes/my-time-page.js';
 import { DailyTimeRecordPage } from '../routes/daily-time-record-page.js';
 import { CorrectionRequestPage } from '../routes/correction-request-page.js';
+import { ManagerCorrectionQueuePage } from '../routes/manager-correction-queue-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -52,13 +53,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-702',
     path: 'team',
     title: 'Team',
-  },
-  {
-    area: 'MANAGER',
-    description: 'A scoped, unified queue for supported approval work.',
-    milestone: 'WL-700',
-    path: 'approvals',
-    title: 'Approvals',
   },
   {
     area: 'MANAGER',
@@ -217,6 +211,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <CorrectionRequestPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Request a time correction' },
+            },
+            {
+              path: 'approvals',
+              loader: createAreaLoader(queryClient, 'MANAGER'),
+              element: <ManagerCorrectionQueuePage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Correction requests' },
             },
             ...PLACEHOLDER_ROUTES.map((route) => ({
               path: route.path,

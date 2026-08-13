@@ -52,6 +52,8 @@ export type {
   CorrectionRequestRecord,
   CorrectionRequestRepository,
   CorrectionRequestStatus,
+  CorrectionReviewRecord,
+  DecideCorrectionRequestInput,
   DailyProjectionRecord,
   DailyProjectionRepository,
   DailyProjectionStatus,

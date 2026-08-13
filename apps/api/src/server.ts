@@ -9,6 +9,7 @@ import { registerAccountSelfServiceRoutes } from './account/routes.js';
 import { registerAttendanceRoutes, type ApiClock } from './attendance/routes.js';
 import { registerMyTimeRoutes } from './time/routes.js';
 import { registerCorrectionRequestRoutes } from './corrections/routes.js';
+import { registerCorrectionReviewRoutes } from './corrections/review-routes.js';
 import type { RuntimeConfig } from './config.js';
 import { createWorkLedgerAuthentication } from './auth/authentication.js';
 import { registerAuthenticationRoutes } from './auth/fastify-auth.js';
@@ -46,6 +47,7 @@ export function createApiServer(
       registerAttendanceRoutes(app, config, authentication, database, dependencies.now);
       registerMyTimeRoutes(app, authentication, database, dependencies.now);
       registerCorrectionRequestRoutes(app, config, authentication, database, dependencies.now);
+      registerCorrectionReviewRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {
         await Promise.all([authentication.close(), database.close()]);
       });

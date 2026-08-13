@@ -107,7 +107,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-501 | Build daily detail, sessions, breaks, absence credit, and accessible event list | WL-500 | Normal/incomplete/overnight days understandable | Done |
 | WL-502 | Build structured warning and missing-entry actions | WL-209, WL-501 | Warning codes map to precise UI/action; no prose parsing | Done |
 | WL-503 | Implement employee correction request form and submission | WL-501, WL-304 | Validation, error summary, reason, proposed impact, audit | Done |
-| WL-504 | Implement manager correction queue, original/proposed comparison, and decision | WL-503, WL-303 | Scope/self-approval tests and accessible comparison | Not started |
+| WL-504 | Implement manager correction queue, original/proposed comparison, and decision | WL-503, WL-303 | Scope/self-approval tests and accessible comparison | Done |
 | WL-505 | Apply approved correction as version/adjustment and recalculate projections | WL-504, WL-208 | Raw event unchanged; ledger/audit updated atomically | Not started |
 | WL-506 | Execute Phase 5 gate review | WL-500–WL-505 | Normal, rejected, approved, locked-period scenarios pass | Not started |
 

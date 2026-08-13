@@ -4,6 +4,8 @@ import {
   clockOutEnvelopeSchema,
   csrfBootstrapEnvelopeSchema,
   dailyTimeRecordEnvelopeSchema,
+  correctionDecisionEnvelopeSchema,
+  correctionReviewQueueEnvelopeSchema,
   submitCorrectionRequestEnvelopeSchema,
   resumeAttendanceEnvelopeSchema,
   revokeSelfSessionEnvelopeSchema,
@@ -25,6 +27,8 @@ import {
   type MyTimeQuery,
   type SubmitCorrectionRequest,
   type SubmittedCorrectionRequest,
+  type CorrectionDecisionRequest,
+  type CorrectionReviewItem,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -106,6 +110,36 @@ export async function submitCorrectionRequest(
     method: 'POST',
   });
   const parsed = submitCorrectionRequestEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadManagerCorrectionQueue(
+  signal?: AbortSignal,
+): Promise<readonly CorrectionReviewItem[]> {
+  const body = await requestJson(
+    '/v1/manager/correction-requests',
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = correctionReviewQueueEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data.items;
+}
+
+export async function decideManagerCorrectionRequest(
+  requestId: string,
+  input: CorrectionDecisionRequest,
+) {
+  const token = await getCsrfToken();
+  const body = await requestJson(
+    `/v1/manager/correction-requests/${encodeURIComponent(requestId)}/decision`,
+    {
+      body: JSON.stringify(input),
+      headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+      method: 'POST',
+    },
+  );
+  const parsed = correctionDecisionEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }
