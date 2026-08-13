@@ -117,7 +117,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-600 | Implement absence-type configuration model and policy validation | WL-309, WL-007 | MVP defaults and invalid combinations tested | Not started |
+| WL-600 | Implement absence-type configuration model and policy validation | WL-309, WL-007 | MVP defaults and invalid combinations tested | Done |
 | WL-601 | Implement entitlement ledger, pending reservation, deduction, restoration, and balance query; complete the leave portion of My Balances | WL-600, WL-500 | Ledger sequence/concurrency fixtures pass and available/reserved/projected values have an accessible source-entry view | Not started |
 | WL-602 | Implement vacation request calculation and form | WL-601, WL-201 | Weekends/holidays/zero-hour/insufficient balance cases pass | Not started |
 | WL-603 | Implement sickness reporting and acknowledgement with privacy-safe DTOs | WL-600, WL-303 | No diagnosis; team/manager/HR views differ correctly | Not started |

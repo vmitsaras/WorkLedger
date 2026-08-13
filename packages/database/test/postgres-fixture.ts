@@ -13,6 +13,7 @@ const migrationFiles = [
   '0006_zero_daily_delta.sql',
   '0007_correction_request_snapshots.sql',
   '0008_nappy_bromley.sql',
+  '0009_married_justin_hammer.sql',
 ] as const;
 
 export type MigratedPostgresFixture = Awaited<ReturnType<typeof createMigratedPostgresFixture>>;

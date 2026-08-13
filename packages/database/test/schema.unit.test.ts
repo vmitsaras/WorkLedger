@@ -6,6 +6,7 @@ import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
   accountEmployeeLinks,
   accountRoleAssignments,
+  absenceTypes,
   approvedMonthlySnapshots,
   authAccounts,
   authSessions,
@@ -39,6 +40,17 @@ describe('initial PostgreSQL schema', () => {
     expect(getTableConfig(dailyProjections).name).toBe('daily_projections');
     expect(getTableConfig(approvedMonthlySnapshots).name).toBe('approved_monthly_snapshots');
     expect(getTableConfig(employmentPeriods).name).toBe('employment_periods');
+  });
+
+  it('persists absence-type versions with an explicit valid date range', () => {
+    const absenceTypeConfiguration = getTableConfig(absenceTypes);
+
+    expect(absenceTypeConfiguration.columns.map(({ name }) => name)).toEqual(
+      expect.arrayContaining(['active', 'policy', 'valid_from', 'valid_to', 'version']),
+    );
+    expect(absenceTypeConfiguration.checks.map(({ name }) => name)).toContain(
+      'absence_types_valid_date_range',
+    );
   });
 
   it('maps the Better Auth persistence surface without exposing domain roles', () => {
@@ -102,6 +114,7 @@ describe('initial PostgreSQL schema', () => {
       '0006_zero_daily_delta',
       '0007_correction_request_snapshots',
       '0008_nappy_bromley',
+      '0009_married_justin_hammer',
     ]);
   });
 });

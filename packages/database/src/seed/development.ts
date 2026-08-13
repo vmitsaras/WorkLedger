@@ -6,6 +6,8 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
 
+import { mvpAbsenceTypePolicies } from '@workledger/domain';
+
 import {
   absenceCoverageSegments,
   absenceDecisions,
@@ -492,22 +494,13 @@ async function insertAttendanceAndCorrections(transaction: SeedTransaction): Pro
 }
 
 async function insertAbsenceAndBalances(transaction: SeedTransaction): Promise<void> {
-  await transaction.insert(absenceTypes).values([
-    absenceType(seedId(4000), 'VACATION', 'Vacation', {
-      entitlement: 'MINUTES',
-      pending: 'RESERVE',
-      workflow: 'APPROVAL_REQUIRED',
-    }),
-    absenceType(seedId(4001), 'SICKNESS', 'Sickness', {
-      retrospectiveCalendarDays: 7,
-      workflow: 'REPORT_AND_ACKNOWLEDGE',
-    }),
-    absenceType(seedId(4002), 'UNPAID', 'Unpaid leave', {
-      creditMinutes: 0,
-      reduceExpected: true,
-      workflow: 'APPROVAL_REQUIRED',
-    }),
-  ]);
+  await transaction
+    .insert(absenceTypes)
+    .values([
+      absenceType(seedId(4000), 'VACATION', 'Vacation', mvpAbsenceTypePolicies.VACATION),
+      absenceType(seedId(4001), 'SICKNESS', 'Sickness', mvpAbsenceTypePolicies.SICKNESS),
+      absenceType(seedId(4002), 'UNPAID', 'Unpaid leave', mvpAbsenceTypePolicies.UNPAID),
+    ]);
 
   const emmaId = employeeId(personaDefinitions[0]);
   const leonId = employeeId(personaDefinitions[1]);
@@ -1238,7 +1231,18 @@ function absenceType(
   name: string,
   policy: Readonly<Record<string, unknown>>,
 ): typeof absenceTypes.$inferInsert {
-  return { active: true, code, createdAt, id, name, organizationId, policy, version: 1 };
+  return {
+    active: true,
+    code,
+    createdAt,
+    id,
+    name,
+    organizationId,
+    policy,
+    validFrom: '2020-01-01',
+    validTo: null,
+    version: 1,
+  };
 }
 
 function absenceRequest(

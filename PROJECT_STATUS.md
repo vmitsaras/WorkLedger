@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 6 — Absence and leave balances
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 8 Phase 6 tasks complete
-**Current milestone:** Absence-type configuration model and policy validation
-**Active task:** `WL-600`
+**Phase progress:** 1 of 8 Phase 6 tasks complete
+**Current milestone:** Entitlement ledger and leave-balance query
+**Active task:** `WL-601`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement the effective-dated absence-type configuration model and policy validation, beginning
-with the MVP defaults and invalid-combination domain fixtures required by `WL-600`.
+Implement the append-only entitlement ledger, pending reservation, deduction, restoration, and
+authorized leave-balance query required by `WL-601`.
 
 ## Verified decisions
 
@@ -296,6 +296,27 @@ with the MVP defaults and invalid-combination domain fixtures required by `WL-60
 
 ## Latest completed task
 
+### `WL-600` — Implement absence types and policy behavior
+
+- Changed: added a framework-independent effective-dated absence-type policy model with bounded
+  workflow, coverage, entitlement/reservation, timing, note, calculation-treatment, and neutral
+  availability values. Added frozen MVP defaults for vacation, sickness, unpaid leave, and other
+  absence; aligned `absence_types` and the deterministic seed with effective ranges and that
+  shared default model.
+- Verified: strict composite TypeScript; 12 focused domain tests and 8 database schema tests; and
+  two database-enabled migration/seed integration tests pass. The migration uses a temporary
+  `0001-01-01` backfill default for existing configuration rows, then removes it.
+- Accessibility: no UI is introduced. The model fixes all team-facing projection states to neutral
+  `UNAVAILABLE`, so a future screen cannot configure absence-type names into team availability.
+- Security/data: sickness configuration forces report-and-acknowledge, no entitlement/reservation,
+  and disabled request notes. Invalid combinations—including report-and-acknowledge plus an
+  entitlement account/reservation—fail before persistence; no health detail field is introduced.
+- Documentation: added `docs/66-absence-type-policy.md` and synchronized TODO, task board, and
+  project status.
+- Remaining risk: this slice creates neither absence requests nor entitlement effects. `WL-601`
+  must use source-unique, append-only ledger entries and scoped balance DTOs.
+- Next task: `WL-601`.
+
 ### `WL-506` — Pass the Phase 5 exit gate
 
 - Changed: completed the Phase 5 gate review, added rejected-decision coverage to the correction
@@ -431,11 +452,11 @@ with the MVP defaults and invalid-combination domain fixtures required by `WL-60
 
 ## Current blockers
 
-No `WL-600` blocker is known. D-502 remains open before the production browser gate.
+No `WL-601` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-600 — Implement absence types and policy behavior.`
+`WL-601 — Implement the entitlement ledger and complete My Balances.`
 
 ## Update rules
 

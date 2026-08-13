@@ -27,6 +27,23 @@ integrationTest(
       const organizationId = organization.rows[0]?.id;
       expect(organizationId).toBeTruthy();
 
+      await expect(
+        client.query(
+          `insert into absence_types
+            (organization_id, code, name, version, active, valid_from, valid_to, policy)
+           values ($1, 'VACATION', 'Vacation', 1, true, '2026-07-01', '2026-07-01', '{}'::jsonb)`,
+          [organizationId],
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
+      await expect(
+        client.query(
+          `insert into absence_types
+            (organization_id, code, name, version, active, valid_from, valid_to, policy)
+           values ($1, 'VACATION', 'Vacation', 1, true, '2026-01-01', null, '{}'::jsonb)`,
+          [organizationId],
+        ),
+      ).resolves.toBeDefined();
+
       const uuidVersion = await client.query<{ version: number }>(
         `select uuid_extract_version($1::uuid) as version`,
         [organizationId],

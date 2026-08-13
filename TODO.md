@@ -84,7 +84,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 6 — Absence and leave balances
 
-- [ ] `WL-600` Implement absence types and policy behavior.
+- [x] `WL-600` Implement absence types and policy behavior.
 - [ ] `WL-601` Implement the entitlement ledger and complete My Balances.
 - [ ] `WL-602` Build vacation request workflow.
 - [ ] `WL-603` Build sickness reporting with privacy boundaries.

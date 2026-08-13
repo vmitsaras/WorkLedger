@@ -666,6 +666,8 @@ export const absenceTypes = pgTable(
     name: varchar('name', { length: 160 }).notNull(),
     version: integer('version').notNull(),
     active: boolean('active').default(true).notNull(),
+    validFrom: date('valid_from', { mode: 'string' }).notNull(),
+    validTo: date('valid_to', { mode: 'string' }),
     policy: jsonb('policy').$type<Readonly<Record<string, unknown>>>().notNull(),
     createdAt: createdAt(),
   },
@@ -676,6 +678,10 @@ export const absenceTypes = pgTable(
       table.version,
     ),
     check('absence_types_positive_version', sql`${table.version} > 0`),
+    check(
+      'absence_types_valid_date_range',
+      sql`${table.validTo} is null or ${table.validFrom} < ${table.validTo}`,
+    ),
   ],
 );
 
