@@ -272,6 +272,23 @@ test('presents a daily record with calculation, exact session intervals, and off
   await expectNoAxeViolations(container);
 });
 
+test('presents an accessible correction-request form with a focused validation summary', async () => {
+  vi.stubGlobal('fetch', authenticatedFetch());
+  const { container } = renderApplication(
+    '/requests/new?recordId=123e4567-e89b-42d3-a456-426614174301',
+  );
+
+  expect(await screen.findByRole('heading', { name: 'Current recorded facts' })).toBeVisible();
+  expect(screen.getByText(/Recorded events are immutable/u)).toBeVisible();
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Submit correction request' }));
+  expect(await screen.findByRole('heading', { name: 'There is a problem' })).toBeVisible();
+  expect(screen.getByRole('link', { name: /Enter a start time/u })).toHaveAttribute(
+    'href',
+    '#startsAtLocalTime',
+  );
+  await expectNoAxeViolations(container);
+});
+
 test('explains incomplete overnight record slices without presenting a final calculation', async () => {
   const overnightRecord: DailyTimeRecord = {
     ...DAILY_TIME_RECORD,

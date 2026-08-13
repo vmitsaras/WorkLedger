@@ -68,6 +68,8 @@ import type {
   AttendanceRepository,
   AuthorizationActorRecord,
   AuthorizationRepository,
+  CorrectionRequestRecord,
+  CorrectionRequestRepository,
   DailyProjectionRecord,
   DailyProjectionRepository,
   DomainAuditEventRecord,
@@ -81,6 +83,7 @@ import type {
   ReplaceActiveRolesInput,
   SecurityAuditEventRecord,
   StoredPunchEvent,
+  SubmitCorrectionRequestInput,
   TimeAccountRepository,
   TodayAttendanceRepository,
   TodayAttendanceSourceRecord,
@@ -111,6 +114,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   attendance: AttendanceRepository;
   attendanceIdempotency: AttendanceIdempotencyRepository;
   authorization: AuthorizationRepository;
+  correctionRequests: CorrectionRequestRepository;
   dailyProjections: DailyProjectionRepository;
   employees: EmployeeRepository;
   organizations: OrganizationRepository;
@@ -123,6 +127,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     attendance: new PostgresAttendanceRepository(transaction),
     attendanceIdempotency: new PostgresAttendanceIdempotencyRepository(transaction),
     authorization: new PostgresAuthorizationRepository(transaction),
+    correctionRequests: new PostgresCorrectionRequestRepository(transaction),
     dailyProjections: new PostgresDailyProjectionRepository(transaction),
     employees: new PostgresEmployeeRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
@@ -1280,6 +1285,29 @@ class PostgresDailyProjectionRepository implements DailyProjectionRepository {
   }
 }
 
+class PostgresCorrectionRequestRepository implements CorrectionRequestRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async submit(input: SubmitCorrectionRequestInput): Promise<CorrectionRequestRecord> {
+    const [row] = await this.transaction
+      .insert(correctionRequests)
+      .values({
+        employeeId: input.employeeId,
+        localDate: input.localDate,
+        organizationId: input.organizationId,
+        originalInterpretation: input.originalInterpretation,
+        proposedInterpretation: input.proposedInterpretation,
+        reason: input.reason,
+        requestedByEmployeeId: input.requestedByEmployeeId,
+        status: input.status,
+        version: input.version,
+      })
+      .returning();
+    if (row === undefined) throw new DatabaseValueError('correction_requests', 'id');
+    return mapCorrectionRequest(row);
+  }
+}
+
 class PostgresTimeAccountRepository implements TimeAccountRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
 
@@ -1475,6 +1503,42 @@ function mapDailyProjection(row: typeof dailyProjections.$inferSelect): DailyPro
     sourceReferences: Object.freeze(row.sourceReferences),
     warningCodes: Object.freeze(row.warningCodes.map(mapWarningCode)),
     workedMinutes: mapNonNegativeMinutes(row.workedMinutes, 'daily_projections', 'worked_minutes'),
+  });
+}
+
+function mapCorrectionRequest(
+  row: typeof correctionRequests.$inferSelect,
+): CorrectionRequestRecord {
+  if (
+    row.originalInterpretation === null ||
+    Array.isArray(row.originalInterpretation) ||
+    typeof row.originalInterpretation !== 'object' ||
+    row.proposedInterpretation === null ||
+    Array.isArray(row.proposedInterpretation) ||
+    typeof row.proposedInterpretation !== 'object'
+  ) {
+    throw new DatabaseValueError('correction_requests', 'interpretation');
+  }
+  return Object.freeze({
+    createdAt: mapInstant(row.createdAt, 'correction_requests', 'created_at'),
+    employeeId: mapDomainId<'Employee'>(row.employeeId, 'correction_requests', 'employee_id'),
+    id: mapDomainId<'CorrectionRequest'>(row.id, 'correction_requests', 'id'),
+    localDate: mapLocalDate(row.localDate, 'correction_requests', 'local_date'),
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'correction_requests',
+      'organization_id',
+    ),
+    originalInterpretation: Object.freeze(row.originalInterpretation),
+    proposedInterpretation: Object.freeze(row.proposedInterpretation),
+    reason: row.reason,
+    requestedByEmployeeId: mapDomainId<'Employee'>(
+      row.requestedByEmployeeId,
+      'correction_requests',
+      'requested_by_employee_id',
+    ),
+    status: row.status,
+    version: row.version,
   });
 }
 

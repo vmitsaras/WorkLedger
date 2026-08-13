@@ -586,6 +586,9 @@ export const correctionRequests = pgTable(
     localDate: date('local_date', { mode: 'string' }).notNull(),
     status: workflowStatus('status').default('SUBMITTED').notNull(),
     reason: text('reason').notNull(),
+    originalInterpretation: jsonb('original_interpretation')
+      .$type<Readonly<Record<string, unknown>>>()
+      .notNull(),
     proposedInterpretation: jsonb('proposed_interpretation')
       .$type<Readonly<Record<string, unknown>>>()
       .notNull(),

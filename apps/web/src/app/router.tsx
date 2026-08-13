@@ -21,6 +21,7 @@ import { RootNotFoundPage, RouteBoundary } from '../routes/route-boundary.js';
 import { TodayPage } from '../routes/today-page.js';
 import { MyTimePage } from '../routes/my-time-page.js';
 import { DailyTimeRecordPage } from '../routes/daily-time-record-page.js';
+import { CorrectionRequestPage } from '../routes/correction-request-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -209,6 +210,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <DailyTimeRecordPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Daily record' },
+            },
+            {
+              path: 'requests/new',
+              loader: createEmployeeTimeLoader(queryClient),
+              element: <CorrectionRequestPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Request a time correction' },
             },
             ...PLACEHOLDER_ROUTES.map((route) => ({
               path: route.path,

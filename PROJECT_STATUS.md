@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 5 — Time records and corrections
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 3 of 7 Phase 5 tasks complete
-**Current milestone:** Employee correction request workflow
-**Active task:** `WL-503`
+**Phase progress:** 4 of 7 Phase 5 tasks complete
+**Current milestone:** Manager correction review and comparison
+**Active task:** `WL-504`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement the employee correction-request form and submission workflow. It must preserve immutable
-attendance facts, validate a focused proposed correction and reason, show accessible errors, and
-create auditable request evidence without applying a result before approval.
+Implement the manager correction queue, original/proposed comparison, and non-self decision
+workflow. It must preserve the immutable request snapshot, constrain manager scope to current
+reports, and not apply a result before the dedicated approval/application task.
 
 ## Verified decisions
 
@@ -297,6 +297,26 @@ create auditable request evidence without applying a result before approval.
 
 ## Latest completed task
 
+### `WL-503` — Build employee correction request form and submission
+
+- Changed: added the self-only correction submission contract and API, a request repository and
+  migration for immutable original-interpretation snapshots, atomic request/audit persistence, and
+  a daily-record-linked employee form for one proposed work interval.
+- Verified: strict composite TypeScript, ESLint, and the unit/component suite pass (158 tests).
+  The PostgreSQL/API correction-request integration test passes with the local test database.
+- Accessibility: the form gives current recorded facts before the proposal, visible labels and
+  descriptions, inline errors, a focusable linked error summary, pending-state duplicate-submit
+  prevention, and a persistent textual success result. DST ambiguity requires a named offset.
+- Security/data: canonical-origin and CSRF checks precede a transaction-scoped active-context and
+  self-only authorization check. The request stores the original/proposed interpretations and
+  reason separately; audit facts omit the free-text reason. No punch event, projection, or ledger
+  mutation occurs.
+- Documentation: added `docs/62-employee-correction-request.md` and synchronized the task board,
+  TODO, status, contract/OpenAPI source, and generated migration metadata.
+- Remaining risk: `WL-504` must implement the scoped manager queue and non-self decision;
+  `WL-505` alone may create an approved applied interpretation, recalculate, or affect the ledger.
+- Next task: `WL-504`.
+
 ### `WL-502` — Build structured warning and missing-entry actions
 
 - Changed: exposed structured attention on My Time summaries and daily detail; mapped stable
@@ -358,11 +378,11 @@ create auditable request evidence without applying a result before approval.
 
 ## Current blockers
 
-No `WL-503` blocker is known. D-502 remains open before the production browser gate.
+No `WL-504` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-503 — Build employee correction request form and submission.`
+`WL-504 — Build manager correction review and comparison.`
 
 ## Update rules
 

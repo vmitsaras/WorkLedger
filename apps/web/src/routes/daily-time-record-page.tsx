@@ -66,6 +66,12 @@ export function DailyTimeRecordPage() {
         calculationHref="#daily-calculation-heading"
         eventHref="#events-heading"
       />
+      <Link
+        className="wl-button-secondary w-fit"
+        to={`/requests/new?recordId=${encodeURIComponent(recordId)}`}
+      >
+        Request a correction
+      </Link>
       {record.calculation === null ? (
         <p className="wl-alert wl-alert-error m-0 rounded-xl border p-4" role="alert">
           This record’s attendance events cannot be reconstructed. No calculation detail is shown.

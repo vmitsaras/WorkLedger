@@ -100,6 +100,8 @@ describe('initial PostgreSQL schema', () => {
       '0004_audit_foundation',
       '0005_idempotency_foundation',
       '0006_zero_daily_delta',
+      '0007_correction_request_snapshots',
+      '0008_nappy_bromley',
     ]);
   });
 });

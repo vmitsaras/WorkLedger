@@ -14,6 +14,8 @@ import type {
 
 export type EmployeeStatus = 'ACTIVE' | 'INACTIVE';
 export type DailyProjectionStatus = 'PROVISIONAL' | 'INCOMPLETE' | 'COMPLETE';
+export type CorrectionRequestStatus =
+  'SUBMITTED' | 'CHANGES_REQUESTED' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
 export type ApplicationRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR';
 export type EmployeeAuthorizationScope = 'ORGANIZATION' | 'REPORTS' | 'SELF' | 'SELF_AND_REPORTS';
 export type AuditOutcome = 'SUCCESS' | 'DENIED' | 'FAILURE';
@@ -273,6 +275,22 @@ export type DailyProjectionRecord = Readonly<{
 
 export type ReplaceDailyProjectionInput = Omit<DailyProjectionRecord, 'id'>;
 
+export type CorrectionRequestRecord = Readonly<{
+  createdAt: Instant;
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'CorrectionRequest'>;
+  localDate: LocalDate;
+  organizationId: DomainId<'Organization'>;
+  originalInterpretation: Readonly<Record<string, unknown>>;
+  proposedInterpretation: Readonly<Record<string, unknown>>;
+  reason: string;
+  requestedByEmployeeId: DomainId<'Employee'>;
+  status: CorrectionRequestStatus;
+  version: number;
+}>;
+
+export type SubmitCorrectionRequestInput = Omit<CorrectionRequestRecord, 'id' | 'createdAt'>;
+
 export type AppendTimeAccountEntryInput = Readonly<{
   entry: TimeAccountLedgerEntry;
   sourceFingerprint: string;
@@ -447,6 +465,10 @@ export interface DailyProjectionRepository {
     endDate: LocalDate,
   ): Promise<readonly DailyProjectionRecord[]>;
   replaceNext(input: ReplaceDailyProjectionInput): Promise<DailyProjectionRecord | null>;
+}
+
+export interface CorrectionRequestRepository {
+  submit(input: SubmitCorrectionRequestInput): Promise<CorrectionRequestRecord>;
 }
 
 export interface TimeAccountRepository {

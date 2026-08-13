@@ -5,6 +5,15 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  correctionRequestIntervalInputSchema,
+  submitCorrectionRequestEnvelopeSchema,
+  submitCorrectionRequestSchema,
+  submittedCorrectionRequestSchema,
+  type SubmitCorrectionRequest,
+  type SubmittedCorrectionRequest,
+} from './corrections.js';
+
+export {
   APPLICATION_ROLES,
   NAVIGATION_AREAS,
   PASSWORD_MAXIMUM_LENGTH,

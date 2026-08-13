@@ -16,6 +16,7 @@ export type EmployeeTargetAction =
   | 'ATTENDANCE_READ'
   | 'CORRECTION_DECIDE'
   | 'CORRECTION_READ'
+  | 'CORRECTION_SUBMIT'
   | 'DOMAIN_HISTORY_READ'
   | 'EMPLOYEE_ACCOUNT_MANAGE'
   | 'EMPLOYEE_CONFIGURATION_ASSIGN'
@@ -80,6 +81,7 @@ const EMPLOYEE_RULES: Readonly<Record<EmployeeTargetAction, EmployeeRule>> = Obj
   ATTENDANCE_READ: { hr: true, reports: true, self: true },
   CORRECTION_DECIDE: { hr: true, reports: true, selfProhibitedForPrivileged: true },
   CORRECTION_READ: { hr: true, reports: true, self: true },
+  CORRECTION_SUBMIT: { self: true },
   DOMAIN_HISTORY_READ: { hr: true, reports: true, self: true },
   EMPLOYEE_ACCOUNT_MANAGE: { fresh: true, hr: true, selfProhibitedForPrivileged: true },
   EMPLOYEE_CONFIGURATION_ASSIGN: { hr: true, selfProhibitedForPrivileged: true },

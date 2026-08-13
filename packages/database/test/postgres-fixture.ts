@@ -11,6 +11,8 @@ const migrationFiles = [
   '0004_audit_foundation.sql',
   '0005_idempotency_foundation.sql',
   '0006_zero_daily_delta.sql',
+  '0007_correction_request_snapshots.sql',
+  '0008_nappy_bromley.sql',
 ] as const;
 
 export type MigratedPostgresFixture = Awaited<ReturnType<typeof createMigratedPostgresFixture>>;

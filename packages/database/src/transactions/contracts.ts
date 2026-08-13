@@ -3,6 +3,7 @@ import type {
   AuditRepository,
   AttendanceIdempotencyRepository,
   AttendanceRepository,
+  CorrectionRequestRepository,
   AuthorizationRepository,
   DailyProjectionRepository,
   EmployeeRepository,
@@ -29,6 +30,7 @@ export interface WorkLedgerTransaction {
   readonly attendance: AttendanceRepository;
   readonly attendanceIdempotency: AttendanceIdempotencyRepository;
   readonly authorization: AuthorizationRepository;
+  readonly correctionRequests: CorrectionRequestRepository;
   readonly dailyProjections: DailyProjectionRepository;
   readonly employees: EmployeeRepository;
   readonly organizations: OrganizationRepository;

@@ -23,6 +23,10 @@ describe('central WorkLedger authorization policy', () => {
       allowed: true,
       scope: 'SELF',
     });
+    expect(employeeDecision(actor, 'CORRECTION_SUBMIT', EMPLOYEE_ID, false)).toEqual({
+      allowed: true,
+      scope: 'SELF',
+    });
     expect(employeeDecision(actor, 'ATTENDANCE_READ', REPORT_ID, false)).toEqual({
       allowed: false,
       code: 'ACCESS_DENIED',

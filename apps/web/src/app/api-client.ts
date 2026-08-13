@@ -4,6 +4,7 @@ import {
   clockOutEnvelopeSchema,
   csrfBootstrapEnvelopeSchema,
   dailyTimeRecordEnvelopeSchema,
+  submitCorrectionRequestEnvelopeSchema,
   resumeAttendanceEnvelopeSchema,
   revokeSelfSessionEnvelopeSchema,
   selfContextEnvelopeSchema,
@@ -12,6 +13,7 @@ import {
   todayAttendanceEnvelopeSchema,
   myTimeEnvelopeSchema,
   type ApiErrorCode,
+  type ApiFieldErrors,
   type ApiRecoveryContext,
   type AttendanceCommand,
   type AttendanceCommandResult,
@@ -21,6 +23,8 @@ import {
   type TodayAttendance,
   type MyTime,
   type MyTimeQuery,
+  type SubmitCorrectionRequest,
+  type SubmittedCorrectionRequest,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -30,6 +34,7 @@ export class ApiClientError extends Error {
     readonly requestId?: string,
     readonly context?: ApiRecoveryContext,
     readonly idempotentReplay?: boolean,
+    readonly fields?: ApiFieldErrors,
   ) {
     super(code);
     this.name = 'ApiClientError';
@@ -84,6 +89,23 @@ export async function loadDailyTimeRecord(
     signal === undefined ? {} : { signal },
   );
   const parsed = dailyTimeRecordEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function submitCorrectionRequest(
+  input: SubmitCorrectionRequest,
+): Promise<SubmittedCorrectionRequest> {
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/me/correction-requests', {
+    body: JSON.stringify(input),
+    headers: {
+      'content-type': 'application/json',
+      'x-workledger-csrf': token,
+    },
+    method: 'POST',
+  });
+  const parsed = submitCorrectionRequestEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }
@@ -264,6 +286,7 @@ async function requestJson(path: string, init: RequestInit = {}): Promise<unknow
     parsedError.success ? parsedError.data.error.requestId : undefined,
     parsedError.success ? parsedError.data.error.context : undefined,
     parsedError.success ? parsedError.data.meta?.idempotentReplay : undefined,
+    parsedError.success ? parsedError.data.error.fields : undefined,
   );
 }
 
