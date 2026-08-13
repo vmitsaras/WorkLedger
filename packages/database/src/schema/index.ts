@@ -6,6 +6,7 @@ import {
   check,
   customType,
   date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -138,12 +139,13 @@ export const securityAuditTargetKind = pgEnum('security_audit_target_kind', [
 ]);
 export const leaveEntitlementEntryType = pgEnum('leave_entitlement_entry_type', [
   'ALLOCATION',
-  'RESERVATION',
+  'PENDING_RESERVATION',
   'RESERVATION_RELEASE',
-  'DEDUCTION',
-  'RESTORATION',
+  'APPROVED_DEDUCTION',
+  'CANCELLATION_RESTORATION',
+  'CARRYOVER',
   'EXPIRY',
-  'ADJUSTMENT',
+  'MANUAL_ADJUSTMENT',
 ]);
 
 export const authUsers = pgTable(
@@ -677,6 +679,7 @@ export const absenceTypes = pgTable(
       table.code,
       table.version,
     ),
+    uniqueIndex('absence_types_organization_id_uidx').on(table.organizationId, table.id),
     check('absence_types_positive_version', sql`${table.version} > 0`),
     check(
       'absence_types_valid_date_range',
@@ -903,6 +906,7 @@ export const leaveEntitlementEntries = pgTable(
   (table) => [
     uniqueIndex('leave_entitlement_entries_employee_type_source_uidx').on(
       table.employeeId,
+      table.absenceTypeId,
       table.entryType,
       table.sourceId,
     ),
@@ -911,6 +915,11 @@ export const leaveEntitlementEntries = pgTable(
       table.absenceTypeId,
       table.effectiveOn,
     ),
+    foreignKey({
+      columns: [table.organizationId, table.absenceTypeId],
+      foreignColumns: [absenceTypes.organizationId, absenceTypes.id],
+      name: 'leave_entitlement_entries_absence_type_organization_fk',
+    }),
   ],
 );
 

@@ -62,7 +62,7 @@ integrationTest(
       }>(
         `select
            sum(minutes)::text as minutes,
-           sum(minutes) filter (where entry_type = 'RESERVATION')::text as reservation
+           sum(minutes) filter (where entry_type = 'PENDING_RESERVATION')::text as reservation
          from leave_entitlement_entries
          where employee_id = $1`,
         [seedId(21)],

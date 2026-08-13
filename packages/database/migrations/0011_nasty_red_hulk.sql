@@ -1,0 +1,1 @@
+ALTER TABLE "leave_entitlement_entries" ADD CONSTRAINT "leave_entitlement_entries_absence_type_organization_fk" FOREIGN KEY ("organization_id","absence_type_id") REFERENCES "public"."absence_types"("organization_id","id") ON DELETE no action ON UPDATE no action;

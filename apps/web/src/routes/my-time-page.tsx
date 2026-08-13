@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
-import { myTimeQuerySchema, type MyTimeQuery } from '@workledger/contracts';
+import { myTimeQuerySchema, type MyTime, type MyTimeQuery } from '@workledger/contracts';
 
 import { ApiClientError } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
@@ -44,7 +44,7 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
     );
   }
 
-  const { balance, ledger, period, records, summary } = query.data;
+  const { balance, leave, ledger, period, records, summary } = query.data;
   return (
     <MyTimeFrame balancesOnly={balancesOnly} title={title}>
       <div className="grid gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface)] p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
@@ -259,7 +259,107 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
           </button>
         </div>
       </section>
+
+      {balancesOnly ? (
+        <LeaveBalanceSection leave={leave} onPage={(page) => setQuery({ page })} />
+      ) : null}
     </MyTimeFrame>
+  );
+}
+
+function LeaveBalanceSection({
+  leave,
+  onPage,
+}: Readonly<{ leave: MyTime['leave']; onPage: (page: number) => void }>) {
+  return (
+    <section aria-labelledby="leave-balance-heading" className="grid gap-4">
+      <div>
+        <h2 id="leave-balance-heading" className="m-0 text-xl font-bold">
+          Leave balances
+        </h2>
+        <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+          Available minutes exclude pending reservations. Projected remaining includes them.
+        </p>
+      </div>
+      {leave.accounts.length === 0 ? (
+        <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
+          No leave entitlement accounts have been allocated yet.
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-3">
+          {leave.accounts.map((account) => (
+            <dl
+              key={account.name}
+              className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4"
+            >
+              <div>
+                <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">Account</dt>
+                <dd className="m-0 text-lg font-bold">{account.name}</dd>
+              </div>
+              <BalanceValue label="Available" value={account.availableMinutes} />
+              <BalanceValue label="Pending reservation" value={account.reservedMinutes} />
+              <BalanceValue label="Projected remaining" value={account.projectedRemainingMinutes} />
+            </dl>
+          ))}
+        </div>
+      )}
+      <div>
+        <h3 className="m-0 text-lg font-bold">Leave entitlement source entries</h3>
+        <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+          Every entry shows its exact effect and the resulting available, reserved, and projected
+          amounts.
+        </p>
+      </div>
+      {leave.ledger.entries.length === 0 ? (
+        <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
+          No leave entitlement source entries exist yet.
+        </p>
+      ) : (
+        <ol className="grid gap-3">
+          {leave.ledger.entries.map((entry, index) => (
+            <li
+              key={`${entry.postedAt}-${entry.entryType}-${index.toString()}`}
+              className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4"
+            >
+              <div>
+                <strong>{entry.entryType.replaceAll('_', ' ').toLowerCase()}</strong>
+                <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                  {entry.absenceTypeName} · effective {formatLocalDate(entry.effectiveOn)}
+                </p>
+              </div>
+              <dl className="grid gap-2 text-sm sm:grid-cols-4">
+                <BalanceValue label="Entry" value={entry.minutes} signed />
+                <BalanceValue label="Available after" value={entry.availableAfterMinutes} />
+                <BalanceValue label="Reserved after" value={entry.reservedAfterMinutes} />
+                <BalanceValue label="Projected after" value={entry.projectedAfterMinutes} />
+              </dl>
+            </li>
+          ))}
+        </ol>
+      )}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          className="wl-button-secondary"
+          type="button"
+          disabled={leave.ledger.page === 1}
+          onClick={() => onPage(leave.ledger.page - 1)}
+        >
+          Previous leave ledger page
+        </button>
+        <span className="text-sm text-[var(--wl-text-muted)]">
+          Page {leave.ledger.page} of{' '}
+          {Math.max(1, Math.ceil(leave.ledger.total / leave.ledger.limit))}
+        </span>
+        <button
+          className="wl-button-secondary"
+          type="button"
+          disabled={leave.ledger.page * leave.ledger.limit >= leave.ledger.total}
+          onClick={() => onPage(leave.ledger.page + 1)}
+        >
+          Next leave ledger page
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -275,7 +375,7 @@ function MyTimeFrame({
         title={title}
         description={
           balancesOnly
-            ? 'Your posted flexible-time ledger and clearly identified eligible projections.'
+            ? 'Your flexible-time and leave balances, with clearly identified projections and source entries.'
             : 'Review your weekly or monthly record summaries and the flexible-time balance they explain.'
         }
       />

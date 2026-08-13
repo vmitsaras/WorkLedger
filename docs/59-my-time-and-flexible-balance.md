@@ -56,7 +56,8 @@ parameters for all shareable state and TanStack Query for the corresponding serv
   navigation focus to remain on the visible `h1` while data changes.
 
 `WL-501` owns daily event/session/break detail. `WL-502` owns richer structured warning and
-missing-entry actions. Leave balances remain deferred to `WL-601`.
+missing-entry actions. `WL-601` adds the leave portion of My Balances without changing the
+flexible-time posting/projection contract.
 
 ## Evidence
 

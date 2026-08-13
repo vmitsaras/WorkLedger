@@ -38,7 +38,7 @@ export function registerMyTimeRoutes(
     {
       schema: {
         description:
-          'Returns the authorized current employee week or month time-record summary and an explainable, paginated flexible-time ledger. Posted ledger facts and eligible unposted projections remain separate.',
+          'Returns the authorized current employee week or month time-record summary with explainable flexible-time and leave-entitlement ledgers. Posted ledger facts and eligible unposted projections remain separate.',
         operationId: 'getCurrentEmployeeTime',
         querystring: myTimeQuerySchema,
         response: {
@@ -48,7 +48,7 @@ export function registerMyTimeRoutes(
           422: apiErrorEnvelopeSchema,
           503: apiErrorEnvelopeSchema,
         },
-        summary: 'Get current employee time records and flexible-time balance',
+        summary: 'Get current employee time records and balances',
         tags: ['Time records'],
       },
     },

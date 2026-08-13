@@ -123,6 +123,7 @@ export {
 
 export {
   MY_TIME_VIEWS,
+  LEAVE_ENTITLEMENT_ENTRY_TYPES,
   TIME_ACCOUNT_ENTRY_TYPES,
   TIME_RECORD_STATUSES,
   dailyTimeAttentionSchema,
@@ -133,6 +134,10 @@ export {
   dailyTimeRecordSchema,
   dailyTimeSessionSchema,
   flexibleTimeBalanceSchema,
+  leaveBalanceSchema,
+  leaveEntitlementAccountSchema,
+  leaveEntitlementLedgerEntrySchema,
+  leaveEntitlementLedgerPageSchema,
   myTimeEnvelopeSchema,
   myTimePeriodSchema,
   myTimeQuerySchema,
@@ -142,6 +147,9 @@ export {
   timeAccountLedgerPageSchema,
   timeRecordSchema,
   type FlexibleTimeBalance,
+  type LeaveBalance,
+  type LeaveEntitlementAccount,
+  type LeaveEntitlementLedgerEntry,
   type DailyTimeAttention,
   type DailyTimeRecord,
   type MyTime,

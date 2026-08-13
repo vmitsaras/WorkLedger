@@ -7,6 +7,7 @@ import {
   parseSignedMinutes,
   type DomainId,
   type Instant,
+  type LeaveEntitlementLedgerEntry,
   type LocalDate,
   type SignedMinutes,
   type TimeAccountLedgerEntry,
@@ -40,6 +41,14 @@ integrationTest(
         [organizationId, 'WL-REPOSITORY-1', 'Repository Test Employee'],
       );
       const employeeId = domainId<'Employee'>(employeeResult.rows[0]?.id);
+      const absenceTypeResult = await fixture.client.query<{ id: string }>(
+        `insert into absence_types
+          (organization_id, code, name, version, active, valid_from, valid_to, policy)
+         values ($1, 'VACATION', 'Vacation', 1, true, '2026-01-01', null, '{}'::jsonb)
+         returning id`,
+        [organizationId],
+      );
+      const absenceTypeId = domainId<'AbsenceTypeVersion'>(absenceTypeResult.rows[0]?.id);
 
       const initial = await database.transaction(async (transaction) => {
         const organization = await transaction.organizations.findById(organizationId);
@@ -100,12 +109,20 @@ integrationTest(
       expect(staleResult).toBeNull();
 
       const ledgerEntry = createLedgerEntry(organizationId, employeeId);
+      const leaveAllocation = createLeaveEntry(
+        organizationId,
+        employeeId,
+        absenceTypeId,
+        'ALLOCATION',
+        4_800,
+      );
       const projectionDate = localDate('2026-08-10');
       await database.transaction(async (transaction) => {
         await transaction.timeAccount.append({
           entry: ledgerEntry,
           sourceFingerprint: 'b'.repeat(64),
         });
+        await transaction.leaveEntitlements.append({ entry: leaveAllocation });
         const projection = await transaction.dailyProjections.replaceNext({
           absenceCreditMinutes: 0,
           adjustmentMinutes: 0,
@@ -157,6 +174,10 @@ integrationTest(
       const persisted = await database.transaction(async (transaction) => ({
         events: await transaction.attendance.listPunchEvents(organizationId, employeeId),
         ledger: await transaction.timeAccount.listForEmployee(organizationId, employeeId),
+        leaveEntries: await transaction.leaveEntitlements.listForEmployee(
+          organizationId,
+          employeeId,
+        ),
         projection: await transaction.dailyProjections.findByEmployeeDate(
           organizationId,
           employeeId,
@@ -166,7 +187,44 @@ integrationTest(
       expect(persisted.events).toHaveLength(1);
       expect(persisted.events[0]?.event.type).toBe('CLOCK_IN');
       expect(persisted.ledger).toEqual([ledgerEntry]);
+      expect(persisted.leaveEntries).toMatchObject([
+        { entryType: 'ALLOCATION', minutes: 4_800, absenceTypeName: 'Vacation' },
+      ]);
       expect(persisted.projection?.projectionVersion).toBe(1);
+
+      const reservationSource = domainId<'LeaveEntitlementSource'>(randomUUID());
+      const reservationOne = createLeaveEntry(
+        organizationId,
+        employeeId,
+        absenceTypeId,
+        'PENDING_RESERVATION',
+        -480,
+        reservationSource,
+      );
+      const reservationTwo = {
+        ...reservationOne,
+        entryId: domainId<'LeaveEntitlementEntry'>(randomUUID()),
+      };
+      const concurrentReservationResults = await Promise.allSettled([
+        database.transaction((transaction) =>
+          transaction.leaveEntitlements.append({ entry: reservationOne }),
+        ),
+        database.transaction((transaction) =>
+          transaction.leaveEntitlements.append({ entry: reservationTwo }),
+        ),
+      ]);
+      expect(
+        concurrentReservationResults.filter(({ status }) => status === 'fulfilled'),
+      ).toHaveLength(1);
+      expect(
+        concurrentReservationResults.filter(({ status }) => status === 'rejected'),
+      ).toHaveLength(1);
+      const leaveAfterRace = await database.transaction((transaction) =>
+        transaction.leaveEntitlements.listForEmployee(organizationId, employeeId),
+      );
+      expect(
+        leaveAfterRace.filter(({ entryType }) => entryType === 'PENDING_RESERVATION'),
+      ).toHaveLength(1);
 
       const otherOrganizationResult = await fixture.client.query<{ id: string }>(
         `insert into organizations (name, time_zone) values ($1, $2) returning id`,
@@ -218,6 +276,27 @@ function createLedgerEntry(
     organizationId,
     recordedAt: instant('2026-08-10T07:00:00Z'),
     sourceKey: domainId<'TimeAccountLedgerSource'>(randomUUID()),
+    subjectEmployeeId: employeeId,
+  });
+}
+
+function createLeaveEntry(
+  organizationId: DomainId<'Organization'>,
+  employeeId: DomainId<'Employee'>,
+  absenceTypeId: DomainId<'AbsenceTypeVersion'>,
+  entryType: LeaveEntitlementLedgerEntry['entryType'],
+  minutes: number,
+  sourceId = domainId<'LeaveEntitlementSource'>(randomUUID()),
+): LeaveEntitlementLedgerEntry {
+  return Object.freeze({
+    absenceTypeId,
+    effectiveOn: localDate('2026-08-10'),
+    entryId: domainId<'LeaveEntitlementEntry'>(randomUUID()),
+    entryType,
+    minutes: signedMinutes(minutes),
+    organizationId,
+    postedAt: instant('2026-08-10T07:00:00Z'),
+    sourceId,
     subjectEmployeeId: employeeId,
   });
 }

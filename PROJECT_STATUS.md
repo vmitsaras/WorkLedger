@@ -2,16 +2,15 @@
 
 **Current phase:** Phase 6 — Absence and leave balances
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 1 of 8 Phase 6 tasks complete
-**Current milestone:** Entitlement ledger and leave-balance query
-**Active task:** `WL-601`
+**Phase progress:** 2 of 8 Phase 6 tasks complete
+**Current milestone:** Vacation request calculation and form
+**Active task:** `WL-602`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement the append-only entitlement ledger, pending reservation, deduction, restoration, and
-authorized leave-balance query required by `WL-601`.
+Implement vacation request calculation and the accessible self-service form required by `WL-602`.
 
 ## Verified decisions
 
@@ -296,6 +295,27 @@ authorized leave-balance query required by `WL-601`.
 
 ## Latest completed task
 
+### `WL-601` — Implement the entitlement ledger and complete My Balances
+
+- Changed: added the pure append-only leave-entitlement ledger calculator, canonical entry types,
+  scoped PostgreSQL repository access, a forward migration from the earlier placeholder enum, and
+  an owner-only My Balances leave read model with account and source-entry explanations.
+- Verified: strict composite TypeScript; 182 unit/component tests; 25 PostgreSQL integration tests,
+  including a concurrent duplicate-reservation fixture; formatting, ESLint, boundaries, OpenAPI
+  drift, and production web/workspace builds pass.
+- Accessibility: My Balances uses labelled description lists for available, reserved, and projected
+  minutes plus a semantic ordered source-entry list and named pagination controls. Empty, loading,
+  and error states retain the stable route heading.
+- Security/data: the existing active-self authorization and `private, no-store` response boundary
+  protect the new DTO. It excludes employee, organization, source, and absence-type identifiers;
+  no entitlement data enters URL state or browser persistence.
+- Documentation: added `docs/67-leave-entitlement-ledger.md`, updated the My Time read-model note,
+  API error conventions, TODO, task board, and project status.
+- Remaining risk: request submission, decision effects, negative-balance override, and
+  cancellation remain intentionally unimplemented. `WL-602` owns vacation coverage calculation,
+  request validation, reservation creation, and the employee form.
+- Next task: `WL-602`.
+
 ### `WL-600` — Implement absence types and policy behavior
 
 - Changed: added a framework-independent effective-dated absence-type policy model with bounded
@@ -452,11 +472,11 @@ authorized leave-balance query required by `WL-601`.
 
 ## Current blockers
 
-No `WL-601` blocker is known. D-502 remains open before the production browser gate.
+No `WL-602` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-601 — Implement the entitlement ledger and complete My Balances.`
+`WL-602 — Implement vacation request calculation and form.`
 
 ## Update rules
 

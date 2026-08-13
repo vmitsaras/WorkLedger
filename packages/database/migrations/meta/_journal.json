@@ -71,6 +71,20 @@
       "when": 1786633928957,
       "tag": "0009_married_justin_hammer",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786634852250,
+      "tag": "0010_broad_sunfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786635371984,
+      "tag": "0011_nasty_red_hulk",
+      "breakpoints": true
     }
   ]
 }

@@ -12,6 +12,16 @@ export const TIME_ACCOUNT_ENTRY_TYPES = [
   'POST_LOCK_ADJUSTMENT',
   'MANUAL_ADMINISTRATIVE_ADJUSTMENT',
 ] as const;
+export const LEAVE_ENTITLEMENT_ENTRY_TYPES = [
+  'ALLOCATION',
+  'PENDING_RESERVATION',
+  'RESERVATION_RELEASE',
+  'APPROVED_DEDUCTION',
+  'CANCELLATION_RESTORATION',
+  'CARRYOVER',
+  'EXPIRY',
+  'MANUAL_ADJUSTMENT',
+] as const;
 
 const dateSchema = z.iso.date();
 const instantSchema = z.iso.datetime({ offset: true });
@@ -115,8 +125,39 @@ export const flexibleTimeBalanceSchema = z.strictObject({
   projectedBalanceMinutes: signedMinuteSchema,
 });
 
+export const leaveEntitlementAccountSchema = z.strictObject({
+  availableMinutes: signedMinuteSchema,
+  name: z.string().min(1).max(160),
+  projectedRemainingMinutes: signedMinuteSchema,
+  reservedMinutes: minuteSchema,
+});
+
+export const leaveEntitlementLedgerEntrySchema = z.strictObject({
+  absenceTypeName: z.string().min(1).max(160),
+  availableAfterMinutes: signedMinuteSchema,
+  effectiveOn: dateSchema,
+  entryType: z.enum(LEAVE_ENTITLEMENT_ENTRY_TYPES),
+  minutes: signedMinuteSchema,
+  postedAt: instantSchema,
+  projectedAfterMinutes: signedMinuteSchema,
+  reservedAfterMinutes: minuteSchema,
+});
+
+export const leaveEntitlementLedgerPageSchema = z.strictObject({
+  entries: z.array(leaveEntitlementLedgerEntrySchema).max(50),
+  limit: z.number().int().min(10).max(50),
+  page: z.number().int().min(1).max(10_000),
+  total: z.number().int().min(0),
+});
+
+export const leaveBalanceSchema = z.strictObject({
+  accounts: z.array(leaveEntitlementAccountSchema).max(20),
+  ledger: leaveEntitlementLedgerPageSchema,
+});
+
 export const myTimeSchema = z.strictObject({
   balance: flexibleTimeBalanceSchema,
+  leave: leaveBalanceSchema,
   ledger: timeAccountLedgerPageSchema,
   period: myTimePeriodSchema,
   records: z.array(timeRecordSchema).max(31),
@@ -128,6 +169,9 @@ export const myTimeEnvelopeSchema = createSuccessEnvelopeSchema(myTimeSchema);
 export const dailyTimeRecordEnvelopeSchema = createSuccessEnvelopeSchema(dailyTimeRecordSchema);
 
 export type FlexibleTimeBalance = z.infer<typeof flexibleTimeBalanceSchema>;
+export type LeaveBalance = z.infer<typeof leaveBalanceSchema>;
+export type LeaveEntitlementAccount = z.infer<typeof leaveEntitlementAccountSchema>;
+export type LeaveEntitlementLedgerEntry = z.infer<typeof leaveEntitlementLedgerEntrySchema>;
 export type DailyTimeAttention = z.infer<typeof dailyTimeAttentionSchema>;
 export type DailyTimeRecord = z.infer<typeof dailyTimeRecordSchema>;
 export type MyTime = z.infer<typeof myTimeSchema>;

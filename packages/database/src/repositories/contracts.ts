@@ -3,6 +3,7 @@ import type {
   AttendanceState,
   DomainId,
   Instant,
+  LeaveEntitlementLedgerEntry,
   LocalDate,
   NonNegativeMinutes,
   PolicyAssignment,
@@ -323,6 +324,13 @@ export type AppendTimeAccountEntryInput = Readonly<{
   sourceFingerprint: string;
 }>;
 
+export type LeaveEntitlementEntryRecord = LeaveEntitlementLedgerEntry &
+  Readonly<{ absenceTypeName: string }>;
+
+export type AppendLeaveEntitlementEntryInput = Readonly<{
+  entry: LeaveEntitlementLedgerEntry;
+}>;
+
 export type AttendanceIdempotencySuccessSnapshot = Readonly<{
   attendanceRevision: number;
   command: AttendanceCommand;
@@ -528,4 +536,12 @@ export interface TimeAccountRepository {
     employeeId: DomainId<'Employee'>,
     endDate: LocalDate,
   ): Promise<readonly TimeAccountLedgerEntry[]>;
+}
+
+export interface LeaveEntitlementRepository {
+  append(input: AppendLeaveEntitlementEntryInput): Promise<LeaveEntitlementEntryRecord>;
+  listForEmployee(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ): Promise<readonly LeaveEntitlementEntryRecord[]>;
 }

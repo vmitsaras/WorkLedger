@@ -43,6 +43,13 @@ integrationTest(
           [organizationId],
         ),
       ).resolves.toBeDefined();
+      const vacationAbsenceType = await client.query<{ id: string }>(
+        `insert into absence_types
+          (organization_id, code, name, version, active, valid_from, valid_to, policy)
+         values ($1, 'VACATION', 'Vacation', 2, true, '2027-01-01', null, '{}'::jsonb)
+         returning id`,
+        [organizationId],
+      );
 
       const uuidVersion = await client.query<{ version: number }>(
         `select uuid_extract_version($1::uuid) as version`,
@@ -56,6 +63,15 @@ integrationTest(
       );
       const employeeId = employee.rows[0]?.id;
       expect(employeeId).toBeTruthy();
+
+      await expect(
+        client.query(
+          `insert into leave_entitlement_entries
+            (organization_id, employee_id, absence_type_id, entry_type, minutes, source_id, effective_on)
+           values ($1, $2, $3, 'PENDING_RESERVATION', -480, uuidv7(), '2026-01-01')`,
+          [organizationId, employeeId, vacationAbsenceType.rows[0]?.id],
+        ),
+      ).resolves.toBeDefined();
 
       const account = await client.query<{ id: string }>(
         `insert into auth_users (name, email) values ('Migration Account', 'migration@example.test') returning id`,
@@ -96,6 +112,21 @@ integrationTest(
         `insert into organizations (name, time_zone) values ($1, $2) returning id`,
         ['Other migration test organization', 'Europe/Berlin'],
       );
+      const otherVacationAbsenceType = await client.query<{ id: string }>(
+        `insert into absence_types
+          (organization_id, code, name, version, active, valid_from, valid_to, policy)
+         values ($1, 'VACATION', 'Vacation', 1, true, '2026-01-01', null, '{}'::jsonb)
+         returning id`,
+        [otherOrganization.rows[0]?.id],
+      );
+      await expect(
+        client.query(
+          `insert into leave_entitlement_entries
+            (organization_id, employee_id, absence_type_id, entry_type, minutes, source_id, effective_on)
+           values ($1, $2, $3, 'ALLOCATION', 480, uuidv7(), '2026-01-01')`,
+          [organizationId, employeeId, otherVacationAbsenceType.rows[0]?.id],
+        ),
+      ).rejects.toMatchObject({ code: '23503' });
       await expect(
         client.query(
           `insert into idempotency_records

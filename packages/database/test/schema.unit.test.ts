@@ -115,6 +115,8 @@ describe('initial PostgreSQL schema', () => {
       '0007_correction_request_snapshots',
       '0008_nappy_bromley',
       '0009_married_justin_hammer',
+      '0010_broad_sunfire',
+      '0011_nasty_red_hulk',
     ]);
   });
 });

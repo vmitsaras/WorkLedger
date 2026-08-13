@@ -641,13 +641,13 @@ async function insertAbsenceAndBalances(transaction: SeedTransaction): Promise<v
     .insert(leaveEntitlementEntries)
     .values([
       leaveEntry(seedId(4500), emmaId, 'ALLOCATION', 9600, seedId(4600), '2026-01-01'),
-      leaveEntry(seedId(4501), emmaId, 'DEDUCTION', -480, seedId(4100), '2026-02-19'),
-      leaveEntry(seedId(4502), emmaId, 'DEDUCTION', -960, seedId(4105), '2026-01-12'),
-      leaveEntry(seedId(4503), emmaId, 'RESTORATION', 240, seedId(4304), '2026-01-13'),
+      leaveEntry(seedId(4501), emmaId, 'APPROVED_DEDUCTION', -480, seedId(4100), '2026-02-19'),
+      leaveEntry(seedId(4502), emmaId, 'APPROVED_DEDUCTION', -960, seedId(4105), '2026-01-12'),
+      leaveEntry(seedId(4503), emmaId, 'CANCELLATION_RESTORATION', 240, seedId(4304), '2026-01-13'),
       leaveEntry(seedId(4510), leonId, 'ALLOCATION', 4800, seedId(4610), '2026-01-01'),
-      leaveEntry(seedId(4511), leonId, 'RESERVATION', -720, seedId(4101), '2026-02-05'),
+      leaveEntry(seedId(4511), leonId, 'PENDING_RESERVATION', -720, seedId(4101), '2026-02-05'),
       leaveEntry(seedId(4520), sofiaId, 'ALLOCATION', 4800, seedId(4620), '2026-01-01'),
-      leaveEntry(seedId(4521), sofiaId, 'DEDUCTION', -180, seedId(4102), '2026-02-17'),
+      leaveEntry(seedId(4521), sofiaId, 'APPROVED_DEDUCTION', -180, seedId(4102), '2026-02-17'),
     ]);
 
   await transaction.insert(dailyProjections).values(createDailyProjections());

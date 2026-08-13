@@ -7,6 +7,7 @@ import type {
   AuthorizationRepository,
   DailyProjectionRepository,
   EmployeeRepository,
+  LeaveEntitlementRepository,
   OrganizationRepository,
   TimeAccountRepository,
   TodayAttendanceRepository,
@@ -33,6 +34,7 @@ export interface WorkLedgerTransaction {
   readonly correctionRequests: CorrectionRequestRepository;
   readonly dailyProjections: DailyProjectionRepository;
   readonly employees: EmployeeRepository;
+  readonly leaveEntitlements: LeaveEntitlementRepository;
   readonly organizations: OrganizationRepository;
   readonly timeAccount: TimeAccountRepository;
   readonly todayAttendance: TodayAttendanceRepository;

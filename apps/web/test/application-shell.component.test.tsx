@@ -106,6 +106,43 @@ const MY_TIME: MyTime = {
     page: 1,
     total: 2,
   },
+  leave: {
+    accounts: [
+      {
+        availableMinutes: 4800,
+        name: 'Vacation',
+        projectedRemainingMinutes: 4080,
+        reservedMinutes: 720,
+      },
+    ],
+    ledger: {
+      entries: [
+        {
+          absenceTypeName: 'Vacation',
+          availableAfterMinutes: 4800,
+          effectiveOn: '2026-08-11',
+          entryType: 'ALLOCATION',
+          minutes: 4800,
+          postedAt: '2026-08-01T08:00:00Z',
+          projectedAfterMinutes: 4800,
+          reservedAfterMinutes: 0,
+        },
+        {
+          absenceTypeName: 'Vacation',
+          availableAfterMinutes: 4800,
+          effectiveOn: '2026-08-11',
+          entryType: 'PENDING_RESERVATION',
+          minutes: -720,
+          postedAt: '2026-08-11T08:00:00Z',
+          projectedAfterMinutes: 4080,
+          reservedAfterMinutes: 720,
+        },
+      ],
+      limit: 20,
+      page: 1,
+      total: 2,
+    },
+  },
   period: { endDate: '2026-08-16', startDate: '2026-08-10', view: 'WEEK' },
   records: [
     {
@@ -251,6 +288,19 @@ test('renders URL-owned time records and keeps posted and projected balance sepa
   expect(screen.getByText(/Projected balance excludes incomplete records/u)).toBeVisible();
   expect(screen.getByRole('table', { name: /Daily time record summaries/u })).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Posted ledger entries' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('renders self-only leave balances with an explainable source-entry list', async () => {
+  vi.stubGlobal('fetch', authenticatedFetch());
+  const { container } = renderApplication('/my-balances?date=2026-08-11&view=WEEK&page=1&limit=20');
+
+  expect(await screen.findByRole('heading', { name: 'My balances' })).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'Leave balances' })).toBeVisible();
+  expect(screen.getByText('Vacation')).toBeVisible();
+  expect(screen.getByText('Pending reservation')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Leave entitlement source entries' })).toBeVisible();
+  expect(screen.getByText('pending reservation')).toBeVisible();
   await expectNoAxeViolations(container);
 });
 

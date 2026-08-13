@@ -24,6 +24,11 @@ const migrationFiles = [
   '0004_audit_foundation.sql',
   '0005_idempotency_foundation.sql',
   '0006_zero_daily_delta.sql',
+  '0007_correction_request_snapshots.sql',
+  '0008_nappy_bromley.sql',
+  '0009_married_justin_hammer.sql',
+  '0010_broad_sunfire.sql',
+  '0011_nasty_red_hulk.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -166,6 +171,21 @@ integrationTest(
            ($1, $2, '2026-02-02', 'DAILY_DELTA', 30, $4, $3, 'SYSTEM', 'test', 'DAILY_CALCULATION', '2026-02-02T18:00:00Z')`,
         [employee.organizationId, employee.employeeId, 'a'.repeat(64), postedProjection],
       );
+      const absenceType = await fixture.client.query<{ id: string }>(
+        `insert into absence_types
+          (organization_id, code, name, version, active, valid_from, valid_to, policy)
+         values ($1, 'VACATION', 'Vacation', 1, true, '2026-01-01', null, '{}'::jsonb)
+         returning id`,
+        [employee.organizationId],
+      );
+      await fixture.client.query(
+        `insert into leave_entitlement_entries
+          (organization_id, employee_id, absence_type_id, entry_type, minutes, source_id, effective_on)
+         values
+          ($1, $2, $3, 'ALLOCATION', 4800, uuidv7(), '2026-01-01'),
+          ($1, $2, $3, 'PENDING_RESERVATION', -720, uuidv7(), '2026-02-05')`,
+        [employee.organizationId, employee.employeeId, absenceType.rows[0]?.id],
+      );
 
       const cookie = await signIn(app);
       const response = await app.inject({
@@ -185,6 +205,17 @@ integrationTest(
             projectedBalanceMinutes: 645,
           },
           ledger: { page: 1, total: 2 },
+          leave: {
+            accounts: [
+              {
+                availableMinutes: 4800,
+                name: 'Vacation',
+                projectedRemainingMinutes: 4080,
+                reservedMinutes: 720,
+              },
+            ],
+            ledger: { page: 1, total: 2 },
+          },
           period: { endDate: '2026-02-08', startDate: '2026-02-02', view: 'WEEK' },
           summary: { completeBalanceMinutes: 45, incompleteRecordCount: 1, recordedDayCount: 3 },
           timeZone: 'Europe/Berlin',

@@ -113,6 +113,16 @@ export {
   type SimpleAttendanceCommandInput,
 } from './attendance-transition.js';
 export {
+  calculateLeaveEntitlementLedger,
+  leaveEntitlementEntryTypes,
+  type LeaveEntitlementEntryType,
+  type LeaveEntitlementLedgerEntry,
+  type LeaveEntitlementLedgerEntryExplanation,
+  type LeaveEntitlementLedgerError,
+  type LeaveEntitlementLedgerInput,
+  type LeaveEntitlementLedgerTotals,
+} from './leave-entitlement-ledger.js';
+export {
   createLocalDateRange,
   localDateRangeContains,
   type InvalidLocalDateRangeError,

@@ -1,6 +1,7 @@
 import type { MyTime, MyTimeQuery } from '@workledger/contracts';
 import {
   addLocalDateDays,
+  calculateLeaveEntitlementLedger,
   calculateTimeAccountLedger,
   parseDomainId,
   parseLocalDate,
@@ -12,7 +13,11 @@ import {
   type Instant,
   type LocalDate,
 } from '@workledger/domain';
-import type { AccountSelfContextRecord, WorkLedgerDatabase } from '@workledger/database';
+import type {
+  AccountSelfContextRecord,
+  LeaveEntitlementEntryRecord,
+  WorkLedgerDatabase,
+} from '@workledger/database';
 
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
@@ -67,7 +72,7 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
         if (!authorization.allowed)
           throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
 
-        const [periodProjections, allProjections, ledgerEntries] = await Promise.all([
+        const [periodProjections, allProjections, ledgerEntries, leaveEntries] = await Promise.all([
           transaction.dailyProjections.listForEmployeeRange(
             context.organization.id,
             employee.id,
@@ -84,6 +89,7 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
             employee.id,
             period.endDate,
           ),
+          transaction.leaveEntitlements.listForEmployee(context.organization.id, employee.id),
         ]);
 
         const totals = calculateTimeAccountLedger({
@@ -149,6 +155,16 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
           .map((projection) => projection.localDate);
         const offset = (query.page - 1) * query.limit;
         const pageEntries = totals.value.entryExplanations.slice(offset, offset + query.limit);
+        const leaveAccounts = createLeaveAccounts(
+          leaveEntries,
+          context.organization.id,
+          employee.id,
+        );
+        const leaveLedgerEntries = leaveAccounts.flatMap(({ entries, name }) =>
+          entries.map(({ entryId: _entryId, ...entry }) =>
+            Object.freeze({ absenceTypeName: name, ...entry }),
+          ),
+        );
 
         return Object.freeze({
           balance: Object.freeze({
@@ -178,6 +194,22 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
             page: query.page,
             total: totals.value.entryExplanations.length,
           }),
+          leave: Object.freeze({
+            accounts: leaveAccounts.map(({ name, totals: leaveTotals }) =>
+              Object.freeze({
+                availableMinutes: leaveTotals.availableMinutes,
+                name,
+                projectedRemainingMinutes: leaveTotals.projectedRemainingMinutes,
+                reservedMinutes: leaveTotals.reservedMinutes,
+              }),
+            ),
+            ledger: Object.freeze({
+              entries: leaveLedgerEntries.slice(offset, offset + query.limit),
+              limit: query.limit,
+              page: query.page,
+              total: leaveLedgerEntries.length,
+            }),
+          }),
           period: Object.freeze({ ...period, view: query.view }),
           records,
           summary: Object.freeze({
@@ -190,6 +222,37 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
       });
     },
   });
+}
+
+function createLeaveAccounts(
+  entries: readonly LeaveEntitlementEntryRecord[],
+  organizationId: DomainId<'Organization'>,
+  employeeId: DomainId<'Employee'>,
+) {
+  const byAbsenceType = new Map<string, { entries: LeaveEntitlementEntryRecord[]; name: string }>();
+  for (const entry of entries) {
+    const key = String(entry.absenceTypeId);
+    const account = byAbsenceType.get(key) ?? { entries: [], name: entry.absenceTypeName };
+    account.entries.push(entry);
+    byAbsenceType.set(key, account);
+  }
+
+  return [...byAbsenceType.values()]
+    .map(({ entries: accountEntries, name }) => {
+      const absenceTypeId = accountEntries[0]?.absenceTypeId;
+      if (absenceTypeId === undefined) {
+        throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+      }
+      const totals = calculateLeaveEntitlementLedger({
+        absenceTypeId,
+        entries: accountEntries,
+        organizationId,
+        subjectEmployeeId: employeeId,
+      });
+      if (!totals.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+      return Object.freeze({ entries: totals.value.entryExplanations, name, totals: totals.value });
+    })
+    .sort((first, second) => first.name.localeCompare(second.name));
 }
 
 export function parseMyTimeIdentity(accountIdValue: string, sessionFresh: boolean): MyTimeIdentity {

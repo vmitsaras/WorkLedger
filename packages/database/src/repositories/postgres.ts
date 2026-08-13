@@ -28,6 +28,7 @@ import {
   absenceCoverageSegments,
   absenceEffects,
   absenceRequests,
+  absenceTypes,
   correctionRequests,
   correctionDecisions,
   appliedCorrections,
@@ -38,6 +39,7 @@ import {
   employmentPeriods,
   idempotencyRecords,
   holidays,
+  leaveEntitlementEntries,
   managerAssignments,
   organizations,
   policyAssignments,
@@ -65,6 +67,7 @@ import type {
   AuditActor,
   AuditRepository,
   AppendPunchEvent,
+  AppendLeaveEntitlementEntryInput,
   AppendTimeAccountEntryInput,
   AttendanceHeadRecord,
   AttendanceIdempotencyClaim,
@@ -84,6 +87,8 @@ import type {
   EmployeeRecord,
   EmployeeRepository,
   LinkEmployeeInput,
+  LeaveEntitlementEntryRecord,
+  LeaveEntitlementRepository,
   ListAuthorizedEmployeesInput,
   OrganizationRecord,
   OrganizationRepository,
@@ -125,6 +130,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   correctionRequests: CorrectionRequestRepository;
   dailyProjections: DailyProjectionRepository;
   employees: EmployeeRepository;
+  leaveEntitlements: LeaveEntitlementRepository;
   organizations: OrganizationRepository;
   timeAccount: TimeAccountRepository;
   todayAttendance: TodayAttendanceRepository;
@@ -138,6 +144,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     correctionRequests: new PostgresCorrectionRequestRepository(transaction),
     dailyProjections: new PostgresDailyProjectionRepository(transaction),
     employees: new PostgresEmployeeRepository(transaction),
+    leaveEntitlements: new PostgresLeaveEntitlementRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
     todayAttendance: new PostgresTodayAttendanceRepository(transaction),
@@ -1543,6 +1550,56 @@ class PostgresTimeAccountRepository implements TimeAccountRepository {
   }
 }
 
+class PostgresLeaveEntitlementRepository implements LeaveEntitlementRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async append(input: AppendLeaveEntitlementEntryInput): Promise<LeaveEntitlementEntryRecord> {
+    const [row] = await this.transaction
+      .insert(leaveEntitlementEntries)
+      .values({
+        absenceTypeId: input.entry.absenceTypeId,
+        effectiveOn: input.entry.effectiveOn,
+        entryType: input.entry.entryType,
+        id: input.entry.entryId,
+        employeeId: input.entry.subjectEmployeeId,
+        minutes: input.entry.minutes,
+        organizationId: input.entry.organizationId,
+        sourceId: input.entry.sourceId,
+      })
+      .returning();
+    if (row === undefined) throw new DatabaseValueError('leave_entitlement_entries', 'id');
+
+    const [absenceType] = await this.transaction
+      .select({ name: absenceTypes.name })
+      .from(absenceTypes)
+      .where(eq(absenceTypes.id, row.absenceTypeId))
+      .limit(1);
+    if (absenceType === undefined) throw new DatabaseValueError('absence_types', 'id');
+    return mapLeaveEntitlementEntry(row, absenceType.name);
+  }
+
+  async listForEmployee(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ): Promise<readonly LeaveEntitlementEntryRecord[]> {
+    const rows = await this.transaction
+      .select({ entry: leaveEntitlementEntries, absenceTypeName: absenceTypes.name })
+      .from(leaveEntitlementEntries)
+      .innerJoin(absenceTypes, eq(leaveEntitlementEntries.absenceTypeId, absenceTypes.id))
+      .where(
+        and(
+          eq(leaveEntitlementEntries.organizationId, organizationId),
+          eq(leaveEntitlementEntries.employeeId, employeeId),
+        ),
+      )
+      .orderBy(asc(leaveEntitlementEntries.createdAt), asc(leaveEntitlementEntries.id));
+
+    return Object.freeze(
+      rows.map(({ absenceTypeName, entry }) => mapLeaveEntitlementEntry(entry, absenceTypeName)),
+    );
+  }
+}
+
 function mapOrganization(row: typeof organizations.$inferSelect): OrganizationRecord {
   return Object.freeze({
     createdAt: mapInstant(row.createdAt, 'organizations', 'created_at'),
@@ -1749,6 +1806,40 @@ function mapTimeAccountEntry(row: typeof timeAccountEntries.$inferSelect): TimeA
     subjectEmployeeId: mapDomainId<'Employee'>(
       row.employeeId,
       'time_account_entries',
+      'employee_id',
+    ),
+  });
+}
+
+function mapLeaveEntitlementEntry(
+  row: typeof leaveEntitlementEntries.$inferSelect,
+  absenceTypeName: string,
+): LeaveEntitlementEntryRecord {
+  return Object.freeze({
+    absenceTypeId: mapDomainId<'AbsenceTypeVersion'>(
+      row.absenceTypeId,
+      'leave_entitlement_entries',
+      'absence_type_id',
+    ),
+    absenceTypeName,
+    effectiveOn: mapLocalDate(row.effectiveOn, 'leave_entitlement_entries', 'effective_on'),
+    entryId: mapDomainId<'LeaveEntitlementEntry'>(row.id, 'leave_entitlement_entries', 'id'),
+    entryType: row.entryType,
+    minutes: mapSignedMinutes(row.minutes, 'leave_entitlement_entries', 'minutes'),
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'leave_entitlement_entries',
+      'organization_id',
+    ),
+    postedAt: mapInstant(row.createdAt, 'leave_entitlement_entries', 'created_at'),
+    sourceId: mapDomainId<'LeaveEntitlementSource'>(
+      row.sourceId,
+      'leave_entitlement_entries',
+      'source_id',
+    ),
+    subjectEmployeeId: mapDomainId<'Employee'>(
+      row.employeeId,
+      'leave_entitlement_entries',
       'employee_id',
     ),
   });
