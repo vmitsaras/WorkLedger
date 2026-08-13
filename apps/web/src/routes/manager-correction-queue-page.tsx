@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { ApiClientError, decideManagerCorrectionRequest } from '../app/api-client.js';
+import {
+  ApiClientError,
+  applyApprovedCorrectionRequest,
+  decideManagerCorrectionRequest,
+} from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { managerCorrectionQueueQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
@@ -50,6 +54,27 @@ export function ManagerCorrectionQueuePage() {
         error instanceof ApiClientError && error.code === 'APPROVAL_STATE_CONFLICT'
           ? 'This request changed before your decision. Refresh and review the current request.'
           : 'WorkLedger could not record this decision. No correction was applied.',
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+  async function apply() {
+    if (item === null) return;
+    setPending(true);
+    setMessage(undefined);
+    try {
+      const result = await applyApprovedCorrectionRequest(item.id, item.version);
+      await queryClient.invalidateQueries({ queryKey: ['manager', 'correction-requests'] });
+      setSelected(null);
+      setMessage(
+        `Correction applied. Worked time is now ${formatDuration(result.workedMinutes)}; the flexible-time balance changed by ${formatDuration(result.balanceDeltaMinutes, true)}.`,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof ApiClientError && error.code === 'PERIOD_ADJUSTMENT_REQUIRED'
+          ? 'This correction affects a locked month. It requires the later post-lock adjustment workflow.'
+          : 'WorkLedger could not apply this correction. No change was recorded.',
       );
     } finally {
       setPending(false);
@@ -128,45 +153,63 @@ export function ManagerCorrectionQueuePage() {
                 {item.proposedStartsAt} to {item.proposedEndsAt}
               </p>
               <p className="text-sm text-[var(--wl-text-muted)]">
-                No calculation impact is shown or applied until the later application step.
+                Approval must still be applied before the daily calculation changes.
               </p>
             </section>
           </div>
           <p>
             <strong>Employee reason:</strong> {item.reason}
           </p>
-          <label className="grid gap-2" htmlFor="decision-reason">
-            Decision reason
-            <textarea
-              id="decision-reason"
-              className="min-h-24 rounded-lg border border-[var(--wl-border)] p-3"
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-            />
-          </label>
-          <div className="flex flex-wrap gap-3">
-            <button
-              disabled={pending}
-              className="wl-button-primary"
-              onClick={() => void decide('APPROVE')}
-            >
-              {pending ? 'Recording…' : 'Approve for later application'}
-            </button>
-            <button
-              disabled={pending}
-              className="wl-button-secondary"
-              onClick={() => void decide('REQUEST_CHANGES')}
-            >
-              Request changes
-            </button>
-            <button
-              disabled={pending}
-              className="wl-button-secondary"
-              onClick={() => void decide('REJECT')}
-            >
-              Reject
-            </button>
-          </div>
+          {item.status === 'APPROVED' ? (
+            <div className="grid gap-3">
+              <p className="m-0">
+                This request is approved but has not been applied. Applying it updates the unlocked
+                daily record and adds an explainable balance delta.
+              </p>
+              <button
+                disabled={pending}
+                className="wl-button-primary w-fit"
+                onClick={() => void apply()}
+              >
+                {pending ? 'Applying…' : 'Apply approved correction'}
+              </button>
+            </div>
+          ) : (
+            <>
+              <label className="grid gap-2" htmlFor="decision-reason">
+                Decision reason
+                <textarea
+                  id="decision-reason"
+                  className="min-h-24 rounded-lg border border-[var(--wl-border)] p-3"
+                  value={reason}
+                  onChange={(event) => setReason(event.target.value)}
+                />
+              </label>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  disabled={pending}
+                  className="wl-button-primary"
+                  onClick={() => void decide('APPROVE')}
+                >
+                  {pending ? 'Recording…' : 'Approve for later application'}
+                </button>
+                <button
+                  disabled={pending}
+                  className="wl-button-secondary"
+                  onClick={() => void decide('REQUEST_CHANGES')}
+                >
+                  Request changes
+                </button>
+                <button
+                  disabled={pending}
+                  className="wl-button-secondary"
+                  onClick={() => void decide('REJECT')}
+                >
+                  Reject
+                </button>
+              </div>
+            </>
+          )}
         </section>
       )}
     </section>

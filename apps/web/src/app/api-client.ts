@@ -1,4 +1,5 @@
 import {
+  applyCorrectionEnvelopeSchema,
   apiErrorEnvelopeSchema,
   clockInEnvelopeSchema,
   clockOutEnvelopeSchema,
@@ -140,6 +141,21 @@ export async function decideManagerCorrectionRequest(
     },
   );
   const parsed = correctionDecisionEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function applyApprovedCorrectionRequest(requestId: string, expectedVersion: number) {
+  const token = await getCsrfToken();
+  const body = await requestJson(
+    `/v1/manager/correction-requests/${encodeURIComponent(requestId)}/apply`,
+    {
+      body: JSON.stringify({ expectedVersion }),
+      headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+      method: 'POST',
+    },
+  );
+  const parsed = applyCorrectionEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

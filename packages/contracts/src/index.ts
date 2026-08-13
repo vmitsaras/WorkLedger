@@ -5,6 +5,8 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  applyCorrectionEnvelopeSchema,
+  applyCorrectionRequestSchema,
   correctionRequestIntervalInputSchema,
   correctionDecisionEnvelopeSchema,
   correctionDecisionRequestSchema,

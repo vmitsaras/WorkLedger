@@ -158,6 +158,70 @@ integrationTest(
         'select count(*) from applied_corrections',
       );
       expect(applicationCount.rows[0]?.count).toBe('0');
+      await fixture.client.query(
+        `insert into monthly_periods (organization_id, employee_id, month_start, status, locked_at)
+         values ($1, $2, '2026-02-01', 'LOCKED', '2026-02-28T12:00:00Z')`,
+        [employee.organizationId, employee.employeeId],
+      );
+      const locked = await app.inject({
+        method: 'POST',
+        url: `/v1/manager/correction-requests/${response.json<{ data: { id: string } }>().data.id}/apply`,
+        headers: {
+          'content-type': 'application/json',
+          cookie: managerCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': managerCsrf.json<{ data: { token: string } }>().data.token,
+        },
+        payload: { expectedVersion: 2 },
+      });
+      expect(locked.statusCode).toBe(409);
+      expect(locked.json()).toMatchObject({ error: { code: 'PERIOD_ADJUSTMENT_REQUIRED' } });
+      expect(
+        (await fixture.client.query<{ count: string }>('select count(*) from applied_corrections'))
+          .rows[0]?.count,
+      ).toBe('0');
+      await fixture.client.query(`delete from monthly_periods where organization_id = $1`, [
+        employee.organizationId,
+      ]);
+      const applied = await app.inject({
+        method: 'POST',
+        url: `/v1/manager/correction-requests/${response.json<{ data: { id: string } }>().data.id}/apply`,
+        headers: {
+          'content-type': 'application/json',
+          cookie: managerCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': managerCsrf.json<{ data: { token: string } }>().data.token,
+        },
+        payload: { expectedVersion: 2 },
+      });
+      expect(applied.statusCode).toBe(200);
+      expect(applied.json()).toMatchObject({
+        data: { balanceDeltaMinutes: -60, status: 'APPLIED', workedMinutes: 60 },
+      });
+      const projected = await fixture.client.query<{
+        balance_minutes: number;
+        credited_minutes: number;
+        projection_version: number;
+        worked_minutes: number;
+      }>(
+        `select worked_minutes, credited_minutes, balance_minutes, projection_version
+         from daily_projections where id = $1`,
+        [projectionId],
+      );
+      expect(projected.rows[0]).toEqual({
+        balance_minutes: -420,
+        credited_minutes: 60,
+        projection_version: 2,
+        worked_minutes: 60,
+      });
+      const appliedCount = await fixture.client.query<{ count: string }>(
+        'select count(*) from applied_corrections',
+      );
+      expect(appliedCount.rows[0]?.count).toBe('1');
+      const ledger = await fixture.client.query<{ entry_type: string; minutes: number }>(
+        'select entry_type, minutes from time_account_entries',
+      );
+      expect(ledger.rows).toContainEqual({ entry_type: 'DAILY_RECALCULATION_DELTA', minutes: -60 });
     } finally {
       await app.close();
       await fixture.cleanup();

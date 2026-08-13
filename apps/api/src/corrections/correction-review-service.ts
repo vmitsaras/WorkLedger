@@ -1,10 +1,14 @@
 import {
+  elapsedMinutesBetweenInstants,
   localDateAtInstant,
   parseDomainId,
+  parseInstant,
+  parseSignedMinutes,
   parseTimeZoneId,
   type DomainId,
   type Instant,
 } from '@workledger/domain';
+import { createHash, randomUUID } from 'node:crypto';
 import type {
   AccountSelfContextRecord,
   CorrectionReviewRecord,
@@ -117,6 +121,171 @@ export function createCorrectionReviewService(database: WorkLedgerDatabase) {
         });
       });
     },
+    async apply(
+      identity: CorrectionReviewIdentity,
+      requestIdValue: string,
+      expectedVersion: number,
+      at: Instant,
+    ) {
+      return database.transaction(async (transaction) => {
+        const { actor, context, localDate } = await reviewContext(transaction, identity, at);
+        if (actor.employeeId === null)
+          throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
+        const requestId = parseRequestId(requestIdValue);
+        const request = await transaction.correctionRequests.findForReview(
+          context.organization.id,
+          requestId,
+        );
+        if (request === null)
+          throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
+        const isCurrentManager = await transaction.authorization.isCurrentManager(
+          context.organization.id,
+          actor.employeeId,
+          request.employeeId,
+          localDate,
+        );
+        const authorization = authorizeEmployeeTarget({
+          action: 'CORRECTION_DECIDE',
+          actor,
+          isCurrentManager,
+          sessionFresh: identity.sessionFresh,
+          targetEmployeeId: request.employeeId,
+          targetOrganizationId: context.organization.id,
+        });
+        if (!authorization.allowed)
+          throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
+        if (request.status !== 'APPROVED' || request.version !== expectedVersion)
+          throw new WorkLedgerApiError({ code: 'APPROVAL_STATE_CONFLICT', statusCode: 409 });
+        if (
+          await transaction.correctionRequests.hasLockedMonth(
+            context.organization.id,
+            request.employeeId,
+            request.localDate,
+          )
+        )
+          throw new WorkLedgerApiError({ code: 'PERIOD_ADJUSTMENT_REQUIRED', statusCode: 409 });
+        const decisionId = await transaction.correctionRequests.findApprovedDecisionId(
+          context.organization.id,
+          request.id,
+        );
+        if (decisionId === null)
+          throw new WorkLedgerApiError({ code: 'APPROVAL_STATE_CONFLICT', statusCode: 409 });
+        const projectionId = readString(request.originalInterpretation['projectionId']);
+        const startsAt = readString(request.proposedInterpretation['startsAt']);
+        const endsAt = readString(request.proposedInterpretation['endsAt']);
+        if (projectionId === null || startsAt === null || endsAt === null)
+          throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+        const parsedProjectionId = parseDomainId<'DailyProjection'>(projectionId);
+        if (!parsedProjectionId.ok)
+          throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+        const projection = await transaction.dailyProjections.findForEmployee(
+          context.organization.id,
+          request.employeeId,
+          parsedProjectionId.value,
+        );
+        if (projection === null || projection.localDate !== request.localDate)
+          throw new WorkLedgerApiError({ code: 'APPROVAL_STATE_CONFLICT', statusCode: 409 });
+        const parsedStartsAt = parseInstant(startsAt);
+        const parsedEndsAt = parseInstant(endsAt);
+        if (!parsedStartsAt.ok || !parsedEndsAt.ok)
+          throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+        const workedMinutes = elapsedMinutesBetweenInstants(
+          parsedStartsAt.value,
+          parsedEndsAt.value,
+        );
+        const balanceDeltaMinutes = workedMinutes - projection.workedMinutes;
+        const creditedMinutes = projection.creditedMinutes + balanceDeltaMinutes;
+        const balanceMinutes = projection.balanceMinutes + balanceDeltaMinutes;
+        if (creditedMinutes < 0)
+          throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+        const applied = await transaction.correctionRequests.apply({
+          correctionDecisionId: decisionId,
+          correctionRequestId: request.id,
+          employeeId: request.employeeId,
+          interpretation: Object.freeze({
+            kind: 'REPLACE_DAILY_WORK_INTERVAL',
+            sourceProjectionVersion: projection.projectionVersion,
+            startsAt,
+            endsAt,
+            workedMinutes,
+          }),
+          localDate: request.localDate,
+          organizationId: context.organization.id,
+          version: 1,
+        });
+        if (applied === null)
+          throw new WorkLedgerApiError({ code: 'APPROVAL_STATE_CONFLICT', statusCode: 409 });
+        const sourceFingerprint = createHash('sha256')
+          .update(
+            `${applied.id}:${projection.sourceFingerprint}:${projection.projectionVersion}`,
+            'utf8',
+          )
+          .digest('hex');
+        const nextProjection = await transaction.dailyProjections.replaceNext({
+          ...projection,
+          calculatedAt: at,
+          balanceMinutes,
+          creditedMinutes,
+          projectionVersion: projection.projectionVersion + 1,
+          sourceFingerprint,
+          sourceReferences: Object.freeze({
+            ...projection.sourceReferences,
+            appliedCorrectionId: applied.id,
+          }),
+          workedMinutes,
+        });
+        if (nextProjection === null)
+          throw new WorkLedgerApiError({ code: 'APPROVAL_STATE_CONFLICT', statusCode: 409 });
+        if (balanceDeltaMinutes !== 0) {
+          const amount = parseSignedMinutes(balanceDeltaMinutes);
+          const entryId = parseDomainId<'TimeAccountLedgerEntry'>(randomUUID());
+          const explanationCode = parseDomainId<'TimeAccountExplanationCode'>(randomUUID());
+          const sourceKey = parseDomainId<'TimeAccountLedgerSource'>(applied.id);
+          if (!amount.ok || !entryId.ok || !explanationCode.ok || !sourceKey.ok)
+            throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+          await transaction.timeAccount.append({
+            entry: {
+              actor: { accountId: context.accountId, kind: 'ACCOUNT' },
+              amountMinutes: amount.value,
+              effectiveDate: request.localDate,
+              entryId: entryId.value,
+              entryType: 'DAILY_RECALCULATION_DELTA',
+              explanationCode: explanationCode.value,
+              organizationId: context.organization.id,
+              recordedAt: at,
+              sourceKey: sourceKey.value,
+              subjectEmployeeId: request.employeeId,
+            },
+            sourceFingerprint,
+          });
+        }
+        await transaction.audit.appendDomain({
+          actionCode: 'CORRECTION_APPLIED',
+          actor: { accountId: context.accountId, kind: 'ACCOUNT', role: auditRole(context.roles) },
+          facts: {
+            effectiveDate: request.localDate,
+            minutes: balanceDeltaMinutes,
+            version: nextProjection.projectionVersion,
+          },
+          occurredAt: at,
+          organizationId: context.organization.id,
+          outcome: 'SUCCESS',
+          privileged: authorization.scope === 'ORGANIZATION_HR',
+          reasonCode: 'APPROVED_CORRECTION',
+          requestId: null,
+          restrictedReasonId: null,
+          subjectEmployeeId: request.employeeId,
+          targetId: applied.id,
+          targetKind: 'CORRECTION_REQUEST',
+        });
+        return Object.freeze({
+          balanceDeltaMinutes,
+          id: applied.id,
+          status: 'APPLIED' as const,
+          workedMinutes,
+        });
+      });
+    },
   });
 }
 
@@ -186,7 +355,12 @@ function toReviewItem(request: CorrectionReviewRecord): CorrectionReviewItem {
     proposedEndsAt: endsAt,
     proposedStartsAt: startsAt,
     reason: request.reason,
-    status: request.status === 'SUBMITTED' ? 'SUBMITTED' : 'CHANGES_REQUESTED',
+    status:
+      request.status === 'SUBMITTED'
+        ? 'SUBMITTED'
+        : request.status === 'APPROVED'
+          ? 'APPROVED'
+          : 'CHANGES_REQUESTED',
     version: request.version,
   });
 }

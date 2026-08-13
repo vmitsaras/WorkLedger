@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
+  applyCorrectionEnvelopeSchema,
+  applyCorrectionRequestSchema,
   apiErrorEnvelopeSchema,
   correctionDecisionEnvelopeSchema,
   correctionDecisionRequestSchema,
@@ -85,6 +87,40 @@ export function registerCorrectionReviewRoutes(
         parseCorrectionReviewIdentity(session.userId, session.fresh),
         request.params.requestId,
         request.body,
+        requireInstant(now()),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+  api.post(
+    '/v1/manager/correction-requests/:requestId/apply',
+    {
+      schema: {
+        body: applyCorrectionRequestSchema,
+        params: z.strictObject({ requestId: z.string().uuid() }),
+        operationId: 'applyApprovedCorrectionRequest',
+        response: {
+          200: applyCorrectionEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          404: apiErrorEnvelopeSchema,
+          409: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'Apply an approved correction to an unlocked daily record',
+        tags: ['Correction requests'],
+      },
+    },
+    async (request, reply) => {
+      requireSameOrigin(request, config.canonicalOrigin);
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      await requireRequestCsrf(request, authentication, headers);
+      const data = await service.apply(
+        parseCorrectionReviewIdentity(session.userId, session.fresh),
+        request.params.requestId,
+        request.body.expectedVersion,
         requireInstant(now()),
       );
       reply.header('cache-control', 'private, no-store');

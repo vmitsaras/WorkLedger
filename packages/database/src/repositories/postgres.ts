@@ -14,6 +14,7 @@ import {
   parseTimeZoneId,
   type DomainId,
   type Instant,
+  type LocalDate,
   type TimeAccountEntryActor,
   type TimeAccountLedgerEntry,
 } from '@workledger/domain';
@@ -29,6 +30,8 @@ import {
   absenceRequests,
   correctionRequests,
   correctionDecisions,
+  appliedCorrections,
+  monthlyPeriods,
   dailyProjections,
   domainAuditEvents,
   employees,
@@ -73,6 +76,8 @@ import type {
   CorrectionRequestRepository,
   CorrectionReviewRecord,
   DecideCorrectionRequestInput,
+  AppliedCorrectionRecord,
+  ApplyCorrectionInput,
   DailyProjectionRecord,
   DailyProjectionRepository,
   DomainAuditEventRecord,
@@ -1107,7 +1112,7 @@ class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
           eq(correctionRequests.organizationId, input.organizationId),
           eq(correctionRequests.employeeId, input.employeeId),
           eq(correctionRequests.localDate, input.localDate),
-          inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED']),
+          inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED']),
         ),
       )
       .limit(1);
@@ -1310,6 +1315,80 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
     return mapCorrectionRequest(row);
   }
 
+  async findApprovedDecisionId(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'CorrectionRequest'>,
+  ): Promise<DomainId<'CorrectionDecision'> | null> {
+    const [row] = await this.transaction
+      .select({ id: correctionDecisions.id })
+      .from(correctionDecisions)
+      .where(
+        and(
+          eq(correctionDecisions.organizationId, organizationId),
+          eq(correctionDecisions.correctionRequestId, requestId),
+          eq(correctionDecisions.action, 'APPROVE'),
+        ),
+      )
+      .orderBy(desc(correctionDecisions.decidedAt), desc(correctionDecisions.id))
+      .limit(1);
+    return row === undefined
+      ? null
+      : mapDomainId<'CorrectionDecision'>(row.id, 'correction_decisions', 'id');
+  }
+
+  async hasLockedMonth(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    localDate: LocalDate,
+  ): Promise<boolean> {
+    const monthStart = `${localDate.slice(0, 7)}-01`;
+    const [row] = await this.transaction
+      .select({ id: monthlyPeriods.id })
+      .from(monthlyPeriods)
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, organizationId),
+          eq(monthlyPeriods.employeeId, employeeId),
+          eq(monthlyPeriods.monthStart, monthStart),
+          eq(monthlyPeriods.status, 'LOCKED'),
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
+  }
+
+  async apply(input: ApplyCorrectionInput): Promise<AppliedCorrectionRecord | null> {
+    const [row] = await this.transaction
+      .insert(appliedCorrections)
+      .values({
+        correctionDecisionId: input.correctionDecisionId,
+        correctionRequestId: input.correctionRequestId,
+        employeeId: input.employeeId,
+        interpretation: input.interpretation,
+        localDate: input.localDate,
+        organizationId: input.organizationId,
+        version: input.version,
+      })
+      .onConflictDoNothing()
+      .returning();
+    if (row === undefined) return null;
+    return Object.freeze({
+      correctionDecisionId: mapDomainId<'CorrectionDecision'>(
+        row.correctionDecisionId,
+        'applied_corrections',
+        'correction_decision_id',
+      ),
+      correctionRequestId: mapDomainId<'CorrectionRequest'>(
+        row.correctionRequestId,
+        'applied_corrections',
+        'correction_request_id',
+      ),
+      id: mapDomainId<'AppliedCorrection'>(row.id, 'applied_corrections', 'id'),
+      interpretation: Object.freeze(row.interpretation),
+      version: row.version,
+    });
+  }
+
   async listPendingForEmployees(
     organizationId: DomainId<'Organization'>,
     employeeIds: readonly DomainId<'Employee'>[],
@@ -1319,11 +1398,16 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
       .select({ request: correctionRequests, employeeDisplayName: employees.displayName })
       .from(correctionRequests)
       .innerJoin(employees, eq(employees.id, correctionRequests.employeeId))
+      .leftJoin(
+        appliedCorrections,
+        eq(appliedCorrections.correctionRequestId, correctionRequests.id),
+      )
       .where(
         and(
           eq(correctionRequests.organizationId, organizationId),
           inArray(correctionRequests.employeeId, [...employeeIds]),
-          inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED']),
+          inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED']),
+          isNull(appliedCorrections.id),
         ),
       )
       .orderBy(asc(correctionRequests.createdAt), asc(correctionRequests.id));

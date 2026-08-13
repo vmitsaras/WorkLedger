@@ -301,6 +301,22 @@ export type DecideCorrectionRequestInput = Readonly<{
   reason: string;
   requestId: DomainId<'CorrectionRequest'>;
 }>;
+export type AppliedCorrectionRecord = Readonly<{
+  correctionDecisionId: DomainId<'CorrectionDecision'>;
+  correctionRequestId: DomainId<'CorrectionRequest'>;
+  id: DomainId<'AppliedCorrection'>;
+  interpretation: Readonly<Record<string, unknown>>;
+  version: number;
+}>;
+export type ApplyCorrectionInput = Readonly<{
+  correctionDecisionId: DomainId<'CorrectionDecision'>;
+  correctionRequestId: DomainId<'CorrectionRequest'>;
+  employeeId: DomainId<'Employee'>;
+  interpretation: Readonly<Record<string, unknown>>;
+  localDate: LocalDate;
+  organizationId: DomainId<'Organization'>;
+  version: number;
+}>;
 
 export type AppendTimeAccountEntryInput = Readonly<{
   entry: TimeAccountLedgerEntry;
@@ -479,11 +495,21 @@ export interface DailyProjectionRepository {
 }
 
 export interface CorrectionRequestRepository {
+  apply(input: ApplyCorrectionInput): Promise<AppliedCorrectionRecord | null>;
   decide(input: DecideCorrectionRequestInput): Promise<CorrectionReviewRecord | null>;
   findForReview(
     organizationId: DomainId<'Organization'>,
     requestId: DomainId<'CorrectionRequest'>,
   ): Promise<CorrectionReviewRecord | null>;
+  findApprovedDecisionId(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'CorrectionRequest'>,
+  ): Promise<DomainId<'CorrectionDecision'> | null>;
+  hasLockedMonth(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    localDate: LocalDate,
+  ): Promise<boolean>;
   listPendingForEmployees(
     organizationId: DomainId<'Organization'>,
     employeeIds: readonly DomainId<'Employee'>[],

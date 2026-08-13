@@ -54,7 +54,7 @@ export const correctionReviewItemSchema = z.strictObject({
   proposedEndsAt: instantSchema,
   proposedStartsAt: instantSchema,
   reason: z.string().min(10).max(1_000),
-  status: z.enum(['SUBMITTED', 'CHANGES_REQUESTED']),
+  status: z.enum(['SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED']),
   version: z.number().int().positive(),
 });
 export const correctionReviewQueueSchema = z.strictObject({
@@ -75,6 +75,18 @@ export const correctionDecisionResultSchema = z.strictObject({
 });
 export const correctionDecisionEnvelopeSchema = createSuccessEnvelopeSchema(
   correctionDecisionResultSchema,
+);
+export const applyCorrectionRequestSchema = z.strictObject({
+  expectedVersion: z.number().int().positive(),
+});
+export const applyCorrectionResultSchema = z.strictObject({
+  balanceDeltaMinutes: z.number().int(),
+  id: opaqueIdentifierSchema,
+  status: z.literal('APPLIED'),
+  workedMinutes: z.number().int().min(0),
+});
+export const applyCorrectionEnvelopeSchema = createSuccessEnvelopeSchema(
+  applyCorrectionResultSchema,
 );
 
 export type SubmitCorrectionRequest = z.infer<typeof submitCorrectionRequestSchema>;

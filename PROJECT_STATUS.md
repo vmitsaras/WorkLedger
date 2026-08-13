@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 5 — Time records and corrections
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 5 of 7 Phase 5 tasks complete
-**Current milestone:** Apply approved correction and recalculate
-**Active task:** `WL-505`
+**Phase progress:** 6 of 7 Phase 5 tasks complete
+**Current milestone:** Phase 5 exit gate review
+**Active task:** `WL-506`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Apply approved corrections as versioned interpretations/adjustments and recalculate eligible daily
-projections without mutating raw attendance facts. Locked-period behavior must use the dedicated
-post-lock adjustment path.
+Execute the Phase 5 exit-gate review across time records and corrections, including normal,
+rejected, approved, and locked-period scenarios. The gate requires the Phase 5 internal version
+bump after its checklist is complete.
 
 ## Verified decisions
 
@@ -297,6 +297,25 @@ post-lock adjustment path.
 
 ## Latest completed task
 
+### `WL-505` — Preserve original values and apply approved adjustment
+
+- Changed: added the authorized approved-correction application endpoint and transaction. It writes
+  one applied interpretation, versions the target daily projection, appends the exact recalculation
+  delta to the time-account ledger, and records audit evidence.
+- Verified: strict TypeScript and the PostgreSQL/API correction integration prove the approved
+  application updates the projection and ledger atomically while raw punch events remain immutable.
+- Accessibility: the manager review makes approval and application separate, gives the pending
+  apply action explicit text, disables it while pending, and persists the exact worked/balance
+  outcome or a no-effect locked-period explanation.
+- Security/data: current direct-manager/non-self authorization, approval state/version, original
+  projection target, and locked-month exclusion are checked in one transaction. Duplicate/stale
+  application cannot create a second applied interpretation.
+- Documentation: added `docs/64-approved-correction-application.md` and synchronized project
+  memory.
+- Remaining risk: locked-month post-lock adjustments belong to `WL-803` because this repository
+  does not yet create monthly snapshots. `WL-506` owns the Phase 5 integrated gate review.
+- Next task: `WL-506`.
+
 ### `WL-504` — Build manager correction review and comparison
 
 - Changed: added a current-report-scoped manager queue, original/proposed comparison, versioned
@@ -394,11 +413,11 @@ post-lock adjustment path.
 
 ## Current blockers
 
-No `WL-505` blocker is known. D-502 remains open before the production browser gate.
+No `WL-506` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-505 — Preserve original values and apply approved adjustment.`
+`WL-506 — Pass the Phase 5 exit gate.`
 
 ## Update rules
 
