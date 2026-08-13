@@ -5,7 +5,13 @@ import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
-import type { MyTime, SelfContext, SelfProfile, TodayAttendance } from '@workledger/contracts';
+import type {
+  DailyTimeRecord,
+  MyTime,
+  SelfContext,
+  SelfProfile,
+  TodayAttendance,
+} from '@workledger/contracts';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { createWorkLedgerQueryClient, todayAttendanceQuery } from '../src/app/query.js';
@@ -107,6 +113,7 @@ const MY_TIME: MyTime = {
       creditedMinutes: 510,
       expectedMinutes: 480,
       localDate: '2026-08-11',
+      recordId: '123e4567-e89b-42d3-a456-426614174301',
       status: 'COMPLETE',
     },
     {
@@ -114,10 +121,57 @@ const MY_TIME: MyTime = {
       creditedMinutes: null,
       expectedMinutes: null,
       localDate: '2026-08-13',
+      recordId: '123e4567-e89b-42d3-a456-426614174302',
       status: 'INCOMPLETE',
     },
   ],
   summary: { completeBalanceMinutes: 30, incompleteRecordCount: 1, recordedDayCount: 2 },
+  timeZone: 'Europe/Berlin',
+};
+
+const DAILY_TIME_RECORD: DailyTimeRecord = {
+  calculation: {
+    absenceCreditMinutes: 0,
+    adjustmentMinutes: 0,
+    balanceMinutes: 30,
+    breakMinutes: 30,
+    creditedMinutes: 510,
+    expectedMinutes: 480,
+    workedMinutes: 510,
+  },
+  events: [
+    { occurredAt: '2026-08-11T07:00:00Z', sequence: 1, type: 'CLOCK_IN' },
+    { occurredAt: '2026-08-11T11:00:00Z', sequence: 2, type: 'BREAK_START' },
+    { occurredAt: '2026-08-11T11:30:00Z', sequence: 3, type: 'BREAK_END' },
+    { occurredAt: '2026-08-11T16:00:00Z', sequence: 4, type: 'CLOCK_OUT' },
+  ],
+  localDate: '2026-08-11',
+  sessions: [
+    {
+      breaks: [
+        {
+          durationMinutes: 30,
+          endsAt: '2026-08-11T11:30:00Z',
+          startsAt: '2026-08-11T11:00:00Z',
+        },
+      ],
+      continuesFromPreviousDate: false,
+      continuesToNextDate: false,
+      workIntervals: [
+        {
+          durationMinutes: 240,
+          endsAt: '2026-08-11T11:00:00Z',
+          startsAt: '2026-08-11T07:00:00Z',
+        },
+        {
+          durationMinutes: 270,
+          endsAt: '2026-08-11T16:00:00Z',
+          startsAt: '2026-08-11T11:30:00Z',
+        },
+      ],
+    },
+  ],
+  status: 'COMPLETE',
   timeZone: 'Europe/Berlin',
 };
 
@@ -191,6 +245,54 @@ test('renders URL-owned time records and keeps posted and projected balance sepa
   expect(screen.getByText(/Projected balance excludes incomplete records/u)).toBeVisible();
   expect(screen.getByRole('table', { name: /Daily time record summaries/u })).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Posted ledger entries' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('presents a daily record with calculation, exact session intervals, and offset-aware event list', async () => {
+  vi.stubGlobal('fetch', authenticatedFetch());
+  const { container } = renderApplication('/time-records/123e4567-e89b-42d3-a456-426614174301');
+
+  expect(await screen.findByRole('heading', { name: /August 11, 2026/u })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Calculation' })).toBeVisible();
+  expect(screen.getAllByText('8h 30m')).not.toHaveLength(0);
+  expect(screen.getByRole('heading', { name: 'Work sessions and breaks' })).toBeVisible();
+  expect(screen.getByText(/Intervals that cross midnight/u)).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Recorded events' })).toBeVisible();
+  expect(screen.getByText(/Recorded order 4/u)).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('explains incomplete overnight record slices without presenting a final calculation', async () => {
+  const overnightRecord: DailyTimeRecord = {
+    ...DAILY_TIME_RECORD,
+    events: [{ occurredAt: '2026-08-12T00:30:00Z', sequence: 5, type: 'CLOCK_OUT' }],
+    localDate: '2026-08-12',
+    sessions: [
+      {
+        breaks: [],
+        continuesFromPreviousDate: true,
+        continuesToNextDate: false,
+        workIntervals: [
+          {
+            durationMinutes: 150,
+            endsAt: '2026-08-12T00:30:00Z',
+            startsAt: '2026-08-11T22:00:00Z',
+          },
+        ],
+      },
+    ],
+    status: 'INCOMPLETE',
+  };
+  vi.stubGlobal('fetch', authenticatedFetch(TODAY_ATTENDANCE, overnightRecord));
+  const { container } = renderApplication('/time-records/123e4567-e89b-42d3-a456-426614174302');
+
+  expect(
+    await screen.findByText(
+      'This record is incomplete. Its calculation is not a final posted result.',
+    ),
+  ).toBeVisible();
+  expect(screen.getByText('Continues from the previous local date.')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Calculation' })).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -900,12 +1002,16 @@ function apiErrorResponse(code: string, status: number): Response {
   );
 }
 
-function authenticatedFetch(today: TodayAttendance = TODAY_ATTENDANCE) {
+function authenticatedFetch(
+  today: TodayAttendance = TODAY_ATTENDANCE,
+  dailyTimeRecord: DailyTimeRecord = DAILY_TIME_RECORD,
+) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const path = requestPath(input);
     if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
     if (path === '/v1/me/attendance/today') return successResponse(today);
     if (path === '/v1/me/time') return successResponse(MY_TIME);
+    if (path.startsWith('/v1/me/time-records/')) return successResponse(dailyTimeRecord);
     throw new Error(`Unexpected test request: ${path}`);
   });
 }

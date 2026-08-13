@@ -75,7 +75,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 ## Phase 5 — Time records and corrections
 
 - [x] `WL-500` Build My Time and the flexible-time portion of My Balances.
-- [ ] `WL-501` Build daily record details and accessible timeline/list.
+- [x] `WL-501` Build daily record details and accessible timeline/list.
 - [ ] `WL-502` Build missing-entry and policy-warning presentation.
 - [ ] `WL-503` Build correction request workflow.
 - [ ] `WL-504` Build manager correction review and comparison.

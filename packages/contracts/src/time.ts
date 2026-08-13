@@ -16,6 +16,7 @@ const dateSchema = z.iso.date();
 const instantSchema = z.iso.datetime({ offset: true });
 const minuteSchema = z.number().int().safe().min(0);
 const signedMinuteSchema = z.number().int().safe();
+const opaqueIdentifierSchema = z.string().min(1).max(128);
 
 export const myTimeQuerySchema = z.strictObject({
   date: dateSchema,
@@ -29,7 +30,46 @@ export const timeRecordSchema = z.strictObject({
   creditedMinutes: minuteSchema.nullable(),
   expectedMinutes: minuteSchema.nullable(),
   localDate: dateSchema,
+  recordId: opaqueIdentifierSchema.nullable(),
   status: z.enum(TIME_RECORD_STATUSES),
+});
+
+export const dailyTimeIntervalSchema = z.strictObject({
+  durationMinutes: minuteSchema,
+  endsAt: instantSchema,
+  startsAt: instantSchema,
+});
+
+export const dailyTimeSessionSchema = z.strictObject({
+  breaks: z.array(dailyTimeIntervalSchema).max(100),
+  continuesFromPreviousDate: z.boolean(),
+  continuesToNextDate: z.boolean(),
+  workIntervals: z.array(dailyTimeIntervalSchema).max(100),
+});
+
+export const dailyTimeEventSchema = z.strictObject({
+  occurredAt: instantSchema,
+  sequence: z.number().int().positive(),
+  type: z.enum(['CLOCK_IN', 'BREAK_START', 'BREAK_END', 'CLOCK_OUT']),
+});
+
+export const dailyTimeCalculationSchema = z.strictObject({
+  absenceCreditMinutes: minuteSchema,
+  adjustmentMinutes: signedMinuteSchema,
+  balanceMinutes: signedMinuteSchema,
+  breakMinutes: minuteSchema,
+  creditedMinutes: minuteSchema,
+  expectedMinutes: minuteSchema,
+  workedMinutes: minuteSchema,
+});
+
+export const dailyTimeRecordSchema = z.strictObject({
+  calculation: dailyTimeCalculationSchema.nullable(),
+  events: z.array(dailyTimeEventSchema).max(500),
+  localDate: dateSchema,
+  sessions: z.array(dailyTimeSessionSchema).max(100),
+  status: z.enum(TIME_RECORD_STATUSES),
+  timeZone: z.string().min(1).max(255),
 });
 
 export const myTimePeriodSchema = z.strictObject({
@@ -77,8 +117,10 @@ export const myTimeSchema = z.strictObject({
 });
 
 export const myTimeEnvelopeSchema = createSuccessEnvelopeSchema(myTimeSchema);
+export const dailyTimeRecordEnvelopeSchema = createSuccessEnvelopeSchema(dailyTimeRecordSchema);
 
 export type FlexibleTimeBalance = z.infer<typeof flexibleTimeBalanceSchema>;
+export type DailyTimeRecord = z.infer<typeof dailyTimeRecordSchema>;
 export type MyTime = z.infer<typeof myTimeSchema>;
 export type MyTimeQuery = z.infer<typeof myTimeQuerySchema>;
 export type MyTimeView = z.infer<typeof myTimePeriodSchema>['view'];

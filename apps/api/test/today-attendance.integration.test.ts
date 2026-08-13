@@ -199,6 +199,125 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `serves a minimized daily record with reconstructed work and break intervals (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'daily_time_record',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+
+    try {
+      const employee = await createTodayEmployee(fixture.client);
+      const projectionId = await insertProjection(
+        fixture.client,
+        employee,
+        '2026-02-03',
+        'COMPLETE',
+        -285,
+      );
+      await fixture.client.query(`update daily_projections set break_minutes = 15 where id = $1`, [
+        projectionId,
+      ]);
+      await fixture.client.query(
+        `update attendance_heads
+         set attendance_revision = 4, next_event_sequence = 5, state = 'OFF_WORK',
+             updated_at = '2026-02-03T10:30:00Z'
+         where employee_id = $1`,
+        [employee.employeeId],
+      );
+      await fixture.client.query(
+        `insert into punch_events (
+           organization_id, employee_id, event_sequence, event_type, occurred_at,
+           actor_employee_id, command_id
+         ) values ($1, $2, 4, 'CLOCK_OUT', '2026-02-03T10:30:00Z', $2, uuidv7())`,
+        [employee.organizationId, employee.employeeId],
+      );
+      const cookie = await signIn(app);
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/me/time-records/${projectionId}`,
+        headers: { cookie, origin: ORIGIN },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      expect(response.json()).toMatchObject({
+        data: {
+          calculation: {
+            balanceMinutes: -285,
+            breakMinutes: 15,
+            expectedMinutes: 480,
+            workedMinutes: 195,
+          },
+          events: [
+            { sequence: 1, type: 'CLOCK_IN' },
+            { sequence: 2, type: 'BREAK_START' },
+            { sequence: 3, type: 'BREAK_END' },
+            { sequence: 4, type: 'CLOCK_OUT' },
+          ],
+          localDate: '2026-02-03',
+          sessions: [
+            {
+              breaks: [{ durationMinutes: 15 }],
+              continuesFromPreviousDate: false,
+              continuesToNextDate: false,
+              workIntervals: [{ durationMinutes: 180 }, { durationMinutes: 15 }],
+            },
+          ],
+          status: 'COMPLETE',
+          timeZone: 'Europe/Berlin',
+        },
+      });
+      expect(response.payload).not.toContain(employee.employeeId);
+      expect(response.payload).not.toContain('sourceFingerprint');
+
+      const otherEmployee = await fixture.client.query<{ id: string }>(
+        `insert into employees (organization_id, employee_number, display_name, status)
+         values ($1, 'TODAY-002', 'Other Employee', 'ACTIVE')
+         returning id`,
+        [employee.organizationId],
+      );
+      const otherEmployeeId = otherEmployee.rows[0]?.id;
+      if (otherEmployeeId === undefined) throw new Error('Expected other employee ID.');
+      const otherProjectionId = await insertProjection(
+        fixture.client,
+        { employeeId: otherEmployeeId, organizationId: employee.organizationId },
+        '2026-02-03',
+        'COMPLETE',
+        30,
+      );
+      const outOfScope = await app.inject({
+        method: 'GET',
+        url: `/v1/me/time-records/${otherProjectionId}`,
+        headers: { cookie, origin: ORIGIN },
+      });
+      expect(outOfScope.statusCode).toBe(404);
+      expect(outOfScope.payload).not.toContain('Other Employee');
+
+      const missing = await app.inject({
+        method: 'GET',
+        url: '/v1/me/time-records/not-a-projection',
+        headers: { cookie, origin: ORIGIN },
+      });
+      expect(missing.statusCode).toBe(404);
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createTodayEmployee(
   client: pg.PoolClient,
 ): Promise<Readonly<{ employeeId: string; organizationId: string }>> {

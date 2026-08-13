@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { type ReactNode } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 import { myTimeQuerySchema, type MyTimeQuery } from '@workledger/contracts';
 
@@ -145,7 +145,13 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                     className="border-b border-[var(--wl-border)] last:border-0"
                   >
                     <th scope="row" className="p-3 font-medium">
-                      {formatLocalDate(record.localDate)}
+                      {record.recordId === null ? (
+                        formatLocalDate(record.localDate)
+                      ) : (
+                        <Link to={`/time-records/${encodeURIComponent(record.recordId)}`}>
+                          {formatLocalDate(record.localDate)}
+                        </Link>
+                      )}
                     </th>
                     <td className="p-3">{record.status.replace('_', ' ').toLowerCase()}</td>
                     <td className="p-3">

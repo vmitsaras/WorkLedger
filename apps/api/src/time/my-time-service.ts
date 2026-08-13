@@ -119,6 +119,7 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
               creditedMinutes: null,
               expectedMinutes: null,
               localDate,
+              recordId: null,
               status: 'NO_RECORD' as const,
             });
           }
@@ -127,6 +128,7 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
             creditedMinutes: projection.creditedMinutes,
             expectedMinutes: projection.expectedMinutes,
             localDate,
+            recordId: projection.id,
             status: projection.calculationStatus,
           });
         });

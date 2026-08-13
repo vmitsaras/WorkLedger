@@ -14,6 +14,15 @@ export function formatTime(value: string, timeZone: string): string {
   }).format(new Date(value));
 }
 
+export function formatTimeWithOffset(value: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone,
+    timeZoneName: 'shortOffset',
+  }).format(new Date(value));
+}
+
 export function formatDuration(minutes: number, showPositiveSign = false): string {
   const sign = minutes < 0 ? '−' : showPositiveSign && minutes > 0 ? '+' : '';
   const absolute = Math.abs(minutes);

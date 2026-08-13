@@ -104,7 +104,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
 | WL-500 | Implement My Time week/month query and the flexible-time balance/ledger portion of My Balances with URL date state, pagination/limits, and summaries | WL-407 | Correct posted/projected totals, explainable entries, restorable non-sensitive filters, and database-enabled integration verification | Done |
-| WL-501 | Build daily detail, sessions, breaks, absence credit, and accessible event list | WL-500 | Normal/incomplete/overnight days understandable | Not started |
+| WL-501 | Build daily detail, sessions, breaks, absence credit, and accessible event list | WL-500 | Normal/incomplete/overnight days understandable | Done |
 | WL-502 | Build structured warning and missing-entry actions | WL-209, WL-501 | Warning codes map to precise UI/action; no prose parsing | Not started |
 | WL-503 | Implement employee correction request form and submission | WL-501, WL-304 | Validation, error summary, reason, proposed impact, audit | Not started |
 | WL-504 | Implement manager correction queue, original/proposed comparison, and decision | WL-503, WL-303 | Scope/self-approval tests and accessible comparison | Not started |

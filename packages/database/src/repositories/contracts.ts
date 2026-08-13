@@ -404,6 +404,11 @@ export interface AttendanceRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<readonly StoredPunchEvent[]>;
+  listPunchEventsUntil(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    occurredAt: Instant,
+  ): Promise<readonly StoredPunchEvent[]>;
   lockHead(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
@@ -420,6 +425,11 @@ export interface AttendanceIdempotencyRepository {
 }
 
 export interface DailyProjectionRepository {
+  findForEmployee(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    projectionId: DomainId<'DailyProjection'>,
+  ): Promise<DailyProjectionRecord | null>;
   findByEmployeeDate(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,

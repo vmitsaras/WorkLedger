@@ -116,6 +116,7 @@ export {
   addLocalDateDays,
   compareInstants,
   compareLocalDates,
+  elapsedMinutesBetweenInstants,
   floorInstantToMinute,
   localDateInstantBounds,
   localDateAtInstant,

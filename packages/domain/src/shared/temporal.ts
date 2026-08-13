@@ -132,3 +132,14 @@ export function startOfLocalMonth(localDate: LocalDate): LocalDate {
   const date = Temporal.PlainDate.from(localDate);
   return date.with({ day: 1 }).toString() as LocalDate;
 }
+
+/** Calculates exact whole-minute elapsed time from two already trusted instants. */
+export function elapsedMinutesBetweenInstants(startsAt: Instant, endsAt: Instant): number {
+  const elapsedNanoseconds =
+    Temporal.Instant.from(endsAt).epochNanoseconds -
+    Temporal.Instant.from(startsAt).epochNanoseconds;
+  if (elapsedNanoseconds < 0n || elapsedNanoseconds % 60_000_000_000n !== 0n) {
+    throw new Error('Expected ordered minute-aligned instants.');
+  }
+  return Number(elapsedNanoseconds / 60_000_000_000n);
+}

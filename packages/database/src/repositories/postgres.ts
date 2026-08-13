@@ -13,6 +13,7 @@ import {
   parseNonNegativeMinutes,
   parseTimeZoneId,
   type DomainId,
+  type Instant,
   type TimeAccountEntryActor,
   type TimeAccountLedgerEntry,
 } from '@workledger/domain';
@@ -861,6 +862,26 @@ class PostgresAttendanceRepository implements AttendanceRepository {
 
     return Object.freeze(rows.map(mapStoredPunchEvent));
   }
+
+  async listPunchEventsUntil(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    occurredAt: Instant,
+  ): Promise<readonly StoredPunchEvent[]> {
+    const rows = await this.transaction
+      .select()
+      .from(punchEvents)
+      .where(
+        and(
+          eq(punchEvents.organizationId, organizationId),
+          eq(punchEvents.employeeId, employeeId),
+          lte(punchEvents.occurredAt, occurredAt),
+        ),
+      )
+      .orderBy(asc(punchEvents.eventSequence));
+
+    return Object.freeze(rows.map(mapStoredPunchEvent));
+  }
 }
 
 const TODAY_SOURCE_EVENT_LIMIT = 500;
@@ -1142,6 +1163,26 @@ function mapSummedNonNegativeMinutes(values: readonly number[], column: string) 
 
 class PostgresDailyProjectionRepository implements DailyProjectionRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async findForEmployee(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    projectionId: DomainId<'DailyProjection'>,
+  ): Promise<DailyProjectionRecord | null> {
+    const [row] = await this.transaction
+      .select()
+      .from(dailyProjections)
+      .where(
+        and(
+          eq(dailyProjections.organizationId, organizationId),
+          eq(dailyProjections.employeeId, employeeId),
+          eq(dailyProjections.id, projectionId),
+        ),
+      )
+      .limit(1);
+
+    return row === undefined ? null : mapDailyProjection(row);
+  }
 
   async findByEmployeeDate(
     organizationId: DomainId<'Organization'>,

@@ -20,6 +20,7 @@ import { ProfilePage } from '../routes/profile-page.js';
 import { RootNotFoundPage, RouteBoundary } from '../routes/route-boundary.js';
 import { TodayPage } from '../routes/today-page.js';
 import { MyTimePage } from '../routes/my-time-page.js';
+import { DailyTimeRecordPage } from '../routes/daily-time-record-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -201,6 +202,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <MyTimePage balancesOnly />,
               errorElement: <RouteBoundary />,
               handle: { title: 'My balances' },
+            },
+            {
+              path: 'time-records/:recordId',
+              loader: createEmployeeTimeLoader(queryClient),
+              element: <DailyTimeRecordPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Daily record' },
             },
             ...PLACEHOLDER_ROUTES.map((route) => ({
               path: route.path,

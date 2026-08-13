@@ -24,6 +24,13 @@ export {
   type MyTimeService,
 } from './time/my-time-service.js';
 export {
+  createDailyTimeService,
+  parseDailyProjectionId,
+  parseDailyTimeIdentity,
+  type DailyTimeIdentity,
+  type DailyTimeService,
+} from './time/daily-time-service.js';
+export {
   createAuditService,
   type DomainAuditQuery,
   type DomainAuditQueryResult,

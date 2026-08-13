@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 5 — Time records and corrections
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 1 of 7 Phase 5 tasks complete
-**Current milestone:** Daily record detail and accessible history
-**Active task:** `WL-501`
+**Phase progress:** 2 of 7 Phase 5 tasks complete
+**Current milestone:** Structured warnings and missing-entry actions
+**Active task:** `WL-502`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement daily record detail, sessions, breaks, absence credit, and an accessible event list on
-top of the My Time query boundary. Normal, incomplete, and overnight days must remain
-understandable without exposing private absence detail.
+Implement structured warning and missing-entry actions on top of daily record detail. Stable warning
+codes must map to precise, accessible UI and recovery actions without parsing prose or exposing
+private absence detail.
 
 ## Verified decisions
 
@@ -297,6 +297,26 @@ understandable without exposing private absence detail.
 
 ## Latest completed task
 
+### `WL-501` — Build daily record details and accessible timeline/list
+
+- Changed: added a self-only daily-record contract, projection lookup, immutable punch-event
+  reconstruction, local-midnight interval splitting, and the employee `/time-records/:recordId`
+  route linked from My Time.
+- Verified: formatting, ESLint, boundaries, strict composite TypeScript, reproducible OpenAPI, all
+  157 unit/component tests, all 23 database-enabled integration tests across 14 files, all 12
+  Chromium scenarios, and the production web build pass.
+- Accessibility: the detail uses a stable route heading, semantic calculation description list,
+  ordered session/event lists, textual complete/incomplete state, explicit continuation labels for
+  overnight sessions, UTC offsets for repeated local times, and axe coverage.
+- Security/data: self-only `ATTENDANCE_READ` is rechecked in the transaction; the scoped lookup,
+  no-store response, safe not-found behavior, and minimized DTO never disclose source fingerprints,
+  employee/organization IDs, correction data, or absence category.
+- Documentation: added `docs/60-daily-time-record-detail.md` and synchronized the task board,
+  TODO, and status.
+- Remaining risk: `WL-502` owns structured missing-entry and policy-warning actions; corrections,
+  manager review, and applied adjustments remain intentionally out of scope.
+- Next task: `WL-502`.
+
 ### `WL-500` — Build My Time and the flexible-time portion of My Balances
 
 - Changed: added the scoped `GET /v1/me/time` contract and repository read paths; derived posted
@@ -318,11 +338,11 @@ understandable without exposing private absence detail.
 
 ## Current blockers
 
-No `WL-501` blocker is known. D-502 remains open before the production browser gate.
+No `WL-502` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-501 — Build daily record details and accessible timeline/list.`
+`WL-502 — Build structured warning and missing-entry actions.`
 
 ## Update rules
 

@@ -3,6 +3,7 @@ import {
   clockInEnvelopeSchema,
   clockOutEnvelopeSchema,
   csrfBootstrapEnvelopeSchema,
+  dailyTimeRecordEnvelopeSchema,
   resumeAttendanceEnvelopeSchema,
   revokeSelfSessionEnvelopeSchema,
   selfContextEnvelopeSchema,
@@ -14,6 +15,7 @@ import {
   type ApiRecoveryContext,
   type AttendanceCommand,
   type AttendanceCommandResult,
+  type DailyTimeRecord,
   type SelfContext,
   type SelfProfile,
   type TodayAttendance,
@@ -69,6 +71,19 @@ export async function loadMyTime(query: MyTimeQuery, signal?: AbortSignal): Prom
     signal === undefined ? {} : { signal },
   );
   const parsed = myTimeEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadDailyTimeRecord(
+  recordId: string,
+  signal?: AbortSignal,
+): Promise<DailyTimeRecord> {
+  const body = await requestJson(
+    `/v1/me/time-records/${encodeURIComponent(recordId)}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = dailyTimeRecordEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }
