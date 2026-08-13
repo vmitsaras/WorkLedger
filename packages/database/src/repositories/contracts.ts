@@ -405,6 +405,31 @@ export type SicknessReportRecord = Readonly<{
   version: number;
 }>;
 
+export type PersonalCalendarAbsenceRecord = Readonly<{
+  absenceTypeName: string;
+  endsAtMinute: number | null;
+  kind: AbsenceCoverageSegmentInput['kind'];
+  localDate: LocalDate;
+  startsAtMinute: number | null;
+  status:
+    | 'ACKNOWLEDGED'
+    | 'APPROVED'
+    | 'CHANGES_REQUESTED'
+    | 'PARTIALLY_CANCELLED'
+    | 'REPORTED'
+    | 'SUBMITTED';
+}>;
+
+export type PersonalCalendarHolidayRecord = Readonly<{
+  localDate: LocalDate;
+  name: string;
+}>;
+
+export type PersonalCalendarRecords = Readonly<{
+  absences: readonly PersonalCalendarAbsenceRecord[];
+  holidays: readonly PersonalCalendarHolidayRecord[];
+}>;
+
 export type AttendanceIdempotencySuccessSnapshot = Readonly<{
   attendanceRevision: number;
   command: AttendanceCommand;
@@ -640,6 +665,12 @@ export interface AbsenceRequestRepository {
   loadConfiguration(
     input: AbsenceRequestConfigurationInput,
   ): Promise<VacationRequestConfigurationRecord>;
+  listPersonalCalendar(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    startDate: LocalDate,
+    endDate: LocalDate,
+  ): Promise<PersonalCalendarRecords>;
   submitSickness(input: SubmitSicknessReportInput): Promise<SicknessReportRecord>;
   submitVacation(input: SubmitVacationRequestInput): Promise<VacationRequestRecord>;
 }

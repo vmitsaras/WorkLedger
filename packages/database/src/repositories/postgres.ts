@@ -97,6 +97,7 @@ import type {
   ListAuthorizedEmployeesInput,
   OrganizationRecord,
   OrganizationRepository,
+  PersonalCalendarRecords,
   ReplaceDailyProjectionInput,
   ReplaceActiveRolesInput,
   SecurityAuditEventRecord,
@@ -1665,6 +1666,91 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     );
   }
 
+  async listPersonalCalendar(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    startDate: LocalDate,
+    endDate: LocalDate,
+  ): Promise<PersonalCalendarRecords> {
+    const [absenceRows, holidayRows] = await Promise.all([
+      this.transaction
+        .select({
+          absenceTypeName: absenceTypes.name,
+          endsAtMinute: absenceCoverageSegments.endsAtMinute,
+          kind: absenceCoverageSegments.kind,
+          localDate: absenceCoverageSegments.localDate,
+          startsAtMinute: absenceCoverageSegments.startsAtMinute,
+          status: absenceRequests.status,
+        })
+        .from(absenceRequests)
+        .innerJoin(
+          absenceCoverageSegments,
+          and(
+            eq(absenceCoverageSegments.absenceRequestId, absenceRequests.id),
+            eq(absenceCoverageSegments.organizationId, absenceRequests.organizationId),
+          ),
+        )
+        .innerJoin(
+          absenceTypes,
+          and(
+            eq(absenceTypes.id, absenceRequests.absenceTypeId),
+            eq(absenceTypes.organizationId, absenceRequests.organizationId),
+          ),
+        )
+        .where(
+          and(
+            eq(absenceRequests.organizationId, organizationId),
+            eq(absenceRequests.employeeId, employeeId),
+            gte(absenceCoverageSegments.localDate, startDate),
+            lte(absenceCoverageSegments.localDate, endDate),
+            inArray(absenceRequests.status, [
+              'SUBMITTED',
+              'REPORTED',
+              'ACKNOWLEDGED',
+              'CHANGES_REQUESTED',
+              'APPROVED',
+              'PARTIALLY_CANCELLED',
+            ]),
+          ),
+        )
+        .orderBy(asc(absenceCoverageSegments.localDate), asc(absenceRequests.submittedAt)),
+      this.transaction
+        .select({ localDate: holidays.holidayDate, name: holidays.name })
+        .from(holidays)
+        .where(
+          and(
+            eq(holidays.organizationId, organizationId),
+            gte(holidays.holidayDate, startDate),
+            lte(holidays.holidayDate, endDate),
+          ),
+        )
+        .orderBy(asc(holidays.holidayDate), asc(holidays.id)),
+    ]);
+
+    return Object.freeze({
+      absences: Object.freeze(
+        absenceRows.map((row) =>
+          Object.freeze({
+            absenceTypeName: row.absenceTypeName,
+            endsAtMinute: row.endsAtMinute,
+            kind: row.kind,
+            localDate: mapLocalDate(row.localDate, 'absence_coverage_segments', 'local_date'),
+            startsAtMinute: row.startsAtMinute,
+            status: mapPersonalCalendarAbsenceStatus(row.status),
+          }),
+        ),
+      ),
+      holidays: Object.freeze(
+        holidayRows.map((row) =>
+          Object.freeze({
+            localDate: mapLocalDate(row.localDate, 'holidays', 'holiday_date'),
+            name: row.name,
+          }),
+        ),
+      ),
+    });
+  }
+
   async submitVacation(input: SubmitVacationRequestInput): Promise<VacationRequestRecord> {
     const [request] = await this.transaction
       .insert(absenceRequests)
@@ -1821,6 +1907,22 @@ function coverageSegmentsOverlap(
     return left.startsAtMinute < right.endsAtMinute && left.endsAtMinute > right.startsAtMinute;
   }
   return left.kind === right.kind;
+}
+
+function mapPersonalCalendarAbsenceStatus(
+  status: typeof absenceRequests.$inferSelect.status,
+): PersonalCalendarRecords['absences'][number]['status'] {
+  if (
+    status === 'SUBMITTED' ||
+    status === 'REPORTED' ||
+    status === 'ACKNOWLEDGED' ||
+    status === 'CHANGES_REQUESTED' ||
+    status === 'APPROVED' ||
+    status === 'PARTIALLY_CANCELLED'
+  ) {
+    return status;
+  }
+  throw new DatabaseValueError('absence_requests', 'status');
 }
 
 class PostgresTimeAccountRepository implements TimeAccountRepository {

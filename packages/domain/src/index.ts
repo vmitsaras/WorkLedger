@@ -171,6 +171,7 @@ export {
   parseTimeZoneId,
   startOfLocalMonth,
   startOfLocalWeek,
+  weekdayOfLocalDate,
   type Instant,
   type InvalidInstantError,
   type InvalidLocalDateError,

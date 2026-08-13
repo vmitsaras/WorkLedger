@@ -8,6 +8,8 @@ import {
   acknowledgedSicknessReportEnvelopeSchema,
   submittedSicknessReportEnvelopeSchema,
   submittedVacationRequestEnvelopeSchema,
+  personalCalendarEnvelopeSchema,
+  personalCalendarQuerySchema,
   submitSicknessReportSchema,
   submitVacationRequestSchema,
 } from '@workledger/contracts';
@@ -30,6 +32,10 @@ import {
   createSicknessReportService,
   parseSicknessReportIdentity,
 } from './sickness-report-service.js';
+import {
+  createPersonalCalendarService,
+  parsePersonalCalendarIdentity,
+} from './personal-calendar-service.js';
 
 export function registerVacationRequestRoutes(
   app: FastifyInstance,
@@ -41,13 +47,46 @@ export function registerVacationRequestRoutes(
   const api = app.withTypeProvider<ZodTypeProvider>();
   const service = createVacationRequestService(database);
   const sicknessService = createSicknessReportService(database);
+  const personalCalendarService = createPersonalCalendarService(database);
+  api.get(
+    '/v1/me/calendar',
+    {
+      schema: {
+        description:
+          'Returns the current employee’s personal public holidays and active absence coverage for one organization-local month. It never returns team availability or another employee’s data.',
+        operationId: 'getPersonalCalendar',
+        querystring: personalCalendarQuerySchema,
+        response: {
+          200: personalCalendarEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'Get personal calendar',
+        tags: ['Absence requests'],
+      },
+    },
+    async (request, reply) => {
+      const { session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      const at = parseInstant(now());
+      if (!at.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+      const data = await personalCalendarService.get(
+        parsePersonalCalendarIdentity(session.userId, session.fresh),
+        request.query,
+        at.value,
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
   api.post(
     '/v1/me/vacation-requests',
     {
       schema: {
         body: submitVacationRequestSchema,
         description:
-          'Submits a full-day employee vacation request. Every local date remains visible; public holidays and zero-hour dates consume zero entitlement. Pending approval reserves the calculated entitlement but does not change daily time calculations.',
+          'Submits a full-day, schedule-half, or exact-minute employee vacation request. Every local date remains visible; public holidays and zero-hour dates consume zero entitlement. Pending approval reserves the calculated entitlement but does not change daily time calculations.',
         operationId: 'submitEmployeeVacationRequest',
         response: {
           201: submittedVacationRequestEnvelopeSchema,
@@ -81,7 +120,7 @@ export function registerVacationRequestRoutes(
       schema: {
         body: submitSicknessReportSchema,
         description:
-          'Reports full-day sickness absence without accepting a note, diagnosis, attachment, or medical detail. Reporting creates the effective absence once; it awaits acknowledgement only.',
+          'Reports full-day, schedule-half, or exact-minute sickness absence without accepting a note, diagnosis, attachment, or medical detail. Reporting creates the effective absence once; it awaits acknowledgement only.',
         operationId: 'reportEmployeeSickness',
         response: {
           201: submittedSicknessReportEnvelopeSchema,

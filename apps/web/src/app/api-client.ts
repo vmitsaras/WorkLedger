@@ -17,6 +17,7 @@ import {
   startBreakEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   myTimeEnvelopeSchema,
+  personalCalendarEnvelopeSchema,
   type ApiErrorCode,
   type ApiFieldErrors,
   type ApiRecoveryContext,
@@ -28,6 +29,8 @@ import {
   type TodayAttendance,
   type MyTime,
   type MyTimeQuery,
+  type PersonalCalendar,
+  type PersonalCalendarQuery,
   type SubmitCorrectionRequest,
   type SubmitSicknessReport,
   type SubmitVacationRequest,
@@ -87,6 +90,22 @@ export async function loadMyTime(query: MyTimeQuery, signal?: AbortSignal): Prom
     signal === undefined ? {} : { signal },
   );
   const parsed = myTimeEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadPersonalCalendar(
+  query: PersonalCalendarQuery,
+  signal?: AbortSignal,
+): Promise<PersonalCalendar> {
+  const search = new URLSearchParams();
+  if (query.month !== undefined) search.set('month', query.month);
+  const suffix = search.size === 0 ? '' : `?${search.toString()}`;
+  const body = await requestJson(
+    `/v1/me/calendar${suffix}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = personalCalendarEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

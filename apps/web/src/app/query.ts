@@ -1,10 +1,15 @@
 import { QueryClient, queryOptions } from '@tanstack/react-query';
 
-import { todayAttendanceSchema, type MyTimeQuery } from '@workledger/contracts';
+import {
+  todayAttendanceSchema,
+  type MyTimeQuery,
+  type PersonalCalendarQuery,
+} from '@workledger/contracts';
 
 import {
   loadDailyTimeRecord,
   loadMyTime,
+  loadPersonalCalendar,
   loadManagerCorrectionQueue,
   loadSelfContext,
   loadSelfProfile,
@@ -49,6 +54,12 @@ export const myTimeQuery = (query: MyTimeQuery) =>
   queryOptions({
     queryFn: ({ signal }) => loadMyTime(query, signal),
     queryKey: ['self', 'time', query] as const,
+  });
+
+export const personalCalendarQuery = (query: PersonalCalendarQuery) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadPersonalCalendar(query, signal),
+    queryKey: ['self', 'calendar', query] as const,
   });
 
 export const dailyTimeRecordQuery = (recordId: string) =>

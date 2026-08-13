@@ -5,6 +5,15 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  personalCalendarAbsenceSchema,
+  personalCalendarEnvelopeSchema,
+  personalCalendarHolidaySchema,
+  personalCalendarQuerySchema,
+  personalCalendarSchema,
+  type PersonalCalendar,
+  type PersonalCalendarQuery,
+} from './personal-calendar.js';
+export {
   acknowledgeSicknessReportSchema,
   acknowledgedSicknessReportEnvelopeSchema,
   acknowledgedSicknessReportSchema,

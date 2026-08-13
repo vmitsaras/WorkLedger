@@ -697,6 +697,103 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `returns only the current employee's month of holidays and absence coverage (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'personal_calendar',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+    try {
+      const employee = await createTodayEmployee(fixture.client);
+      const absenceType = await fixture.client.query<{ id: string }>(
+        `insert into absence_types
+          (organization_id, code, name, version, active, valid_from, valid_to, policy)
+         values ($1, 'VACATION', 'Vacation', 1, true, '2026-01-01', null, $2::jsonb)
+         returning id`,
+        [
+          employee.organizationId,
+          JSON.stringify({
+            allowedCoverageUnits: ['FULL_DAY', 'HALF_DAY', 'MINUTES'],
+            availabilityState: 'UNAVAILABLE',
+            entitlementAccountCategory: 'VACATION',
+            maximumRetrospectiveCalendarDays: null,
+            minimumLeadCalendarDays: 0,
+            pendingReservationBehavior: 'RESERVE_PENDING',
+            requestNoteMode: 'OPTIONAL',
+            timeTreatment: 'CREDIT_COVERED_EXPECTATION',
+            workflow: 'APPROVAL_REQUIRED',
+          }),
+        ],
+      );
+      const request = await fixture.client.query<{ id: string }>(
+        `insert into absence_requests
+          (organization_id, employee_id, absence_type_id, requested_by_employee_id, status, submitted_at)
+         values ($1, $2, $3, $2, 'SUBMITTED', $4)
+         returning id`,
+        [employee.organizationId, employee.employeeId, absenceType.rows[0]?.id, NOW],
+      );
+      await fixture.client.query(
+        `insert into absence_coverage_segments
+          (organization_id, absence_request_id, local_date, kind, starts_at_minute, ends_at_minute)
+         values ($1, $2, '2026-02-10', 'FULL_DAY', null, null),
+                ($1, $2, '2026-02-12', 'MINUTE_INTERVAL', 540, 660)`,
+        [employee.organizationId, request.rows[0]?.id],
+      );
+      await fixture.client.query(
+        `insert into holidays (organization_id, holiday_date, name)
+         values ($1, '2026-02-11', 'Regional holiday')`,
+        [employee.organizationId],
+      );
+      const cookie = await signIn(app);
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/me/calendar?month=2026-02',
+        headers: { cookie, origin: ORIGIN },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      expect(response.json()).toMatchObject({
+        data: {
+          absences: [
+            {
+              absenceTypeName: 'Vacation',
+              kind: 'FULL_DAY',
+              localDate: '2026-02-10',
+              status: 'SUBMITTED',
+            },
+            {
+              endsAtMinute: 660,
+              kind: 'MINUTE_INTERVAL',
+              localDate: '2026-02-12',
+              startsAtMinute: 540,
+            },
+          ],
+          holidays: [{ localDate: '2026-02-11', name: 'Regional holiday' }],
+          leadingEmptyDays: 6,
+          month: '2026-02',
+        },
+      });
+      expect(response.payload).not.toContain('employeeId');
+      expect(response.payload).not.toContain('organizationId');
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createTodayEmployee(
   client: pg.PoolClient,
 ): Promise<Readonly<{ employeeId: string; organizationId: string }>> {

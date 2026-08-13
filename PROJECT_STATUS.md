@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 6 — Absence and leave balances
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 5 of 8 Phase 6 tasks complete
-**Current milestone:** Personal calendar and accessible agenda alternative
-**Active task:** `WL-605`
+**Phase progress:** 6 of 8 Phase 6 tasks complete
+**Current milestone:** Cancellation workflow and balance reversal
+**Active task:** `WL-606`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement the personal calendar and accessible agenda alternative required by `WL-605`.
+Implement cancellation workflow and balance reversal required by `WL-606`.
 
 ## Verified decisions
 
@@ -294,6 +294,24 @@ Implement the personal calendar and accessible agenda alternative required by `W
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-605` — Build personal calendar and accessible agenda alternative
+
+- Changed: replaced the personal-calendar placeholder with a self-only, organization-local calendar
+  feed plus equivalent semantic month-table and agenda-list presentations; navigation month state is
+  URL-owned without absence detail in the URL.
+- Verified: domain/component tests pass (189 tests); PostgreSQL API integration tests pass (28
+  tests), including the minimized private holiday/absence response; calendar component/axe evidence
+  covers both equivalent presentations and their switch controls.
+- Accessibility: a captioned weekday table and chronological agenda expose the same textual
+  holiday, coverage, and status information; real buttons switch views/months without a custom
+  keyboard grid, and the selected month is announced politely.
+- Security/data: active self authorization is enforced on the API; no team data, identifiers, or
+  browser-persisted data enters the response, and cache control is private/no-store.
+- Documentation: added `docs/71-personal-calendar-agenda.md` and synchronized the task board/TODO.
+- Remaining risk: cancellation/reversal, workflow decisions, and calendar-linked recalculation
+  remain the following roadmap work.
+- Next task: `WL-606`.
 
 ### `WL-604` — Build partial-day and hourly absence support
 

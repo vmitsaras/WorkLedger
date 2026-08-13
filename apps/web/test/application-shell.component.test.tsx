@@ -8,6 +8,7 @@ import { vi } from 'vitest';
 import type {
   DailyTimeRecord,
   MyTime,
+  PersonalCalendar,
   SelfContext,
   SelfProfile,
   TodayAttendance,
@@ -166,6 +167,26 @@ const MY_TIME: MyTime = {
   ],
   summary: { completeBalanceMinutes: 30, incompleteRecordCount: 1, recordedDayCount: 2 },
   timeZone: 'Europe/Berlin',
+};
+
+const PERSONAL_CALENDAR: PersonalCalendar = {
+  absences: [
+    {
+      absenceTypeName: 'Vacation',
+      endsAtMinute: null,
+      kind: 'FULL_DAY',
+      localDate: '2026-08-12',
+      startsAtMinute: null,
+      status: 'SUBMITTED',
+    },
+  ],
+  days: Array.from(
+    { length: 31 },
+    (_, index) => `2026-08-${(index + 1).toString().padStart(2, '0')}`,
+  ),
+  holidays: [{ localDate: '2026-08-15', name: 'Summer holiday' }],
+  leadingEmptyDays: 5,
+  month: '2026-08',
 };
 
 const DAILY_TIME_RECORD: DailyTimeRecord = {
@@ -368,6 +389,29 @@ test('presents a no-medical-detail sickness-report form with accessible recovery
   expect(screen.queryByRole('textbox', { name: /note|diagnosis|reason/u })).toBeNull();
   await userEvent.setup().click(screen.getByRole('button', { name: 'Report sickness' }));
   expect(await screen.findByRole('heading', { name: 'There is a problem' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('presents equivalent accessible personal calendar and agenda information', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/calendar') return successResponse(PERSONAL_CALENDAR);
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/calendar?month=2026-08');
+
+  expect(await screen.findByRole('heading', { name: 'Calendar' })).toBeVisible();
+  expect(screen.getByRole('table')).toHaveAccessibleName(/Personal holidays and absence coverage/u);
+  expect(screen.getByText('Vacation: Full day (submitted)')).toBeVisible();
+  expect(screen.getByText('Public holiday: Summer holiday')).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Agenda list' }));
+  expect(screen.getByRole('list', { name: /Calendar agenda for August 2026/u })).toBeVisible();
+  expect(screen.getByText('Vacation: Full day (submitted)')).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -1129,6 +1173,7 @@ function authenticatedFetch(
     if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
     if (path === '/v1/me/attendance/today') return successResponse(today);
     if (path === '/v1/me/time') return successResponse(MY_TIME);
+    if (path === '/v1/me/calendar') return successResponse(PERSONAL_CALENDAR);
     if (path.startsWith('/v1/me/time-records/')) return successResponse(dailyTimeRecord);
     throw new Error(`Unexpected test request: ${path}`);
   });

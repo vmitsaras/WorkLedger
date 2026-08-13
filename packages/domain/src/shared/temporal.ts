@@ -121,6 +121,11 @@ export function addLocalDateDays(localDate: LocalDate, days: number): LocalDate 
   return Temporal.PlainDate.from(localDate).add({ days }).toString() as LocalDate;
 }
 
+/** Returns the ISO weekday (Monday = 1 through Sunday = 7) for one validated local date. */
+export function weekdayOfLocalDate(localDate: LocalDate): 1 | 2 | 3 | 4 | 5 | 6 | 7 {
+  return Temporal.PlainDate.from(localDate).dayOfWeek as 1 | 2 | 3 | 4 | 5 | 6 | 7;
+}
+
 /** Returns the ISO Monday that starts the week containing the supplied local date. */
 export function startOfLocalWeek(localDate: LocalDate): LocalDate {
   const date = Temporal.PlainDate.from(localDate);

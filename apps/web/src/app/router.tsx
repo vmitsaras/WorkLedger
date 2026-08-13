@@ -5,7 +5,12 @@ import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } 
 import type { NavigationArea, SelfContext } from '@workledger/contracts';
 
 import { ApiClientError, clearSessionMemory } from './api-client.js';
-import { selfContextQuery, selfProfileQuery, todayAttendanceQuery } from './query.js';
+import {
+  personalCalendarQuery,
+  selfContextQuery,
+  selfProfileQuery,
+  todayAttendanceQuery,
+} from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
 import { ApplicationShell } from '../components/application-shell.js';
@@ -25,6 +30,7 @@ import { CorrectionRequestPage } from '../routes/correction-request-page.js';
 import { ManagerCorrectionQueuePage } from '../routes/manager-correction-queue-page.js';
 import { VacationRequestPage } from '../routes/vacation-request-page.js';
 import { SicknessReportPage } from '../routes/sickness-report-page.js';
+import { PersonalCalendarPage } from '../routes/personal-calendar-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -42,13 +48,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'EMPLOYEE',
-    description: 'Personal holidays and approved absence in calendar and agenda forms.',
-    milestone: 'WL-605',
-    path: 'calendar',
-    title: 'Calendar',
   },
   {
     area: 'MANAGER',
@@ -223,6 +222,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               handle: { title: 'Report sickness' },
             },
             {
+              path: 'calendar',
+              loader: createPersonalCalendarLoader(queryClient),
+              element: <PersonalCalendarPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Calendar' },
+            },
+            {
               path: 'time-records/:recordId/correction',
               loader: createEmployeeTimeLoader(queryClient),
               element: <CorrectionRequestPage />,
@@ -350,6 +356,18 @@ function createEmployeeTimeLoader(queryClient: QueryClient): LoaderFunction {
   return async () => {
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
+    return null;
+  };
+}
+
+function createPersonalCalendarLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
+    const month = new URL(request.url).searchParams.get('month') ?? undefined;
+    await queryClient.ensureQueryData(
+      personalCalendarQuery({ ...(month === undefined ? {} : { month }) }),
+    );
     return null;
   };
 }
