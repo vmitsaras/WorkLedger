@@ -1,4 +1,5 @@
 import {
+  addLocalDateDays,
   compareInstants,
   createLocalDateRange,
   failure,
@@ -9,6 +10,8 @@ import {
   parseNonNegativeMinutes,
   parseSignedMinutes,
   parseTimeZoneId,
+  startOfLocalMonth,
+  startOfLocalWeek,
   success,
   type DomainError,
   type Result,
@@ -84,6 +87,16 @@ test('accepts exact ISO local dates and rejects impossible or timestamp-shaped v
   for (const invalid of ['2023-02-29', '2026-8-10', '2026-08-10T00:00:00Z', '']) {
     expectFailureCode(parseLocalDate(invalid), 'INVALID_LOCAL_DATE');
   }
+});
+
+test('derives ISO-week and calendar-month boundaries without Date arithmetic', () => {
+  const leapDay = expectSuccess(parseLocalDate('2024-02-29'));
+  const sunday = expectSuccess(parseLocalDate('2026-08-16'));
+
+  expect(startOfLocalWeek(sunday)).toBe('2026-08-10');
+  expect(startOfLocalMonth(leapDay)).toBe('2024-02-01');
+  expect(addLocalDateDays(leapDay, 1)).toBe('2024-03-01');
+  expect(addLocalDateDays(leapDay, -28)).toBe('2024-02-01');
 });
 
 test('accepts named IANA timezone IDs, normalizes case, and rejects offsets', () => {

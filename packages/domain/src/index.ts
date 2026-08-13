@@ -113,6 +113,7 @@ export {
   type Success,
 } from './shared/result.js';
 export {
+  addLocalDateDays,
   compareInstants,
   compareLocalDates,
   floorInstantToMinute,
@@ -121,6 +122,8 @@ export {
   parseInstant,
   parseLocalDate,
   parseTimeZoneId,
+  startOfLocalMonth,
+  startOfLocalWeek,
   type Instant,
   type InvalidInstantError,
   type InvalidLocalDateError,

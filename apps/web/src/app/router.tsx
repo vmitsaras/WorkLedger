@@ -19,6 +19,7 @@ import { PlaceholderPage } from '../routes/placeholder-page.js';
 import { ProfilePage } from '../routes/profile-page.js';
 import { RootNotFoundPage, RouteBoundary } from '../routes/route-boundary.js';
 import { TodayPage } from '../routes/today-page.js';
+import { MyTimePage } from '../routes/my-time-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -29,20 +30,6 @@ type PlaceholderRoute = Readonly<{
 }>;
 
 const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
-  {
-    area: 'EMPLOYEE',
-    description: 'Weekly and monthly time records with explainable flexible-time balances.',
-    milestone: 'WL-500',
-    path: 'my-time',
-    title: 'My time',
-  },
-  {
-    area: 'EMPLOYEE',
-    description: 'Posted and projected flexible-time and leave balances.',
-    milestone: 'WL-500 and WL-601',
-    path: 'my-balances',
-    title: 'My balances',
-  },
   {
     area: 'EMPLOYEE',
     description: 'Type-neutral absence, correction, cancellation, and post-lock requests.',
@@ -201,6 +188,20 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               errorElement: <RouteBoundary />,
               handle: { title: 'Profile' },
             },
+            {
+              path: 'my-time',
+              loader: createEmployeeTimeLoader(queryClient),
+              element: <MyTimePage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'My time' },
+            },
+            {
+              path: 'my-balances',
+              loader: createEmployeeTimeLoader(queryClient),
+              element: <MyTimePage balancesOnly />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'My balances' },
+            },
             ...PLACEHOLDER_ROUTES.map((route) => ({
               path: route.path,
               loader:
@@ -307,6 +308,14 @@ function createTodayLoader(queryClient: QueryClient): LoaderFunction {
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
     void queryClient.prefetchQuery(todayAttendanceQuery());
+    return null;
+  };
+}
+
+function createEmployeeTimeLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
     return null;
   };
 }

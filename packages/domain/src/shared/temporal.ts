@@ -115,3 +115,20 @@ export function compareLocalDates(left: LocalDate, right: LocalDate): -1 | 0 | 1
   if (left > right) return 1;
   return 0;
 }
+
+/** Returns an organization-local calendar date shifted by whole calendar days. */
+export function addLocalDateDays(localDate: LocalDate, days: number): LocalDate {
+  return Temporal.PlainDate.from(localDate).add({ days }).toString() as LocalDate;
+}
+
+/** Returns the ISO Monday that starts the week containing the supplied local date. */
+export function startOfLocalWeek(localDate: LocalDate): LocalDate {
+  const date = Temporal.PlainDate.from(localDate);
+  return date.subtract({ days: date.dayOfWeek - 1 }).toString() as LocalDate;
+}
+
+/** Returns the first day of the calendar month containing the supplied local date. */
+export function startOfLocalMonth(localDate: LocalDate): LocalDate {
+  const date = Temporal.PlainDate.from(localDate);
+  return date.with({ day: 1 }).toString() as LocalDate;
+}

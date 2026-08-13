@@ -9,6 +9,7 @@ import {
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
+  myTimeEnvelopeSchema,
   type ApiErrorCode,
   type ApiRecoveryContext,
   type AttendanceCommand,
@@ -16,6 +17,8 @@ import {
   type SelfContext,
   type SelfProfile,
   type TodayAttendance,
+  type MyTime,
+  type MyTimeQuery,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -50,6 +53,22 @@ export async function loadSelfProfile(): Promise<SelfProfile> {
 export async function loadTodayAttendance(signal?: AbortSignal): Promise<TodayAttendance> {
   const body = await requestJson('/v1/me/attendance/today', signal === undefined ? {} : { signal });
   const parsed = todayAttendanceEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadMyTime(query: MyTimeQuery, signal?: AbortSignal): Promise<MyTime> {
+  const search = new URLSearchParams({
+    date: query.date,
+    limit: query.limit.toString(),
+    page: query.page.toString(),
+    view: query.view,
+  });
+  const body = await requestJson(
+    `/v1/me/time?${search.toString()}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = myTimeEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

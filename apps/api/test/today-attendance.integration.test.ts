@@ -128,6 +128,77 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `separates posted flexible-time facts from eligible projections (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'my_time',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+
+    try {
+      const employee = await createTodayEmployee(fixture.client);
+      const postedProjection = await insertProjection(
+        fixture.client,
+        employee,
+        '2026-02-02',
+        'COMPLETE',
+        30,
+      );
+      await insertProjection(fixture.client, employee, '2026-02-03', 'COMPLETE', 15);
+      await insertProjection(fixture.client, employee, '2026-02-04', 'INCOMPLETE', -480);
+      await fixture.client.query(
+        `insert into time_account_entries (
+           organization_id, employee_id, local_date, entry_type, minutes, source_id,
+           source_fingerprint, actor_kind, actor_id, explanation_code, posted_at
+         ) values
+           ($1, $2, '2026-01-01', 'OPENING_BALANCE', 600, uuidv7(), $3, 'SYSTEM', 'test', 'OPENING_BALANCE', '2026-01-01T08:00:00Z'),
+           ($1, $2, '2026-02-02', 'DAILY_DELTA', 30, $4, $3, 'SYSTEM', 'test', 'DAILY_CALCULATION', '2026-02-02T18:00:00Z')`,
+        [employee.organizationId, employee.employeeId, 'a'.repeat(64), postedProjection],
+      );
+
+      const cookie = await signIn(app);
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/me/time?date=2026-02-03&view=WEEK&page=1&limit=10',
+        headers: { cookie, origin: ORIGIN },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      expect(response.json()).toMatchObject({
+        data: {
+          balance: {
+            eligibleProjectedMinutes: 15,
+            excludedIncompleteDates: ['2026-02-04'],
+            postedBalanceMinutes: 630,
+            projectedBalanceMinutes: 645,
+          },
+          ledger: { page: 1, total: 2 },
+          period: { endDate: '2026-02-08', startDate: '2026-02-02', view: 'WEEK' },
+          summary: { completeBalanceMinutes: 45, incompleteRecordCount: 1, recordedDayCount: 3 },
+          timeZone: 'Europe/Berlin',
+        },
+      });
+      expect(response.payload).not.toContain(employee.employeeId);
+      expect(response.payload).not.toContain(employee.organizationId);
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createTodayEmployee(
   client: pg.PoolClient,
 ): Promise<Readonly<{ employeeId: string; organizationId: string }>> {
@@ -228,6 +299,38 @@ async function createTodayEmployee(
   }
 
   return Object.freeze({ employeeId, organizationId });
+}
+
+async function insertProjection(
+  client: pg.PoolClient,
+  employee: Readonly<{ employeeId: string; organizationId: string }>,
+  localDate: string,
+  calculationStatus: 'COMPLETE' | 'INCOMPLETE',
+  balanceMinutes: number,
+): Promise<string> {
+  const creditedMinutes = Math.max(0, 480 + balanceMinutes);
+  const projection = await client.query<{ id: string }>(
+    `insert into daily_projections (
+       organization_id, employee_id, local_date, calculation_status, projection_version,
+       engine_version, source_fingerprint, expected_minutes, worked_minutes, break_minutes,
+       absence_credit_minutes, adjustment_minutes, credited_minutes, balance_minutes,
+       warning_codes, source_references, calculated_at
+     ) values ($1, $2, $3, $4, 1, 'test', $5, 480, $6, 0, 0, 0, $6, $7, '[]'::jsonb, '{}'::jsonb, $8)
+     returning id`,
+    [
+      employee.organizationId,
+      employee.employeeId,
+      localDate,
+      calculationStatus,
+      'b'.repeat(64),
+      creditedMinutes,
+      balanceMinutes,
+      '2026-02-03T10:30:00Z',
+    ],
+  );
+  const id = projection.rows[0]?.id;
+  if (id === undefined) throw new Error('Expected daily projection ID.');
+  return id;
 }
 
 async function signIn(app: ReturnType<typeof createApiServer>): Promise<string> {

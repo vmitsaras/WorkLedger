@@ -2,6 +2,15 @@
 
 Codex must not silently invent a rule in this file. Resolve blocking items before their listed phase.
 
+## Task coordination notes
+
+### 2026-08-13 — Phase wording reconciliation
+
+The request to “continue with phase 4” conflicts with the canonical roadmap: `WL-400` through
+`WL-407` are complete, and the Phase 4 gate passed at version `0.5.0`. The active, unblocked
+successor is `WL-500` in Phase 5. Work therefore proceeds with `WL-500` unless the requester
+explicitly asks to reopen a completed Phase 4 task.
+
 ## Accepted defaults for the MVP
 
 | Decision | Default | Rationale |

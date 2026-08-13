@@ -1163,6 +1163,48 @@ class PostgresDailyProjectionRepository implements DailyProjectionRepository {
     return row === undefined ? null : mapDailyProjection(row);
   }
 
+  async listForEmployeeRange(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    startDate: DailyProjectionRecord['localDate'],
+    endDate: DailyProjectionRecord['localDate'],
+  ): Promise<readonly DailyProjectionRecord[]> {
+    const rows = await this.transaction
+      .select()
+      .from(dailyProjections)
+      .where(
+        and(
+          eq(dailyProjections.organizationId, organizationId),
+          eq(dailyProjections.employeeId, employeeId),
+          gte(dailyProjections.localDate, startDate),
+          lte(dailyProjections.localDate, endDate),
+        ),
+      )
+      .orderBy(asc(dailyProjections.localDate));
+
+    return Object.freeze(rows.map(mapDailyProjection));
+  }
+
+  async listForEmployeeThroughDate(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    endDate: DailyProjectionRecord['localDate'],
+  ): Promise<readonly DailyProjectionRecord[]> {
+    const rows = await this.transaction
+      .select()
+      .from(dailyProjections)
+      .where(
+        and(
+          eq(dailyProjections.organizationId, organizationId),
+          eq(dailyProjections.employeeId, employeeId),
+          lte(dailyProjections.localDate, endDate),
+        ),
+      )
+      .orderBy(asc(dailyProjections.localDate));
+
+    return Object.freeze(rows.map(mapDailyProjection));
+  }
+
   async replaceNext(input: ReplaceDailyProjectionInput): Promise<DailyProjectionRecord | null> {
     const values = {
       absenceCreditMinutes: input.absenceCreditMinutes,
@@ -1237,6 +1279,26 @@ class PostgresTimeAccountRepository implements TimeAccountRepository {
         and(
           eq(timeAccountEntries.organizationId, organizationId),
           eq(timeAccountEntries.employeeId, employeeId),
+        ),
+      )
+      .orderBy(asc(timeAccountEntries.postedAt), asc(timeAccountEntries.id));
+
+    return Object.freeze(rows.map(mapTimeAccountEntry));
+  }
+
+  async listForEmployeeThroughDate(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    endDate: TimeAccountLedgerEntry['effectiveDate'],
+  ): Promise<readonly TimeAccountLedgerEntry[]> {
+    const rows = await this.transaction
+      .select()
+      .from(timeAccountEntries)
+      .where(
+        and(
+          eq(timeAccountEntries.organizationId, organizationId),
+          eq(timeAccountEntries.employeeId, employeeId),
+          lte(timeAccountEntries.localDate, endDate),
         ),
       )
       .orderBy(asc(timeAccountEntries.postedAt), asc(timeAccountEntries.id));

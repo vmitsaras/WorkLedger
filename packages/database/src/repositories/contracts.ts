@@ -425,6 +425,17 @@ export interface DailyProjectionRepository {
     employeeId: DomainId<'Employee'>,
     localDate: LocalDate,
   ): Promise<DailyProjectionRecord | null>;
+  listForEmployeeRange(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    startDate: LocalDate,
+    endDate: LocalDate,
+  ): Promise<readonly DailyProjectionRecord[]>;
+  listForEmployeeThroughDate(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    endDate: LocalDate,
+  ): Promise<readonly DailyProjectionRecord[]>;
   replaceNext(input: ReplaceDailyProjectionInput): Promise<DailyProjectionRecord | null>;
 }
 
@@ -433,5 +444,10 @@ export interface TimeAccountRepository {
   listForEmployee(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
+  ): Promise<readonly TimeAccountLedgerEntry[]>;
+  listForEmployeeThroughDate(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    endDate: LocalDate,
   ): Promise<readonly TimeAccountLedgerEntry[]>;
 }

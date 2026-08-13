@@ -2,17 +2,18 @@
 
 **Current phase:** Phase 5 — Time records and corrections
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 7 Phase 5 tasks complete
+**Phase progress:** 0 of 7 Phase 5 tasks complete; `WL-500` implementation in review
 **Current milestone:** Historical time and flexible-balance foundations
 **Active task:** `WL-500`
-**Status:** Ready
-**Last verified:** 2026-08-12
+**Status:** In review — database-enabled verification pending
+**Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement My Time week/month queries and the flexible-time balance/ledger portion of My Balances
-with URL-owned non-sensitive date/view/pagination state, correct posted/projected totals,
-explainable entries, and scoped API/database behavior.
+Complete database-enabled verification for My Time week/month queries and the flexible-time
+balance/ledger portion of My Balances. The implemented slice uses URL-owned non-sensitive
+date/view/pagination state, separate posted/projected totals, explainable entries, and scoped
+API/database behavior.
 
 ## Verified decisions
 
@@ -321,7 +322,9 @@ explainable entries, and scoped API/database behavior.
 
 ## Current blockers
 
-No `WL-500` blocker is known. D-502 remains open before the production browser gate.
+`WL-500` needs one database-enabled integration run before completion. The local Docker daemon is
+unavailable and `WORKLEDGER_TEST_DATABASE_URL` is unset, so its integration scenario is correctly
+skipped. D-502 remains open before the production browser gate.
 
 ## Next task
 

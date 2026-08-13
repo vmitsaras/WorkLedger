@@ -18,6 +18,12 @@ export {
   type TodayAttendanceService,
 } from './attendance/today-service.js';
 export {
+  createMyTimeService,
+  parseMyTimeIdentity,
+  type MyTimeIdentity,
+  type MyTimeService,
+} from './time/my-time-service.js';
+export {
   createAuditService,
   type DomainAuditQuery,
   type DomainAuditQueryResult,

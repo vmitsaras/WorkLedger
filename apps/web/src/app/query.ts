@@ -1,8 +1,8 @@
 import { QueryClient, queryOptions } from '@tanstack/react-query';
 
-import { todayAttendanceSchema } from '@workledger/contracts';
+import { todayAttendanceSchema, type MyTimeQuery } from '@workledger/contracts';
 
-import { loadSelfContext, loadSelfProfile, loadTodayAttendance } from './api-client.js';
+import { loadMyTime, loadSelfContext, loadSelfProfile, loadTodayAttendance } from './api-client.js';
 
 const TODAY_ATTENDANCE_REFRESH_INTERVAL_MS = 30 * 1_000;
 
@@ -36,6 +36,12 @@ export const todayAttendanceQuery = () =>
     refetchOnReconnect: 'always',
     refetchOnWindowFocus: 'always',
     structuralSharing: preferNewestTodayAttendance,
+  });
+
+export const myTimeQuery = (query: MyTimeQuery) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadMyTime(query, signal),
+    queryKey: ['self', 'time', query] as const,
   });
 
 function preferNewestTodayAttendance(previous: unknown, next: unknown): unknown {

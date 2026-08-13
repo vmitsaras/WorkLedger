@@ -5,7 +5,7 @@ import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
-import type { SelfContext, SelfProfile, TodayAttendance } from '@workledger/contracts';
+import type { MyTime, SelfContext, SelfProfile, TodayAttendance } from '@workledger/contracts';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { createWorkLedgerQueryClient, todayAttendanceQuery } from '../src/app/query.js';
@@ -70,6 +70,57 @@ const TODAY_ATTENDANCE: TodayAttendance = {
   timelineTruncated: false,
 };
 
+const MY_TIME: MyTime = {
+  balance: {
+    eligibleProjectedMinutes: 15,
+    excludedIncompleteDates: ['2026-08-13'],
+    postedBalanceMinutes: 630,
+    projectedBalanceMinutes: 645,
+  },
+  ledger: {
+    entries: [
+      {
+        balanceAfterMinutes: 600,
+        effectiveDate: '2026-08-01',
+        entryType: 'OPENING_BALANCE',
+        explanationCode: 'OPENING_BALANCE',
+        minutes: 600,
+        postedAt: '2026-08-01T08:00:00Z',
+      },
+      {
+        balanceAfterMinutes: 630,
+        effectiveDate: '2026-08-11',
+        entryType: 'DAILY_DELTA',
+        explanationCode: 'DAILY_CALCULATION',
+        minutes: 30,
+        postedAt: '2026-08-11T17:00:00Z',
+      },
+    ],
+    limit: 20,
+    page: 1,
+    total: 2,
+  },
+  period: { endDate: '2026-08-16', startDate: '2026-08-10', view: 'WEEK' },
+  records: [
+    {
+      balanceMinutes: 30,
+      creditedMinutes: 510,
+      expectedMinutes: 480,
+      localDate: '2026-08-11',
+      status: 'COMPLETE',
+    },
+    {
+      balanceMinutes: null,
+      creditedMinutes: null,
+      expectedMinutes: null,
+      localDate: '2026-08-13',
+      status: 'INCOMPLETE',
+    },
+  ],
+  summary: { completeBalanceMinutes: 30, incompleteRecordCount: 1, recordedDayCount: 2 },
+  timeZone: 'Europe/Berlin',
+};
+
 afterEach(() => {
   clearSessionMemory();
   onlineManager.setOnline(true);
@@ -125,6 +176,21 @@ test('renders the role-aware shell and focuses each completed route navigation',
   const timeHeading = await screen.findByRole('heading', { name: 'My time' });
   await waitFor(() => expect(timeHeading).toHaveFocus());
   expect(document.title).toBe('My time | WorkLedger');
+  await expectNoAxeViolations(container);
+});
+
+test('renders URL-owned time records and keeps posted and projected balance separate', async () => {
+  vi.stubGlobal('fetch', authenticatedFetch());
+  const { container } = renderApplication('/my-time?date=2026-08-11&view=WEEK&page=1&limit=20');
+
+  expect(await screen.findByRole('heading', { name: 'My time' })).toBeVisible();
+  expect(await screen.findByText('Posted balance')).toBeVisible();
+  expect(screen.getByText('10h 30m')).toBeVisible();
+  expect(screen.getByText('Projected balance')).toBeVisible();
+  expect(screen.getByText('10h 45m')).toBeVisible();
+  expect(screen.getByText(/Projected balance excludes incomplete records/u)).toBeVisible();
+  expect(screen.getByRole('table', { name: /Daily time record summaries/u })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Posted ledger entries' })).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -792,9 +858,14 @@ test('keeps profile fields read-only and clears protected state after current-se
 
 function renderApplication(initialEntry: string) {
   const queryClient = createWorkLedgerQueryClient();
+  const url = new URL(initialEntry, 'https://workledger.test');
   const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
     initialEntries: [
-      { key: `component-test-${(routerSequence += 1).toString()}`, pathname: initialEntry },
+      {
+        key: `component-test-${(routerSequence += 1).toString()}`,
+        pathname: url.pathname,
+        search: url.search,
+      },
     ],
   });
   const rendered = render(
@@ -834,6 +905,7 @@ function authenticatedFetch(today: TodayAttendance = TODAY_ATTENDANCE) {
     const path = requestPath(input);
     if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
     if (path === '/v1/me/attendance/today') return successResponse(today);
+    if (path === '/v1/me/time') return successResponse(MY_TIME);
     throw new Error(`Unexpected test request: ${path}`);
   });
 }
