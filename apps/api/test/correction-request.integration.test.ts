@@ -222,6 +222,48 @@ integrationTest(
         'select entry_type, minutes from time_account_entries',
       );
       expect(ledger.rows).toContainEqual({ entry_type: 'DAILY_RECALCULATION_DELTA', minutes: -60 });
+      const rejectedRequest = await app.inject({
+        method: 'POST',
+        url: '/v1/me/correction-requests',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: {
+          interval: {
+            endsAtLocalTime: '11:00',
+            endsAtUtcOffset: null,
+            startsAtLocalTime: '08:00',
+            startsAtUtcOffset: null,
+          },
+          reason: 'This proposal should be rejected in the gate scenario.',
+          recordId: projectionId,
+        },
+      });
+      expect(rejectedRequest.statusCode).toBe(201);
+      const rejection = await app.inject({
+        method: 'POST',
+        url: `/v1/manager/correction-requests/${rejectedRequest.json<{ data: { id: string } }>().data.id}/decision`,
+        headers: {
+          'content-type': 'application/json',
+          cookie: managerCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': managerCsrf.json<{ data: { token: string } }>().data.token,
+        },
+        payload: {
+          action: 'REJECT',
+          expectedVersion: 1,
+          reason: 'The proposed interval does not match the recorded evidence.',
+        },
+      });
+      expect(rejection.statusCode).toBe(200);
+      expect(rejection.json()).toMatchObject({ data: { status: 'REJECTED', version: 2 } });
+      expect(
+        (await fixture.client.query<{ count: string }>('select count(*) from applied_corrections'))
+          .rows[0]?.count,
+      ).toBe('1');
     } finally {
       await app.close();
       await fixture.cleanup();

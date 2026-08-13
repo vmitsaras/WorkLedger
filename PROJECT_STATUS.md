@@ -5,7 +5,7 @@
 **Phase progress:** 6 of 7 Phase 5 tasks complete
 **Current milestone:** Phase 5 exit gate review
 **Active task:** `WL-506`
-**Status:** Ready
+**Status:** Blocked — local toolchain mismatch
 **Last verified:** 2026-08-13
 
 ## Current objective
@@ -413,7 +413,11 @@ bump after its checklist is complete.
 
 ## Current blockers
 
-No `WL-506` blocker is known. D-502 remains open before the production browser gate.
+`WL-506` cannot complete on this desktop host because its required exact toolchain check rejects
+the available runtimes: the host uses Node 26.0.0, while the bundled runtime uses Node 24.19.0
+and pnpm 11.19.0; the repository requires Node 24.18.0 and pnpm 11.20.0. The functional,
+formatting, static-analysis, unit/component, integration, browser, and build checks are green.
+D-502 remains open before the production browser gate.
 
 ## Next task
 
