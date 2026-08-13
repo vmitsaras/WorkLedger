@@ -68,7 +68,7 @@ export function DailyTimeRecordPage() {
       />
       <Link
         className="wl-button-secondary w-fit"
-        to={`/requests/new?recordId=${encodeURIComponent(recordId)}`}
+        to={`/time-records/${encodeURIComponent(recordId)}/correction?recordId=${encodeURIComponent(recordId)}`}
       >
         Request a correction
       </Link>

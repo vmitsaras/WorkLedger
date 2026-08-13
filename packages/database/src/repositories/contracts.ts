@@ -1,6 +1,7 @@
 import type {
   AttendanceCommand,
   AttendanceState,
+  AbsenceTypePolicyInput,
   DomainId,
   Instant,
   LeaveEntitlementLedgerEntry,
@@ -331,6 +332,48 @@ export type AppendLeaveEntitlementEntryInput = Readonly<{
   entry: LeaveEntitlementLedgerEntry;
 }>;
 
+export type VacationAbsenceTypeRecord = Readonly<{
+  active: boolean;
+  id: DomainId<'AbsenceTypeVersion'>;
+  name: string;
+  policy: AbsenceTypePolicyInput;
+  validFrom: LocalDate;
+  validTo: LocalDate | null;
+}>;
+
+export type VacationRequestConfigurationInput = Readonly<{
+  employeeId: DomainId<'Employee'>;
+  endDate: LocalDate;
+  organizationId: DomainId<'Organization'>;
+  startDate: LocalDate;
+}>;
+
+export type VacationRequestConfigurationRecord = Readonly<{
+  absenceTypes: readonly VacationAbsenceTypeRecord[];
+  holidayDates: readonly LocalDate[];
+  scheduleAssignments: readonly ScheduleAssignment[];
+}>;
+
+export type SubmitVacationRequestInput = Readonly<{
+  absenceTypeId: DomainId<'AbsenceTypeVersion'>;
+  coverage: readonly Readonly<{ localDate: LocalDate }>[];
+  employeeId: DomainId<'Employee'>;
+  organizationId: DomainId<'Organization'>;
+  requestedByEmployeeId: DomainId<'Employee'>;
+  submittedAt: Instant;
+}>;
+
+export type VacationRequestRecord = Readonly<{
+  absenceTypeId: DomainId<'AbsenceTypeVersion'>;
+  createdAt: Instant;
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'AbsenceRequest'>;
+  organizationId: DomainId<'Organization'>;
+  status: 'SUBMITTED';
+  submittedAt: Instant;
+  version: number;
+}>;
+
 export type AttendanceIdempotencySuccessSnapshot = Readonly<{
   attendanceRevision: number;
   command: AttendanceCommand;
@@ -544,4 +587,16 @@ export interface LeaveEntitlementRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<readonly LeaveEntitlementEntryRecord[]>;
+}
+
+export interface AbsenceRequestRepository {
+  hasCoverageConflict(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    localDates: readonly LocalDate[],
+  ): Promise<boolean>;
+  loadVacationConfiguration(
+    input: VacationRequestConfigurationInput,
+  ): Promise<VacationRequestConfigurationRecord>;
+  submitVacation(input: SubmitVacationRequestInput): Promise<VacationRequestRecord>;
 }

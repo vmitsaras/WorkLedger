@@ -28,6 +28,7 @@ export type {
   AccountSelfContextRecord,
   AccountSelfServiceRepository,
   AccountSessionRecord,
+  AbsenceRequestRepository,
   AppendDomainAuditEventInput,
   AppendLeaveEntitlementEntryInput,
   AppendSecurityAuditEventInput,
@@ -87,6 +88,11 @@ export type {
   TodayAttendanceSourceInput,
   TodayAttendanceSourceRecord,
   TodayHolidayRecord,
+  SubmitVacationRequestInput,
+  VacationAbsenceTypeRecord,
+  VacationRequestConfigurationInput,
+  VacationRequestConfigurationRecord,
+  VacationRequestRecord,
 } from './repositories/contracts.js';
 export type {
   TransactionIsolationLevel,

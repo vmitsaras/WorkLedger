@@ -45,9 +45,11 @@ the existing route boundary. No leave details are placed in URLs or browser pers
 
 ## Deliberate boundaries
 
-This slice creates the ledger foundation and read surface only. It does not create entitlement
-allocations in the UI, absence requests, decisions, absence effects, negative-balance overrides,
-or cancellations. Those state transitions remain owned by `WL-602`, `WL-603`, and `WL-606`.
+This slice creates the ledger foundation and read surface. `WL-602` now creates a pending
+reservation for an employee's full-day vacation request; its exact range calculation and submission
+boundary are documented in `docs/68-vacation-requests.md`. It does not yet create decisions,
+absence effects, negative-balance overrides, or cancellations. Those transitions remain owned by
+later Phase 6 tasks.
 
 ## Evidence
 

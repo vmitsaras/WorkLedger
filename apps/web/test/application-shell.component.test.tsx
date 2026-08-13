@@ -325,7 +325,7 @@ test('presents a daily record with calculation, exact session intervals, and off
 test('presents an accessible correction-request form with a focused validation summary', async () => {
   vi.stubGlobal('fetch', authenticatedFetch());
   const { container } = renderApplication(
-    '/requests/new?recordId=123e4567-e89b-42d3-a456-426614174301',
+    '/time-records/123e4567-e89b-42d3-a456-426614174301/correction?recordId=123e4567-e89b-42d3-a456-426614174301',
   );
 
   expect(await screen.findByRole('heading', { name: 'Current recorded facts' })).toBeVisible();
@@ -335,6 +335,21 @@ test('presents an accessible correction-request form with a focused validation s
   expect(screen.getByRole('link', { name: /Enter a start time/u })).toHaveAttribute(
     'href',
     '#startsAtLocalTime',
+  );
+  await expectNoAxeViolations(container);
+});
+
+test('presents an accessible vacation-request form with a focused validation summary', async () => {
+  vi.stubGlobal('fetch', authenticatedFetch());
+  const { container } = renderApplication('/requests/new');
+
+  expect(await screen.findByRole('heading', { name: 'Request vacation' })).toBeVisible();
+  expect(screen.getByText(/Weekends, public holidays, and zero-hour days/u)).toBeVisible();
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Submit vacation request' }));
+  expect(await screen.findByRole('heading', { name: 'There is a problem' })).toBeVisible();
+  expect(screen.getByRole('link', { name: /Choose the first vacation day/u })).toHaveAttribute(
+    'href',
+    '#startDate',
   );
   await expectNoAxeViolations(container);
 });

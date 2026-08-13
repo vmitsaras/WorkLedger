@@ -5,6 +5,14 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  submittedVacationRequestEnvelopeSchema,
+  submittedVacationRequestSchema,
+  submitVacationRequestSchema,
+  vacationRequestCoverageSchema,
+  type SubmittedVacationRequest,
+  type SubmitVacationRequest,
+} from './vacation-requests.js';
+export {
   applyCorrectionEnvelopeSchema,
   applyCorrectionRequestSchema,
   correctionRequestIntervalInputSchema,

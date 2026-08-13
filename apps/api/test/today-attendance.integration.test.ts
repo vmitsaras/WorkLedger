@@ -405,6 +405,135 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `submits a schedule-aware vacation request and reserves entitlement once (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'vacation_request',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+
+    try {
+      const employee = await createTodayEmployee(fixture.client);
+      const vacationType = await fixture.client.query<{ id: string }>(
+        `insert into absence_types
+          (organization_id, code, name, version, active, valid_from, valid_to, policy)
+         values ($1, 'VACATION', 'Vacation', 1, true, '2026-01-01', null, $2::jsonb)
+         returning id`,
+        [
+          employee.organizationId,
+          JSON.stringify({
+            allowedCoverageUnits: ['FULL_DAY', 'HALF_DAY', 'MINUTES'],
+            availabilityState: 'UNAVAILABLE',
+            entitlementAccountCategory: 'VACATION',
+            maximumRetrospectiveCalendarDays: null,
+            minimumLeadCalendarDays: 0,
+            pendingReservationBehavior: 'RESERVE_PENDING',
+            requestNoteMode: 'OPTIONAL',
+            timeTreatment: 'CREDIT_COVERED_EXPECTATION',
+            workflow: 'APPROVAL_REQUIRED',
+          }),
+        ],
+      );
+      await fixture.client.query(
+        `insert into leave_entitlement_entries
+          (organization_id, employee_id, absence_type_id, entry_type, minutes, source_id, effective_on)
+         values ($1, $2, $3, 'ALLOCATION', 480, uuidv7(), '2026-01-01')`,
+        [employee.organizationId, employee.employeeId, vacationType.rows[0]?.id],
+      );
+      await fixture.client.query(
+        `insert into holidays (organization_id, holiday_date, name) values ($1, '2026-02-10', 'Local holiday')`,
+        [employee.organizationId],
+      );
+      const cookie = await signIn(app);
+      const csrf = await app.inject({
+        method: 'GET',
+        url: '/v1/me/csrf',
+        headers: { cookie, origin: ORIGIN },
+      });
+      const token = csrf.json<{ data: { token: string } }>().data.token;
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/me/vacation-requests',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: { endDate: '2026-02-10', startDate: '2026-02-06' },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      expect(response.json()).toMatchObject({
+        data: {
+          coverage: [
+            { entitlementMinutes: 480, localDate: '2026-02-06' },
+            { entitlementMinutes: 0, localDate: '2026-02-07' },
+            { entitlementMinutes: 0, localDate: '2026-02-08' },
+            { entitlementMinutes: 480, localDate: '2026-02-09' },
+            { entitlementMinutes: 0, holiday: true, localDate: '2026-02-10' },
+          ],
+          entitlementMinutes: 960,
+          projectedRemainingMinutes: -480,
+          status: 'PENDING_APPROVAL',
+        },
+      });
+      await expect(
+        fixture.client.query(
+          `select id from absence_requests where organization_id = $1 and employee_id = $2`,
+          [employee.organizationId, employee.employeeId],
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      await expect(
+        fixture.client.query(
+          `select id from absence_coverage_segments where organization_id = $1`,
+          [employee.organizationId],
+        ),
+      ).resolves.toMatchObject({ rowCount: 5 });
+      await expect(
+        fixture.client.query<{ entry_type: string; minutes: number }>(
+          `select entry_type, minutes from leave_entitlement_entries
+           where organization_id = $1 order by created_at`,
+          [employee.organizationId],
+        ),
+      ).resolves.toMatchObject({
+        rows: [
+          { entry_type: 'ALLOCATION', minutes: 480 },
+          { entry_type: 'PENDING_RESERVATION', minutes: -960 },
+        ],
+      });
+      const duplicate = await app.inject({
+        method: 'POST',
+        url: '/v1/me/vacation-requests',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: { endDate: '2026-02-10', startDate: '2026-02-06' },
+      });
+      expect(duplicate.statusCode).toBe(422);
+      expect(duplicate.json()).toMatchObject({ error: { code: 'ABSENCE_OVERLAP' } });
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createTodayEmployee(
   client: pg.PoolClient,
 ): Promise<Readonly<{ employeeId: string; organizationId: string }>> {

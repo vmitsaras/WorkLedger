@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 6 — Absence and leave balances
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 2 of 8 Phase 6 tasks complete
-**Current milestone:** Vacation request calculation and form
-**Active task:** `WL-602`
+**Phase progress:** 3 of 8 Phase 6 tasks complete
+**Current milestone:** Sickness reporting with privacy boundaries
+**Active task:** `WL-603`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement vacation request calculation and the accessible self-service form required by `WL-602`.
+Implement sickness reporting and acknowledgement with privacy-safe DTOs required by `WL-603`.
 
 ## Verified decisions
 
@@ -294,6 +294,23 @@ Implement vacation request calculation and the accessible self-service form requ
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-602` — Build vacation request workflow
+
+- Changed: added schedule- and holiday-aware full-day vacation range calculation, employee-owned
+  CSRF-protected submission, immutable coverage persistence, pending entitlement reservation, and
+  the accessible `/requests/new` self-service form.
+- Verified: domain, component/axe, and PostgreSQL API integration coverage includes weekends,
+  public holidays, zero-hour dates, negative projected balance, and overlap rejection.
+- Accessibility: the form has native labelled date fields, focused error summary, linked errors,
+  and a focused status confirmation that lists every covered day and effect.
+- Security/data: submission is active-self authorized, same-origin and CSRF protected, runs in one
+  serializable transaction, is no-store, and returns no internal IDs. It creates no time-calculation
+  effect while pending.
+- Documentation: added `docs/68-vacation-requests.md` and updated the ledger boundary.
+- Remaining risk: manager/HR decision, reservation release/deduction, negative-balance override,
+  and cancellation are intentionally deferred to later Phase 6 tasks.
+- Next task: `WL-603`.
 
 ### `WL-601` — Implement the entitlement ledger and complete My Balances
 

@@ -15,6 +15,7 @@ import {
   type DomainId,
   type Instant,
   type LocalDate,
+  type AbsenceTypePolicyInput,
   type TimeAccountEntryActor,
   type TimeAccountLedgerEntry,
 } from '@workledger/domain';
@@ -62,6 +63,7 @@ import type {
   AccountSelfContextRecord,
   AccountSelfServiceRepository,
   AccountSessionRecord,
+  AbsenceRequestRepository,
   AdvanceAttendanceHeadInput,
   ApplicationRole,
   AuditActor,
@@ -100,6 +102,10 @@ import type {
   TimeAccountRepository,
   TodayAttendanceRepository,
   TodayAttendanceSourceRecord,
+  SubmitVacationRequestInput,
+  VacationRequestConfigurationInput,
+  VacationRequestConfigurationRecord,
+  VacationRequestRecord,
 } from './contracts.js';
 import {
   AuditValueError,
@@ -123,6 +129,7 @@ export type RepositoryTransaction = Parameters<Parameters<RootDatabase['transact
 
 export function createTransactionRepositories(transaction: RepositoryTransaction): Readonly<{
   accountSelfService: AccountSelfServiceRepository;
+  absenceRequests: AbsenceRequestRepository;
   audit: AuditRepository;
   attendance: AttendanceRepository;
   attendanceIdempotency: AttendanceIdempotencyRepository;
@@ -137,6 +144,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
 }> {
   return Object.freeze({
     accountSelfService: new PostgresAccountSelfServiceRepository(transaction),
+    absenceRequests: new PostgresAbsenceRequestRepository(transaction),
     audit: new PostgresAuditRepository(transaction),
     attendance: new PostgresAttendanceRepository(transaction),
     attendanceIdempotency: new PostgresAttendanceIdempotencyRepository(transaction),
@@ -1482,6 +1490,188 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
   }
 }
 
+class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async loadVacationConfiguration(
+    input: VacationRequestConfigurationInput,
+  ): Promise<VacationRequestConfigurationRecord> {
+    const [absenceTypeRows, scheduleRows, holidayRows] = await Promise.all([
+      this.transaction
+        .select({
+          active: absenceTypes.active,
+          id: absenceTypes.id,
+          name: absenceTypes.name,
+          policy: absenceTypes.policy,
+          validFrom: absenceTypes.validFrom,
+          validTo: absenceTypes.validTo,
+        })
+        .from(absenceTypes)
+        .where(
+          and(
+            eq(absenceTypes.organizationId, input.organizationId),
+            eq(absenceTypes.code, 'VACATION'),
+            lte(absenceTypes.validFrom, input.startDate),
+            or(isNull(absenceTypes.validTo), gt(absenceTypes.validTo, input.endDate)),
+          ),
+        )
+        .orderBy(asc(absenceTypes.validFrom), asc(absenceTypes.id)),
+      this.transaction
+        .select({
+          assignmentEndsOn: scheduleAssignments.endsOn,
+          assignmentId: scheduleAssignments.id,
+          assignmentStartsOn: scheduleAssignments.startsOn,
+          fridayMinutes: weeklySchedules.fridayMinutes,
+          mondayMinutes: weeklySchedules.mondayMinutes,
+          saturdayMinutes: weeklySchedules.saturdayMinutes,
+          scheduleId: weeklySchedules.id,
+          sundayMinutes: weeklySchedules.sundayMinutes,
+          thursdayMinutes: weeklySchedules.thursdayMinutes,
+          tuesdayMinutes: weeklySchedules.tuesdayMinutes,
+          wednesdayMinutes: weeklySchedules.wednesdayMinutes,
+        })
+        .from(scheduleAssignments)
+        .innerJoin(
+          weeklySchedules,
+          and(
+            eq(weeklySchedules.id, scheduleAssignments.scheduleId),
+            eq(weeklySchedules.organizationId, scheduleAssignments.organizationId),
+          ),
+        )
+        .where(
+          and(
+            eq(scheduleAssignments.organizationId, input.organizationId),
+            eq(scheduleAssignments.employeeId, input.employeeId),
+            lte(scheduleAssignments.startsOn, input.endDate),
+            or(isNull(scheduleAssignments.endsOn), gt(scheduleAssignments.endsOn, input.startDate)),
+          ),
+        )
+        .orderBy(asc(scheduleAssignments.startsOn), asc(scheduleAssignments.id)),
+      this.transaction
+        .select({ localDate: holidays.holidayDate })
+        .from(holidays)
+        .where(
+          and(
+            eq(holidays.organizationId, input.organizationId),
+            gte(holidays.holidayDate, input.startDate),
+            lte(holidays.holidayDate, input.endDate),
+          ),
+        )
+        .orderBy(asc(holidays.holidayDate)),
+    ]);
+
+    const assignments = scheduleRows.map((row) => {
+      const range = createLocalDateRange(
+        mapLocalDate(row.assignmentStartsOn, 'schedule_assignments', 'starts_on'),
+        row.assignmentEndsOn === null
+          ? null
+          : mapLocalDate(row.assignmentEndsOn, 'schedule_assignments', 'ends_on'),
+      );
+      const schedule = createWeeklySchedule(
+        mapDomainId<'WorkScheduleVersion'>(row.scheduleId, 'weekly_schedules', 'id'),
+        {
+          FRIDAY: row.fridayMinutes,
+          MONDAY: row.mondayMinutes,
+          SATURDAY: row.saturdayMinutes,
+          SUNDAY: row.sundayMinutes,
+          THURSDAY: row.thursdayMinutes,
+          TUESDAY: row.tuesdayMinutes,
+          WEDNESDAY: row.wednesdayMinutes,
+        },
+      );
+      if (!range.ok || !schedule.ok) {
+        throw new DatabaseValueError('schedule_assignments', 'effective_configuration');
+      }
+      const assignment = createScheduleAssignment(
+        mapDomainId<'ScheduleAssignment'>(row.assignmentId, 'schedule_assignments', 'id'),
+        range.value,
+        schedule.value,
+      );
+      if (!assignment.ok) throw new DatabaseValueError('schedule_assignments', 'id');
+      return assignment.value;
+    });
+
+    return Object.freeze({
+      absenceTypes: Object.freeze(
+        absenceTypeRows.map((row) =>
+          Object.freeze({
+            active: row.active,
+            id: mapDomainId<'AbsenceTypeVersion'>(row.id, 'absence_types', 'id'),
+            name: row.name,
+            policy: mapAbsenceTypePolicyInput(row.policy),
+            validFrom: mapLocalDate(row.validFrom, 'absence_types', 'valid_from'),
+            validTo:
+              row.validTo === null ? null : mapLocalDate(row.validTo, 'absence_types', 'valid_to'),
+          }),
+        ),
+      ),
+      holidayDates: Object.freeze(
+        holidayRows.map((row) => mapLocalDate(row.localDate, 'holidays', 'holiday_date')),
+      ),
+      scheduleAssignments: Object.freeze(assignments),
+    });
+  }
+
+  async hasCoverageConflict(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    localDates: readonly LocalDate[],
+  ): Promise<boolean> {
+    if (localDates.length === 0) return false;
+    const [row] = await this.transaction
+      .select({ id: absenceRequests.id })
+      .from(absenceRequests)
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.absenceRequestId, absenceRequests.id),
+          eq(absenceCoverageSegments.organizationId, absenceRequests.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(absenceRequests.organizationId, organizationId),
+          eq(absenceRequests.employeeId, employeeId),
+          inArray(absenceCoverageSegments.localDate, [...localDates]),
+          inArray(absenceRequests.status, [
+            'SUBMITTED',
+            'REPORTED',
+            'CHANGES_REQUESTED',
+            'APPROVED',
+            'PARTIALLY_CANCELLED',
+          ]),
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
+  }
+
+  async submitVacation(input: SubmitVacationRequestInput): Promise<VacationRequestRecord> {
+    const [request] = await this.transaction
+      .insert(absenceRequests)
+      .values({
+        absenceTypeId: input.absenceTypeId,
+        employeeId: input.employeeId,
+        organizationId: input.organizationId,
+        requestedByEmployeeId: input.requestedByEmployeeId,
+        status: 'SUBMITTED',
+        submittedAt: input.submittedAt,
+        version: 1,
+      })
+      .returning();
+    if (request === undefined) throw new DatabaseValueError('absence_requests', 'id');
+    await this.transaction.insert(absenceCoverageSegments).values(
+      input.coverage.map((coverage) => ({
+        absenceRequestId: request.id,
+        kind: 'FULL_DAY' as const,
+        localDate: coverage.localDate,
+        organizationId: input.organizationId,
+      })),
+    );
+    return mapVacationRequest(request);
+  }
+}
+
 class PostgresTimeAccountRepository implements TimeAccountRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
 
@@ -1771,6 +1961,46 @@ function mapCorrectionReview(
   employeeDisplayName: string,
 ): CorrectionReviewRecord {
   return Object.freeze({ ...mapCorrectionRequest(row), employeeDisplayName });
+}
+
+function mapVacationRequest(row: typeof absenceRequests.$inferSelect): VacationRequestRecord {
+  if (row.status !== 'SUBMITTED') {
+    throw new DatabaseValueError('absence_requests', 'status');
+  }
+  return Object.freeze({
+    absenceTypeId: mapDomainId<'AbsenceTypeVersion'>(
+      row.absenceTypeId,
+      'absence_requests',
+      'absence_type_id',
+    ),
+    createdAt: mapInstant(row.createdAt, 'absence_requests', 'created_at'),
+    employeeId: mapDomainId<'Employee'>(row.employeeId, 'absence_requests', 'employee_id'),
+    id: mapDomainId<'AbsenceRequest'>(row.id, 'absence_requests', 'id'),
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'absence_requests',
+      'organization_id',
+    ),
+    status: 'SUBMITTED',
+    submittedAt: mapInstant(row.submittedAt, 'absence_requests', 'submitted_at'),
+    version: row.version,
+  });
+}
+
+function mapAbsenceTypePolicyInput(
+  value: Readonly<Record<string, unknown>>,
+): AbsenceTypePolicyInput {
+  return Object.freeze({
+    allowedCoverageUnits: value['allowedCoverageUnits'],
+    availabilityState: value['availabilityState'],
+    entitlementAccountCategory: value['entitlementAccountCategory'],
+    maximumRetrospectiveCalendarDays: value['maximumRetrospectiveCalendarDays'],
+    minimumLeadCalendarDays: value['minimumLeadCalendarDays'],
+    pendingReservationBehavior: value['pendingReservationBehavior'],
+    requestNoteMode: value['requestNoteMode'],
+    timeTreatment: value['timeTreatment'],
+    workflow: value['workflow'],
+  });
 }
 
 function mapWarningCode(value: unknown): string {

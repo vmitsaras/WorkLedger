@@ -23,6 +23,7 @@ import { MyTimePage } from '../routes/my-time-page.js';
 import { DailyTimeRecordPage } from '../routes/daily-time-record-page.js';
 import { CorrectionRequestPage } from '../routes/correction-request-page.js';
 import { ManagerCorrectionQueuePage } from '../routes/manager-correction-queue-page.js';
+import { VacationRequestPage } from '../routes/vacation-request-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -35,8 +36,9 @@ type PlaceholderRoute = Readonly<{
 const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
   {
     area: 'EMPLOYEE',
-    description: 'Type-neutral absence, correction, cancellation, and post-lock requests.',
-    milestone: 'WL-503 and Phase 6',
+    description:
+      'Vacation requests and later absence, correction, cancellation, and post-lock requests.',
+    milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
   },
@@ -207,6 +209,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
             },
             {
               path: 'requests/new',
+              loader: protectedLoader,
+              element: <VacationRequestPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Request vacation' },
+            },
+            {
+              path: 'time-records/:recordId/correction',
               loader: createEmployeeTimeLoader(queryClient),
               element: <CorrectionRequestPage />,
               errorElement: <RouteBoundary />,

@@ -8,6 +8,7 @@ import {
   correctionDecisionEnvelopeSchema,
   correctionReviewQueueEnvelopeSchema,
   submitCorrectionRequestEnvelopeSchema,
+  submittedVacationRequestEnvelopeSchema,
   resumeAttendanceEnvelopeSchema,
   revokeSelfSessionEnvelopeSchema,
   selfContextEnvelopeSchema,
@@ -27,7 +28,9 @@ import {
   type MyTime,
   type MyTimeQuery,
   type SubmitCorrectionRequest,
+  type SubmitVacationRequest,
   type SubmittedCorrectionRequest,
+  type SubmittedVacationRequest,
   type CorrectionDecisionRequest,
   type CorrectionReviewItem,
 } from '@workledger/contracts';
@@ -111,6 +114,23 @@ export async function submitCorrectionRequest(
     method: 'POST',
   });
   const parsed = submitCorrectionRequestEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function submitVacationRequest(
+  input: SubmitVacationRequest,
+): Promise<SubmittedVacationRequest> {
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/me/vacation-requests', {
+    body: JSON.stringify(input),
+    headers: {
+      'content-type': 'application/json',
+      'x-workledger-csrf': token,
+    },
+    method: 'POST',
+  });
+  const parsed = submittedVacationRequestEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }
