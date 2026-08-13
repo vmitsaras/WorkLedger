@@ -1,18 +1,17 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 5 — Time records and corrections
+**Current phase:** Phase 6 — Absence and leave balances
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 6 of 7 Phase 5 tasks complete
-**Current milestone:** Phase 5 exit gate review
-**Active task:** `WL-506`
-**Status:** Blocked — local toolchain mismatch
+**Phase progress:** 0 of 8 Phase 6 tasks complete
+**Current milestone:** Absence-type configuration model and policy validation
+**Active task:** `WL-600`
+**Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Execute the Phase 5 exit-gate review across time records and corrections, including normal,
-rejected, approved, and locked-period scenarios. The gate requires the Phase 5 internal version
-bump after its checklist is complete.
+Implement the effective-dated absence-type configuration model and policy validation, beginning
+with the MVP defaults and invalid-combination domain fixtures required by `WL-600`.
 
 ## Verified decisions
 
@@ -297,6 +296,25 @@ bump after its checklist is complete.
 
 ## Latest completed task
 
+### `WL-506` — Pass the Phase 5 exit gate
+
+- Changed: completed the Phase 5 gate review, added rejected-decision coverage to the correction
+  integration scenario, and advanced the root plus all private workspace manifests to `0.6.0`.
+- Verified: the exact Node `24.18.0`/pnpm `11.20.0` toolchain check, workspace/configuration,
+  formatting, lint, boundaries, strict TypeScript, OpenAPI drift, 158 unit/component tests, 25
+  database-enabled integration tests, 12 Chromium scenarios, and production/workspace builds pass.
+- Accessibility: employee correction submission has labelled fields, an error summary, persistent
+  textual result, and keyboard-complete controls; manager review/application use named pending and
+  result states and distinguish decision from application in text.
+- Security/data: the gate confirms self-only submission, current non-self direct-manager review,
+  transactional approval/application, immutable raw events, audit evidence, one applied
+  interpretation, and locked-period denial without an ordinary-flow mutation.
+- Documentation: added `docs/65-phase-5-gate-review.md` and synchronized TODO, task board,
+  project status, and shared milestone versioning.
+- Remaining risk: post-lock corrections remain a Phase 8 adjustment concern; `WL-600` begins
+  absence-type policy behavior without adding payroll, monitoring, or workflow-builder scope.
+- Next task: `WL-600`.
+
 ### `WL-505` — Preserve original values and apply approved adjustment
 
 - Changed: added the authorized approved-correction application endpoint and transaction. It writes
@@ -413,15 +431,11 @@ bump after its checklist is complete.
 
 ## Current blockers
 
-`WL-506` cannot complete on this desktop host because its required exact toolchain check rejects
-the available runtimes: the host uses Node 26.0.0, while the bundled runtime uses Node 24.19.0
-and pnpm 11.19.0; the repository requires Node 24.18.0 and pnpm 11.20.0. The functional,
-formatting, static-analysis, unit/component, integration, browser, and build checks are green.
-D-502 remains open before the production browser gate.
+No `WL-600` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-506 — Pass the Phase 5 exit gate.`
+`WL-600 — Implement absence types and policy behavior.`
 
 ## Update rules
 

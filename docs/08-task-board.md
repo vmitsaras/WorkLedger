@@ -109,7 +109,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-503 | Implement employee correction request form and submission | WL-501, WL-304 | Validation, error summary, reason, proposed impact, audit | Done |
 | WL-504 | Implement manager correction queue, original/proposed comparison, and decision | WL-503, WL-303 | Scope/self-approval tests and accessible comparison | Done |
 | WL-505 | Apply approved correction as version/adjustment and recalculate projections | WL-504, WL-208 | Raw event unchanged; ledger/audit updated atomically | Done |
-| WL-506 | Execute Phase 5 gate review | WL-500–WL-505 | Normal, rejected, approved, locked-period scenarios pass | Blocked — exact local toolchain unavailable |
+| WL-506 | Execute Phase 5 gate review | WL-500–WL-505 | Normal, rejected, approved, locked-period scenarios pass | Done |
 
 ---
 

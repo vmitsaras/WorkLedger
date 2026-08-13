@@ -80,7 +80,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-503` Build correction request workflow.
 - [x] `WL-504` Build manager correction review and comparison.
 - [x] `WL-505` Preserve original values and apply approved adjustment.
-- [ ] `WL-506` Pass the Phase 5 exit gate.
+- [x] `WL-506` Pass the Phase 5 exit gate.
 
 ## Phase 6 — Absence and leave balances
 
