@@ -27,6 +27,7 @@ import {
   authUsers,
   attendanceHeads,
   absenceCoverageSegments,
+  absenceDecisions,
   absenceEffects,
   absenceRequests,
   absenceTypes,
@@ -64,6 +65,7 @@ import type {
   AccountSelfServiceRepository,
   AccountSessionRecord,
   AbsenceRequestRepository,
+  AbsenceRequestConfigurationInput,
   AdvanceAttendanceHeadInput,
   ApplicationRole,
   AuditActor,
@@ -99,13 +101,14 @@ import type {
   SecurityAuditEventRecord,
   StoredPunchEvent,
   SubmitCorrectionRequestInput,
+  SubmitSicknessReportInput,
   TimeAccountRepository,
   TodayAttendanceRepository,
   TodayAttendanceSourceRecord,
   SubmitVacationRequestInput,
-  VacationRequestConfigurationInput,
   VacationRequestConfigurationRecord,
   VacationRequestRecord,
+  SicknessReportRecord,
 } from './contracts.js';
 import {
   AuditValueError,
@@ -1493,8 +1496,8 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
 class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
 
-  async loadVacationConfiguration(
-    input: VacationRequestConfigurationInput,
+  async loadConfiguration(
+    input: AbsenceRequestConfigurationInput,
   ): Promise<VacationRequestConfigurationRecord> {
     const [absenceTypeRows, scheduleRows, holidayRows] = await Promise.all([
       this.transaction
@@ -1510,7 +1513,7 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
         .where(
           and(
             eq(absenceTypes.organizationId, input.organizationId),
-            eq(absenceTypes.code, 'VACATION'),
+            eq(absenceTypes.code, input.absenceCode),
             lte(absenceTypes.validFrom, input.startDate),
             or(isNull(absenceTypes.validTo), gt(absenceTypes.validTo, input.endDate)),
           ),
@@ -1669,6 +1672,106 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
       })),
     );
     return mapVacationRequest(request);
+  }
+
+  async submitSickness(input: SubmitSicknessReportInput): Promise<SicknessReportRecord> {
+    const [request] = await this.transaction
+      .insert(absenceRequests)
+      .values({
+        absenceTypeId: input.absenceTypeId,
+        employeeId: input.employeeId,
+        organizationId: input.organizationId,
+        requestedByEmployeeId: input.requestedByEmployeeId,
+        status: 'REPORTED',
+        submittedAt: input.reportedAt,
+        version: 1,
+      })
+      .returning();
+    if (request === undefined) throw new DatabaseValueError('absence_requests', 'id');
+    const segments = await this.transaction
+      .insert(absenceCoverageSegments)
+      .values(
+        input.coverage.map((coverage) => ({
+          absenceRequestId: request.id,
+          kind: 'FULL_DAY' as const,
+          localDate: coverage.localDate,
+          organizationId: input.organizationId,
+        })),
+      )
+      .returning({ id: absenceCoverageSegments.id, localDate: absenceCoverageSegments.localDate });
+    const creditByDate = new Map(input.coverage.map((coverage) => [coverage.localDate, coverage]));
+    await this.transaction.insert(absenceEffects).values(
+      segments.map((segment) => {
+        const coverage = creditByDate.get(
+          mapLocalDate(segment.localDate, 'absence_coverage_segments', 'local_date'),
+        );
+        if (coverage === undefined)
+          throw new DatabaseValueError('absence_coverage_segments', 'local_date');
+        return {
+          absenceCoverageSegmentId: segment.id,
+          absenceRequestId: request.id,
+          creditMinutes: coverage.creditMinutes,
+          effectVersion: 1,
+          employeeId: input.employeeId,
+          entitlementMinutes: 0,
+          expectedReductionMinutes: 0,
+          localDate: coverage.localDate,
+          organizationId: input.organizationId,
+          sourceDecisionId: null,
+        };
+      }),
+    );
+    return mapSicknessReport(request);
+  }
+
+  async findSicknessReport(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'AbsenceRequest'>,
+  ): Promise<SicknessReportRecord | null> {
+    const [row] = await this.transaction
+      .select()
+      .from(absenceRequests)
+      .innerJoin(absenceTypes, eq(absenceTypes.id, absenceRequests.absenceTypeId))
+      .where(
+        and(
+          eq(absenceRequests.organizationId, organizationId),
+          eq(absenceRequests.id, requestId),
+          eq(absenceTypes.code, 'SICKNESS'),
+        ),
+      )
+      .limit(1);
+    return row === undefined ? null : mapSicknessReport(row.absence_requests);
+  }
+
+  async acknowledgeSickness(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'AbsenceRequest'>,
+    actorEmployeeId: DomainId<'Employee'>,
+    expectedVersion: number,
+    acknowledgedAt: Instant,
+  ): Promise<SicknessReportRecord | null> {
+    const [updated] = await this.transaction
+      .update(absenceRequests)
+      .set({ status: 'ACKNOWLEDGED', version: sql`${absenceRequests.version} + 1` })
+      .where(
+        and(
+          eq(absenceRequests.organizationId, organizationId),
+          eq(absenceRequests.id, requestId),
+          eq(absenceRequests.version, expectedVersion),
+          eq(absenceRequests.status, 'REPORTED'),
+        ),
+      )
+      .returning();
+    if (updated === undefined) return null;
+    await this.transaction.insert(absenceDecisions).values({
+      absenceRequestId: requestId,
+      action: 'ACKNOWLEDGE',
+      actorEmployeeId,
+      decidedAt: acknowledgedAt,
+      organizationId,
+      reason: null,
+    });
+    return mapSicknessReport(updated);
   }
 }
 
@@ -1983,6 +2086,23 @@ function mapVacationRequest(row: typeof absenceRequests.$inferSelect): VacationR
     ),
     status: 'SUBMITTED',
     submittedAt: mapInstant(row.submittedAt, 'absence_requests', 'submitted_at'),
+    version: row.version,
+  });
+}
+
+function mapSicknessReport(row: typeof absenceRequests.$inferSelect): SicknessReportRecord {
+  if (row.status !== 'REPORTED' && row.status !== 'ACKNOWLEDGED') {
+    throw new DatabaseValueError('absence_requests', 'status');
+  }
+  return Object.freeze({
+    employeeId: mapDomainId<'Employee'>(row.employeeId, 'absence_requests', 'employee_id'),
+    id: mapDomainId<'AbsenceRequest'>(row.id, 'absence_requests', 'id'),
+    requestedByEmployeeId: mapDomainId<'Employee'>(
+      row.requestedByEmployeeId,
+      'absence_requests',
+      'requested_by_employee_id',
+    ),
+    status: row.status,
     version: row.version,
   });
 }

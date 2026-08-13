@@ -354,6 +354,17 @@ test('presents an accessible vacation-request form with a focused validation sum
   await expectNoAxeViolations(container);
 });
 
+test('presents a no-medical-detail sickness-report form with accessible recovery', async () => {
+  vi.stubGlobal('fetch', authenticatedFetch());
+  const { container } = renderApplication('/requests/sickness');
+  expect(await screen.findByRole('heading', { name: 'Report sickness' })).toBeVisible();
+  expect(screen.getByText(/Do not include a diagnosis/u)).toBeVisible();
+  expect(screen.queryByRole('textbox', { name: /note|diagnosis|reason/u })).toBeNull();
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Report sickness' }));
+  expect(await screen.findByRole('heading', { name: 'There is a problem' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
 test('explains incomplete overnight record slices without presenting a final calculation', async () => {
   const overnightRecord: DailyTimeRecord = {
     ...DAILY_TIME_RECORD,

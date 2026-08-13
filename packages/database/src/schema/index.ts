@@ -73,6 +73,7 @@ export const workflowStatus = pgEnum('workflow_status', [
 export const absenceRequestStatus = pgEnum('absence_request_status', [
   'SUBMITTED',
   'REPORTED',
+  'ACKNOWLEDGED',
   'CHANGES_REQUESTED',
   'APPROVED',
   'REJECTED',

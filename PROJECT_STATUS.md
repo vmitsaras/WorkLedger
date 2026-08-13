@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 6 — Absence and leave balances
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 3 of 8 Phase 6 tasks complete
-**Current milestone:** Sickness reporting with privacy boundaries
-**Active task:** `WL-603`
+**Phase progress:** 4 of 8 Phase 6 tasks complete
+**Current milestone:** Partial-day and hourly absence support
+**Active task:** `WL-604`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement sickness reporting and acknowledgement with privacy-safe DTOs required by `WL-603`.
+Implement partial-day and hourly absence support required by `WL-604`.
 
 ## Verified decisions
 
@@ -294,6 +294,23 @@ Implement sickness reporting and acknowledgement with privacy-safe DTOs required
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-603` — Build sickness reporting with privacy boundaries
+
+- Changed: added a date-only full-day sickness report with immediate effective coverage/credit,
+  configurable retrospective enforcement, a `REPORTED`/`ACKNOWLEDGED` state migration, and a
+  non-self current-manager/HR acknowledgement endpoint that has no second effect.
+- Verified: strict unknown fields reject an attempted medical detail without echoing it; the
+  PostgreSQL API fixture proves effective credit, zero entitlement, retrospective limit, and
+  no-store output; component/axe coverage exercises the no-medical-detail form.
+- Accessibility: explicit privacy instruction, labelled native date fields, a focused validation
+  summary, and focused success confirmation keep the form keyboard complete.
+- Security/data: sickness is absent from URLs/browser persistence, server audit facts, and generic
+  response DTOs; mutations require active authorization, same origin, CSRF, and transactions.
+- Documentation: added `docs/69-sickness-reporting-privacy.md`.
+- Remaining risk: manager review UI/queue and neutral team/calendar visibility remain later Phase 7
+  and WL-605 work; partial-day sickness belongs to `WL-604`.
+- Next task: `WL-604`.
 
 ### `WL-602` — Build vacation request workflow
 

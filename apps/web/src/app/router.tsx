@@ -24,6 +24,7 @@ import { DailyTimeRecordPage } from '../routes/daily-time-record-page.js';
 import { CorrectionRequestPage } from '../routes/correction-request-page.js';
 import { ManagerCorrectionQueuePage } from '../routes/manager-correction-queue-page.js';
 import { VacationRequestPage } from '../routes/vacation-request-page.js';
+import { SicknessReportPage } from '../routes/sickness-report-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -213,6 +214,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <VacationRequestPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Request vacation' },
+            },
+            {
+              path: 'requests/sickness',
+              loader: protectedLoader,
+              element: <SicknessReportPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Report sickness' },
             },
             {
               path: 'time-records/:recordId/correction',

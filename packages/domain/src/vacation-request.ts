@@ -9,7 +9,7 @@ import { parseNonNegativeMinutes, type NonNegativeMinutes } from './shared/minut
 import { failure, success, type DomainError, type Result } from './shared/result.js';
 import { compareLocalDates, type LocalDate } from './shared/temporal.js';
 
-export type VacationRequestCoverage = Readonly<{
+export type FullDayAbsenceCoverage = Readonly<{
   entitlementMinutes: NonNegativeMinutes;
   holiday: boolean;
   kind: 'FULL_DAY';
@@ -17,19 +17,19 @@ export type VacationRequestCoverage = Readonly<{
   scheduledMinutes: NonNegativeMinutes;
 }>;
 
-export type VacationRequestCalculation = Readonly<{
-  coverage: readonly VacationRequestCoverage[];
+export type FullDayAbsenceCalculation = Readonly<{
+  coverage: readonly FullDayAbsenceCoverage[];
   entitlementMinutes: NonNegativeMinutes;
 }>;
 
-export type VacationRequestCalculationInput = Readonly<{
+export type FullDayAbsenceCalculationInput = Readonly<{
   endDate: LocalDate;
   holidayDates: readonly LocalDate[];
   scheduleAssignments: readonly ScheduleAssignment[];
   startDate: LocalDate;
 }>;
 
-export type VacationRequestCalculationError =
+export type FullDayAbsenceCalculationError =
   | DomainError<'VACATION_DATE_RANGE_INVALID'>
   | DomainError<'VACATION_DATE_RANGE_TOO_LARGE'>
   | ScheduleResolutionError;
@@ -45,14 +45,21 @@ const VACATION_DATE_RANGE_TOO_LARGE = Object.freeze({
  * remain visible coverage but consume no entitlement, as required by the absence policy.
  */
 export function calculateVacationRequest(
-  input: VacationRequestCalculationInput,
-): Result<VacationRequestCalculation, VacationRequestCalculationError> {
+  input: FullDayAbsenceCalculationInput,
+): Result<FullDayAbsenceCalculation, FullDayAbsenceCalculationError> {
+  return calculateFullDayAbsenceRequest(input);
+}
+
+/** Expands a schedule-aware full-day range for any compatible absence workflow. */
+export function calculateFullDayAbsenceRequest(
+  input: FullDayAbsenceCalculationInput,
+): Result<FullDayAbsenceCalculation, FullDayAbsenceCalculationError> {
   if (compareLocalDates(input.startDate, input.endDate) > 0) {
     return failure(VACATION_DATE_RANGE_INVALID);
   }
 
   const holidays = new Set(input.holidayDates);
-  const coverage: VacationRequestCoverage[] = [];
+  const coverage: FullDayAbsenceCoverage[] = [];
   let total = 0;
   let date = Temporal.PlainDate.from(input.startDate);
   const end = Temporal.PlainDate.from(input.endDate);

@@ -5,6 +5,18 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  acknowledgeSicknessReportSchema,
+  acknowledgedSicknessReportEnvelopeSchema,
+  acknowledgedSicknessReportSchema,
+  reportedSicknessCoverageSchema,
+  submittedSicknessReportEnvelopeSchema,
+  submittedSicknessReportSchema,
+  submitSicknessReportSchema,
+  type AcknowledgeSicknessReport,
+  type SubmitSicknessReport,
+  type SubmittedSicknessReport,
+} from './sickness-reports.js';
+export {
   submittedVacationRequestEnvelopeSchema,
   submittedVacationRequestSchema,
   submitVacationRequestSchema,

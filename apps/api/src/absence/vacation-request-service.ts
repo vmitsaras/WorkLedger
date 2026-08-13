@@ -62,7 +62,8 @@ export function createVacationRequestService(database: WorkLedgerDatabase): Vaca
           const startDate = requireLocalDate(input.startDate);
           const endDate = requireLocalDate(input.endDate);
 
-          const configuration = await transaction.absenceRequests.loadVacationConfiguration({
+          const configuration = await transaction.absenceRequests.loadConfiguration({
+            absenceCode: 'VACATION',
             employeeId: employee.id,
             endDate,
             organizationId: context.organization.id,

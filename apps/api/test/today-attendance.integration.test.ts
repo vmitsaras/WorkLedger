@@ -29,6 +29,7 @@ const migrationFiles = [
   '0009_married_justin_hammer.sql',
   '0010_broad_sunfire.sql',
   '0011_nasty_red_hulk.sql',
+  '0012_silly_magik.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -527,6 +528,116 @@ integrationTest(
       });
       expect(duplicate.statusCode).toBe(422);
       expect(duplicate.json()).toMatchObject({ error: { code: 'ABSENCE_OVERLAP' } });
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
+integrationTest(
+  `reports sickness without medical detail and creates one immediate effect (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'sickness_report',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+    try {
+      const employee = await createTodayEmployee(fixture.client);
+      await fixture.client.query(
+        `insert into absence_types (organization_id, code, name, version, active, valid_from, valid_to, policy)
+         values ($1, 'SICKNESS', 'Sickness', 1, true, '2026-01-01', null, $2::jsonb)`,
+        [
+          employee.organizationId,
+          JSON.stringify({
+            allowedCoverageUnits: ['FULL_DAY', 'HALF_DAY', 'MINUTES'],
+            availabilityState: 'UNAVAILABLE',
+            entitlementAccountCategory: null,
+            maximumRetrospectiveCalendarDays: 7,
+            minimumLeadCalendarDays: 0,
+            pendingReservationBehavior: 'NONE',
+            requestNoteMode: 'DISABLED',
+            timeTreatment: 'CREDIT_COVERED_EXPECTATION',
+            workflow: 'REPORT_AND_ACKNOWLEDGE',
+          }),
+        ],
+      );
+      const cookie = await signIn(app);
+      const csrf = await app.inject({
+        method: 'GET',
+        url: '/v1/me/csrf',
+        headers: { cookie, origin: ORIGIN },
+      });
+      const token = csrf.json<{ data: { token: string } }>().data.token;
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/me/sickness-reports',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: { endDate: '2026-02-03', startDate: '2026-02-02' },
+      });
+      expect(response.statusCode).toBe(201);
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      expect(response.json()).toMatchObject({
+        data: {
+          coverage: [
+            { creditMinutes: 480, localDate: '2026-02-02' },
+            { creditMinutes: 480, localDate: '2026-02-03' },
+          ],
+          status: 'REPORTED',
+        },
+      });
+      expect(response.payload).not.toContain('diagnosis');
+      expect(
+        (
+          await fixture.client.query<{ credit_minutes: number; entitlement_minutes: number }>(
+            'select credit_minutes, entitlement_minutes from absence_effects where organization_id = $1 order by local_date',
+            [employee.organizationId],
+          )
+        ).rows,
+      ).toEqual([
+        { credit_minutes: 480, entitlement_minutes: 0 },
+        { credit_minutes: 480, entitlement_minutes: 0 },
+      ]);
+      const unknownField = await app.inject({
+        method: 'POST',
+        url: '/v1/me/sickness-reports',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: { diagnosis: 'private', endDate: '2026-02-03', startDate: '2026-02-03' },
+      });
+      expect(unknownField.statusCode).toBe(422);
+      expect(unknownField.payload).not.toContain('private');
+      const tooOld = await app.inject({
+        method: 'POST',
+        url: '/v1/me/sickness-reports',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: { endDate: '2026-01-25', startDate: '2026-01-25' },
+      });
+      expect(tooOld.json()).toMatchObject({ error: { code: 'ABSENCE_RETROACTIVE_LIMIT' } });
     } finally {
       await app.close();
       await fixture.cleanup();

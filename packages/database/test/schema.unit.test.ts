@@ -117,6 +117,7 @@ describe('initial PostgreSQL schema', () => {
       '0009_married_justin_hammer',
       '0010_broad_sunfire',
       '0011_nasty_red_hulk',
+      '0012_silly_magik',
     ]);
   });
 });

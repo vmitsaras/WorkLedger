@@ -341,7 +341,8 @@ export type VacationAbsenceTypeRecord = Readonly<{
   validTo: LocalDate | null;
 }>;
 
-export type VacationRequestConfigurationInput = Readonly<{
+export type AbsenceRequestConfigurationInput = Readonly<{
+  absenceCode: 'SICKNESS' | 'VACATION';
   employeeId: DomainId<'Employee'>;
   endDate: LocalDate;
   organizationId: DomainId<'Organization'>;
@@ -371,6 +372,23 @@ export type VacationRequestRecord = Readonly<{
   organizationId: DomainId<'Organization'>;
   status: 'SUBMITTED';
   submittedAt: Instant;
+  version: number;
+}>;
+
+export type SubmitSicknessReportInput = Readonly<{
+  absenceTypeId: DomainId<'AbsenceTypeVersion'>;
+  coverage: readonly Readonly<{ creditMinutes: NonNegativeMinutes; localDate: LocalDate }>[];
+  employeeId: DomainId<'Employee'>;
+  organizationId: DomainId<'Organization'>;
+  requestedByEmployeeId: DomainId<'Employee'>;
+  reportedAt: Instant;
+}>;
+
+export type SicknessReportRecord = Readonly<{
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'AbsenceRequest'>;
+  requestedByEmployeeId: DomainId<'Employee'>;
+  status: 'ACKNOWLEDGED' | 'REPORTED';
   version: number;
 }>;
 
@@ -595,8 +613,20 @@ export interface AbsenceRequestRepository {
     employeeId: DomainId<'Employee'>,
     localDates: readonly LocalDate[],
   ): Promise<boolean>;
-  loadVacationConfiguration(
-    input: VacationRequestConfigurationInput,
+  acknowledgeSickness(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'AbsenceRequest'>,
+    actorEmployeeId: DomainId<'Employee'>,
+    expectedVersion: number,
+    acknowledgedAt: Instant,
+  ): Promise<SicknessReportRecord | null>;
+  findSicknessReport(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'AbsenceRequest'>,
+  ): Promise<SicknessReportRecord | null>;
+  loadConfiguration(
+    input: AbsenceRequestConfigurationInput,
   ): Promise<VacationRequestConfigurationRecord>;
+  submitSickness(input: SubmitSicknessReportInput): Promise<SicknessReportRecord>;
   submitVacation(input: SubmitVacationRequestInput): Promise<VacationRequestRecord>;
 }

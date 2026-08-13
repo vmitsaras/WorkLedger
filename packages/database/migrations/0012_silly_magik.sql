@@ -1,0 +1,1 @@
+ALTER TYPE "public"."absence_request_status" ADD VALUE 'ACKNOWLEDGED' BEFORE 'CHANGES_REQUESTED';

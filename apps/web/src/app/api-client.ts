@@ -8,6 +8,7 @@ import {
   correctionDecisionEnvelopeSchema,
   correctionReviewQueueEnvelopeSchema,
   submitCorrectionRequestEnvelopeSchema,
+  submittedSicknessReportEnvelopeSchema,
   submittedVacationRequestEnvelopeSchema,
   resumeAttendanceEnvelopeSchema,
   revokeSelfSessionEnvelopeSchema,
@@ -28,7 +29,9 @@ import {
   type MyTime,
   type MyTimeQuery,
   type SubmitCorrectionRequest,
+  type SubmitSicknessReport,
   type SubmitVacationRequest,
+  type SubmittedSicknessReport,
   type SubmittedCorrectionRequest,
   type SubmittedVacationRequest,
   type CorrectionDecisionRequest,
@@ -131,6 +134,20 @@ export async function submitVacationRequest(
     method: 'POST',
   });
   const parsed = submittedVacationRequestEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function submitSicknessReport(
+  input: SubmitSicknessReport,
+): Promise<SubmittedSicknessReport> {
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/me/sickness-reports', {
+    body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+  });
+  const parsed = submittedSicknessReportEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }
