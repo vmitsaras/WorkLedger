@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 6 — Absence and leave balances
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 6 of 8 Phase 6 tasks complete
-**Current milestone:** Cancellation workflow and balance reversal
-**Active task:** `WL-606`
+**Phase progress:** 7 of 8 Phase 6 tasks complete
+**Current milestone:** Phase 6 exit gate
+**Active task:** `WL-607`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement cancellation workflow and balance reversal required by `WL-606`.
+Pass the Phase 6 exit gate required by `WL-607`.
 
 ## Verified decisions
 
@@ -312,6 +312,29 @@ Implement cancellation workflow and balance reversal required by `WL-606`.
 - Remaining risk: cancellation/reversal, workflow decisions, and calendar-linked recalculation
   remain the following roadmap work.
 - Next task: `WL-606`.
+
+### `WL-606` — Build cancellation workflow and balance reversal
+
+- Changed: added immutable cancellation, cancellation-segment, and cancellation-decision records;
+  employee request/withdrawal and non-self current-manager-or-HR decision endpoints; explicit
+  source/cancellation version checks; and a sickness-report success-state cancellation action.
+  Approval changes the source status only, appends later zero calculation-effect versions for the
+  exact target segments, and conditionally appends a bounded entitlement-restoration ledger fact.
+- Verified: 189 unit/component tests and 2 focused PostgreSQL cancellation integration tests pass.
+  The integration evidence covers partial cancellation, immutable original effect and deduction,
+  exact restoration, stale-decision safety, and locked-period routing.
+- Accessibility: the employee action is a real button with a clear pending state, a concise
+  explanation that the original absence remains effective, focused success behavior, and asserted
+  failure feedback. No new custom widget or color-only state was introduced.
+- Security/data: all mutation routes require active authentication, same-origin and CSRF checks;
+  employee, manager, and HR scopes are checked in the API; decisions prohibit self-approval;
+  transactions are serializable; responses are private/no-store; audit facts contain no sickness
+  detail. Locked targets require a post-lock adjustment rather than ordinary mutation.
+- Documentation: added `docs/72-absence-cancellation.md` and synchronized TODO/task-board state.
+- Remaining risk: Phase 6 needs its explicit exit-gate review and version bump. Calendar views do
+  not yet expose cancellation-history detail, by design; the workflow remains auditable through
+  domain records and audit history.
+- Next task: `WL-607`.
 
 ### `WL-604` — Build partial-day and hourly absence support
 

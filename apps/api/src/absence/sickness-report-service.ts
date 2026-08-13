@@ -156,6 +156,7 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
             id: report.id,
             reportedAt: at,
             status: 'REPORTED',
+            version: report.version,
           });
         },
         { isolationLevel: 'serializable', retry: { maxAttempts: 3, mode: 'DATABASE_ONLY' } },

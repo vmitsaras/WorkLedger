@@ -405,6 +405,59 @@ export type SicknessReportRecord = Readonly<{
   version: number;
 }>;
 
+export type AbsenceCancellationStatus =
+  'PENDING_DECISION' | 'CHANGES_REQUESTED' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
+export type AbsenceCancellationDecisionAction =
+  'APPROVE' | 'REJECT' | 'REQUEST_CHANGES' | 'WITHDRAW';
+
+export type AbsenceCancellationRecord = Readonly<{
+  absenceRequestId: DomainId<'AbsenceRequest'>;
+  absenceTypeId: DomainId<'AbsenceTypeVersion'>;
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'AbsenceCancellation'>;
+  organizationId: DomainId<'Organization'>;
+  status: AbsenceCancellationStatus;
+  version: number;
+}>;
+
+export type SubmitAbsenceCancellationInput = Readonly<{
+  coverageSegmentIds: readonly DomainId<'AbsenceCoverageSegment'>[] | null;
+  employeeId: DomainId<'Employee'>;
+  expectedRequestVersion: number;
+  organizationId: DomainId<'Organization'>;
+  requestId: DomainId<'AbsenceRequest'>;
+  requestedByEmployeeId: DomainId<'Employee'>;
+  submittedAt: Instant;
+}>;
+
+export type DecideAbsenceCancellationInput = Readonly<{
+  action: Exclude<AbsenceCancellationDecisionAction, 'WITHDRAW'>;
+  actorEmployeeId: DomainId<'Employee'>;
+  cancellationId: DomainId<'AbsenceCancellation'>;
+  expectedVersion: number;
+  organizationId: DomainId<'Organization'>;
+  reason: string | null;
+  decidedAt: Instant;
+}>;
+
+export type WithdrawAbsenceCancellationInput = Readonly<{
+  actorEmployeeId: DomainId<'Employee'>;
+  cancellationId: DomainId<'AbsenceCancellation'>;
+  expectedVersion: number;
+  organizationId: DomainId<'Organization'>;
+  decidedAt: Instant;
+}>;
+
+export type AbsenceCancellationDecisionResult = AbsenceCancellationRecord &
+  Readonly<{
+    restoration: Readonly<{
+      absenceTypeId: DomainId<'AbsenceTypeVersion'>;
+      effectiveOn: LocalDate;
+      employeeId: DomainId<'Employee'>;
+      minutes: number;
+    }> | null;
+  }>;
+
 export type PersonalCalendarAbsenceRecord = Readonly<{
   absenceTypeName: string;
   endsAtMinute: number | null;
@@ -658,6 +711,13 @@ export interface AbsenceRequestRepository {
     expectedVersion: number,
     acknowledgedAt: Instant,
   ): Promise<SicknessReportRecord | null>;
+  decideCancellation(
+    input: DecideAbsenceCancellationInput,
+  ): Promise<AbsenceCancellationDecisionResult | null>;
+  findCancellation(
+    organizationId: DomainId<'Organization'>,
+    cancellationId: DomainId<'AbsenceCancellation'>,
+  ): Promise<AbsenceCancellationRecord | null>;
   findSicknessReport(
     organizationId: DomainId<'Organization'>,
     requestId: DomainId<'AbsenceRequest'>,
@@ -672,5 +732,11 @@ export interface AbsenceRequestRepository {
     endDate: LocalDate,
   ): Promise<PersonalCalendarRecords>;
   submitSickness(input: SubmitSicknessReportInput): Promise<SicknessReportRecord>;
+  submitCancellation(
+    input: SubmitAbsenceCancellationInput,
+  ): Promise<AbsenceCancellationRecord | null>;
   submitVacation(input: SubmitVacationRequestInput): Promise<VacationRequestRecord>;
+  withdrawCancellation(
+    input: WithdrawAbsenceCancellationInput,
+  ): Promise<AbsenceCancellationRecord | null>;
 }

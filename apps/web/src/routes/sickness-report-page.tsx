@@ -3,7 +3,11 @@ import { Link } from 'react-router';
 
 import type { SubmitSicknessReport } from '@workledger/contracts';
 
-import { ApiClientError, submitSicknessReport } from '../app/api-client.js';
+import {
+  ApiClientError,
+  submitAbsenceCancellation,
+  submitSicknessReport,
+} from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
@@ -33,6 +37,9 @@ export function SicknessReportPage() {
   const [fieldErrors, setFieldErrors] = useState<Readonly<Record<string, string>>>({});
   const [formError, setFormError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const [cancellationError, setCancellationError] = useState<string>();
+  const [cancellationPending, setCancellationPending] = useState(false);
+  const [cancellationRequested, setCancellationRequested] = useState(false);
   const [success, setSuccess] = useState<Awaited<ReturnType<typeof submitSicknessReport>> | null>(
     null,
   );
@@ -47,6 +54,27 @@ export function SicknessReportPage() {
     setFieldErrors({});
     setFormError(undefined);
     setSuccess(null);
+    setCancellationError(undefined);
+    setCancellationRequested(false);
+  }
+  async function requestCancellation() {
+    if (success === null) return;
+    setCancellationPending(true);
+    setCancellationError(undefined);
+    try {
+      await submitAbsenceCancellation(success.id, { expectedRequestVersion: success.version });
+      setCancellationRequested(true);
+    } catch (error) {
+      if (error instanceof ApiClientError && error.code === 'PERIOD_ADJUSTMENT_REQUIRED') {
+        setCancellationError('This report is in a locked period and needs a post-lock adjustment.');
+      } else if (error instanceof ApiClientError && error.code === 'ABSENCE_CANNOT_CANCEL') {
+        setCancellationError(
+          'This report can no longer be cancelled. Refresh and review its status.',
+        );
+      } else setCancellationError('WorkLedger could not request this cancellation. Try again.');
+    } finally {
+      setCancellationPending(false);
+    }
   }
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -188,6 +216,31 @@ export function SicknessReportPage() {
               </li>
             ))}
           </ul>
+          {cancellationRequested ? (
+            <p className="m-0" role="status">
+              Cancellation requested. Your report remains effective until an eligible manager or HR
+              administrator decides it.
+            </p>
+          ) : (
+            <div className="grid gap-2">
+              <button
+                className="wl-button-secondary w-fit"
+                type="button"
+                disabled={cancellationPending}
+                onClick={() => void requestCancellation()}
+              >
+                {cancellationPending ? 'Requesting cancellation…' : 'Request cancellation'}
+              </button>
+              <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                A cancellation does not remove your report until it is approved.
+              </p>
+              {cancellationError === undefined ? null : (
+                <p className="m-0 text-sm text-[var(--wl-danger)]" role="alert">
+                  {cancellationError}
+                </p>
+              )}
+            </div>
+          )}
           <Link className="wl-button-secondary w-fit" to="/today">
             Return to Today
           </Link>

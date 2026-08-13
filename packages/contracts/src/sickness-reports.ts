@@ -26,6 +26,7 @@ export const submittedSicknessReportSchema = z.strictObject({
   id: opaqueIdentifierSchema,
   reportedAt: instantSchema,
   status: z.literal('REPORTED'),
+  version: z.number().int().positive(),
 });
 export const submittedSicknessReportEnvelopeSchema = createSuccessEnvelopeSchema(
   submittedSicknessReportSchema,

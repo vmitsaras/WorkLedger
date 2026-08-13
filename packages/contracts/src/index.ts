@@ -5,6 +5,20 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  absenceCancellationSchema,
+  decideAbsenceCancellationSchema,
+  decidedAbsenceCancellationEnvelopeSchema,
+  submitAbsenceCancellationSchema,
+  submittedAbsenceCancellationEnvelopeSchema,
+  withdrawAbsenceCancellationSchema,
+  withdrawnAbsenceCancellationEnvelopeSchema,
+  type AbsenceCancellation,
+  type DecideAbsenceCancellation,
+  type SubmitAbsenceCancellation,
+  type WithdrawAbsenceCancellation,
+} from './absence-cancellations.js';
+
+export {
   personalCalendarAbsenceSchema,
   personalCalendarEnvelopeSchema,
   personalCalendarHolidaySchema,

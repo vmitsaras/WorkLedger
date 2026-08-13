@@ -87,6 +87,19 @@ export const absenceCoverageKind = pgEnum('absence_coverage_kind', [
   'SECOND_HALF',
   'MINUTE_INTERVAL',
 ]);
+export const absenceCancellationStatus = pgEnum('absence_cancellation_status', [
+  'PENDING_DECISION',
+  'CHANGES_REQUESTED',
+  'APPROVED',
+  'REJECTED',
+  'WITHDRAWN',
+]);
+export const absenceCancellationDecisionAction = pgEnum('absence_cancellation_decision_action', [
+  'APPROVE',
+  'REJECT',
+  'REQUEST_CHANGES',
+  'WITHDRAW',
+]);
 export const decisionAction = pgEnum('decision_action', [
   'APPROVE',
   'REJECT',
@@ -757,6 +770,77 @@ export const absenceDecisions = pgTable(
   },
   (table) => [
     index('absence_decisions_request_decided_idx').on(table.absenceRequestId, table.decidedAt),
+  ],
+);
+
+/** Immutable cancellation workflow records; original absence coverage is never deleted or edited. */
+export const absenceCancellations = pgTable(
+  'absence_cancellations',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    absenceRequestId: uuid('absence_request_id')
+      .notNull()
+      .references(() => absenceRequests.id),
+    employeeId: employeeId(),
+    requestedByEmployeeId: uuid('requested_by_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    status: absenceCancellationStatus('status').notNull(),
+    version: integer('version').default(1).notNull(),
+    submittedAt: timestamp('submitted_at', { mode: 'string', withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('absence_cancellations_request_status_idx').on(table.absenceRequestId, table.status),
+    index('absence_cancellations_employee_status_idx').on(table.employeeId, table.status),
+    check('absence_cancellations_positive_version', sql`${table.version} > 0`),
+  ],
+);
+
+export const absenceCancellationSegments = pgTable(
+  'absence_cancellation_segments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    absenceCancellationId: uuid('absence_cancellation_id')
+      .notNull()
+      .references(() => absenceCancellations.id),
+    absenceCoverageSegmentId: uuid('absence_coverage_segment_id')
+      .notNull()
+      .references(() => absenceCoverageSegments.id),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('absence_cancellation_segments_cancellation_coverage_uidx').on(
+      table.absenceCancellationId,
+      table.absenceCoverageSegmentId,
+    ),
+    index('absence_cancellation_segments_coverage_idx').on(table.absenceCoverageSegmentId),
+  ],
+);
+
+export const absenceCancellationDecisions = pgTable(
+  'absence_cancellation_decisions',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    absenceCancellationId: uuid('absence_cancellation_id')
+      .notNull()
+      .references(() => absenceCancellations.id),
+    actorEmployeeId: uuid('actor_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    action: absenceCancellationDecisionAction('action').notNull(),
+    reason: text('reason'),
+    decidedAt: timestamp('decided_at', { mode: 'string', withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('absence_cancellation_decisions_cancellation_decided_idx').on(
+      table.absenceCancellationId,
+      table.decidedAt,
+    ),
   ],
 );
 

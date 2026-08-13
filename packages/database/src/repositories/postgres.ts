@@ -27,6 +27,9 @@ import {
   authUsers,
   attendanceHeads,
   absenceCoverageSegments,
+  absenceCancellations,
+  absenceCancellationSegments,
+  absenceCancellationDecisions,
   absenceDecisions,
   absenceEffects,
   absenceRequests,
@@ -65,8 +68,11 @@ import type {
   AccountSelfServiceRepository,
   AccountSessionRecord,
   AbsenceCoverageSegmentInput,
+  AbsenceCancellationRecord,
+  AbsenceCancellationDecisionResult,
   AbsenceRequestRepository,
   AbsenceRequestConfigurationInput,
+  DecideAbsenceCancellationInput,
   AdvanceAttendanceHeadInput,
   ApplicationRole,
   AuditActor,
@@ -104,6 +110,7 @@ import type {
   StoredPunchEvent,
   SubmitCorrectionRequestInput,
   SubmitSicknessReportInput,
+  SubmitAbsenceCancellationInput,
   TimeAccountRepository,
   TodayAttendanceRepository,
   TodayAttendanceSourceRecord,
@@ -111,6 +118,7 @@ import type {
   VacationRequestConfigurationRecord,
   VacationRequestRecord,
   SicknessReportRecord,
+  WithdrawAbsenceCancellationInput,
 } from './contracts.js';
 import {
   AuditValueError,
@@ -126,6 +134,7 @@ import {
   validateOriginalHttpStatus,
   validateRequestFingerprint,
 } from './idempotency-values.js';
+import { AbsenceCancellationLockedPeriodError } from './absence-cancellation-errors.js';
 
 import * as schema from '../schema/index.js';
 
@@ -1498,6 +1507,320 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
 class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
 
+  async findCancellation(
+    organizationId: DomainId<'Organization'>,
+    cancellationId: DomainId<'AbsenceCancellation'>,
+  ): Promise<AbsenceCancellationRecord | null> {
+    const [row] = await this.transaction
+      .select({ cancellation: absenceCancellations, absenceTypeId: absenceRequests.absenceTypeId })
+      .from(absenceCancellations)
+      .innerJoin(absenceRequests, eq(absenceRequests.id, absenceCancellations.absenceRequestId))
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, organizationId),
+          eq(absenceCancellations.id, cancellationId),
+          eq(absenceRequests.organizationId, organizationId),
+        ),
+      )
+      .limit(1);
+    return row === undefined ? null : mapAbsenceCancellation(row.cancellation, row.absenceTypeId);
+  }
+
+  async submitCancellation(
+    input: SubmitAbsenceCancellationInput,
+  ): Promise<AbsenceCancellationRecord | null> {
+    const [request] = await this.transaction
+      .select()
+      .from(absenceRequests)
+      .where(
+        and(
+          eq(absenceRequests.organizationId, input.organizationId),
+          eq(absenceRequests.id, input.requestId),
+          eq(absenceRequests.employeeId, input.employeeId),
+          eq(absenceRequests.version, input.expectedRequestVersion),
+          inArray(absenceRequests.status, [
+            'REPORTED',
+            'ACKNOWLEDGED',
+            'APPROVED',
+            'PARTIALLY_CANCELLED',
+          ]),
+        ),
+      )
+      .limit(1);
+    if (request === undefined) return null;
+
+    const coverageRows = await this.transaction
+      .select({ id: absenceCoverageSegments.id, localDate: absenceCoverageSegments.localDate })
+      .from(absenceCoverageSegments)
+      .where(
+        and(
+          eq(absenceCoverageSegments.organizationId, input.organizationId),
+          eq(absenceCoverageSegments.absenceRequestId, input.requestId),
+          input.coverageSegmentIds === null
+            ? undefined
+            : inArray(absenceCoverageSegments.id, [...input.coverageSegmentIds]),
+        ),
+      );
+    if (
+      coverageRows.length === 0 ||
+      (input.coverageSegmentIds !== null && coverageRows.length !== input.coverageSegmentIds.length)
+    ) {
+      return null;
+    }
+    const targetIds = coverageRows.map((row) => row.id);
+    const existing = await this.transaction
+      .select({ id: absenceCancellationSegments.id })
+      .from(absenceCancellationSegments)
+      .innerJoin(
+        absenceCancellations,
+        eq(absenceCancellations.id, absenceCancellationSegments.absenceCancellationId),
+      )
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, input.organizationId),
+          inArray(absenceCancellationSegments.absenceCoverageSegmentId, targetIds),
+          inArray(absenceCancellations.status, [
+            'PENDING_DECISION',
+            'CHANGES_REQUESTED',
+            'APPROVED',
+          ]),
+        ),
+      )
+      .limit(1);
+    if (existing.length > 0) return null;
+
+    const monthStarts = [...new Set(coverageRows.map((row) => `${row.localDate.slice(0, 7)}-01`))];
+    const locked = await this.transaction
+      .select({ id: monthlyPeriods.id })
+      .from(monthlyPeriods)
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, input.organizationId),
+          eq(monthlyPeriods.employeeId, input.employeeId),
+          eq(monthlyPeriods.status, 'LOCKED'),
+          inArray(monthlyPeriods.monthStart, monthStarts),
+        ),
+      )
+      .limit(1);
+    if (locked.length > 0) throw new AbsenceCancellationLockedPeriodError();
+
+    const [cancellation] = await this.transaction
+      .insert(absenceCancellations)
+      .values({
+        absenceRequestId: input.requestId,
+        employeeId: input.employeeId,
+        organizationId: input.organizationId,
+        requestedByEmployeeId: input.requestedByEmployeeId,
+        status: 'PENDING_DECISION',
+        submittedAt: input.submittedAt,
+        version: 1,
+      })
+      .returning();
+    if (cancellation === undefined) throw new DatabaseValueError('absence_cancellations', 'id');
+    await this.transaction.insert(absenceCancellationSegments).values(
+      targetIds.map((absenceCoverageSegmentId) => ({
+        absenceCancellationId: cancellation.id,
+        absenceCoverageSegmentId,
+        organizationId: input.organizationId,
+      })),
+    );
+    return mapAbsenceCancellation(cancellation, request.absenceTypeId);
+  }
+
+  async decideCancellation(
+    input: DecideAbsenceCancellationInput,
+  ): Promise<AbsenceCancellationDecisionResult | null> {
+    const nextStatus =
+      input.action === 'APPROVE'
+        ? 'APPROVED'
+        : input.action === 'REJECT'
+          ? 'REJECTED'
+          : 'CHANGES_REQUESTED';
+    const [updated] = await this.transaction
+      .update(absenceCancellations)
+      .set({ status: nextStatus, version: sql`${absenceCancellations.version} + 1` })
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, input.organizationId),
+          eq(absenceCancellations.id, input.cancellationId),
+          eq(absenceCancellations.version, input.expectedVersion),
+          inArray(absenceCancellations.status, ['PENDING_DECISION', 'CHANGES_REQUESTED']),
+        ),
+      )
+      .returning();
+    if (updated === undefined) return null;
+    await this.transaction.insert(absenceCancellationDecisions).values({
+      absenceCancellationId: updated.id,
+      action: input.action,
+      actorEmployeeId: input.actorEmployeeId,
+      decidedAt: input.decidedAt,
+      organizationId: input.organizationId,
+      reason: input.reason,
+    });
+
+    const [request] = await this.transaction
+      .select()
+      .from(absenceRequests)
+      .where(eq(absenceRequests.id, updated.absenceRequestId))
+      .limit(1);
+    if (request === undefined) throw new DatabaseValueError('absence_requests', 'id');
+    let restoration: AbsenceCancellationDecisionResult['restoration'] = null;
+    if (input.action === 'APPROVE') {
+      const coverageRows = await this.transaction
+        .select({
+          coverageSegmentId: absenceCoverageSegments.id,
+          localDate: absenceCoverageSegments.localDate,
+        })
+        .from(absenceCancellationSegments)
+        .innerJoin(
+          absenceCoverageSegments,
+          eq(absenceCoverageSegments.id, absenceCancellationSegments.absenceCoverageSegmentId),
+        )
+        .leftJoin(
+          absenceEffects,
+          eq(absenceEffects.absenceCoverageSegmentId, absenceCoverageSegments.id),
+        )
+        .where(eq(absenceCancellationSegments.absenceCancellationId, updated.id));
+      const targetCoverageIds = coverageRows.map((row) => row.coverageSegmentId);
+      const effectRows = await this.transaction
+        .select({
+          absenceCoverageSegmentId: absenceEffects.absenceCoverageSegmentId,
+          creditMinutes: absenceEffects.creditMinutes,
+          effectVersion: absenceEffects.effectVersion,
+          entitlementMinutes: absenceEffects.entitlementMinutes,
+          expectedReductionMinutes: absenceEffects.expectedReductionMinutes,
+          localDate: absenceEffects.localDate,
+        })
+        .from(absenceEffects)
+        .where(
+          and(
+            eq(absenceEffects.organizationId, input.organizationId),
+            inArray(absenceEffects.absenceCoverageSegmentId, targetCoverageIds),
+          ),
+        )
+        .orderBy(desc(absenceEffects.effectVersion));
+      const latestEffects = new Map<string, (typeof effectRows)[number]>();
+      for (const effect of effectRows) {
+        if (!latestEffects.has(effect.absenceCoverageSegmentId)) {
+          latestEffects.set(effect.absenceCoverageSegmentId, effect);
+        }
+      }
+      const effectMinutes = [...latestEffects.values()].reduce(
+        (total, effect) => total + effect.entitlementMinutes,
+        0,
+      );
+      const [deduction] = await this.transaction
+        .select({ minutes: sql<number>`coalesce(sum(${leaveEntitlementEntries.minutes}), 0)` })
+        .from(leaveEntitlementEntries)
+        .where(
+          and(
+            eq(leaveEntitlementEntries.organizationId, input.organizationId),
+            eq(leaveEntitlementEntries.employeeId, updated.employeeId),
+            eq(leaveEntitlementEntries.absenceTypeId, request.absenceTypeId),
+            eq(leaveEntitlementEntries.entryType, 'APPROVED_DEDUCTION'),
+            eq(leaveEntitlementEntries.sourceId, request.id),
+          ),
+        );
+      const restorationMinutes = Math.min(effectMinutes, Math.max(0, -(deduction?.minutes ?? 0)));
+      if (restorationMinutes > 0) {
+        const firstDate = coverageRows.map((row) => row.localDate).sort()[0];
+        if (firstDate === undefined)
+          throw new DatabaseValueError('absence_cancellation_segments', 'id');
+        restoration = Object.freeze({
+          absenceTypeId: mapDomainId<'AbsenceTypeVersion'>(
+            request.absenceTypeId,
+            'absence_requests',
+            'absence_type_id',
+          ),
+          effectiveOn: mapLocalDate(firstDate, 'absence_coverage_segments', 'local_date'),
+          employeeId: mapDomainId<'Employee'>(
+            updated.employeeId,
+            'absence_cancellations',
+            'employee_id',
+          ),
+          minutes: restorationMinutes,
+        });
+      }
+      if (latestEffects.size > 0) {
+        await this.transaction.insert(absenceEffects).values(
+          [...latestEffects.values()].map((effect) => ({
+            absenceCoverageSegmentId: effect.absenceCoverageSegmentId,
+            absenceRequestId: request.id,
+            creditMinutes: 0,
+            effectVersion: effect.effectVersion + 1,
+            employeeId: updated.employeeId,
+            entitlementMinutes: 0,
+            expectedReductionMinutes: 0,
+            localDate: effect.localDate,
+            organizationId: input.organizationId,
+            sourceDecisionId: null,
+          })),
+        );
+      }
+      const [counts] = await this.transaction
+        .select({
+          cancelled: sql<number>`count(${absenceCancellationSegments.id}) filter (where ${absenceCancellations.status} = 'APPROVED')`,
+          total: sql<number>`count(distinct ${absenceCoverageSegments.id})`,
+        })
+        .from(absenceCoverageSegments)
+        .leftJoin(
+          absenceCancellationSegments,
+          eq(absenceCancellationSegments.absenceCoverageSegmentId, absenceCoverageSegments.id),
+        )
+        .leftJoin(
+          absenceCancellations,
+          eq(absenceCancellations.id, absenceCancellationSegments.absenceCancellationId),
+        )
+        .where(eq(absenceCoverageSegments.absenceRequestId, request.id));
+      await this.transaction
+        .update(absenceRequests)
+        .set({
+          status:
+            (counts?.cancelled ?? 0) >= (counts?.total ?? 1) ? 'CANCELLED' : 'PARTIALLY_CANCELLED',
+          version: sql`${absenceRequests.version} + 1`,
+        })
+        .where(eq(absenceRequests.id, request.id));
+    }
+    return Object.freeze({
+      ...mapAbsenceCancellation(updated, request.absenceTypeId),
+      restoration,
+    });
+  }
+
+  async withdrawCancellation(
+    input: WithdrawAbsenceCancellationInput,
+  ): Promise<AbsenceCancellationRecord | null> {
+    const [updated] = await this.transaction
+      .update(absenceCancellations)
+      .set({ status: 'WITHDRAWN', version: sql`${absenceCancellations.version} + 1` })
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, input.organizationId),
+          eq(absenceCancellations.id, input.cancellationId),
+          eq(absenceCancellations.employeeId, input.actorEmployeeId),
+          eq(absenceCancellations.version, input.expectedVersion),
+          inArray(absenceCancellations.status, ['PENDING_DECISION', 'CHANGES_REQUESTED']),
+        ),
+      )
+      .returning();
+    if (updated === undefined) return null;
+    await this.transaction.insert(absenceCancellationDecisions).values({
+      absenceCancellationId: updated.id,
+      action: 'WITHDRAW',
+      actorEmployeeId: input.actorEmployeeId,
+      decidedAt: input.decidedAt,
+      organizationId: input.organizationId,
+      reason: null,
+    });
+    const [request] = await this.transaction
+      .select({ absenceTypeId: absenceRequests.absenceTypeId })
+      .from(absenceRequests)
+      .where(eq(absenceRequests.id, updated.absenceRequestId))
+      .limit(1);
+    if (request === undefined) throw new DatabaseValueError('absence_requests', 'id');
+    return mapAbsenceCancellation(updated, request.absenceTypeId);
+  }
+
   async loadConfiguration(
     input: AbsenceRequestConfigurationInput,
   ): Promise<VacationRequestConfigurationRecord> {
@@ -2251,6 +2574,33 @@ function mapSicknessReport(row: typeof absenceRequests.$inferSelect): SicknessRe
       row.requestedByEmployeeId,
       'absence_requests',
       'requested_by_employee_id',
+    ),
+    status: row.status,
+    version: row.version,
+  });
+}
+
+function mapAbsenceCancellation(
+  row: typeof absenceCancellations.$inferSelect,
+  absenceTypeId: string,
+): AbsenceCancellationRecord {
+  return Object.freeze({
+    absenceRequestId: mapDomainId<'AbsenceRequest'>(
+      row.absenceRequestId,
+      'absence_cancellations',
+      'absence_request_id',
+    ),
+    absenceTypeId: mapDomainId<'AbsenceTypeVersion'>(
+      absenceTypeId,
+      'absence_requests',
+      'absence_type_id',
+    ),
+    employeeId: mapDomainId<'Employee'>(row.employeeId, 'absence_cancellations', 'employee_id'),
+    id: mapDomainId<'AbsenceCancellation'>(row.id, 'absence_cancellations', 'id'),
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'absence_cancellations',
+      'organization_id',
     ),
     status: row.status,
     version: row.version,

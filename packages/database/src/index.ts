@@ -13,6 +13,7 @@ export {
   type WorkLedgerDatabaseConfiguration,
 } from './client.js';
 export { DatabaseValueError } from './mapping/domain-values.js';
+export { AbsenceCancellationLockedPeriodError } from './repositories/absence-cancellation-errors.js';
 export { AuditValueError } from './repositories/audit-values.js';
 export { IdempotencyValueError } from './repositories/idempotency-values.js';
 export {
@@ -29,12 +30,17 @@ export type {
   AccountSelfServiceRepository,
   AccountSessionRecord,
   AbsenceCoverageSegmentInput,
+  AbsenceCancellationRecord,
+  AbsenceCancellationStatus,
+  AbsenceCancellationDecisionAction,
+  AbsenceCancellationDecisionResult,
   PersonalCalendarAbsenceRecord,
   PersonalCalendarHolidayRecord,
   PersonalCalendarRecords,
   AbsenceRequestRepository,
   AbsenceRequestConfigurationInput,
   AppendDomainAuditEventInput,
+  DecideAbsenceCancellationInput,
   AppendLeaveEntitlementEntryInput,
   AppendSecurityAuditEventInput,
   ApplicationRole,
@@ -85,6 +91,7 @@ export type {
   ReplaceActiveRolesInput,
   SecurityAuditEventRecord,
   SubmitCorrectionRequestInput,
+  SubmitAbsenceCancellationInput,
   SecurityAuditFacts,
   SecurityAuditTargetKind,
   StoredPunchEvent,
@@ -99,6 +106,7 @@ export type {
   VacationAbsenceTypeRecord,
   VacationRequestConfigurationRecord,
   VacationRequestRecord,
+  WithdrawAbsenceCancellationInput,
 } from './repositories/contracts.js';
 export type {
   TransactionIsolationLevel,

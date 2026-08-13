@@ -123,7 +123,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-603 | Implement sickness reporting and acknowledgement with privacy-safe DTOs | WL-600, WL-303 | No diagnosis; team/manager/HR views differ correctly | Done |
 | WL-604 | Implement half-day and hourly absence | WL-602, WL-207 | Worked-plus-absence avoids double credit | Done |
 | WL-605 | Build personal calendar and agenda/list alternative | WL-602–WL-604 | Keyboard, screen-reader, mobile and equivalent-information checks | Done |
-| WL-606 | Implement cancellation request, decision, and entitlement reversal | WL-601–WL-605 | No deletion; ledger and audit history correct | Not started |
+| WL-606 | Implement cancellation request, decision, and entitlement reversal | WL-601–WL-605 | No deletion; ledger and audit history correct | Done |
 | WL-607 | Execute Phase 6 gate review | WL-600–WL-606 | Balance, privacy, overlap, cancellation evidence | Not started |
 
 ---

@@ -5,13 +5,19 @@ import { z } from 'zod';
 import {
   apiErrorEnvelopeSchema,
   acknowledgeSicknessReportSchema,
+  decideAbsenceCancellationSchema,
+  decidedAbsenceCancellationEnvelopeSchema,
   acknowledgedSicknessReportEnvelopeSchema,
   submittedSicknessReportEnvelopeSchema,
   submittedVacationRequestEnvelopeSchema,
   personalCalendarEnvelopeSchema,
   personalCalendarQuerySchema,
   submitSicknessReportSchema,
+  submitAbsenceCancellationSchema,
+  submittedAbsenceCancellationEnvelopeSchema,
   submitVacationRequestSchema,
+  withdrawAbsenceCancellationSchema,
+  withdrawnAbsenceCancellationEnvelopeSchema,
 } from '@workledger/contracts';
 import { parseInstant } from '@workledger/domain';
 import type { WorkLedgerDatabase } from '@workledger/database';
@@ -36,6 +42,10 @@ import {
   createPersonalCalendarService,
   parsePersonalCalendarIdentity,
 } from './personal-calendar-service.js';
+import {
+  createAbsenceCancellationService,
+  parseAbsenceCancellationIdentity,
+} from './cancellation-service.js';
 
 export function registerVacationRequestRoutes(
   app: FastifyInstance,
@@ -48,6 +58,7 @@ export function registerVacationRequestRoutes(
   const service = createVacationRequestService(database);
   const sicknessService = createSicknessReportService(database);
   const personalCalendarService = createPersonalCalendarService(database);
+  const cancellationService = createAbsenceCancellationService(database);
   api.get(
     '/v1/me/calendar',
     {
@@ -74,6 +85,119 @@ export function registerVacationRequestRoutes(
       const data = await personalCalendarService.get(
         parsePersonalCalendarIdentity(session.userId, session.fresh),
         request.query,
+        at.value,
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+  api.post(
+    '/v1/me/absence-requests/:requestId/cancellations',
+    {
+      schema: {
+        body: submitAbsenceCancellationSchema,
+        description:
+          'Requests cancellation of all remaining effective coverage or an exact non-overlapping subset. The underlying absence and prior effects remain immutable while the request is pending.',
+        operationId: 'submitAbsenceCancellation',
+        params: z.strictObject({ requestId: z.uuid() }),
+        response: {
+          201: submittedAbsenceCancellationEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          409: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'Request absence cancellation',
+        tags: ['Absence requests'],
+      },
+    },
+    async (request, reply) => {
+      requireSameOrigin(request, config.canonicalOrigin);
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      await requireRequestCsrf(request, authentication, headers);
+      const at = parseInstant(now());
+      if (!at.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+      const data = await cancellationService.submit(
+        parseAbsenceCancellationIdentity(session.userId, session.fresh),
+        request.params.requestId,
+        request.body,
+        at.value,
+      );
+      reply.code(201).header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+  api.post(
+    '/v1/me/absence-cancellations/:cancellationId/withdraw',
+    {
+      schema: {
+        body: withdrawAbsenceCancellationSchema,
+        description:
+          'Withdraws the employee’s pending cancellation request without changing absence coverage or balances.',
+        operationId: 'withdrawAbsenceCancellation',
+        params: z.strictObject({ cancellationId: z.uuid() }),
+        response: {
+          200: withdrawnAbsenceCancellationEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          404: apiErrorEnvelopeSchema,
+          409: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'Withdraw absence cancellation',
+        tags: ['Absence requests'],
+      },
+    },
+    async (request, reply) => {
+      requireSameOrigin(request, config.canonicalOrigin);
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      await requireRequestCsrf(request, authentication, headers);
+      const at = parseInstant(now());
+      if (!at.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+      const data = await cancellationService.withdraw(
+        parseAbsenceCancellationIdentity(session.userId, session.fresh),
+        request.params.cancellationId,
+        request.body,
+        at.value,
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+  api.post(
+    '/v1/manager/absence-cancellations/:cancellationId/decision',
+    {
+      schema: {
+        body: decideAbsenceCancellationSchema,
+        description:
+          'Records an eligible non-self manager or HR decision for an absence cancellation. Approval appends any applicable entitlement restoration; it never edits the original deduction.',
+        operationId: 'decideAbsenceCancellation',
+        params: z.strictObject({ cancellationId: z.uuid() }),
+        response: {
+          200: decidedAbsenceCancellationEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          404: apiErrorEnvelopeSchema,
+          409: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'Decide absence cancellation',
+        tags: ['Absence requests'],
+      },
+    },
+    async (request, reply) => {
+      requireSameOrigin(request, config.canonicalOrigin);
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      await requireRequestCsrf(request, authentication, headers);
+      const at = parseInstant(now());
+      if (!at.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+      const data = await cancellationService.decide(
+        parseAbsenceCancellationIdentity(session.userId, session.fresh),
+        request.params.cancellationId,
+        request.body,
         at.value,
       );
       reply.header('cache-control', 'private, no-store');
