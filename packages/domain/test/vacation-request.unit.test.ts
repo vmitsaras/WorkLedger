@@ -1,4 +1,5 @@
 import {
+  calculateAbsenceRequest,
   calculateVacationRequest,
   createLocalDateRange,
   createScheduleAssignment,
@@ -76,5 +77,75 @@ describe('calculateVacationRequest', () => {
         startDate: date('2026-01-01'),
       }),
     ).toMatchObject({ ok: false, error: { code: 'VACATION_DATE_RANGE_TOO_LARGE' } });
+  });
+});
+
+describe('calculateAbsenceRequest', () => {
+  it('partitions an odd scheduled day exactly between its two obligation halves', () => {
+    const schedule = createWeeklySchedule(ORGANIZATION_SCHEDULE_ID, {
+      FRIDAY: 481,
+      MONDAY: 481,
+      SATURDAY: 0,
+      SUNDAY: 0,
+      THURSDAY: 481,
+      TUESDAY: 481,
+      WEDNESDAY: 481,
+    });
+    const range = createLocalDateRange(date('2026-01-01'));
+    if (!schedule.ok || !range.ok) throw new Error('Invalid test configuration.');
+    const assignment = createScheduleAssignment(ASSIGNMENT_ID, range.value, schedule.value);
+    if (!assignment.ok) throw new Error('Invalid test assignment.');
+
+    const first = calculateAbsenceRequest({
+      coverage: { kind: 'FIRST_HALF', localDate: date('2026-01-05') },
+      holidayDates: [],
+      scheduleAssignments: [assignment.value],
+    });
+    const second = calculateAbsenceRequest({
+      coverage: { kind: 'SECOND_HALF', localDate: date('2026-01-05') },
+      holidayDates: [],
+      scheduleAssignments: [assignment.value],
+    });
+
+    expect(first).toMatchObject({ ok: true, value: { entitlementMinutes: 240 } });
+    expect(second).toMatchObject({ ok: true, value: { entitlementMinutes: 241 } });
+  });
+
+  it('keeps exact-minute coverage as a local half-open segment and rejects more than one expected day', () => {
+    const result = calculateAbsenceRequest({
+      coverage: {
+        endsAtMinute: 660,
+        kind: 'MINUTE_INTERVAL',
+        localDate: date('2026-01-05'),
+        startsAtMinute: 540,
+      },
+      holidayDates: [],
+      scheduleAssignments: assignments(),
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        coverage: [
+          {
+            endsAtMinute: 660,
+            entitlementMinutes: 120,
+            kind: 'MINUTE_INTERVAL',
+            startsAtMinute: 540,
+          },
+        ],
+      },
+    });
+    expect(
+      calculateAbsenceRequest({
+        coverage: {
+          endsAtMinute: 1_020,
+          kind: 'MINUTE_INTERVAL',
+          localDate: date('2026-01-05'),
+          startsAtMinute: 450,
+        },
+        holidayDates: [],
+        scheduleAssignments: assignments(),
+      }),
+    ).toMatchObject({ ok: false, error: { code: 'ABSENCE_COVERAGE_INVALID' } });
   });
 });

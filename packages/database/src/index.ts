@@ -28,6 +28,7 @@ export type {
   AccountSelfContextRecord,
   AccountSelfServiceRepository,
   AccountSessionRecord,
+  AbsenceCoverageSegmentInput,
   AbsenceRequestRepository,
   AbsenceRequestConfigurationInput,
   AppendDomainAuditEventInput,

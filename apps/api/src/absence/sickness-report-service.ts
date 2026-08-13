@@ -1,16 +1,16 @@
 import {
   addLocalDateDays,
-  calculateFullDayAbsenceRequest,
+  calculateAbsenceRequest,
   compareLocalDates,
   createAbsenceTypeVersion,
   createLocalDateRange,
   localDateAtInstant,
   parseDomainId,
-  parseLocalDate,
   parseTimeZoneId,
   resolveEffectiveAbsenceTypeVersion,
   type DomainId,
   type Instant,
+  type LocalDate,
   type AbsenceTypeVersion,
 } from '@workledger/domain';
 import type { AccountSelfContextRecord, WorkLedgerDatabase } from '@workledger/database';
@@ -22,6 +22,12 @@ import type {
 
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import {
+  asCoverageSegmentInput,
+  assertCoverageAllowed,
+  coverageDateRange,
+  parseRequestCoverage,
+} from './coverage.js';
 
 export type SicknessReportIdentity = Readonly<{
   accountId: DomainId<'Account'>;
@@ -39,8 +45,8 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
           const employee = context.employee;
           if (employee === null) throw denied();
           assertSelfAuthorized(context, identity.sessionFresh, employee.id, 'ABSENCE_REQUEST');
-          const startDate = requireLocalDate(input.startDate);
-          const endDate = requireLocalDate(input.endDate);
+          const requestCoverage = parseRequestCoverage(input);
+          const { startDate, endDate } = coverageDateRange(requestCoverage);
           const timeZone = parseTimeZoneId(context.organization.timeZone);
           if (!timeZone.ok)
             throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
@@ -79,6 +85,7 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
           });
           const sicknessType = resolveSicknessType(versions, startDate);
           if (!sicknessType.ok) throw sicknessType.error;
+          assertCoverageAllowed(sicknessType.value, requestCoverage);
           const minimumDate = addLocalDateDays(
             today,
             -sicknessType.value.policy.maximumRetrospectiveCalendarDays!,
@@ -86,18 +93,17 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
           if (compareLocalDates(startDate, minimumDate) < 0) {
             throw new WorkLedgerApiError({ code: 'ABSENCE_RETROACTIVE_LIMIT', statusCode: 422 });
           }
-          const calculation = calculateFullDayAbsenceRequest({
-            endDate,
+          const calculation = calculateAbsenceRequest({
+            coverage: requestCoverage,
             holidayDates: configuration.holidayDates,
             scheduleAssignments: configuration.scheduleAssignments,
-            startDate,
           });
           if (!calculation.ok) throw coverageError(calculation.error.code);
           if (
             await transaction.absenceRequests.hasCoverageConflict(
               context.organization.id,
               employee.id,
-              calculation.value.coverage.map((coverage) => coverage.localDate),
+              calculation.value.coverage.map(asCoverageSegmentInput),
             )
           ) {
             throw new WorkLedgerApiError({ code: 'ABSENCE_OVERLAP', statusCode: 422 });
@@ -106,7 +112,7 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
             absenceTypeId: sicknessType.value.id,
             coverage: calculation.value.coverage.map((coverage) => ({
               creditMinutes: coverage.entitlementMinutes,
-              localDate: coverage.localDate,
+              ...asCoverageSegmentInput(coverage),
             })),
             employeeId: employee.id,
             organizationId: context.organization.id,
@@ -139,8 +145,13 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
           return Object.freeze({
             coverage: calculation.value.coverage.map((coverage) => ({
               creditMinutes: coverage.entitlementMinutes,
+              endsAtMinute:
+                coverage.kind === 'MINUTE_INTERVAL' ? (coverage.endsAtMinute ?? null) : null,
               holiday: coverage.holiday,
+              kind: coverage.kind,
               localDate: coverage.localDate,
+              startsAtMinute:
+                coverage.kind === 'MINUTE_INTERVAL' ? (coverage.startsAtMinute ?? null) : null,
             })),
             id: report.id,
             reportedAt: at,
@@ -234,10 +245,7 @@ export function parseSicknessReportIdentity(accountIdValue: string, sessionFresh
   return Object.freeze({ accountId: accountId.value, sessionFresh });
 }
 
-function resolveSicknessType(
-  records: readonly AbsenceTypeVersion[],
-  date: ReturnType<typeof requireLocalDate>,
-) {
+function resolveSicknessType(records: readonly AbsenceTypeVersion[], date: LocalDate) {
   const type = resolveEffectiveAbsenceTypeVersion(records, 'SICKNESS', date);
   if (!type.ok)
     return {
@@ -289,11 +297,6 @@ function assertSelfAuthorized(
     targetOrganizationId: context.organization.id,
   });
   if (!result.allowed) throw denied();
-}
-function requireLocalDate(value: string) {
-  const parsed = parseLocalDate(value);
-  if (!parsed.ok) throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
-  return parsed.value;
 }
 function requireRequestId(value: string) {
   const parsed = parseDomainId<'AbsenceRequest'>(value);

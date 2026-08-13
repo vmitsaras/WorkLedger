@@ -355,9 +355,16 @@ export type VacationRequestConfigurationRecord = Readonly<{
   scheduleAssignments: readonly ScheduleAssignment[];
 }>;
 
+export type AbsenceCoverageSegmentInput = Readonly<{
+  endsAtMinute: number | null;
+  kind: 'FIRST_HALF' | 'FULL_DAY' | 'MINUTE_INTERVAL' | 'SECOND_HALF';
+  localDate: LocalDate;
+  startsAtMinute: number | null;
+}>;
+
 export type SubmitVacationRequestInput = Readonly<{
   absenceTypeId: DomainId<'AbsenceTypeVersion'>;
-  coverage: readonly Readonly<{ localDate: LocalDate }>[];
+  coverage: readonly AbsenceCoverageSegmentInput[];
   employeeId: DomainId<'Employee'>;
   organizationId: DomainId<'Organization'>;
   requestedByEmployeeId: DomainId<'Employee'>;
@@ -377,7 +384,13 @@ export type VacationRequestRecord = Readonly<{
 
 export type SubmitSicknessReportInput = Readonly<{
   absenceTypeId: DomainId<'AbsenceTypeVersion'>;
-  coverage: readonly Readonly<{ creditMinutes: NonNegativeMinutes; localDate: LocalDate }>[];
+  coverage: readonly Readonly<{
+    creditMinutes: NonNegativeMinutes;
+    endsAtMinute: number | null;
+    kind: AbsenceCoverageSegmentInput['kind'];
+    localDate: LocalDate;
+    startsAtMinute: number | null;
+  }>[];
   employeeId: DomainId<'Employee'>;
   organizationId: DomainId<'Organization'>;
   requestedByEmployeeId: DomainId<'Employee'>;
@@ -611,7 +624,7 @@ export interface AbsenceRequestRepository {
   hasCoverageConflict(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
-    localDates: readonly LocalDate[],
+    coverage: readonly AbsenceCoverageSegmentInput[],
   ): Promise<boolean>;
   acknowledgeSickness(
     organizationId: DomainId<'Organization'>,

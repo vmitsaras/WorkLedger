@@ -1,22 +1,24 @@
 import { z } from 'zod';
 
 import { createSuccessEnvelopeSchema } from './api.js';
+import { absenceCoverageInputSchema } from './vacation-requests.js';
 
 const dateSchema = z.iso.date();
 const instantSchema = z.iso.datetime({ offset: true });
 const opaqueIdentifierSchema = z.uuid();
+const minuteOfDaySchema = z.number().int().min(0).max(1_439);
+const minuteEndSchema = z.number().int().min(1).max(1_440);
 
-export const submitSicknessReportSchema = z
-  .strictObject({ endDate: dateSchema, startDate: dateSchema })
-  .refine((value) => value.startDate <= value.endDate, {
-    message: 'End date must be on or after start date.',
-    path: ['endDate'],
-  });
+/** Sickness accepts the same coverage units but deliberately no note, diagnosis, or attachment. */
+export const submitSicknessReportSchema = absenceCoverageInputSchema;
 
 export const reportedSicknessCoverageSchema = z.strictObject({
   creditMinutes: z.number().int().min(0).max(1_440),
+  endsAtMinute: minuteEndSchema.nullable(),
   holiday: z.boolean(),
+  kind: z.enum(['FULL_DAY', 'FIRST_HALF', 'SECOND_HALF', 'MINUTE_INTERVAL']),
   localDate: dateSchema,
+  startsAtMinute: minuteOfDaySchema.nullable(),
 });
 
 export const submittedSicknessReportSchema = z.strictObject({

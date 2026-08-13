@@ -345,7 +345,13 @@ test('presents an accessible vacation-request form with a focused validation sum
 
   expect(await screen.findByRole('heading', { name: 'Request vacation' })).toBeVisible();
   expect(screen.getByText(/Weekends, public holidays, and zero-hour days/u)).toBeVisible();
-  await userEvent.setup().click(screen.getByRole('button', { name: 'Submit vacation request' }));
+  const user = userEvent.setup();
+  await user.selectOptions(screen.getByLabelText('Coverage'), 'MINUTE_INTERVAL');
+  expect(screen.getByLabelText('Local date')).toBeVisible();
+  expect(screen.getByLabelText('Start time')).toBeVisible();
+  expect(screen.getByLabelText('End time')).toBeVisible();
+  await user.selectOptions(screen.getByLabelText('Coverage'), 'FULL_DAY');
+  await user.click(screen.getByRole('button', { name: 'Submit vacation request' }));
   expect(await screen.findByRole('heading', { name: 'There is a problem' })).toBeVisible();
   expect(screen.getByRole('link', { name: /Choose the first vacation day/u })).toHaveAttribute(
     'href',

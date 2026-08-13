@@ -12533,21 +12533,67 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": false,
-                "properties": {
-                  "endDate": {
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                    "type": "string"
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "endDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      },
+                      "kind": { "enum": ["FULL_DAY"], "type": "string" },
+                      "startDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["endDate", "kind", "startDate"],
+                    "type": "object"
                   },
-                  "startDate": {
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                    "type": "string"
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": { "enum": ["FIRST_HALF"], "type": "string" },
+                      "localDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["kind", "localDate"],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": { "enum": ["SECOND_HALF"], "type": "string" },
+                      "localDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["kind", "localDate"],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "endsAtMinute": { "maximum": 1440, "minimum": 1, "type": "integer" },
+                      "kind": { "enum": ["MINUTE_INTERVAL"], "type": "string" },
+                      "localDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      },
+                      "startsAtMinute": { "maximum": 1439, "minimum": 0, "type": "integer" }
+                    },
+                    "required": ["endsAtMinute", "kind", "localDate", "startsAtMinute"],
+                    "type": "object"
                   }
-                },
-                "required": ["endDate", "startDate"],
-                "type": "object"
+                ]
               }
             }
           },
@@ -12568,14 +12614,42 @@
                             "additionalProperties": false,
                             "properties": {
                               "creditMinutes": { "maximum": 1440, "minimum": 0, "type": "integer" },
+                              "endsAtMinute": {
+                                "anyOf": [
+                                  { "maximum": 1440, "minimum": 1, "type": "integer" },
+                                  { "type": "null" }
+                                ]
+                              },
                               "holiday": { "type": "boolean" },
+                              "kind": {
+                                "enum": [
+                                  "FULL_DAY",
+                                  "FIRST_HALF",
+                                  "SECOND_HALF",
+                                  "MINUTE_INTERVAL"
+                                ],
+                                "type": "string"
+                              },
                               "localDate": {
                                 "format": "date",
                                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
                                 "type": "string"
+                              },
+                              "startsAtMinute": {
+                                "anyOf": [
+                                  { "maximum": 1439, "minimum": 0, "type": "integer" },
+                                  { "type": "null" }
+                                ]
                               }
                             },
-                            "required": ["creditMinutes", "holiday", "localDate"],
+                            "required": [
+                              "creditMinutes",
+                              "endsAtMinute",
+                              "holiday",
+                              "kind",
+                              "localDate",
+                              "startsAtMinute"
+                            ],
                             "type": "object"
                           },
                           "maxItems": 366,
@@ -15582,21 +15656,67 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": false,
-                "properties": {
-                  "endDate": {
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                    "type": "string"
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "endDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      },
+                      "kind": { "enum": ["FULL_DAY"], "type": "string" },
+                      "startDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["endDate", "kind", "startDate"],
+                    "type": "object"
                   },
-                  "startDate": {
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                    "type": "string"
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": { "enum": ["FIRST_HALF"], "type": "string" },
+                      "localDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["kind", "localDate"],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": { "enum": ["SECOND_HALF"], "type": "string" },
+                      "localDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["kind", "localDate"],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "endsAtMinute": { "maximum": 1440, "minimum": 1, "type": "integer" },
+                      "kind": { "enum": ["MINUTE_INTERVAL"], "type": "string" },
+                      "localDate": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      },
+                      "startsAtMinute": { "maximum": 1439, "minimum": 0, "type": "integer" }
+                    },
+                    "required": ["endsAtMinute", "kind", "localDate", "startsAtMinute"],
+                    "type": "object"
                   }
-                },
-                "required": ["endDate", "startDate"],
-                "type": "object"
+                ]
               }
             }
           },
@@ -15616,12 +15736,27 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
+                              "endsAtMinute": {
+                                "anyOf": [
+                                  { "maximum": 1440, "minimum": 1, "type": "integer" },
+                                  { "type": "null" }
+                                ]
+                              },
                               "entitlementMinutes": {
                                 "maximum": 527040,
                                 "minimum": 0,
                                 "type": "integer"
                               },
                               "holiday": { "type": "boolean" },
+                              "kind": {
+                                "enum": [
+                                  "FULL_DAY",
+                                  "FIRST_HALF",
+                                  "SECOND_HALF",
+                                  "MINUTE_INTERVAL"
+                                ],
+                                "type": "string"
+                              },
                               "localDate": {
                                 "format": "date",
                                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
@@ -15631,13 +15766,22 @@
                                 "maximum": 1440,
                                 "minimum": 0,
                                 "type": "integer"
+                              },
+                              "startsAtMinute": {
+                                "anyOf": [
+                                  { "maximum": 1439, "minimum": 0, "type": "integer" },
+                                  { "type": "null" }
+                                ]
                               }
                             },
                             "required": [
+                              "endsAtMinute",
                               "entitlementMinutes",
                               "holiday",
+                              "kind",
                               "localDate",
-                              "scheduledMinutes"
+                              "scheduledMinutes",
+                              "startsAtMinute"
                             ],
                             "type": "object"
                           },

@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 6 — Absence and leave balances
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 4 of 8 Phase 6 tasks complete
-**Current milestone:** Partial-day and hourly absence support
-**Active task:** `WL-604`
+**Phase progress:** 5 of 8 Phase 6 tasks complete
+**Current milestone:** Personal calendar and accessible agenda alternative
+**Active task:** `WL-605`
 **Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Implement partial-day and hourly absence support required by `WL-604`.
+Implement the personal calendar and accessible agenda alternative required by `WL-605`.
 
 ## Verified decisions
 
@@ -294,6 +294,23 @@ Implement partial-day and hourly absence support required by `WL-604`.
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-604` — Build partial-day and hourly absence support
+
+- Changed: extended vacation and sickness request coverage from full-day ranges to schedule-relative
+  first/second halves and same-date half-open minute intervals; persisted coverage now retains its
+  precise segment kind and minutes, and overlap detection follows full/half/minute compatibility.
+- Verified: domain and component tests pass (188 tests); PostgreSQL integration tests pass (27
+  tests), including compatible opposite halves and rejection of ambiguous minute-plus-half coverage.
+  The daily-effects suite retains its exact worked-plus-absence no-double-credit evidence.
+- Accessibility: employee forms clearly distinguish schedule-relative halves from clock-specific
+  minute coverage, with labelled conditional fields, validation summary focus, and success focus.
+- Security/data: all new submissions preserve existing active-self authorization, same-origin, CSRF,
+  serializable transaction, no-store, strict-contract, and sickness data-minimization boundaries.
+- Documentation: added `docs/70-partial-absence-coverage.md` and synchronized the task board/TODO.
+- Remaining risk: person calendar/agenda, cancellation, approval decisions, and date recalculation
+  remain the following roadmap slices.
+- Next task: `WL-605`.
 
 ### `WL-603` — Build sickness reporting with privacy boundaries
 

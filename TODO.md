@@ -88,7 +88,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-601` Implement the entitlement ledger and complete My Balances.
 - [x] `WL-602` Build vacation request workflow.
 - [x] `WL-603` Build sickness reporting with privacy boundaries.
-- [ ] `WL-604` Build partial-day and hourly absence support.
+- [x] `WL-604` Build partial-day and hourly absence support.
 - [ ] `WL-605` Build personal calendar plus accessible agenda alternative.
 - [ ] `WL-606` Build cancellation workflow and balance reversal.
 - [ ] `WL-607` Pass the Phase 6 exit gate.

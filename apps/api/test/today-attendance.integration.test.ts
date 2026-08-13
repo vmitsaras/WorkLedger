@@ -472,7 +472,7 @@ integrationTest(
           origin: ORIGIN,
           'x-workledger-csrf': token,
         },
-        payload: { endDate: '2026-02-10', startDate: '2026-02-06' },
+        payload: { endDate: '2026-02-10', kind: 'FULL_DAY', startDate: '2026-02-06' },
       });
 
       expect(response.statusCode).toBe(201);
@@ -524,10 +524,57 @@ integrationTest(
           origin: ORIGIN,
           'x-workledger-csrf': token,
         },
-        payload: { endDate: '2026-02-10', startDate: '2026-02-06' },
+        payload: { endDate: '2026-02-10', kind: 'FULL_DAY', startDate: '2026-02-06' },
       });
       expect(duplicate.statusCode).toBe(422);
       expect(duplicate.json()).toMatchObject({ error: { code: 'ABSENCE_OVERLAP' } });
+
+      const firstHalf = await app.inject({
+        method: 'POST',
+        url: '/v1/me/vacation-requests',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: { kind: 'FIRST_HALF', localDate: '2026-02-11' },
+      });
+      const secondHalf = await app.inject({
+        method: 'POST',
+        url: '/v1/me/vacation-requests',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: { kind: 'SECOND_HALF', localDate: '2026-02-11' },
+      });
+      expect(firstHalf.json()).toMatchObject({
+        data: { coverage: [{ entitlementMinutes: 240, kind: 'FIRST_HALF' }] },
+      });
+      expect(secondHalf.json()).toMatchObject({
+        data: { coverage: [{ entitlementMinutes: 240, kind: 'SECOND_HALF' }] },
+      });
+      const minuteMixedWithHalf = await app.inject({
+        method: 'POST',
+        url: '/v1/me/vacation-requests',
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': token,
+        },
+        payload: {
+          endsAtMinute: 660,
+          kind: 'MINUTE_INTERVAL',
+          localDate: '2026-02-11',
+          startsAtMinute: 540,
+        },
+      });
+      expect(minuteMixedWithHalf.statusCode).toBe(422);
+      expect(minuteMixedWithHalf.json()).toMatchObject({ error: { code: 'ABSENCE_OVERLAP' } });
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -588,7 +635,7 @@ integrationTest(
           origin: ORIGIN,
           'x-workledger-csrf': token,
         },
-        payload: { endDate: '2026-02-03', startDate: '2026-02-02' },
+        payload: { endDate: '2026-02-03', kind: 'FULL_DAY', startDate: '2026-02-02' },
       });
       expect(response.statusCode).toBe(201);
       expect(response.headers['cache-control']).toBe('private, no-store');
@@ -622,7 +669,12 @@ integrationTest(
           origin: ORIGIN,
           'x-workledger-csrf': token,
         },
-        payload: { diagnosis: 'private', endDate: '2026-02-03', startDate: '2026-02-03' },
+        payload: {
+          diagnosis: 'private',
+          endDate: '2026-02-03',
+          kind: 'FULL_DAY',
+          startDate: '2026-02-03',
+        },
       });
       expect(unknownField.statusCode).toBe(422);
       expect(unknownField.payload).not.toContain('private');
@@ -635,7 +687,7 @@ integrationTest(
           origin: ORIGIN,
           'x-workledger-csrf': token,
         },
-        payload: { endDate: '2026-01-25', startDate: '2026-01-25' },
+        payload: { endDate: '2026-01-25', kind: 'FULL_DAY', startDate: '2026-01-25' },
       });
       expect(tooOld.json()).toMatchObject({ error: { code: 'ABSENCE_RETROACTIVE_LIMIT' } });
     } finally {

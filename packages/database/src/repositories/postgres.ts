@@ -64,6 +64,7 @@ import type {
   AccountSelfContextRecord,
   AccountSelfServiceRepository,
   AccountSessionRecord,
+  AbsenceCoverageSegmentInput,
   AbsenceRequestRepository,
   AbsenceRequestConfigurationInput,
   AdvanceAttendanceHeadInput,
@@ -1618,11 +1619,17 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
   async hasCoverageConflict(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
-    localDates: readonly LocalDate[],
+    coverage: readonly AbsenceCoverageSegmentInput[],
   ): Promise<boolean> {
-    if (localDates.length === 0) return false;
-    const [row] = await this.transaction
-      .select({ id: absenceRequests.id })
+    if (coverage.length === 0) return false;
+    const localDates = [...new Set(coverage.map((segment) => segment.localDate))];
+    const rows = await this.transaction
+      .select({
+        endsAtMinute: absenceCoverageSegments.endsAtMinute,
+        kind: absenceCoverageSegments.kind,
+        localDate: absenceCoverageSegments.localDate,
+        startsAtMinute: absenceCoverageSegments.startsAtMinute,
+      })
       .from(absenceRequests)
       .innerJoin(
         absenceCoverageSegments,
@@ -1639,14 +1646,23 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
           inArray(absenceRequests.status, [
             'SUBMITTED',
             'REPORTED',
+            'ACKNOWLEDGED',
             'CHANGES_REQUESTED',
             'APPROVED',
             'PARTIALLY_CANCELLED',
           ]),
         ),
-      )
-      .limit(1);
-    return row !== undefined;
+      );
+    return rows.some((row) =>
+      coverage.some((candidate) =>
+        coverageSegmentsOverlap(candidate, {
+          endsAtMinute: row.endsAtMinute,
+          kind: row.kind,
+          localDate: mapLocalDate(row.localDate, 'absence_coverage_segments', 'local_date'),
+          startsAtMinute: row.startsAtMinute,
+        }),
+      ),
+    );
   }
 
   async submitVacation(input: SubmitVacationRequestInput): Promise<VacationRequestRecord> {
@@ -1666,9 +1682,11 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     await this.transaction.insert(absenceCoverageSegments).values(
       input.coverage.map((coverage) => ({
         absenceRequestId: request.id,
-        kind: 'FULL_DAY' as const,
+        endsAtMinute: coverage.endsAtMinute,
+        kind: coverage.kind,
         localDate: coverage.localDate,
         organizationId: input.organizationId,
+        startsAtMinute: coverage.startsAtMinute,
       })),
     );
     return mapVacationRequest(request);
@@ -1693,9 +1711,11 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
       .values(
         input.coverage.map((coverage) => ({
           absenceRequestId: request.id,
-          kind: 'FULL_DAY' as const,
+          endsAtMinute: coverage.endsAtMinute,
+          kind: coverage.kind,
           localDate: coverage.localDate,
           organizationId: input.organizationId,
+          startsAtMinute: coverage.startsAtMinute,
         })),
       )
       .returning({ id: absenceCoverageSegments.id, localDate: absenceCoverageSegments.localDate });
@@ -1773,6 +1793,34 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     });
     return mapSicknessReport(updated);
   }
+}
+
+function coverageSegmentsOverlap(
+  left: AbsenceCoverageSegmentInput,
+  right: Readonly<{
+    endsAtMinute: number | null;
+    kind: AbsenceCoverageSegmentInput['kind'];
+    localDate: LocalDate;
+    startsAtMinute: number | null;
+  }>,
+): boolean {
+  if (left.localDate !== right.localDate) return false;
+  if (left.kind === 'FULL_DAY' || right.kind === 'FULL_DAY') return true;
+  const leftIsMinute = left.kind === 'MINUTE_INTERVAL';
+  const rightIsMinute = right.kind === 'MINUTE_INTERVAL';
+  if (leftIsMinute || rightIsMinute) {
+    if (!leftIsMinute || !rightIsMinute) return true;
+    if (
+      left.startsAtMinute === null ||
+      left.endsAtMinute === null ||
+      right.startsAtMinute === null ||
+      right.endsAtMinute === null
+    ) {
+      throw new DatabaseValueError('absence_coverage_segments', 'minute_shape');
+    }
+    return left.startsAtMinute < right.endsAtMinute && left.endsAtMinute > right.startsAtMinute;
+  }
+  return left.kind === right.kind;
 }
 
 class PostgresTimeAccountRepository implements TimeAccountRepository {

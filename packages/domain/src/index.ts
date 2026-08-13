@@ -46,8 +46,13 @@ export {
   type PendingReservationBehavior,
 } from './absence-policy.js';
 export {
+  calculateAbsenceRequest,
   calculateFullDayAbsenceRequest,
   calculateVacationRequest,
+  type AbsenceRequestCalculation,
+  type AbsenceRequestCalculationInput,
+  type AbsenceRequestCoverage,
+  type AbsenceRequestCoverageInput,
   type FullDayAbsenceCalculation,
   type FullDayAbsenceCalculationError,
   type FullDayAbsenceCalculationInput,

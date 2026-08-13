@@ -17,12 +17,14 @@ export {
   type SubmittedSicknessReport,
 } from './sickness-reports.js';
 export {
+  absenceCoverageInputSchema,
   submittedVacationRequestEnvelopeSchema,
   submittedVacationRequestSchema,
   submitVacationRequestSchema,
   vacationRequestCoverageSchema,
   type SubmittedVacationRequest,
   type SubmitVacationRequest,
+  type AbsenceCoverageInput,
 } from './vacation-requests.js';
 export {
   applyCorrectionEnvelopeSchema,

@@ -1,10 +1,9 @@
 import {
   calculateLeaveEntitlementLedger,
-  calculateVacationRequest,
+  calculateAbsenceRequest,
   createAbsenceTypeVersion,
   createLocalDateRange,
   parseDomainId,
-  parseLocalDate,
   parseSignedMinutes,
   resolveEffectiveAbsenceTypeVersion,
   type DomainId,
@@ -15,6 +14,13 @@ import type { SubmitVacationRequest, SubmittedVacationRequest } from '@workledge
 
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import {
+  asCoverageSegmentInput,
+  assertCoverageAllowed,
+  coverageDateRange,
+  parseRequestCoverage,
+  responseCoverage,
+} from './coverage.js';
 
 export type VacationRequestIdentity = Readonly<{
   accountId: DomainId<'Account'>;
@@ -59,8 +65,8 @@ export function createVacationRequestService(database: WorkLedgerDatabase): Vaca
           if (!authorization.allowed) {
             throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
           }
-          const startDate = requireLocalDate(input.startDate);
-          const endDate = requireLocalDate(input.endDate);
+          const requestCoverage = parseRequestCoverage(input);
+          const { startDate, endDate } = coverageDateRange(requestCoverage);
 
           const configuration = await transaction.absenceRequests.loadConfiguration({
             absenceCode: 'VACATION',
@@ -109,20 +115,19 @@ export function createVacationRequestService(database: WorkLedgerDatabase): Vaca
           ) {
             throw new WorkLedgerApiError({ code: 'POLICY_CONFIGURATION_INVALID', statusCode: 422 });
           }
+          assertCoverageAllowed(absenceType.value, requestCoverage);
 
-          const calculation = calculateVacationRequest({
-            endDate,
+          const calculation = calculateAbsenceRequest({
+            coverage: requestCoverage,
             holidayDates: configuration.holidayDates,
             scheduleAssignments: configuration.scheduleAssignments,
-            startDate,
           });
           if (!calculation.ok) throw vacationCalculationError(calculation.error.code);
-          const localDates = calculation.value.coverage.map(({ localDate }) => localDate);
           if (
             await transaction.absenceRequests.hasCoverageConflict(
               context.organization.id,
               employee.id,
-              localDates,
+              calculation.value.coverage.map(asCoverageSegmentInput),
             )
           ) {
             throw new WorkLedgerApiError({ code: 'ABSENCE_OVERLAP', statusCode: 422 });
@@ -130,7 +135,7 @@ export function createVacationRequestService(database: WorkLedgerDatabase): Vaca
 
           const submitted = await transaction.absenceRequests.submitVacation({
             absenceTypeId: absenceType.value.id,
-            coverage: calculation.value.coverage,
+            coverage: calculation.value.coverage.map(asCoverageSegmentInput),
             employeeId: employee.id,
             organizationId: context.organization.id,
             requestedByEmployeeId: employee.id,
@@ -211,12 +216,7 @@ export function createVacationRequestService(database: WorkLedgerDatabase): Vaca
             targetKind: 'ABSENCE_REQUEST',
           });
           return Object.freeze({
-            coverage: calculation.value.coverage.map((coverage) => ({
-              entitlementMinutes: coverage.entitlementMinutes,
-              holiday: coverage.holiday,
-              localDate: coverage.localDate,
-              scheduledMinutes: coverage.scheduledMinutes,
-            })),
+            coverage: calculation.value.coverage.map(responseCoverage),
             entitlementMinutes: calculation.value.entitlementMinutes,
             id: submitted.id,
             projectedRemainingMinutes,
@@ -255,12 +255,6 @@ function requireActiveEmployeeContext(
 function requireDomainId<Kind extends string>(value: string): DomainId<Kind> {
   const parsed = parseDomainId<Kind>(value);
   if (!parsed.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
-  return parsed.value;
-}
-
-function requireLocalDate(value: string) {
-  const parsed = parseLocalDate(value);
-  if (!parsed.ok) throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
   return parsed.value;
 }
 
