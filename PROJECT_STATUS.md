@@ -2,18 +2,17 @@
 
 **Current phase:** Phase 5 — Time records and corrections
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 7 Phase 5 tasks complete; `WL-500` implementation in review
-**Current milestone:** Historical time and flexible-balance foundations
-**Active task:** `WL-500`
-**Status:** In review — database-enabled verification pending
+**Phase progress:** 1 of 7 Phase 5 tasks complete
+**Current milestone:** Daily record detail and accessible history
+**Active task:** `WL-501`
+**Status:** Ready
 **Last verified:** 2026-08-13
 
 ## Current objective
 
-Complete database-enabled verification for My Time week/month queries and the flexible-time
-balance/ledger portion of My Balances. The implemented slice uses URL-owned non-sensitive
-date/view/pagination state, separate posted/projected totals, explainable entries, and scoped
-API/database behavior.
+Implement daily record detail, sessions, breaks, absence credit, and an accessible event list on
+top of the My Time query boundary. Normal, incomplete, and overnight days must remain
+understandable without exposing private absence detail.
 
 ## Verified decisions
 
@@ -298,37 +297,32 @@ API/database behavior.
 
 ## Latest completed task
 
-### `WL-407` — Execute the Phase 4 exit-gate review
+### `WL-500` — Build My Time and the flexible-time portion of My Balances
 
-- Changed: reconciled all seven Phase 4 exit criteria with direct domain, PostgreSQL/API, browser,
-  audit, security, and accessibility evidence; checked the canonical roadmap and task gate; and
-  advanced the root plus all eight private workspace manifests to internal version `0.5.0`.
-- Verified: the database-enabled canonical gate passes 24 native checks, 153 unit/component tests,
-  21 integration tests, and 12 Chromium scenarios plus reproducible OpenAPI, formatting,
-  lint/boundaries, strict TypeScript, and the production build.
-- Accessibility: the gate confirms the full keyboard/touch attendance sequence, modal focus,
-  concise status/alert behavior, silent polling/retry, route and status focus, ordinary-mode axe,
-  forced colors, reduced motion, long content, and 320–1920 px reflow. Actual named OS
-  screen-reader/browser and physical-device output is not claimed.
-- Security/data: the gate adds no runtime data path. Attendance remains API-authorized,
-  origin/CSRF-protected, serializable, idempotent, immutable, minimized, private/no-store, and free
-  of offline mutation queues or persistent browser state.
-- Documentation: added `docs/58-phase-4-gate-review.md` and synchronized README, roadmap, task board,
-  TODO, manifests, and project status.
-- Remaining risk: D-502 still owns supported browser/version targets; actual OS screen-reader/browser,
-  physical touch-device, and browser-chrome zoom checks remain release-level manual confirmation.
-  The existing bundle warning and bounded-history scale remain owned by `WL-1001`.
-- Next task: `WL-500`.
+- Changed: added the scoped `GET /v1/me/time` contract and repository read paths; derived posted
+  ledger totals separately from eligible complete unposted projections; and replaced My Time/My
+  Balances placeholders with URL-owned, explainable employee views.
+- Verified: strict TypeScript, formatting, ESLint, executable boundaries, reproducible OpenAPI,
+  all 155 unit/component tests, the production web build, and all 22 database-enabled integration
+  tests across 14 files pass.
+- Accessibility: the views preserve route-heading focus through loading; use native labelled
+  controls, a captioned day-summary table, description lists, ordered ledger explanations, named
+  pagination, and axe component coverage.
+- Security/data: the self-only API rechecks active employee capability and `TIME_BALANCE_READ`,
+  returns `private, no-store`, and omits employee, organization, actor, and source identifiers.
+- Documentation: added `docs/59-my-time-and-flexible-balance.md`, regenerated OpenAPI, and
+  synchronized the task board, TODO, and status.
+- Remaining risk: `WL-501` owns daily event/session/break detail; `WL-502` owns structured warning
+  actions. D-502 and the bounded-history scale remain release-level work.
+- Next task: `WL-501`.
 
 ## Current blockers
 
-`WL-500` needs one database-enabled integration run before completion. The local Docker daemon is
-unavailable and `WORKLEDGER_TEST_DATABASE_URL` is unset, so its integration scenario is correctly
-skipped. D-502 remains open before the production browser gate.
+No `WL-501` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-500 — Implement My Time and the flexible-time portion of My Balances.`
+`WL-501 — Build daily record details and accessible timeline/list.`
 
 ## Update rules
 

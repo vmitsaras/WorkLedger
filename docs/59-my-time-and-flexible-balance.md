@@ -2,8 +2,7 @@
 
 **Task:** `WL-500`
 
-**Status:** Implementation in review; database-enabled integration verification is pending a local
-PostgreSQL test service.
+**Status:** Complete.
 
 ## Scope
 
@@ -65,9 +64,9 @@ missing-entry actions. Leave balances remain deferred to `WL-601`.
   arithmetic.
 - Component and axe coverage exercises URL-owned My Time state, separate posted/projected values,
   incomplete-date explanation, the daily table, and ledger presentation.
-- API integration coverage seeds posted and unposted complete projections plus an incomplete
-  projection, then verifies the distinct totals, privacy-minimized DTO, cache policy, and period
-  bounds. It is currently skipped because `WORKLEDGER_TEST_DATABASE_URL` is not configured and the
-  local Docker daemon is unavailable.
+- Database-enabled API integration coverage seeds posted and unposted complete projections plus an
+  incomplete projection, then verifies the distinct totals, privacy-minimized DTO, cache policy,
+  and period bounds. The full PostgreSQL integration suite passed 22 tests across 14 files on
+  2026-08-13.
 - The OpenAPI 3.1 artifact is regenerated from the same Zod contract at
   `openapi/workledger.openapi.json`.
