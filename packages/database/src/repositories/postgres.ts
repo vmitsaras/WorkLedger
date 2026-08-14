@@ -13,6 +13,7 @@ import {
   isNull,
   lt,
   lte,
+  ne,
   or,
   sql,
 } from 'drizzle-orm';
@@ -423,6 +424,125 @@ class PostgresAccountSelfServiceRepository implements AccountSelfServiceReposito
 class PostgresAdministrationRepository implements AdministrationRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
 
+  async applyManagerAssignmentTransition(
+    input: Parameters<AdministrationRepository['applyManagerAssignmentTransition']>[0],
+  ) {
+    if (!(await this.lockActiveEmployee(input.organizationId, input.employeeId))) return null;
+    if (input.transition.insert !== null) {
+      const managerEmployeeId = mapDomainId<'Employee'>(
+        input.transition.insert.targetId,
+        'manager_assignments',
+        'manager_employee_id',
+      );
+      if (managerEmployeeId === input.employeeId) return null;
+      const [eligibleManager] = await this.transaction
+        .select({ id: employees.id })
+        .from(employees)
+        .innerJoin(
+          employmentPeriods,
+          and(
+            eq(employmentPeriods.organizationId, input.organizationId),
+            eq(employmentPeriods.employeeId, employees.id),
+            lte(employmentPeriods.startsOn, input.transition.effectiveFrom),
+            or(
+              isNull(employmentPeriods.endsOn),
+              gt(employmentPeriods.endsOn, input.transition.effectiveFrom),
+            ),
+          ),
+        )
+        .innerJoin(
+          accountEmployeeLinks,
+          and(
+            eq(accountEmployeeLinks.organizationId, input.organizationId),
+            eq(accountEmployeeLinks.employeeId, employees.id),
+            isNull(accountEmployeeLinks.unlinkedAt),
+          ),
+        )
+        .innerJoin(
+          authUsers,
+          and(eq(authUsers.id, accountEmployeeLinks.userId), eq(authUsers.active, true)),
+        )
+        .innerJoin(
+          accountRoleAssignments,
+          and(
+            eq(accountRoleAssignments.organizationId, input.organizationId),
+            eq(accountRoleAssignments.userId, authUsers.id),
+            eq(accountRoleAssignments.role, 'MANAGER'),
+            isNull(accountRoleAssignments.revokedAt),
+          ),
+        )
+        .where(
+          and(
+            eq(employees.organizationId, input.organizationId),
+            eq(employees.id, managerEmployeeId),
+            eq(employees.status, 'ACTIVE'),
+          ),
+        )
+        .limit(1);
+      if (eligibleManager === undefined) return null;
+    }
+    const closedId = await this.closeManagerAssignment(input);
+    if (input.transition.closeAssignmentId !== null && closedId === null) return null;
+    if (input.transition.insert === null) return closedId;
+    const [created] = await this.transaction
+      .insert(managerAssignments)
+      .values({
+        employeeId: input.employeeId,
+        endsOn: input.transition.insert.endsOn,
+        managerEmployeeId: mapDomainId<'Employee'>(
+          input.transition.insert.targetId,
+          'manager_assignments',
+          'manager_employee_id',
+        ),
+        organizationId: input.organizationId,
+        startsOn: input.transition.effectiveFrom,
+      })
+      .returning({ id: managerAssignments.id });
+    return created?.id ?? null;
+  }
+
+  async applyTeamAssignmentTransition(
+    input: Parameters<AdministrationRepository['applyTeamAssignmentTransition']>[0],
+  ) {
+    if (!(await this.lockActiveEmployee(input.organizationId, input.employeeId))) return null;
+    if (input.transition.insert !== null) {
+      const [team] = await this.transaction
+        .select({ id: teams.id })
+        .from(teams)
+        .where(
+          and(
+            eq(teams.organizationId, input.organizationId),
+            eq(
+              teams.id,
+              mapDomainId<'Team'>(input.transition.insert.targetId, 'team_assignments', 'team_id'),
+            ),
+            eq(teams.active, true),
+          ),
+        )
+        .for('update')
+        .limit(1);
+      if (team === undefined) return null;
+    }
+    const closedId = await this.closeTeamAssignment(input);
+    if (input.transition.closeAssignmentId !== null && closedId === null) return null;
+    if (input.transition.insert === null) return closedId;
+    const [created] = await this.transaction
+      .insert(teamAssignments)
+      .values({
+        employeeId: input.employeeId,
+        endsOn: input.transition.insert.endsOn,
+        organizationId: input.organizationId,
+        startsOn: input.transition.effectiveFrom,
+        teamId: mapDomainId<'Team'>(
+          input.transition.insert.targetId,
+          'team_assignments',
+          'team_id',
+        ),
+      })
+      .returning({ id: teamAssignments.id });
+    return created?.id ?? null;
+  }
+
   async activateEmployee(
     organizationId: Parameters<AdministrationRepository['activateEmployee']>[0],
     employeeId: Parameters<AdministrationRepository['activateEmployee']>[1],
@@ -588,6 +708,23 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     return result;
   }
 
+  async createTeam(
+    organizationId: Parameters<AdministrationRepository['createTeam']>[0],
+    name: Parameters<AdministrationRepository['createTeam']>[1],
+  ) {
+    const [team] = await this.transaction
+      .insert(teams)
+      .values({ name, organizationId })
+      .returning({ active: teams.active, id: teams.id, name: teams.name });
+    if (team === undefined) throw new DatabaseValueError('teams', 'id');
+    return Object.freeze({
+      active: team.active,
+      currentMemberCount: 0,
+      id: mapDomainId<'Team'>(team.id, 'teams', 'id'),
+      name: team.name,
+    });
+  }
+
   async createTechnicalAccount(
     input: Parameters<AdministrationRepository['createTechnicalAccount']>[0],
   ) {
@@ -719,6 +856,164 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     });
   }
 
+  async findEmployeeAssignments(
+    organizationId: Parameters<AdministrationRepository['findEmployeeAssignments']>[0],
+    employeeId: Parameters<AdministrationRepository['findEmployeeAssignments']>[1],
+    localDate: Parameters<AdministrationRepository['findEmployeeAssignments']>[2],
+  ) {
+    const [employee] = await this.transaction
+      .select({ status: employees.status })
+      .from(employees)
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)))
+      .limit(1);
+    if (employee === undefined) return null;
+
+    const teamRows = await this.transaction
+      .select({
+        endsOn: teamAssignments.endsOn,
+        id: teamAssignments.id,
+        startsOn: teamAssignments.startsOn,
+        teamActive: teams.active,
+        teamId: teams.id,
+        teamName: teams.name,
+      })
+      .from(teamAssignments)
+      .innerJoin(
+        teams,
+        and(eq(teams.organizationId, organizationId), eq(teams.id, teamAssignments.teamId)),
+      )
+      .where(
+        and(
+          eq(teamAssignments.organizationId, organizationId),
+          eq(teamAssignments.employeeId, employeeId),
+        ),
+      )
+      .orderBy(desc(teamAssignments.startsOn), desc(teamAssignments.id));
+    const managerRows = await this.transaction
+      .select({
+        endsOn: managerAssignments.endsOn,
+        id: managerAssignments.id,
+        managerDisplayName: employees.displayName,
+        managerEmployeeNumber: employees.employeeNumber,
+        managerId: employees.id,
+        managerStatus: employees.status,
+        startsOn: managerAssignments.startsOn,
+      })
+      .from(managerAssignments)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.organizationId, organizationId),
+          eq(employees.id, managerAssignments.managerEmployeeId),
+        ),
+      )
+      .where(
+        and(
+          eq(managerAssignments.organizationId, organizationId),
+          eq(managerAssignments.employeeId, employeeId),
+        ),
+      )
+      .orderBy(desc(managerAssignments.startsOn), desc(managerAssignments.id));
+    const activeTeamRows = await this.transaction
+      .select({ active: teams.active, id: teams.id, name: teams.name })
+      .from(teams)
+      .where(and(eq(teams.organizationId, organizationId), eq(teams.active, true)))
+      .orderBy(asc(teams.name), asc(teams.id))
+      .limit(250);
+    const managerCandidates = await this.transaction
+      .selectDistinct({
+        displayName: employees.displayName,
+        employeeNumber: employees.employeeNumber,
+        id: employees.id,
+      })
+      .from(employees)
+      .innerJoin(
+        employmentPeriods,
+        and(
+          eq(employmentPeriods.organizationId, organizationId),
+          eq(employmentPeriods.employeeId, employees.id),
+          lte(employmentPeriods.startsOn, localDate),
+          or(isNull(employmentPeriods.endsOn), gt(employmentPeriods.endsOn, localDate)),
+        ),
+      )
+      .innerJoin(
+        accountEmployeeLinks,
+        and(
+          eq(accountEmployeeLinks.organizationId, organizationId),
+          eq(accountEmployeeLinks.employeeId, employees.id),
+          isNull(accountEmployeeLinks.unlinkedAt),
+        ),
+      )
+      .innerJoin(
+        authUsers,
+        and(eq(authUsers.id, accountEmployeeLinks.userId), eq(authUsers.active, true)),
+      )
+      .innerJoin(
+        accountRoleAssignments,
+        and(
+          eq(accountRoleAssignments.organizationId, organizationId),
+          eq(accountRoleAssignments.userId, authUsers.id),
+          eq(accountRoleAssignments.role, 'MANAGER'),
+          isNull(accountRoleAssignments.revokedAt),
+        ),
+      )
+      .where(
+        and(
+          eq(employees.organizationId, organizationId),
+          eq(employees.status, 'ACTIVE'),
+          ne(employees.id, employeeId),
+        ),
+      )
+      .orderBy(asc(employees.displayName), asc(employees.employeeNumber), asc(employees.id))
+      .limit(250);
+
+    const teamHistory = Object.freeze(teamRows.map(mapAdministrationTeamAssignment));
+    const managerHistory = Object.freeze(
+      managerRows.map((row) =>
+        Object.freeze({
+          endsOn:
+            row.endsOn === null ? null : mapLocalDate(row.endsOn, 'manager_assignments', 'ends_on'),
+          id: mapDomainId<'ManagerAssignment'>(row.id, 'manager_assignments', 'id'),
+          manager: Object.freeze({
+            displayName: row.managerDisplayName,
+            employeeNumber: row.managerEmployeeNumber,
+            id: mapEmployeeId(row.managerId),
+            status: row.managerStatus,
+          }),
+          startsOn: mapLocalDate(row.startsOn, 'manager_assignments', 'starts_on'),
+        }),
+      ),
+    );
+    return Object.freeze({
+      activeTeams: Object.freeze(
+        activeTeamRows.map((team) =>
+          Object.freeze({
+            active: team.active,
+            currentMemberCount: 0,
+            id: mapDomainId<'Team'>(team.id, 'teams', 'id'),
+            name: team.name,
+          }),
+        ),
+      ),
+      currentManager:
+        managerHistory.find((assignment) => assignmentContains(assignment, localDate)) ?? null,
+      currentTeam:
+        teamHistory.find((assignment) => assignmentContains(assignment, localDate)) ?? null,
+      eligibleManagers: Object.freeze(
+        managerCandidates.map((candidate) =>
+          Object.freeze({
+            displayName: candidate.displayName,
+            employeeNumber: candidate.employeeNumber,
+            id: mapEmployeeId(candidate.id),
+          }),
+        ),
+      ),
+      employeeStatus: employee.status,
+      managerHistory,
+      teamHistory,
+    });
+  }
+
   async listEmployees(input: Parameters<AdministrationRepository['listEmployees']>[0]) {
     const statusCondition = input.status === null ? undefined : eq(employees.status, input.status);
     const where = and(eq(employees.organizationId, input.organizationId), statusCondition);
@@ -737,6 +1032,85 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     for (const row of rows) {
       const item = await this.findEmployee(input.organizationId, mapEmployeeId(row.id), input.at);
       if (item !== null) items.push(item);
+    }
+    return Object.freeze({ items: Object.freeze(items), total: totalRow?.value ?? 0 });
+  }
+
+  async listManagerAssignmentGraph(
+    organizationId: Parameters<AdministrationRepository['listManagerAssignmentGraph']>[0],
+  ) {
+    const rows = await this.transaction
+      .select({
+        employeeId: managerAssignments.employeeId,
+        endsOn: managerAssignments.endsOn,
+        id: managerAssignments.id,
+        managerEmployeeId: managerAssignments.managerEmployeeId,
+        startsOn: managerAssignments.startsOn,
+      })
+      .from(managerAssignments)
+      .where(eq(managerAssignments.organizationId, organizationId))
+      .orderBy(asc(managerAssignments.startsOn), asc(managerAssignments.id));
+    return Object.freeze(
+      rows.map((row) =>
+        Object.freeze({
+          endsOn:
+            row.endsOn === null ? null : mapLocalDate(row.endsOn, 'manager_assignments', 'ends_on'),
+          id: row.id,
+          startsOn: mapLocalDate(row.startsOn, 'manager_assignments', 'starts_on'),
+          subjectId: row.employeeId,
+          targetId: row.managerEmployeeId,
+        }),
+      ),
+    );
+  }
+
+  async listTeams(input: Parameters<AdministrationRepository['listTeams']>[0]) {
+    const statusCondition = input.active === null ? undefined : eq(teams.active, input.active);
+    const where = and(eq(teams.organizationId, input.organizationId), statusCondition);
+    const [totalRow] = await this.transaction.select({ value: count() }).from(teams).where(where);
+    const rows = await this.transaction
+      .select({ active: teams.active, id: teams.id, name: teams.name })
+      .from(teams)
+      .where(where)
+      .orderBy(asc(teams.name), asc(teams.id))
+      .limit(input.limit)
+      .offset(input.offset);
+    const items = [];
+    for (const row of rows) {
+      const [memberCount] = await this.transaction
+        .select({ value: count() })
+        .from(teamAssignments)
+        .innerJoin(
+          employees,
+          and(
+            eq(employees.organizationId, input.organizationId),
+            eq(employees.id, teamAssignments.employeeId),
+            eq(employees.status, 'ACTIVE'),
+          ),
+        )
+        .where(
+          and(
+            eq(teamAssignments.organizationId, input.organizationId),
+            eq(teamAssignments.teamId, row.id),
+            lte(teamAssignments.startsOn, input.localDate),
+            or(isNull(teamAssignments.endsOn), gt(teamAssignments.endsOn, input.localDate)),
+            sql`exists (
+              select 1 from ${employmentPeriods}
+              where ${employmentPeriods.organizationId} = ${input.organizationId}
+                and ${employmentPeriods.employeeId} = ${teamAssignments.employeeId}
+                and ${employmentPeriods.startsOn} <= ${input.localDate}
+                and (${employmentPeriods.endsOn} is null or ${employmentPeriods.endsOn} > ${input.localDate})
+            )`,
+          ),
+        );
+      items.push(
+        Object.freeze({
+          active: row.active,
+          currentMemberCount: memberCount?.value ?? 0,
+          id: mapDomainId<'Team'>(row.id, 'teams', 'id'),
+          name: row.name,
+        }),
+      );
     }
     return Object.freeze({ items: Object.freeze(items), total: totalRow?.value ?? 0 });
   }
@@ -885,6 +1259,120 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     }
     await this.transaction.delete(authSessions).where(eq(authSessions.userId, accountId));
     return true;
+  }
+
+  async setTeamActive(
+    organizationId: Parameters<AdministrationRepository['setTeamActive']>[0],
+    teamId: Parameters<AdministrationRepository['setTeamActive']>[1],
+    active: Parameters<AdministrationRepository['setTeamActive']>[2],
+    localDate: Parameters<AdministrationRepository['setTeamActive']>[3],
+  ) {
+    const [team] = await this.transaction
+      .select({ active: teams.active })
+      .from(teams)
+      .where(and(eq(teams.organizationId, organizationId), eq(teams.id, teamId)))
+      .for('update')
+      .limit(1);
+    if (team === undefined || team.active === active) return false;
+    if (!active) {
+      const [assignment] = await this.transaction
+        .select({ id: teamAssignments.id })
+        .from(teamAssignments)
+        .where(
+          and(
+            eq(teamAssignments.organizationId, organizationId),
+            eq(teamAssignments.teamId, teamId),
+            or(isNull(teamAssignments.endsOn), gt(teamAssignments.endsOn, localDate)),
+          ),
+        )
+        .limit(1);
+      if (assignment !== undefined) return false;
+    }
+    const rows = await this.transaction
+      .update(teams)
+      .set({ active })
+      .where(and(eq(teams.organizationId, organizationId), eq(teams.id, teamId)))
+      .returning({ id: teams.id });
+    return rows.length === 1;
+  }
+
+  private async closeManagerAssignment(
+    input: Parameters<AdministrationRepository['applyManagerAssignmentTransition']>[0],
+  ): Promise<string | null> {
+    if (input.transition.closeAssignmentId === null) return null;
+    const rows = await this.transaction
+      .update(managerAssignments)
+      .set({ endsOn: input.transition.effectiveFrom })
+      .where(
+        and(
+          eq(managerAssignments.organizationId, input.organizationId),
+          eq(managerAssignments.employeeId, input.employeeId),
+          eq(
+            managerAssignments.id,
+            mapDomainId<'ManagerAssignment'>(
+              input.transition.closeAssignmentId,
+              'manager_assignments',
+              'id',
+            ),
+          ),
+          lt(managerAssignments.startsOn, input.transition.effectiveFrom),
+          or(
+            isNull(managerAssignments.endsOn),
+            gt(managerAssignments.endsOn, input.transition.effectiveFrom),
+          ),
+        ),
+      )
+      .returning({ id: managerAssignments.id });
+    return rows[0]?.id ?? null;
+  }
+
+  private async closeTeamAssignment(
+    input: Parameters<AdministrationRepository['applyTeamAssignmentTransition']>[0],
+  ): Promise<string | null> {
+    if (input.transition.closeAssignmentId === null) return null;
+    const rows = await this.transaction
+      .update(teamAssignments)
+      .set({ endsOn: input.transition.effectiveFrom })
+      .where(
+        and(
+          eq(teamAssignments.organizationId, input.organizationId),
+          eq(teamAssignments.employeeId, input.employeeId),
+          eq(
+            teamAssignments.id,
+            mapDomainId<'TeamAssignment'>(
+              input.transition.closeAssignmentId,
+              'team_assignments',
+              'id',
+            ),
+          ),
+          lt(teamAssignments.startsOn, input.transition.effectiveFrom),
+          or(
+            isNull(teamAssignments.endsOn),
+            gt(teamAssignments.endsOn, input.transition.effectiveFrom),
+          ),
+        ),
+      )
+      .returning({ id: teamAssignments.id });
+    return rows[0]?.id ?? null;
+  }
+
+  private async lockActiveEmployee(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ): Promise<boolean> {
+    const [employee] = await this.transaction
+      .select({ id: employees.id })
+      .from(employees)
+      .where(
+        and(
+          eq(employees.organizationId, organizationId),
+          eq(employees.id, employeeId),
+          eq(employees.status, 'ACTIVE'),
+        ),
+      )
+      .for('update')
+      .limit(1);
+    return employee !== undefined;
   }
 
   private async accountBelongsToOrganization(
@@ -1101,6 +1589,38 @@ class PostgresAdministrationRepository implements AdministrationRepository {
       await this.transaction.delete(authSessions).where(eq(authSessions.userId, accountId));
     }
   }
+}
+
+function mapAdministrationTeamAssignment(
+  row: Readonly<{
+    endsOn: string | null;
+    id: string;
+    startsOn: string;
+    teamActive: boolean;
+    teamId: string;
+    teamName: string;
+  }>,
+) {
+  return Object.freeze({
+    endsOn: row.endsOn === null ? null : mapLocalDate(row.endsOn, 'team_assignments', 'ends_on'),
+    id: mapDomainId<'TeamAssignment'>(row.id, 'team_assignments', 'id'),
+    startsOn: mapLocalDate(row.startsOn, 'team_assignments', 'starts_on'),
+    team: Object.freeze({
+      active: row.teamActive,
+      id: mapDomainId<'Team'>(row.teamId, 'teams', 'id'),
+      name: row.teamName,
+    }),
+  });
+}
+
+function assignmentContains(
+  assignment: Readonly<{ endsOn: LocalDate | null; startsOn: LocalDate }>,
+  localDate: LocalDate,
+) {
+  return (
+    assignment.startsOn <= localDate &&
+    (assignment.endsOn === null || localDate < assignment.endsOn)
+  );
 }
 
 const INVITATION_ACCOUNT_VALUE_PREFIX = 'workledger-invitation-account:';

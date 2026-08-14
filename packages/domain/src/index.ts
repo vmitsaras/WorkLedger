@@ -5,6 +5,20 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  planEffectiveAssignmentTransition,
+  validateManagerAssignmentGraph,
+  type EffectiveAssignmentDateInPastError,
+  type EffectiveAssignmentHistoryInvalidError,
+  type EffectiveAssignmentNoChangeError,
+  type EffectiveAssignmentRecord,
+  type EffectiveAssignmentSameDateConflictError,
+  type EffectiveAssignmentTransition,
+  type EffectiveAssignmentTransitionError,
+  type ManagerAssignmentCycleError,
+  type ManagerAssignmentGraphError,
+} from './effective-assignment.js';
+
+export {
   calculateDailyCalculationSignals,
   calculationBlockerCodes,
   calculationWarningCodes,

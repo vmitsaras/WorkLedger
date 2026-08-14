@@ -16,6 +16,8 @@ import type {
   TimeAccountLedgerEntry,
   MonthlyPeriodStatus,
   CalculationBlockerCode,
+  EffectiveAssignmentRecord,
+  EffectiveAssignmentTransition,
 } from '@workledger/domain';
 
 export type EmployeeStatus = 'ACTIVE' | 'INACTIVE';
@@ -313,6 +315,63 @@ export type AdministrationEmployeeRecord = Readonly<{
 export type AdministrationEmployeePageRecord = Readonly<{
   items: readonly AdministrationEmployeeRecord[];
   total: number;
+}>;
+
+export type AdministrationTeamRecord = Readonly<{
+  active: boolean;
+  currentMemberCount: number;
+  id: DomainId<'Team'>;
+  name: string;
+}>;
+
+export type AdministrationTeamPageRecord = Readonly<{
+  items: readonly AdministrationTeamRecord[];
+  total: number;
+}>;
+
+export type AdministrationTeamAssignmentRecord = Readonly<{
+  endsOn: LocalDate | null;
+  id: DomainId<'TeamAssignment'>;
+  startsOn: LocalDate;
+  team: Readonly<{
+    active: boolean;
+    id: DomainId<'Team'>;
+    name: string;
+  }>;
+}>;
+
+export type AdministrationManagerAssignmentRecord = Readonly<{
+  endsOn: LocalDate | null;
+  id: DomainId<'ManagerAssignment'>;
+  manager: Readonly<{
+    displayName: string;
+    employeeNumber: string;
+    id: DomainId<'Employee'>;
+    status: EmployeeStatus;
+  }>;
+  startsOn: LocalDate;
+}>;
+
+export type AdministrationManagerCandidateRecord = Readonly<{
+  displayName: string;
+  employeeNumber: string;
+  id: DomainId<'Employee'>;
+}>;
+
+export type AdministrationEmployeeAssignmentsRecord = Readonly<{
+  activeTeams: readonly AdministrationTeamRecord[];
+  currentManager: AdministrationManagerAssignmentRecord | null;
+  currentTeam: AdministrationTeamAssignmentRecord | null;
+  eligibleManagers: readonly AdministrationManagerCandidateRecord[];
+  employeeStatus: EmployeeStatus;
+  managerHistory: readonly AdministrationManagerAssignmentRecord[];
+  teamHistory: readonly AdministrationTeamAssignmentRecord[];
+}>;
+
+export type ApplyAdministrationAssignmentTransitionInput = Readonly<{
+  employeeId: DomainId<'Employee'>;
+  organizationId: DomainId<'Organization'>;
+  transition: EffectiveAssignmentTransition;
 }>;
 
 export type CreateAdministrationEmployeeInput = Readonly<{
@@ -1124,6 +1183,10 @@ export interface AdministrationRepository {
     organizationId: DomainId<'Organization'>;
   }> | null>;
   createEmployee(input: CreateAdministrationEmployeeInput): Promise<AdministrationEmployeeRecord>;
+  createTeam(
+    organizationId: DomainId<'Organization'>,
+    name: string,
+  ): Promise<AdministrationTeamRecord>;
   createTechnicalAccount(
     input: CreateAdministrationTechnicalAccountInput,
   ): Promise<AdministrationSystemAccountRecord>;
@@ -1138,6 +1201,20 @@ export interface AdministrationRepository {
     employeeId: DomainId<'Employee'>,
     at: Instant,
   ): Promise<AdministrationEmployeeRecord | null>;
+  findEmployeeAssignments(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    localDate: LocalDate,
+  ): Promise<AdministrationEmployeeAssignmentsRecord | null>;
+  applyManagerAssignmentTransition(
+    input: ApplyAdministrationAssignmentTransitionInput,
+  ): Promise<string | null>;
+  applyTeamAssignmentTransition(
+    input: ApplyAdministrationAssignmentTransitionInput,
+  ): Promise<string | null>;
+  listManagerAssignmentGraph(
+    organizationId: DomainId<'Organization'>,
+  ): Promise<readonly EffectiveAssignmentRecord[]>;
   listEmployees(
     input: Readonly<{
       at: Instant;
@@ -1155,6 +1232,15 @@ export interface AdministrationRepository {
       organizationId: DomainId<'Organization'>;
     }>,
   ): Promise<AdministrationSystemAccountPageRecord>;
+  listTeams(
+    input: Readonly<{
+      limit: number;
+      localDate: LocalDate;
+      offset: number;
+      organizationId: DomainId<'Organization'>;
+      active: boolean | null;
+    }>,
+  ): Promise<AdministrationTeamPageRecord>;
   replaceEmployeeRoles(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
@@ -1185,6 +1271,12 @@ export interface AdministrationRepository {
     accountId: DomainId<'Account'>,
     enabled: boolean,
     changedAt: Instant,
+  ): Promise<boolean>;
+  setTeamActive(
+    organizationId: DomainId<'Organization'>,
+    teamId: DomainId<'Team'>,
+    active: boolean,
+    localDate: LocalDate,
   ): Promise<boolean>;
 }
 

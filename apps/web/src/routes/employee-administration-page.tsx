@@ -6,6 +6,8 @@ import {
   employeeAdminQuerySchema,
   type EmployeeAdminDetail,
   type EmployeeAdminQuery,
+  type EmployeeAssignmentAdminDetail,
+  type TeamAdminPage,
 } from '@workledger/contracts';
 import { Button, linkVariants, TextField } from '@workledger/ui';
 
@@ -13,11 +15,20 @@ import {
   activateEmployeeForAdministration,
   ApiClientError,
   createEmployeeForAdministration,
+  createTeamForAdministration,
   deactivateEmployeeForAdministration,
   reissueEmployeeInvitation,
+  replaceManagerAssignmentForAdministration,
   replaceEmployeeRolesForAdministration,
+  replaceTeamAssignmentForAdministration,
+  setTeamStateForAdministration,
 } from '../app/api-client.js';
-import { employeeAdminDetailQuery, employeeAdminPageQuery } from '../app/query.js';
+import {
+  employeeAdminDetailQuery,
+  employeeAdminPageQuery,
+  employeeAssignmentAdminDetailQuery,
+  teamAdminPageQuery,
+} from '../app/query.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -32,9 +43,11 @@ export function EmployeeAdministrationPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = readEmployeeQuery(searchParams);
   const employeesQuery = useQuery(employeeAdminPageQuery(query));
+  const teamsQuery = useQuery(teamAdminPageQuery({ limit: 50, page: 1, status: 'ALL' }));
   const [status, setStatus] = useState(query.status);
 
   if (employeesQuery.isError) throw employeesQuery.error;
+  if (teamsQuery.isError) throw teamsQuery.error;
 
   return (
     <section className="grid gap-8">
@@ -182,6 +195,8 @@ export function EmployeeAdministrationPage() {
           </Button>
         </nav>
       )}
+
+      <TeamAdministration teams={teamsQuery.data} isPending={teamsQuery.isPending} />
     </section>
   );
 }
@@ -311,18 +326,118 @@ export function NewEmployeeAdministrationPage() {
   );
 }
 
+function TeamAdministration({
+  isPending,
+  teams,
+}: Readonly<{ isPending: boolean; teams: TeamAdminPage | undefined }>) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState<Readonly<{ kind: 'error' | 'success'; text: string }>>();
+  const mutation = useMutation({
+    mutationFn: async (operation: Readonly<{ active?: boolean; teamId?: string }>) => {
+      if (operation.teamId === undefined) return createTeamForAdministration({ name: name.trim() });
+      return setTeamStateForAdministration(operation.teamId, operation.active ?? false);
+    },
+  });
+
+  async function run(operation: Readonly<{ active?: boolean; teamId?: string }>) {
+    setMessage(undefined);
+    if (operation.teamId === undefined && name.trim() === '') {
+      setMessage({ kind: 'error', text: 'Enter a team name.' });
+      document.querySelector<HTMLElement>('#new-team-name')?.focus();
+      return;
+    }
+    try {
+      await mutation.mutateAsync(operation);
+      setName('');
+      await queryClient.invalidateQueries({ queryKey: ['administration'] });
+      setMessage({ kind: 'success', text: 'The team catalog was updated.' });
+    } catch (error) {
+      setMessage({ kind: 'error', text: employeeMutationError(error) });
+    }
+  }
+
+  return (
+    <section className="wl-panel grid gap-5" aria-labelledby="team-catalog-heading">
+      <div>
+        <h2 id="team-catalog-heading" className="m-0 text-xl font-bold">
+          Teams
+        </h2>
+        <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
+          Teams group employees for orientation only. Direct-manager assignments independently
+          control manager scope.
+        </p>
+      </div>
+      {message === undefined ? null : (
+        <div
+          role={message.kind === 'error' ? 'alert' : 'status'}
+          className="wl-alert rounded-xl border p-4"
+        >
+          {message.text}
+        </div>
+      )}
+      <form
+        className="flex flex-wrap items-end gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void run({});
+        }}
+      >
+        <div className="min-w-64 flex-1">
+          <TextField id="new-team-name" label="New team name" value={name} onChange={setName} />
+        </div>
+        <Button type="submit" isDisabled={mutation.isPending}>
+          Create team
+        </Button>
+      </form>
+      {isPending ? (
+        <p className="m-0" aria-busy="true">
+          Loading teams…
+        </p>
+      ) : teams === undefined || teams.items.length === 0 ? (
+        <p className="m-0">No teams have been created.</p>
+      ) : (
+        <ul className="m-0 grid gap-3 p-0" aria-label="Team catalog">
+          {teams.items.map((team) => (
+            <li
+              key={team.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--wl-border)] p-4"
+            >
+              <div>
+                <h3 className="m-0 text-base font-bold">{team.name}</h3>
+                <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+                  {team.active ? 'Active' : 'Inactive'} — {team.currentMemberCount}{' '}
+                  {team.currentMemberCount === 1 ? 'current member' : 'current members'}
+                </p>
+              </div>
+              <Button
+                variant="quiet"
+                isDisabled={mutation.isPending || (team.active && team.currentMemberCount > 0)}
+                onPress={() => void run({ active: !team.active, teamId: team.id })}
+              >
+                {team.active ? `Deactivate ${team.name}` : `Activate ${team.name}`}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function EmployeeAdministrationDetailPage() {
   const employeeId = useParams()['employeeId'];
   if (employeeId === undefined) throw new Response(null, { status: 404 });
   const employeeQuery = useQuery(employeeAdminDetailQuery(employeeId));
+  const assignmentsQuery = useQuery(employeeAssignmentAdminDetailQuery(employeeId));
   useEffect(() => {
-    if (employeeQuery.data !== undefined) {
+    if (employeeQuery.data !== undefined && assignmentsQuery.data !== undefined) {
       window.requestAnimationFrame(() =>
         document.querySelector<HTMLElement>('[data-route-heading]')?.focus(),
       );
     }
-  }, [employeeQuery.data]);
-  if (employeeQuery.isPending) {
+  }, [assignmentsQuery.data, employeeQuery.data]);
+  if (employeeQuery.isPending || assignmentsQuery.isPending) {
     return (
       <section aria-busy="true">
         <PageHeader title="Employee" description="Loading lifecycle history…" />
@@ -330,10 +445,14 @@ export function EmployeeAdministrationDetailPage() {
     );
   }
   if (employeeQuery.isError) throw employeeQuery.error;
-  return <EmployeeDetail employee={employeeQuery.data} />;
+  if (assignmentsQuery.isError) throw assignmentsQuery.error;
+  return <EmployeeDetail assignments={assignmentsQuery.data} employee={employeeQuery.data} />;
 }
 
-function EmployeeDetail({ employee }: Readonly<{ employee: EmployeeAdminDetail }>) {
+function EmployeeDetail({
+  assignments,
+  employee,
+}: Readonly<{ assignments: EmployeeAssignmentAdminDetail; employee: EmployeeAdminDetail }>) {
   const queryClient = useQueryClient();
   const [manager, setManager] = useState(employee.roles.includes('MANAGER'));
   const [hrAdministrator, setHrAdministrator] = useState(
@@ -462,6 +581,8 @@ function EmployeeDetail({ employee }: Readonly<{ employee: EmployeeAdminDetail }
         </section>
       </div>
 
+      <AssignmentAdministration assignments={assignments} employeeId={employee.id} />
+
       {!employee.privilegedActionsAllowed ? (
         <div className="wl-alert rounded-xl border p-4">
           You may review your own employee record here, but privileged self-edit controls are
@@ -542,16 +663,233 @@ function EmployeeDetail({ employee }: Readonly<{ employee: EmployeeAdminDetail }
   );
 }
 
+function AssignmentAdministration({
+  assignments,
+  employeeId,
+}: Readonly<{ assignments: EmployeeAssignmentAdminDetail; employeeId: string }>) {
+  const queryClient = useQueryClient();
+  const [teamChoice, setTeamChoice] = useState('__UNCHANGED');
+  const [teamDate, setTeamDate] = useState('');
+  const [managerChoice, setManagerChoice] = useState('__UNCHANGED');
+  const [managerDate, setManagerDate] = useState('');
+  const [message, setMessage] = useState<Readonly<{ kind: 'error' | 'success'; text: string }>>();
+  const mutation = useMutation({
+    mutationFn: async (kind: 'manager' | 'team') => {
+      if (kind === 'team') {
+        return replaceTeamAssignmentForAdministration(employeeId, {
+          effectiveFrom: teamDate,
+          teamId: teamChoice === '__NONE' ? null : teamChoice,
+        });
+      }
+      return replaceManagerAssignmentForAdministration(employeeId, {
+        effectiveFrom: managerDate,
+        managerEmployeeId: managerChoice === '__NONE' ? null : managerChoice,
+      });
+    },
+  });
+
+  async function save(kind: 'manager' | 'team') {
+    setMessage(undefined);
+    const choice = kind === 'team' ? teamChoice : managerChoice;
+    const date = kind === 'team' ? teamDate : managerDate;
+    if (choice === '__UNCHANGED' || date === '') {
+      setMessage({
+        kind: 'error',
+        text: `Choose a ${kind === 'team' ? 'team change' : 'manager change'} and effective date.`,
+      });
+      document
+        .querySelector<HTMLElement>(
+          choice === '__UNCHANGED' ? `#${kind}-assignment-choice` : `#${kind}-assignment-date`,
+        )
+        ?.focus();
+      return;
+    }
+    try {
+      await mutation.mutateAsync(kind);
+      await queryClient.invalidateQueries({ queryKey: ['administration'] });
+      if (kind === 'team') {
+        setTeamChoice('__UNCHANGED');
+        setTeamDate('');
+      } else {
+        setManagerChoice('__UNCHANGED');
+        setManagerDate('');
+      }
+      setMessage({
+        kind: 'success',
+        text: `The ${kind === 'team' ? 'team' : 'direct-manager'} assignment was updated without rewriting prior history.`,
+      });
+    } catch (error) {
+      setMessage({ kind: 'error', text: employeeMutationError(error) });
+    }
+  }
+
+  return (
+    <section className="grid gap-6" aria-labelledby="organization-assignments-heading">
+      <div>
+        <h2 id="organization-assignments-heading" className="m-0 text-2xl font-bold">
+          Team and direct manager
+        </h2>
+        <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
+          Current state is resolved for {formatDate(assignments.asOfLocalDate)}. Team membership
+          does not grant manager access; only the effective direct-manager relationship does.
+        </p>
+      </div>
+      {message === undefined ? null : (
+        <div
+          role={message.kind === 'error' ? 'alert' : 'status'}
+          className="wl-alert rounded-xl border p-4"
+        >
+          {message.text}
+        </div>
+      )}
+      <div className="grid gap-6 xl:grid-cols-2">
+        <AssignmentHistoryCard
+          heading="Team history"
+          current={assignments.currentTeam?.team.name ?? 'No current team'}
+          items={assignments.teamHistory.map((assignment) => ({
+            endsOn: assignment.endsOn,
+            id: assignment.id,
+            label: `${assignment.team.name}${assignment.team.active ? '' : ' (inactive team)'}`,
+            startsOn: assignment.startsOn,
+          }))}
+        />
+        <AssignmentHistoryCard
+          heading="Direct-manager history"
+          current={assignments.currentManager?.manager.displayName ?? 'No current direct manager'}
+          items={assignments.managerHistory.map((assignment) => ({
+            endsOn: assignment.endsOn,
+            id: assignment.id,
+            label: `${assignment.manager.displayName} (${assignment.manager.employeeNumber})`,
+            startsOn: assignment.startsOn,
+          }))}
+        />
+      </div>
+      {!assignments.privilegedActionsAllowed ? null : (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <form
+            className="wl-panel grid gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void save('team');
+            }}
+          >
+            <h3 className="m-0 text-xl font-bold">Change team</h3>
+            <label className="grid gap-2 text-sm font-semibold" htmlFor="team-assignment-choice">
+              Team change
+              <select
+                id="team-assignment-choice"
+                className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3"
+                value={teamChoice}
+                onChange={(event) => setTeamChoice(event.target.value)}
+              >
+                <option value="__UNCHANGED">Choose a change</option>
+                <option value="__NONE">No team</option>
+                {assignments.activeTeams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <NativeDateField
+              id="team-assignment-date"
+              label="Effective from"
+              min={assignments.asOfLocalDate}
+              value={teamDate}
+              onChange={setTeamDate}
+            />
+            <Button type="submit" isDisabled={mutation.isPending}>
+              Save team assignment
+            </Button>
+          </form>
+          <form
+            className="wl-panel grid gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void save('manager');
+            }}
+          >
+            <h3 className="m-0 text-xl font-bold">Change direct manager</h3>
+            <label className="grid gap-2 text-sm font-semibold" htmlFor="manager-assignment-choice">
+              Direct-manager change
+              <select
+                id="manager-assignment-choice"
+                className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3"
+                value={managerChoice}
+                onChange={(event) => setManagerChoice(event.target.value)}
+              >
+                <option value="__UNCHANGED">Choose a change</option>
+                <option value="__NONE">No direct manager</option>
+                {assignments.eligibleManagers.map((manager) => (
+                  <option key={manager.id} value={manager.id}>
+                    {manager.displayName} ({manager.employeeNumber})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <NativeDateField
+              id="manager-assignment-date"
+              label="Effective from"
+              min={assignments.asOfLocalDate}
+              value={managerDate}
+              onChange={setManagerDate}
+            />
+            <Button type="submit" isDisabled={mutation.isPending}>
+              Save direct-manager assignment
+            </Button>
+          </form>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AssignmentHistoryCard({
+  current,
+  heading,
+  items,
+}: Readonly<{
+  current: string;
+  heading: string;
+  items: readonly Readonly<{
+    endsOn: string | null;
+    id: string;
+    label: string;
+    startsOn: string;
+  }>[];
+}>) {
+  return (
+    <section className="wl-panel grid content-start gap-4">
+      <h3 className="m-0 text-xl font-bold">{heading}</h3>
+      <p className="m-0 font-semibold">Current: {current}</p>
+      {items.length === 0 ? (
+        <p className="m-0 text-sm text-[var(--wl-text-muted)]">No assignment history.</p>
+      ) : (
+        <ol className="m-0 grid gap-2 pl-5">
+          {items.map((item) => (
+            <li key={item.id}>
+              {item.label}: {formatDate(item.startsOn)} to{' '}
+              {item.endsOn === null ? 'ongoing' : formatDate(item.endsOn)}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
 function NativeDateField({
   error,
   id,
   label,
+  min,
   onChange,
   value,
 }: Readonly<{
   error?: string;
   id: string;
   label: string;
+  min?: string;
   onChange: (value: string) => void;
   value: string;
 }>) {
@@ -562,6 +900,7 @@ function NativeDateField({
         id={id}
         type="date"
         value={value}
+        min={min}
         aria-invalid={error === undefined ? undefined : true}
         aria-describedby={error === undefined ? undefined : `${id}-error`}
         onChange={(event) => onChange(event.target.value)}
@@ -609,6 +948,17 @@ function employeeMutationError(error: unknown): string {
       return 'That employee number is already in use.';
     if (error.code === 'EMPLOYMENT_PERIOD_OVERLAP')
       return 'The new employment period overlaps existing history.';
+    if (error.code === 'ASSIGNMENT_EFFECTIVE_DATE_INVALID')
+      return 'Choose a later effective date that does not replace an assignment beginning that day.';
+    if (error.code === 'ASSIGNMENT_STATE_CONFLICT')
+      return 'The assignment changed or already has that value. Refresh and review its history.';
+    if (error.code === 'MANAGER_ASSIGNMENT_CYCLE')
+      return 'That direct-manager change would create a reporting cycle.';
+    if (error.code === 'MANAGER_NOT_ELIGIBLE')
+      return 'Choose an active employee with a current account and Manager role.';
+    if (error.code === 'TEAM_NAME_ALREADY_EXISTS') return 'A team already uses that name.';
+    if (error.code === 'TEAM_STATE_CONFLICT')
+      return 'The team changed or still has current or scheduled assignments.';
     if (error.code === 'EMPLOYEE_STATE_CONFLICT')
       return 'The employee state changed. Refresh and review the current record.';
   }

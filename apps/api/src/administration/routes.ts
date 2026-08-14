@@ -7,18 +7,25 @@ import {
   administrationActionEnvelopeSchema,
   apiErrorEnvelopeSchema,
   createEmployeeAdminRequestSchema,
+  createTeamAdminRequestSchema,
   createTechnicalAccountRequestSchema,
   deactivateEmployeeAdminRequestSchema,
   employeeAdminDetailEnvelopeSchema,
   employeeAdminPageEnvelopeSchema,
   employeeAdminQuerySchema,
+  employeeAssignmentAdminDetailEnvelopeSchema,
   invitationActivationEnvelopeSchema,
   invitationActivationRequestSchema,
+  replaceManagerAssignmentRequestSchema,
   replaceEmployeeRolesRequestSchema,
+  replaceTeamAssignmentRequestSchema,
   systemAccountPageEnvelopeSchema,
   systemAccountQuerySchema,
   systemAccountStateRequestSchema,
   systemRoleStateRequestSchema,
+  teamAdminPageEnvelopeSchema,
+  teamAdminQuerySchema,
+  teamAdminStateRequestSchema,
 } from '@workledger/contracts';
 import type { LocalDate, DomainId, Instant } from '@workledger/domain';
 import type { WorkLedgerDatabase } from '@workledger/database';
@@ -44,6 +51,7 @@ const accountParamsSchema = z.strictObject({ accountId: z.string().min(1).max(12
 const accountSessionParamsSchema = accountParamsSchema.extend({
   sessionId: z.string().min(1).max(128),
 });
+const teamParamsSchema = z.strictObject({ teamId: z.string().min(1).max(128) });
 const READ_ERRORS = {
   401: apiErrorEnvelopeSchema,
   403: apiErrorEnvelopeSchema,
@@ -117,6 +125,31 @@ export function registerAdministrationRoutes(
     async (request, reply) => {
       const identity = await readIdentity(request, authentication);
       const data = await service.listEmployees(identity, request.query, requestInstant(now));
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.get(
+    '/v1/hr/employees/:employeeId/assignments',
+    {
+      schema: {
+        description:
+          'Returns one employee’s preserved team/direct-manager assignment history plus active team and currently eligible manager options for HR administration.',
+        operationId: 'getEmployeeAssignmentsForAdministration',
+        params: employeeParamsSchema,
+        response: { 200: employeeAssignmentAdminDetailEnvelopeSchema, ...READ_ERRORS },
+        summary: 'Get employee assignment administration detail',
+        tags: ['Employee administration'],
+      },
+    },
+    async (request, reply) => {
+      const identity = await readIdentity(request, authentication);
+      const data = await service.getEmployeeAssignments(
+        identity,
+        parseAdministrationId<'Employee'>(request.params.employeeId),
+        requestInstant(now),
+      );
       reply.header('cache-control', 'private, no-store');
       return { data, meta: { requestId: request.id } };
     },
@@ -258,6 +291,62 @@ export function registerAdministrationRoutes(
   );
 
   api.post(
+    '/v1/hr/employees/:employeeId/team-assignment',
+    {
+      schema: {
+        body: replaceTeamAssignmentRequestSchema,
+        description:
+          'Creates an adjacent effective-dated team assignment or an explicit unassigned interval without rewriting earlier membership history.',
+        operationId: 'replaceEmployeeTeamAssignment',
+        params: employeeParamsSchema,
+        response: { 200: administrationActionEnvelopeSchema, ...MUTATION_ERRORS },
+        summary: 'Change an employee team assignment',
+        tags: ['Employee administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.replaceTeamAssignment(
+        prepared.identity,
+        parseAdministrationId<'Employee'>(request.params.employeeId),
+        request.body,
+        prepared.at,
+        requestIdentifier(request),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.post(
+    '/v1/hr/employees/:employeeId/manager-assignment',
+    {
+      schema: {
+        body: replaceManagerAssignmentRequestSchema,
+        description:
+          'Creates an adjacent effective-dated direct-manager assignment after validating active manager eligibility and the complete historical/future graph for cycles.',
+        operationId: 'replaceEmployeeManagerAssignment',
+        params: employeeParamsSchema,
+        response: { 200: administrationActionEnvelopeSchema, ...MUTATION_ERRORS },
+        summary: 'Change an employee direct manager',
+        tags: ['Employee administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.replaceManagerAssignment(
+        prepared.identity,
+        parseAdministrationId<'Employee'>(request.params.employeeId),
+        request.body,
+        prepared.at,
+        requestIdentifier(request),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.post(
     '/v1/hr/employees/:employeeId/invitation',
     {
       schema: {
@@ -275,6 +364,81 @@ export function registerAdministrationRoutes(
       const data = await service.reissueEmployeeInvitation(
         prepared.identity,
         parseAdministrationId<'Employee'>(request.params.employeeId),
+        prepared.at,
+        requestIdentifier(request),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.get(
+    '/v1/hr/teams',
+    {
+      schema: {
+        description:
+          'Lists organization teams with current active-member counts after applying a bounded active-state filter and pagination.',
+        operationId: 'listTeamsForAdministration',
+        querystring: teamAdminQuerySchema,
+        response: { 200: teamAdminPageEnvelopeSchema, ...READ_ERRORS },
+        summary: 'List teams for administration',
+        tags: ['Employee administration'],
+      },
+    },
+    async (request, reply) => {
+      const identity = await readIdentity(request, authentication);
+      const data = await service.listTeams(identity, request.query, requestInstant(now));
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.post(
+    '/v1/hr/teams',
+    {
+      schema: {
+        body: createTeamAdminRequestSchema,
+        description:
+          'Creates one active organization team without changing any employee assignment.',
+        operationId: 'createTeamForAdministration',
+        response: { 200: administrationActionEnvelopeSchema, ...MUTATION_ERRORS },
+        summary: 'Create a team',
+        tags: ['Employee administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.createTeam(
+        prepared.identity,
+        request.body,
+        prepared.at,
+        requestIdentifier(request),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.post(
+    '/v1/hr/teams/:teamId/state',
+    {
+      schema: {
+        body: teamAdminStateRequestSchema,
+        description:
+          'Activates or deactivates a team; deactivation is denied while current or scheduled assignments still reference it.',
+        operationId: 'setTeamStateForAdministration',
+        params: teamParamsSchema,
+        response: { 200: administrationActionEnvelopeSchema, ...MUTATION_ERRORS },
+        summary: 'Set team state',
+        tags: ['Employee administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.setTeamState(
+        prepared.identity,
+        parseAdministrationId<'Team'>(request.params.teamId),
+        request.body.active,
         prepared.at,
         requestIdentifier(request),
       );

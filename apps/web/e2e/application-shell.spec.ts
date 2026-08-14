@@ -1402,11 +1402,14 @@ test('revokes the current session and removes protected profile data before sign
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('creates and invites an employee through the keyboard-complete HR workflow', async ({
+test('creates, invites, and assigns an employee through the keyboard-complete HR workflow', async ({
   page,
 }) => {
   const employeeId = '123e4567-e89b-42d3-a456-426614174901';
+  const teamId = '123e4567-e89b-42d3-a456-426614174903';
+  const managerId = '123e4567-e89b-42d3-a456-426614174904';
   const submittedBodies: unknown[] = [];
+  const assignmentBodies: unknown[] = [];
   const employeeDetail = {
     account: {
       active: false,
@@ -1453,6 +1456,51 @@ test('creates and invites an employee through the keyboard-complete HR workflow'
   await page.route(`**/v1/hr/employees/${employeeId}`, async (route) => {
     await route.fulfill({ json: success(employeeDetail), status: 200 });
   });
+  await page.route(`**/v1/hr/employees/${employeeId}/assignments`, async (route) => {
+    await route.fulfill({
+      json: success({
+        activeTeams: [{ active: true, id: teamId, name: 'Client Services' }],
+        asOfLocalDate: '2026-08-14',
+        currentManager: null,
+        currentTeam: null,
+        eligibleManagers: [
+          {
+            displayName: 'Alex Morgan',
+            employeeNumber: 'NS-010',
+            id: managerId,
+          },
+        ],
+        managerHistory: [],
+        privilegedActionsAllowed: true,
+        teamHistory: [],
+      }),
+      status: 200,
+    });
+  });
+  await page.route(`**/v1/hr/employees/${employeeId}/team-assignment`, async (route) => {
+    expect(route.request().headers()['x-workledger-csrf']).toBe('h'.repeat(43));
+    assignmentBodies.push(route.request().postDataJSON());
+    await route.fulfill({
+      json: success({
+        action: 'TEAM_ASSIGNMENT_CHANGED',
+        occurredAt: '2026-08-14T10:30:45Z',
+        targetId: employeeId,
+      }),
+      status: 200,
+    });
+  });
+  await page.route(`**/v1/hr/employees/${employeeId}/manager-assignment`, async (route) => {
+    expect(route.request().headers()['x-workledger-csrf']).toBe('h'.repeat(43));
+    assignmentBodies.push(route.request().postDataJSON());
+    await route.fulfill({
+      json: success({
+        action: 'MANAGER_ASSIGNMENT_CHANGED',
+        occurredAt: '2026-08-14T10:30:45Z',
+        targetId: employeeId,
+      }),
+      status: 200,
+    });
+  });
 
   await page.goto('/employees/new');
   await expect(page.getByRole('heading', { name: 'Add employee' })).toBeFocused();
@@ -1475,6 +1523,18 @@ test('creates and invites an employee through the keyboard-complete HR workflow'
       employmentStartsOn: '2026-08-18',
       roles: ['EMPLOYEE', 'MANAGER'],
     },
+  ]);
+  await page.getByLabel('Team change').selectOption(teamId);
+  await page.getByLabel('Effective from', { exact: true }).first().fill('2026-08-18');
+  await page.getByRole('button', { name: 'Save team assignment' }).click();
+  await expect(page.getByRole('status')).toContainText('team assignment was updated');
+  await page.getByLabel('Direct-manager change').selectOption(managerId);
+  await page.getByLabel('Effective from', { exact: true }).last().fill('2026-08-18');
+  await page.getByRole('button', { name: 'Save direct-manager assignment' }).click();
+  await expect(page.getByRole('status')).toContainText('direct-manager assignment was updated');
+  expect(assignmentBodies).toEqual([
+    { effectiveFrom: '2026-08-18', teamId },
+    { effectiveFrom: '2026-08-18', managerEmployeeId: managerId },
   ]);
   expect(JSON.stringify(submittedBodies)).not.toMatch(/SYSTEM_ADMINISTRATOR|token/iu);
   await expectPageToHaveNoAxeViolations(page);

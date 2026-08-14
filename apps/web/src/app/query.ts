@@ -10,6 +10,7 @@ import {
   type ReportKey,
   type ReportQuery,
   type EmployeeAdminQuery,
+  type TeamAdminQuery,
   type SystemAccountQuery,
 } from '@workledger/contracts';
 
@@ -31,6 +32,8 @@ import {
   loadReportCatalog,
   loadEmployeeAdminDetail,
   loadEmployeeAdminPage,
+  loadEmployeeAssignmentAdminDetail,
+  loadTeamAdminPage,
   loadSystemAccountPage,
 } from './api-client.js';
 
@@ -69,6 +72,19 @@ export const employeeAdminDetailQuery = (employeeId: string) =>
   queryOptions({
     queryFn: ({ signal }) => loadEmployeeAdminDetail(employeeId, signal),
     queryKey: ['administration', 'employee', employeeId] as const,
+  });
+
+export const employeeAssignmentAdminDetailQuery = (employeeId: string) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadEmployeeAssignmentAdminDetail(employeeId, signal),
+    queryKey: ['administration', 'employee-assignments', employeeId] as const,
+  });
+
+export const teamAdminPageQuery = (query: TeamAdminQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadTeamAdminPage(query, signal),
+    queryKey: ['administration', 'teams', query] as const,
   });
 
 export const systemAccountPageQuery = (query: SystemAccountQuery) =>

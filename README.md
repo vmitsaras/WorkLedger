@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 9 — 1 of 8 tasks complete**
+> **Current phase progress: Phase 9 — 2 of 8 tasks complete**
 
 Phases 0–8 have passed their exit gates. The repository now includes the attendance, correction,
 absence, entitlement, manager-approval/team, and notification slices plus monthly employee review
@@ -18,8 +18,9 @@ without changing that approved record, and the monthly view separates the origin
 adjustments. Scoped operational reports now include reauthorized, formula-safe bounded CSV export,
 a minimized printable monthly record, and explicit safe summary copy. Phase 9 now includes
 accessible HR employee create/invite/activate/deactivate/history workflows and a purpose-separated
-technical account, system-role, and session surface. Teams and effective direct-manager assignment
-are next (`WL-901`).
+technical account, system-role, and session surface. Organization HR can now manage teams and
+effective-dated team/direct-manager history, with current manager scope changing immediately and
+past attribution preserved. Effective-dated weekly schedule management is next (`WL-902`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe

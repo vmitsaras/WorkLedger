@@ -319,6 +319,219 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `changes team and direct-manager scope immediately without rewriting assignment history (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'team_administration',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => AT },
+    );
+
+    try {
+      const actors = await createAdministrationActors(fixture.client);
+      const passwordHash = await hashPassword(ADMIN_PASSWORD);
+      const alice = await createManagedEmployee(
+        fixture.client,
+        actors.organizationId,
+        passwordHash,
+        'Alice Manager',
+        'alice-manager@example.test',
+        'MGR-101',
+        true,
+      );
+      const bob = await createManagedEmployee(
+        fixture.client,
+        actors.organizationId,
+        passwordHash,
+        'Bob Employee',
+        'bob-employee@example.test',
+        'EMP-201',
+        true,
+      );
+      const charlie = await createManagedEmployee(
+        fixture.client,
+        actors.organizationId,
+        passwordHash,
+        'Charlie Manager',
+        'charlie-manager@example.test',
+        'MGR-102',
+        true,
+      );
+      const originalTeam = await fixture.client.query<{ id: string }>(
+        `insert into teams (organization_id, name) values ($1, 'Client Services') returning id`,
+        [actors.organizationId],
+      );
+      const originalTeamId = originalTeam.rows[0]?.id;
+      if (originalTeamId === undefined) throw new Error('Expected original team ID.');
+      await fixture.client.query(
+        `insert into team_assignments (organization_id, employee_id, team_id, starts_on)
+         values ($1, $2, $3, '2026-01-01')`,
+        [actors.organizationId, bob.employeeId, originalTeamId],
+      );
+      await fixture.client.query(
+        `insert into manager_assignments
+           (organization_id, employee_id, manager_employee_id, starts_on)
+         values ($1, $2, $3, '2026-01-01'), ($1, $4, $3, '2026-01-01')`,
+        [actors.organizationId, bob.employeeId, alice.employeeId, charlie.employeeId],
+      );
+
+      const hrCookie = await signIn(app, 'hr@example.test', ADMIN_PASSWORD);
+      const aliceCookie = await signIn(app, 'alice-manager@example.test', ADMIN_PASSWORD);
+      const charlieCookie = await signIn(app, 'charlie-manager@example.test', ADMIN_PASSWORD);
+      const hrCsrf = await getCsrf(app, hrCookie);
+
+      const aliceBefore = await app.inject({
+        headers: { cookie: aliceCookie, origin: ORIGIN },
+        method: 'GET',
+        url: '/v1/team/status',
+      });
+      expect(aliceBefore.statusCode).toBe(200);
+      expect(aliceBefore.payload).toContain('Bob Employee');
+      const charlieBefore = await app.inject({
+        headers: { cookie: charlieCookie, origin: ORIGIN },
+        method: 'GET',
+        url: '/v1/team/status',
+      });
+      expect(charlieBefore.statusCode).toBe(200);
+      expect(charlieBefore.payload).not.toContain('Bob Employee');
+
+      const createTeam = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { name: 'Operations' },
+        url: '/v1/hr/teams',
+      });
+      expect(createTeam.statusCode, createTeam.payload).toBe(200);
+      const operationsTeamId = String(createTeam.json().data.targetId);
+      const duplicateTeam = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { name: 'Operations' },
+        url: '/v1/hr/teams',
+      });
+      expect(duplicateTeam.statusCode).toBe(409);
+      expect(duplicateTeam.json()).toMatchObject({ error: { code: 'TEAM_NAME_ALREADY_EXISTS' } });
+
+      const assignmentDetailBefore = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: `/v1/hr/employees/${bob.employeeId}/assignments`,
+      });
+      expect(assignmentDetailBefore.statusCode).toBe(200);
+      expect(assignmentDetailBefore.json()).toMatchObject({
+        data: {
+          asOfLocalDate: '2026-08-14',
+          currentManager: { manager: { displayName: 'Alice Manager' } },
+          currentTeam: { team: { name: 'Client Services' } },
+          privilegedActionsAllowed: true,
+        },
+      });
+
+      const changeTeam = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-08-14', teamId: operationsTeamId },
+        url: `/v1/hr/employees/${bob.employeeId}/team-assignment`,
+      });
+      expect(changeTeam.statusCode, changeTeam.payload).toBe(200);
+      const changeManager = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-08-14', managerEmployeeId: charlie.employeeId },
+        url: `/v1/hr/employees/${bob.employeeId}/manager-assignment`,
+      });
+      expect(changeManager.statusCode, changeManager.payload).toBe(200);
+
+      const aliceAfter = await app.inject({
+        headers: { cookie: aliceCookie, origin: ORIGIN },
+        method: 'GET',
+        url: '/v1/team/status',
+      });
+      expect(aliceAfter.statusCode).toBe(200);
+      expect(aliceAfter.payload).not.toContain('Bob Employee');
+      const charlieAfter = await app.inject({
+        headers: { cookie: charlieCookie, origin: ORIGIN },
+        method: 'GET',
+        url: '/v1/team/status',
+      });
+      expect(charlieAfter.statusCode).toBe(200);
+      expect(charlieAfter.payload).toContain('Bob Employee');
+      expect(charlieAfter.payload).toContain('Operations');
+
+      const history = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: `/v1/hr/employees/${bob.employeeId}/assignments`,
+      });
+      expect(history.json().data.teamHistory).toEqual([
+        expect.objectContaining({ endsOn: null, startsOn: '2026-08-14' }),
+        expect.objectContaining({ endsOn: '2026-08-14', startsOn: '2026-01-01' }),
+      ]);
+      expect(history.json().data.managerHistory).toEqual([
+        expect.objectContaining({
+          endsOn: null,
+          manager: expect.objectContaining({ displayName: 'Charlie Manager' }),
+          startsOn: '2026-08-14',
+        }),
+        expect.objectContaining({
+          endsOn: '2026-08-14',
+          manager: expect.objectContaining({ displayName: 'Alice Manager' }),
+          startsOn: '2026-01-01',
+        }),
+      ]);
+
+      const cycle = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-08-14', managerEmployeeId: bob.employeeId },
+        url: `/v1/hr/employees/${alice.employeeId}/manager-assignment`,
+      });
+      expect(cycle.statusCode, cycle.payload).toBe(409);
+      expect(cycle.json()).toMatchObject({ error: { code: 'MANAGER_ASSIGNMENT_CYCLE' } });
+
+      const assignedTeamCannotDeactivate = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { active: false },
+        url: `/v1/hr/teams/${operationsTeamId}/state`,
+      });
+      expect(assignedTeamCannotDeactivate.statusCode).toBe(409);
+      const selfAssignment = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-08-14', teamId: operationsTeamId },
+        url: `/v1/hr/employees/${actors.hrEmployeeId}/team-assignment`,
+      });
+      expect(selfAssignment.statusCode).toBe(403);
+
+      const persisted = await fixture.client.query<{
+        assignment_count: string;
+        audit_count: string;
+      }>(
+        `select
+           (select count(*) from manager_assignments where employee_id = $1)::text as assignment_count,
+           (select count(*) from domain_audit_events
+              where subject_employee_id = $1 and action_code in ('TEAM_ASSIGNMENT_CHANGED', 'MANAGER_ASSIGNMENT_CHANGED'))::text as audit_count`,
+        [bob.employeeId],
+      );
+      expect(persisted.rows[0]).toEqual({ assignment_count: '2', audit_count: '2' });
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createAdministrationActors(client: pg.PoolClient) {
   const passwordHash = await hashPassword(ADMIN_PASSWORD);
   const organization = await client.query<{ id: string }>(
@@ -359,6 +572,41 @@ async function createAdministrationActors(client: pg.PoolClient) {
     [organizationId, hrAccountId, systemAccountId],
   );
   return { hrAccountId, hrEmployeeId, organizationId, systemAccountId };
+}
+
+async function createManagedEmployee(
+  client: pg.PoolClient,
+  organizationId: string,
+  passwordHash: string,
+  displayName: string,
+  email: string,
+  employeeNumber: string,
+  manager: boolean,
+) {
+  const accountId = await insertCredentialAccount(client, displayName, email, passwordHash);
+  const employee = await client.query<{ id: string }>(
+    `insert into employees (organization_id, employee_number, display_name, status)
+     values ($1, $2, $3, 'ACTIVE') returning id`,
+    [organizationId, employeeNumber, displayName],
+  );
+  const employeeId = employee.rows[0]?.id;
+  if (employeeId === undefined) throw new Error('Expected managed employee ID.');
+  await client.query(
+    `insert into employment_periods (organization_id, employee_id, starts_on)
+     values ($1, $2, '2025-01-01')`,
+    [organizationId, employeeId],
+  );
+  await client.query(
+    `insert into account_employee_links (organization_id, user_id, employee_id)
+     values ($1, $2, $3)`,
+    [organizationId, accountId, employeeId],
+  );
+  await client.query(
+    `insert into account_role_assignments (organization_id, user_id, role)
+     values ($1, $2, 'EMPLOYEE')${manager ? ", ($1, $2, 'MANAGER')" : ''}`,
+    [organizationId, accountId],
+  );
+  return { accountId, employeeId };
 }
 
 async function insertCredentialAccount(

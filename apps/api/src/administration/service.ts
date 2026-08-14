@@ -2,25 +2,35 @@ import { randomBytes } from 'node:crypto';
 
 import type {
   AdministrationActionResult,
+  CreateTeamAdminRequest,
   CreateEmployeeAdminRequest,
   CreateTechnicalAccountRequest,
   EmployeeAdminDetail,
   EmployeeAdminPage,
   EmployeeAdminQuery,
+  EmployeeAssignmentAdminDetail,
+  ReplaceManagerAssignmentRequest,
+  ReplaceTeamAssignmentRequest,
   SystemAccountPage,
   SystemAccountQuery,
+  TeamAdminPage,
+  TeamAdminQuery,
 } from '@workledger/contracts';
 import {
   localDateAtInstant,
   parseDomainId,
   parseInstant,
   parseTimeZoneId,
+  planEffectiveAssignmentTransition,
+  validateManagerAssignmentGraph,
   type DomainId,
+  type EffectiveAssignmentRecord,
   type Instant,
   type LocalDate,
 } from '@workledger/domain';
 import type {
   AdministrationEmployeeRecord,
+  AdministrationEmployeeAssignmentsRecord,
   AdministrationSystemAccountRecord,
   ApplicationRole,
   AuthorizationActorRecord,
@@ -303,6 +313,41 @@ export function createAdministrationService(
       return actionResult('TECHNICAL_ACCOUNT_CREATED', account.id, at);
     },
 
+    async createTeam(
+      identity: AdministrationIdentity,
+      input: CreateTeamAdminRequest,
+      at: Instant,
+      requestId: DomainId<'Request'>,
+    ): Promise<AdministrationActionResult> {
+      try {
+        return await database.transaction(async (transaction) => {
+          const { actor, context } = await requireHrReadContext(transaction, identity, at);
+          const team = await transaction.administration.createTeam(
+            context.organization.id,
+            input.name,
+          );
+          await transaction.audit.appendDomain({
+            actionCode: 'TEAM_CREATED',
+            actor: auditActor(actor, 'HR_ADMINISTRATOR'),
+            facts: { nextStatus: 'ACTIVE' },
+            occurredAt: at,
+            organizationId: context.organization.id,
+            outcome: 'SUCCESS',
+            privileged: true,
+            reasonCode: null,
+            requestId,
+            restrictedReasonId: null,
+            subjectEmployeeId: null,
+            targetId: team.id,
+            targetKind: 'TEAM',
+          });
+          return actionResult('TEAM_CREATED', team.id, at);
+        }, serializableRetry);
+      } catch (error) {
+        throw mapAdministrationDatabaseError(error);
+      }
+    },
+
     async deactivateEmployee(
       identity: AdministrationIdentity,
       employeeId: DomainId<'Employee'>,
@@ -395,6 +440,34 @@ export function createAdministrationService(
       });
     },
 
+    async getEmployeeAssignments(
+      identity: AdministrationIdentity,
+      employeeId: DomainId<'Employee'>,
+      at: Instant,
+    ): Promise<EmployeeAssignmentAdminDetail> {
+      return database.transaction(async (transaction) => {
+        const context = await requireContext(transaction, identity, at);
+        const actor = await requireEmployeeAdministration(
+          transaction,
+          identity,
+          context.organization.id,
+          employeeId,
+          at,
+          'EMPLOYEE_PROFILE_READ',
+        );
+        const localDate = organizationLocalDate(at, context.organization.timeZone);
+        const assignments = await transaction.administration.findEmployeeAssignments(
+          context.organization.id,
+          employeeId,
+          localDate,
+        );
+        if (assignments === null) {
+          throw new WorkLedgerApiError({ code: 'EMPLOYEE_NOT_FOUND', statusCode: 404 });
+        }
+        return mapEmployeeAssignments(assignments, localDate, actor.employeeId !== employeeId);
+      });
+    },
+
     async listEmployees(
       identity: AdministrationIdentity,
       query: EmployeeAdminQuery,
@@ -419,6 +492,27 @@ export function createAdministrationService(
             );
             return item;
           }),
+          pagination: pagination(query.page, query.limit, page.total),
+        });
+      });
+    },
+
+    async listTeams(
+      identity: AdministrationIdentity,
+      query: TeamAdminQuery,
+      at: Instant,
+    ): Promise<TeamAdminPage> {
+      return database.transaction(async (transaction) => {
+        const { context } = await requireHrReadContext(transaction, identity, at);
+        const page = await transaction.administration.listTeams({
+          active: query.status === 'ALL' ? null : query.status === 'ACTIVE',
+          limit: query.limit,
+          localDate: organizationLocalDate(at, context.organization.timeZone),
+          offset: (query.page - 1) * query.limit,
+          organizationId: context.organization.id,
+        });
+        return Object.freeze({
+          items: [...page.items],
           pagination: pagination(query.page, query.limit, page.total),
         });
       });
@@ -581,6 +675,148 @@ export function createAdministrationService(
       }, serializableRetry);
     },
 
+    async replaceManagerAssignment(
+      identity: AdministrationIdentity,
+      employeeId: DomainId<'Employee'>,
+      input: ReplaceManagerAssignmentRequest,
+      at: Instant,
+      requestId: DomainId<'Request'>,
+    ): Promise<AdministrationActionResult> {
+      try {
+        return await database.transaction(async (transaction) => {
+          const context = await requireContext(transaction, identity, at);
+          const actor = await requireEmployeeAdministration(
+            transaction,
+            identity,
+            context.organization.id,
+            employeeId,
+            at,
+            'TEAM_MANAGER_ASSIGN',
+          );
+          const localDate = organizationLocalDate(at, context.organization.timeZone);
+          const assignments = await transaction.administration.findEmployeeAssignments(
+            context.organization.id,
+            employeeId,
+            localDate,
+          );
+          if (assignments === null) {
+            throw new WorkLedgerApiError({ code: 'EMPLOYEE_NOT_FOUND', statusCode: 404 });
+          }
+          if (assignments.employeeStatus !== 'ACTIVE') {
+            throw new WorkLedgerApiError({ code: 'EMPLOYEE_STATE_CONFLICT', statusCode: 409 });
+          }
+          const transition = planEffectiveAssignmentTransition(
+            managerEffectiveHistory(employeeId, assignments),
+            employeeId,
+            localDate,
+            input.effectiveFrom as LocalDate,
+            input.managerEmployeeId,
+          );
+          if (!transition.ok) throw assignmentPlanningError(transition.error.code);
+          const assignmentId = await transaction.administration.applyManagerAssignmentTransition({
+            employeeId,
+            organizationId: context.organization.id,
+            transition: transition.value,
+          });
+          if (assignmentId === null) {
+            throw new WorkLedgerApiError({ code: 'MANAGER_NOT_ELIGIBLE', statusCode: 409 });
+          }
+          const graph = validateManagerAssignmentGraph(
+            await transaction.administration.listManagerAssignmentGraph(context.organization.id),
+          );
+          if (!graph.ok) {
+            throw new WorkLedgerApiError({
+              code:
+                graph.error.code === 'MANAGER_ASSIGNMENT_CYCLE'
+                  ? 'MANAGER_ASSIGNMENT_CYCLE'
+                  : 'INTERNAL_ERROR',
+              statusCode: graph.error.code === 'MANAGER_ASSIGNMENT_CYCLE' ? 409 : 503,
+            });
+          }
+          await appendAssignmentAudit(
+            transaction,
+            actor,
+            context.organization.id,
+            employeeId,
+            assignmentId,
+            input.effectiveFrom as LocalDate,
+            input.managerEmployeeId === null ? 'UNASSIGNED' : 'ASSIGNED',
+            'MANAGER_ASSIGNMENT_CHANGED',
+            at,
+            requestId,
+          );
+          return actionResult('MANAGER_ASSIGNMENT_CHANGED', assignmentId, at);
+        }, serializableRetry);
+      } catch (error) {
+        throw mapAdministrationDatabaseError(error);
+      }
+    },
+
+    async replaceTeamAssignment(
+      identity: AdministrationIdentity,
+      employeeId: DomainId<'Employee'>,
+      input: ReplaceTeamAssignmentRequest,
+      at: Instant,
+      requestId: DomainId<'Request'>,
+    ): Promise<AdministrationActionResult> {
+      try {
+        return await database.transaction(async (transaction) => {
+          const context = await requireContext(transaction, identity, at);
+          const actor = await requireEmployeeAdministration(
+            transaction,
+            identity,
+            context.organization.id,
+            employeeId,
+            at,
+            'TEAM_MANAGER_ASSIGN',
+          );
+          const localDate = organizationLocalDate(at, context.organization.timeZone);
+          const assignments = await transaction.administration.findEmployeeAssignments(
+            context.organization.id,
+            employeeId,
+            localDate,
+          );
+          if (assignments === null) {
+            throw new WorkLedgerApiError({ code: 'EMPLOYEE_NOT_FOUND', statusCode: 404 });
+          }
+          if (assignments.employeeStatus !== 'ACTIVE') {
+            throw new WorkLedgerApiError({ code: 'EMPLOYEE_STATE_CONFLICT', statusCode: 409 });
+          }
+          const transition = planEffectiveAssignmentTransition(
+            teamEffectiveHistory(employeeId, assignments),
+            employeeId,
+            localDate,
+            input.effectiveFrom as LocalDate,
+            input.teamId,
+          );
+          if (!transition.ok) throw assignmentPlanningError(transition.error.code);
+          const assignmentId = await transaction.administration.applyTeamAssignmentTransition({
+            employeeId,
+            organizationId: context.organization.id,
+            transition: transition.value,
+          });
+          if (assignmentId === null) {
+            throw new WorkLedgerApiError({ code: 'TEAM_STATE_CONFLICT', statusCode: 409 });
+          }
+          await appendAssignmentAudit(
+            transaction,
+            actor,
+            context.organization.id,
+            employeeId,
+            assignmentId,
+            input.effectiveFrom as LocalDate,
+            input.teamId === null ? 'UNASSIGNED' : 'ASSIGNED',
+            'TEAM_ASSIGNMENT_CHANGED',
+            at,
+            requestId,
+          );
+          return actionResult('TEAM_ASSIGNMENT_CHANGED', assignmentId, at);
+        }, serializableRetry);
+      } catch (error) {
+        throw mapAdministrationDatabaseError(error);
+      }
+    },
+
     async revokeSystemSession(
       identity: AdministrationIdentity,
       accountId: DomainId<'Account'>,
@@ -649,6 +885,48 @@ export function createAdministrationService(
           targetKind: 'ACCOUNT',
         });
         return actionResult(active ? 'ACCOUNT_ACTIVATED' : 'ACCOUNT_DEACTIVATED', accountId, at);
+      }, serializableRetry);
+    },
+
+    async setTeamState(
+      identity: AdministrationIdentity,
+      teamId: DomainId<'Team'>,
+      active: boolean,
+      at: Instant,
+      requestId: DomainId<'Request'>,
+    ): Promise<AdministrationActionResult> {
+      return database.transaction(async (transaction) => {
+        const { actor, context } = await requireHrReadContext(transaction, identity, at);
+        const localDate = organizationLocalDate(at, context.organization.timeZone);
+        const changed = await transaction.administration.setTeamActive(
+          context.organization.id,
+          teamId,
+          active,
+          localDate,
+        );
+        if (!changed) {
+          throw new WorkLedgerApiError({ code: 'TEAM_STATE_CONFLICT', statusCode: 409 });
+        }
+        await transaction.audit.appendDomain({
+          actionCode: active ? 'TEAM_ACTIVATED' : 'TEAM_DEACTIVATED',
+          actor: auditActor(actor, 'HR_ADMINISTRATOR'),
+          facts: {
+            effectiveDate: localDate,
+            nextStatus: active ? 'ACTIVE' : 'INACTIVE',
+            previousStatus: active ? 'INACTIVE' : 'ACTIVE',
+          },
+          occurredAt: at,
+          organizationId: context.organization.id,
+          outcome: 'SUCCESS',
+          privileged: true,
+          reasonCode: null,
+          requestId,
+          restrictedReasonId: null,
+          subjectEmployeeId: null,
+          targetId: teamId,
+          targetKind: 'TEAM',
+        });
+        return actionResult(active ? 'TEAM_ACTIVATED' : 'TEAM_DEACTIVATED', teamId, at);
       }, serializableRetry);
     },
 
@@ -775,7 +1053,8 @@ async function requireEmployeeAdministration(
     | 'EMPLOYEE_ACCOUNT_MANAGE'
     | 'EMPLOYEE_MANAGE'
     | 'EMPLOYEE_PROFILE_READ'
-    | 'EMPLOYEE_ROLE_MANAGE',
+    | 'EMPLOYEE_ROLE_MANAGE'
+    | 'TEAM_MANAGER_ASSIGN',
 ) {
   const context = await transaction.accountSelfService.findContext(identity.accountId, at);
   if (context === null || !context.accountActive) {
@@ -787,7 +1066,10 @@ async function requireEmployeeAdministration(
     organizationLocalDate(at, context.organization.timeZone),
   );
   if (actor === null) throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
-  if (action !== 'EMPLOYEE_PROFILE_READ' && !identity.fresh) {
+  if (
+    !identity.fresh &&
+    ['EMPLOYEE_ACCOUNT_MANAGE', 'EMPLOYEE_MANAGE', 'EMPLOYEE_ROLE_MANAGE'].includes(action)
+  ) {
     throw new WorkLedgerApiError({ code: 'AUTH_SESSION_NOT_FRESH', statusCode: 401 });
   }
   const decision = authorizeEmployeeTarget({
@@ -853,6 +1135,98 @@ function mapEmployee(
       HR_ROLES.has(role),
     ),
     status: employee.status,
+  });
+}
+
+function mapEmployeeAssignments(
+  assignments: AdministrationEmployeeAssignmentsRecord,
+  localDate: LocalDate,
+  privilegedActionsAllowed: boolean,
+): EmployeeAssignmentAdminDetail {
+  return Object.freeze({
+    activeTeams: assignments.activeTeams.map(({ active, id, name }) => ({ active, id, name })),
+    asOfLocalDate: localDate,
+    currentManager: assignments.currentManager,
+    currentTeam: assignments.currentTeam,
+    eligibleManagers: [...assignments.eligibleManagers],
+    managerHistory: [...assignments.managerHistory],
+    privilegedActionsAllowed,
+    teamHistory: [...assignments.teamHistory],
+  });
+}
+
+function teamEffectiveHistory(
+  employeeId: DomainId<'Employee'>,
+  assignments: AdministrationEmployeeAssignmentsRecord,
+): readonly EffectiveAssignmentRecord[] {
+  return assignments.teamHistory.map((assignment) => ({
+    endsOn: assignment.endsOn,
+    id: assignment.id,
+    startsOn: assignment.startsOn,
+    subjectId: employeeId,
+    targetId: assignment.team.id,
+  }));
+}
+
+function managerEffectiveHistory(
+  employeeId: DomainId<'Employee'>,
+  assignments: AdministrationEmployeeAssignmentsRecord,
+): readonly EffectiveAssignmentRecord[] {
+  return assignments.managerHistory.map((assignment) => ({
+    endsOn: assignment.endsOn,
+    id: assignment.id,
+    startsOn: assignment.startsOn,
+    subjectId: employeeId,
+    targetId: assignment.manager.id,
+  }));
+}
+
+function assignmentPlanningError(
+  code:
+    | 'EFFECTIVE_ASSIGNMENT_DATE_IN_PAST'
+    | 'EFFECTIVE_ASSIGNMENT_HISTORY_INVALID'
+    | 'EFFECTIVE_ASSIGNMENT_NO_CHANGE'
+    | 'EFFECTIVE_ASSIGNMENT_SAME_DATE_CONFLICT',
+) {
+  if (
+    code === 'EFFECTIVE_ASSIGNMENT_DATE_IN_PAST' ||
+    code === 'EFFECTIVE_ASSIGNMENT_SAME_DATE_CONFLICT'
+  ) {
+    return new WorkLedgerApiError({ code: 'ASSIGNMENT_EFFECTIVE_DATE_INVALID', statusCode: 409 });
+  }
+  return new WorkLedgerApiError({
+    code:
+      code === 'EFFECTIVE_ASSIGNMENT_NO_CHANGE' ? 'ASSIGNMENT_STATE_CONFLICT' : 'INTERNAL_ERROR',
+    statusCode: code === 'EFFECTIVE_ASSIGNMENT_NO_CHANGE' ? 409 : 503,
+  });
+}
+
+async function appendAssignmentAudit(
+  transaction: WorkLedgerTransaction,
+  actor: AuthorizationActorRecord,
+  organizationId: DomainId<'Organization'>,
+  employeeId: DomainId<'Employee'>,
+  assignmentId: string,
+  effectiveDate: LocalDate,
+  nextStatus: 'ASSIGNED' | 'UNASSIGNED',
+  actionCode: 'MANAGER_ASSIGNMENT_CHANGED' | 'TEAM_ASSIGNMENT_CHANGED',
+  occurredAt: Instant,
+  requestId: DomainId<'Request'>,
+) {
+  await transaction.audit.appendDomain({
+    actionCode,
+    actor: auditActor(actor, 'HR_ADMINISTRATOR'),
+    facts: { effectiveDate, nextStatus },
+    occurredAt,
+    organizationId,
+    outcome: 'SUCCESS',
+    privileged: true,
+    reasonCode: null,
+    requestId,
+    restrictedReasonId: null,
+    subjectEmployeeId: employeeId,
+    targetId: assignmentId,
+    targetKind: 'ASSIGNMENT',
   });
 }
 
@@ -952,8 +1326,17 @@ function mapAdministrationDatabaseError(error: unknown): Error {
   if (code === '23505' && constraint === 'employees_organization_employee_number_uidx') {
     return new WorkLedgerApiError({ code: 'EMPLOYEE_NUMBER_ALREADY_EXISTS', statusCode: 409 });
   }
+  if (code === '23505' && constraint === 'teams_organization_name_uidx') {
+    return new WorkLedgerApiError({ code: 'TEAM_NAME_ALREADY_EXISTS', statusCode: 409 });
+  }
   if (code === '23P01' && constraint === 'employment_periods_no_overlap') {
     return new WorkLedgerApiError({ code: 'EMPLOYMENT_PERIOD_OVERLAP', statusCode: 409 });
+  }
+  if (
+    code === '23P01' &&
+    ['manager_assignments_no_overlap', 'team_assignments_no_overlap'].includes(constraint ?? '')
+  ) {
+    return new WorkLedgerApiError({ code: 'ASSIGNMENT_STATE_CONFLICT', statusCode: 409 });
   }
   return error instanceof Error
     ? error

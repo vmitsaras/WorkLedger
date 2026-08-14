@@ -29,8 +29,10 @@ import {
   reportCatalogQuery,
   reportResultQuery,
   employeeAdminDetailQuery,
+  employeeAssignmentAdminDetailQuery,
   employeeAdminPageQuery,
   systemAccountPageQuery,
+  teamAdminPageQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -549,6 +551,7 @@ function createEmployeeAdminListLoader(queryClient: QueryClient): LoaderFunction
     const parsed = employeeAdminQuerySchema.safeParse(values);
     if (!parsed.success) return redirect('/employees?limit=20&page=1&status=ALL');
     void queryClient.prefetchQuery(employeeAdminPageQuery(parsed.data));
+    void queryClient.prefetchQuery(teamAdminPageQuery({ limit: 50, page: 1, status: 'ALL' }));
     return parsed.data;
   };
 }
@@ -560,6 +563,7 @@ function createEmployeeAdminDetailLoader(queryClient: QueryClient): LoaderFuncti
     const employeeId = params['employeeId'];
     if (employeeId === undefined) throw new Response(null, { status: 404 });
     void queryClient.prefetchQuery(employeeAdminDetailQuery(employeeId));
+    void queryClient.prefetchQuery(employeeAssignmentAdminDetailQuery(employeeId));
     return null;
   };
 }

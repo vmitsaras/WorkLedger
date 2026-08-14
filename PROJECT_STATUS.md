@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 9 — Administration
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 1 of 8 Phase 9 tasks complete
-**Current milestone:** Teams and effective manager assignment
-**Active task:** `WL-901`
+**Phase progress:** 2 of 8 Phase 9 tasks complete
+**Current milestone:** Effective-dated weekly schedule management
+**Active task:** `WL-902`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Build teams, effective-dated direct-manager assignments, and immediate authorization-scope changes
-with preserved historical attribution for `WL-901`.
+Build effective-dated weekly schedule administration with overlap/gap validation and future changes
+that preserve approved history for `WL-902`.
 
 ## Verified decisions
 
@@ -72,6 +72,14 @@ with preserved historical attribution for `WL-901`.
   addresses and raw user-agent values never enter browser DTOs.
 - In-app notification records are core; external email delivery is optional and non-transactional.
 - Manager scope is current direct reports only and is evaluated when each request is handled.
+- Team membership and direct-manager assignment use separate non-overlapping half-open histories;
+  current manager scope is re-resolved from PostgreSQL on every request, so an effective manager
+  change transfers access immediately while prior rows retain attribution but grant no access.
+- Effective assignment changes cannot be backdated or replace an existing same-day boundary,
+  preserve already scheduled later boundaries, and validate the full current/future manager graph
+  against self-links and direct or indirect cycles inside the serializable mutation transaction.
+- Inactive teams remain readable in history but unavailable for new assignments; a team with a
+  current or scheduled assignment cannot be deactivated.
 - `/team` uses active attendance before neutral organization-local date absence coverage and exposes
   only display name, current team name, textual availability, and a generic unresolved-record flag.
   It never exposes employee/request IDs, absence subtype, sickness context, notes, reasons,
@@ -364,6 +372,36 @@ with preserved historical attribution for `WL-901`.
   assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-901` — Build teams, manager assignments, and effective scope changes
+
+- Changed: added strict contracts and generated OpenAPI for the team catalog plus effective team
+  and direct-manager history/mutations; implemented pure transition and manager-graph rules,
+  serializable PostgreSQL repositories and audit writes, immediate authorization-scope transfer,
+  accessible team and employee-detail controls, and preserved scheduled/historical boundaries.
+- Verified: pinned toolchain/workspace/version/configuration checks, reproducible OpenAPI,
+  formatting, ESLint and 224-file/1,108-import boundaries, strict TypeScript, 24 tooling tests, 288
+  unit/component tests across 38 files, 21 database-enabled integration tests across 11 focused
+  files, 19 Chromium scenarios, and the production/workspace build pass. The build retains the
+  known large-chunk advisory; database integration retains the existing `pg` concurrent-query
+  deprecation warning.
+- Accessibility: the team catalog and two assignment histories use semantic headings, ordered
+  history, textual current/state/date information, labelled native controls, persistent mutation
+  results, pending protection, validation focus recovery, privileged self-control omission, and
+  component/browser axe coverage through a keyboard-operable workflow.
+- Security/data: all routes enforce active account and organization-HR authority; mutations are
+  same-origin and CSRF protected, privileged self-assignment is denied, manager candidates are
+  revalidated at the effective date, and changes lock/close/insert/validate the complete manager
+  graph/audit in one serializable transaction. Current manager access transfers immediately from
+  authoritative PostgreSQL data, while historical rows grant no scope and remain unchanged.
+- Documentation: added `docs/89-team-manager-administration.md`, regenerated OpenAPI, and
+  synchronized README, TODO, task board, and project status. No migration or version bump is needed
+  because the existing assignment constraints cover this slice and this is not the Phase 9 exit
+  gate.
+- Remaining risk: team-catalog pagination beyond its first bounded page and the full performance,
+  cross-browser, assistive-technology, and production security matrices remain Phase 10 work. The
+  existing large web chunk advisory, `pg` warning, `D-502`, and `D-504` also remain explicit.
+- Next task: `WL-902`.
 
 ### `WL-900` — Build employee lifecycle and separated technical-account/session administration
 
@@ -1045,12 +1083,12 @@ with preserved historical attribution for `WL-901`.
 
 ## Current blockers
 
-No `WL-901` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
+No `WL-902` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
 recovery, and `D-502` remains open before the production browser gate.
 
 ## Next task
 
-`WL-901 — Build teams, manager assignments, and effective scope changes.`
+`WL-902 — Build effective-dated schedule management.`
 
 ## Update rules
 

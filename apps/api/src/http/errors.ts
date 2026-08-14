@@ -41,6 +41,10 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'An account already uses that email address.';
     case 'ACCOUNT_STATE_CONFLICT':
       return 'The account is already in the requested state.';
+    case 'ASSIGNMENT_EFFECTIVE_DATE_INVALID':
+      return 'Choose an effective date that preserves the existing assignment history.';
+    case 'ASSIGNMENT_STATE_CONFLICT':
+      return 'The assignment changed. Refresh and review the current history.';
     case 'ACCESS_DENIED':
       return 'You do not have permission to perform this action.';
     case 'AUTH_REQUIRED':
@@ -61,6 +65,10 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'The employment period overlaps existing history.';
     case 'MALFORMED_REQUEST':
       return 'The request body is not valid JSON.';
+    case 'MANAGER_ASSIGNMENT_CYCLE':
+      return 'That manager assignment would create a reporting cycle.';
+    case 'MANAGER_NOT_ELIGIBLE':
+      return 'Choose an active employee with current manager authority.';
     case 'RATE_LIMITED':
       return 'Too many requests. Try again later.';
     case 'REQUEST_TOO_LARGE':
@@ -69,6 +77,10 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'The report contains too many rows to export. Narrow the date range or employee scope.';
     case 'ROUTE_NOT_FOUND':
       return 'The requested endpoint was not found.';
+    case 'TEAM_NAME_ALREADY_EXISTS':
+      return 'A team already uses that name.';
+    case 'TEAM_STATE_CONFLICT':
+      return 'The team state changed or the team still has current or scheduled assignments.';
     case 'UNSUPPORTED_MEDIA_TYPE':
       return 'Use a supported request content type.';
     case 'VALIDATION_FAILED':

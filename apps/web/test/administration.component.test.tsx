@@ -8,8 +8,10 @@ import { vi } from 'vitest';
 import type {
   EmployeeAdminDetail,
   EmployeeAdminPage,
+  EmployeeAssignmentAdminDetail,
   SelfContext,
   SystemAccountPage,
+  TeamAdminPage,
 } from '@workledger/contracts';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
@@ -117,13 +119,80 @@ const SYSTEM_PAGE: SystemAccountPage = {
   pagination: { limit: 20, page: 1, total: 2, totalPages: 1 },
 };
 
+const TEAM_PAGE: TeamAdminPage = {
+  items: [
+    { active: true, currentMemberCount: 1, id: 'team-alpha', name: 'Client Services' },
+    { active: false, currentMemberCount: 0, id: 'team-old', name: 'Former Operations' },
+  ],
+  pagination: { limit: 50, page: 1, total: 2, totalPages: 1 },
+};
+
+const SELF_ASSIGNMENTS: EmployeeAssignmentAdminDetail = {
+  activeTeams: [{ active: true, id: 'team-alpha', name: 'Client Services' }],
+  asOfLocalDate: '2026-08-14',
+  currentManager: null,
+  currentTeam: null,
+  eligibleManagers: [],
+  managerHistory: [],
+  privilegedActionsAllowed: false,
+  teamHistory: [],
+};
+
+const EMPLOYEE_ASSIGNMENTS: EmployeeAssignmentAdminDetail = {
+  activeTeams: [
+    { active: true, id: 'team-alpha', name: 'Client Services' },
+    { active: true, id: 'team-beta', name: 'Operations' },
+  ],
+  asOfLocalDate: '2026-08-14',
+  currentManager: {
+    endsOn: null,
+    id: 'manager-assignment-current',
+    manager: {
+      displayName: 'Alex Morgan',
+      employeeNumber: 'MGR-001',
+      id: 'manager-alex',
+      status: 'ACTIVE',
+    },
+    startsOn: '2026-04-01',
+  },
+  currentTeam: {
+    endsOn: null,
+    id: 'team-assignment-current',
+    startsOn: '2026-06-01',
+    team: { active: true, id: 'team-alpha', name: 'Client Services' },
+  },
+  eligibleManagers: [{ displayName: 'Sam Rivera', employeeNumber: 'MGR-002', id: 'manager-sam' }],
+  managerHistory: [
+    {
+      endsOn: null,
+      id: 'manager-assignment-current',
+      manager: {
+        displayName: 'Alex Morgan',
+        employeeNumber: 'MGR-001',
+        id: 'manager-alex',
+        status: 'ACTIVE',
+      },
+      startsOn: '2026-04-01',
+    },
+  ],
+  privilegedActionsAllowed: true,
+  teamHistory: [
+    {
+      endsOn: null,
+      id: 'team-assignment-current',
+      startsOn: '2026-06-01',
+      team: { active: true, id: 'team-alpha', name: 'Client Services' },
+    },
+  ],
+};
+
 afterEach(() => {
   clearSessionMemory();
   vi.unstubAllGlobals();
 });
 
-test('renders a dense, accessible employee directory with textual lifecycle and account states', async () => {
-  stubFetch(HR_CONTEXT, { employeePage: EMPLOYEE_PAGE });
+test('renders a dense, accessible employee directory and textual team catalog states', async () => {
+  stubFetch(HR_CONTEXT, { employeePage: EMPLOYEE_PAGE, teamPage: TEAM_PAGE });
   const { container } = renderApplication('/employees?limit=20&page=1&status=ALL');
 
   const heading = await screen.findByRole('heading', { name: 'Employees' });
@@ -137,11 +206,18 @@ test('renders a dense, accessible employee directory with textual lifecycle and 
   expect(row).toHaveTextContent('Invitation pending');
   expect(row).toHaveTextContent('Employee, Manager');
   expect(screen.getByLabelText('Employment status')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Teams' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Client Services' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Deactivate Client Services' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Activate Former Operations' })).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
 test('keeps privileged self-edit controls absent on an HR administrator’s own employee record', async () => {
-  stubFetch(HR_CONTEXT, { employeeDetail: SELF_EMPLOYEE_DETAIL });
+  stubFetch(HR_CONTEXT, {
+    employeeAssignments: SELF_ASSIGNMENTS,
+    employeeDetail: SELF_EMPLOYEE_DETAIL,
+  });
   const { container } = renderApplication(`/employees/${EMPLOYEE_ID}`);
 
   const heading = await screen.findByRole('heading', { name: 'HR Administrator' });
@@ -149,6 +225,26 @@ test('keeps privileged self-edit controls absent on an HR administrator’s own 
   expect(screen.getByText(/privileged self-edit controls are unavailable/iu)).toBeVisible();
   expect(screen.queryByRole('button', { name: 'Save roles' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Deactivate employee/iu })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Save team assignment' })).not.toBeInTheDocument();
+  await expectNoAxeViolations(container);
+});
+
+test('shows separate effective team and manager history with keyboard-focused recovery', async () => {
+  stubFetch(HR_CONTEXT, {
+    employeeAssignments: EMPLOYEE_ASSIGNMENTS,
+    employeeDetail: { ...SELF_EMPLOYEE_DETAIL, privilegedActionsAllowed: true },
+  });
+  const user = userEvent.setup();
+  const { container } = renderApplication(`/employees/${EMPLOYEE_ID}`);
+
+  const heading = await screen.findByRole('heading', { name: 'HR Administrator' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(screen.getByText('Current: Client Services')).toBeVisible();
+  expect(screen.getByText('Current: Alex Morgan')).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Save direct-manager assignment' }));
+  expect(screen.getByRole('alert')).toHaveTextContent(/Choose a manager change/iu);
+  expect(screen.getByLabelText('Direct-manager change')).toHaveFocus();
+  expect(screen.getByRole('option', { name: 'Sam Rivera (MGR-002)' })).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -206,8 +302,10 @@ function stubFetch(
   context: SelfContext,
   responses: Readonly<{
     employeeDetail?: EmployeeAdminDetail;
+    employeeAssignments?: EmployeeAssignmentAdminDetail;
     employeePage?: EmployeeAdminPage;
     systemPage?: SystemAccountPage;
+    teamPage?: TeamAdminPage;
   }>,
 ) {
   vi.stubGlobal(
@@ -220,6 +318,12 @@ function stubFetch(
       if (url.pathname === '/v1/me/context') return successResponse(context);
       if (url.pathname === '/v1/hr/employees' && responses.employeePage !== undefined) {
         return successResponse(responses.employeePage);
+      }
+      if (url.pathname === '/v1/hr/teams' && responses.teamPage !== undefined) {
+        return successResponse(responses.teamPage);
+      }
+      if (url.pathname.endsWith('/assignments') && responses.employeeAssignments !== undefined) {
+        return successResponse(responses.employeeAssignments);
       }
       if (url.pathname.startsWith('/v1/hr/employees/') && responses.employeeDetail !== undefined) {
         return successResponse(responses.employeeDetail);

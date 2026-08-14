@@ -74,19 +74,27 @@ import {
   administrationActionEnvelopeSchema,
   employeeAdminDetailEnvelopeSchema,
   employeeAdminPageEnvelopeSchema,
+  employeeAssignmentAdminDetailEnvelopeSchema,
   invitationActivationEnvelopeSchema,
   systemAccountPageEnvelopeSchema,
+  teamAdminPageEnvelopeSchema,
   type ActivateEmployeeAdminRequest,
   type AdministrationActionResult,
   type CreateEmployeeAdminRequest,
+  type CreateTeamAdminRequest,
   type CreateTechnicalAccountRequest,
   type DeactivateEmployeeAdminRequest,
   type EmployeeAdminDetail,
   type EmployeeAdminPage,
   type EmployeeAdminQuery,
+  type EmployeeAssignmentAdminDetail,
+  type ReplaceManagerAssignmentRequest,
   type ReplaceEmployeeRolesRequest,
+  type ReplaceTeamAssignmentRequest,
   type SystemAccountPage,
   type SystemAccountQuery,
+  type TeamAdminPage,
+  type TeamAdminQuery,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -711,6 +719,34 @@ export async function createEmployeeForAdministration(
   return parsed.data.data;
 }
 
+export async function loadEmployeeAssignmentAdminDetail(
+  employeeId: string,
+  signal?: AbortSignal,
+): Promise<EmployeeAssignmentAdminDetail> {
+  const body = await requestJson(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/assignments`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = employeeAssignmentAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadTeamAdminPage(
+  query: TeamAdminQuery,
+  signal?: AbortSignal,
+): Promise<TeamAdminPage> {
+  const search = new URLSearchParams({
+    limit: query.limit.toString(),
+    page: query.page.toString(),
+    status: query.status,
+  });
+  const body = await requestJson(`/v1/hr/teams?${search}`, signal === undefined ? {} : { signal });
+  const parsed = teamAdminPageEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
 export async function activateEmployeeForAdministration(
   employeeId: string,
   input: ActivateEmployeeAdminRequest,
@@ -739,6 +775,39 @@ export async function reissueEmployeeInvitation(
   employeeId: string,
 ): Promise<AdministrationActionResult> {
   return administrationAction(`/v1/hr/employees/${encodeURIComponent(employeeId)}/invitation`, {});
+}
+
+export async function createTeamForAdministration(
+  input: CreateTeamAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction('/v1/hr/teams', input);
+}
+
+export async function setTeamStateForAdministration(
+  teamId: string,
+  active: boolean,
+): Promise<AdministrationActionResult> {
+  return administrationAction(`/v1/hr/teams/${encodeURIComponent(teamId)}/state`, { active });
+}
+
+export async function replaceTeamAssignmentForAdministration(
+  employeeId: string,
+  input: ReplaceTeamAssignmentRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/team-assignment`,
+    input,
+  );
+}
+
+export async function replaceManagerAssignmentForAdministration(
+  employeeId: string,
+  input: ReplaceManagerAssignmentRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/manager-assignment`,
+    input,
+  );
 }
 
 export async function createTechnicalAccount(

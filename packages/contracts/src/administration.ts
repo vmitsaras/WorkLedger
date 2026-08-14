@@ -5,6 +5,7 @@ import { createSuccessEnvelopeSchema } from './api.js';
 
 export const HR_MANAGED_ROLES = ['EMPLOYEE', 'MANAGER', 'HR_ADMINISTRATOR'] as const;
 export const EMPLOYEE_ADMIN_STATUSES = ['ALL', 'ACTIVE', 'INACTIVE'] as const;
+export const TEAM_ADMIN_STATUSES = ['ALL', 'ACTIVE', 'INACTIVE'] as const;
 
 const opaqueIdentifierSchema = z.string().min(1).max(128);
 const instantSchema = z.iso.datetime({ offset: true });
@@ -16,6 +17,7 @@ const inputEmailSchema = emailSchema.transform((value) => value.toLocaleLowerCas
 
 export const hrManagedRoleSchema = z.enum(HR_MANAGED_ROLES);
 export const employeeAdminStatusSchema = z.enum(EMPLOYEE_ADMIN_STATUSES);
+export const teamAdminStatusSchema = z.enum(TEAM_ADMIN_STATUSES);
 
 export const employeeAdminQuerySchema = z.strictObject({
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -28,6 +30,77 @@ export const administrationPaginationSchema = z.strictObject({
   page: z.number().int().min(1),
   total: z.number().int().nonnegative(),
   totalPages: z.number().int().nonnegative(),
+});
+
+export const teamAdminQuerySchema = z.strictObject({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
+  status: teamAdminStatusSchema.default('ACTIVE'),
+});
+
+export const teamAdminListItemSchema = z.strictObject({
+  active: z.boolean(),
+  currentMemberCount: z.number().int().nonnegative(),
+  id: opaqueIdentifierSchema,
+  name: displayTextSchema,
+});
+
+export const teamAdminPageSchema = z.strictObject({
+  items: z.array(teamAdminListItemSchema).max(50),
+  pagination: administrationPaginationSchema,
+});
+
+export const createTeamAdminRequestSchema = z.strictObject({ name: displayTextSchema });
+export const teamAdminStateRequestSchema = z.strictObject({ active: z.boolean() });
+
+const assignmentRangeSchema = z.strictObject({
+  endsOn: localDateSchema.nullable(),
+  id: opaqueIdentifierSchema,
+  startsOn: localDateSchema,
+});
+
+export const teamAssignmentAdminSummarySchema = assignmentRangeSchema.extend({
+  team: z.strictObject({
+    active: z.boolean(),
+    id: opaqueIdentifierSchema,
+    name: displayTextSchema,
+  }),
+});
+
+export const managerAssignmentAdminSummarySchema = assignmentRangeSchema.extend({
+  manager: z.strictObject({
+    displayName: displayTextSchema,
+    employeeNumber: employeeNumberSchema,
+    id: opaqueIdentifierSchema,
+    status: z.enum(['ACTIVE', 'INACTIVE']),
+  }),
+});
+
+export const managerCandidateSchema = z.strictObject({
+  displayName: displayTextSchema,
+  employeeNumber: employeeNumberSchema,
+  id: opaqueIdentifierSchema,
+});
+
+export const employeeAssignmentAdminDetailSchema = z.strictObject({
+  activeTeams: z.array(teamAdminListItemSchema.omit({ currentMemberCount: true })).max(250),
+  asOfLocalDate: localDateSchema,
+  currentManager: managerAssignmentAdminSummarySchema.nullable(),
+  currentTeam: teamAssignmentAdminSummarySchema.nullable(),
+  eligibleManagers: z.array(managerCandidateSchema).max(250),
+  managerHistory: z.array(managerAssignmentAdminSummarySchema).max(100),
+  privilegedActionsAllowed: z.boolean(),
+  teamHistory: z.array(teamAssignmentAdminSummarySchema).max(100),
+});
+
+export const replaceTeamAssignmentRequestSchema = z.strictObject({
+  effectiveFrom: localDateSchema,
+  teamId: opaqueIdentifierSchema.nullable(),
+});
+
+export const replaceManagerAssignmentRequestSchema = z.strictObject({
+  effectiveFrom: localDateSchema,
+  managerEmployeeId: opaqueIdentifierSchema.nullable(),
 });
 
 export const employmentPeriodSummarySchema = z.strictObject({
@@ -141,10 +214,15 @@ export const administrationActionResultSchema = z.strictObject({
     'EMPLOYEE_DEACTIVATED',
     'EMPLOYEE_ROLES_REPLACED',
     'INVITATION_REISSUED',
+    'MANAGER_ASSIGNMENT_CHANGED',
     'SESSION_REVOKED',
     'SYSTEM_ROLE_ASSIGNED',
     'SYSTEM_ROLE_REVOKED',
     'TECHNICAL_ACCOUNT_CREATED',
+    'TEAM_ACTIVATED',
+    'TEAM_ASSIGNMENT_CHANGED',
+    'TEAM_CREATED',
+    'TEAM_DEACTIVATED',
   ]),
   occurredAt: instantSchema,
   targetId: opaqueIdentifierSchema,
@@ -159,6 +237,10 @@ export const administrationActionEnvelopeSchema = createSuccessEnvelopeSchema(
 );
 export const invitationActivationEnvelopeSchema = createSuccessEnvelopeSchema(
   invitationActivationResultSchema,
+);
+export const teamAdminPageEnvelopeSchema = createSuccessEnvelopeSchema(teamAdminPageSchema);
+export const employeeAssignmentAdminDetailEnvelopeSchema = createSuccessEnvelopeSchema(
+  employeeAssignmentAdminDetailSchema,
 );
 
 export type EmployeeAdminQuery = z.infer<typeof employeeAdminQuerySchema>;
@@ -175,3 +257,10 @@ export type CreateTechnicalAccountRequest = z.infer<typeof createTechnicalAccoun
 export type SystemAccountStateRequest = z.infer<typeof systemAccountStateRequestSchema>;
 export type SystemRoleStateRequest = z.infer<typeof systemRoleStateRequestSchema>;
 export type AdministrationActionResult = z.infer<typeof administrationActionResultSchema>;
+export type TeamAdminQuery = z.infer<typeof teamAdminQuerySchema>;
+export type TeamAdminPage = z.infer<typeof teamAdminPageSchema>;
+export type CreateTeamAdminRequest = z.infer<typeof createTeamAdminRequestSchema>;
+export type TeamAdminStateRequest = z.infer<typeof teamAdminStateRequestSchema>;
+export type EmployeeAssignmentAdminDetail = z.infer<typeof employeeAssignmentAdminDetailSchema>;
+export type ReplaceTeamAssignmentRequest = z.infer<typeof replaceTeamAssignmentRequestSchema>;
+export type ReplaceManagerAssignmentRequest = z.infer<typeof replaceManagerAssignmentRequestSchema>;
