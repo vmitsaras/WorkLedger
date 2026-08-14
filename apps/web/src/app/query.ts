@@ -7,6 +7,8 @@ import {
   type PersonalCalendarQuery,
   type TeamCalendarQuery,
   type NotificationQuery,
+  type ReportKey,
+  type ReportQuery,
 } from '@workledger/contracts';
 
 import {
@@ -23,6 +25,8 @@ import {
   loadTeamStatus,
   loadTeamCalendar,
   loadNotificationHistory,
+  loadReport,
+  loadReportCatalog,
 } from './api-client.js';
 
 const TODAY_ATTENDANCE_REFRESH_INTERVAL_MS = 30 * 1_000;
@@ -89,6 +93,19 @@ export const monthlyPeriodQuery = (periodId: string) =>
   queryOptions({
     queryFn: ({ signal }) => loadMonthlyPeriod(periodId, signal),
     queryKey: ['monthly-periods', 'detail', periodId] as const,
+  });
+
+export const reportCatalogQuery = () =>
+  queryOptions({
+    queryFn: ({ signal }) => loadReportCatalog(signal),
+    queryKey: ['reports', 'catalog'] as const,
+  });
+
+export const reportResultQuery = (reportKey: ReportKey, query: ReportQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadReport(reportKey, query, signal),
+    queryKey: ['reports', reportKey, query] as const,
   });
 
 export const managerCorrectionQueueQuery = () =>

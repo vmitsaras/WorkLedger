@@ -51,7 +51,9 @@ fixture has no Phase 2 implementation surface and must be tested at the named la
 | EX-076 | Direct | `monthly-period.unit.test.ts`, `monthly-period.integration.test.ts`, and `monthly-period.component.test.tsx` cover stale warning/source acknowledgement, refresh, focus, and no transition. |
 | EX-040–EX-042, EX-077–EX-080, EX-085 | Direct | `WL-802` domain, migration, API, inbox, notification, and component tests cover current-manager/HR-only authority, self/former/unrelated denial, account-first actor evidence, source races, reconciliation, two approval cycles, explicit lock, and neutral sickness-effect snapshot privacy. |
 | EX-081–EX-084 | Direct | `WL-803` PostgreSQL/API and monthly projection tests cover signed post-lock delta, zero-delta evidence without a ledger row, one concurrent winner, and linked compensating reversal while preserving the approved snapshot. |
-| EX-043–EX-045 | Deferred | CSV export, scoped reporting and deactivation: `WL-804`–`WL-805`, `WL-900` |
+| EX-043 | Deferred | CSV formula neutralization remains owned by `WL-805`. |
+| EX-044 | Direct | `reports.integration.test.ts` proves general current-manager scope before totals and explicit unrelated employee targeting returns `403 ACCESS_DENIED`. |
+| EX-045 | Deferred | Account deactivation and historical-report lifecycle behavior remain owned by `WL-900`. |
 
 ## Invariant review
 

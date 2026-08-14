@@ -149,6 +149,15 @@ import type {
   OrganizationRepository,
   NotificationListItemRecord,
   NotificationRepository,
+  ReportRepository,
+  ReportRangeInput,
+  MonthlyTimeReportPage,
+  MonthlyTimeReportRecord,
+  FlexibleTimeReportPage,
+  FlexibleTimeReportRecord,
+  LeaveReportPage,
+  LeaveReportRecord,
+  MissingRecordReportRecord,
   PersonalCalendarRecords,
   ReplaceDailyProjectionInput,
   ReplaceActiveRolesInput,
@@ -207,6 +216,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   leaveEntitlements: LeaveEntitlementRepository;
   organizations: OrganizationRepository;
   notifications: NotificationRepository;
+  reports: ReportRepository;
   monthlyPeriods: MonthlyPeriodRepository;
   timeAccount: TimeAccountRepository;
   teamStatus: TeamStatusRepository;
@@ -226,6 +236,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     leaveEntitlements: new PostgresLeaveEntitlementRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
     notifications: new PostgresNotificationRepository(transaction),
+    reports: new PostgresReportRepository(transaction),
     monthlyPeriods: new PostgresMonthlyPeriodRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
     teamStatus: new PostgresTeamStatusRepository(transaction),
@@ -647,6 +658,7 @@ class PostgresApprovalInboxRepository implements ApprovalInboxRepository {
       monthlyPeriodQuery,
     ).as('approval_inbox');
     const filters = and(
+      input.employeeId === null ? undefined : eq(unified.employeeId, input.employeeId),
       input.type === 'ALL' ? undefined : eq(unified.type, input.type),
       input.status === 'ALL' ? undefined : eq(unified.status, input.status),
       input.teamId === null ? undefined : eq(unified.teamId, input.teamId),
@@ -692,6 +704,310 @@ class PostgresApprovalInboxRepository implements ApprovalInboxRepository {
           return Object.freeze({
             id: mapDomainId<'Team'>(team.id, 'teams', 'id'),
             name: team.name,
+          });
+        }),
+      ),
+      total: countRow?.total ?? 0,
+    });
+  }
+}
+
+class PostgresReportRepository implements ReportRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async listMonthlyTime(input: ReportRangeInput) {
+    if (input.authorizedEmployeeIds.length === 0) {
+      return Object.freeze({
+        items: Object.freeze([]),
+        summary: emptyMonthlyTimeReportSummary(),
+        total: 0,
+      });
+    }
+
+    const rows = await this.transaction
+      .select({
+        balanceMinutes:
+          sql<number>`coalesce(sum(${dailyProjections.balanceMinutes}), 0)::integer`.mapWith(
+            Number,
+          ),
+        creditedMinutes:
+          sql<number>`coalesce(sum(${dailyProjections.creditedMinutes}), 0)::integer`.mapWith(
+            Number,
+          ),
+        employeeDisplayName: employees.displayName,
+        employeeId: employees.id,
+        expectedMinutes:
+          sql<number>`coalesce(sum(${dailyProjections.expectedMinutes}), 0)::integer`.mapWith(
+            Number,
+          ),
+        incompleteRecordCount:
+          sql<number>`count(*) filter (where ${dailyProjections.calculationStatus} = 'INCOMPLETE')::integer`.mapWith(
+            Number,
+          ),
+        monthStart: monthlyPeriods.monthStart,
+        monthlyPeriodId: monthlyPeriods.id,
+        workedMinutes:
+          sql<number>`coalesce(sum(${dailyProjections.workedMinutes}), 0)::integer`.mapWith(Number),
+        workflowStatus: monthlyPeriods.status,
+      })
+      .from(monthlyPeriods)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.organizationId, input.organizationId),
+          eq(employees.id, monthlyPeriods.employeeId),
+        ),
+      )
+      .innerJoin(
+        dailyProjections,
+        and(
+          eq(dailyProjections.organizationId, input.organizationId),
+          eq(dailyProjections.employeeId, monthlyPeriods.employeeId),
+          sql`date_trunc('month', ${dailyProjections.localDate}::timestamp)::date = ${monthlyPeriods.monthStart}`,
+          gte(dailyProjections.localDate, input.from),
+          lte(dailyProjections.localDate, input.to),
+        ),
+      )
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, input.organizationId),
+          inArray(monthlyPeriods.employeeId, [...input.authorizedEmployeeIds]),
+        ),
+      )
+      .groupBy(
+        monthlyPeriods.id,
+        monthlyPeriods.monthStart,
+        monthlyPeriods.status,
+        employees.id,
+        employees.displayName,
+      );
+
+    const adjustmentRows = await this.transaction
+      .select({
+        deltaMinutes:
+          sql<number>`coalesce(sum(${postLockAdjustments.minutes}), 0)::integer`.mapWith(Number),
+        monthlyPeriodId: approvedMonthlySnapshots.monthlyPeriodId,
+      })
+      .from(postLockAdjustments)
+      .innerJoin(
+        approvedMonthlySnapshots,
+        and(
+          eq(approvedMonthlySnapshots.organizationId, input.organizationId),
+          eq(approvedMonthlySnapshots.id, postLockAdjustments.monthlySnapshotId),
+        ),
+      )
+      .where(
+        and(
+          eq(postLockAdjustments.organizationId, input.organizationId),
+          inArray(postLockAdjustments.employeeId, [...input.authorizedEmployeeIds]),
+          gte(postLockAdjustments.localDate, input.from),
+          lte(postLockAdjustments.localDate, input.to),
+        ),
+      )
+      .groupBy(approvedMonthlySnapshots.monthlyPeriodId);
+    const adjustmentByPeriod = new Map(
+      adjustmentRows.map((row) => [row.monthlyPeriodId, row.deltaMinutes]),
+    );
+    const records: MonthlyTimeReportRecord[] = rows.map((row) => {
+      const postLockDeltaMinutes = adjustmentByPeriod.get(row.monthlyPeriodId) ?? 0;
+      return Object.freeze({
+        balanceMinutes: row.balanceMinutes + postLockDeltaMinutes,
+        creditedMinutes: row.creditedMinutes + postLockDeltaMinutes,
+        employeeDisplayName: row.employeeDisplayName,
+        employeeId: mapEmployeeId(row.employeeId),
+        expectedMinutes: row.expectedMinutes,
+        incompleteRecordCount: row.incompleteRecordCount,
+        monthStart: mapLocalDate(row.monthStart, 'monthly_periods', 'month_start'),
+        monthlyPeriodId: mapDomainId<'MonthlyPeriod'>(row.monthlyPeriodId, 'monthly_periods', 'id'),
+        postLockDeltaMinutes,
+        workedMinutes: row.workedMinutes + postLockDeltaMinutes,
+        workflowStatus: row.workflowStatus,
+      });
+    });
+    const sorted = sortMonthlyTimeReport(records, input);
+    return Object.freeze({
+      items: Object.freeze(sorted.slice(input.offset, input.offset + input.limit)),
+      summary: sumMonthlyTimeReport(records),
+      total: records.length,
+    });
+  }
+
+  async listFlexibleTime(input: ReportRangeInput) {
+    if (input.authorizedEmployeeIds.length === 0) {
+      return Object.freeze({
+        items: Object.freeze([]),
+        summary: emptyFlexibleTimeReportSummary(),
+        total: 0,
+      });
+    }
+    const openingExpression = sql<number>`coalesce(sum(case when ${timeAccountEntries.localDate} < ${input.from} then ${timeAccountEntries.minutes} else 0 end), 0)::integer`;
+    const changeExpression = sql<number>`coalesce(sum(case when ${timeAccountEntries.localDate} >= ${input.from} and ${timeAccountEntries.localDate} <= ${input.to} then ${timeAccountEntries.minutes} else 0 end), 0)::integer`;
+    const closingExpression = sql<number>`coalesce(sum(case when ${timeAccountEntries.localDate} <= ${input.to} then ${timeAccountEntries.minutes} else 0 end), 0)::integer`;
+    const rows = await this.transaction
+      .select({
+        closingBalanceMinutes: closingExpression.mapWith(Number),
+        employeeDisplayName: employees.displayName,
+        employeeId: employees.id,
+        openingBalanceMinutes: openingExpression.mapWith(Number),
+        rangeChangeMinutes: changeExpression.mapWith(Number),
+      })
+      .from(employees)
+      .leftJoin(
+        timeAccountEntries,
+        and(
+          eq(timeAccountEntries.organizationId, input.organizationId),
+          eq(timeAccountEntries.employeeId, employees.id),
+          lte(timeAccountEntries.localDate, input.to),
+        ),
+      )
+      .where(
+        and(
+          eq(employees.organizationId, input.organizationId),
+          inArray(employees.id, [...input.authorizedEmployeeIds]),
+        ),
+      )
+      .groupBy(employees.id, employees.displayName);
+    const records: FlexibleTimeReportRecord[] = rows.map((row) =>
+      Object.freeze({
+        ...row,
+        employeeId: mapEmployeeId(row.employeeId),
+      }),
+    );
+    const sorted = sortFlexibleTimeReport(records, input);
+    return Object.freeze({
+      items: Object.freeze(sorted.slice(input.offset, input.offset + input.limit)),
+      summary: sumFlexibleTimeReport(records),
+      total: records.length,
+    });
+  }
+
+  async listLeave(input: ReportRangeInput) {
+    if (input.authorizedEmployeeIds.length === 0) {
+      return Object.freeze({
+        items: Object.freeze([]),
+        summary: emptyLeaveReportSummary(),
+        total: 0,
+      });
+    }
+    const finalEntry = sql`${leaveEntitlementEntries.entryType} not in ('PENDING_RESERVATION', 'RESERVATION_RELEASE')`;
+    const openingExpression = sql<number>`coalesce(sum(case when ${finalEntry} and ${leaveEntitlementEntries.effectiveOn} < ${input.from} then ${leaveEntitlementEntries.minutes} else 0 end), 0)::integer`;
+    const changeExpression = sql<number>`coalesce(sum(case when ${finalEntry} and ${leaveEntitlementEntries.effectiveOn} >= ${input.from} and ${leaveEntitlementEntries.effectiveOn} <= ${input.to} then ${leaveEntitlementEntries.minutes} else 0 end), 0)::integer`;
+    const closingExpression = sql<number>`coalesce(sum(case when ${finalEntry} and ${leaveEntitlementEntries.effectiveOn} <= ${input.to} then ${leaveEntitlementEntries.minutes} else 0 end), 0)::integer`;
+    const reservedExpression = sql<number>`-coalesce(sum(case when ${leaveEntitlementEntries.entryType} in ('PENDING_RESERVATION', 'RESERVATION_RELEASE') and ${leaveEntitlementEntries.effectiveOn} <= ${input.to} then ${leaveEntitlementEntries.minutes} else 0 end), 0)::integer`;
+    const rows = await this.transaction
+      .select({
+        accountName: absenceTypes.name,
+        availableChangeMinutes: changeExpression.mapWith(Number),
+        closingAvailableMinutes: closingExpression.mapWith(Number),
+        employeeDisplayName: employees.displayName,
+        employeeId: employees.id,
+        openingAvailableMinutes: openingExpression.mapWith(Number),
+        reservedMinutes: reservedExpression.mapWith(Number),
+      })
+      .from(leaveEntitlementEntries)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.organizationId, input.organizationId),
+          eq(employees.id, leaveEntitlementEntries.employeeId),
+        ),
+      )
+      .innerJoin(
+        absenceTypes,
+        and(
+          eq(absenceTypes.organizationId, input.organizationId),
+          eq(absenceTypes.id, leaveEntitlementEntries.absenceTypeId),
+        ),
+      )
+      .where(
+        and(
+          eq(leaveEntitlementEntries.organizationId, input.organizationId),
+          inArray(leaveEntitlementEntries.employeeId, [...input.authorizedEmployeeIds]),
+          lte(leaveEntitlementEntries.effectiveOn, input.to),
+          sql`${absenceTypes.code} <> 'SICKNESS'`,
+        ),
+      )
+      .groupBy(employees.id, employees.displayName, absenceTypes.name);
+    const records: LeaveReportRecord[] = rows.map((row) =>
+      Object.freeze({
+        ...row,
+        employeeId: mapEmployeeId(row.employeeId),
+        projectedRemainingMinutes: row.closingAvailableMinutes - row.reservedMinutes,
+      }),
+    );
+    const sorted = sortLeaveReport(records, input);
+    return Object.freeze({
+      items: Object.freeze(sorted.slice(input.offset, input.offset + input.limit)),
+      summary: sumLeaveReport(records),
+      total: records.length,
+    });
+  }
+
+  async listMissingRecords(input: ReportRangeInput) {
+    if (input.authorizedEmployeeIds.length === 0) {
+      return Object.freeze({ items: Object.freeze([]), total: 0 });
+    }
+    const direction = input.direction === 'ASC' ? asc : desc;
+    const primarySort =
+      input.sort === 'EMPLOYEE' ? sql`lower(${employees.displayName})` : dailyProjections.localDate;
+    const where = and(
+      eq(dailyProjections.organizationId, input.organizationId),
+      inArray(dailyProjections.employeeId, [...input.authorizedEmployeeIds]),
+      eq(dailyProjections.calculationStatus, 'INCOMPLETE'),
+      gte(dailyProjections.localDate, input.from),
+      lte(dailyProjections.localDate, input.to),
+    );
+    const rows = await this.transaction
+      .select({
+        employeeDisplayName: employees.displayName,
+        employeeId: employees.id,
+        expectedMinutes: dailyProjections.expectedMinutes,
+        localDate: dailyProjections.localDate,
+        warningCodes: dailyProjections.warningCodes,
+        workedMinutes: dailyProjections.workedMinutes,
+      })
+      .from(dailyProjections)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.organizationId, input.organizationId),
+          eq(employees.id, dailyProjections.employeeId),
+        ),
+      )
+      .where(where)
+      .orderBy(
+        direction(primarySort),
+        direction(sql`lower(${employees.displayName})`),
+        direction(dailyProjections.localDate),
+        direction(dailyProjections.id),
+      )
+      .limit(input.limit)
+      .offset(input.offset);
+    const [countRow] = await this.transaction
+      .select({ total: sql<number>`count(*)::integer`.mapWith(Number) })
+      .from(dailyProjections)
+      .where(where);
+    return Object.freeze({
+      items: Object.freeze(
+        rows.map((row): MissingRecordReportRecord => {
+          if (!Array.isArray(row.warningCodes)) {
+            throw new DatabaseValueError('daily_projections', 'warning_codes');
+          }
+          return Object.freeze({
+            employeeDisplayName: row.employeeDisplayName,
+            employeeId: mapEmployeeId(row.employeeId),
+            expectedMinutes: mapNonNegativeMinutes(
+              row.expectedMinutes,
+              'daily_projections',
+              'expected_minutes',
+            ),
+            localDate: mapLocalDate(row.localDate, 'daily_projections', 'local_date'),
+            warningCodes: Object.freeze(row.warningCodes.map(mapWarningCode)),
+            workedMinutes: mapNonNegativeMinutes(
+              row.workedMinutes,
+              'daily_projections',
+              'worked_minutes',
+            ),
           });
         }),
       ),
@@ -1549,6 +1865,154 @@ function employeeScopeCondition(input: ListAuthorizedEmployeesInput) {
   return input.scope === 'REPORTS'
     ? reportCondition
     : or(eq(employees.id, input.actorEmployeeId), reportCondition);
+}
+
+function emptyMonthlyTimeReportSummary(): MonthlyTimeReportPage['summary'] {
+  return Object.freeze({
+    balanceMinutes: 0,
+    creditedMinutes: 0,
+    expectedMinutes: 0,
+    incompleteRecordCount: 0,
+    postLockDeltaMinutes: 0,
+    workedMinutes: 0,
+  });
+}
+
+function sumMonthlyTimeReport(
+  records: readonly MonthlyTimeReportRecord[],
+): MonthlyTimeReportPage['summary'] {
+  return Object.freeze(
+    records.reduce(
+      (summary, record) => ({
+        balanceMinutes: summary.balanceMinutes + record.balanceMinutes,
+        creditedMinutes: summary.creditedMinutes + record.creditedMinutes,
+        expectedMinutes: summary.expectedMinutes + record.expectedMinutes,
+        incompleteRecordCount: summary.incompleteRecordCount + record.incompleteRecordCount,
+        postLockDeltaMinutes: summary.postLockDeltaMinutes + record.postLockDeltaMinutes,
+        workedMinutes: summary.workedMinutes + record.workedMinutes,
+      }),
+      emptyMonthlyTimeReportSummary(),
+    ),
+  );
+}
+
+function emptyFlexibleTimeReportSummary(): FlexibleTimeReportPage['summary'] {
+  return Object.freeze({
+    closingBalanceMinutes: 0,
+    openingBalanceMinutes: 0,
+    rangeChangeMinutes: 0,
+  });
+}
+
+function sumFlexibleTimeReport(
+  records: readonly FlexibleTimeReportRecord[],
+): FlexibleTimeReportPage['summary'] {
+  return Object.freeze(
+    records.reduce(
+      (summary, record) => ({
+        closingBalanceMinutes: summary.closingBalanceMinutes + record.closingBalanceMinutes,
+        openingBalanceMinutes: summary.openingBalanceMinutes + record.openingBalanceMinutes,
+        rangeChangeMinutes: summary.rangeChangeMinutes + record.rangeChangeMinutes,
+      }),
+      emptyFlexibleTimeReportSummary(),
+    ),
+  );
+}
+
+function emptyLeaveReportSummary(): LeaveReportPage['summary'] {
+  return Object.freeze({
+    availableChangeMinutes: 0,
+    closingAvailableMinutes: 0,
+    openingAvailableMinutes: 0,
+    projectedRemainingMinutes: 0,
+    reservedMinutes: 0,
+  });
+}
+
+function sumLeaveReport(records: readonly LeaveReportRecord[]): LeaveReportPage['summary'] {
+  return Object.freeze(
+    records.reduce(
+      (summary, record) => ({
+        availableChangeMinutes: summary.availableChangeMinutes + record.availableChangeMinutes,
+        closingAvailableMinutes: summary.closingAvailableMinutes + record.closingAvailableMinutes,
+        openingAvailableMinutes: summary.openingAvailableMinutes + record.openingAvailableMinutes,
+        projectedRemainingMinutes:
+          summary.projectedRemainingMinutes + record.projectedRemainingMinutes,
+        reservedMinutes: summary.reservedMinutes + record.reservedMinutes,
+      }),
+      emptyLeaveReportSummary(),
+    ),
+  );
+}
+
+function sortMonthlyTimeReport(
+  records: readonly MonthlyTimeReportRecord[],
+  input: Pick<ReportRangeInput, 'direction' | 'sort'>,
+) {
+  return [...records].sort((left, right) => {
+    const primary =
+      input.sort === 'DATE'
+        ? compareText(left.monthStart, right.monthStart)
+        : input.sort === 'VALUE'
+          ? left.balanceMinutes - right.balanceMinutes
+          : input.sort === 'STATUS'
+            ? compareText(left.workflowStatus, right.workflowStatus)
+            : compareText(left.employeeDisplayName, right.employeeDisplayName);
+    const fallback =
+      primary !== 0
+        ? primary
+        : compareText(left.employeeDisplayName, right.employeeDisplayName) ||
+          compareText(left.monthStart, right.monthStart) ||
+          compareText(left.monthlyPeriodId, right.monthlyPeriodId);
+    return input.direction === 'ASC' ? fallback : -fallback;
+  });
+}
+
+function sortFlexibleTimeReport(
+  records: readonly FlexibleTimeReportRecord[],
+  input: Pick<ReportRangeInput, 'direction' | 'sort'>,
+) {
+  return [...records].sort((left, right) => {
+    const primary =
+      input.sort === 'VALUE'
+        ? left.closingBalanceMinutes - right.closingBalanceMinutes
+        : compareText(left.employeeDisplayName, right.employeeDisplayName);
+    const fallback =
+      primary !== 0
+        ? primary
+        : compareText(left.employeeDisplayName, right.employeeDisplayName) ||
+          compareText(left.employeeId, right.employeeId);
+    return input.direction === 'ASC' ? fallback : -fallback;
+  });
+}
+
+function sortLeaveReport(
+  records: readonly LeaveReportRecord[],
+  input: Pick<ReportRangeInput, 'direction' | 'sort'>,
+) {
+  return [...records].sort((left, right) => {
+    const primary =
+      input.sort === 'VALUE'
+        ? left.projectedRemainingMinutes - right.projectedRemainingMinutes
+        : compareText(left.employeeDisplayName, right.employeeDisplayName);
+    const fallback =
+      primary !== 0
+        ? primary
+        : compareText(left.employeeDisplayName, right.employeeDisplayName) ||
+          compareText(left.accountName, right.accountName) ||
+          compareText(left.employeeId, right.employeeId);
+    return input.direction === 'ASC' ? fallback : -fallback;
+  });
+}
+
+function compareText(left: string, right: string): number {
+  const normalizedLeft = left.toLocaleLowerCase('en');
+  const normalizedRight = right.toLocaleLowerCase('en');
+  if (normalizedLeft < normalizedRight) return -1;
+  if (normalizedLeft > normalizedRight) return 1;
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
 }
 
 function mapEmployeeId(value: string) {

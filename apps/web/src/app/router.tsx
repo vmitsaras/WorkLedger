@@ -4,6 +4,8 @@ import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } 
 
 import {
   approvalInboxQuerySchema,
+  reportKeySchema,
+  reportQuerySchema,
   teamCalendarQuerySchema,
   notificationQuerySchema,
   type NavigationArea,
@@ -22,6 +24,8 @@ import {
   teamCalendarQuery,
   notificationHistoryQuery,
   monthlyPeriodQuery,
+  reportCatalogQuery,
+  reportResultQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -48,6 +52,12 @@ import { TeamStatusPage } from '../routes/team-status-page.js';
 import { TeamCalendarPage } from '../routes/team-calendar-page.js';
 import { NotificationsPage } from '../routes/notifications-page.js';
 import { MonthlyPeriodPage } from '../routes/monthly-period-page.js';
+import {
+  ReportDetailPage,
+  toReportSearchParams,
+  type ReportRouteLoaderData,
+} from '../routes/report-detail-page.js';
+import { ReportsPage } from '../routes/reports-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -72,13 +82,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-900',
     path: 'employees',
     title: 'Employees',
-  },
-  {
-    area: 'HR',
-    description: 'Scoped time, balance, leave, missing-record, and approval reports.',
-    milestone: 'WL-804',
-    path: 'reports',
-    title: 'Reports',
   },
   {
     area: 'HR',
@@ -273,6 +276,20 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <ApprovalDetailPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Approval review' },
+            },
+            {
+              path: 'reports',
+              loader: createReportsLoader(queryClient),
+              element: <ReportsPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Reports' },
+            },
+            {
+              path: 'reports/:reportKey',
+              loader: createReportDetailLoader(queryClient),
+              element: <ReportDetailPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Report' },
             },
             ...PLACEHOLDER_ROUTES.map((route) => ({
               path: route.path,
@@ -484,9 +501,87 @@ function createMonthlyPeriodLoader(queryClient: QueryClient): LoaderFunction {
   };
 }
 
+function createReportsLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    await requireReportAudience(queryClient);
+    await ensureReportCatalog(queryClient);
+    return null;
+  };
+}
+
+function createReportDetailLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ params, request }) => {
+    await requireReportAudience(queryClient);
+    const parsedKey = reportKeySchema.safeParse(params['reportKey']);
+    if (!parsedKey.success) throw new Response(null, { status: 404 });
+    const catalog = await ensureReportCatalog(queryClient);
+    const report = catalog.reports.find((candidate) => candidate.key === parsedKey.data);
+    if (report === undefined) throw new Response(null, { status: 403 });
+    const searchParams = new URL(request.url).searchParams;
+    const values: Record<string, string> = {};
+    for (const key of new Set(searchParams.keys())) {
+      const entries = searchParams.getAll(key);
+      if (entries.length !== 1 || entries[0] === undefined) {
+        return redirect(canonicalReportPath(parsedKey.data, catalog, report.defaultSort));
+      }
+      values[key] = entries[0];
+    }
+    const parsedQuery = reportQuerySchema.safeParse(values);
+    if (!parsedQuery.success || !report.availableSorts.includes(parsedQuery.data.sort)) {
+      return redirect(canonicalReportPath(parsedKey.data, catalog, report.defaultSort));
+    }
+    void queryClient.prefetchQuery(reportResultQuery(parsedKey.data, parsedQuery.data));
+    return {
+      catalog,
+      query: parsedQuery.data,
+      report,
+      reportKey: parsedKey.data,
+    } satisfies ReportRouteLoaderData;
+  };
+}
+
+async function ensureReportCatalog(queryClient: QueryClient) {
+  try {
+    return await queryClient.ensureQueryData(reportCatalogQuery());
+  } catch (error) {
+    if (isAuthenticationError(error)) throw expireSession(queryClient, error);
+    if (error instanceof ApiClientError && error.status === 403) {
+      throw new Response(null, { status: 403 });
+    }
+    throw error;
+  }
+}
+
+function canonicalReportPath(
+  reportKey: ReportRouteLoaderData['reportKey'],
+  catalog: ReportRouteLoaderData['catalog'],
+  sort: ReportRouteLoaderData['query']['sort'],
+): string {
+  const query = reportQuerySchema.parse({
+    direction: 'ASC',
+    from: catalog.defaultRange.from,
+    limit: 20,
+    page: 1,
+    sort,
+    to: catalog.defaultRange.to,
+  });
+  return `/reports/${reportKey}?${toReportSearchParams(query).toString()}`;
+}
+
 async function requireApprovalAudience(queryClient: QueryClient): Promise<void> {
   const context = await requireContext(queryClient);
   if (!context.navigationAreas.includes('MANAGER') && !context.navigationAreas.includes('HR')) {
+    throw new Response(null, { status: 403 });
+  }
+}
+
+async function requireReportAudience(queryClient: QueryClient): Promise<void> {
+  const context = await requireContext(queryClient);
+  if (
+    !context.navigationAreas.includes('EMPLOYEE') &&
+    !context.navigationAreas.includes('MANAGER') &&
+    !context.navigationAreas.includes('HR')
+  ) {
     throw new Response(null, { status: 403 });
   }
 }

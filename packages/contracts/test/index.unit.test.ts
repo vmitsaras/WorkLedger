@@ -20,6 +20,8 @@ import {
   monthlyPeriodLockRequestSchema,
   monthlyPeriodReviewRequestSchema,
   monthlyPeriodSubmissionRequestSchema,
+  reportQuerySchema,
+  reportResultEnvelopeSchema,
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
   teamCalendarEnvelopeSchema,
@@ -29,6 +31,85 @@ import {
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
+
+test('bounds report URLs to strict, inclusive calendar ranges', () => {
+  const employeeId = randomUUID();
+  expect(reportQuerySchema.parse({ employeeId, from: '2024-01-01', to: '2024-12-31' })).toEqual({
+    direction: 'ASC',
+    employeeId,
+    from: '2024-01-01',
+    limit: 20,
+    page: 1,
+    sort: 'EMPLOYEE',
+    to: '2024-12-31',
+  });
+  expect(() => reportQuerySchema.parse({ from: '2023-01-01', to: '2024-01-02' })).toThrow();
+  expect(() => reportQuerySchema.parse({ from: '2026-08-02', to: '2026-08-01' })).toThrow();
+  expect(() =>
+    reportQuerySchema.parse({ from: '2026-08-01', person: 'private', to: '2026-08-02' }),
+  ).toThrow();
+});
+
+test('keeps report rows strict and free of private workflow or employee identifiers', () => {
+  const response = {
+    data: {
+      generatedAt: '2026-08-14T10:00:00Z',
+      key: 'leave',
+      pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+      partial: false,
+      range: { from: '2026-08-01', to: '2026-08-31' },
+      rows: [
+        {
+          accountName: 'Vacation',
+          availableChangeMinutes: -480,
+          closingAvailableMinutes: 9_120,
+          employeeDisplayName: 'Employee Example',
+          kind: 'LEAVE',
+          openingAvailableMinutes: 9_600,
+          projectedRemainingMinutes: 8_160,
+          reservedMinutes: 960,
+        },
+      ],
+      scope: 'SELF',
+      summary: {
+        availableChangeMinutes: -480,
+        closingAvailableMinutes: 9_120,
+        kind: 'LEAVE',
+        openingAvailableMinutes: 9_600,
+        projectedRemainingMinutes: 8_160,
+        reservedMinutes: 960,
+      },
+      timeZone: 'Europe/Berlin',
+    },
+    meta: { requestId: randomUUID() },
+  };
+
+  expect(reportResultEnvelopeSchema.parse(response)).toEqual(response);
+  expect(() =>
+    reportResultEnvelopeSchema.parse({
+      ...response,
+      data: { ...response.data, key: 'flexible-time' },
+    }),
+  ).toThrow();
+  for (const protectedField of [
+    'employeeId',
+    'absenceTypeCode',
+    'sicknessClassification',
+    'requestReason',
+    'reviewerReason',
+    'sourceReference',
+  ]) {
+    expect(() =>
+      reportResultEnvelopeSchema.parse({
+        ...response,
+        data: {
+          ...response.data,
+          rows: [{ ...response.data.rows[0], [protectedField]: 'private' }],
+        },
+      }),
+    ).toThrow();
+  }
+});
 
 test('keeps monthly review data strict, bounded, and free of protected absence fields', () => {
   const response = {

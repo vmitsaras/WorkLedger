@@ -50,6 +50,7 @@ export function createApprovalInboxService(database: WorkLedgerDatabase) {
           const page = await transaction.approvalInbox.list({
             actorEmployeeId: actor.employeeId,
             direction: query.direction,
+            employeeId: null,
             from: parseOptionalLocalDate(query.from),
             limit: query.limit,
             localDate,

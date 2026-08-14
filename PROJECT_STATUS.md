@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 8 — Monthly closure and reporting
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 4 of 7 Phase 8 tasks complete
-**Current milestone:** Scoped operational reports
-**Active task:** `WL-804`
+**Phase progress:** 5 of 7 Phase 8 tasks complete
+**Current milestone:** Safe report portability
+**Active task:** `WL-805`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Build scoped monthly, balance, leave, missing-record, and approval reports for `WL-804`.
+Build authorized CSV, printable monthly records, and explicit safe clipboard behavior for `WL-805`.
 
 ## Verified decisions
 
@@ -41,6 +41,13 @@ Build scoped monthly, balance, leave, missing-record, and approval reports for `
   pagination. Rows, totals, and team filter options share one repeatable-read snapshot.
 - Monthly-period rows use month bounds and direct restricted-period links; scope and self-exclusion
   apply before filters, totals, sorting, and pagination, and reasons/source detail stay excluded.
+- `/reports` returns only the current actor's authorized catalog. The five allow-listed report
+  queries fix self/current-report/organization scope before date filters, totals, sorting, counts,
+  and pagination; pending approvals exclude self, system authority grants no domain fallback, and
+  an explicit unrelated opaque employee target returns `403` without partial fulfillment.
+- Report URLs contain only bounded dates, pagination, allow-listed sorting, and an optional opaque
+  authorized employee target. Generic report DTOs exclude sickness classification, reasons, notes,
+  source/employee identifiers, and entitlement detail outside generic leave-account totals.
 - Monthly request-changes, approval, and lock transitions use `CURRENT_MANAGER` when that current
   scope qualifies, otherwise `ORGANIZATION_HR`; HR-only accounts need no fabricated employee
   identity, system administrators receive no domain fallback, and both paths apply identical state,
@@ -343,6 +350,33 @@ Build scoped monthly, balance, leave, missing-record, and approval reports for `
   handoff notes, and current project memory.
 
 ## Latest completed task
+
+### `WL-804` — Build scoped operational reports
+
+- Changed: added strict catalog/query/result contracts; repeatable-read PostgreSQL repositories for
+  monthly time, flexible time, leave balance, and incomplete-record reporting; reused the unified
+  approval source for actionable pending work; exposed authorized no-store report APIs; and
+  replaced the reports placeholder with catalog/detail routes, canonical URL filters, totals,
+  tables, and pagination.
+- Verified: exact toolchain/workspace/version/config checks, formatting, ESLint and 211-file/1,025-
+  import boundaries, strict TypeScript, reproducible OpenAPI, 24 tooling tests, 253 unit/component
+  tests, 37 PostgreSQL integration tests across 20 files, 17 Chromium scenarios, and the
+  production/workspace build pass. The build retains the existing large-chunk advisory;
+  integration retains the existing `pg` concurrent-query deprecation warning.
+- Accessibility: visible labelled filters include linked errors; results identify applied scope and
+  partial data in text; totals use description lists; tables use captions, headers, active
+  `aria-sort`, and named keyboard-scrollable containment; empty/loading/error/retry/pagination and
+  route focus behavior are covered.
+- Security/data: self/current-manager/HR scope is fixed before filters, totals, sorting, counts, and
+  pages; explicit opaque targets are authorized before use; pending work excludes self; system-only
+  access is denied. Generic DTOs and URLs omit sickness, subtype, notes, reasons, person search,
+  employee/source identifiers, and unrestricted entitlement data.
+- Documentation: added `docs/85-scoped-operational-reports.md`, regenerated OpenAPI, mapped EX-044
+  to direct evidence, and synchronized README, TODO, task board, and status.
+- Remaining risk: CSV, print, clipboard, formula neutralization, generation-time reauthorization,
+  encoding, filenames, and bounded streaming remain entirely owned by `WL-805`. Locked absence
+  cancellation adjustment ownership and the existing large web chunk advisory also remain.
+- Next task: `WL-805`.
 
 ### `WL-803` — Implement post-lock correction and adjustment linkage
 
@@ -906,12 +940,12 @@ Build scoped monthly, balance, leave, missing-record, and approval reports for `
 
 ## Current blockers
 
-No `WL-804` blocker is known. Locked absence-cancellation adjustment ownership remains an explicit
+No `WL-805` blocker is known. Locked absence-cancellation adjustment ownership remains an explicit
 gap before the applicable phase/release gate. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-804 — Build monthly, balance, leave, missing-record, and approval reports.`
+`WL-805 — Implement authorized CSV export, printable monthly records, and explicit safe clipboard behavior.`
 
 ## Update rules
 

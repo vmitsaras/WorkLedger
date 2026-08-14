@@ -33555,6 +33555,2234 @@
         "tags": ["Monthly periods"]
       }
     },
+    "/v1/reports": {
+      "get": {
+        "description": "Returns only report definitions allowed by the current self, direct-report, or organization-HR scope plus the organization-local default date range. System-administrator authority alone grants no report access.",
+        "operationId": "getReportCatalog",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "defaultRange": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "from": {
+                              "format": "date",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                              "type": "string"
+                            },
+                            "to": {
+                              "format": "date",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                              "type": "string"
+                            }
+                          },
+                          "required": ["from", "to"],
+                          "type": "object"
+                        },
+                        "reports": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "availableSorts": {
+                                "items": {
+                                  "enum": ["EMPLOYEE", "DATE", "VALUE", "STATUS"],
+                                  "type": "string"
+                                },
+                                "maxItems": 4,
+                                "minItems": 1,
+                                "type": "array"
+                              },
+                              "defaultSort": {
+                                "enum": ["EMPLOYEE", "DATE", "VALUE", "STATUS"],
+                                "type": "string"
+                              },
+                              "description": { "maxLength": 320, "minLength": 1, "type": "string" },
+                              "key": {
+                                "enum": [
+                                  "monthly-time",
+                                  "flexible-time",
+                                  "leave",
+                                  "missing-records",
+                                  "pending-approvals"
+                                ],
+                                "type": "string"
+                              },
+                              "title": { "maxLength": 120, "minLength": 1, "type": "string" }
+                            },
+                            "required": [
+                              "availableSorts",
+                              "defaultSort",
+                              "description",
+                              "key",
+                              "title"
+                            ],
+                            "type": "object"
+                          },
+                          "maxItems": 5,
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "timeZone": { "maxLength": 255, "minLength": 1, "type": "string" }
+                      },
+                      "required": ["defaultRange", "reports", "timeZone"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "idempotentReplay": { "type": "boolean" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["requestId"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["data", "meta"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Get the authorized report catalog",
+        "tags": ["Reports"]
+      }
+    },
+    "/v1/reports/{reportKey}": {
+      "get": {
+        "description": "Runs one allow-listed, purpose-minimized report. Current self/direct-report/organization scope is applied before the inclusive date range, totals, sorting, count, and bounded pagination. URLs and responses exclude absence subtype, sickness classification, notes, reasons, entitlement details outside the leave report, and person-identifying search text.",
+        "operationId": "runReport",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": { "default": "ASC", "enum": ["ASC", "DESC"], "type": "string" }
+          },
+          {
+            "in": "query",
+            "name": "employeeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": { "default": 20, "maximum": 50, "minimum": 10, "type": "integer" }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": { "default": 1, "maximum": 10000, "minimum": 1, "type": "integer" }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "EMPLOYEE",
+              "enum": ["EMPLOYEE", "DATE", "VALUE", "STATUS"],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "reportKey",
+            "required": true,
+            "schema": {
+              "enum": [
+                "monthly-time",
+                "flexible-time",
+                "leave",
+                "missing-records",
+                "pending-approvals"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "generatedAt": {
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          "type": "string"
+                        },
+                        "key": {
+                          "enum": [
+                            "monthly-time",
+                            "flexible-time",
+                            "leave",
+                            "missing-records",
+                            "pending-approvals"
+                          ],
+                          "type": "string"
+                        },
+                        "pagination": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "limit": { "maximum": 50, "minimum": 10, "type": "integer" },
+                            "page": { "maximum": 10000, "minimum": 1, "type": "integer" },
+                            "total": {
+                              "maximum": 9007199254740991,
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "maximum": 9007199254740991,
+                              "minimum": 0,
+                              "type": "integer"
+                            }
+                          },
+                          "required": ["limit", "page", "total", "totalPages"],
+                          "type": "object"
+                        },
+                        "partial": { "type": "boolean" },
+                        "range": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "from": {
+                              "format": "date",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                              "type": "string"
+                            },
+                            "to": {
+                              "format": "date",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                              "type": "string"
+                            }
+                          },
+                          "required": ["from", "to"],
+                          "type": "object"
+                        },
+                        "rows": {
+                          "items": {
+                            "oneOf": [
+                              {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "balanceMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "creditedMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                  },
+                                  "employeeDisplayName": {
+                                    "maxLength": 160,
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "expectedMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                  },
+                                  "incompleteRecordCount": {
+                                    "maximum": 31,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                  },
+                                  "kind": { "enum": ["MONTHLY_TIME"], "type": "string" },
+                                  "monthlyPeriodId": {
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                    "type": "string"
+                                  },
+                                  "monthStart": {
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    "type": "string"
+                                  },
+                                  "postLockDeltaMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "workedMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                  },
+                                  "workflowStatus": {
+                                    "enum": [
+                                      "OPEN",
+                                      "SUBMITTED",
+                                      "CHANGES_REQUESTED",
+                                      "APPROVED",
+                                      "LOCKED"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "balanceMinutes",
+                                  "creditedMinutes",
+                                  "employeeDisplayName",
+                                  "expectedMinutes",
+                                  "incompleteRecordCount",
+                                  "kind",
+                                  "monthStart",
+                                  "monthlyPeriodId",
+                                  "postLockDeltaMinutes",
+                                  "workedMinutes",
+                                  "workflowStatus"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "closingBalanceMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "employeeDisplayName": {
+                                    "maxLength": 160,
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "kind": { "enum": ["FLEXIBLE_TIME"], "type": "string" },
+                                  "openingBalanceMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "rangeChangeMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "closingBalanceMinutes",
+                                  "employeeDisplayName",
+                                  "kind",
+                                  "openingBalanceMinutes",
+                                  "rangeChangeMinutes"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "accountName": {
+                                    "maxLength": 160,
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "availableChangeMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "closingAvailableMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "employeeDisplayName": {
+                                    "maxLength": 160,
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "kind": { "enum": ["LEAVE"], "type": "string" },
+                                  "openingAvailableMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "projectedRemainingMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "reservedMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "accountName",
+                                  "availableChangeMinutes",
+                                  "closingAvailableMinutes",
+                                  "employeeDisplayName",
+                                  "kind",
+                                  "openingAvailableMinutes",
+                                  "projectedRemainingMinutes",
+                                  "reservedMinutes"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "employeeDisplayName": {
+                                    "maxLength": 160,
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "expectedMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                  },
+                                  "kind": { "enum": ["MISSING_RECORD"], "type": "string" },
+                                  "localDate": {
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    "type": "string"
+                                  },
+                                  "status": { "enum": ["INCOMPLETE"], "type": "string" },
+                                  "warningCodes": {
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "enum": [
+                                            "WORK_ON_ZERO_EXPECTED_DAY",
+                                            "WORK_ON_HOLIDAY",
+                                            "WORK_DURING_ABSENCE",
+                                            "FLEX_POSITIVE_THRESHOLD_EXCEEDED",
+                                            "FLEX_NEGATIVE_THRESHOLD_EXCEEDED"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        {
+                                          "enum": [
+                                            "ATTENDANCE_INCOMPLETE",
+                                            "ATTENDANCE_OVERLAP",
+                                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                                            "SCHEDULE_NOT_ASSIGNED",
+                                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                                            "POLICY_NOT_ASSIGNED",
+                                            "POLICY_ASSIGNMENT_OVERLAP",
+                                            "POLICY_CONFIGURATION_INVALID",
+                                            "CORRECTION_UNRESOLVED",
+                                            "ABSENCE_APPROVAL_PENDING",
+                                            "LEDGER_SOURCE_MISMATCH"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      ]
+                                    },
+                                    "maxItems": 17,
+                                    "type": "array"
+                                  },
+                                  "workedMinutes": {
+                                    "maximum": 9007199254740991,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "employeeDisplayName",
+                                  "expectedMinutes",
+                                  "kind",
+                                  "localDate",
+                                  "status",
+                                  "warningCodes",
+                                  "workedMinutes"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "affectedEndDate": {
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    "type": "string"
+                                  },
+                                  "affectedStartDate": {
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    "type": "string"
+                                  },
+                                  "approvalId": {
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                    "type": "string"
+                                  },
+                                  "approvalKind": {
+                                    "enum": [
+                                      "CORRECTION",
+                                      "ABSENCE",
+                                      "CANCELLATION",
+                                      "MONTHLY_PERIOD"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "employeeDisplayName": {
+                                    "maxLength": 160,
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "kind": { "enum": ["PENDING_APPROVAL"], "type": "string" },
+                                  "submittedAt": {
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                    "type": "string"
+                                  },
+                                  "version": {
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991,
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "affectedEndDate",
+                                  "affectedStartDate",
+                                  "approvalId",
+                                  "approvalKind",
+                                  "employeeDisplayName",
+                                  "kind",
+                                  "submittedAt",
+                                  "version"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "maxItems": 50,
+                          "type": "array"
+                        },
+                        "scope": {
+                          "enum": ["SELF", "REPORTS", "SELF_AND_REPORTS", "ORGANIZATION"],
+                          "type": "string"
+                        },
+                        "summary": {
+                          "oneOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "balanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "creditedMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "expectedMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "incompleteRecordCount": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "kind": { "enum": ["MONTHLY_TIME"], "type": "string" },
+                                "postLockDeltaMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "workedMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "balanceMinutes",
+                                "creditedMinutes",
+                                "expectedMinutes",
+                                "incompleteRecordCount",
+                                "kind",
+                                "postLockDeltaMinutes",
+                                "workedMinutes"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "closingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "kind": { "enum": ["FLEXIBLE_TIME"], "type": "string" },
+                                "openingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "rangeChangeMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "closingBalanceMinutes",
+                                "kind",
+                                "openingBalanceMinutes",
+                                "rangeChangeMinutes"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "availableChangeMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "closingAvailableMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "kind": { "enum": ["LEAVE"], "type": "string" },
+                                "openingAvailableMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "projectedRemainingMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "reservedMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "availableChangeMinutes",
+                                "closingAvailableMinutes",
+                                "kind",
+                                "openingAvailableMinutes",
+                                "projectedRemainingMinutes",
+                                "reservedMinutes"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "kind": { "enum": ["MISSING_RECORD"], "type": "string" },
+                                "recordCount": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": ["kind", "recordCount"],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "itemCount": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "kind": { "enum": ["PENDING_APPROVAL"], "type": "string" }
+                              },
+                              "required": ["itemCount", "kind"],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "timeZone": { "maxLength": 255, "minLength": 1, "type": "string" }
+                      },
+                      "required": [
+                        "generatedAt",
+                        "key",
+                        "pagination",
+                        "partial",
+                        "range",
+                        "rows",
+                        "scope",
+                        "summary",
+                        "timeZone"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "idempotentReplay": { "type": "boolean" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["requestId"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["data", "meta"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Run an authorized report",
+        "tags": ["Reports"]
+      }
+    },
     "/v1/team/calendar": {
       "get": {
         "description": "Returns effective absence coverage for currently authorized employees in a requested month. Every entry uses the neutral UNAVAILABLE state. The response excludes employee and request identifiers, absence subtype, sickness classification, notes, reasons, entitlement, and reviewer history.",

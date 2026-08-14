@@ -5,6 +5,35 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  REPORT_DIRECTIONS,
+  REPORT_KEYS,
+  REPORT_SCOPES,
+  REPORT_SORTS,
+  reportCatalogEnvelopeSchema,
+  reportCatalogItemSchema,
+  reportCatalogSchema,
+  reportDirectionSchema,
+  reportKeySchema,
+  reportPaginationSchema,
+  reportQuerySchema,
+  reportRecordIssueCodeSchema,
+  reportResultEnvelopeSchema,
+  reportResultSchema,
+  reportRowSchema,
+  reportScopeSchema,
+  reportSortSchema,
+  type ReportCatalog,
+  type ReportCatalogItem,
+  type ReportDirection,
+  type ReportKey,
+  type ReportQuery,
+  type ReportResult,
+  type ReportRow,
+  type ReportScope,
+  type ReportSort,
+} from './reports.js';
+
+export {
   MONTHLY_DAILY_STATUSES,
   MONTHLY_PERIOD_ACTIONS,
   MONTHLY_PERIOD_REVIEW_ACTIONS,

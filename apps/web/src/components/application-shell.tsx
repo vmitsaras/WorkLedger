@@ -20,9 +20,11 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   { area: 'EMPLOYEE', label: 'My balances', to: '/my-balances' },
   { area: 'EMPLOYEE', label: 'Requests', to: '/requests' },
   { area: 'EMPLOYEE', label: 'Calendar', to: '/calendar' },
+  { area: 'EMPLOYEE', label: 'Reports', to: '/reports' },
   { area: 'MANAGER', label: 'Team', to: '/team' },
   { area: 'MANAGER', label: 'Approvals', to: '/approvals' },
   { area: 'MANAGER', label: 'Team calendar', to: '/team-calendar' },
+  { area: 'MANAGER', label: 'Reports', to: '/reports' },
   { area: 'HR', label: 'Employees', to: '/employees' },
   { area: 'HR', label: 'Reports', to: '/reports' },
   { area: 'HR', label: 'Time settings', to: '/settings/time' },
@@ -108,13 +110,21 @@ function NavigationLists({
   mode: 'desktop' | 'mobile';
   onNavigate?: () => void;
 }>) {
+  const reportArea = context.navigationAreas.includes('EMPLOYEE')
+    ? 'EMPLOYEE'
+    : context.navigationAreas.includes('MANAGER')
+      ? 'MANAGER'
+      : 'HR';
   return (
     <div className="grid content-start gap-7">
       <nav aria-label={mode === 'mobile' ? 'Mobile primary' : 'Primary'}>
         <div className="grid gap-6">
           {context.navigationAreas.map((area) => {
             const items = [
-              ...NAVIGATION_ITEMS.filter((item) => item.area === area),
+              ...NAVIGATION_ITEMS.filter(
+                (item) =>
+                  item.area === area && (item.to !== '/reports' || item.area === reportArea),
+              ),
               ...(area === 'HR' && !context.navigationAreas.includes('MANAGER')
                 ? [HR_APPROVAL_ITEM, HR_TEAM_CALENDAR_ITEM]
                 : []),

@@ -35,6 +35,8 @@ export type NotificationDeliveryStatus = 'NOT_CONFIGURED' | 'PENDING' | Notifica
 export type ApprovalInboxStatus = 'ACTION_REQUIRED' | 'COMPLETED' | 'WAITING_ON_EMPLOYEE';
 export type ApprovalInboxType = 'ABSENCE' | 'CANCELLATION' | 'CORRECTION' | 'MONTHLY_PERIOD';
 export type ApprovalInboxSort = 'AFFECTED_DATE' | 'EMPLOYEE' | 'SUBMITTED_AT';
+export type ReportSort = 'DATE' | 'EMPLOYEE' | 'STATUS' | 'VALUE';
+export type ReportDirection = 'ASC' | 'DESC';
 export type AuditOutcome = 'SUCCESS' | 'DENIED' | 'FAILURE';
 export type DomainAuditTargetKind =
   | 'EMPLOYEE'
@@ -479,6 +481,85 @@ export type MonthlyPeriodRangeRecord = Readonly<{
   startsOn: LocalDate;
 }>;
 
+export type ReportRangeInput = Readonly<{
+  authorizedEmployeeIds: readonly DomainId<'Employee'>[];
+  direction: ReportDirection;
+  from: LocalDate;
+  limit: number;
+  offset: number;
+  organizationId: DomainId<'Organization'>;
+  sort: ReportSort;
+  to: LocalDate;
+}>;
+
+export type MonthlyTimeReportRecord = Readonly<{
+  balanceMinutes: number;
+  creditedMinutes: number;
+  employeeDisplayName: string;
+  employeeId: DomainId<'Employee'>;
+  expectedMinutes: number;
+  incompleteRecordCount: number;
+  monthStart: LocalDate;
+  monthlyPeriodId: DomainId<'MonthlyPeriod'>;
+  postLockDeltaMinutes: number;
+  workedMinutes: number;
+  workflowStatus: MonthlyPeriodStatus;
+}>;
+
+export type FlexibleTimeReportRecord = Readonly<{
+  closingBalanceMinutes: number;
+  employeeDisplayName: string;
+  employeeId: DomainId<'Employee'>;
+  openingBalanceMinutes: number;
+  rangeChangeMinutes: number;
+}>;
+
+export type LeaveReportRecord = Readonly<{
+  accountName: string;
+  availableChangeMinutes: number;
+  closingAvailableMinutes: number;
+  employeeDisplayName: string;
+  employeeId: DomainId<'Employee'>;
+  openingAvailableMinutes: number;
+  projectedRemainingMinutes: number;
+  reservedMinutes: number;
+}>;
+
+export type MissingRecordReportRecord = Readonly<{
+  employeeDisplayName: string;
+  employeeId: DomainId<'Employee'>;
+  expectedMinutes: number;
+  localDate: LocalDate;
+  warningCodes: readonly string[];
+  workedMinutes: number;
+}>;
+
+export type MonthlyTimeReportPage = Readonly<{
+  items: readonly MonthlyTimeReportRecord[];
+  summary: Omit<
+    MonthlyTimeReportRecord,
+    'employeeDisplayName' | 'employeeId' | 'monthStart' | 'monthlyPeriodId' | 'workflowStatus'
+  >;
+  total: number;
+}>;
+
+export type FlexibleTimeReportPage = Readonly<{
+  items: readonly FlexibleTimeReportRecord[];
+  summary: Omit<FlexibleTimeReportRecord, 'employeeDisplayName' | 'employeeId'>;
+  total: number;
+}>;
+
+export type LeaveReportPage = Readonly<{
+  items: readonly LeaveReportRecord[];
+  summary: Omit<LeaveReportRecord, 'accountName' | 'employeeDisplayName' | 'employeeId'>;
+  total: number;
+}>;
+
+export type MissingRecordReportPage = Readonly<{
+  items: readonly MissingRecordReportRecord[];
+  total: number;
+}>;
+
 export type MonthlyScheduleAssignmentRecord = MonthlyPeriodRangeRecord &
   Readonly<{
     scheduleId: DomainId<'WeeklySchedule'>;
@@ -853,6 +934,7 @@ export type DecideAbsenceRequestInput = Readonly<{
 export type ListApprovalInboxInput = Readonly<{
   actorEmployeeId: DomainId<'Employee'> | null;
   direction: 'ASC' | 'DESC';
+  employeeId: DomainId<'Employee'> | null;
   from: LocalDate | null;
   limit: number;
   localDate: LocalDate;
@@ -923,6 +1005,13 @@ export interface OrganizationRepository {
 
 export interface ApprovalInboxRepository {
   list(input: ListApprovalInboxInput): Promise<ApprovalInboxPageRecord>;
+}
+
+export interface ReportRepository {
+  listFlexibleTime(input: ReportRangeInput): Promise<FlexibleTimeReportPage>;
+  listLeave(input: ReportRangeInput): Promise<LeaveReportPage>;
+  listMissingRecords(input: ReportRangeInput): Promise<MissingRecordReportPage>;
+  listMonthlyTime(input: ReportRangeInput): Promise<MonthlyTimeReportPage>;
 }
 
 export interface TeamStatusRepository {

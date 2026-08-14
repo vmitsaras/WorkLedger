@@ -339,6 +339,109 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('opens an authorized report, applies URL filters, and contains its table at narrow width', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const reportQueries: URLSearchParams[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(MANAGER_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/reports', async (route) => {
+    await route.fulfill({
+      json: success({
+        defaultRange: { from: '2026-08-01', to: '2026-08-31' },
+        reports: [
+          {
+            availableSorts: ['EMPLOYEE', 'VALUE'],
+            defaultSort: 'EMPLOYEE',
+            description: 'Opening, in-range change, and closing flexible-time balances.',
+            key: 'flexible-time',
+            title: 'Flexible time',
+          },
+        ],
+        timeZone: 'Europe/Berlin',
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/reports/flexible-time*', async (route) => {
+    const url = new URL(route.request().url());
+    reportQueries.push(url.searchParams);
+    expect(url.searchParams.has('absenceType')).toBe(false);
+    expect(url.searchParams.has('employeeName')).toBe(false);
+    await route.fulfill({
+      json: success({
+        generatedAt: '2026-08-14T10:00:00Z',
+        key: 'flexible-time',
+        pagination: { limit: 20, page: 1, total: 2, totalPages: 1 },
+        partial: false,
+        range: {
+          from: url.searchParams.get('from'),
+          to: url.searchParams.get('to'),
+        },
+        rows: [
+          {
+            closingBalanceMinutes: 630,
+            employeeDisplayName: 'Emma Reed',
+            kind: 'FLEXIBLE_TIME',
+            openingBalanceMinutes: 600,
+            rangeChangeMinutes: 30,
+          },
+          {
+            closingBalanceMinutes: -60,
+            employeeDisplayName: 'Leon Papas',
+            kind: 'FLEXIBLE_TIME',
+            openingBalanceMinutes: 0,
+            rangeChangeMinutes: -60,
+          },
+        ],
+        scope: 'REPORTS',
+        summary: {
+          closingBalanceMinutes: 570,
+          kind: 'FLEXIBLE_TIME',
+          openingBalanceMinutes: 600,
+          rangeChangeMinutes: -30,
+        },
+        timeZone: 'Europe/Berlin',
+      }),
+      status: 200,
+    });
+  });
+
+  await page.goto('/reports');
+  await expect(page.getByRole('heading', { name: 'Reports', exact: true })).toBeFocused();
+  await page.getByRole('link', { name: 'Open flexible time' }).click();
+  await expect(page.getByRole('heading', { name: 'Flexible time' })).toBeFocused();
+  const table = page.getByRole('table', { name: /Flexible time rows/iu });
+  await expect(table.getByRole('row', { name: /Emma Reed/iu })).toBeVisible();
+
+  await page.getByLabel('From').fill('2026-08-10');
+  await page.getByLabel('To').fill('2026-08-20');
+  await page.getByLabel('Direction').selectOption('DESC');
+  await page.getByRole('button', { name: 'Apply report filters' }).click();
+  await expect(page).toHaveURL(/from=2026-08-10.*to=2026-08-20/u);
+  await expect.poll(() => reportQueries.at(-1)?.get('from')).toBe('2026-08-10');
+  expect(Object.fromEntries(reportQueries.at(-1) ?? [])).toEqual({
+    direction: 'DESC',
+    from: '2026-08-10',
+    limit: '20',
+    page: '1',
+    sort: 'EMPLOYEE',
+    to: '2026-08-20',
+  });
+
+  const region = page.getByRole('region', { name: 'Flexible time report table' });
+  await region.focus();
+  await expect(region).toBeFocused();
+  expect(await region.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await expect(page.getByText(/sickness|medical|request reason/iu)).toHaveCount(0);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('records an approval decision with field-linked errors and keyboard-scrollable detail', async ({
   page,
 }) => {

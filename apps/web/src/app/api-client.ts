@@ -25,6 +25,8 @@ import {
   myTimeEnvelopeSchema,
   notificationHistoryEnvelopeSchema,
   monthlyPeriodEnvelopeSchema,
+  reportCatalogEnvelopeSchema,
+  reportResultEnvelopeSchema,
   dismissedNotificationEnvelopeSchema,
   personalCalendarEnvelopeSchema,
   type ApiErrorCode,
@@ -51,6 +53,10 @@ import {
   type MonthlyPeriodReviewRequest,
   type MonthlyPeriodSubmissionRequest,
   type NotificationQuery,
+  type ReportCatalog,
+  type ReportKey,
+  type ReportQuery,
+  type ReportResult,
   type DismissedNotification,
   type SubmitCorrectionRequest,
   type SubmitSicknessReport,
@@ -188,6 +194,36 @@ export async function loadMonthlyPeriod(
     signal === undefined ? {} : { signal },
   );
   const parsed = monthlyPeriodEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadReportCatalog(signal?: AbortSignal): Promise<ReportCatalog> {
+  const body = await requestJson('/v1/reports', signal === undefined ? {} : { signal });
+  const parsed = reportCatalogEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadReport(
+  reportKey: ReportKey,
+  query: ReportQuery,
+  signal?: AbortSignal,
+): Promise<ReportResult> {
+  const search = new URLSearchParams({
+    direction: query.direction,
+    from: query.from,
+    limit: query.limit.toString(),
+    page: query.page.toString(),
+    sort: query.sort,
+    to: query.to,
+  });
+  if (query.employeeId !== undefined) search.set('employeeId', query.employeeId);
+  const body = await requestJson(
+    `/v1/reports/${encodeURIComponent(reportKey)}?${search.toString()}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = reportResultEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

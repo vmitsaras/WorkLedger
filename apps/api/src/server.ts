@@ -20,6 +20,7 @@ import { registerApprovalInboxRoutes } from './approvals/routes.js';
 import { registerTeamStatusRoutes } from './team/routes.js';
 import { registerNotificationRoutes } from './notifications/routes.js';
 import { registerMonthlyPeriodRoutes } from './monthly/routes.js';
+import { registerReportRoutes } from './reports/routes.js';
 import {
   disabledNotificationDeliveryAdapter,
   type NotificationDeliveryAdapter,
@@ -77,6 +78,7 @@ export function createApiServer(
         dependencies.now,
         dependencies.notificationDelivery ?? disabledNotificationDeliveryAdapter,
       );
+      registerReportRoutes(app, authentication, database, dependencies.now);
       registerTeamStatusRoutes(app, authentication, database, dependencies.now);
       registerVacationRequestRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {
