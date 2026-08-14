@@ -1,16 +1,16 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 7 — Manager approvals and team availability
+**Current phase:** Phase 8 — Monthly closure and reporting
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 6 of 7 Phase 7 tasks complete
-**Current milestone:** Phase 7 exit-gate review
-**Active task:** `WL-706`
+**Phase progress:** 0 of 7 Phase 8 tasks complete
+**Current milestone:** Monthly period summary and blockers
+**Active task:** `WL-800`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Execute the Phase 7 manager approvals and team availability exit-gate review for `WL-706`.
+Implement monthly period projection, totals, warnings, blockers, and snapshot version for `WL-800`.
 
 ## Verified decisions
 
@@ -312,6 +312,30 @@ Execute the Phase 7 manager approvals and team availability exit-gate review for
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-706` — Pass the Phase 7 exit gate
+
+- Changed: completed the gate review across `WL-700`–`WL-705`, recorded direct evidence for all six
+  manager-approval/team criteria, marked the sequential gate complete, and advanced the root plus
+  all eight private workspace manifests from `0.7.0` to `0.8.0`.
+- Verified: the installed pinned-toolchain equivalent of database-enabled canonical verification
+  passes toolchain/workspace/version/config, formatting, lint/boundaries, strict typecheck,
+  generated OpenAPI, 24 repository-contract tests, 219 unit/component tests, 33 PostgreSQL
+  integration tests, 16 Chromium scenarios, and the production build. The pnpm managed-runtime
+  wrapper requested and then safely aborted a non-interactive dependency refresh after the
+  manifest-only version bump; no dependency or lockfile changed.
+- Accessibility: semantic manager workflows, keyboard completion, linked errors, route/result
+  focus, bounded live feedback, equivalent calendar/agenda information, narrow reflow, reduced
+  motion, forced colors, touch, and axe evidence pass. Real assistive-technology smoke remains a
+  release-level verification item rather than a conformance claim.
+- Security/data: current-manager/HR scope, non-self decisions, account-first audit actors, no-store
+  minimized DTOs, cross-organization isolation, CSRF, versioned serializable decisions, and
+  post-commit delivery failure behavior meet the gate.
+- Documentation: added `docs/80-phase-7-gate-review.md`, synchronized README/TODO/task board/status,
+  and advanced the roadmap to `WL-800`.
+- Remaining risk: monthly approval/lock authority remains blocked on `D-402` before `WL-802`; the
+  known Vite main-chunk warning remains owned by `WL-1001`.
+- Next task: `WL-800`.
 
 ### `WL-705` — Complete manager authorization and accessibility review
 
@@ -734,12 +758,12 @@ Execute the Phase 7 manager approvals and team availability exit-gate review for
 
 ## Current blockers
 
-No `WL-706` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
+No `WL-800` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
 to the inbox; D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-706 — Pass the Phase 7 exit gate.`
+`WL-800 — Implement monthly period summary and blockers.`
 
 ## Update rules
 

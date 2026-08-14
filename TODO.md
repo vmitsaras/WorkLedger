@@ -101,7 +101,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-703` Build team calendar and agenda alternative.
 - [x] `WL-704` Implement notification records, in-app history, and optional email delivery.
 - [x] `WL-705` Complete authorization and accessibility review.
-- [ ] `WL-706` Pass the Phase 7 exit gate.
+- [x] `WL-706` Pass the Phase 7 exit gate.
 
 ## Phase 8 — Monthly closure and reporting
 

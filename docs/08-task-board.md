@@ -138,7 +138,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-703 | Build team calendar and agenda/list alternative | WL-607, WL-702 | Same information in accessible alternative; coverage warnings are textual | Done |
 | WL-704 | Implement notification records, the generic in-app notification route, and optional email adapter | WL-701 | Authorized generic notification history is accessible and privacy-safe; domain decision persists when delivery fails; retry diagnostics exist | Done |
 | WL-705 | Execute manager authorization and accessibility review | WL-700–WL-704 | Permission matrix and critical-flow review complete | Done |
-| WL-706 | Execute Phase 7 gate review | WL-705 | Gate evidence recorded | Not started |
+| WL-706 | Execute Phase 7 gate review | WL-705 | Gate evidence recorded | Done |
 
 ---
 
