@@ -278,11 +278,13 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-203 — Email delivery
 
-**Status:** Resolved by `WL-002`, `WL-009`, and `WL-010`; implementation owner `WL-704`.
+**Status:** Resolved by `WL-002`, `WL-009`, `WL-010`, and `WL-704`.
 
 - MVP core must work without SMTP.
 - Phase 3 may define the outbound interface/fake needed by integration tests but does not add a production SMTP dependency.
-- `WL-704` implements durable generic in-app notifications and may add the optional privacy-safe SMTP adapter. Delivery failure/retry never changes the committed domain outcome.
+- `WL-704` implements durable generic in-app notifications, a bounded post-commit delivery adapter,
+  and persistent retry diagnostics without adding a production SMTP dependency. Delivery
+  failure/retry never changes the committed domain outcome.
 
 ### D-205 — Part-time seed reservation arithmetic
 

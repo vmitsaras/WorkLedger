@@ -23,6 +23,10 @@ import type { RuntimeConfig } from '../config.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import { createApprovalDetailService, parseApprovalDetailIdentity } from './detail-service.js';
 import { createApprovalInboxService, parseApprovalInboxIdentity } from './inbox-service.js';
+import {
+  disabledNotificationDeliveryAdapter,
+  type NotificationDeliveryAdapter,
+} from '../notifications/delivery.js';
 
 export function registerApprovalInboxRoutes(
   app: FastifyInstance,
@@ -30,10 +34,11 @@ export function registerApprovalInboxRoutes(
   authentication: WorkLedgerAuthentication,
   database: WorkLedgerDatabase,
   now: () => string = () => new Date().toISOString(),
+  notificationDelivery: NotificationDeliveryAdapter = disabledNotificationDeliveryAdapter,
 ): void {
   const api = app.withTypeProvider<ZodTypeProvider>();
   const service = createApprovalInboxService(database);
-  const detailService = createApprovalDetailService(database);
+  const detailService = createApprovalDetailService(database, notificationDelivery);
 
   api.get(
     '/v1/approvals',

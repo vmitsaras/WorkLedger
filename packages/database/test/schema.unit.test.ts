@@ -18,6 +18,8 @@ import {
   domainAuditEvents,
   employmentPeriods,
   idempotencyRecords,
+  notificationDeliveryAttempts,
+  notifications,
   punchEvents,
   securityAuditEvents,
   timeAccountEntries,
@@ -111,6 +113,34 @@ describe('initial PostgreSQL schema', () => {
     }
   });
 
+  it('keeps generic notification history separate from append-only delivery attempts', () => {
+    const notificationConfiguration = getTableConfig(notifications);
+    const attemptConfiguration = getTableConfig(notificationDeliveryAttempts);
+
+    expect(notificationConfiguration.columns.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'dismissed_at',
+        'recipient_account_id',
+        'recipient_employee_id',
+        'source_id',
+        'source_kind',
+        'source_version',
+      ]),
+    );
+    expect(notificationConfiguration.indexes.map(({ config }) => config.name)).toContain(
+      'notifications_source_recipient_event_version_uidx',
+    );
+    expect(attemptConfiguration.indexes.map(({ config }) => config.name)).toContain(
+      'notification_delivery_attempts_number_uidx',
+    );
+    expect(attemptConfiguration.checks.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'notification_delivery_attempts_outcome_shape',
+        'notification_delivery_attempts_positive_number',
+      ]),
+    );
+  });
+
   it('commits generated and custom migration metadata', () => {
     const journal = JSON.parse(
       readFileSync(`${packageDirectory}/migrations/meta/_journal.json`, 'utf8'),
@@ -132,6 +162,7 @@ describe('initial PostgreSQL schema', () => {
       '0012_silly_magik',
       '0013_brave_bulldozer',
       '0014_adorable_piledriver',
+      '0015_rainy_nightshade',
     ]);
   });
 });

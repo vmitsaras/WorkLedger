@@ -5,6 +5,7 @@ import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } 
 import {
   approvalInboxQuerySchema,
   teamCalendarQuerySchema,
+  notificationQuerySchema,
   type NavigationArea,
   type SelfContext,
 } from '@workledger/contracts';
@@ -19,6 +20,7 @@ import {
   todayAttendanceQuery,
   teamStatusQuery,
   teamCalendarQuery,
+  notificationHistoryQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -43,6 +45,7 @@ import { ApprovalInboxPage } from '../routes/approval-inbox-page.js';
 import { ApprovalDetailPage } from '../routes/approval-detail-page.js';
 import { TeamStatusPage } from '../routes/team-status-page.js';
 import { TeamCalendarPage } from '../routes/team-calendar-page.js';
+import { NotificationsPage } from '../routes/notifications-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -123,12 +126,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-906 and WL-1006',
     path: 'system/audit',
     title: 'Technical audit',
-  },
-  {
-    description: 'Generic in-app outcome and attention records with authorized detail links.',
-    milestone: 'WL-704',
-    path: 'notifications',
-    title: 'Notifications',
   },
 ];
 
@@ -246,6 +243,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <TeamCalendarPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Team calendar' },
+            },
+            {
+              path: 'notifications',
+              loader: createNotificationsLoader(queryClient),
+              element: <NotificationsPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Notifications' },
             },
             {
               path: 'approvals',
@@ -430,6 +434,23 @@ function createTeamCalendarLoader(queryClient: QueryClient): LoaderFunction {
     const parsed = teamCalendarQuerySchema.safeParse(values);
     if (!parsed.success) return redirect('/team-calendar');
     void queryClient.prefetchQuery(teamCalendarQuery(parsed.data));
+    return parsed.data;
+  };
+}
+
+function createNotificationsLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    await requireContext(queryClient);
+    const searchParams = new URL(request.url).searchParams;
+    const values: Record<string, string> = {};
+    for (const key of new Set(searchParams.keys())) {
+      const entries = searchParams.getAll(key);
+      if (entries.length !== 1 || entries[0] === undefined) return redirect('/notifications');
+      values[key] = entries[0];
+    }
+    const parsed = notificationQuerySchema.safeParse(values);
+    if (!parsed.success) return redirect('/notifications');
+    void queryClient.prefetchQuery(notificationHistoryQuery(parsed.data));
     return parsed.data;
   };
 }

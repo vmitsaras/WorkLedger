@@ -7,11 +7,18 @@ import {
   approvalDecisionEnvelopeSchema,
   approvalDetailEnvelopeSchema,
   approvalInboxEnvelopeSchema,
+  dismissedNotificationEnvelopeSchema,
+  notificationHistoryEnvelopeSchema,
   type ApprovalInbox,
+  type NotificationHistory,
 } from '@workledger/contracts';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createRuntimeConfig } from '../src/config.js';
+import type {
+  NotificationDeliveryAdapter,
+  NotificationDeliveryMessage,
+} from '../src/notifications/delivery.js';
 import { createApiServer } from '../src/server.js';
 
 const databaseHarness = createDatabaseHarnessState(process.env);
@@ -36,6 +43,7 @@ const migrationFiles = [
   '0012_silly_magik.sql',
   '0013_brave_bulldozer.sql',
   '0014_adorable_piledriver.sql',
+  '0015_rainy_nightshade.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -46,6 +54,7 @@ integrationTest(
       label: 'approval_inbox',
       migrationFiles,
     });
+    const notificationDelivery = createFailingNotificationDelivery();
     const app = createApiServer(
       createRuntimeConfig({
         WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
@@ -53,7 +62,7 @@ integrationTest(
         WORKLEDGER_ENVIRONMENT: 'test',
         WORKLEDGER_ORIGIN: ORIGIN,
       }),
-      { now: () => NOW },
+      { notificationDelivery, now: () => NOW },
     );
 
     try {
@@ -263,6 +272,121 @@ integrationTest(
         },
       ]);
 
+      expect(notificationDelivery.messages).toHaveLength(2);
+      expect(notificationDelivery.messages).toEqual([
+        {
+          body: 'An item you submitted was not approved.',
+          destinationPath: '/requests',
+          notificationId: expect.any(String),
+          recipientEmail: scenario.alpha.email,
+          subject: 'A WorkLedger item was not approved',
+        },
+        {
+          body: 'An item you submitted was not approved.',
+          destinationPath: '/requests',
+          notificationId: expect.any(String),
+          recipientEmail: scenario.alpha.email,
+          subject: 'A WorkLedger item was not approved',
+        },
+      ]);
+      expect(notificationDelivery.messages[0]?.notificationId).toBe(
+        notificationDelivery.messages[1]?.notificationId,
+      );
+      expect(JSON.stringify(notificationDelivery.messages)).not.toMatch(
+        /correction|sickness|vacation|supporting record/iu,
+      );
+      const deliveryAttempts = await fixture.client.query<{
+        attempt_number: number;
+        failure_code: string | null;
+        outcome: string;
+      }>(
+        `select attempt_number, failure_code, outcome
+         from notification_delivery_attempts
+         order by attempt_number`,
+      );
+      expect(deliveryAttempts.rows).toEqual([
+        {
+          attempt_number: 1,
+          failure_code: 'DELIVERY_DEPENDENCY_FAILED',
+          outcome: 'FAILED',
+        },
+        {
+          attempt_number: 2,
+          failure_code: 'DELIVERY_DEPENDENCY_FAILED',
+          outcome: 'FAILED',
+        },
+      ]);
+
+      const alphaCookie = await signIn(app, scenario.alpha.email, scenario.alpha.password);
+      const initialNotifications = await parsedNotifications(app, alphaCookie);
+      expect(initialNotifications.pagination).toEqual({
+        limit: 20,
+        page: 1,
+        total: 1,
+        totalPages: 1,
+      });
+      expect(initialNotifications.items).toEqual([
+        {
+          body: 'An item you submitted was not approved.',
+          deliveryStatus: 'FAILED',
+          destinationPath: '/requests',
+          dismissedAt: null,
+          event: 'ITEM_REJECTED',
+          id: notificationDelivery.messages[0]?.notificationId,
+          occurredAt: NOW,
+          status: 'ACTIVE',
+          title: 'Item not approved',
+        },
+      ]);
+      assertNotificationPrivacy(initialNotifications);
+      expect((await parsedNotifications(app, managerCookie)).pagination.total).toBe(0);
+      const invalidNotificationQuery = await app.inject({
+        method: 'GET',
+        url: '/v1/me/notifications?absenceType=SICKNESS',
+        headers: { cookie: alphaCookie, origin: ORIGIN },
+      });
+      expect(invalidNotificationQuery.statusCode).toBe(422);
+      expect(invalidNotificationQuery.json()).toMatchObject({
+        error: { code: 'VALIDATION_FAILED' },
+      });
+      expect(invalidNotificationQuery.payload).not.toContain('SICKNESS');
+
+      const alphaCsrf = await getCsrfToken(app, alphaCookie);
+      const notificationId = requiredId(initialNotifications.items[0]?.id);
+      const dismiss = await app.inject({
+        method: 'POST',
+        url: `/v1/me/notifications/${notificationId}/dismiss`,
+        headers: {
+          cookie: alphaCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': alphaCsrf,
+        },
+      });
+      expect(dismiss.statusCode, dismiss.payload).toBe(200);
+      expect(dismissedNotificationEnvelopeSchema.parse(dismiss.json()).data).toEqual({
+        dismissedAt: NOW,
+        id: notificationId,
+        status: 'DISMISSED',
+      });
+      expect((await parsedNotifications(app, alphaCookie)).items[0]).toMatchObject({
+        dismissedAt: NOW,
+        id: notificationId,
+        status: 'DISMISSED',
+      });
+
+      const managerCsrf = await getCsrfToken(app, managerCookie);
+      const foreignDismiss = await app.inject({
+        method: 'POST',
+        url: `/v1/me/notifications/${notificationId}/dismiss`,
+        headers: {
+          cookie: managerCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': managerCsrf,
+        },
+      });
+      expect(foreignDismiss.statusCode).toBe(404);
+      expect(foreignDismiss.json()).toMatchObject({ error: { code: 'ROUTE_NOT_FOUND' } });
+
       const staleDecision = await app.inject({
         method: 'POST',
         url: `/v1/approvals/${scenario.alphaCorrectionId}/decision`,
@@ -280,6 +404,8 @@ integrationTest(
       });
       expect(staleDecision.statusCode).toBe(409);
       expect(staleDecision.json()).toMatchObject({ error: { code: 'APPROVAL_STATE_CONFLICT' } });
+      expect((await parsedNotifications(app, alphaCookie)).pagination.total).toBe(1);
+      expect(notificationDelivery.messages).toHaveLength(2);
 
       const sicknessDetailResponse = await app.inject({
         method: 'GET',
@@ -312,6 +438,15 @@ integrationTest(
         status: 'ACKNOWLEDGED',
         version: 2,
       });
+      const afterSickness = await parsedNotifications(app, alphaCookie);
+      expect(afterSickness.pagination.total).toBe(2);
+      expect(afterSickness.items[0]).toMatchObject({
+        body: 'An item you submitted was acknowledged.',
+        deliveryStatus: 'FAILED',
+        event: 'ITEM_ACKNOWLEDGED',
+        title: 'Item acknowledged',
+      });
+      assertNotificationPrivacy(afterSickness);
 
       const vacation = await createAbsence(
         fixture.client,
@@ -390,6 +525,15 @@ integrationTest(
       expect(effect.rows).toEqual([
         { credit_minutes: 480, entitlement_minutes: 480, expected_reduction_minutes: 0 },
       ]);
+      const finalNotifications = await parsedNotifications(app, alphaCookie);
+      expect(finalNotifications.pagination.total).toBe(3);
+      expect(finalNotifications.items[0]).toMatchObject({
+        body: 'An item you submitted was approved.',
+        deliveryStatus: 'FAILED',
+        event: 'ITEM_APPROVED',
+        title: 'Item approved',
+      });
+      assertNotificationPrivacy(finalNotifications);
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -477,6 +621,13 @@ async function createScenario(client: pg.PoolClient) {
     name: 'Inbox manager',
     password: 'safe approval manager passphrase 2026',
     roles: ['MANAGER'],
+  });
+  const alpha = await createAccount(client, organizationId, {
+    email: 'approval-alpha@example.test',
+    employeeId: alphaEmployeeId,
+    name: 'Alpha report',
+    password: 'safe approval alpha passphrase 2026',
+    roles: ['EMPLOYEE'],
   });
   const hrOnly = await createAccount(client, organizationId, {
     email: 'approval-hr-only@example.test',
@@ -585,6 +736,7 @@ async function createScenario(client: pg.PoolClient) {
   });
 
   return Object.freeze({
+    alpha,
     alphaCorrectionId: requiredId(alphaCorrectionId),
     alphaEmployeeId,
     alphaTeamId,
@@ -641,7 +793,7 @@ async function createAccount(
     employeeId?: string;
     name: string;
     password: string;
-    roles: readonly ('HR_ADMINISTRATOR' | 'MANAGER' | 'SYSTEM_ADMINISTRATOR')[];
+    roles: readonly ('EMPLOYEE' | 'HR_ADMINISTRATOR' | 'MANAGER' | 'SYSTEM_ADMINISTRATOR')[];
   }>,
 ): Promise<Credentials> {
   const accountId = requiredId(
@@ -834,6 +986,33 @@ async function parsedInbox(
   return approvalInboxEnvelopeSchema.parse(response.json()).data;
 }
 
+async function parsedNotifications(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+): Promise<NotificationHistory> {
+  const response = await app.inject({
+    method: 'GET',
+    url: '/v1/me/notifications',
+    headers: { cookie, origin: ORIGIN },
+  });
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['cache-control']).toBe('private, no-store');
+  return notificationHistoryEnvelopeSchema.parse(response.json()).data;
+}
+
+async function getCsrfToken(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+): Promise<string> {
+  const response = await app.inject({
+    method: 'GET',
+    url: '/v1/me/csrf',
+    headers: { cookie, origin: ORIGIN },
+  });
+  expect(response.statusCode).toBe(200);
+  return response.json<{ data: { token: string } }>().data.token;
+}
+
 async function getInbox(app: ReturnType<typeof createApiServer>, cookie: string, query = '') {
   return app.inject({
     method: 'GET',
@@ -893,6 +1072,47 @@ function assertPrivacyMinimized(inbox: ApprovalInbox) {
   ]) {
     expect(keys).not.toContain(forbiddenKey);
   }
+}
+
+function assertNotificationPrivacy(history: NotificationHistory) {
+  const serialized = JSON.stringify(history);
+  for (const forbiddenValue of [
+    'SICKNESS',
+    'Sickness',
+    'VACATION',
+    'Vacation',
+    'correction',
+    'supporting record',
+  ]) {
+    expect(serialized).not.toContain(forbiddenValue);
+  }
+  const keys = collectKeys(history);
+  for (const forbiddenKey of [
+    'absenceType',
+    'employeeId',
+    'entitlementMinutes',
+    'reason',
+    'reviewer',
+    'sourceId',
+  ]) {
+    expect(keys).not.toContain(forbiddenKey);
+  }
+}
+
+function createFailingNotificationDelivery(): NotificationDeliveryAdapter &
+  Readonly<{ messages: NotificationDeliveryMessage[] }> {
+  const messages: NotificationDeliveryMessage[] = [];
+  return Object.freeze({
+    configured: true,
+    async deliver(message: NotificationDeliveryMessage) {
+      messages.push(message);
+      return Object.freeze({
+        failureCode: 'DELIVERY_DEPENDENCY_FAILED' as const,
+        outcome: 'FAILED' as const,
+      });
+    },
+    messages,
+  });
 }
 
 function collectKeys(value: unknown, keys: string[] = []): readonly string[] {

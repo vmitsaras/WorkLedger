@@ -24,6 +24,11 @@ export type CorrectionDecisionAction = 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES';
 export type ApplicationRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR';
 export type EmployeeAuthorizationScope = 'ORGANIZATION' | 'REPORTS' | 'SELF' | 'SELF_AND_REPORTS';
 export type TeamAvailabilityState = 'OFF_WORK' | 'ON_BREAK' | 'UNAVAILABLE' | 'WORKING';
+export type NotificationEvent =
+  'ITEM_APPROVED' | 'ITEM_REJECTED' | 'ITEM_CHANGES_REQUESTED' | 'ITEM_ACKNOWLEDGED';
+export type NotificationSourceKind = 'REQUEST' | 'MONTHLY_PERIOD';
+export type NotificationDeliveryOutcome = 'DELIVERED' | 'FAILED';
+export type NotificationDeliveryStatus = 'NOT_CONFIGURED' | 'PENDING' | NotificationDeliveryOutcome;
 export type ApprovalInboxStatus = 'ACTION_REQUIRED' | 'COMPLETED' | 'WAITING_ON_EMPLOYEE';
 export type ApprovalInboxType = 'ABSENCE' | 'CANCELLATION' | 'CORRECTION';
 export type ApprovalInboxSort = 'AFFECTED_DATE' | 'EMPLOYEE' | 'SUBMITTED_AT';
@@ -119,6 +124,66 @@ export type SecurityAuditEventRecord = Readonly<{
 
 export type AppendDomainAuditEventInput = Omit<DomainAuditEventRecord, 'id'>;
 export type AppendSecurityAuditEventInput = Omit<SecurityAuditEventRecord, 'id'>;
+
+export type AppendNotificationInput = Readonly<{
+  deliveryRequested: boolean;
+  destinationPath: '/requests';
+  event: NotificationEvent;
+  occurredAt: Instant;
+  organizationId: DomainId<'Organization'>;
+  recipientEmployeeId: DomainId<'Employee'>;
+  sourceId: string;
+  sourceKind: NotificationSourceKind;
+  sourceVersion: number;
+}>;
+
+export type NotificationRecord = AppendNotificationInput &
+  Readonly<{
+    deliveryRequested: boolean;
+    dismissedAt: Instant | null;
+    id: DomainId<'Notification'>;
+    recipientAccountId: DomainId<'Account'> | null;
+    recipientEmail: string | null;
+  }>;
+
+export type AppendNotificationDeliveryAttemptInput = Readonly<{
+  attemptedAt: Instant;
+  attemptNumber: number;
+  failureCode: string | null;
+  notificationId: DomainId<'Notification'>;
+  organizationId: DomainId<'Organization'>;
+  outcome: NotificationDeliveryOutcome;
+}>;
+
+export type ListNotificationsInput = Readonly<{
+  accountId: DomainId<'Account'>;
+  employeeId: DomainId<'Employee'> | null;
+  limit: number;
+  offset: number;
+  organizationId: DomainId<'Organization'>;
+}>;
+
+export type DismissNotificationInput = Readonly<{
+  accountId: DomainId<'Account'>;
+  dismissedAt: Instant;
+  employeeId: DomainId<'Employee'> | null;
+  notificationId: DomainId<'Notification'>;
+  organizationId: DomainId<'Organization'>;
+}>;
+
+export type NotificationListItemRecord = Readonly<{
+  deliveryStatus: NotificationDeliveryStatus;
+  destinationPath: '/requests';
+  dismissedAt: Instant | null;
+  event: NotificationEvent;
+  id: DomainId<'Notification'>;
+  occurredAt: Instant;
+}>;
+
+export type NotificationPageRecord = Readonly<{
+  items: readonly NotificationListItemRecord[];
+  total: number;
+}>;
 
 export type ListDomainAuditEventsInput = Readonly<{
   limit: number;
@@ -688,6 +753,13 @@ export interface ApprovalInboxRepository {
 export interface TeamStatusRepository {
   listCalendar(input: ListTeamCalendarInput): Promise<readonly TeamCalendarEntryRecord[]>;
   listCurrent(input: ListTeamStatusInput): Promise<readonly TeamStatusMemberRecord[]>;
+}
+
+export interface NotificationRepository {
+  append(input: AppendNotificationInput): Promise<NotificationRecord>;
+  appendDeliveryAttempt(input: AppendNotificationDeliveryAttemptInput): Promise<void>;
+  dismiss(input: DismissNotificationInput): Promise<NotificationListItemRecord | null>;
+  list(input: ListNotificationsInput): Promise<NotificationPageRecord>;
 }
 
 export interface AuditRepository {

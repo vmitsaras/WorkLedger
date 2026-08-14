@@ -298,6 +298,83 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('reviews and dismisses generic notification history without losing keyboard focus', async ({
+  page,
+}) => {
+  const notificationId = '123e4567-e89b-42d3-a456-426614174601';
+  let dismissedAt: string | null = null;
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'n'.repeat(43) }), status: 200 });
+  });
+  await page.route('**/v1/me/notifications?*', async (route) => {
+    const url = new URL(route.request().url());
+    expect(Object.fromEntries(url.searchParams)).toEqual({ limit: '20', page: '1' });
+    await route.fulfill({
+      json: success({
+        items: [
+          {
+            body: 'An item you submitted needs changes.',
+            deliveryStatus: 'FAILED',
+            destinationPath: '/requests',
+            dismissedAt,
+            event: 'ITEM_CHANGES_REQUESTED',
+            id: notificationId,
+            occurredAt: '2026-08-14T09:30:00Z',
+            status: dismissedAt === null ? 'ACTIVE' : 'DISMISSED',
+            title: 'Changes requested',
+          },
+        ],
+        pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+        timeZone: 'Europe/Berlin',
+      }),
+      status: 200,
+    });
+  });
+  await page.route(`**/v1/me/notifications/${notificationId}/dismiss`, async (route) => {
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().headers()['x-workledger-csrf']).toBe('n'.repeat(43));
+    dismissedAt = '2026-08-14T10:00:00Z';
+    await route.fulfill({
+      json: success({ dismissedAt, id: notificationId, status: 'DISMISSED' }),
+      status: 200,
+    });
+  });
+
+  await page.goto('/notifications');
+  await expect(page).toHaveTitle('Notifications | WorkLedger');
+  await expect(page.getByRole('heading', { name: 'Notifications' })).toBeFocused();
+  const history = page.getByRole('list', { name: 'Generic notification history' });
+  await expect(history.getByText('Changes requested')).toBeVisible();
+  await expect(history.getByText('Delivery failed; in-app record unaffected')).toBeVisible();
+  await expect(history.getByRole('link', { name: 'Open requests' })).toHaveAttribute(
+    'href',
+    '/requests',
+  );
+  await expect(page.getByText(/sickness|vacation|diagnosis|private reason/iu)).toHaveCount(0);
+
+  const dismiss = history.getByRole('button');
+  await expect(dismiss).toHaveAccessibleName('Dismiss notification');
+  await dismiss.focus();
+  await page.keyboard.press('Enter');
+  await expect(dismiss).toHaveText('Dismissed');
+  await expect(dismiss).toBeFocused();
+  await expect(dismiss).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByRole('status')).toHaveText(
+    'Notification dismissed. It remains in your history.',
+  );
+
+  await page.setViewportSize({ width: 320, height: 900 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('completes the attendance sequence by keyboard with protected intents and break confirmation', async ({
   page,
 }) => {

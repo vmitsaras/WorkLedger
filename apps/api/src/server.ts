@@ -18,12 +18,20 @@ import { createRequestId, registerHttpFoundation } from './http/foundation.js';
 import { registerOpenApiRoute } from './http/openapi.js';
 import { registerApprovalInboxRoutes } from './approvals/routes.js';
 import { registerTeamStatusRoutes } from './team/routes.js';
+import { registerNotificationRoutes } from './notifications/routes.js';
+import {
+  disabledNotificationDeliveryAdapter,
+  type NotificationDeliveryAdapter,
+} from './notifications/delivery.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
 
 export function createApiServer(
   config: RuntimeConfig,
-  dependencies: Readonly<{ now?: ApiClock }> = {},
+  dependencies: Readonly<{
+    notificationDelivery?: NotificationDeliveryAdapter;
+    now?: ApiClock;
+  }> = {},
 ): FastifyInstance {
   const app = Fastify({
     genReqId: createRequestId,
@@ -51,7 +59,15 @@ export function createApiServer(
       registerMyTimeRoutes(app, authentication, database, dependencies.now);
       registerCorrectionRequestRoutes(app, config, authentication, database, dependencies.now);
       registerCorrectionReviewRoutes(app, config, authentication, database, dependencies.now);
-      registerApprovalInboxRoutes(app, config, authentication, database, dependencies.now);
+      registerApprovalInboxRoutes(
+        app,
+        config,
+        authentication,
+        database,
+        dependencies.now,
+        dependencies.notificationDelivery ?? disabledNotificationDeliveryAdapter,
+      );
+      registerNotificationRoutes(app, config, authentication, database, dependencies.now);
       registerTeamStatusRoutes(app, authentication, database, dependencies.now);
       registerVacationRequestRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {

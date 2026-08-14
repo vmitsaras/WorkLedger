@@ -14,6 +14,8 @@ import {
   clockOutRequestSchema,
   createSuccessEnvelopeSchema,
   resumeAttendanceEnvelopeSchema,
+  notificationHistoryEnvelopeSchema,
+  notificationQuerySchema,
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
   teamCalendarEnvelopeSchema,
@@ -23,6 +25,74 @@ import {
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
+
+test('keeps notification history generic, strict, and pagination-bounded', () => {
+  const response = {
+    data: {
+      items: [
+        {
+          body: 'An item you submitted needs changes.',
+          deliveryStatus: 'FAILED',
+          destinationPath: '/requests',
+          dismissedAt: null,
+          event: 'ITEM_CHANGES_REQUESTED',
+          id: randomUUID(),
+          occurredAt: '2026-08-14T09:30:00Z',
+          status: 'ACTIVE',
+          title: 'Changes requested',
+        },
+      ],
+      pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+      timeZone: 'Europe/Berlin',
+    },
+    meta: { requestId: randomUUID() },
+  };
+
+  expect(notificationQuerySchema.parse({})).toEqual({ limit: 20, page: 1 });
+  expect(notificationQuerySchema.parse({ limit: '50', page: '10000' })).toEqual({
+    limit: 50,
+    page: 10_000,
+  });
+  expect(() => notificationQuerySchema.parse({ limit: '51' })).toThrow();
+  expect(() => notificationQuerySchema.parse({ absenceType: 'SICKNESS' })).toThrow();
+  expect(notificationHistoryEnvelopeSchema.parse(response)).toEqual(response);
+  expect(() =>
+    notificationHistoryEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        items: [{ ...response.data.items[0], destinationPath: '/sickness/record' }],
+      },
+    }),
+  ).toThrow();
+  expect(() =>
+    notificationHistoryEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        items: [{ ...response.data.items[0], dismissedAt: '2026-08-14T10:00:00Z' }],
+      },
+    }),
+  ).toThrow();
+  for (const protectedField of [
+    'absenceType',
+    'employeeId',
+    'reason',
+    'reviewer',
+    'sourceId',
+    'entitlementMinutes',
+  ]) {
+    expect(() =>
+      notificationHistoryEnvelopeSchema.parse({
+        ...response,
+        data: {
+          ...response.data,
+          items: [{ ...response.data.items[0], [protectedField]: 'private' }],
+        },
+      }),
+    ).toThrow();
+  }
+});
 
 test('keeps team calendar coverage strict, neutral, and free of protected absence fields', () => {
   const response = {

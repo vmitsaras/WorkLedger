@@ -14,6 +14,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
   varchar,
@@ -155,6 +156,20 @@ export const securityAuditTargetKind = pgEnum('security_audit_target_kind', [
   'BACKUP',
   'SECRET',
   'NOTIFICATION_DELIVERY',
+]);
+export const notificationEvent = pgEnum('notification_event', [
+  'ITEM_APPROVED',
+  'ITEM_REJECTED',
+  'ITEM_CHANGES_REQUESTED',
+  'ITEM_ACKNOWLEDGED',
+]);
+export const notificationSourceKind = pgEnum('notification_source_kind', [
+  'REQUEST',
+  'MONTHLY_PERIOD',
+]);
+export const notificationDeliveryOutcome = pgEnum('notification_delivery_outcome', [
+  'DELIVERED',
+  'FAILED',
 ]);
 export const leaveEntitlementEntryType = pgEnum('leave_entitlement_entry_type', [
   'ALLOCATION',
@@ -1195,6 +1210,95 @@ export const idempotencyRecords = pgTable(
         and ${table.completedAt} is not null
       )`,
     ),
+  ],
+);
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    recipientAccountId: uuid('recipient_account_id').references(() => authUsers.id),
+    recipientEmployeeId: uuid('recipient_employee_id')
+      .notNull()
+      .references(() => employees.id),
+    event: notificationEvent('event').notNull(),
+    sourceKind: notificationSourceKind('source_kind').notNull(),
+    sourceId: uuid('source_id').notNull(),
+    sourceVersion: integer('source_version').notNull(),
+    destinationPath: varchar('destination_path', { length: 512 }).notNull(),
+    deliveryRequested: boolean('delivery_requested').default(false).notNull(),
+    occurredAt: timestamp('occurred_at', { mode: 'string', withTimezone: true }).notNull(),
+    dismissedAt: timestamp('dismissed_at', { mode: 'string', withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    unique('notifications_organization_id_unique').on(table.organizationId, table.id),
+    uniqueIndex('notifications_source_recipient_event_version_uidx').on(
+      table.organizationId,
+      table.recipientEmployeeId,
+      table.sourceKind,
+      table.sourceId,
+      table.event,
+      table.sourceVersion,
+    ),
+    index('notifications_recipient_employee_time_idx').on(
+      table.organizationId,
+      table.recipientEmployeeId,
+      table.occurredAt,
+      table.id,
+    ),
+    index('notifications_recipient_account_time_idx').on(
+      table.recipientAccountId,
+      table.occurredAt,
+      table.id,
+    ),
+    check('notifications_positive_source_version', sql`${table.sourceVersion} > 0`),
+    check('notifications_destination_path', sql`${table.destinationPath} in ('/requests')`),
+    check(
+      'notifications_dismissed_after_occurrence',
+      sql`${table.dismissedAt} is null or ${table.dismissedAt} >= ${table.occurredAt}`,
+    ),
+    foreignKey({
+      columns: [table.organizationId, table.recipientEmployeeId],
+      foreignColumns: [employees.organizationId, employees.id],
+      name: 'notifications_recipient_employee_organization_fk',
+    }),
+  ],
+);
+
+export const notificationDeliveryAttempts = pgTable(
+  'notification_delivery_attempts',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    notificationId: uuid('notification_id').notNull(),
+    attemptNumber: integer('attempt_number').notNull(),
+    outcome: notificationDeliveryOutcome('outcome').notNull(),
+    failureCode: varchar('failure_code', { length: 80 }),
+    attemptedAt: timestamp('attempted_at', { mode: 'string', withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('notification_delivery_attempts_number_uidx').on(
+      table.notificationId,
+      table.attemptNumber,
+    ),
+    index('notification_delivery_attempts_organization_time_idx').on(
+      table.organizationId,
+      table.attemptedAt,
+      table.id,
+    ),
+    check('notification_delivery_attempts_positive_number', sql`${table.attemptNumber} > 0`),
+    check(
+      'notification_delivery_attempts_outcome_shape',
+      sql`(${table.outcome} = 'DELIVERED' and ${table.failureCode} is null) or (${table.outcome} = 'FAILED' and ${table.failureCode} ~ '^[A-Z][A-Z0-9_]{0,79}$')`,
+    ),
+    foreignKey({
+      columns: [table.organizationId, table.notificationId],
+      foreignColumns: [notifications.organizationId, notifications.id],
+      name: 'notification_delivery_attempts_notification_organization_fk',
+    }),
   ],
 );
 

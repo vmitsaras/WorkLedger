@@ -31,6 +31,11 @@ import {
 } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import { toCorrectionReviewItem } from '../corrections/correction-review-service.js';
+import {
+  deliverCommittedNotification,
+  disabledNotificationDeliveryAdapter,
+  type NotificationDeliveryAdapter,
+} from '../notifications/delivery.js';
 
 export type ApprovalDetailIdentity = Readonly<{
   accountId: DomainId<'Account'>;
@@ -42,7 +47,10 @@ type LoadedApproval =
   | Readonly<{ kind: 'ABSENCE'; record: ApprovalAbsenceRecord }>
   | Readonly<{ kind: 'CANCELLATION'; record: ApprovalCancellationRecord }>;
 
-export function createApprovalDetailService(database: WorkLedgerDatabase) {
+export function createApprovalDetailService(
+  database: WorkLedgerDatabase,
+  notificationDelivery: NotificationDeliveryAdapter = disabledNotificationDeliveryAdapter,
+) {
   return Object.freeze({
     async get(
       identity: ApprovalDetailIdentity,
@@ -64,7 +72,7 @@ export function createApprovalDetailService(database: WorkLedgerDatabase) {
       input: ApprovalDecisionRequest,
       at: Instant,
     ): Promise<ApprovalDecisionResult> {
-      return database.transaction(
+      const committed = await database.transaction(
         async (transaction) => {
           const state = await loadAuthorizedApproval(transaction, identity, approvalIdValue, at);
           const authority = decisionActor(state.actor, state.authorization.scope);
@@ -98,12 +106,33 @@ export function createApprovalDetailService(database: WorkLedgerDatabase) {
                     at,
                   );
 
-          return result;
+          const notification = await transaction.notifications.append({
+            deliveryRequested: notificationDelivery.configured,
+            destinationPath: '/requests',
+            event: notificationEvent(input.action),
+            occurredAt: at,
+            organizationId: state.context.organization.id,
+            recipientEmployeeId: state.approval.record.employeeId,
+            sourceId: result.id,
+            sourceKind: 'REQUEST',
+            sourceVersion: result.version,
+          });
+
+          return Object.freeze({ notification, result });
         },
         { isolationLevel: 'serializable', retry: { maxAttempts: 3, mode: 'DATABASE_ONLY' } },
       );
+      await deliverCommittedNotification(database, notificationDelivery, committed.notification);
+      return committed.result;
     },
   });
+}
+
+function notificationEvent(action: ApprovalDecisionRequest['action']) {
+  if (action === 'APPROVE') return 'ITEM_APPROVED' as const;
+  if (action === 'REJECT') return 'ITEM_REJECTED' as const;
+  if (action === 'REQUEST_CHANGES') return 'ITEM_CHANGES_REQUESTED' as const;
+  return 'ITEM_ACKNOWLEDGED' as const;
 }
 
 export function parseApprovalDetailIdentity(

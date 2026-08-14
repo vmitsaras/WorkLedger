@@ -56,6 +56,8 @@ import {
   correctionDecisions,
   appliedCorrections,
   monthlyPeriods,
+  notificationDeliveryAttempts,
+  notifications,
   dailyProjections,
   domainAuditEvents,
   employees,
@@ -132,6 +134,8 @@ import type {
   ListTeamStatusInput,
   OrganizationRecord,
   OrganizationRepository,
+  NotificationListItemRecord,
+  NotificationRepository,
   PersonalCalendarRecords,
   ReplaceDailyProjectionInput,
   ReplaceActiveRolesInput,
@@ -186,6 +190,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   employees: EmployeeRepository;
   leaveEntitlements: LeaveEntitlementRepository;
   organizations: OrganizationRepository;
+  notifications: NotificationRepository;
   timeAccount: TimeAccountRepository;
   teamStatus: TeamStatusRepository;
   todayAttendance: TodayAttendanceRepository;
@@ -203,6 +208,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     employees: new PostgresEmployeeRepository(transaction),
     leaveEntitlements: new PostgresLeaveEntitlementRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
+    notifications: new PostgresNotificationRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
     teamStatus: new PostgresTeamStatusRepository(transaction),
     todayAttendance: new PostgresTodayAttendanceRepository(transaction),
@@ -937,6 +943,211 @@ class PostgresTeamStatusRepository implements TeamStatusRepository {
       ),
     );
   }
+}
+
+class PostgresNotificationRepository implements NotificationRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async append(
+    input: Parameters<NotificationRepository['append']>[0],
+  ): Promise<Awaited<ReturnType<NotificationRepository['append']>>> {
+    const [recipient] = await this.transaction
+      .select({ accountId: authUsers.id, email: authUsers.email })
+      .from(accountEmployeeLinks)
+      .innerJoin(authUsers, eq(authUsers.id, accountEmployeeLinks.userId))
+      .where(
+        and(
+          eq(accountEmployeeLinks.organizationId, input.organizationId),
+          eq(accountEmployeeLinks.employeeId, input.recipientEmployeeId),
+          isNull(accountEmployeeLinks.unlinkedAt),
+          eq(authUsers.active, true),
+        ),
+      )
+      .limit(1);
+    const deliveryRequested = input.deliveryRequested && recipient !== undefined;
+    const [row] = await this.transaction
+      .insert(notifications)
+      .values({
+        deliveryRequested,
+        destinationPath: input.destinationPath,
+        event: input.event,
+        occurredAt: input.occurredAt,
+        organizationId: input.organizationId,
+        recipientAccountId: recipient?.accountId ?? null,
+        recipientEmployeeId: input.recipientEmployeeId,
+        sourceId: input.sourceId,
+        sourceKind: input.sourceKind,
+        sourceVersion: input.sourceVersion,
+      })
+      .returning();
+    if (row === undefined) throw new DatabaseValueError('notifications', 'id');
+    return Object.freeze({
+      deliveryRequested,
+      destinationPath: row.destinationPath as '/requests',
+      dismissedAt:
+        row.dismissedAt === null
+          ? null
+          : mapInstant(row.dismissedAt, 'notifications', 'dismissed_at'),
+      event: row.event,
+      id: mapDomainId<'Notification'>(row.id, 'notifications', 'id'),
+      occurredAt: mapInstant(row.occurredAt, 'notifications', 'occurred_at'),
+      organizationId: mapDomainId<'Organization'>(
+        row.organizationId,
+        'notifications',
+        'organization_id',
+      ),
+      recipientAccountId:
+        row.recipientAccountId === null
+          ? null
+          : mapDomainId<'Account'>(row.recipientAccountId, 'notifications', 'recipient_account_id'),
+      recipientEmail: deliveryRequested ? (recipient?.email ?? null) : null,
+      recipientEmployeeId: mapEmployeeId(row.recipientEmployeeId),
+      sourceId: row.sourceId,
+      sourceKind: row.sourceKind,
+      sourceVersion: row.sourceVersion,
+    });
+  }
+
+  async appendDeliveryAttempt(
+    input: Parameters<NotificationRepository['appendDeliveryAttempt']>[0],
+  ): Promise<void> {
+    const [row] = await this.transaction
+      .insert(notificationDeliveryAttempts)
+      .values(input)
+      .returning({ id: notificationDeliveryAttempts.id });
+    if (row === undefined) throw new DatabaseValueError('notification_delivery_attempts', 'id');
+  }
+
+  async dismiss(
+    input: Parameters<NotificationRepository['dismiss']>[0],
+  ): Promise<NotificationListItemRecord | null> {
+    const ownership = notificationOwnership(input.accountId, input.employeeId);
+    await this.transaction
+      .update(notifications)
+      .set({ dismissedAt: input.dismissedAt })
+      .where(
+        and(
+          eq(notifications.id, input.notificationId),
+          eq(notifications.organizationId, input.organizationId),
+          ownership,
+          isNull(notifications.dismissedAt),
+        ),
+      );
+
+    const [existing] = await this.transaction
+      .select(notificationCoreSelection())
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.id, input.notificationId),
+          eq(notifications.organizationId, input.organizationId),
+          ownership,
+        ),
+      )
+      .limit(1);
+    if (existing === undefined) return null;
+    return mapNotificationListItem(
+      existing,
+      existing.deliveryRequested ? 'PENDING' : 'NOT_CONFIGURED',
+    );
+  }
+
+  async list(
+    input: Parameters<NotificationRepository['list']>[0],
+  ): Promise<Awaited<ReturnType<NotificationRepository['list']>>> {
+    const ownership = notificationOwnership(input.accountId, input.employeeId);
+    const where = and(eq(notifications.organizationId, input.organizationId), ownership);
+    const rows = await this.transaction
+      .select(notificationCoreSelection())
+      .from(notifications)
+      .where(where)
+      .orderBy(desc(notifications.occurredAt), desc(notifications.id))
+      .limit(input.limit)
+      .offset(input.offset);
+    const totalRows = await this.transaction
+      .select({ total: sql<number>`count(*)::integer`.mapWith(Number) })
+      .from(notifications)
+      .where(where);
+    const requestedIds = rows.filter((row) => row.deliveryRequested).map((row) => row.id);
+    const attempts =
+      requestedIds.length === 0
+        ? []
+        : await this.transaction
+            .select({
+              notificationId: notificationDeliveryAttempts.notificationId,
+              outcome: notificationDeliveryAttempts.outcome,
+            })
+            .from(notificationDeliveryAttempts)
+            .where(inArray(notificationDeliveryAttempts.notificationId, requestedIds))
+            .orderBy(
+              desc(notificationDeliveryAttempts.attemptNumber),
+              desc(notificationDeliveryAttempts.id),
+            );
+    const deliveryStatuses = new Map<string, NotificationListItemRecord['deliveryStatus']>();
+    for (const attempt of attempts) {
+      if (!deliveryStatuses.has(attempt.notificationId)) {
+        deliveryStatuses.set(attempt.notificationId, attempt.outcome);
+      }
+    }
+    return Object.freeze({
+      items: Object.freeze(
+        rows.map((row) =>
+          mapNotificationListItem(
+            row,
+            row.deliveryRequested ? (deliveryStatuses.get(row.id) ?? 'PENDING') : 'NOT_CONFIGURED',
+          ),
+        ),
+      ),
+      total: totalRows[0]?.total ?? 0,
+    });
+  }
+}
+
+function notificationOwnership(
+  accountId: DomainId<'Account'>,
+  employeeId: DomainId<'Employee'> | null,
+) {
+  return employeeId === null
+    ? eq(notifications.recipientAccountId, accountId)
+    : or(
+        eq(notifications.recipientAccountId, accountId),
+        eq(notifications.recipientEmployeeId, employeeId),
+      );
+}
+
+function notificationCoreSelection() {
+  return {
+    deliveryRequested: notifications.deliveryRequested,
+    destinationPath: notifications.destinationPath,
+    dismissedAt: notifications.dismissedAt,
+    event: notifications.event,
+    id: notifications.id,
+    occurredAt: notifications.occurredAt,
+  };
+}
+
+function mapNotificationListItem(
+  row: Readonly<{
+    deliveryRequested: boolean;
+    destinationPath: string;
+    dismissedAt: string | null;
+    event: NotificationListItemRecord['event'];
+    id: string;
+    occurredAt: string;
+  }>,
+  deliveryStatus: NotificationListItemRecord['deliveryStatus'],
+): NotificationListItemRecord {
+  return Object.freeze({
+    deliveryStatus,
+    destinationPath: row.destinationPath as '/requests',
+    dismissedAt:
+      row.dismissedAt === null
+        ? null
+        : mapInstant(row.dismissedAt, 'notifications', 'dismissed_at'),
+    event: row.event,
+    id: mapDomainId<'Notification'>(row.id, 'notifications', 'id'),
+    occurredAt: mapInstant(row.occurredAt, 'notifications', 'occurred_at'),
+  });
 }
 
 class PostgresAuditRepository implements AuditRepository {

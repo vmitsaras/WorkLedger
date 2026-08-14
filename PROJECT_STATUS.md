@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 7 — Manager approvals and team availability
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 4 of 7 Phase 7 tasks complete
-**Current milestone:** Notification history and optional delivery
-**Active task:** `WL-704`
+**Phase progress:** 5 of 7 Phase 7 tasks complete
+**Current milestone:** Manager authorization and accessibility review
+**Active task:** `WL-705`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement durable in-app notification history and optional non-transactional delivery for `WL-704`.
+Complete the Phase 7 manager authorization and accessibility review for `WL-705`.
 
 ## Verified decisions
 
@@ -312,6 +312,29 @@ Implement durable in-app notification history and optional non-transactional del
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-704` — Implement generic notification records, history, and optional delivery
+
+- Changed: added durable notification and delivery-attempt tables, transaction-scoped repositories,
+  strict shared contracts, self-only list/dismiss API routes, atomic approval-decision producers, a
+  bounded optional post-commit delivery adapter, and the real `/notifications` history route.
+- Verified: strict contract and component tests, the 42-table migration suite, and live PostgreSQL
+  approval integration cover correction, sickness-report, and vacation outcomes; stale-decision
+  duplicate prevention; two persisted failed attempts; decision success despite delivery failure;
+  own-history isolation; foreign-target not-found behavior; retained dismissal; and generic copy.
+  Chromium covers keyboard dismissal, focus retention, status announcement, 320 px reflow, and axe.
+- Accessibility: notification history is a persistent semantic list with native links/buttons,
+  visible delivery state, explicit empty/loading/error/refresh/pagination states, a retained focused
+  dismissal control, and one polite completion announcement rather than transient toast behavior.
+- Security/data: notification creation shares the serializable decision transaction; delivery runs
+  only after commit and cannot alter the outcome. Responses are self-scoped and no-store; dismissal
+  requires same origin and CSRF; browser/delivery copy omits request kind, sickness/absence detail,
+  reason, note, entitlement, reviewer, employee, and source identifiers.
+- Documentation: added `docs/78-generic-notifications-delivery.md`, resolved the `D-203`
+  implementation owner, regenerated OpenAPI, and advanced Phase 7 to `WL-705`.
+- Remaining risk: the MVP has an adapter boundary and deterministic fake but no production SMTP
+  dependency. Monthly notification production/destinations remain owned by `WL-802` after `D-402`.
+- Next task: `WL-705`.
 
 ### `WL-703` — Build team calendar and agenda/list alternative
 
@@ -686,12 +709,12 @@ Implement durable in-app notification history and optional non-transactional del
 
 ## Current blockers
 
-No `WL-704` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
+No `WL-705` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
 to the inbox; D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-704 — Implement notification records, in-app history, and optional email delivery.`
+`WL-705 — Complete authorization and accessibility review.`
 
 ## Update rules
 

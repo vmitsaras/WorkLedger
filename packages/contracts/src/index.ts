@@ -5,6 +5,26 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  NOTIFICATION_DELIVERY_STATUSES,
+  NOTIFICATION_EVENTS,
+  dismissedNotificationEnvelopeSchema,
+  dismissedNotificationSchema,
+  notificationDeliveryStatusSchema,
+  notificationEventSchema,
+  notificationHistoryEnvelopeSchema,
+  notificationHistorySchema,
+  notificationItemSchema,
+  notificationPaginationSchema,
+  notificationQuerySchema,
+  type DismissedNotification,
+  type NotificationDeliveryStatus,
+  type NotificationEvent,
+  type NotificationHistory,
+  type NotificationItem,
+  type NotificationQuery,
+} from './notifications.js';
+
+export {
   TEAM_CALENDAR_COVERAGE_KINDS,
   teamCalendarEntrySchema,
   teamCalendarEnvelopeSchema,

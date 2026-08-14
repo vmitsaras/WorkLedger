@@ -23,6 +23,8 @@ import {
   teamCalendarEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   myTimeEnvelopeSchema,
+  notificationHistoryEnvelopeSchema,
+  dismissedNotificationEnvelopeSchema,
   personalCalendarEnvelopeSchema,
   type ApiErrorCode,
   type ApprovalInbox,
@@ -42,6 +44,9 @@ import {
   type MyTimeQuery,
   type PersonalCalendar,
   type PersonalCalendarQuery,
+  type NotificationHistory,
+  type NotificationQuery,
+  type DismissedNotification,
   type SubmitCorrectionRequest,
   type SubmitSicknessReport,
   type SubmitVacationRequest,
@@ -121,6 +126,37 @@ export async function loadPersonalCalendar(
     signal === undefined ? {} : { signal },
   );
   const parsed = personalCalendarEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadNotificationHistory(
+  query: NotificationQuery,
+  signal?: AbortSignal,
+): Promise<NotificationHistory> {
+  const search = new URLSearchParams({
+    limit: query.limit.toString(),
+    page: query.page.toString(),
+  });
+  const body = await requestJson(
+    `/v1/me/notifications?${search.toString()}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = notificationHistoryEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function dismissNotification(notificationId: string): Promise<DismissedNotification> {
+  const token = await getCsrfToken();
+  const body = await requestJson(
+    `/v1/me/notifications/${encodeURIComponent(notificationId)}/dismiss`,
+    {
+      headers: { 'x-workledger-csrf': token },
+      method: 'POST',
+    },
+  );
+  const parsed = dismissedNotificationEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

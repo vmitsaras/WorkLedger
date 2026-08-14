@@ -6,6 +6,7 @@ import {
   type MyTimeQuery,
   type PersonalCalendarQuery,
   type TeamCalendarQuery,
+  type NotificationQuery,
 } from '@workledger/contracts';
 
 import {
@@ -20,6 +21,7 @@ import {
   loadTodayAttendance,
   loadTeamStatus,
   loadTeamCalendar,
+  loadNotificationHistory,
 } from './api-client.js';
 
 const TODAY_ATTENDANCE_REFRESH_INTERVAL_MS = 30 * 1_000;
@@ -67,6 +69,13 @@ export const personalCalendarQuery = (query: PersonalCalendarQuery) =>
   queryOptions({
     queryFn: ({ signal }) => loadPersonalCalendar(query, signal),
     queryKey: ['self', 'calendar', query] as const,
+  });
+
+export const notificationHistoryQuery = (query: NotificationQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadNotificationHistory(query, signal),
+    queryKey: ['self', 'notifications', query] as const,
   });
 
 export const dailyTimeRecordQuery = (recordId: string) =>
