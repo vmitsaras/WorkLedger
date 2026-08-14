@@ -307,12 +307,12 @@ Create trustworthy monthly records that can be reviewed, locked, exported, and a
 
 ## Exit gate
 
-- [ ] A complete seeded month can be submitted, approved, locked, and exported.
-- [ ] Ordinary edits are rejected after submission/lock according to state.
-- [ ] Post-lock correction creates a linked adjustment.
-- [ ] Approved snapshot remains reproducible.
-- [ ] CSV formula injection tests pass.
-- [ ] Reports are scoped, paginated, and accessible.
+- [x] A complete seeded month can be submitted, approved, locked, and exported.
+- [x] Ordinary edits are rejected after submission/lock according to state.
+- [x] Post-lock correction creates a linked adjustment.
+- [x] Approved snapshot remains reproducible.
+- [x] CSV formula injection tests pass.
+- [x] Reports are scoped, paginated, and accessible.
 
 ---
 

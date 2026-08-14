@@ -44,6 +44,11 @@ export function RoutePresentation() {
     if (!pathnameChanged && navigationType !== 'POP') return;
 
     const animationFrame = window.requestAnimationFrame(() => {
+      const activeElement = document.activeElement;
+      const main = document.querySelector<HTMLElement>('#main-content');
+      if (activeElement instanceof HTMLElement && main?.contains(activeElement)) {
+        return;
+      }
       const rememberedKey =
         navigationType === 'POP' ? focusByLocationKey.get(location.key) : undefined;
       const remembered =

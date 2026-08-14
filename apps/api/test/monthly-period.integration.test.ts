@@ -43,7 +43,7 @@ const migrationFiles = [
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
-  `derives complete and incomplete monthly review projections with scoped access (${databaseHarness.safeLabel})`,
+  `closes, adjusts, and exports complete monthly records with scoped review projections (${databaseHarness.safeLabel})`,
   async () => {
     const fixture = await createPostgresSchemaFixture({
       connectionString: databaseHarness.url,
@@ -632,16 +632,38 @@ integrationTest(
         [scenario.completePeriodId],
       );
       const lockedSnapshotId = requiredId(lockedSnapshot.rows[0]?.id);
-      const adjustmentOne = await insertPostLockAdjustment(fixture.client, {
-        adjustmentVersion: 1,
-        employeeId: scenario.employeeId,
-        localDate: '2026-06-30',
-        minutes: 13,
-        organizationId: scenario.organizationId,
-        previousAdjustedWorkedMinutes: 495,
-        proposedWorkedMinutes: 508,
-        snapshotId: lockedSnapshotId,
+      const positiveCorrection = await submitLockedCorrection(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completeProjectionId,
+        '17:28',
+        'The locked monthly record omitted thirteen minutes of accepted work.',
+      );
+      expect(positiveCorrection.statusCode).toBe(201);
+      expect(positiveCorrection.json()).toMatchObject({
+        data: { applicationMode: 'POST_LOCK_ADJUSTMENT', proposedDurationMinutes: 508 },
       });
+      const positiveCorrectionId = positiveCorrection.json<{ data: { id: string } }>().data.id;
+      const positiveDecision = await decideLockedCorrection(
+        app,
+        managerCookie,
+        managerCsrf,
+        positiveCorrectionId,
+      );
+      expect(positiveDecision.statusCode).toBe(200);
+      expect(positiveDecision.json()).toMatchObject({
+        data: { status: 'APPROVED', version: 2 },
+      });
+      const adjustmentOne = requiredId(
+        (
+          await fixture.client.query<{ id: string }>(
+            `select id from post_lock_adjustments
+              where monthly_snapshot_id = $1 and adjustment_version = 1`,
+            [lockedSnapshotId],
+          )
+        ).rows[0]?.id,
+      );
       const adjusted = monthlyPeriodEnvelopeSchema.parse(
         (await getPeriod(app, employeeCookie, scenario.completePeriodId)).json(),
       ).data;
@@ -665,27 +687,63 @@ integrationTest(
         status: 'ADJUSTED_AFTER_LOCK',
       });
 
-      await insertPostLockAdjustment(fixture.client, {
-        adjustmentVersion: 2,
-        employeeId: scenario.employeeId,
-        localDate: '2026-06-30',
-        minutes: 0,
-        organizationId: scenario.organizationId,
-        previousAdjustedWorkedMinutes: 508,
-        proposedWorkedMinutes: 508,
-        snapshotId: lockedSnapshotId,
-      });
-      await insertPostLockAdjustment(fixture.client, {
-        adjustmentVersion: 3,
-        employeeId: scenario.employeeId,
-        localDate: '2026-06-30',
-        minutes: -13,
-        organizationId: scenario.organizationId,
-        previousAdjustedWorkedMinutes: 508,
-        proposedWorkedMinutes: 495,
-        reversesAdjustmentId: adjustmentOne,
-        snapshotId: lockedSnapshotId,
-      });
+      const adjustedExport = await exportMonthlyReport(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.employeeId,
+      );
+      expect(adjustedExport.statusCode, adjustedExport.payload).toBe(200);
+      expect(adjustedExport.headers['content-type']).toBe('text/csv; charset=utf-8');
+      expect(adjustedExport.headers['content-disposition']).toBe(
+        'attachment; filename="workledger-monthly-time-2026-06-01-to-2026-06-30.csv"',
+      );
+      expect(adjustedExport.payload).toBe(
+        'employee_name,month,workflow_status,expected_minutes,worked_minutes,credited_minutes,balance_minutes,incomplete_record_count,post_lock_delta_minutes\r\n' +
+          'Monthly Employee,2026-06-01,LOCKED,960,508,988,28,0,13\r\n',
+      );
+      expect(adjustedExport.payload).not.toMatch(
+        /employee_id|monthly_period_id|snapshot|correction|reason|sickness/iu,
+      );
+
+      const zeroCorrection = await submitLockedCorrection(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completeProjectionId,
+        '17:28',
+        'This confirms the adjusted duration without another balance change.',
+      );
+      expect(zeroCorrection.statusCode).toBe(201);
+      expect(
+        (
+          await decideLockedCorrection(
+            app,
+            managerCookie,
+            managerCsrf,
+            zeroCorrection.json<{ data: { id: string } }>().data.id,
+          )
+        ).statusCode,
+      ).toBe(200);
+      const reversalCorrection = await submitLockedCorrection(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completeProjectionId,
+        '17:15',
+        'New evidence restores the approved locked duration exactly.',
+      );
+      expect(reversalCorrection.statusCode).toBe(201);
+      expect(
+        (
+          await decideLockedCorrection(
+            app,
+            managerCookie,
+            managerCsrf,
+            reversalCorrection.json<{ data: { id: string } }>().data.id,
+          )
+        ).statusCode,
+      ).toBe(200);
       const reversed = monthlyPeriodEnvelopeSchema.parse(
         (await getPeriod(app, employeeCookie, scenario.completePeriodId)).json(),
       ).data;
@@ -712,7 +770,9 @@ integrationTest(
 
       const workflowEvidence = (
         await fixture.client.query<{
+          adjustment_audit_count: string;
           decision_count: string;
+          export_audit_count: string;
           hr_snapshot_count: string;
           locked_at: string;
           notification_count: string;
@@ -733,13 +793,21 @@ integrationTest(
                   (select count(*)::text from notifications notification
                     where notification.source_kind = 'MONTHLY_PERIOD'
                       and notification.source_id = mp.id
-                      and notification.destination_path = '/monthly-periods/' || mp.id::text) as notification_count
+                      and notification.destination_path = '/monthly-periods/' || mp.id::text) as notification_count,
+                  (select count(*)::text from domain_audit_events dae
+                    where dae.action_code = 'REPORT_MONTHLY_TIME_EXPORTED'
+                      and dae.subject_employee_id = mp.employee_id) as export_audit_count,
+                  (select count(*)::text from domain_audit_events dae
+                    where dae.action_code = 'POST_LOCK_CORRECTION_APPLIED'
+                      and dae.subject_employee_id = mp.employee_id) as adjustment_audit_count
              from monthly_periods mp where mp.id = $1`,
           [scenario.completePeriodId],
         )
       ).rows[0];
       expect(workflowEvidence).toMatchObject({
+        adjustment_audit_count: '3',
         decision_count: '5',
+        export_audit_count: '1',
         hr_snapshot_count: '1',
         notification_count: '5',
         snapshot_count: '2',
@@ -757,18 +825,21 @@ integrationTest(
       const notificationHistory = notificationHistoryEnvelopeSchema.parse(
         notificationResponse.json(),
       ).data;
-      expect(notificationHistory.pagination.total).toBe(5);
-      expect(notificationHistory.items).toHaveLength(5);
+      expect(notificationHistory.pagination.total).toBe(8);
+      expect(notificationHistory.items).toHaveLength(8);
       expect(
-        notificationHistory.items.every(
+        notificationHistory.items.filter(
           (item) => item.destinationPath === `/monthly-periods/${scenario.completePeriodId}`,
         ),
-      ).toBe(true);
+      ).toHaveLength(5);
+      expect(
+        notificationHistory.items.filter((item) => item.destinationPath === '/requests'),
+      ).toHaveLength(3);
       expect(notificationHistory.items.map(({ event }) => event)).toEqual(
         expect.arrayContaining(['ITEM_ACKNOWLEDGED', 'ITEM_APPROVED', 'ITEM_CHANGES_REQUESTED']),
       );
       expect(notificationResponse.payload).not.toMatch(
-        /Please review the recalculated source|Please confirm the final approved total/iu,
+        /Please review the recalculated source|Please confirm the final approved total|locked monthly record|adjusted duration|restores the approved locked duration/iu,
       );
     } finally {
       await app.close();
@@ -1159,139 +1230,6 @@ async function createLedgerEntry(
   );
 }
 
-async function insertPostLockAdjustment(
-  client: pg.PoolClient,
-  input: Readonly<{
-    adjustmentVersion: number;
-    employeeId: string;
-    localDate: string;
-    minutes: number;
-    organizationId: string;
-    previousAdjustedWorkedMinutes: number;
-    proposedWorkedMinutes: number;
-    reversesAdjustmentId?: string;
-    snapshotId: string;
-  }>,
-) {
-  const reviewer = (
-    await client.query<{ account_id: string; employee_id: string }>(
-      `select user_account.id as account_id, employee.id as employee_id
-         from auth_users user_account
-         join account_employee_links link on link.user_id = user_account.id
-         join employees employee on employee.id = link.employee_id
-        where user_account.email = 'monthly-manager@example.test'`,
-    )
-  ).rows[0];
-  const requestId = requiredId(
-    (
-      await client.query<{ id: string }>(
-        `insert into correction_requests
-          (organization_id, employee_id, requested_by_employee_id, local_date, status, reason,
-           original_interpretation, proposed_interpretation, locked_monthly_snapshot_id, version)
-         values ($1, $2, $2, $3, 'APPROVED', $4, $5::jsonb, $6::jsonb, $7, 2)
-         returning id`,
-        [
-          input.organizationId,
-          input.employeeId,
-          input.localDate,
-          `Accepted post-lock correction version ${input.adjustmentVersion.toString()}.`,
-          JSON.stringify({
-            projectionId: 'source',
-            workedMinutes: input.previousAdjustedWorkedMinutes,
-          }),
-          JSON.stringify({ workedMinutes: input.proposedWorkedMinutes }),
-          input.snapshotId,
-        ],
-      )
-    ).rows[0]?.id,
-  );
-  const decisionId = requiredId(
-    (
-      await client.query<{ id: string }>(
-        `insert into correction_decisions
-          (organization_id, correction_request_id, actor_account_id, actor_employee_id,
-           actor_authority, action, reason, decided_at)
-         values ($1, $2, $3, $4, 'CURRENT_MANAGER', 'APPROVE', $5, $6) returning id`,
-        [
-          input.organizationId,
-          requestId,
-          reviewer?.account_id,
-          reviewer?.employee_id,
-          'The submitted correction evidence is sufficient.',
-          NOW,
-        ],
-      )
-    ).rows[0]?.id,
-  );
-  const appliedId = requiredId(
-    (
-      await client.query<{ id: string }>(
-        `insert into applied_corrections
-          (organization_id, correction_request_id, correction_decision_id, employee_id,
-           local_date, version, interpretation)
-         values ($1, $2, $3, $4, $5, 1, $6::jsonb) returning id`,
-        [
-          input.organizationId,
-          requestId,
-          decisionId,
-          input.employeeId,
-          input.localDate,
-          JSON.stringify({ workedMinutes: input.proposedWorkedMinutes }),
-        ],
-      )
-    ).rows[0]?.id,
-  );
-  const adjustmentId = requiredId(
-    (
-      await client.query<{ id: string }>(
-        `insert into post_lock_adjustments
-          (organization_id, monthly_snapshot_id, employee_id, source_id, correction_request_id,
-           correction_decision_id, applied_correction_id, local_date, adjustment_version,
-           previous_adjusted_worked_minutes, proposed_worked_minutes, reverses_adjustment_id,
-           minutes, reason, created_at)
-         values ($1, $2, $3, $4, $5, $6, $4, $7, $8, $9, $10, $11, $12, $13, $14)
-         returning id`,
-        [
-          input.organizationId,
-          input.snapshotId,
-          input.employeeId,
-          appliedId,
-          requestId,
-          decisionId,
-          input.localDate,
-          input.adjustmentVersion,
-          input.previousAdjustedWorkedMinutes,
-          input.proposedWorkedMinutes,
-          input.reversesAdjustmentId ?? null,
-          input.minutes,
-          `Accepted post-lock correction version ${input.adjustmentVersion.toString()}.`,
-          NOW,
-        ],
-      )
-    ).rows[0]?.id,
-  );
-  if (input.minutes !== 0) {
-    await client.query(
-      `insert into time_account_entries
-        (organization_id, employee_id, local_date, entry_type, minutes, source_id,
-         source_fingerprint, actor_kind, actor_id, explanation_code, posted_at)
-       values ($1, $2, $3, 'POST_LOCK_ADJUSTMENT', $4, $5, $6, 'ACCOUNT', $7,
-               'POST_LOCK_CORRECTION', $8)`,
-      [
-        input.organizationId,
-        input.employeeId,
-        input.localDate,
-        input.minutes,
-        adjustmentId,
-        input.adjustmentVersion.toString().repeat(64),
-        reviewer?.account_id,
-        NOW,
-      ],
-    );
-  }
-  return adjustmentId;
-}
-
 async function createAccount(
   client: pg.PoolClient,
   organizationId: string,
@@ -1364,6 +1302,85 @@ async function csrf(app: ReturnType<typeof createApiServer>, cookie: string): Pr
   });
   expect(response.statusCode).toBe(200);
   return response.json<{ data: { token: string } }>().data.token;
+}
+
+function submitLockedCorrection(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  token: string,
+  recordId: string,
+  endsAtLocalTime: string,
+  reason: string,
+) {
+  return app.inject({
+    method: 'POST',
+    url: '/v1/me/correction-requests',
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: ORIGIN,
+      'x-workledger-csrf': token,
+    },
+    payload: {
+      interval: {
+        endsAtLocalTime,
+        endsAtUtcOffset: null,
+        startsAtLocalTime: '09:00',
+        startsAtUtcOffset: null,
+      },
+      reason,
+      recordId,
+    },
+  });
+}
+
+function decideLockedCorrection(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  token: string,
+  requestId: string,
+) {
+  return app.inject({
+    method: 'POST',
+    url: `/v1/approvals/${encodeURIComponent(requestId)}/decision`,
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: ORIGIN,
+      'x-workledger-csrf': token,
+    },
+    payload: {
+      action: 'APPROVE',
+      expectedVersion: 1,
+      negativeBalanceOverride: false,
+      reason: 'The submitted evidence supports this locked-period correction.',
+    },
+  });
+}
+
+function exportMonthlyReport(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  token: string,
+  employeeId: string,
+) {
+  return app.inject({
+    method: 'POST',
+    url: '/v1/reports/monthly-time/export',
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: ORIGIN,
+      'x-workledger-csrf': token,
+    },
+    payload: {
+      direction: 'ASC',
+      employeeId,
+      from: '2026-06-01',
+      sort: 'DATE',
+      to: '2026-06-30',
+    },
+  });
 }
 
 function submitPeriod(

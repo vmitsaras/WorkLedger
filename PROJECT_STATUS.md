@@ -1,17 +1,17 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 8 — Monthly closure and reporting
+**Current phase:** Phase 9 — Administration
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 6 of 7 Phase 8 tasks complete
-**Current milestone:** Phase 8 exit gate
-**Active task:** `WL-806`
+**Phase progress:** 0 of 8 Phase 9 tasks complete
+**Current milestone:** Employee lifecycle and technical-account separation
+**Active task:** `WL-900`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Execute the Phase 8 gate review, including the end-to-end close/export/adjust scenario, for
-`WL-806`.
+Build HR employee create/invite/activate/deactivate/history plus separated technical-account,
+system-role, and session administration routes for `WL-900`.
 
 ## Verified decisions
 
@@ -340,26 +340,54 @@ Execute the Phase 8 gate review, including the end-to-end close/export/adjust sc
 
 ## Latest decision update
 
-### `D-402` — Monthly approval authority
+### `D-504` — Locked absence-cancellation adjustment contract
 
-- Resolved: monthly `REQUEST_CHANGES`, `APPROVE`, and `LOCK` transitions accept either the
-  employee's current effective direct manager (`CURRENT_MANAGER`) or organization HR
-  (`ORGANIZATION_HR`), always non-self. Current-manager authority takes deterministic precedence
-  when both roles qualify.
-- Security/data: every transition must re-evaluate scope and record required actor account and
-  authority; current-manager authority requires employee evidence, while HR employee evidence is
-  optional. System administrators, former/unrelated managers, delegation, self-action, and bypasses
-  of readiness or reconciliation remain excluded.
-- Implemented by `WL-802`: migration `0017` backfills the existing employee-only approved-snapshot
-  actor shape to the account-first contract before exposing HR-only decisions or lock. The earlier
-  decision-resolution change itself added no workflow code or migration.
-- Verification: the focused authorization-policy suite passes all six cases; the repository-wide
-  24 contract tests and 229 unit/component tests pass with formatting, lint, strict typecheck, and
-  source-boundary validation.
-- Documentation: amended ADR 0010 and synchronized roles, domain rules, UX, fixtures, Phase 7/8
-  handoff notes, and current project memory.
+- Open production blocker: locked-period absence cancellation remains a safe no-effect
+  `PERIOD_ADJUSTMENT_REQUIRED` denial; it has no completed replacement-effect, entitlement,
+  time-ledger, audit, or notification adjustment workflow.
+- Phase 8 conclusion: the exact exit criterion and `WL-803` scope are post-lock correction, which
+  now has complete linked adjustment evidence. The gate does not reinterpret absence cancellation
+  as correction or treat safe denial as a finished recovery path.
+- Ownership: `WL-1000` must resolve employee/reviewer authority, snapshot/effect linkage,
+  entitlement/time-account compensation, concurrency, audit/notification, privacy, and reporting,
+  then own or schedule a bounded implementation before `WL-1008`.
+- Evidence: the Phase 6 cancellation integration proves no partial effect on locked dates; the
+  Phase 8 gate proves corrections use their distinct immutable-snapshot adjustment contract.
+- Documentation: recorded the decision in `docs/10-open-decisions.md` and the explicit gate
+  assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-806` — Pass the Phase 8 exit gate
+
+- Changed: completed the criterion-by-criterion review across `WL-800`–`WL-805`; replaced direct
+  post-lock fixture insertion in the monthly scenario with real employee correction and unified
+  manager approval endpoints; exported the adjusted locked month; preserved deliberate in-main
+  focus from delayed route-heading focus; recorded `D-504`; and advanced the root plus all eight
+  private workspace manifests from `0.8.0` to `0.9.0`.
+- Verified: exact phase-version, workspace/configuration, formatting, ESLint and 215-file/1,040-
+  import boundaries, strict TypeScript, reproducible OpenAPI, 24 tooling tests, 276 unit/component
+  tests, 37 PostgreSQL integration tests across 20 files, 17 Chromium scenarios, and the
+  production/workspace build pass. The build retains the existing large-chunk advisory;
+  integration retains the existing `pg` concurrent-query deprecation warning.
+- Accessibility: the gate revalidates labelled monthly/report controls, linked validation and
+  focus-managed outcomes, textual workflow/readiness/adjustment state, captioned tables, contained
+  narrow-screen results, semantic purpose-minimized print, explicit clipboard/export status,
+  keyboard/touch/forced-colors foundations, and axe/Chromium evidence. Delayed route presentation
+  now leaves deliberate focus inside `main` intact while ordinary shell navigation still focuses
+  the destination heading; focused regression coverage and the full component suite pass.
+- Security/data: current actor/scope and non-self rules are enforced at every submit/review/lock/
+  correction/export action; ordinary submitted-period mutation has zero effect; post-lock
+  correction appends linked `+13`, zero, and `-13` evidence without changing snapshot JSON; the
+  exact adjusted CSV contains no hidden identifiers or protected reasons; audits and notifications
+  remain minimized.
+- Documentation: added `docs/87-phase-8-gate-review.md`, checked the six canonical exit criteria,
+  recorded `D-504`, synchronized README/TODO/task board/status, and completed the internal `0.9.0`
+  milestone without tagging, publishing, releasing, or deploying.
+- Remaining risk: `D-504` blocks production release until the separate locked absence-cancellation
+  contract is resolved and implemented. `D-502`, the large web chunk advisory, the `pg` warning,
+  and real assistive-technology/cross-browser production evidence also remain.
+- Next task: `WL-900`.
 
 ### `WL-805` — Build safe report portability
 
@@ -980,12 +1008,12 @@ Execute the Phase 8 gate review, including the end-to-end close/export/adjust sc
 
 ## Current blockers
 
-No `WL-806` blocker is known. Its gate review must explicitly assess the locked absence-
-cancellation adjustment ownership gap. D-502 remains open before the production browser gate.
+No `WL-900` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
+recovery, and `D-502` remains open before the production browser gate.
 
 ## Next task
 
-`WL-806 — Execute the Phase 8 gate review.`
+`WL-900 — Build employee lifecycle and separated technical-account/session administration.`
 
 ## Update rules
 

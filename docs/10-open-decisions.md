@@ -472,3 +472,23 @@ These were confirmed from repository evidence and the architecture ratification.
 - Production uses one canonical HTTPS origin for web/API, publishes only proxy ports, keeps API/PostgreSQL private, and fixes the public origin in validated configuration.
 - The proxy overwrites forwarded headers; the application trusts only exact configured proxy addresses. Direct client-supplied forwarded values cannot affect callback URLs, cookie security, rate limits, or audit identity.
 - Equivalent proxies are supported only when they meet the TLS, header, network-isolation, timeout/limit, health, and security-header requirements in `docs/06-security-operations.md`.
+
+### D-504 — Locked absence-cancellation adjustment contract
+
+**Status:** Open; resolution owner `WL-1000`, and production release remains blocked until the
+required implementation is scheduled and completed before `WL-1008`.
+
+- Current behavior is fail-closed: cancellation of coverage touching a locked monthly period
+  returns `409 PERIOD_ADJUSTMENT_REQUIRED` before any cancellation decision, coverage/effect
+  version, entitlement restoration, time-account entry, success audit, or notification is written.
+  Direct integration evidence proves the no-partial-effect boundary.
+- Phase 8 does not silently reinterpret this as a correction. Its exact gate criterion and `WL-803`
+  task are post-lock **correction** scoped, and their linked snapshot/adjustment contract is now
+  complete. The Phase 8 gate therefore passes while retaining this separate release blocker.
+- Resolution must define employee intent, current non-self reviewer/HR authority, self-action,
+  snapshot linkage, replacement absence-effect versions, entitlement restoration or compensation,
+  signed time-account impact, idempotency/concurrency, audit/notification evidence, privacy-safe
+  responses, and original-versus-adjusted reporting without rewriting locked history.
+- `WL-1000` must resolve that contract against the threat/permission matrix and either own the
+  bounded implementation or add an explicit dependency-ordered task before `WL-1008`. A production
+  gate cannot waive the path merely because the current denial is safe.

@@ -5,9 +5,9 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 8 — 6 of 7 tasks complete**
+> **Current phase progress: Phase 9 — 0 of 8 tasks complete**
 
-Phases 0–7 have passed their exit gates. The repository now includes the attendance, correction,
+Phases 0–8 have passed their exit gates. The repository now includes the attendance, correction,
 absence, entitlement, manager-approval/team, and notification slices plus monthly employee review
 and submission. Monthly review derives ended-month readiness, complete-date totals, warnings,
 blockers, ledger reconciliation, and a source-fingerprinted schema version; self-only submission
@@ -16,8 +16,9 @@ managers or organization HR can request changes, create numbered immutable appro
 separately lock an exact approved record. Locked-date corrections now append a source-linked delta
 without changing that approved record, and the monthly view separates the original from its ordered
 adjustments. Scoped operational reports now include reauthorized, formula-safe bounded CSV export,
-a minimized printable monthly record, and explicit safe summary copy. Phase 8 continues with its
-exit-gate review (`WL-806`).
+a minimized printable monthly record, and explicit safe summary copy. The Phase 8 close/adjust/
+export gate has passed; Phase 9 begins with separated employee-lifecycle and technical-account
+administration (`WL-900`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe
@@ -208,7 +209,7 @@ versions and makes no response-time or production-support promise.
 | [docs/56-attendance-resilience-recovery.md](docs/56-attendance-resilience-recovery.md) | Same-key retry, offline non-queuing, tab/device convergence, dependency recovery, and focus evidence |
 | [docs/57-employee-attendance-accessibility-review.md](docs/57-employee-attendance-accessibility-review.md) | Phase-wide keyboard, announcement, reflow, touch, forced-colors, reduced-motion, and viewport evidence |
 | [docs/58-phase-4-gate-review.md](docs/58-phase-4-gate-review.md) | Phase 4 vertical-slice exit criteria, cross-cutting review, verification, versioning, and Phase 5 handoff |
-| [docs/59-my-time-and-flexible-balance.md](docs/59-my-time-and-flexible-balance.md) through [docs/86-safe-report-portability.md](docs/86-safe-report-portability.md) | Phase 5–8 employee time, absence, approvals, monthly closure, scoped-report, and safe-portability implementation evidence |
+| [docs/59-my-time-and-flexible-balance.md](docs/59-my-time-and-flexible-balance.md) through [docs/87-phase-8-gate-review.md](docs/87-phase-8-gate-review.md) | Phase 5–8 employee time, absence, approvals, monthly closure, scoped-report, safe-portability, and gate evidence |
 
 ## License
 

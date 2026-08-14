@@ -152,7 +152,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-803 | Implement post-lock correction and adjustment linkage | WL-505, WL-802 | Approved snapshot preserved; delta report correct | Done |
 | WL-804 | Build monthly, balance, leave, missing-record, and approval reports | WL-800–WL-803 | Scoped queries, pagination, empty/loading/error/accessibility states | Done |
 | WL-805 | Implement authorized CSV export, printable monthly record, and explicit safe clipboard behavior where offered | WL-804 | Formula/encoding/filename, permission/scope-change, field-minimization, clipboard, and print tests | Done |
-| WL-806 | Execute Phase 8 gate review | WL-800–WL-805 | End-to-end close/export/adjust scenario passes | Ready |
+| WL-806 | Execute Phase 8 gate review | WL-800–WL-805 | End-to-end close/export/adjust scenario passes | Done |
 
 ---
 
@@ -160,7 +160,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-900 | Build HR employee create/invite/activate/deactivate/history plus separated technical-account, system-role, and session administration routes | WL-309, WL-400 | Complex-form accessibility; deactivation revokes sessions and preserves history; HR/system fields and self-role actions remain separated | Not started |
+| WL-900 | Build HR employee create/invite/activate/deactivate/history plus separated technical-account, system-role, and session administration routes | WL-309, WL-400 | Complex-form accessibility; deactivation revokes sessions and preserves history; HR/system fields and self-role actions remain separated | Ready |
 | WL-901 | Build teams, manager assignments, and effective scope changes | WL-900 | Scope changes reflected immediately; historical attribution preserved | Not started |
 | WL-902 | Build effective-dated schedule management | WL-201, WL-900 | Overlap/gap validation; future change does not rewrite history | Not started |
 | WL-903 | Build time-policy management | WL-902 | Policy preview and effective-date behavior tested | Not started |
