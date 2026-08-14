@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 7 — Manager approvals and team availability
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 2 of 7 Phase 7 tasks complete
-**Current milestone:** Privacy-safe team availability
-**Active task:** `WL-702`
+**Phase progress:** 3 of 7 Phase 7 tasks complete
+**Current milestone:** Equivalent team availability calendar
+**Active task:** `WL-703`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement the privacy-safe team current-status list required by `WL-702`.
+Implement the equivalent team availability calendar and agenda/list required by `WL-703`.
 
 ## Verified decisions
 
@@ -50,6 +50,10 @@ Implement the privacy-safe team current-status list required by `WL-702`.
   addresses and raw user-agent values never enter browser DTOs.
 - In-app notification records are core; external email delivery is optional and non-transactional.
 - Manager scope is current direct reports only and is evaluated when each request is handled.
+- `/team` uses active attendance before neutral organization-local date absence coverage and exposes
+  only display name, current team name, textual availability, and a generic unresolved-record flag.
+  It never exposes employee/request IDs, absence subtype, sickness context, notes, reasons,
+  entitlement, or reviewer history.
 - Explicit unauthorized targets return `403`; scoped collections apply authorization before counts and pagination.
 - Self-approval and privileged self-adjustment are prohibited even for combined roles.
 - System-administrator capability grants technical access only, not HR/domain data.
@@ -304,6 +308,26 @@ Implement the privacy-safe team current-status list required by `WL-702`.
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-702` — Build privacy-safe team current-status list
+
+- Changed: added a strict minimized team-status contract, a current-scope PostgreSQL read model,
+  `GET /v1/team/status`, foreground refresh, and the real `/team` manager route with summary and
+  direct-report status table.
+- Verified: contract, component/axe, live PostgreSQL, and Chromium coverage exercise current and
+  former manager scope, HR organization scope, technical-admin and employee-route denial,
+  attendance precedence, neutral absence projection, cancellation, unresolved indicators, empty
+  and dependency states, focus, and narrow contained scrolling.
+- Accessibility: the route uses a focused page heading, labelled description-list totals, textual
+  states, a captioned native table, and a named keyboard-focusable horizontal scroll region without
+  noisy loading announcements.
+- Security/data: authorization precedes rows and totals in one repeatable-read snapshot; responses
+  are private/no-store; the DTO omits protected identifiers and absence context; active attendance
+  wins before date-level `Unavailable today` projection.
+- Documentation: added `docs/76-privacy-safe-team-status.md` and advanced Phase 7 to `WL-703`.
+- Remaining risk: half-day absence has no authoritative wall-clock boundary, so the list states
+  `Unavailable today`; `WL-703` owns detailed neutral date/coverage presentation.
+- Next task: `WL-703`.
 
 ### `WL-701` — Implement consistent approval decisions
 
@@ -635,12 +659,12 @@ Implement the privacy-safe team current-status list required by `WL-702`.
 
 ## Current blockers
 
-No `WL-702` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
+No `WL-703` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
 to the inbox; D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-702 — Build privacy-safe team current-status list.`
+`WL-703 — Build team calendar and agenda/list alternative.`
 
 ## Update rules
 

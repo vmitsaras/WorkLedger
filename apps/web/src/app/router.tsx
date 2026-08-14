@@ -16,6 +16,7 @@ import {
   selfContextQuery,
   selfProfileQuery,
   todayAttendanceQuery,
+  teamStatusQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -38,6 +39,7 @@ import { SicknessReportPage } from '../routes/sickness-report-page.js';
 import { PersonalCalendarPage } from '../routes/personal-calendar-page.js';
 import { ApprovalInboxPage } from '../routes/approval-inbox-page.js';
 import { ApprovalDetailPage } from '../routes/approval-detail-page.js';
+import { TeamStatusPage } from '../routes/team-status-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -55,13 +57,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'MANAGER',
-    description: 'Privacy-safe current availability for direct reports.',
-    milestone: 'WL-702',
-    path: 'team',
-    title: 'Team',
   },
   {
     area: 'MANAGER',
@@ -243,6 +238,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               handle: { title: 'Request a time correction' },
             },
             {
+              path: 'team',
+              loader: createTeamStatusLoader(queryClient),
+              element: <TeamStatusPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Team' },
+            },
+            {
               path: 'approvals',
               loader: createApprovalInboxLoader(queryClient),
               element: <ApprovalInboxPage />,
@@ -400,6 +402,15 @@ function createApprovalInboxLoader(queryClient: QueryClient): LoaderFunction {
     if (!parsed.success) return redirect('/approvals');
     void queryClient.prefetchQuery(approvalInboxQuery(parsed.data));
     return parsed.data;
+  };
+}
+
+function createTeamStatusLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('MANAGER')) throw new Response(null, { status: 403 });
+    void queryClient.prefetchQuery(teamStatusQuery());
+    return null;
   };
 }
 

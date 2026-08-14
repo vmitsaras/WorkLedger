@@ -16,10 +16,57 @@ import {
   resumeAttendanceEnvelopeSchema,
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
+  teamStatusEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
+
+test('keeps team status bounded, strict, and free of protected absence fields', () => {
+  const response = {
+    data: {
+      asOf: '2026-08-14T09:30:00+02:00',
+      localDate: '2026-08-14',
+      members: [
+        {
+          availability: 'UNAVAILABLE',
+          displayName: 'Employee Example',
+          hasUnresolvedRecords: true,
+          teamName: 'Operations',
+        },
+      ],
+      summary: {
+        offWork: 0,
+        onBreak: 0,
+        total: 1,
+        unavailable: 1,
+        unresolved: 1,
+        working: 0,
+      },
+      timeZone: 'Europe/Berlin',
+    },
+    meta: { requestId: randomUUID() },
+  };
+
+  expect(teamStatusEnvelopeSchema.parse(response)).toEqual(response);
+  for (const protectedField of [
+    'employeeId',
+    'requestId',
+    'absenceType',
+    'reason',
+    'entitlementMinutes',
+  ]) {
+    expect(() =>
+      teamStatusEnvelopeSchema.parse({
+        ...response,
+        data: {
+          ...response.data,
+          members: [{ ...response.data.members[0], [protectedField]: 'private' }],
+        },
+      }),
+    ).toThrow();
+  }
+});
 
 test('applies bounded approval-inbox URL-filter defaults', () => {
   expect(approvalInboxQuerySchema.parse({})).toEqual({

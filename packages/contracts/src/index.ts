@@ -5,6 +5,18 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  TEAM_AVAILABILITY_STATES,
+  teamAvailabilityStateSchema,
+  teamStatusEnvelopeSchema,
+  teamStatusMemberSchema,
+  teamStatusSchema,
+  teamStatusSummarySchema,
+  type TeamAvailabilityState,
+  type TeamStatus,
+  type TeamStatusMember,
+} from './team-status.js';
+
+export {
   APPROVAL_INBOX_DIRECTIONS,
   APPROVAL_INBOX_ITEM_STATUSES,
   APPROVAL_INBOX_SORTS,

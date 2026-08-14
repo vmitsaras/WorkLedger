@@ -12,6 +12,7 @@ import type {
   LeaveEntitlementRepository,
   OrganizationRepository,
   TimeAccountRepository,
+  TeamStatusRepository,
   TodayAttendanceRepository,
 } from '../repositories/contracts.js';
 
@@ -41,6 +42,7 @@ export interface WorkLedgerTransaction {
   readonly leaveEntitlements: LeaveEntitlementRepository;
   readonly organizations: OrganizationRepository;
   readonly timeAccount: TimeAccountRepository;
+  readonly teamStatus: TeamStatusRepository;
   readonly todayAttendance: TodayAttendanceRepository;
 }
 

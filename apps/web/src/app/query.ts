@@ -17,9 +17,11 @@ import {
   loadSelfContext,
   loadSelfProfile,
   loadTodayAttendance,
+  loadTeamStatus,
 } from './api-client.js';
 
 const TODAY_ATTENDANCE_REFRESH_INTERVAL_MS = 30 * 1_000;
+const TEAM_STATUS_REFRESH_INTERVAL_MS = 30 * 1_000;
 
 export function createWorkLedgerQueryClient(): QueryClient {
   return new QueryClient({
@@ -88,6 +90,16 @@ export const approvalDetailQuery = (approvalId: string) =>
   queryOptions({
     queryFn: ({ signal }) => loadApprovalDetail(approvalId, signal),
     queryKey: ['approvals', 'detail', approvalId] as const,
+  });
+
+export const teamStatusQuery = () =>
+  queryOptions({
+    queryFn: ({ signal }) => loadTeamStatus(signal),
+    queryKey: ['team', 'status'] as const,
+    refetchInterval: TEAM_STATUS_REFRESH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
+    refetchOnReconnect: 'always',
+    refetchOnWindowFocus: 'always',
   });
 
 function preferNewestTodayAttendance(previous: unknown, next: unknown): unknown {

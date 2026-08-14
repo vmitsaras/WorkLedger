@@ -19,6 +19,7 @@ import {
   selfContextEnvelopeSchema,
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
+  teamStatusEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   myTimeEnvelopeSchema,
   personalCalendarEnvelopeSchema,
@@ -49,6 +50,7 @@ import {
   type CorrectionDecisionRequest,
   type CorrectionReviewItem,
   type SubmitAbsenceCancellation,
+  type TeamStatus,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -244,6 +246,13 @@ export async function loadApprovalDetail(
     signal === undefined ? {} : { signal },
   );
   const parsed = approvalDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadTeamStatus(signal?: AbortSignal): Promise<TeamStatus> {
+  const body = await requestJson('/v1/team/status', signal === undefined ? {} : { signal });
+  const parsed = teamStatusEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

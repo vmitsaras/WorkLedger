@@ -128,6 +128,7 @@ import type {
   LeaveEntitlementRepository,
   ListAuthorizedEmployeesInput,
   ListApprovalInboxInput,
+  ListTeamStatusInput,
   OrganizationRecord,
   OrganizationRepository,
   PersonalCalendarRecords,
@@ -138,6 +139,8 @@ import type {
   SubmitCorrectionRequestInput,
   SubmitSicknessReportInput,
   SubmitAbsenceCancellationInput,
+  TeamStatusMemberRecord,
+  TeamStatusRepository,
   TimeAccountRepository,
   TodayAttendanceRepository,
   TodayAttendanceSourceRecord,
@@ -182,6 +185,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   leaveEntitlements: LeaveEntitlementRepository;
   organizations: OrganizationRepository;
   timeAccount: TimeAccountRepository;
+  teamStatus: TeamStatusRepository;
   todayAttendance: TodayAttendanceRepository;
 }> {
   return Object.freeze({
@@ -198,6 +202,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     leaveEntitlements: new PostgresLeaveEntitlementRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
+    teamStatus: new PostgresTeamStatusRepository(transaction),
     todayAttendance: new PostgresTodayAttendanceRepository(transaction),
   });
 }
@@ -713,6 +718,124 @@ class PostgresAttendanceIdempotencyRepository implements AttendanceIdempotencyRe
       )
       .returning({ id: idempotencyRecords.id });
     return rows.length === 1;
+  }
+}
+
+class PostgresTeamStatusRepository implements TeamStatusRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async listCurrent(input: ListTeamStatusInput): Promise<readonly TeamStatusMemberRecord[]> {
+    const scopeCondition = employeeScopeCondition({ ...input, limit: 1_000, offset: 0 });
+    const currentManagerJoin = and(
+      eq(managerAssignments.organizationId, input.organizationId),
+      eq(managerAssignments.employeeId, employees.id),
+      lte(managerAssignments.startsOn, input.localDate),
+      or(isNull(managerAssignments.endsOn), gt(managerAssignments.endsOn, input.localDate)),
+    );
+    const currentTeamJoin = and(
+      eq(teamAssignments.organizationId, input.organizationId),
+      eq(teamAssignments.employeeId, employees.id),
+      lte(teamAssignments.startsOn, input.localDate),
+      or(isNull(teamAssignments.endsOn), gt(teamAssignments.endsOn, input.localDate)),
+    );
+    const rows = await this.transaction
+      .select({
+        availability: sql<TeamStatusMemberRecord['availability']>`case
+          when ${attendanceHeads.state} = 'WORKING' then 'WORKING'
+          when ${attendanceHeads.state} = 'ON_BREAK' then 'ON_BREAK'
+          when exists (
+            select 1
+            from ${absenceEffects}
+            where ${absenceEffects.organizationId} = ${input.organizationId}
+              and ${absenceEffects.employeeId} = ${employees.id}
+              and ${absenceEffects.localDate} = ${input.localDate}
+              and ${absenceEffects.effectVersion} = 1
+              and not exists (
+                select 1
+                from ${absenceCancellationSegments}
+                inner join ${absenceCancellations}
+                  on ${absenceCancellations.id} = ${absenceCancellationSegments.absenceCancellationId}
+                 and ${absenceCancellations.organizationId} = ${input.organizationId}
+                 and ${absenceCancellations.status} = 'APPROVED'
+                where ${absenceCancellationSegments.absenceCoverageSegmentId} = ${absenceEffects.absenceCoverageSegmentId}
+              )
+          ) then 'UNAVAILABLE'
+          else 'OFF_WORK'
+        end`.as('availability'),
+        displayName: employees.displayName,
+        hasUnresolvedRecords: sql<boolean>`(
+          exists (
+            select 1 from ${correctionRequests}
+            where ${correctionRequests.organizationId} = ${input.organizationId}
+              and ${correctionRequests.employeeId} = ${employees.id}
+              and (
+                ${correctionRequests.status} in ('SUBMITTED', 'CHANGES_REQUESTED')
+                or (
+                  ${correctionRequests.status} = 'APPROVED'
+                  and not exists (
+                    select 1 from ${appliedCorrections}
+                    where ${appliedCorrections.organizationId} = ${input.organizationId}
+                      and ${appliedCorrections.correctionRequestId} = ${correctionRequests.id}
+                  )
+                )
+              )
+          )
+          or exists (
+            select 1 from ${absenceRequests}
+            where ${absenceRequests.organizationId} = ${input.organizationId}
+              and ${absenceRequests.employeeId} = ${employees.id}
+              and ${absenceRequests.status} in ('SUBMITTED', 'REPORTED', 'CHANGES_REQUESTED')
+          )
+          or exists (
+            select 1 from ${absenceCancellations}
+            where ${absenceCancellations.organizationId} = ${input.organizationId}
+              and ${absenceCancellations.employeeId} = ${employees.id}
+              and ${absenceCancellations.status} in ('PENDING_DECISION', 'CHANGES_REQUESTED')
+          )
+        )`.as('has_unresolved_records'),
+        teamName: teams.name,
+      })
+      .from(employees)
+      .leftJoin(managerAssignments, currentManagerJoin)
+      .leftJoin(teamAssignments, currentTeamJoin)
+      .leftJoin(
+        teams,
+        and(eq(teams.organizationId, input.organizationId), eq(teams.id, teamAssignments.teamId)),
+      )
+      .leftJoin(
+        attendanceHeads,
+        and(
+          eq(attendanceHeads.organizationId, input.organizationId),
+          eq(attendanceHeads.employeeId, employees.id),
+        ),
+      )
+      .where(
+        and(
+          eq(employees.organizationId, input.organizationId),
+          eq(employees.status, 'ACTIVE'),
+          scopeCondition,
+          sql`exists (
+            select 1 from ${employmentPeriods}
+            where ${employmentPeriods.organizationId} = ${input.organizationId}
+              and ${employmentPeriods.employeeId} = ${employees.id}
+              and ${employmentPeriods.startsOn} <= ${input.localDate}
+              and (${employmentPeriods.endsOn} is null or ${employmentPeriods.endsOn} > ${input.localDate})
+          )`,
+        ),
+      )
+      .orderBy(asc(employees.displayName), asc(employees.id))
+      .limit(1_000);
+
+    return Object.freeze(
+      rows.map((row) =>
+        Object.freeze({
+          availability: row.availability,
+          displayName: row.displayName,
+          hasUnresolvedRecords: row.hasUnresolvedRecords,
+          teamName: row.teamName,
+        }),
+      ),
+    );
   }
 }
 

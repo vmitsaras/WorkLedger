@@ -45,6 +45,33 @@ const APPROVAL_ITEMS = [
     version: 3,
   },
 ];
+const TEAM_STATUS = {
+  asOf: '2026-08-14T10:30:45Z',
+  localDate: '2026-08-14',
+  members: [
+    {
+      availability: 'WORKING',
+      displayName: 'Ari Working',
+      hasUnresolvedRecords: true,
+      teamName: 'Delivery',
+    },
+    {
+      availability: 'UNAVAILABLE',
+      displayName: 'Cleo Away',
+      hasUnresolvedRecords: false,
+      teamName: null,
+    },
+  ],
+  summary: {
+    offWork: 0,
+    onBreak: 0,
+    total: 2,
+    unavailable: 1,
+    unresolved: 1,
+    working: 1,
+  },
+  timeZone: 'Europe/Berlin',
+};
 const TODAY_ATTENDANCE = {
   asOf: '2026-08-11T09:30:00Z',
   attendance: {
@@ -840,6 +867,9 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
     });
   });
   await mockToday(page);
+  await page.route('**/v1/team/status', async (route) => {
+    await route.fulfill({ json: success(TEAM_STATUS), status: 200 });
+  });
 
   await page.goto('/today');
   await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
@@ -858,8 +888,27 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
 
   await dialog.getByRole('link', { name: 'Team', exact: true }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByRole('heading', { name: 'Team' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Team status' })).toBeFocused();
   await expect(page).toHaveTitle('Team | WorkLedger');
+  const teamTable = page.getByRole('table', {
+    name: 'Privacy-safe current status for authorized direct reports.',
+  });
+  await expect(
+    teamTable.getByRole('row', { name: /Ari Working Delivery Working Unresolved record/u }),
+  ).toBeVisible();
+  await expect(
+    teamTable.getByRole('row', { name: /Cleo Away No current team Unavailable today/u }),
+  ).toBeVisible();
+  const teamScrollRegion = page.getByRole('region', { name: 'Scrollable team status' });
+  await teamScrollRegion.focus();
+  await expect(teamScrollRegion).toBeFocused();
+  expect(
+    await teamScrollRegion.evaluate((element) => element.scrollWidth > element.clientWidth),
+  ).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await expect(page.getByText(/sickness|vacation/iu)).toHaveCount(0);
   await expectPageToHaveNoAxeViolations(page);
 });
 

@@ -97,7 +97,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 - [x] `WL-700` Build manager approval inbox and URL-owned filters.
 - [x] `WL-701` Build approve, reject, and changes-requested decisions.
-- [ ] `WL-702` Build team status and privacy-safe availability.
+- [x] `WL-702` Build team status and privacy-safe availability.
 - [ ] `WL-703` Build team calendar and agenda alternative.
 - [ ] `WL-704` Implement notification records, in-app history, and optional email delivery.
 - [ ] `WL-705` Complete authorization and accessibility review.

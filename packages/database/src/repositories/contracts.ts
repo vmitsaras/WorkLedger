@@ -23,6 +23,7 @@ export type CorrectionRequestStatus =
 export type CorrectionDecisionAction = 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES';
 export type ApplicationRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR';
 export type EmployeeAuthorizationScope = 'ORGANIZATION' | 'REPORTS' | 'SELF' | 'SELF_AND_REPORTS';
+export type TeamAvailabilityState = 'OFF_WORK' | 'ON_BREAK' | 'UNAVAILABLE' | 'WORKING';
 export type ApprovalInboxStatus = 'ACTION_REQUIRED' | 'COMPLETED' | 'WAITING_ON_EMPLOYEE';
 export type ApprovalInboxType = 'ABSENCE' | 'CANCELLATION' | 'CORRECTION';
 export type ApprovalInboxSort = 'AFFECTED_DATE' | 'EMPLOYEE' | 'SUBMITTED_AT';
@@ -167,6 +168,20 @@ export type ListAuthorizedEmployeesInput = Readonly<{
   offset: number;
   organizationId: DomainId<'Organization'>;
   scope: EmployeeAuthorizationScope;
+}>;
+
+export type ListTeamStatusInput = Readonly<{
+  actorEmployeeId: DomainId<'Employee'> | null;
+  localDate: LocalDate;
+  organizationId: DomainId<'Organization'>;
+  scope: EmployeeAuthorizationScope;
+}>;
+
+export type TeamStatusMemberRecord = Readonly<{
+  availability: TeamAvailabilityState;
+  displayName: string;
+  hasUnresolvedRecords: boolean;
+  teamName: string | null;
 }>;
 
 export type OrganizationRecord = Readonly<{
@@ -650,6 +665,10 @@ export interface OrganizationRepository {
 
 export interface ApprovalInboxRepository {
   list(input: ListApprovalInboxInput): Promise<ApprovalInboxPageRecord>;
+}
+
+export interface TeamStatusRepository {
+  listCurrent(input: ListTeamStatusInput): Promise<readonly TeamStatusMemberRecord[]>;
 }
 
 export interface AuditRepository {
