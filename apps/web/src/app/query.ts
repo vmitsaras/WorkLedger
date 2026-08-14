@@ -9,6 +9,8 @@ import {
   type NotificationQuery,
   type ReportKey,
   type ReportQuery,
+  type EmployeeAdminQuery,
+  type SystemAccountQuery,
 } from '@workledger/contracts';
 
 import {
@@ -27,6 +29,9 @@ import {
   loadNotificationHistory,
   loadReport,
   loadReportCatalog,
+  loadEmployeeAdminDetail,
+  loadEmployeeAdminPage,
+  loadSystemAccountPage,
 } from './api-client.js';
 
 const TODAY_ATTENDANCE_REFRESH_INTERVAL_MS = 30 * 1_000;
@@ -52,6 +57,26 @@ export const selfContextQuery = () =>
 
 export const selfProfileQuery = () =>
   queryOptions({ queryFn: loadSelfProfile, queryKey: ['self', 'profile'] as const });
+
+export const employeeAdminPageQuery = (query: EmployeeAdminQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadEmployeeAdminPage(query, signal),
+    queryKey: ['administration', 'employees', query] as const,
+  });
+
+export const employeeAdminDetailQuery = (employeeId: string) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadEmployeeAdminDetail(employeeId, signal),
+    queryKey: ['administration', 'employee', employeeId] as const,
+  });
+
+export const systemAccountPageQuery = (query: SystemAccountQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadSystemAccountPage(query, signal),
+    queryKey: ['administration', 'system-accounts', query] as const,
+  });
 
 export const todayAttendanceQuery = () =>
   queryOptions({

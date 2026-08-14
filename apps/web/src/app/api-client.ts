@@ -71,6 +71,22 @@ import {
   type TeamStatus,
   type TeamCalendar,
   type TeamCalendarQuery,
+  administrationActionEnvelopeSchema,
+  employeeAdminDetailEnvelopeSchema,
+  employeeAdminPageEnvelopeSchema,
+  invitationActivationEnvelopeSchema,
+  systemAccountPageEnvelopeSchema,
+  type ActivateEmployeeAdminRequest,
+  type AdministrationActionResult,
+  type CreateEmployeeAdminRequest,
+  type CreateTechnicalAccountRequest,
+  type DeactivateEmployeeAdminRequest,
+  type EmployeeAdminDetail,
+  type EmployeeAdminPage,
+  type EmployeeAdminQuery,
+  type ReplaceEmployeeRolesRequest,
+  type SystemAccountPage,
+  type SystemAccountQuery,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -99,6 +115,54 @@ export async function loadSelfContext(): Promise<SelfContext> {
 export async function loadSelfProfile(): Promise<SelfProfile> {
   const body = await requestJson('/v1/me/profile');
   const parsed = selfProfileEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadEmployeeAdminPage(
+  query: EmployeeAdminQuery,
+  signal?: AbortSignal,
+): Promise<EmployeeAdminPage> {
+  const search = new URLSearchParams({
+    limit: query.limit.toString(),
+    page: query.page.toString(),
+    status: query.status,
+  });
+  const body = await requestJson(
+    `/v1/hr/employees?${search}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = employeeAdminPageEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadEmployeeAdminDetail(
+  employeeId: string,
+  signal?: AbortSignal,
+): Promise<EmployeeAdminDetail> {
+  const body = await requestJson(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = employeeAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadSystemAccountPage(
+  query: SystemAccountQuery,
+  signal?: AbortSignal,
+): Promise<SystemAccountPage> {
+  const search = new URLSearchParams({
+    limit: query.limit.toString(),
+    page: query.page.toString(),
+  });
+  const body = await requestJson(
+    `/v1/system/accounts?${search}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = systemAccountPageEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }
@@ -626,6 +690,108 @@ export async function resetPassword(token: string, newPassword: string): Promise
     response.status === 429 ? 'RATE_LIMITED' : 'AUTH_RESET_INVALID_OR_EXPIRED',
     response.status,
   );
+}
+
+export async function activateAccountInvitation(token: string, password: string): Promise<void> {
+  const body = await requestJson('/v1/account-invitations/activate', {
+    body: JSON.stringify({ password, token }),
+    headers: jsonHeaders(),
+    method: 'POST',
+  });
+  const parsed = invitationActivationEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+}
+
+export async function createEmployeeForAdministration(
+  input: CreateEmployeeAdminRequest,
+): Promise<EmployeeAdminDetail> {
+  const body = await administrationMutation('/v1/hr/employees', input);
+  const parsed = employeeAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function activateEmployeeForAdministration(
+  employeeId: string,
+  input: ActivateEmployeeAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction(`/v1/hr/employees/${encodeURIComponent(employeeId)}/activate`, input);
+}
+
+export async function deactivateEmployeeForAdministration(
+  employeeId: string,
+  input: DeactivateEmployeeAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/deactivate`,
+    input,
+  );
+}
+
+export async function replaceEmployeeRolesForAdministration(
+  employeeId: string,
+  input: ReplaceEmployeeRolesRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction(`/v1/hr/employees/${encodeURIComponent(employeeId)}/roles`, input);
+}
+
+export async function reissueEmployeeInvitation(
+  employeeId: string,
+): Promise<AdministrationActionResult> {
+  return administrationAction(`/v1/hr/employees/${encodeURIComponent(employeeId)}/invitation`, {});
+}
+
+export async function createTechnicalAccount(
+  input: CreateTechnicalAccountRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction('/v1/system/accounts', input);
+}
+
+export async function setSystemAccountState(
+  accountId: string,
+  active: boolean,
+): Promise<AdministrationActionResult> {
+  return administrationAction(`/v1/system/accounts/${encodeURIComponent(accountId)}/state`, {
+    active,
+  });
+}
+
+export async function setSystemAdministratorRole(
+  accountId: string,
+  enabled: boolean,
+): Promise<AdministrationActionResult> {
+  return administrationAction(`/v1/system/accounts/${encodeURIComponent(accountId)}/system-role`, {
+    enabled,
+  });
+}
+
+export async function revokeSystemAccountSession(
+  accountId: string,
+  sessionId: string,
+): Promise<AdministrationActionResult> {
+  return administrationAction(
+    `/v1/system/accounts/${encodeURIComponent(accountId)}/sessions/${encodeURIComponent(sessionId)}/revoke`,
+    {},
+  );
+}
+
+async function administrationAction(
+  path: string,
+  input: unknown,
+): Promise<AdministrationActionResult> {
+  const body = await administrationMutation(path, input);
+  const parsed = administrationActionEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+async function administrationMutation(path: string, input: unknown): Promise<unknown> {
+  const token = await getCsrfToken();
+  return requestJson(path, {
+    body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+  });
 }
 
 export async function signOut(): Promise<void> {

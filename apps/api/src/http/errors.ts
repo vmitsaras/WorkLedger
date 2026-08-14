@@ -37,6 +37,10 @@ export class WorkLedgerApiError extends Error {
 
 export function safeApiErrorMessage(code: ApiErrorCode): string {
   switch (code) {
+    case 'ACCOUNT_EMAIL_ALREADY_EXISTS':
+      return 'An account already uses that email address.';
+    case 'ACCOUNT_STATE_CONFLICT':
+      return 'The account is already in the requested state.';
     case 'ACCESS_DENIED':
       return 'You do not have permission to perform this action.';
     case 'AUTH_REQUIRED':
@@ -49,6 +53,12 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'The service is temporarily unavailable. Try again later.';
     case 'EMPLOYEE_NOT_FOUND':
       return 'The requested employee was not found.';
+    case 'EMPLOYEE_NUMBER_ALREADY_EXISTS':
+      return 'An employee already uses that employee number.';
+    case 'EMPLOYEE_STATE_CONFLICT':
+      return 'The employee is already in the requested state.';
+    case 'EMPLOYMENT_PERIOD_OVERLAP':
+      return 'The employment period overlaps existing history.';
     case 'MALFORMED_REQUEST':
       return 'The request body is not valid JSON.';
     case 'RATE_LIMITED':

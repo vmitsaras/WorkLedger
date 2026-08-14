@@ -10,6 +10,8 @@ import {
   notificationQuerySchema,
   type NavigationArea,
   type SelfContext,
+  employeeAdminQuerySchema,
+  systemAccountQuerySchema,
 } from '@workledger/contracts';
 
 import { ApiClientError, clearSessionMemory } from './api-client.js';
@@ -26,6 +28,9 @@ import {
   monthlyPeriodQuery,
   reportCatalogQuery,
   reportResultQuery,
+  employeeAdminDetailQuery,
+  employeeAdminPageQuery,
+  systemAccountPageQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -35,6 +40,7 @@ import {
   ForgotPasswordPage,
   ResetPasswordPage,
   SignInPage,
+  ActivateAccountPage,
 } from '../routes/auth-routes.js';
 import { PlaceholderPage } from '../routes/placeholder-page.js';
 import { ProfilePage } from '../routes/profile-page.js';
@@ -58,6 +64,12 @@ import {
   type ReportRouteLoaderData,
 } from '../routes/report-detail-page.js';
 import { ReportsPage } from '../routes/reports-page.js';
+import {
+  EmployeeAdministrationDetailPage,
+  EmployeeAdministrationPage,
+  NewEmployeeAdministrationPage,
+} from '../routes/employee-administration-page.js';
+import { SystemAccountAdministrationPage } from '../routes/system-account-administration-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -75,13 +87,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'HR',
-    description: 'Employment records and invitation, activation, and deactivation workflows.',
-    milestone: 'WL-900',
-    path: 'employees',
-    title: 'Employees',
   },
   {
     area: 'HR',
@@ -110,13 +115,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-906',
     path: 'audit',
     title: 'Audit',
-  },
-  {
-    area: 'SYSTEM',
-    description: 'Technical accounts and authorized session administration.',
-    milestone: 'WL-900',
-    path: 'system/accounts',
-    title: 'Accounts and sessions',
   },
   {
     area: 'SYSTEM',
@@ -162,6 +160,12 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               'reset-password',
               'Choose a new password',
               <ResetPasswordPage />,
+              publicOnlyLoader,
+            ),
+            authRoute(
+              'activate-account',
+              'Activate your account',
+              <ActivateAccountPage />,
               publicOnlyLoader,
             ),
           ],
@@ -290,6 +294,34 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <ReportDetailPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Report' },
+            },
+            {
+              path: 'employees',
+              loader: createEmployeeAdminListLoader(queryClient),
+              element: <EmployeeAdministrationPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Employees' },
+            },
+            {
+              path: 'employees/new',
+              loader: createAreaLoader(queryClient, 'HR'),
+              element: <NewEmployeeAdministrationPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Add employee' },
+            },
+            {
+              path: 'employees/:employeeId',
+              loader: createEmployeeAdminDetailLoader(queryClient),
+              element: <EmployeeAdministrationDetailPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Employee' },
+            },
+            {
+              path: 'system/accounts',
+              loader: createSystemAccountAdminLoader(queryClient),
+              element: <SystemAccountAdministrationPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Accounts and sessions' },
             },
             ...PLACEHOLDER_ROUTES.map((route) => ({
               path: route.path,
@@ -506,6 +538,41 @@ function createReportsLoader(queryClient: QueryClient): LoaderFunction {
     await requireReportAudience(queryClient);
     await ensureReportCatalog(queryClient);
     return null;
+  };
+}
+
+function createEmployeeAdminListLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
+    const values = Object.fromEntries(new URL(request.url).searchParams);
+    const parsed = employeeAdminQuerySchema.safeParse(values);
+    if (!parsed.success) return redirect('/employees?limit=20&page=1&status=ALL');
+    void queryClient.prefetchQuery(employeeAdminPageQuery(parsed.data));
+    return parsed.data;
+  };
+}
+
+function createEmployeeAdminDetailLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ params }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
+    const employeeId = params['employeeId'];
+    if (employeeId === undefined) throw new Response(null, { status: 404 });
+    void queryClient.prefetchQuery(employeeAdminDetailQuery(employeeId));
+    return null;
+  };
+}
+
+function createSystemAccountAdminLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('SYSTEM')) throw new Response(null, { status: 403 });
+    const values = Object.fromEntries(new URL(request.url).searchParams);
+    const parsed = systemAccountQuerySchema.safeParse(values);
+    const query = parsed.success ? parsed.data : { limit: 20, page: 1 };
+    void queryClient.prefetchQuery(systemAccountPageQuery(query));
+    return query;
   };
 }
 

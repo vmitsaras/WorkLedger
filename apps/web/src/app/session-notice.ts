@@ -1,4 +1,5 @@
-export type SignInNotice = 'SESSION_EXPIRED' | 'SIGNED_OUT' | 'PASSWORD_RESET';
+export type SignInNotice =
+  'ACCOUNT_ACTIVATED' | 'SESSION_EXPIRED' | 'SIGNED_OUT' | 'PASSWORD_RESET';
 
 let pendingNotice: SignInNotice | null = null;
 

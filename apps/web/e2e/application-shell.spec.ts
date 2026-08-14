@@ -19,6 +19,14 @@ const MANAGER_CONTEXT = {
   organization: { name: 'Northstar Studio' },
   roles: ['MANAGER'],
 };
+const HR_CONTEXT = {
+  account: { email: 'priya@northstar.test', name: 'Priya Shah' },
+  defaultPath: '/today',
+  employee: { displayName: 'Priya Shah', employeeNumber: 'NS-020', status: 'ACTIVE' },
+  navigationAreas: ['EMPLOYEE', 'HR'],
+  organization: { name: 'Northstar Studio' },
+  roles: ['EMPLOYEE', 'HR_ADMINISTRATOR'],
+};
 const APPROVAL_TEAM_ID = '123e4567-e89b-42d3-a456-426614174500';
 const CORRECTION_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174501';
 const ABSENCE_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174502';
@@ -1390,6 +1398,124 @@ test('revokes the current session and removes protected profile data before sign
   await expect(page).toHaveURL(/\/sign-in$/u);
   await expect(page.getByRole('status')).toContainText('You have signed out');
   await expect(page.getByText('NS-001')).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeFocused();
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('creates and invites an employee through the keyboard-complete HR workflow', async ({
+  page,
+}) => {
+  const employeeId = '123e4567-e89b-42d3-a456-426614174901';
+  const submittedBodies: unknown[] = [];
+  const employeeDetail = {
+    account: {
+      active: false,
+      email: 'jordan@example.test',
+      invitationPending: true,
+    },
+    currentEmployment: {
+      endsOn: null,
+      id: '123e4567-e89b-42d3-a456-426614174902',
+      startsOn: '2026-08-18',
+    },
+    displayName: 'Jordan Lee',
+    employeeNumber: 'NS-021',
+    employmentHistory: [
+      {
+        endsOn: null,
+        id: '123e4567-e89b-42d3-a456-426614174902',
+        startsOn: '2026-08-18',
+      },
+    ],
+    id: employeeId,
+    privilegedActionsAllowed: true,
+    roles: ['EMPLOYEE', 'MANAGER'],
+    status: 'ACTIVE',
+  };
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(HR_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'h'.repeat(43) }), status: 200 });
+  });
+  await page.route('**/v1/hr/employees', async (route) => {
+    if (route.request().method() === 'POST') {
+      expect(route.request().headers()['x-workledger-csrf']).toBe('h'.repeat(43));
+      submittedBodies.push(route.request().postDataJSON());
+      await route.fulfill({ json: success(employeeDetail), status: 200 });
+      return;
+    }
+    await route.fulfill({
+      json: success({ items: [], pagination: { limit: 20, page: 1, total: 0, totalPages: 0 } }),
+      status: 200,
+    });
+  });
+  await page.route(`**/v1/hr/employees/${employeeId}`, async (route) => {
+    await route.fulfill({ json: success(employeeDetail), status: 200 });
+  });
+
+  await page.goto('/employees/new');
+  await expect(page.getByRole('heading', { name: 'Add employee' })).toBeFocused();
+  await page.getByRole('button', { name: 'Create and invite employee' }).click();
+  await expect(page.getByRole('alert')).toBeFocused();
+  await page.getByLabel('Display name').fill('Jordan Lee');
+  await page.getByLabel('Employee number').fill('NS-021');
+  await page.getByLabel('Account email').fill('Jordan@example.test');
+  await page.getByLabel('Employment starts on').fill('2026-08-18');
+  await page.getByLabel('Manager').check();
+  await page.getByRole('button', { name: 'Create and invite employee' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/employees/${employeeId}$`, 'u'));
+  await expect(page.getByRole('heading', { name: 'Jordan Lee' })).toBeFocused();
+  expect(submittedBodies).toEqual([
+    {
+      displayName: 'Jordan Lee',
+      email: 'jordan@example.test',
+      employeeNumber: 'NS-021',
+      employmentStartsOn: '2026-08-18',
+      roles: ['EMPLOYEE', 'MANAGER'],
+    },
+  ]);
+  expect(JSON.stringify(submittedBodies)).not.toMatch(/SYSTEM_ADMINISTRATOR|token/iu);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('captures, cleans, and consumes an invitation grant without automatic sign-in', async ({
+  page,
+}) => {
+  const invitationToken = 'i'.repeat(43);
+  let submittedBody: unknown;
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({
+      json: {
+        error: { code: 'AUTH_REQUIRED', message: 'Sign in to continue.', requestId: REQUEST_ID },
+      },
+      status: 401,
+    });
+  });
+  await page.route('**/v1/account-invitations/activate', async (route) => {
+    submittedBody = route.request().postDataJSON();
+    expect(route.request().headers()['origin']).toBe('http://127.0.0.1:4173');
+    await route.fulfill({ json: success({ activated: true }), status: 200 });
+  });
+
+  await page.goto(`/activate-account?token=${invitationToken}#discarded`);
+  await expect(page).toHaveURL(/\/activate-account$/u);
+  await expect(page.getByRole('heading', { name: 'Activate your account' })).toBeFocused();
+  await page.getByLabel('New password', { exact: true }).fill('safe invitation passphrase 2026');
+  await page
+    .getByLabel('Confirm new password', { exact: true })
+    .fill('safe invitation passphrase 2026');
+  await page.getByRole('button', { name: 'Activate account' }).click();
+
+  await expect(page).toHaveURL(/\/sign-in$/u);
+  await expect(page.getByRole('status')).toContainText(
+    'Your account is active. Sign in with your new password.',
+  );
+  expect(submittedBody).toEqual({
+    password: 'safe invitation passphrase 2026',
+    token: invitationToken,
+  });
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeFocused();
   await expectPageToHaveNoAxeViolations(page);
 });

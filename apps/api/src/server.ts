@@ -21,6 +21,8 @@ import { registerTeamStatusRoutes } from './team/routes.js';
 import { registerNotificationRoutes } from './notifications/routes.js';
 import { registerMonthlyPeriodRoutes } from './monthly/routes.js';
 import { registerReportRoutes } from './reports/routes.js';
+import { registerAdministrationRoutes } from './administration/routes.js';
+import type { AccountInvitationSender } from './administration/service.js';
 import {
   disabledNotificationDeliveryAdapter,
   type NotificationDeliveryAdapter,
@@ -31,6 +33,7 @@ const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
 export function createApiServer(
   config: RuntimeConfig,
   dependencies: Readonly<{
+    invitationSender?: AccountInvitationSender;
     notificationDelivery?: NotificationDeliveryAdapter;
     now?: ApiClock;
   }> = {},
@@ -81,6 +84,14 @@ export function createApiServer(
       registerReportRoutes(app, config, authentication, database, dependencies.now);
       registerTeamStatusRoutes(app, authentication, database, dependencies.now);
       registerVacationRequestRoutes(app, config, authentication, database, dependencies.now);
+      registerAdministrationRoutes(
+        app,
+        config,
+        authentication,
+        database,
+        dependencies.now,
+        dependencies.invitationSender,
+      );
       app.addHook('onClose', async () => {
         await Promise.all([authentication.close(), database.close()]);
       });

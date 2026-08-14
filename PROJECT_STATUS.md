@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 9 — Administration
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 8 Phase 9 tasks complete
-**Current milestone:** Employee lifecycle and technical-account separation
-**Active task:** `WL-900`
+**Phase progress:** 1 of 8 Phase 9 tasks complete
+**Current milestone:** Teams and effective manager assignment
+**Active task:** `WL-901`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Build HR employee create/invite/activate/deactivate/history plus separated technical-account,
-system-role, and session administration routes for `WL-900`.
+Build teams, effective-dated direct-manager assignments, and immediate authorization-scope changes
+with preserved historical attribution for `WL-901`.
 
 ## Verified decisions
 
@@ -149,6 +149,13 @@ system-role, and session administration routes for `WL-900`.
 - Route navigation updates the document title and visible heading with deterministic focus behavior; screen states have persistent, non-duplicative focus and announcement rules.
 - Narrow-screen calendars use an equivalent agenda/list when the grid is unsuitable, and responsive transformations preserve reading order, relationships, and actions.
 - System-administrator routes expose only technical account/session, safe operations, and technical-audit data; restore, secret rotation, and upgrade remain host-operator workflows.
+- HR employee administration and system account administration use separate contracts and routes:
+  HR owns stable employee/employment history and employee/manager/HR roles; system administration
+  receives no HR fields and owns only technical account state, system role, and session revocation.
+- Employee deactivation ends the current half-open employment period, deactivates the linked
+  account, and revokes all sessions without deleting prior periods or roles. Technical account
+  state changes never mutate employment, and cannot re-enable an employee-linked account while the
+  employee is inactive.
 - WorkLedger treats authentication, employment, attendance, benefits, sickness-related absence, approvals, audit, exports, and backups as high-sensitivity data with purpose-specific access and retention.
 - Invite-only credentials use 15–128 character passwords, local common-password rejection, 30-minute single-use reset grants, and 24-hour single-use invitation grants.
 - Sessions are PostgreSQL-backed and immediately revocable; stateless/session caches and persistent remember-me are excluded, with 30-minute idle, 12-hour absolute, and 15-minute freshness boundaries.
@@ -357,6 +364,36 @@ system-role, and session administration routes for `WL-900`.
   assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-900` — Build employee lifecycle and separated technical-account/session administration
+
+- Changed: added strict shared contracts and generated OpenAPI for HR employee list/detail/create,
+  invitation, activation/deactivation, HR-role management, preserved employment history, and a
+  separate technical account/system-role/session surface; implemented serializable PostgreSQL
+  repositories, transactional audit evidence, invitation activation, and accessible web routes.
+- Verified: pinned toolchain/workspace/version/configuration checks, reproducible OpenAPI,
+  formatting, ESLint and 222-file/1,104-import boundaries, strict TypeScript, 24 tooling tests, 280
+  unit/component tests across 37 files, 20 database-enabled integration tests across 11 focused
+  files, 19 Chromium scenarios, and the production/workspace build pass. The build retains the
+  known large-chunk advisory; database integration retains the existing `pg` concurrent-query
+  deprecation warning.
+- Accessibility: employee creation has visible labels/descriptions, linked inline errors and a
+  focused error summary; list/detail/system screens use textual state, semantic history, captioned
+  tables, named pagination/scroll containment, keyboard-complete actions, self-control omission,
+  deliberate async route focus, narrow-screen browser coverage, and axe component/browser checks.
+- Security/data: all privileged mutations require a fresh active session, same-origin and CSRF
+  checks, current HR/system authority, prohibited self-targeting, serializable state changes,
+  session revocation, and minimized audit. Single-use invitation grants are protected at rest,
+  client/grant rate-limited, immediately removed from browser history, absent from responses and
+  audit, and never create a session automatically. HR/system DTOs and role ownership remain
+  purpose-separated, and system account state cannot override inactive employment.
+- Documentation: added `docs/88-employee-account-administration.md`, regenerated OpenAPI, and
+  synchronized README, TODO, task board, and project status. No migration or version bump is needed
+  because this is not the Phase 9 exit gate.
+- Remaining risk: production email delivery/configuration and the full proxy/rate-limit,
+  cross-browser, assistive-technology, security, and performance matrices remain Phase 10 work.
+  The existing large web chunk advisory, `pg` warning, `D-502`, and `D-504` also remain explicit.
+- Next task: `WL-901`.
 
 ### `WL-806` — Pass the Phase 8 exit gate
 
@@ -1008,12 +1045,12 @@ system-role, and session administration routes for `WL-900`.
 
 ## Current blockers
 
-No `WL-900` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
+No `WL-901` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
 recovery, and `D-502` remains open before the production browser gate.
 
 ## Next task
 
-`WL-900 — Build employee lifecycle and separated technical-account/session administration.`
+`WL-901 — Build teams, manager assignments, and effective scope changes.`
 
 ## Update rules
 

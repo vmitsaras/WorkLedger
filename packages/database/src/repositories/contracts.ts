@@ -288,6 +288,76 @@ export type EmployeeRecord = Readonly<{
   status: EmployeeStatus;
 }>;
 
+export type AdministrationEmploymentPeriodRecord = Readonly<{
+  endsOn: LocalDate | null;
+  id: DomainId<'EmploymentPeriod'>;
+  startsOn: LocalDate;
+}>;
+
+export type AdministrationEmployeeRecord = Readonly<{
+  account: Readonly<{
+    active: boolean;
+    email: string;
+    id: DomainId<'Account'>;
+    invitationPending: boolean;
+  }> | null;
+  displayName: string;
+  employeeNumber: string;
+  employmentHistory: readonly AdministrationEmploymentPeriodRecord[];
+  id: DomainId<'Employee'>;
+  organizationId: DomainId<'Organization'>;
+  roles: readonly ApplicationRole[];
+  status: EmployeeStatus;
+}>;
+
+export type AdministrationEmployeePageRecord = Readonly<{
+  items: readonly AdministrationEmployeeRecord[];
+  total: number;
+}>;
+
+export type CreateAdministrationEmployeeInput = Readonly<{
+  accountEmail: string;
+  accountName: string;
+  createdAt: Instant;
+  employeeNumber: string;
+  employmentStartsOn: LocalDate;
+  invitationExpiresAt: Instant;
+  invitationIdentifier: string;
+  organizationId: DomainId<'Organization'>;
+  roles: readonly ApplicationRole[];
+}>;
+
+export type AdministrationSystemAccountRecord = Readonly<{
+  active: boolean;
+  employeeLinked: boolean;
+  email: string;
+  id: DomainId<'Account'>;
+  invitationPending: boolean;
+  name: string;
+  sessions: readonly AccountSessionRecord[];
+  systemAdministrator: boolean;
+}>;
+
+export type AdministrationSystemAccountPageRecord = Readonly<{
+  items: readonly AdministrationSystemAccountRecord[];
+  total: number;
+}>;
+
+export type CreateAdministrationTechnicalAccountInput = Readonly<{
+  createdAt: Instant;
+  email: string;
+  invitationExpiresAt: Instant;
+  invitationIdentifier: string;
+  name: string;
+  organizationId: DomainId<'Organization'>;
+}>;
+
+export type ActivateAdministrationInvitationInput = Readonly<{
+  activatedAt: Instant;
+  invitationIdentifier: string;
+  passwordHash: string;
+}>;
+
 export type AccountSelfContextRecord = Readonly<{
   accountActive: boolean;
   accountId: DomainId<'Account'>;
@@ -1040,6 +1110,82 @@ export interface EmployeeRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<EmployeeRecord | null>;
+}
+
+export interface AdministrationRepository {
+  activateEmployee(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    startsOn: LocalDate,
+    changedAt: Instant,
+  ): Promise<AdministrationEmployeeRecord | null>;
+  activateInvitation(input: ActivateAdministrationInvitationInput): Promise<Readonly<{
+    accountId: DomainId<'Account'>;
+    organizationId: DomainId<'Organization'>;
+  }> | null>;
+  createEmployee(input: CreateAdministrationEmployeeInput): Promise<AdministrationEmployeeRecord>;
+  createTechnicalAccount(
+    input: CreateAdministrationTechnicalAccountInput,
+  ): Promise<AdministrationSystemAccountRecord>;
+  deactivateEmployee(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    endsOn: LocalDate,
+    changedAt: Instant,
+  ): Promise<AdministrationEmployeeRecord | null>;
+  findEmployee(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    at: Instant,
+  ): Promise<AdministrationEmployeeRecord | null>;
+  listEmployees(
+    input: Readonly<{
+      at: Instant;
+      limit: number;
+      offset: number;
+      organizationId: DomainId<'Organization'>;
+      status: EmployeeStatus | null;
+    }>,
+  ): Promise<AdministrationEmployeePageRecord>;
+  listSystemAccounts(
+    input: Readonly<{
+      at: Instant;
+      limit: number;
+      offset: number;
+      organizationId: DomainId<'Organization'>;
+    }>,
+  ): Promise<AdministrationSystemAccountPageRecord>;
+  replaceEmployeeRoles(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    roles: readonly ApplicationRole[],
+    changedAt: Instant,
+  ): Promise<AdministrationEmployeeRecord | null>;
+  reissueInvitation(
+    input: Readonly<{
+      accountId: DomainId<'Account'>;
+      expiresAt: Instant;
+      invitationIdentifier: string;
+      organizationId: DomainId<'Organization'>;
+    }>,
+  ): Promise<boolean>;
+  revokeAccountSession(
+    organizationId: DomainId<'Organization'>,
+    accountId: DomainId<'Account'>,
+    sessionId: DomainId<'Session'>,
+  ): Promise<boolean>;
+  setAccountActive(
+    organizationId: DomainId<'Organization'>,
+    accountId: DomainId<'Account'>,
+    active: boolean,
+    changedAt: Instant,
+  ): Promise<boolean>;
+  setSystemRole(
+    organizationId: DomainId<'Organization'>,
+    accountId: DomainId<'Account'>,
+    enabled: boolean,
+    changedAt: Instant,
+  ): Promise<boolean>;
 }
 
 export interface AccountSelfServiceRepository {

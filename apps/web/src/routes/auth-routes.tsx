@@ -7,13 +7,19 @@ import { Button, linkVariants, TextField } from '@workledger/ui';
 
 import {
   ApiClientError,
+  activateAccountInvitation,
   clearSessionMemory,
   requestPasswordReset,
   resetPassword,
   signIn,
 } from '../app/api-client.js';
 import { selfContextQuery } from '../app/query.js';
-import { clearResetGrant, readResetGrant } from '../app/reset-grant.js';
+import {
+  clearInvitationGrant,
+  clearResetGrant,
+  readInvitationGrant,
+  readResetGrant,
+} from '../app/reset-grant.js';
 import {
   clearPendingSignInNotice,
   readPendingSignInNotice,
@@ -321,6 +327,95 @@ export function ResetPasswordPage() {
   );
 }
 
+export function ActivateAccountPage() {
+  const navigate = useNavigate();
+  const [grant] = useState(readInvitationGrant);
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string>();
+  const [pending, setPending] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => clearInvitationGrant(), []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (grant === null) return;
+    const errors = validateNewPassword(password, confirmation);
+    setFieldErrors(errors);
+    setFormError(undefined);
+    if (Object.keys(errors).length > 0) {
+      focusSummary(summaryRef);
+      return;
+    }
+    setPending(true);
+    try {
+      await activateAccountInvitation(grant, password);
+      setPendingSignInNotice('ACCOUNT_ACTIVATED');
+      await navigate('/sign-in', { replace: true });
+    } catch (error) {
+      setFormError(invitationErrorMessage(error));
+      focusSummary(summaryRef);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (grant === null) {
+    return (
+      <section className="grid gap-6">
+        <PageHeader
+          eyebrow="Account invitation"
+          title="Invitation link unavailable"
+          description="This invitation is invalid, expired, or already used. Ask your administrator to issue a new invitation."
+        />
+        <Link className={linkVariants({ prominence: 'default' })} to="/sign-in">
+          Return to sign in
+        </Link>
+      </section>
+    );
+  }
+
+  return (
+    <section className="grid gap-6">
+      <PageHeader
+        eyebrow="Account invitation"
+        title="Activate your account"
+        description={`Choose a password with ${PASSWORD_MINIMUM_LENGTH} to ${PASSWORD_MAXIMUM_LENGTH} characters. Activation does not sign you in automatically.`}
+      />
+      <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
+      <form className="grid gap-5" noValidate onSubmit={handleSubmit}>
+        <TextField
+          id="new-password"
+          name="newPassword"
+          type="password"
+          autoComplete="new-password"
+          isInvalid={fieldErrors['new-password'] !== undefined}
+          errorMessage={fieldErrors['new-password']}
+          label="New password"
+          value={password}
+          onChange={setPassword}
+        />
+        <TextField
+          id="confirm-password"
+          name="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          isInvalid={fieldErrors['confirm-password'] !== undefined}
+          errorMessage={fieldErrors['confirm-password']}
+          label="Confirm new password"
+          value={confirmation}
+          onChange={setConfirmation}
+        />
+        <Button type="submit" isDisabled={pending}>
+          {pending ? 'Activating…' : 'Activate account'}
+        </Button>
+      </form>
+    </section>
+  );
+}
+
 function validateEmail(email: string): Record<string, string> {
   if (email.trim() === '') return { email: 'Enter your email address.' };
   return EMAIL_PATTERN.test(email.trim()) ? {} : { email: 'Enter a valid email address.' };
@@ -374,8 +469,20 @@ function resetErrorMessage(error: unknown): string {
   return 'This recovery link is invalid, expired, or already used. Request a new link to continue.';
 }
 
+function invitationErrorMessage(error: unknown): string {
+  if (error instanceof ApiClientError && error.code === 'RATE_LIMITED') {
+    return 'Too many activation attempts. Wait a moment and try again.';
+  }
+  if (error instanceof ApiClientError && error.code === 'VALIDATION_FAILED') {
+    return 'Choose a password that meets the length guidance and is not commonly used.';
+  }
+  return 'This invitation is invalid, expired, or already used. Ask your administrator to issue a new invitation.';
+}
+
 function noticeMessage(notice: ReturnType<typeof readPendingSignInNotice>): string {
   if (notice === 'SESSION_EXPIRED') return 'Your session expired. Sign in again to continue.';
+  if (notice === 'ACCOUNT_ACTIVATED')
+    return 'Your account is active. Sign in with your new password.';
   if (notice === 'PASSWORD_RESET')
     return 'Your password was updated. Sign in with the new password.';
   return 'You have signed out.';

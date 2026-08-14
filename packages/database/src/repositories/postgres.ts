@@ -5,6 +5,7 @@ import {
   asc,
   desc,
   eq,
+  count,
   gt,
   gte,
   inArray,
@@ -42,8 +43,10 @@ import {
 import {
   accountEmployeeLinks,
   accountRoleAssignments,
+  authAccounts,
   authSessions,
   authUsers,
+  authVerifications,
   attendanceHeads,
   absenceCoverageSegments,
   absenceCancellations,
@@ -93,6 +96,9 @@ import type {
   AccountSelfContextRecord,
   AccountSelfServiceRepository,
   AccountSessionRecord,
+  AdministrationEmployeeRecord,
+  AdministrationRepository,
+  AdministrationSystemAccountRecord,
   AbsenceCoverageSegmentInput,
   AbsenceCancellationRecord,
   AbsenceCancellationDecisionResult,
@@ -204,6 +210,7 @@ export type RepositoryTransaction = Parameters<Parameters<RootDatabase['transact
 
 export function createTransactionRepositories(transaction: RepositoryTransaction): Readonly<{
   accountSelfService: AccountSelfServiceRepository;
+  administration: AdministrationRepository;
   absenceRequests: AbsenceRequestRepository;
   approvalInbox: ApprovalInboxRepository;
   audit: AuditRepository;
@@ -224,6 +231,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
 }> {
   return Object.freeze({
     accountSelfService: new PostgresAccountSelfServiceRepository(transaction),
+    administration: new PostgresAdministrationRepository(transaction),
     absenceRequests: new PostgresAbsenceRequestRepository(transaction),
     approvalInbox: new PostgresApprovalInboxRepository(transaction),
     audit: new PostgresAuditRepository(transaction),
@@ -410,6 +418,695 @@ class PostgresAccountSelfServiceRepository implements AccountSelfServiceReposito
       .limit(1);
     return row === undefined ? null : mapAccountSession(row);
   }
+}
+
+class PostgresAdministrationRepository implements AdministrationRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async activateEmployee(
+    organizationId: Parameters<AdministrationRepository['activateEmployee']>[0],
+    employeeId: Parameters<AdministrationRepository['activateEmployee']>[1],
+    startsOn: Parameters<AdministrationRepository['activateEmployee']>[2],
+    changedAt: Parameters<AdministrationRepository['activateEmployee']>[3],
+  ) {
+    const [employee] = await this.transaction
+      .select({ id: employees.id, status: employees.status })
+      .from(employees)
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)))
+      .for('update')
+      .limit(1);
+    if (employee === undefined || employee.status !== 'INACTIVE') return null;
+
+    await this.transaction.insert(employmentPeriods).values({
+      employeeId,
+      organizationId,
+      startsOn,
+    });
+    await this.transaction
+      .update(employees)
+      .set({ status: 'ACTIVE' })
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)));
+    const [link] = await this.transaction
+      .select({ accountId: accountEmployeeLinks.userId })
+      .from(accountEmployeeLinks)
+      .where(
+        and(
+          eq(accountEmployeeLinks.organizationId, organizationId),
+          eq(accountEmployeeLinks.employeeId, employeeId),
+          isNull(accountEmployeeLinks.unlinkedAt),
+        ),
+      )
+      .limit(1);
+    if (link !== undefined) {
+      await this.transaction
+        .update(authUsers)
+        .set({ active: true, updatedAt: new Date(changedAt) })
+        .where(eq(authUsers.id, link.accountId));
+      await this.transaction.delete(authSessions).where(eq(authSessions.userId, link.accountId));
+    }
+    return this.findEmployee(organizationId, employeeId, changedAt);
+  }
+
+  async activateInvitation(input: Parameters<AdministrationRepository['activateInvitation']>[0]) {
+    const [verification] = await this.transaction
+      .select({
+        expiresAt: authVerifications.expiresAt,
+        id: authVerifications.id,
+        value: authVerifications.value,
+      })
+      .from(authVerifications)
+      .where(eq(authVerifications.identifier, input.invitationIdentifier))
+      .for('update')
+      .limit(1);
+    if (
+      verification === undefined ||
+      verification.expiresAt.getTime() <= new Date(input.activatedAt).getTime() ||
+      !verification.value.startsWith(INVITATION_ACCOUNT_VALUE_PREFIX)
+    ) {
+      return null;
+    }
+    const accountId = mapDomainId<'Account'>(
+      verification.value.slice(INVITATION_ACCOUNT_VALUE_PREFIX.length),
+      'auth_verifications',
+      'value',
+    );
+    const [account] = await this.transaction
+      .select({ active: authUsers.active, id: authUsers.id })
+      .from(authUsers)
+      .where(eq(authUsers.id, accountId))
+      .for('update')
+      .limit(1);
+    if (account === undefined || account.active) return null;
+    const organizationId = await this.findAccountOrganization(accountId);
+    if (organizationId === null) return null;
+    const [employeeLink] = await this.transaction
+      .select({ employeeStatus: employees.status })
+      .from(accountEmployeeLinks)
+      .innerJoin(employees, eq(employees.id, accountEmployeeLinks.employeeId))
+      .where(
+        and(
+          eq(accountEmployeeLinks.organizationId, organizationId),
+          eq(accountEmployeeLinks.userId, accountId),
+          isNull(accountEmployeeLinks.unlinkedAt),
+        ),
+      )
+      .limit(1);
+    if (employeeLink !== undefined && employeeLink.employeeStatus !== 'ACTIVE') return null;
+
+    const [credential] = await this.transaction
+      .select({ id: authAccounts.id })
+      .from(authAccounts)
+      .where(and(eq(authAccounts.userId, accountId), eq(authAccounts.providerId, 'credential')))
+      .limit(1);
+    if (credential === undefined) {
+      await this.transaction.insert(authAccounts).values({
+        accountId,
+        password: input.passwordHash,
+        providerId: 'credential',
+        userId: accountId,
+      });
+    } else {
+      await this.transaction
+        .update(authAccounts)
+        .set({ password: input.passwordHash, updatedAt: new Date(input.activatedAt) })
+        .where(eq(authAccounts.id, credential.id));
+    }
+    await this.transaction
+      .update(authUsers)
+      .set({ active: true, emailVerified: true, updatedAt: new Date(input.activatedAt) })
+      .where(eq(authUsers.id, accountId));
+    await this.transaction.delete(authSessions).where(eq(authSessions.userId, accountId));
+    await this.transaction
+      .delete(authVerifications)
+      .where(eq(authVerifications.id, verification.id));
+    return Object.freeze({ accountId, organizationId });
+  }
+
+  async createEmployee(input: Parameters<AdministrationRepository['createEmployee']>[0]) {
+    const [employee] = await this.transaction
+      .insert(employees)
+      .values({
+        displayName: input.accountName,
+        employeeNumber: input.employeeNumber,
+        organizationId: input.organizationId,
+        status: 'ACTIVE',
+      })
+      .returning({ id: employees.id });
+    if (employee === undefined) throw new DatabaseValueError('employees', 'id');
+    const employeeId = mapDomainId<'Employee'>(employee.id, 'employees', 'id');
+    await this.transaction.insert(employmentPeriods).values({
+      employeeId,
+      organizationId: input.organizationId,
+      startsOn: input.employmentStartsOn,
+    });
+    const [account] = await this.transaction
+      .insert(authUsers)
+      .values({
+        active: false,
+        email: input.accountEmail,
+        emailVerified: false,
+        name: input.accountName,
+      })
+      .returning({ id: authUsers.id });
+    if (account === undefined) throw new DatabaseValueError('auth_users', 'id');
+    const accountId = mapDomainId<'Account'>(account.id, 'auth_users', 'id');
+    await this.transaction.insert(accountEmployeeLinks).values({
+      employeeId,
+      organizationId: input.organizationId,
+      userId: accountId,
+    });
+    await this.transaction.insert(accountRoleAssignments).values(
+      [...new Set(input.roles)].map((role) => ({
+        organizationId: input.organizationId,
+        role,
+        userId: accountId,
+      })),
+    );
+    await this.insertInvitation(accountId, input.invitationIdentifier, input.invitationExpiresAt);
+    const result = await this.findEmployee(input.organizationId, employeeId, input.createdAt);
+    if (result === null) throw new DatabaseValueError('employees', 'id');
+    return result;
+  }
+
+  async createTechnicalAccount(
+    input: Parameters<AdministrationRepository['createTechnicalAccount']>[0],
+  ) {
+    const [account] = await this.transaction
+      .insert(authUsers)
+      .values({ active: false, email: input.email, emailVerified: false, name: input.name })
+      .returning({ id: authUsers.id });
+    if (account === undefined) throw new DatabaseValueError('auth_users', 'id');
+    const accountId = mapDomainId<'Account'>(account.id, 'auth_users', 'id');
+    await this.transaction.insert(accountRoleAssignments).values({
+      organizationId: input.organizationId,
+      role: 'SYSTEM_ADMINISTRATOR',
+      userId: accountId,
+    });
+    await this.insertInvitation(accountId, input.invitationIdentifier, input.invitationExpiresAt);
+    const result = await this.findSystemAccount(input.organizationId, accountId, input.createdAt);
+    if (result === null) throw new DatabaseValueError('auth_users', 'id');
+    return result;
+  }
+
+  async deactivateEmployee(
+    organizationId: Parameters<AdministrationRepository['deactivateEmployee']>[0],
+    employeeId: Parameters<AdministrationRepository['deactivateEmployee']>[1],
+    endsOn: Parameters<AdministrationRepository['deactivateEmployee']>[2],
+    changedAt: Parameters<AdministrationRepository['deactivateEmployee']>[3],
+  ) {
+    const [employee] = await this.transaction
+      .select({ id: employees.id, status: employees.status })
+      .from(employees)
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)))
+      .for('update')
+      .limit(1);
+    if (employee === undefined || employee.status !== 'ACTIVE') return null;
+    const [period] = await this.transaction
+      .select({ id: employmentPeriods.id, startsOn: employmentPeriods.startsOn })
+      .from(employmentPeriods)
+      .where(
+        and(
+          eq(employmentPeriods.organizationId, organizationId),
+          eq(employmentPeriods.employeeId, employeeId),
+          isNull(employmentPeriods.endsOn),
+        ),
+      )
+      .for('update')
+      .limit(1);
+    if (period === undefined || period.startsOn >= endsOn) return null;
+    await this.transaction
+      .update(employmentPeriods)
+      .set({ endsOn })
+      .where(eq(employmentPeriods.id, period.id));
+    await this.transaction
+      .update(employees)
+      .set({ status: 'INACTIVE' })
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)));
+    const accountId = await this.findEmployeeAccountId(organizationId, employeeId);
+    if (accountId !== null) {
+      await this.transaction
+        .update(authUsers)
+        .set({ active: false, updatedAt: new Date(changedAt) })
+        .where(eq(authUsers.id, accountId));
+      await this.transaction.delete(authSessions).where(eq(authSessions.userId, accountId));
+      await this.transaction
+        .delete(authVerifications)
+        .where(eq(authVerifications.value, invitationAccountValue(accountId)));
+    }
+    return this.findEmployee(organizationId, employeeId, changedAt);
+  }
+
+  async findEmployee(
+    organizationId: Parameters<AdministrationRepository['findEmployee']>[0],
+    employeeId: Parameters<AdministrationRepository['findEmployee']>[1],
+    at: Parameters<AdministrationRepository['findEmployee']>[2],
+  ): Promise<AdministrationEmployeeRecord | null> {
+    const [employee] = await this.transaction
+      .select()
+      .from(employees)
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)))
+      .limit(1);
+    if (employee === undefined) return null;
+    const periodRows = await this.transaction
+      .select()
+      .from(employmentPeriods)
+      .where(
+        and(
+          eq(employmentPeriods.organizationId, organizationId),
+          eq(employmentPeriods.employeeId, employeeId),
+        ),
+      )
+      .orderBy(desc(employmentPeriods.startsOn), desc(employmentPeriods.id));
+    const accountId = await this.findEmployeeAccountId(organizationId, employeeId);
+    let account: AdministrationEmployeeRecord['account'] = null;
+    let roles: readonly ApplicationRole[] = Object.freeze([]);
+    if (accountId !== null) {
+      const [accountRow] = await this.transaction
+        .select({ active: authUsers.active, email: authUsers.email })
+        .from(authUsers)
+        .where(eq(authUsers.id, accountId))
+        .limit(1);
+      if (accountRow !== undefined) {
+        account = Object.freeze({
+          active: accountRow.active,
+          email: accountRow.email,
+          id: accountId,
+          invitationPending: await this.invitationPending(accountId, at),
+        });
+      }
+      roles = await this.listActiveRoles(organizationId, accountId);
+    }
+    return Object.freeze({
+      account,
+      displayName: employee.displayName,
+      employeeNumber: employee.employeeNumber,
+      employmentHistory: Object.freeze(
+        periodRows.map((period) =>
+          Object.freeze({
+            endsOn:
+              period.endsOn === null
+                ? null
+                : mapLocalDate(period.endsOn, 'employment_periods', 'ends_on'),
+            id: mapDomainId<'EmploymentPeriod'>(period.id, 'employment_periods', 'id'),
+            startsOn: mapLocalDate(period.startsOn, 'employment_periods', 'starts_on'),
+          }),
+        ),
+      ),
+      id: mapDomainId<'Employee'>(employee.id, 'employees', 'id'),
+      organizationId,
+      roles,
+      status: employee.status,
+    });
+  }
+
+  async listEmployees(input: Parameters<AdministrationRepository['listEmployees']>[0]) {
+    const statusCondition = input.status === null ? undefined : eq(employees.status, input.status);
+    const where = and(eq(employees.organizationId, input.organizationId), statusCondition);
+    const [totalRow] = await this.transaction
+      .select({ value: count() })
+      .from(employees)
+      .where(where);
+    const rows = await this.transaction
+      .select({ id: employees.id })
+      .from(employees)
+      .where(where)
+      .orderBy(asc(employees.displayName), asc(employees.employeeNumber), asc(employees.id))
+      .limit(input.limit)
+      .offset(input.offset);
+    const items: AdministrationEmployeeRecord[] = [];
+    for (const row of rows) {
+      const item = await this.findEmployee(input.organizationId, mapEmployeeId(row.id), input.at);
+      if (item !== null) items.push(item);
+    }
+    return Object.freeze({ items: Object.freeze(items), total: totalRow?.value ?? 0 });
+  }
+
+  async listSystemAccounts(input: Parameters<AdministrationRepository['listSystemAccounts']>[0]) {
+    const association = or(
+      eq(accountRoleAssignments.organizationId, input.organizationId),
+      eq(accountEmployeeLinks.organizationId, input.organizationId),
+    );
+    const accountIds = this.transaction
+      .selectDistinct({ id: authUsers.id })
+      .from(authUsers)
+      .leftJoin(accountRoleAssignments, eq(accountRoleAssignments.userId, authUsers.id))
+      .leftJoin(accountEmployeeLinks, eq(accountEmployeeLinks.userId, authUsers.id))
+      .where(association);
+    const [totalRow] = await this.transaction
+      .select({ value: count() })
+      .from(accountIds.as('administration_accounts'));
+    const rows = await this.transaction
+      .selectDistinct({ id: authUsers.id, name: authUsers.name })
+      .from(authUsers)
+      .leftJoin(accountRoleAssignments, eq(accountRoleAssignments.userId, authUsers.id))
+      .leftJoin(accountEmployeeLinks, eq(accountEmployeeLinks.userId, authUsers.id))
+      .where(association)
+      .orderBy(asc(authUsers.name), asc(authUsers.id))
+      .limit(input.limit)
+      .offset(input.offset);
+    const items: AdministrationSystemAccountRecord[] = [];
+    for (const row of rows) {
+      const item = await this.findSystemAccount(
+        input.organizationId,
+        mapDomainId<'Account'>(row.id, 'auth_users', 'id'),
+        input.at,
+      );
+      if (item !== null) items.push(item);
+    }
+    return Object.freeze({ items: Object.freeze(items), total: totalRow?.value ?? 0 });
+  }
+
+  async replaceEmployeeRoles(
+    organizationId: Parameters<AdministrationRepository['replaceEmployeeRoles']>[0],
+    employeeId: Parameters<AdministrationRepository['replaceEmployeeRoles']>[1],
+    roles: Parameters<AdministrationRepository['replaceEmployeeRoles']>[2],
+    changedAt: Parameters<AdministrationRepository['replaceEmployeeRoles']>[3],
+  ) {
+    const accountId = await this.findEmployeeAccountId(organizationId, employeeId);
+    if (accountId === null) return null;
+    await this.replaceRoles(organizationId, accountId, roles, changedAt, false);
+    return this.findEmployee(organizationId, employeeId, changedAt);
+  }
+
+  async reissueInvitation(input: Parameters<AdministrationRepository['reissueInvitation']>[0]) {
+    if (!(await this.accountBelongsToOrganization(input.organizationId, input.accountId)))
+      return false;
+    await this.transaction
+      .delete(authVerifications)
+      .where(eq(authVerifications.value, invitationAccountValue(input.accountId)));
+    await this.insertInvitation(input.accountId, input.invitationIdentifier, input.expiresAt);
+    return true;
+  }
+
+  async revokeAccountSession(
+    organizationId: Parameters<AdministrationRepository['revokeAccountSession']>[0],
+    accountId: Parameters<AdministrationRepository['revokeAccountSession']>[1],
+    sessionId: Parameters<AdministrationRepository['revokeAccountSession']>[2],
+  ) {
+    if (!(await this.accountBelongsToOrganization(organizationId, accountId))) return false;
+    const rows = await this.transaction
+      .delete(authSessions)
+      .where(and(eq(authSessions.userId, accountId), eq(authSessions.id, sessionId)))
+      .returning({ id: authSessions.id });
+    return rows.length === 1;
+  }
+
+  async setAccountActive(
+    organizationId: Parameters<AdministrationRepository['setAccountActive']>[0],
+    accountId: Parameters<AdministrationRepository['setAccountActive']>[1],
+    active: Parameters<AdministrationRepository['setAccountActive']>[2],
+    changedAt: Parameters<AdministrationRepository['setAccountActive']>[3],
+  ) {
+    if (!(await this.accountBelongsToOrganization(organizationId, accountId))) return false;
+    if (active) {
+      if (await this.invitationPending(accountId, changedAt)) return false;
+      const [employeeLink] = await this.transaction
+        .select({ employeeStatus: employees.status })
+        .from(accountEmployeeLinks)
+        .innerJoin(employees, eq(employees.id, accountEmployeeLinks.employeeId))
+        .where(
+          and(
+            eq(accountEmployeeLinks.organizationId, organizationId),
+            eq(accountEmployeeLinks.userId, accountId),
+            isNull(accountEmployeeLinks.unlinkedAt),
+          ),
+        )
+        .limit(1);
+      if (employeeLink !== undefined && employeeLink.employeeStatus !== 'ACTIVE') return false;
+    }
+    const rows = await this.transaction
+      .update(authUsers)
+      .set({ active, updatedAt: new Date(changedAt) })
+      .where(and(eq(authUsers.id, accountId), sql`${authUsers.active} <> ${active}`))
+      .returning({ id: authUsers.id });
+    if (rows.length === 0) return false;
+    await this.transaction.delete(authSessions).where(eq(authSessions.userId, accountId));
+    if (!active) {
+      await this.transaction
+        .delete(authVerifications)
+        .where(eq(authVerifications.value, invitationAccountValue(accountId)));
+    }
+    return true;
+  }
+
+  async setSystemRole(
+    organizationId: Parameters<AdministrationRepository['setSystemRole']>[0],
+    accountId: Parameters<AdministrationRepository['setSystemRole']>[1],
+    enabled: Parameters<AdministrationRepository['setSystemRole']>[2],
+    changedAt: Parameters<AdministrationRepository['setSystemRole']>[3],
+  ) {
+    if (!(await this.accountBelongsToOrganization(organizationId, accountId))) return false;
+    const [current] = await this.transaction
+      .select({ id: accountRoleAssignments.id })
+      .from(accountRoleAssignments)
+      .where(
+        and(
+          eq(accountRoleAssignments.organizationId, organizationId),
+          eq(accountRoleAssignments.userId, accountId),
+          eq(accountRoleAssignments.role, 'SYSTEM_ADMINISTRATOR'),
+          isNull(accountRoleAssignments.revokedAt),
+        ),
+      )
+      .for('update')
+      .limit(1);
+    if ((enabled && current !== undefined) || (!enabled && current === undefined)) return false;
+    if (enabled) {
+      await this.transaction.insert(accountRoleAssignments).values({
+        assignedAt: new Date(changedAt),
+        organizationId,
+        role: 'SYSTEM_ADMINISTRATOR',
+        userId: accountId,
+      });
+    } else if (current !== undefined) {
+      await this.transaction
+        .update(accountRoleAssignments)
+        .set({ revokedAt: new Date(changedAt) })
+        .where(eq(accountRoleAssignments.id, current.id));
+    }
+    await this.transaction.delete(authSessions).where(eq(authSessions.userId, accountId));
+    return true;
+  }
+
+  private async accountBelongsToOrganization(
+    organizationId: DomainId<'Organization'>,
+    accountId: DomainId<'Account'>,
+  ) {
+    const [row] = await this.transaction
+      .select({ id: authUsers.id })
+      .from(authUsers)
+      .leftJoin(
+        accountRoleAssignments,
+        and(
+          eq(accountRoleAssignments.userId, authUsers.id),
+          eq(accountRoleAssignments.organizationId, organizationId),
+        ),
+      )
+      .leftJoin(
+        accountEmployeeLinks,
+        and(
+          eq(accountEmployeeLinks.userId, authUsers.id),
+          eq(accountEmployeeLinks.organizationId, organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(authUsers.id, accountId),
+          or(isNotNull(accountRoleAssignments.id), isNotNull(accountEmployeeLinks.id)),
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
+  }
+
+  private async findAccountOrganization(accountId: DomainId<'Account'>) {
+    const roleRows = await this.transaction
+      .selectDistinct({ organizationId: accountRoleAssignments.organizationId })
+      .from(accountRoleAssignments)
+      .where(
+        and(eq(accountRoleAssignments.userId, accountId), isNull(accountRoleAssignments.revokedAt)),
+      );
+    const linkRows = await this.transaction
+      .selectDistinct({ organizationId: accountEmployeeLinks.organizationId })
+      .from(accountEmployeeLinks)
+      .where(
+        and(eq(accountEmployeeLinks.userId, accountId), isNull(accountEmployeeLinks.unlinkedAt)),
+      );
+    const ids = new Set([...roleRows, ...linkRows].map(({ organizationId }) => organizationId));
+    if (ids.size !== 1) return null;
+    const value = [...ids][0];
+    return value === undefined
+      ? null
+      : mapDomainId<'Organization'>(value, 'account_role_assignments', 'organization_id');
+  }
+
+  private async findEmployeeAccountId(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ) {
+    const [row] = await this.transaction
+      .select({ accountId: accountEmployeeLinks.userId })
+      .from(accountEmployeeLinks)
+      .where(
+        and(
+          eq(accountEmployeeLinks.organizationId, organizationId),
+          eq(accountEmployeeLinks.employeeId, employeeId),
+          isNull(accountEmployeeLinks.unlinkedAt),
+        ),
+      )
+      .limit(1);
+    return row === undefined
+      ? null
+      : mapDomainId<'Account'>(row.accountId, 'account_employee_links', 'user_id');
+  }
+
+  private async findSystemAccount(
+    organizationId: DomainId<'Organization'>,
+    accountId: DomainId<'Account'>,
+    at: Instant,
+  ): Promise<AdministrationSystemAccountRecord | null> {
+    if (!(await this.accountBelongsToOrganization(organizationId, accountId))) return null;
+    const [row] = await this.transaction
+      .select({
+        active: authUsers.active,
+        email: authUsers.email,
+        id: authUsers.id,
+        name: authUsers.name,
+      })
+      .from(authUsers)
+      .where(eq(authUsers.id, accountId))
+      .limit(1);
+    if (row === undefined) return null;
+    const [link] = await this.transaction
+      .select({ id: accountEmployeeLinks.id })
+      .from(accountEmployeeLinks)
+      .where(
+        and(
+          eq(accountEmployeeLinks.organizationId, organizationId),
+          eq(accountEmployeeLinks.userId, accountId),
+          isNull(accountEmployeeLinks.unlinkedAt),
+        ),
+      )
+      .limit(1);
+    const roles = await this.listActiveRoles(organizationId, accountId);
+    const atDate = new Date(at);
+    const sessionRows = await this.transaction
+      .select({
+        createdAt: authSessions.createdAt,
+        expiresAt: authSessions.expiresAt,
+        id: authSessions.id,
+        lastActiveAt: authSessions.updatedAt,
+        userAgent: authSessions.userAgent,
+        userId: authSessions.userId,
+      })
+      .from(authSessions)
+      .where(and(eq(authSessions.userId, accountId), gt(authSessions.expiresAt, atDate)))
+      .orderBy(desc(authSessions.updatedAt), desc(authSessions.id))
+      .limit(50);
+    return Object.freeze({
+      active: row.active,
+      employeeLinked: link !== undefined,
+      email: row.email,
+      id: accountId,
+      invitationPending: await this.invitationPending(accountId, at),
+      name: row.name,
+      sessions: Object.freeze(sessionRows.map(mapAccountSession)),
+      systemAdministrator: roles.includes('SYSTEM_ADMINISTRATOR'),
+    });
+  }
+
+  private async insertInvitation(
+    accountId: DomainId<'Account'>,
+    identifier: string,
+    expiresAt: Instant,
+  ) {
+    await this.transaction.insert(authVerifications).values({
+      expiresAt: new Date(expiresAt),
+      identifier,
+      value: invitationAccountValue(accountId),
+    });
+  }
+
+  private async invitationPending(accountId: DomainId<'Account'>, at: Instant) {
+    const [row] = await this.transaction
+      .select({ id: authVerifications.id })
+      .from(authVerifications)
+      .where(
+        and(
+          eq(authVerifications.value, invitationAccountValue(accountId)),
+          gt(authVerifications.expiresAt, new Date(at)),
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
+  }
+
+  private async listActiveRoles(
+    organizationId: DomainId<'Organization'>,
+    accountId: DomainId<'Account'>,
+  ) {
+    const rows = await this.transaction
+      .select({ role: accountRoleAssignments.role })
+      .from(accountRoleAssignments)
+      .where(
+        and(
+          eq(accountRoleAssignments.organizationId, organizationId),
+          eq(accountRoleAssignments.userId, accountId),
+          isNull(accountRoleAssignments.revokedAt),
+        ),
+      )
+      .orderBy(asc(accountRoleAssignments.role));
+    return Object.freeze(rows.map(({ role }) => role));
+  }
+
+  private async replaceRoles(
+    organizationId: DomainId<'Organization'>,
+    accountId: DomainId<'Account'>,
+    roles: readonly ApplicationRole[],
+    changedAt: Instant,
+    includeSystemRole: boolean,
+  ) {
+    const requested = [...new Set(roles)].filter(
+      (role) => includeSystemRole || role !== 'SYSTEM_ADMINISTRATOR',
+    );
+    const current = await this.listActiveRoles(organizationId, accountId);
+    const managedCurrent = current.filter(
+      (role) => includeSystemRole || role !== 'SYSTEM_ADMINISTRATOR',
+    );
+    const removed = managedCurrent.filter((role) => !requested.includes(role));
+    const added = requested.filter((role) => !managedCurrent.includes(role));
+    if (removed.length > 0) {
+      await this.transaction
+        .update(accountRoleAssignments)
+        .set({ revokedAt: new Date(changedAt) })
+        .where(
+          and(
+            eq(accountRoleAssignments.organizationId, organizationId),
+            eq(accountRoleAssignments.userId, accountId),
+            isNull(accountRoleAssignments.revokedAt),
+            inArray(accountRoleAssignments.role, removed),
+          ),
+        );
+    }
+    if (added.length > 0) {
+      await this.transaction.insert(accountRoleAssignments).values(
+        added.map((role) => ({
+          assignedAt: new Date(changedAt),
+          organizationId,
+          role,
+          userId: accountId,
+        })),
+      );
+    }
+    if (removed.length > 0 || added.length > 0) {
+      await this.transaction.delete(authSessions).where(eq(authSessions.userId, accountId));
+    }
+  }
+}
+
+const INVITATION_ACCOUNT_VALUE_PREFIX = 'workledger-invitation-account:';
+
+function invitationAccountValue(accountId: DomainId<'Account'>): string {
+  return `${INVITATION_ACCOUNT_VALUE_PREFIX}${accountId}`;
 }
 
 class PostgresApprovalInboxRepository implements ApprovalInboxRepository {

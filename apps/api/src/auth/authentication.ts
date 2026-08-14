@@ -1,5 +1,7 @@
 import { betterAuth } from 'better-auth';
 import type { BetterAuthOptions } from 'better-auth';
+import { createHash } from 'node:crypto';
+import { hashPassword } from 'better-auth/crypto';
 
 import { createWorkLedgerAuthDatabase, type WorkLedgerAuthDatabase } from '@workledger/database';
 
@@ -54,6 +56,11 @@ export interface WorkLedgerAuthentication {
   getSession(headers: Headers, activity: 'ACTIVE' | 'PASSIVE'): Promise<SafeAuthSession | null>;
   handler(request: Request): Promise<Response>;
   issueCsrfToken(headers: Headers): Promise<string | null>;
+  consumeInvitationRateLimit(
+    token: string,
+    clientAddress: string,
+  ): Promise<Readonly<{ allowed: boolean; retryAfter: number | null }>>;
+  hashCredentialPassword(password: string): Promise<string>;
   revokeUserSessions(userId: string): Promise<void>;
   verifyCsrfToken(headers: Headers, candidate: string): Promise<boolean>;
 }
@@ -121,6 +128,19 @@ export function createWorkLedgerAuthentication(
     async issueCsrfToken(headers: Headers) {
       const session = await readSession(headers);
       return session === null ? null : createSessionCsrfToken(session.token, config.authSecret);
+    },
+    async consumeInvitationRateLimit(token: string, clientAddress: string) {
+      const tokenHash = createHash('sha256').update(token, 'utf8').digest('hex');
+      const clientHash = createHash('sha256').update(clientAddress, 'utf8').digest('hex');
+      const client = await authDatabase.consumeRateLimit(`invitation-client:${clientHash}`, {
+        max: 10,
+        window: 60,
+      });
+      if (!client.allowed) return client;
+      return authDatabase.consumeRateLimit(`invitation-token:${tokenHash}`, { max: 5, window: 60 });
+    },
+    hashCredentialPassword(password: string) {
+      return hashPassword(validateCredentialPassword(password));
     },
     revokeUserSessions: (userId: string) => authDatabase.revokeUserSessions(userId),
     async verifyCsrfToken(headers: Headers, candidate: string) {

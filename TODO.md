@@ -115,7 +115,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 9 — Administration
 
-- [ ] `WL-900` Build employee lifecycle and separated technical-account/session administration.
+- [x] `WL-900` Build employee lifecycle and separated technical-account/session administration.
 - [ ] `WL-901` Build teams and manager assignment.
 - [ ] `WL-902` Build schedule and effective-date management.
 - [ ] `WL-903` Build time-policy management.
