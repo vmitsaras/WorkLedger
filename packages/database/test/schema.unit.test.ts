@@ -6,11 +6,14 @@ import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
   accountEmployeeLinks,
   accountRoleAssignments,
+  absenceCancellationDecisions,
+  absenceDecisions,
   absenceTypes,
   approvedMonthlySnapshots,
   authAccounts,
   authSessions,
   authUsers,
+  correctionDecisions,
   dailyProjections,
   domainAuditEvents,
   employmentPeriods,
@@ -99,6 +102,15 @@ describe('initial PostgreSQL schema', () => {
     );
   });
 
+  it('records approval actors by account and authority without requiring an employee link', () => {
+    for (const table of [correctionDecisions, absenceDecisions, absenceCancellationDecisions]) {
+      const columns = getTableConfig(table).columns;
+      expect(columns.find(({ name }) => name === 'actor_account_id')?.notNull).toBe(true);
+      expect(columns.find(({ name }) => name === 'actor_authority')?.notNull).toBe(true);
+      expect(columns.find(({ name }) => name === 'actor_employee_id')?.notNull).toBe(false);
+    }
+  });
+
   it('commits generated and custom migration metadata', () => {
     const journal = JSON.parse(
       readFileSync(`${packageDirectory}/migrations/meta/_journal.json`, 'utf8'),
@@ -119,6 +131,7 @@ describe('initial PostgreSQL schema', () => {
       '0011_nasty_red_hulk',
       '0012_silly_magik',
       '0013_brave_bulldozer',
+      '0014_adorable_piledriver',
     ]);
   });
 });

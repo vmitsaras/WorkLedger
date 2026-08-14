@@ -1,7 +1,9 @@
 import type {
+  AbsenceTypeCode,
+  AbsenceTypePolicy,
+  AbsenceTypePolicyInput,
   AttendanceCommand,
   AttendanceState,
-  AbsenceTypePolicyInput,
   DomainId,
   Instant,
   LeaveEntitlementLedgerEntry,
@@ -137,6 +139,13 @@ export type AuthorizationActorRecord = Readonly<{
   employeeId: DomainId<'Employee'> | null;
   organizationId: DomainId<'Organization'>;
   roles: readonly ApplicationRole[];
+}>;
+
+export type DecisionActorAuthority = 'SELF' | 'CURRENT_MANAGER' | 'ORGANIZATION_HR';
+export type DecisionActorRecord = Readonly<{
+  accountId: DomainId<'Account'>;
+  authority: DecisionActorAuthority;
+  employeeId: DomainId<'Employee'> | null;
 }>;
 
 export type AuthorizationChangeInput = Readonly<{
@@ -300,7 +309,7 @@ export type CorrectionReviewRecord = CorrectionRequestRecord &
   Readonly<{ employeeDisplayName: string }>;
 export type DecideCorrectionRequestInput = Readonly<{
   action: CorrectionDecisionAction;
-  actorEmployeeId: DomainId<'Employee'>;
+  actor: DecisionActorRecord;
   expectedVersion: number;
   organizationId: DomainId<'Organization'>;
   reason: string;
@@ -345,7 +354,7 @@ export type VacationAbsenceTypeRecord = Readonly<{
 }>;
 
 export type AbsenceRequestConfigurationInput = Readonly<{
-  absenceCode: 'SICKNESS' | 'VACATION';
+  absenceCode: AbsenceTypeCode;
   employeeId: DomainId<'Employee'>;
   endDate: LocalDate;
   organizationId: DomainId<'Organization'>;
@@ -435,7 +444,7 @@ export type SubmitAbsenceCancellationInput = Readonly<{
 
 export type DecideAbsenceCancellationInput = Readonly<{
   action: Exclude<AbsenceCancellationDecisionAction, 'WITHDRAW'>;
-  actorEmployeeId: DomainId<'Employee'>;
+  actor: DecisionActorRecord;
   cancellationId: DomainId<'AbsenceCancellation'>;
   expectedVersion: number;
   organizationId: DomainId<'Organization'>;
@@ -444,7 +453,7 @@ export type DecideAbsenceCancellationInput = Readonly<{
 }>;
 
 export type WithdrawAbsenceCancellationInput = Readonly<{
-  actorEmployeeId: DomainId<'Employee'>;
+  actor: DecisionActorRecord & Readonly<{ employeeId: DomainId<'Employee'> }>;
   cancellationId: DomainId<'AbsenceCancellation'>;
   expectedVersion: number;
   organizationId: DomainId<'Organization'>;
@@ -508,6 +517,64 @@ export type ApprovalInboxPageRecord = Readonly<{
   items: readonly ApprovalInboxItemRecord[];
   teams: readonly ApprovalInboxTeamRecord[];
   total: number;
+}>;
+
+export type ApprovalAbsenceRecord = Readonly<{
+  absenceCode: AbsenceTypeCode;
+  absenceTypeId: DomainId<'AbsenceTypeVersion'>;
+  absenceTypeName: string;
+  coverage: readonly (AbsenceCoverageSegmentInput &
+    Readonly<{ id: DomainId<'AbsenceCoverageSegment'> }>)[];
+  employeeDisplayName: string;
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'AbsenceRequest'>;
+  organizationId: DomainId<'Organization'>;
+  policy: AbsenceTypePolicy;
+  status:
+    | 'SUBMITTED'
+    | 'REPORTED'
+    | 'ACKNOWLEDGED'
+    | 'CHANGES_REQUESTED'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'WITHDRAWN'
+    | 'PARTIALLY_CANCELLED'
+    | 'CANCELLED';
+  submittedAt: Instant;
+  version: number;
+}>;
+
+export type ApprovalCancellationRecord = Readonly<{
+  absenceCode: AbsenceTypeCode;
+  absenceTypeId: DomainId<'AbsenceTypeVersion'>;
+  absenceTypeName: string;
+  coverage: readonly (AbsenceCoverageSegmentInput &
+    Readonly<{ id: DomainId<'AbsenceCoverageSegment'> }>)[];
+  employeeDisplayName: string;
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'AbsenceCancellation'>;
+  organizationId: DomainId<'Organization'>;
+  policy: AbsenceTypePolicy;
+  status: AbsenceCancellationStatus;
+  submittedAt: Instant;
+  version: number;
+}>;
+
+export type DecideAbsenceRequestInput = Readonly<{
+  action: 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES';
+  actor: DecisionActorRecord;
+  decidedAt: Instant;
+  effects: readonly Readonly<{
+    absenceCoverageSegmentId: DomainId<'AbsenceCoverageSegment'>;
+    creditMinutes: number;
+    entitlementMinutes: number;
+    expectedReductionMinutes: number;
+    localDate: LocalDate;
+  }>[];
+  expectedVersion: number;
+  organizationId: DomainId<'Organization'>;
+  reason: string;
+  requestId: DomainId<'AbsenceRequest'>;
 }>;
 
 export type ListApprovalInboxInput = Readonly<{
@@ -717,6 +784,10 @@ export interface CorrectionRequestRepository {
     employeeId: DomainId<'Employee'>,
     localDate: LocalDate,
   ): Promise<boolean>;
+  hasApplied(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'CorrectionRequest'>,
+  ): Promise<boolean>;
   listPendingForEmployees(
     organizationId: DomainId<'Organization'>,
     employeeIds: readonly DomainId<'Employee'>[],
@@ -754,10 +825,11 @@ export interface AbsenceRequestRepository {
   acknowledgeSickness(
     organizationId: DomainId<'Organization'>,
     requestId: DomainId<'AbsenceRequest'>,
-    actorEmployeeId: DomainId<'Employee'>,
+    actor: DecisionActorRecord,
     expectedVersion: number,
     acknowledgedAt: Instant,
   ): Promise<SicknessReportRecord | null>;
+  decideRequest(input: DecideAbsenceRequestInput): Promise<ApprovalAbsenceRecord | null>;
   decideCancellation(
     input: DecideAbsenceCancellationInput,
   ): Promise<AbsenceCancellationDecisionResult | null>;
@@ -765,6 +837,14 @@ export interface AbsenceRequestRepository {
     organizationId: DomainId<'Organization'>,
     cancellationId: DomainId<'AbsenceCancellation'>,
   ): Promise<AbsenceCancellationRecord | null>;
+  findForApproval(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'AbsenceRequest'>,
+  ): Promise<ApprovalAbsenceRecord | null>;
+  findCancellationForApproval(
+    organizationId: DomainId<'Organization'>,
+    cancellationId: DomainId<'AbsenceCancellation'>,
+  ): Promise<ApprovalCancellationRecord | null>;
   findSicknessReport(
     organizationId: DomainId<'Organization'>,
     requestId: DomainId<'AbsenceRequest'>,

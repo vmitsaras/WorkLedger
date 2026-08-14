@@ -1,4 +1,6 @@
 import {
+  approvalDecisionEnvelopeSchema,
+  approvalDetailEnvelopeSchema,
   approvalInboxEnvelopeSchema,
   applyCorrectionEnvelopeSchema,
   apiErrorEnvelopeSchema,
@@ -23,6 +25,9 @@ import {
   type ApiErrorCode,
   type ApprovalInbox,
   type ApprovalInboxQuery,
+  type ApprovalDecisionRequest,
+  type ApprovalDecisionResult,
+  type ApprovalDetail,
   type ApiFieldErrors,
   type ApiRecoveryContext,
   type AttendanceCommand,
@@ -226,6 +231,34 @@ export async function loadApprovalInbox(
     signal === undefined ? {} : { signal },
   );
   const parsed = approvalInboxEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadApprovalDetail(
+  approvalId: string,
+  signal?: AbortSignal,
+): Promise<ApprovalDetail> {
+  const body = await requestJson(
+    `/v1/approvals/${encodeURIComponent(approvalId)}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = approvalDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function decideApproval(
+  approvalId: string,
+  input: ApprovalDecisionRequest,
+): Promise<ApprovalDecisionResult> {
+  const token = await getCsrfToken();
+  const body = await requestJson(`/v1/approvals/${encodeURIComponent(approvalId)}/decision`, {
+    body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+  });
+  const parsed = approvalDecisionEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

@@ -144,6 +144,129 @@ export const approvalInboxSchema = z.strictObject({
 
 export const approvalInboxEnvelopeSchema = createSuccessEnvelopeSchema(approvalInboxSchema);
 
+export const APPROVAL_DECISION_ACTIONS = [
+  'APPROVE',
+  'REJECT',
+  'REQUEST_CHANGES',
+  'ACKNOWLEDGE',
+] as const;
+export const APPROVAL_DETAIL_ACTIONS = [...APPROVAL_DECISION_ACTIONS, 'APPLY_CORRECTION'] as const;
+export const approvalDecisionActionSchema = z.enum(APPROVAL_DECISION_ACTIONS);
+export const approvalDetailActionSchema = z.enum(APPROVAL_DETAIL_ACTIONS);
+
+const approvalCoverageSchema = z.strictObject({
+  endsAtMinute: z.number().int().min(1).max(1_440).nullable(),
+  kind: z.enum(['FULL_DAY', 'FIRST_HALF', 'SECOND_HALF', 'MINUTE_INTERVAL']),
+  localDate: dateSchema,
+  minutes: z.number().int().min(0).max(1_440),
+  startsAtMinute: z.number().int().min(0).max(1_439).nullable(),
+});
+
+const approvalDetailCommonShape = {
+  affectedEndDate: dateSchema,
+  affectedStartDate: dateSchema,
+  availableActions: z.array(approvalDetailActionSchema).max(APPROVAL_DETAIL_ACTIONS.length),
+  employeeDisplayName: z.string().min(1).max(160),
+  id: opaqueIdentifierSchema,
+  submittedAt: instantSchema,
+  version: z.number().int().positive(),
+};
+
+export const approvalDetailSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    ...approvalDetailCommonShape,
+    events: z.array(
+      z.strictObject({
+        occurredAt: instantSchema,
+        sequence: z.number().int().positive(),
+        type: z.string().min(1).max(32),
+      }),
+    ),
+    kind: z.literal('CORRECTION'),
+    originalCalculation: z.strictObject({
+      balanceMinutes: z.number().int(),
+      breakMinutes: z.number().int().min(0),
+      creditedMinutes: z.number().int().min(0),
+      expectedMinutes: z.number().int().min(0),
+      workedMinutes: z.number().int().min(0),
+    }),
+    proposedEndsAt: instantSchema,
+    proposedStartsAt: instantSchema,
+    requestReason: z.string().min(1).max(1_000),
+    status: z.enum([
+      'SUBMITTED',
+      'CHANGES_REQUESTED',
+      'APPROVED',
+      'REJECTED',
+      'WITHDRAWN',
+      'APPLIED',
+    ]),
+  }),
+  z.strictObject({
+    ...approvalDetailCommonShape,
+    absenceTypeName: z.string().min(1).max(160),
+    availableEntitlementMinutes: z.number().int().nullable(),
+    canOverrideNegativeBalance: z.boolean(),
+    coverage: z.array(approvalCoverageSchema).min(1).max(366),
+    kind: z.literal('ABSENCE'),
+    projectedRemainingMinutes: z.number().int().nullable(),
+    requestedEntitlementMinutes: z.number().int().min(0).nullable(),
+    status: z.enum([
+      'SUBMITTED',
+      'REPORTED',
+      'ACKNOWLEDGED',
+      'CHANGES_REQUESTED',
+      'APPROVED',
+      'REJECTED',
+      'WITHDRAWN',
+      'PARTIALLY_CANCELLED',
+      'CANCELLED',
+    ]),
+    workflow: z.enum(['APPROVAL_REQUIRED', 'REPORT_AND_ACKNOWLEDGE']),
+  }),
+  z.strictObject({
+    ...approvalDetailCommonShape,
+    absenceTypeName: z.string().min(1).max(160),
+    coverage: z.array(approvalCoverageSchema).min(1).max(366),
+    kind: z.literal('CANCELLATION'),
+    status: z.enum(['PENDING_DECISION', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED', 'WITHDRAWN']),
+  }),
+]);
+export const approvalDetailEnvelopeSchema = createSuccessEnvelopeSchema(approvalDetailSchema);
+
+export const approvalDecisionRequestSchema = z
+  .strictObject({
+    action: approvalDecisionActionSchema,
+    expectedVersion: z.number().int().positive(),
+    negativeBalanceOverride: z.boolean().default(false),
+    reason: z.string().trim().min(10).max(2_000).optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.action !== 'ACKNOWLEDGE' && value.reason === undefined) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A decision reason of at least 10 characters is required.',
+        path: ['reason'],
+      });
+    }
+    if (value.negativeBalanceOverride && value.action !== 'APPROVE') {
+      context.addIssue({
+        code: 'custom',
+        message: 'A negative-balance override is valid only for approval.',
+        path: ['negativeBalanceOverride'],
+      });
+    }
+  });
+export const approvalDecisionResultSchema = z.strictObject({
+  id: opaqueIdentifierSchema,
+  kind: z.enum(['CORRECTION', 'ABSENCE', 'CANCELLATION']),
+  status: z.string().min(1).max(40),
+  version: z.number().int().positive(),
+});
+export const approvalDecisionEnvelopeSchema = createSuccessEnvelopeSchema(
+  approvalDecisionResultSchema,
+);
+
 export type ApprovalInboxStatus = z.infer<typeof approvalInboxStatusSchema>;
 export type ApprovalInboxItemStatus = z.infer<typeof approvalInboxItemStatusSchema>;
 export type ApprovalInboxType = z.infer<typeof approvalInboxTypeSchema>;
@@ -152,3 +275,8 @@ export type ApprovalInboxDirection = z.infer<typeof approvalInboxDirectionSchema
 export type ApprovalInboxQuery = z.infer<typeof approvalInboxQuerySchema>;
 export type ApprovalInboxItem = z.infer<typeof approvalInboxItemSchema>;
 export type ApprovalInbox = z.infer<typeof approvalInboxSchema>;
+export type ApprovalDetail = z.infer<typeof approvalDetailSchema>;
+export type ApprovalDetailAction = z.infer<typeof approvalDetailActionSchema>;
+export type ApprovalDecisionAction = z.infer<typeof approvalDecisionActionSchema>;
+export type ApprovalDecisionRequest = z.infer<typeof approvalDecisionRequestSchema>;
+export type ApprovalDecisionResult = z.infer<typeof approvalDecisionResultSchema>;

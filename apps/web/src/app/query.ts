@@ -9,6 +9,7 @@ import {
 
 import {
   loadDailyTimeRecord,
+  loadApprovalDetail,
   loadApprovalInbox,
   loadMyTime,
   loadPersonalCalendar,
@@ -81,6 +82,12 @@ export const approvalInboxQuery = (query: ApprovalInboxQuery) =>
     placeholderData: keepPreviousData,
     queryFn: ({ signal }) => loadApprovalInbox(query, signal),
     queryKey: ['approvals', 'inbox', query] as const,
+  });
+
+export const approvalDetailQuery = (approvalId: string) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadApprovalDetail(approvalId, signal),
+    queryKey: ['approvals', 'detail', approvalId] as const,
   });
 
 function preferNewestTodayAttendance(previous: unknown, next: unknown): unknown {

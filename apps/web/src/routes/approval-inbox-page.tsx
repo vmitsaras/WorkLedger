@@ -1,12 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import {
-  Link,
-  useLoaderData,
-  useNavigate,
-  useRouteLoaderData,
-  useSearchParams,
-} from 'react-router';
+import { Link, useLoaderData, useNavigate, useSearchParams } from 'react-router';
 
 import {
   approvalInboxQuerySchema,
@@ -16,7 +10,6 @@ import {
   type ApprovalInboxSort,
   type ApprovalInboxStatus,
   type ApprovalInboxType,
-  type SelfContext,
 } from '@workledger/contracts';
 import { Button, buttonVariants } from '@workledger/ui';
 
@@ -39,7 +32,6 @@ type FilterDraft = Readonly<{
 
 export function ApprovalInboxPage() {
   const queryInput = useLoaderData<ApprovalInboxQuery>();
-  const context = useRouteLoaderData<SelfContext>('protected');
   const [, setSearchParams] = useSearchParams();
   const query = useQuery(approvalInboxQuery(queryInput));
   const queryClient = useQueryClient();
@@ -124,7 +116,6 @@ export function ApprovalInboxPage() {
       ) : (
         <ApprovalResults
           data={query.data}
-          canReviewCorrections={context?.navigationAreas.includes('MANAGER') ?? false}
           isFetching={query.isFetching}
           onClear={clearFilters}
           onPage={setPage}
@@ -363,14 +354,12 @@ function SelectFilter({
 }
 
 function ApprovalResults({
-  canReviewCorrections,
   data,
   isFetching,
   onClear,
   onPage,
   query,
 }: Readonly<{
-  canReviewCorrections: boolean;
   data: ApprovalInbox;
   isFetching: boolean;
   onClear: () => void;
@@ -460,16 +449,13 @@ function ApprovalResults({
                   <td className="p-3">{formatSubmittedAt(item.submittedAt, data.timeZone)}</td>
                   <td className="p-3">{item.team?.name ?? 'No current team'}</td>
                   <td className="p-3">
-                    {canReviewCorrections &&
-                    !isFetching &&
-                    item.kind === 'CORRECTION' &&
-                    item.status === 'ACTION_REQUIRED' ? (
+                    {!isFetching ? (
                       <Link
-                        aria-label={`Review correction for ${item.employeeDisplayName}`}
+                        aria-label={`Review ${workflowLabel(item.kind).toLowerCase()} for ${item.employeeDisplayName}`}
                         className={buttonVariants({ variant: 'secondary' })}
                         to={`/approvals/${encodeURIComponent(item.id)}`}
                       >
-                        Review correction
+                        Review
                       </Link>
                     ) : (
                       <span className="text-sm text-[var(--wl-text-muted)]">No list action</span>

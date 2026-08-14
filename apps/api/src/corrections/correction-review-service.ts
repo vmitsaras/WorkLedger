@@ -48,7 +48,7 @@ export function createCorrectionReviewService(database: WorkLedgerDatabase) {
           ),
         ]
           .flat()
-          .map(toReviewItem);
+          .map(toCorrectionReviewItem);
       });
     },
     async decide(
@@ -59,8 +59,6 @@ export function createCorrectionReviewService(database: WorkLedgerDatabase) {
     ) {
       return database.transaction(async (transaction) => {
         const { actor, context, localDate } = await reviewContext(transaction, identity, at);
-        if (actor.employeeId === null)
-          throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
         const requestId = parseRequestId(requestIdValue);
         const request = await transaction.correctionRequests.findForReview(
           context.organization.id,
@@ -68,12 +66,14 @@ export function createCorrectionReviewService(database: WorkLedgerDatabase) {
         );
         if (request === null)
           throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
-        const isCurrentManager = await transaction.authorization.isCurrentManager(
-          context.organization.id,
-          actor.employeeId,
-          request.employeeId,
-          localDate,
-        );
+        const isCurrentManager =
+          actor.employeeId !== null &&
+          (await transaction.authorization.isCurrentManager(
+            context.organization.id,
+            actor.employeeId,
+            request.employeeId,
+            localDate,
+          ));
         const authorization = authorizeEmployeeTarget({
           action: 'CORRECTION_DECIDE',
           actor,
@@ -86,7 +86,11 @@ export function createCorrectionReviewService(database: WorkLedgerDatabase) {
           throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
         const updated = await transaction.correctionRequests.decide({
           action: input.action,
-          actorEmployeeId: actor.employeeId,
+          actor: {
+            accountId: actor.accountId,
+            authority: decisionAuthority(authorization.scope),
+            employeeId: actor.employeeId,
+          },
           expectedVersion: input.expectedVersion,
           organizationId: context.organization.id,
           reason: input.reason.trim(),
@@ -129,8 +133,6 @@ export function createCorrectionReviewService(database: WorkLedgerDatabase) {
     ) {
       return database.transaction(async (transaction) => {
         const { actor, context, localDate } = await reviewContext(transaction, identity, at);
-        if (actor.employeeId === null)
-          throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
         const requestId = parseRequestId(requestIdValue);
         const request = await transaction.correctionRequests.findForReview(
           context.organization.id,
@@ -138,12 +140,14 @@ export function createCorrectionReviewService(database: WorkLedgerDatabase) {
         );
         if (request === null)
           throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
-        const isCurrentManager = await transaction.authorization.isCurrentManager(
-          context.organization.id,
-          actor.employeeId,
-          request.employeeId,
-          localDate,
-        );
+        const isCurrentManager =
+          actor.employeeId !== null &&
+          (await transaction.authorization.isCurrentManager(
+            context.organization.id,
+            actor.employeeId,
+            request.employeeId,
+            localDate,
+          ));
         const authorization = authorizeEmployeeTarget({
           action: 'CORRECTION_DECIDE',
           actor,
@@ -322,8 +326,6 @@ async function reviewContext(
 function requireActiveContext(context: AccountSelfContextRecord | null): AccountSelfContextRecord {
   if (context === null || !context.accountActive)
     throw new WorkLedgerApiError({ code: 'AUTH_SESSION_EXPIRED', statusCode: 401 });
-  if (!context.employeeCapabilityActive)
-    throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
   return context;
 }
 function parseRequestId(value: string): DomainId<'CorrectionRequest'> {
@@ -331,7 +333,7 @@ function parseRequestId(value: string): DomainId<'CorrectionRequest'> {
   if (!parsed.ok) throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
   return parsed.value;
 }
-function toReviewItem(request: CorrectionReviewRecord): CorrectionReviewItem {
+export function toCorrectionReviewItem(request: CorrectionReviewRecord): CorrectionReviewItem {
   const original = request.originalInterpretation;
   const proposed = request.proposedInterpretation;
   const calculation = readRecord(original['calculation']);
@@ -360,7 +362,11 @@ function toReviewItem(request: CorrectionReviewRecord): CorrectionReviewItem {
         ? 'SUBMITTED'
         : request.status === 'APPROVED'
           ? 'APPROVED'
-          : 'CHANGES_REQUESTED',
+          : request.status === 'REJECTED'
+            ? 'REJECTED'
+            : request.status === 'WITHDRAWN'
+              ? 'WITHDRAWN'
+              : 'CHANGES_REQUESTED',
     version: request.version,
   });
 }
@@ -409,6 +415,11 @@ function readEvents(value: unknown): CorrectionReviewItem['events'] | null {
 }
 function decisionReasonCode(action: CorrectionDecisionRequest['action']) {
   return action === 'APPROVE' ? 'APPROVED' : action === 'REJECT' ? 'REJECTED' : 'CHANGES_REQUESTED';
+}
+function decisionAuthority(scope: 'SELF' | 'REPORTS_LIMITED' | 'ORGANIZATION_HR' | 'TECHNICAL') {
+  if (scope === 'ORGANIZATION_HR') return 'ORGANIZATION_HR' as const;
+  if (scope === 'REPORTS_LIMITED') return 'CURRENT_MANAGER' as const;
+  throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
 }
 function auditRole(
   roles: readonly ('EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR')[],

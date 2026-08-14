@@ -376,7 +376,7 @@ test('clears the inbox and redirects safely when the session expires during load
   expect(screen.queryByRole('heading', { name: 'Approval inbox' })).not.toBeInTheDocument();
 });
 
-test('lets HR discover the minimized inbox without exposing correction decision links', async () => {
+test('lets HR discover and open minimized approval records without requiring an employee link', async () => {
   stubInboxFetch({
     context: HR_CONTEXT,
     onInbox: () => successResponse(inbox({ items: INBOX_ITEMS, limit: 20, page: 1, total: 3 })),
@@ -386,11 +386,11 @@ test('lets HR discover the minimized inbox without exposing correction decision 
   const table = await screen.findByRole('table', { name: /Unified approval inbox/u });
   expect(within(table).getByText('Maria Chen')).toBeVisible();
   expect(
-    within(table).queryByRole('link', { name: 'Review correction for Maria Chen' }),
-  ).not.toBeInTheDocument();
+    within(table).getByRole('link', { name: 'Review correction for Maria Chen' }),
+  ).toHaveAttribute('href', `/approvals/${CORRECTION_ID}`);
   expect(
-    within(within(table).getByRole('row', { name: /Maria Chen/u })).getByText('No list action'),
-  ).toBeVisible();
+    within(table).getByRole('link', { name: 'Review absence request for Noah Williams' }),
+  ).toHaveAttribute('href', `/approvals/${ABSENCE_ID}`);
   expect(screen.getByRole('link', { name: 'Approvals' })).toHaveAttribute('aria-current', 'page');
 });
 

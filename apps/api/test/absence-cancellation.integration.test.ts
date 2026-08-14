@@ -33,6 +33,7 @@ const migrationFiles = [
   '0011_nasty_red_hulk.sql',
   '0012_silly_magik.sql',
   '0013_brave_bulldozer.sql',
+  '0014_adorable_piledriver.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -78,9 +79,13 @@ integrationTest(
       const cancellationId = submitted.json<{ data: { id: string } }>().data.id;
       const approval = await app.inject({
         method: 'POST',
-        url: `/v1/manager/absence-cancellations/${cancellationId}/decision`,
+        url: `/v1/approvals/${cancellationId}/decision`,
         headers: requestHeaders(managerCookie, managerCsrf),
-        payload: { action: 'APPROVE', expectedVersion: 1 },
+        payload: {
+          action: 'APPROVE',
+          expectedVersion: 1,
+          reason: 'The requested coverage can be cancelled and restored.',
+        },
       });
       expect(approval.statusCode).toBe(200);
       expect(approval.json()).toMatchObject({ data: { status: 'APPROVED', version: 2 } });
@@ -110,12 +115,16 @@ integrationTest(
       ]);
       const staleRetry = await app.inject({
         method: 'POST',
-        url: `/v1/manager/absence-cancellations/${cancellationId}/decision`,
+        url: `/v1/approvals/${cancellationId}/decision`,
         headers: requestHeaders(managerCookie, managerCsrf),
-        payload: { action: 'APPROVE', expectedVersion: 1 },
+        payload: {
+          action: 'APPROVE',
+          expectedVersion: 1,
+          reason: 'A stale retry must not restore the entitlement twice.',
+        },
       });
       expect(staleRetry.statusCode).toBe(409);
-      expect(staleRetry.json()).toMatchObject({ error: { code: 'ABSENCE_STATE_CHANGED' } });
+      expect(staleRetry.json()).toMatchObject({ error: { code: 'APPROVAL_STATE_CONFLICT' } });
       expect(
         await scalar(fixture.client, 'select count(*) from absence_cancellation_decisions'),
       ).toBe('1');
@@ -227,8 +236,21 @@ async function createEffectiveVacation(
     (
       await client.query<{ id: string }>(
         `insert into absence_types (organization_id, code, name, version, active, valid_from, policy)
-         values ($1, 'VACATION', 'Vacation', 1, true, '2025-01-01', '{}'::jsonb) returning id`,
-        [employee.organizationId],
+         values ($1, 'VACATION', 'Vacation', 1, true, '2025-01-01', $2::jsonb) returning id`,
+        [
+          employee.organizationId,
+          JSON.stringify({
+            allowedCoverageUnits: ['FULL_DAY', 'HALF_DAY', 'MINUTES'],
+            availabilityState: 'UNAVAILABLE',
+            entitlementAccountCategory: 'VACATION',
+            maximumRetrospectiveCalendarDays: null,
+            minimumLeadCalendarDays: 0,
+            pendingReservationBehavior: 'RESERVE_PENDING',
+            requestNoteMode: 'OPTIONAL',
+            timeTreatment: 'CREDIT_COVERED_EXPECTATION',
+            workflow: 'APPROVAL_REQUIRED',
+          }),
+        ],
       )
     ).rows[0]?.id,
   );

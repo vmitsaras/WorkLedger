@@ -370,6 +370,23 @@ These were confirmed from repository evidence and the architecture ratification.
 
 - Rows, total count, and authorized team options are read in one repeatable-read transaction so a concurrent workflow, assignment, or team change cannot mix snapshots within one inbox response.
 
+### D-352 — Decision actor identity for HR-only approvals
+
+**Status:** Resolved by `WL-701`.
+
+- Every correction, absence, and absence-cancellation decision records the authenticated account as
+  required `actor_account_id`, explicit `actor_authority`, and nullable `actor_employee_id` evidence.
+  Authority is `CURRENT_MANAGER` or `ORGANIZATION_HR` for privileged decisions; employee-owned
+  cancellation withdrawal uses `SELF` and requires its real employee identity.
+- HR-only accounts therefore remain fully attributable without fabricated employee records or
+  weakened authorization. Domain audit records use the same account-first identity and authority-
+  derived role.
+- Migration `0014_adorable_piledriver.sql` backfills historical account identities from the
+  effective account/employee link, derives manager or HR authority at the decision instant, aborts
+  on missing or ambiguous evidence, then installs required account/authority constraints while
+  retaining nullable employee evidence and immutable decision triggers.
+- See `docs/75-consistent-approval-decisions.md` for the shared decision and recovery contract.
+
 ## Decisions blocking Phase 8
 
 ### D-400 — Month lock timing

@@ -1,11 +1,30 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-import { createDatabaseHarnessState } from '@workledger/test-utils';
+import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createMigratedPostgresFixture } from './postgres-fixture.js';
 
 const databaseHarness = createDatabaseHarnessState(process.env);
 const integrationTest = databaseHarness.enabled ? test : test.skip;
+const packageDirectory = fileURLToPath(new URL('..', import.meta.url));
+const preDecisionActorMigrations = [
+  '0000_initial_schema.sql',
+  '0001_integrity_constraints.sql',
+  '0002_auth_foundation.sql',
+  '0003_authorization_foundation.sql',
+  '0004_audit_foundation.sql',
+  '0005_idempotency_foundation.sql',
+  '0006_zero_daily_delta.sql',
+  '0007_correction_request_snapshots.sql',
+  '0008_nappy_bromley.sql',
+  '0009_married_justin_hammer.sql',
+  '0010_broad_sunfire.sql',
+  '0011_nasty_red_hulk.sql',
+  '0012_silly_magik.sql',
+  '0013_brave_bulldozer.sql',
+].map((file) => `${packageDirectory}/migrations/${file}`);
 
 integrationTest(
   `applies the initial migrations and enforces core invariants (${databaseHarness.safeLabel})`,
@@ -18,7 +37,7 @@ integrationTest(
         `select count(*) from information_schema.tables where table_schema = $1`,
         [schemaName],
       );
-      expect(Number(tableCount.rows[0]?.count)).toBe(37);
+      expect(Number(tableCount.rows[0]?.count)).toBe(40);
 
       const organization = await client.query<{ id: string }>(
         `insert into organizations (name, time_zone) values ($1, $2) returning id`,
@@ -155,6 +174,32 @@ integrationTest(
         ),
       ).rejects.toMatchObject({ code: '23503' });
 
+      const hrOnlyAccount = await client.query<{ id: string }>(
+        `insert into auth_users (name, email)
+         values ('HR-only decision actor', 'hr-only-decision@example.test') returning id`,
+      );
+      const correctionRequest = await client.query<{ id: string }>(
+        `insert into correction_requests
+          (organization_id, employee_id, requested_by_employee_id, local_date, status, reason,
+           original_interpretation, proposed_interpretation)
+         values ($1, $2, $2, '2026-01-02', 'SUBMITTED', 'Migration decision reason',
+                 '{}'::jsonb, '{}'::jsonb) returning id`,
+        [organizationId, employeeId],
+      );
+      const decision = await client.query<{ id: string }>(
+        `insert into correction_decisions
+          (organization_id, correction_request_id, actor_account_id, actor_employee_id,
+           actor_authority, action, reason, decided_at)
+         values ($1, $2, $3, null, 'ORGANIZATION_HR', 'APPROVE',
+                 'HR-only migration decision', '2026-01-02T09:00:00Z') returning id`,
+        [organizationId, correctionRequest.rows[0]?.id, hrOnlyAccount.rows[0]?.id],
+      );
+      await expect(
+        client.query(`update correction_decisions set reason = 'Changed' where id = $1`, [
+          decision.rows[0]?.id,
+        ]),
+      ).rejects.toMatchObject({ code: '55000' });
+
       const punch = await client.query<{ id: string }>(
         `insert into punch_events (organization_id, employee_id, event_sequence, event_type, occurred_at, command_id) values ($1, $2, 1, 'CLOCK_IN', $3, $4) returning id`,
         [organizationId, employeeId, '2026-01-02T08:00:00Z', randomUUID()],
@@ -221,6 +266,94 @@ integrationTest(
           [organizationId, employeeId, '2026-01-02', 'a'.repeat(64), '2026-01-03T00:00:00Z'],
         ),
       ).rejects.toMatchObject({ code: '23514' });
+    } finally {
+      await fixture.cleanup();
+    }
+  },
+);
+
+integrationTest(
+  `backfills historical decision accounts and manager authority before making actor accounts required (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'decision_actor_backfill',
+      migrationFiles: preDecisionActorMigrations,
+    });
+    try {
+      const organizationId = (
+        await fixture.client.query<{ id: string }>(
+          `insert into organizations (name, time_zone)
+           values ('Decision actor backfill', 'Europe/Berlin') returning id`,
+        )
+      ).rows[0]?.id;
+      const employees = await fixture.client.query<{ id: string }>(
+        `insert into employees (organization_id, employee_number, display_name)
+         values ($1, 'BACKFILL-MANAGER', 'Historical manager'),
+                ($1, 'BACKFILL-TARGET', 'Historical report') returning id`,
+        [organizationId],
+      );
+      const managerEmployeeId = employees.rows[0]?.id;
+      const targetEmployeeId = employees.rows[1]?.id;
+      const accountId = (
+        await fixture.client.query<{ id: string }>(
+          `insert into auth_users (name, email)
+           values ('Historical manager', 'historical-manager@example.test') returning id`,
+        )
+      ).rows[0]?.id;
+      await fixture.client.query(
+        `insert into account_employee_links
+          (organization_id, user_id, employee_id, linked_at)
+         values ($1, $2, $3, '2026-01-01T00:00:00Z')`,
+        [organizationId, accountId, managerEmployeeId],
+      );
+      await fixture.client.query(
+        `insert into account_role_assignments
+          (organization_id, user_id, role, assigned_at)
+         values ($1, $2, 'MANAGER', '2026-01-01T00:00:00Z')`,
+        [organizationId, accountId],
+      );
+      await fixture.client.query(
+        `insert into manager_assignments
+          (organization_id, employee_id, manager_employee_id, starts_on)
+         values ($1, $2, $3, '2026-01-01')`,
+        [organizationId, targetEmployeeId, managerEmployeeId],
+      );
+      const correctionId = (
+        await fixture.client.query<{ id: string }>(
+          `insert into correction_requests
+            (organization_id, employee_id, requested_by_employee_id, local_date, status, reason,
+             original_interpretation, proposed_interpretation)
+           values ($1, $2, $2, '2026-08-13', 'APPROVED', 'Historical correction',
+                   '{}'::jsonb, '{}'::jsonb) returning id`,
+          [organizationId, targetEmployeeId],
+        )
+      ).rows[0]?.id;
+      await fixture.client.query(
+        `insert into correction_decisions
+          (organization_id, correction_request_id, actor_employee_id, action, reason, decided_at)
+         values ($1, $2, $3, 'APPROVE', 'Historical manager approval',
+                 '2026-08-13T10:00:00Z')`,
+        [organizationId, correctionId, managerEmployeeId],
+      );
+
+      const actorMigration = readFileSync(
+        `${packageDirectory}/migrations/0014_adorable_piledriver.sql`,
+        'utf8',
+      ).replaceAll('"public".', `"${fixture.schemaName}".`);
+      await fixture.client.query(actorMigration);
+      const backfilled = await fixture.client.query<{
+        actor_account_id: string;
+        actor_authority: string;
+        actor_employee_id: string;
+      }>(`select actor_account_id, actor_authority, actor_employee_id from correction_decisions`);
+      expect(backfilled.rows).toEqual([
+        {
+          actor_account_id: accountId,
+          actor_authority: 'CURRENT_MANAGER',
+          actor_employee_id: managerEmployeeId,
+        },
+      ]);
     } finally {
       await fixture.cleanup();
     }

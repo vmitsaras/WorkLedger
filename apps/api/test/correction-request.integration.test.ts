@@ -28,6 +28,12 @@ const migrationFiles = [
   '0006_zero_daily_delta.sql',
   '0007_correction_request_snapshots.sql',
   '0008_nappy_bromley.sql',
+  '0009_married_justin_hammer.sql',
+  '0010_broad_sunfire.sql',
+  '0011_nasty_red_hulk.sql',
+  '0012_silly_magik.sql',
+  '0013_brave_bulldozer.sql',
+  '0014_adorable_piledriver.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(

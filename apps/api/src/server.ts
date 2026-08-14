@@ -50,7 +50,7 @@ export function createApiServer(
       registerMyTimeRoutes(app, authentication, database, dependencies.now);
       registerCorrectionRequestRoutes(app, config, authentication, database, dependencies.now);
       registerCorrectionReviewRoutes(app, config, authentication, database, dependencies.now);
-      registerApprovalInboxRoutes(app, authentication, database, dependencies.now);
+      registerApprovalInboxRoutes(app, config, authentication, database, dependencies.now);
       registerVacationRequestRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {
         await Promise.all([authentication.close(), database.close()]);

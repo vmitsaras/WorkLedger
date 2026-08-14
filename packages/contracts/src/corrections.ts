@@ -54,7 +54,7 @@ export const correctionReviewItemSchema = z.strictObject({
   proposedEndsAt: instantSchema,
   proposedStartsAt: instantSchema,
   reason: z.string().min(10).max(1_000),
-  status: z.enum(['SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED']),
+  status: z.enum(['SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED', 'WITHDRAWN']),
   version: z.number().int().positive(),
 });
 export const correctionReviewQueueSchema = z.strictObject({

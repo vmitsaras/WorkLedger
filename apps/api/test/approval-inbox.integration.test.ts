@@ -3,7 +3,12 @@ import { fileURLToPath } from 'node:url';
 
 import type pg from 'pg';
 
-import { approvalInboxEnvelopeSchema, type ApprovalInbox } from '@workledger/contracts';
+import {
+  approvalDecisionEnvelopeSchema,
+  approvalDetailEnvelopeSchema,
+  approvalInboxEnvelopeSchema,
+  type ApprovalInbox,
+} from '@workledger/contracts';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createRuntimeConfig } from '../src/config.js';
@@ -30,6 +35,7 @@ const migrationFiles = [
   '0011_nasty_red_hulk.sql',
   '0012_silly_magik.sql',
   '0013_brave_bulldozer.sql',
+  '0014_adorable_piledriver.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -196,6 +202,194 @@ integrationTest(
         expect(invalid.json()).toMatchObject({ error: { code: 'VALIDATION_FAILED' } });
         expect(invalid.payload).not.toContain('do-not-reflect-this-value');
       }
+
+      const detailResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/approvals/${scenario.alphaCorrectionId}`,
+        headers: { cookie: hrOnlyCookie, origin: ORIGIN },
+      });
+      expect(detailResponse.statusCode).toBe(200);
+      const detail = approvalDetailEnvelopeSchema.parse(detailResponse.json()).data;
+      expect(detail).toMatchObject({
+        employeeDisplayName: 'Alpha report',
+        id: scenario.alphaCorrectionId,
+        kind: 'CORRECTION',
+        status: 'SUBMITTED',
+        version: 1,
+      });
+      expect(detail.availableActions).toEqual(['APPROVE', 'REQUEST_CHANGES', 'REJECT']);
+
+      const csrf = await app.inject({
+        method: 'GET',
+        url: '/v1/me/csrf',
+        headers: { cookie: hrOnlyCookie, origin: ORIGIN },
+      });
+      const decisionResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/approvals/${scenario.alphaCorrectionId}/decision`,
+        headers: {
+          'content-type': 'application/json',
+          cookie: hrOnlyCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': csrf.json<{ data: { token: string } }>().data.token,
+        },
+        payload: {
+          action: 'REJECT',
+          expectedVersion: 1,
+          reason: 'The submitted interval does not match the supporting record.',
+        },
+      });
+      expect(decisionResponse.statusCode).toBe(200);
+      expect(approvalDecisionEnvelopeSchema.parse(decisionResponse.json()).data).toMatchObject({
+        id: scenario.alphaCorrectionId,
+        kind: 'CORRECTION',
+        status: 'REJECTED',
+        version: 2,
+      });
+      const storedDecision = await fixture.client.query<{
+        actor_account_id: string;
+        actor_authority: string;
+        actor_employee_id: string | null;
+      }>(
+        `select actor_account_id, actor_authority, actor_employee_id
+         from correction_decisions where correction_request_id = $1`,
+        [scenario.alphaCorrectionId],
+      );
+      expect(storedDecision.rows).toEqual([
+        {
+          actor_account_id: scenario.hrOnly.accountId,
+          actor_authority: 'ORGANIZATION_HR',
+          actor_employee_id: null,
+        },
+      ]);
+
+      const staleDecision = await app.inject({
+        method: 'POST',
+        url: `/v1/approvals/${scenario.alphaCorrectionId}/decision`,
+        headers: {
+          'content-type': 'application/json',
+          cookie: hrOnlyCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': csrf.json<{ data: { token: string } }>().data.token,
+        },
+        payload: {
+          action: 'APPROVE',
+          expectedVersion: 1,
+          reason: 'A stale browser tab must not overwrite the recorded outcome.',
+        },
+      });
+      expect(staleDecision.statusCode).toBe(409);
+      expect(staleDecision.json()).toMatchObject({ error: { code: 'APPROVAL_STATE_CONFLICT' } });
+
+      const sicknessDetailResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/approvals/${scenario.sicknessReportId}`,
+        headers: { cookie: hrOnlyCookie, origin: ORIGIN },
+      });
+      expect(sicknessDetailResponse.statusCode).toBe(200);
+      expect(approvalDetailEnvelopeSchema.parse(sicknessDetailResponse.json()).data).toMatchObject({
+        availableActions: ['ACKNOWLEDGE', 'REQUEST_CHANGES'],
+        id: scenario.sicknessReportId,
+        kind: 'ABSENCE',
+        status: 'REPORTED',
+        workflow: 'REPORT_AND_ACKNOWLEDGE',
+      });
+      const acknowledge = await app.inject({
+        method: 'POST',
+        url: `/v1/approvals/${scenario.sicknessReportId}/decision`,
+        headers: {
+          'content-type': 'application/json',
+          cookie: hrOnlyCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': csrf.json<{ data: { token: string } }>().data.token,
+        },
+        payload: { action: 'ACKNOWLEDGE', expectedVersion: 1 },
+      });
+      expect(acknowledge.statusCode).toBe(200);
+      expect(approvalDecisionEnvelopeSchema.parse(acknowledge.json()).data).toMatchObject({
+        id: scenario.sicknessReportId,
+        kind: 'ABSENCE',
+        status: 'ACKNOWLEDGED',
+        version: 2,
+      });
+
+      const vacation = await createAbsence(
+        fixture.client,
+        scenario.organizationId,
+        scenario.alphaEmployeeId,
+        scenario.vacationTypeId,
+        {
+          dates: ['2026-08-26'],
+          status: 'SUBMITTED',
+          submittedAt: '2026-08-14T10:00:00Z',
+        },
+      );
+      await fixture.client.query(
+        `insert into leave_entitlement_entries
+          (organization_id, employee_id, absence_type_id, entry_type, minutes, source_id,
+           effective_on, created_at)
+         values ($1, $2, $3, 'ALLOCATION', 960, uuidv7(), '2026-01-01', '2026-01-01T00:00:00Z'),
+                ($1, $2, $3, 'PENDING_RESERVATION', -480, $4, '2026-08-26',
+                 '2026-08-14T10:00:00Z')`,
+        [
+          scenario.organizationId,
+          scenario.alphaEmployeeId,
+          scenario.vacationTypeId,
+          vacation.requestId,
+        ],
+      );
+      const approveVacation = await app.inject({
+        method: 'POST',
+        url: `/v1/approvals/${vacation.requestId}/decision`,
+        headers: {
+          'content-type': 'application/json',
+          cookie: hrOnlyCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': csrf.json<{ data: { token: string } }>().data.token,
+        },
+        payload: {
+          action: 'APPROVE',
+          expectedVersion: 1,
+          reason: 'The requested vacation is covered by the employee entitlement.',
+        },
+      });
+      expect(approveVacation.statusCode).toBe(200);
+      expect(approvalDecisionEnvelopeSchema.parse(approveVacation.json()).data).toMatchObject({
+        id: vacation.requestId,
+        kind: 'ABSENCE',
+        status: 'APPROVED',
+        version: 2,
+      });
+      const entitlementTransition = await fixture.client.query<{
+        entry_type: string;
+        minutes: number;
+      }>(
+        `select entry_type, minutes from leave_entitlement_entries
+         where employee_id = $1 and absence_type_id = $2 order by created_at, entry_type`,
+        [scenario.alphaEmployeeId, scenario.vacationTypeId],
+      );
+      expect(entitlementTransition.rows).toEqual(
+        expect.arrayContaining([
+          { entry_type: 'PENDING_RESERVATION', minutes: -480 },
+          { entry_type: 'RESERVATION_RELEASE', minutes: 480 },
+          { entry_type: 'APPROVED_DEDUCTION', minutes: -480 },
+        ]),
+      );
+      expect(entitlementTransition.rows.reduce((total, entry) => total + entry.minutes, 0)).toBe(
+        480,
+      );
+      const effect = await fixture.client.query<{
+        credit_minutes: number;
+        entitlement_minutes: number;
+        expected_reduction_minutes: number;
+      }>(
+        `select credit_minutes, entitlement_minutes, expected_reduction_minutes
+         from absence_effects where absence_request_id = $1`,
+        [vacation.requestId],
+      );
+      expect(effect.rows).toEqual([
+        { credit_minutes: 480, entitlement_minutes: 480, expected_reduction_minutes: 0 },
+      ]);
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -203,7 +397,7 @@ integrationTest(
   },
 );
 
-type Credentials = Readonly<{ email: string; password: string }>;
+type Credentials = Readonly<{ accountId: string; email: string; password: string }>;
 
 async function createScenario(client: pg.PoolClient) {
   const organizationId = requiredId(
@@ -242,6 +436,24 @@ async function createScenario(client: pg.PoolClient) {
     'Unrelated employee',
   );
   const hrEmployeeId = await createEmployee(client, organizationId, 'INBOX-HR', 'HR reviewer');
+
+  const scheduleId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into weekly_schedules
+          (organization_id, name, version, monday_minutes, tuesday_minutes, wednesday_minutes,
+           thursday_minutes, friday_minutes, saturday_minutes, sunday_minutes)
+         values ($1, 'Approval test schedule', 1, 480, 480, 480, 480, 480, 0, 0) returning id`,
+        [organizationId],
+      )
+    ).rows[0]?.id,
+  );
+  await client.query(
+    `insert into schedule_assignments
+      (organization_id, employee_id, schedule_id, starts_on)
+     values ($1, $2, $3, '2025-01-01')`,
+    [organizationId, alphaEmployeeId, scheduleId],
+  );
 
   await client.query(
     `insert into manager_assignments
@@ -286,14 +498,16 @@ async function createScenario(client: pg.PoolClient) {
     roles: ['SYSTEM_ADMINISTRATOR'],
   });
 
+  let alphaCorrectionId: string | undefined;
   for (let day = 1; day <= 10; day += 1) {
     const localDate = `2026-08-${String(day).padStart(2, '0')}`;
-    await createCorrection(client, organizationId, alphaEmployeeId, {
+    const correctionId = await createCorrection(client, organizationId, alphaEmployeeId, {
       createdAt: `${localDate}T08:00:00Z`,
       localDate,
       reason: `Private correction reason ${day}`,
       status: 'SUBMITTED',
     });
+    alphaCorrectionId ??= correctionId;
   }
   await createCorrection(client, organizationId, betaEmployeeId, {
     createdAt: '2026-08-12T08:00:00Z',
@@ -310,11 +524,17 @@ async function createScenario(client: pg.PoolClient) {
 
   const sicknessTypeId = await createAbsenceType(client, organizationId, 'SICKNESS', 'Sickness');
   const vacationTypeId = await createAbsenceType(client, organizationId, 'VACATION', 'Vacation');
-  await createAbsence(client, organizationId, alphaEmployeeId, sicknessTypeId, {
-    dates: ['2026-08-13', '2026-08-14'],
-    status: 'SUBMITTED',
-    submittedAt: '2026-08-13T09:00:00Z',
-  });
+  const sicknessReport = await createAbsence(
+    client,
+    organizationId,
+    alphaEmployeeId,
+    sicknessTypeId,
+    {
+      dates: ['2026-08-13', '2026-08-14'],
+      status: 'REPORTED',
+      submittedAt: '2026-08-13T09:00:00Z',
+    },
+  );
   await createAbsence(client, organizationId, alphaEmployeeId, vacationTypeId, {
     dates: ['2026-08-05'],
     status: 'REJECTED',
@@ -365,12 +585,17 @@ async function createScenario(client: pg.PoolClient) {
   });
 
   return Object.freeze({
+    alphaCorrectionId: requiredId(alphaCorrectionId),
+    alphaEmployeeId,
     alphaTeamId,
     betaTeamId,
     hrOnly,
     linkedHr,
     manager,
+    organizationId,
+    sicknessReportId: sicknessReport.requestId,
     system,
+    vacationTypeId,
   });
 }
 
@@ -447,7 +672,7 @@ async function createAccount(
       [organizationId, accountId, role],
     );
   }
-  return Object.freeze({ email: input.email, password: input.password });
+  return Object.freeze({ accountId, email: input.email, password: input.password });
 }
 
 async function createCorrection(
@@ -461,21 +686,40 @@ async function createCorrection(
     status: 'CHANGES_REQUESTED' | 'SUBMITTED';
   }>,
 ) {
-  await client.query(
-    `insert into correction_requests
+  return requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into correction_requests
       (organization_id, employee_id, requested_by_employee_id, local_date, status, reason,
        original_interpretation, proposed_interpretation, version, created_at)
-     values ($1, $2, $2, $3, $4, $5, $6::jsonb, $7::jsonb, 1, $8)`,
-    [
-      organizationId,
-      employeeId,
-      input.localDate,
-      input.status,
-      input.reason,
-      JSON.stringify({ events: [{ private: 'raw-event-must-not-leave-api' }] }),
-      JSON.stringify({ proposed: 'source-record-must-not-leave-api' }),
-      input.createdAt,
-    ],
+     values ($1, $2, $2, $3, $4, $5, $6::jsonb, $7::jsonb, 1, $8) returning id`,
+        [
+          organizationId,
+          employeeId,
+          input.localDate,
+          input.status,
+          input.reason,
+          JSON.stringify({
+            calculation: {
+              balanceMinutes: 0,
+              breakMinutes: 0,
+              creditedMinutes: 480,
+              expectedMinutes: 480,
+              workedMinutes: 480,
+            },
+            events: [{ occurredAt: input.createdAt, sequence: 1, type: 'CLOCK_IN' }],
+            projectionId: '123e4567-e89b-42d3-a456-426614174777',
+            private: 'raw-event-must-not-leave-api',
+          }),
+          JSON.stringify({
+            endsAt: input.createdAt,
+            private: 'source-record-must-not-leave-api',
+            startsAt: input.createdAt,
+          }),
+          input.createdAt,
+        ],
+      )
+    ).rows[0]?.id,
   );
 }
 
@@ -490,8 +734,8 @@ async function createAbsenceType(
       await client.query<{ id: string }>(
         `insert into absence_types
           (organization_id, code, name, version, active, valid_from, policy)
-         values ($1, $2, $3, 1, true, '2025-01-01', '{}'::jsonb) returning id`,
-        [organizationId, code, name],
+         values ($1, $2, $3, 1, true, '2025-01-01', $4::jsonb) returning id`,
+        [organizationId, code, name, JSON.stringify(absencePolicy(code))],
       )
     ).rows[0]?.id,
   );
@@ -504,7 +748,7 @@ async function createAbsence(
   absenceTypeId: string,
   input: Readonly<{
     dates: readonly string[];
-    status: 'APPROVED' | 'REJECTED' | 'SUBMITTED';
+    status: 'APPROVED' | 'REJECTED' | 'REPORTED' | 'SUBMITTED';
     submittedAt: string;
   }>,
 ) {
@@ -535,6 +779,20 @@ async function createAbsence(
     );
   }
   return Object.freeze({ requestId, segmentIds: Object.freeze(segmentIds) });
+}
+
+function absencePolicy(code: 'SICKNESS' | 'VACATION') {
+  return {
+    allowedCoverageUnits: ['FULL_DAY', 'HALF_DAY', 'MINUTES'],
+    availabilityState: 'UNAVAILABLE',
+    entitlementAccountCategory: code === 'VACATION' ? 'VACATION' : null,
+    maximumRetrospectiveCalendarDays: code === 'SICKNESS' ? 7 : null,
+    minimumLeadCalendarDays: 0,
+    pendingReservationBehavior: code === 'VACATION' ? 'RESERVE_PENDING' : 'NONE',
+    requestNoteMode: code === 'VACATION' ? 'OPTIONAL' : 'DISABLED',
+    timeTreatment: 'CREDIT_COVERED_EXPECTATION',
+    workflow: code === 'VACATION' ? 'APPROVAL_REQUIRED' : 'REPORT_AND_ACKNOWLEDGE',
+  };
 }
 
 async function createCancellation(

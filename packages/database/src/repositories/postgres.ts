@@ -19,6 +19,7 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { unionAll } from 'drizzle-orm/pg-core';
 
 import {
+  createAbsenceTypeVersion,
   createLocalDateRange,
   createPolicyAssignment,
   createScheduleAssignment,
@@ -30,6 +31,8 @@ import {
   type DomainId,
   type Instant,
   type LocalDate,
+  type AbsenceTypeCode,
+  type AbsenceTypePolicy,
   type AbsenceTypePolicyInput,
   type TimeAccountEntryActor,
   type TimeAccountLedgerEntry,
@@ -88,10 +91,14 @@ import type {
   AbsenceCancellationRecord,
   AbsenceCancellationDecisionResult,
   AbsenceRequestRepository,
+  ApprovalAbsenceRecord,
+  ApprovalCancellationRecord,
   ApprovalInboxItemRecord,
   ApprovalInboxRepository,
   AbsenceRequestConfigurationInput,
   DecideAbsenceCancellationInput,
+  DecideAbsenceRequestInput,
+  DecisionActorRecord,
   AdvanceAttendanceHeadInput,
   ApplicationRole,
   AuditActor,
@@ -1719,6 +1726,23 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
     return row !== undefined;
   }
 
+  async hasApplied(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'CorrectionRequest'>,
+  ): Promise<boolean> {
+    const [row] = await this.transaction
+      .select({ id: appliedCorrections.id })
+      .from(appliedCorrections)
+      .where(
+        and(
+          eq(appliedCorrections.organizationId, organizationId),
+          eq(appliedCorrections.correctionRequestId, requestId),
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
+  }
+
   async apply(input: ApplyCorrectionInput): Promise<AppliedCorrectionRecord | null> {
     const [row] = await this.transaction
       .insert(appliedCorrections)
@@ -1818,7 +1842,9 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
     if (updated === undefined) return null;
     await this.transaction.insert(correctionDecisions).values({
       action: input.action,
-      actorEmployeeId: input.actorEmployeeId,
+      actorAccountId: input.actor.accountId,
+      actorAuthority: input.actor.authority,
+      actorEmployeeId: input.actor.employeeId,
       correctionRequestId: input.requestId,
       organizationId: input.organizationId,
       reason: input.reason,
@@ -1839,6 +1865,212 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
 
 class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async findForApproval(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'AbsenceRequest'>,
+  ): Promise<ApprovalAbsenceRecord | null> {
+    const [row] = await this.transaction
+      .select({
+        request: absenceRequests,
+        absenceTypeActive: absenceTypes.active,
+        absenceCode: absenceTypes.code,
+        absenceTypeValidFrom: absenceTypes.validFrom,
+        absenceTypeValidTo: absenceTypes.validTo,
+        absenceTypeName: absenceTypes.name,
+        policy: absenceTypes.policy,
+        employeeDisplayName: employees.displayName,
+      })
+      .from(absenceRequests)
+      .innerJoin(absenceTypes, eq(absenceTypes.id, absenceRequests.absenceTypeId))
+      .innerJoin(employees, eq(employees.id, absenceRequests.employeeId))
+      .where(
+        and(eq(absenceRequests.organizationId, organizationId), eq(absenceRequests.id, requestId)),
+      )
+      .limit(1);
+    if (row === undefined) return null;
+    const coverage = await this.transaction
+      .select()
+      .from(absenceCoverageSegments)
+      .where(
+        and(
+          eq(absenceCoverageSegments.organizationId, organizationId),
+          eq(absenceCoverageSegments.absenceRequestId, requestId),
+        ),
+      )
+      .orderBy(asc(absenceCoverageSegments.localDate), asc(absenceCoverageSegments.id));
+    return Object.freeze({
+      absenceCode: mapAbsenceTypeCode(row.absenceCode),
+      absenceTypeId: mapDomainId<'AbsenceTypeVersion'>(
+        row.request.absenceTypeId,
+        'absence_requests',
+        'absence_type_id',
+      ),
+      absenceTypeName: row.absenceTypeName,
+      coverage: Object.freeze(coverage.map(mapApprovalCoverage)),
+      employeeDisplayName: row.employeeDisplayName,
+      employeeId: mapDomainId<'Employee'>(
+        row.request.employeeId,
+        'absence_requests',
+        'employee_id',
+      ),
+      id: mapDomainId<'AbsenceRequest'>(row.request.id, 'absence_requests', 'id'),
+      organizationId: mapDomainId<'Organization'>(
+        row.request.organizationId,
+        'absence_requests',
+        'organization_id',
+      ),
+      policy: mapResolvedAbsenceTypePolicy({
+        active: row.absenceTypeActive,
+        code: mapAbsenceTypeCode(row.absenceCode),
+        id: row.request.absenceTypeId,
+        name: row.absenceTypeName,
+        policy: row.policy,
+        validFrom: row.absenceTypeValidFrom,
+        validTo: row.absenceTypeValidTo,
+      }),
+      status: row.request.status,
+      submittedAt: mapInstant(row.request.submittedAt, 'absence_requests', 'submitted_at'),
+      version: row.request.version,
+    });
+  }
+
+  async findCancellationForApproval(
+    organizationId: DomainId<'Organization'>,
+    cancellationId: DomainId<'AbsenceCancellation'>,
+  ): Promise<ApprovalCancellationRecord | null> {
+    const [row] = await this.transaction
+      .select({
+        cancellation: absenceCancellations,
+        absenceTypeActive: absenceTypes.active,
+        absenceCode: absenceTypes.code,
+        absenceTypeId: absenceRequests.absenceTypeId,
+        absenceTypeName: absenceTypes.name,
+        absenceTypeValidFrom: absenceTypes.validFrom,
+        absenceTypeValidTo: absenceTypes.validTo,
+        employeeDisplayName: employees.displayName,
+        policy: absenceTypes.policy,
+      })
+      .from(absenceCancellations)
+      .innerJoin(absenceRequests, eq(absenceRequests.id, absenceCancellations.absenceRequestId))
+      .innerJoin(absenceTypes, eq(absenceTypes.id, absenceRequests.absenceTypeId))
+      .innerJoin(employees, eq(employees.id, absenceCancellations.employeeId))
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, organizationId),
+          eq(absenceCancellations.id, cancellationId),
+        ),
+      )
+      .limit(1);
+    if (row === undefined) return null;
+    const coverage = await this.transaction
+      .select({ coverage: absenceCoverageSegments })
+      .from(absenceCancellationSegments)
+      .innerJoin(
+        absenceCoverageSegments,
+        eq(absenceCoverageSegments.id, absenceCancellationSegments.absenceCoverageSegmentId),
+      )
+      .where(
+        and(
+          eq(absenceCancellationSegments.organizationId, organizationId),
+          eq(absenceCancellationSegments.absenceCancellationId, cancellationId),
+        ),
+      )
+      .orderBy(asc(absenceCoverageSegments.localDate), asc(absenceCoverageSegments.id));
+    return Object.freeze({
+      absenceCode: mapAbsenceTypeCode(row.absenceCode),
+      absenceTypeId: mapDomainId<'AbsenceTypeVersion'>(
+        row.absenceTypeId,
+        'absence_requests',
+        'absence_type_id',
+      ),
+      absenceTypeName: row.absenceTypeName,
+      coverage: Object.freeze(coverage.map(({ coverage: value }) => mapApprovalCoverage(value))),
+      employeeDisplayName: row.employeeDisplayName,
+      employeeId: mapDomainId<'Employee'>(
+        row.cancellation.employeeId,
+        'absence_cancellations',
+        'employee_id',
+      ),
+      id: mapDomainId<'AbsenceCancellation'>(row.cancellation.id, 'absence_cancellations', 'id'),
+      organizationId: mapDomainId<'Organization'>(
+        row.cancellation.organizationId,
+        'absence_cancellations',
+        'organization_id',
+      ),
+      policy: mapResolvedAbsenceTypePolicy({
+        active: row.absenceTypeActive,
+        code: mapAbsenceTypeCode(row.absenceCode),
+        id: row.absenceTypeId,
+        name: row.absenceTypeName,
+        policy: row.policy,
+        validFrom: row.absenceTypeValidFrom,
+        validTo: row.absenceTypeValidTo,
+      }),
+      status: row.cancellation.status,
+      submittedAt: mapInstant(
+        row.cancellation.submittedAt,
+        'absence_cancellations',
+        'submitted_at',
+      ),
+      version: row.cancellation.version,
+    });
+  }
+
+  async decideRequest(input: DecideAbsenceRequestInput): Promise<ApprovalAbsenceRecord | null> {
+    const nextStatus =
+      input.action === 'APPROVE'
+        ? 'APPROVED'
+        : input.action === 'REJECT'
+          ? 'REJECTED'
+          : 'CHANGES_REQUESTED';
+    const [updated] = await this.transaction
+      .update(absenceRequests)
+      .set({ status: nextStatus, version: sql`${absenceRequests.version} + 1` })
+      .where(
+        and(
+          eq(absenceRequests.organizationId, input.organizationId),
+          eq(absenceRequests.id, input.requestId),
+          eq(absenceRequests.version, input.expectedVersion),
+          input.action === 'REQUEST_CHANGES'
+            ? inArray(absenceRequests.status, ['SUBMITTED', 'REPORTED'])
+            : eq(absenceRequests.status, 'SUBMITTED'),
+        ),
+      )
+      .returning();
+    if (updated === undefined) return null;
+    const [decision] = await this.transaction
+      .insert(absenceDecisions)
+      .values({
+        absenceRequestId: input.requestId,
+        action: input.action,
+        actorAccountId: input.actor.accountId,
+        actorAuthority: input.actor.authority,
+        actorEmployeeId: input.actor.employeeId,
+        decidedAt: input.decidedAt,
+        organizationId: input.organizationId,
+        reason: input.reason,
+      })
+      .returning({ id: absenceDecisions.id });
+    if (decision === undefined) throw new DatabaseValueError('absence_decisions', 'id');
+    if (input.action === 'APPROVE') {
+      await this.transaction.insert(absenceEffects).values(
+        input.effects.map((effect) => ({
+          absenceCoverageSegmentId: effect.absenceCoverageSegmentId,
+          absenceRequestId: input.requestId,
+          creditMinutes: effect.creditMinutes,
+          effectVersion: 1,
+          employeeId: updated.employeeId,
+          entitlementMinutes: effect.entitlementMinutes,
+          expectedReductionMinutes: effect.expectedReductionMinutes,
+          localDate: effect.localDate,
+          organizationId: input.organizationId,
+          sourceDecisionId: decision.id,
+        })),
+      );
+    }
+    return this.findForApproval(input.organizationId, input.requestId);
+  }
 
   async findCancellation(
     organizationId: DomainId<'Organization'>,
@@ -1985,7 +2217,9 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     await this.transaction.insert(absenceCancellationDecisions).values({
       absenceCancellationId: updated.id,
       action: input.action,
-      actorEmployeeId: input.actorEmployeeId,
+      actorAccountId: input.actor.accountId,
+      actorAuthority: input.actor.authority,
+      actorEmployeeId: input.actor.employeeId,
       decidedAt: input.decidedAt,
       organizationId: input.organizationId,
       reason: input.reason,
@@ -2130,7 +2364,7 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
         and(
           eq(absenceCancellations.organizationId, input.organizationId),
           eq(absenceCancellations.id, input.cancellationId),
-          eq(absenceCancellations.employeeId, input.actorEmployeeId),
+          eq(absenceCancellations.employeeId, input.actor.employeeId),
           eq(absenceCancellations.version, input.expectedVersion),
           inArray(absenceCancellations.status, ['PENDING_DECISION', 'CHANGES_REQUESTED']),
         ),
@@ -2140,7 +2374,9 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     await this.transaction.insert(absenceCancellationDecisions).values({
       absenceCancellationId: updated.id,
       action: 'WITHDRAW',
-      actorEmployeeId: input.actorEmployeeId,
+      actorAccountId: input.actor.accountId,
+      actorAuthority: input.actor.authority,
+      actorEmployeeId: input.actor.employeeId,
       decidedAt: input.decidedAt,
       organizationId: input.organizationId,
       reason: null,
@@ -2508,7 +2744,7 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
   async acknowledgeSickness(
     organizationId: DomainId<'Organization'>,
     requestId: DomainId<'AbsenceRequest'>,
-    actorEmployeeId: DomainId<'Employee'>,
+    actor: DecisionActorRecord,
     expectedVersion: number,
     acknowledgedAt: Instant,
   ): Promise<SicknessReportRecord | null> {
@@ -2528,7 +2764,9 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     await this.transaction.insert(absenceDecisions).values({
       absenceRequestId: requestId,
       action: 'ACKNOWLEDGE',
-      actorEmployeeId,
+      actorAccountId: actor.accountId,
+      actorAuthority: actor.authority,
+      actorEmployeeId: actor.employeeId,
       decidedAt: acknowledgedAt,
       organizationId,
       reason: null,
@@ -2940,6 +3178,18 @@ function mapAbsenceCancellation(
   });
 }
 
+function mapApprovalCoverage(
+  row: typeof absenceCoverageSegments.$inferSelect,
+): AbsenceCoverageSegmentInput & Readonly<{ id: DomainId<'AbsenceCoverageSegment'> }> {
+  return Object.freeze({
+    endsAtMinute: row.endsAtMinute,
+    id: mapDomainId<'AbsenceCoverageSegment'>(row.id, 'absence_coverage_segments', 'id'),
+    kind: row.kind,
+    localDate: mapLocalDate(row.localDate, 'absence_coverage_segments', 'local_date'),
+    startsAtMinute: row.startsAtMinute,
+  });
+}
+
 function mapAbsenceTypePolicyInput(
   value: Readonly<Record<string, unknown>>,
 ): AbsenceTypePolicyInput {
@@ -2954,6 +3204,46 @@ function mapAbsenceTypePolicyInput(
     timeTreatment: value['timeTreatment'],
     workflow: value['workflow'],
   });
+}
+
+function mapResolvedAbsenceTypePolicy(
+  input: Readonly<{
+    active: boolean;
+    code: AbsenceTypeCode;
+    id: string;
+    name: string;
+    policy: Readonly<Record<string, unknown>>;
+    validFrom: string;
+    validTo: string | null;
+  }>,
+): AbsenceTypePolicy {
+  const effectiveRange = createLocalDateRange(
+    mapLocalDate(input.validFrom, 'absence_types', 'valid_from'),
+    input.validTo === null ? null : mapLocalDate(input.validTo, 'absence_types', 'valid_to'),
+  );
+  if (!effectiveRange.ok) throw new DatabaseValueError('absence_types', 'effective_range');
+  const version = createAbsenceTypeVersion(
+    mapDomainId<'AbsenceTypeVersion'>(input.id, 'absence_types', 'id'),
+    input.code,
+    input.name,
+    effectiveRange.value,
+    input.active,
+    mapAbsenceTypePolicyInput(input.policy),
+  );
+  if (!version.ok) throw new DatabaseValueError('absence_types', 'policy');
+  return version.value.policy;
+}
+
+function mapAbsenceTypeCode(value: string): AbsenceTypeCode {
+  switch (value) {
+    case 'VACATION':
+    case 'SICKNESS':
+    case 'UNPAID':
+    case 'OTHER':
+      return value;
+    default:
+      throw new DatabaseValueError('absence_types', 'code');
+  }
 }
 
 function mapWarningCode(value: unknown): string {

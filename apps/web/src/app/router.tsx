@@ -11,6 +11,7 @@ import {
 import { ApiClientError, clearSessionMemory } from './api-client.js';
 import {
   personalCalendarQuery,
+  approvalDetailQuery,
   approvalInboxQuery,
   selfContextQuery,
   selfProfileQuery,
@@ -32,11 +33,11 @@ import { TodayPage } from '../routes/today-page.js';
 import { MyTimePage } from '../routes/my-time-page.js';
 import { DailyTimeRecordPage } from '../routes/daily-time-record-page.js';
 import { CorrectionRequestPage } from '../routes/correction-request-page.js';
-import { ManagerCorrectionQueuePage } from '../routes/manager-correction-queue-page.js';
 import { VacationRequestPage } from '../routes/vacation-request-page.js';
 import { SicknessReportPage } from '../routes/sickness-report-page.js';
 import { PersonalCalendarPage } from '../routes/personal-calendar-page.js';
 import { ApprovalInboxPage } from '../routes/approval-inbox-page.js';
+import { ApprovalDetailPage } from '../routes/approval-detail-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -250,8 +251,8 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
             },
             {
               path: 'approvals/:approvalId',
-              loader: createAreaLoader(queryClient, 'MANAGER'),
-              element: <ManagerCorrectionQueuePage />,
+              loader: createApprovalDetailLoader(queryClient),
+              element: <ApprovalDetailPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Approval review' },
             },
@@ -399,6 +400,16 @@ function createApprovalInboxLoader(queryClient: QueryClient): LoaderFunction {
     if (!parsed.success) return redirect('/approvals');
     void queryClient.prefetchQuery(approvalInboxQuery(parsed.data));
     return parsed.data;
+  };
+}
+
+function createApprovalDetailLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ params }) => {
+    await requireApprovalAudience(queryClient);
+    const approvalId = params['approvalId'];
+    if (approvalId === undefined) throw new Response(null, { status: 404 });
+    void queryClient.prefetchQuery(approvalDetailQuery(approvalId));
+    return null;
   };
 }
 

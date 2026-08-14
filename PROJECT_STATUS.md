@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 7 — Manager approvals and team availability
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 1 of 7 Phase 7 tasks complete
-**Current milestone:** Consistent approval decisions
-**Active task:** `WL-701`
+**Phase progress:** 2 of 7 Phase 7 tasks complete
+**Current milestone:** Privacy-safe team availability
+**Active task:** `WL-702`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement the consistent non-self approval decision experience required by `WL-701`.
+Implement the privacy-safe team current-status list required by `WL-702`.
 
 ## Verified decisions
 
@@ -40,6 +40,9 @@ Implement the consistent non-self approval decision experience required by `WL-7
   pagination. Rows, totals, and team filter options share one repeatable-read snapshot.
 - Monthly-period items remain excluded until `WL-802` after the authority conflict recorded in
   `D-402` is resolved.
+- Approval decisions require the authenticated account and explicit `CURRENT_MANAGER`,
+  `ORGANIZATION_HR`, or `SELF` authority; a linked employee identity is optional evidence, so
+  HR-only accounts remain attributable without fabricated employee records (`D-352`).
 - English is the only shipped MVP locale; formatting remains locale-aware.
 - Employee self-service profile data is read-only; HR-owned employment facts are not self-editable.
 - The self-context/profile transport exposes only active account, organization, employee summary,
@@ -301,6 +304,26 @@ Implement the consistent non-self approval decision experience required by `WL-7
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-701` — Implement consistent approval decisions
+
+- Changed: added type-neutral approval detail and decision contracts/routes for corrections,
+  absence requests, and absence cancellations; retained correction approval/application as
+  separate actions; and made all decision repositories account-first with explicit authority.
+- Verified: component and live PostgreSQL tests cover manager/HR scope, HR-only decision actors,
+  historical actor backfill, correction decisions, sickness acknowledgement, vacation effects and
+  entitlement transitions, cancellation reversal, stale conflicts, and immutable decision rows.
+- Accessibility: the detail route uses semantic summaries and tables, visible labels, native form
+  controls, reason validation with focused error feedback, disabled pending actions, one persistent
+  outcome announcement, and current-state recovery after conflicts.
+- Security/data: authorization and self-exclusion remain API-enforced; mutations require same-origin
+  CSRF protection; responses are no-store; sickness detail stays inside the authorized record; and
+  audit actors use the authenticated account plus decision authority.
+- Documentation: resolved `D-352`, added `docs/75-consistent-approval-decisions.md`, and advanced
+  the Phase 7 roadmap to `WL-702`.
+- Remaining risk: monthly approval records remain excluded until `WL-802` resolves `D-402`.
+  Notification delivery remains separate from domain decision persistence and belongs to `WL-704`.
+- Next task: `WL-702`.
 
 ### `WL-700` — Build manager approval inbox and URL-owned filters
 
@@ -612,12 +635,12 @@ Implement the consistent non-self approval decision experience required by `WL-7
 
 ## Current blockers
 
-No `WL-701` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval
-items to the inbox; D-502 remains open before the production browser gate.
+No `WL-702` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
+to the inbox; D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-701 — Implement approve, reject, and changes-requested decisions consistently.`
+`WL-702 — Build privacy-safe team current-status list.`
 
 ## Update rules
 

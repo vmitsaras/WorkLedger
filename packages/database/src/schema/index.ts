@@ -108,6 +108,11 @@ export const decisionAction = pgEnum('decision_action', [
   'WITHDRAW',
   'CANCEL',
 ]);
+export const decisionActorAuthority = pgEnum('decision_actor_authority', [
+  'SELF',
+  'CURRENT_MANAGER',
+  'ORGANIZATION_HR',
+]);
 export const periodStatus = pgEnum('period_status', [
   'OPEN',
   'SUBMITTED',
@@ -630,9 +635,11 @@ export const correctionDecisions = pgTable(
     correctionRequestId: uuid('correction_request_id')
       .notNull()
       .references(() => correctionRequests.id),
-    actorEmployeeId: uuid('actor_employee_id')
+    actorAccountId: uuid('actor_account_id')
       .notNull()
-      .references(() => employees.id),
+      .references(() => authUsers.id),
+    actorEmployeeId: uuid('actor_employee_id').references(() => employees.id),
+    actorAuthority: decisionActorAuthority('actor_authority').notNull(),
     action: decisionAction('action').notNull(),
     reason: text('reason'),
     decidedAt: timestamp('decided_at', { mode: 'string', withTimezone: true }).notNull(),
@@ -642,6 +649,15 @@ export const correctionDecisions = pgTable(
     index('correction_decisions_request_decided_idx').on(
       table.correctionRequestId,
       table.decidedAt,
+    ),
+    foreignKey({
+      columns: [table.organizationId, table.actorEmployeeId],
+      foreignColumns: [employees.organizationId, employees.id],
+      name: 'correction_decisions_actor_employee_organization_fk',
+    }),
+    check(
+      'correction_decisions_reviewer_authority',
+      sql`${table.actorAuthority} in ('CURRENT_MANAGER', 'ORGANIZATION_HR')`,
     ),
   ],
 );
@@ -760,9 +776,11 @@ export const absenceDecisions = pgTable(
     absenceRequestId: uuid('absence_request_id')
       .notNull()
       .references(() => absenceRequests.id),
-    actorEmployeeId: uuid('actor_employee_id')
+    actorAccountId: uuid('actor_account_id')
       .notNull()
-      .references(() => employees.id),
+      .references(() => authUsers.id),
+    actorEmployeeId: uuid('actor_employee_id').references(() => employees.id),
+    actorAuthority: decisionActorAuthority('actor_authority').notNull(),
     action: decisionAction('action').notNull(),
     reason: text('reason'),
     decidedAt: timestamp('decided_at', { mode: 'string', withTimezone: true }).notNull(),
@@ -770,6 +788,15 @@ export const absenceDecisions = pgTable(
   },
   (table) => [
     index('absence_decisions_request_decided_idx').on(table.absenceRequestId, table.decidedAt),
+    foreignKey({
+      columns: [table.organizationId, table.actorEmployeeId],
+      foreignColumns: [employees.organizationId, employees.id],
+      name: 'absence_decisions_actor_employee_organization_fk',
+    }),
+    check(
+      'absence_decisions_reviewer_authority',
+      sql`${table.actorAuthority} in ('CURRENT_MANAGER', 'ORGANIZATION_HR')`,
+    ),
   ],
 );
 
@@ -828,9 +855,11 @@ export const absenceCancellationDecisions = pgTable(
     absenceCancellationId: uuid('absence_cancellation_id')
       .notNull()
       .references(() => absenceCancellations.id),
-    actorEmployeeId: uuid('actor_employee_id')
+    actorAccountId: uuid('actor_account_id')
       .notNull()
-      .references(() => employees.id),
+      .references(() => authUsers.id),
+    actorEmployeeId: uuid('actor_employee_id').references(() => employees.id),
+    actorAuthority: decisionActorAuthority('actor_authority').notNull(),
     action: absenceCancellationDecisionAction('action').notNull(),
     reason: text('reason'),
     decidedAt: timestamp('decided_at', { mode: 'string', withTimezone: true }).notNull(),
@@ -840,6 +869,15 @@ export const absenceCancellationDecisions = pgTable(
     index('absence_cancellation_decisions_cancellation_decided_idx').on(
       table.absenceCancellationId,
       table.decidedAt,
+    ),
+    foreignKey({
+      columns: [table.organizationId, table.actorEmployeeId],
+      foreignColumns: [employees.organizationId, employees.id],
+      name: 'absence_cancellation_decisions_actor_employee_organization_fk',
+    }),
+    check(
+      'absence_cancellation_decisions_actor_shape',
+      sql`(${table.action} = 'WITHDRAW' and ${table.actorAuthority} = 'SELF' and ${table.actorEmployeeId} is not null) or (${table.action} <> 'WITHDRAW' and ${table.actorAuthority} in ('CURRENT_MANAGER', 'ORGANIZATION_HR'))`,
     ),
   ],
 );

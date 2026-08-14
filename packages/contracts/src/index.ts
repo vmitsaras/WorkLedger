@@ -10,6 +10,15 @@ export {
   APPROVAL_INBOX_SORTS,
   APPROVAL_INBOX_STATUSES,
   APPROVAL_INBOX_TYPES,
+  APPROVAL_DECISION_ACTIONS,
+  APPROVAL_DETAIL_ACTIONS,
+  approvalDecisionActionSchema,
+  approvalDecisionEnvelopeSchema,
+  approvalDecisionRequestSchema,
+  approvalDecisionResultSchema,
+  approvalDetailActionSchema,
+  approvalDetailEnvelopeSchema,
+  approvalDetailSchema,
   approvalInboxDirectionSchema,
   approvalInboxEnvelopeSchema,
   approvalInboxFilterOptionsSchema,
@@ -30,6 +39,11 @@ export {
   type ApprovalInboxSort,
   type ApprovalInboxStatus,
   type ApprovalInboxType,
+  type ApprovalDecisionAction,
+  type ApprovalDecisionRequest,
+  type ApprovalDecisionResult,
+  type ApprovalDetail,
+  type ApprovalDetailAction,
 } from './approvals.js';
 
 export {

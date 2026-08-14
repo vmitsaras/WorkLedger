@@ -169,11 +169,10 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
       at: Instant,
     ) {
       return database.transaction(async (transaction) => {
-        const context = requireActiveEmployeeContext(
+        const context = requireActiveAccountContext(
           await transaction.accountSelfService.findContext(identity.accountId, at),
         );
         const actor = context.employee;
-        if (actor === null) throw denied();
         const requestId = requireRequestId(requestIdValue);
         const report = await transaction.absenceRequests.findSicknessReport(
           context.organization.id,
@@ -182,19 +181,21 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
         if (report === null)
           throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
         const localDate = localDateAtInstant(at, requireTimeZone(context.organization.timeZone));
-        const isCurrentManager = await transaction.authorization.isCurrentManager(
-          context.organization.id,
-          actor.id,
-          report.employeeId,
-          localDate,
-        );
+        const isCurrentManager =
+          actor !== null &&
+          (await transaction.authorization.isCurrentManager(
+            context.organization.id,
+            actor.id,
+            report.employeeId,
+            localDate,
+          ));
         const decision = authorizeEmployeeTarget({
           action: 'ABSENCE_DECIDE',
           actor: {
             accountActive: context.accountActive,
             accountId: context.accountId,
             employeeCapabilityActive: context.employeeCapabilityActive,
-            employeeId: actor.id,
+            employeeId: actor?.id ?? null,
             organizationId: context.organization.id,
             roles: context.roles,
           },
@@ -207,7 +208,11 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
         const acknowledged = await transaction.absenceRequests.acknowledgeSickness(
           context.organization.id,
           requestId,
-          actor.id,
+          {
+            accountId: context.accountId,
+            authority: decision.scope === 'ORGANIZATION_HR' ? 'ORGANIZATION_HR' : 'CURRENT_MANAGER',
+            employeeId: actor?.id ?? null,
+          },
           input.expectedVersion,
           at,
         );
@@ -216,7 +221,11 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
         }
         await transaction.audit.appendDomain({
           actionCode: 'SICKNESS_ACKNOWLEDGED',
-          actor: { accountId: context.accountId, kind: 'ACCOUNT', role: auditRole(context.roles) },
+          actor: {
+            accountId: context.accountId,
+            kind: 'ACCOUNT',
+            role: decision.scope === 'ORGANIZATION_HR' ? 'HR_ADMINISTRATOR' : 'MANAGER',
+          },
           facts: { version: acknowledged.version },
           occurredAt: at,
           organizationId: context.organization.id,
@@ -274,6 +283,13 @@ function requireActiveEmployeeContext(
   if (context === null || !context.accountActive)
     throw new WorkLedgerApiError({ code: 'AUTH_SESSION_EXPIRED', statusCode: 401 });
   if (!context.employeeCapabilityActive || context.employee?.status !== 'ACTIVE') throw denied();
+  return context;
+}
+function requireActiveAccountContext(
+  context: AccountSelfContextRecord | null,
+): AccountSelfContextRecord {
+  if (context === null || !context.accountActive)
+    throw new WorkLedgerApiError({ code: 'AUTH_SESSION_EXPIRED', statusCode: 401 });
   return context;
 }
 function assertSelfAuthorized(

@@ -95,11 +95,10 @@ export function createAbsenceCancellationService(database: WorkLedgerDatabase) {
     ) {
       return database.transaction(
         async (transaction) => {
-          const context = requireActiveEmployeeContext(
+          const context = requireActiveAccountContext(
             await transaction.accountSelfService.findContext(identity.accountId, at),
           );
           const actor = context.employee;
-          if (actor === null) throw denied();
           const cancellationId = requireId<'AbsenceCancellation'>(cancellationIdValue);
           const cancellation = await transaction.absenceRequests.findCancellation(
             context.organization.id,
@@ -110,23 +109,38 @@ export function createAbsenceCancellationService(database: WorkLedgerDatabase) {
           const timeZone = parseTimeZoneId(context.organization.timeZone);
           if (!timeZone.ok)
             throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
-          const isCurrentManager = await transaction.authorization.isCurrentManager(
-            context.organization.id,
-            actor.id,
-            cancellation.employeeId,
-            localDateAtInstant(at, timeZone.value),
-          );
-          const decision = assertAuthorized(
-            context,
-            identity.sessionFresh,
-            actor.id,
-            cancellation.employeeId,
+          const isCurrentManager =
+            actor !== null &&
+            (await transaction.authorization.isCurrentManager(
+              context.organization.id,
+              actor.id,
+              cancellation.employeeId,
+              localDateAtInstant(at, timeZone.value),
+            ));
+          const decision = authorizeEmployeeTarget({
+            action: 'ABSENCE_CANCEL_DECIDE',
+            actor: {
+              accountActive: context.accountActive,
+              accountId: context.accountId,
+              employeeCapabilityActive: context.employeeCapabilityActive,
+              employeeId: actor?.id ?? null,
+              organizationId: context.organization.id,
+              roles: context.roles,
+            },
             isCurrentManager,
-            'ABSENCE_CANCEL_DECIDE',
-          );
+            sessionFresh: identity.sessionFresh,
+            targetEmployeeId: cancellation.employeeId,
+            targetOrganizationId: context.organization.id,
+          });
+          if (!decision.allowed) throw denied();
           const result = await transaction.absenceRequests.decideCancellation({
             action: input.action,
-            actorEmployeeId: actor.id,
+            actor: {
+              accountId: context.accountId,
+              authority:
+                decision.scope === 'ORGANIZATION_HR' ? 'ORGANIZATION_HR' : 'CURRENT_MANAGER',
+              employeeId: actor?.id ?? null,
+            },
             cancellationId,
             decidedAt: at,
             expectedVersion: input.expectedVersion,
@@ -164,6 +178,7 @@ export function createAbsenceCancellationService(database: WorkLedgerDatabase) {
             `ABSENCE_CANCELLATION_${input.action}D`,
             decision.scope === 'ORGANIZATION_HR',
             result.version,
+            decision.scope === 'ORGANIZATION_HR' ? 'HR_ADMINISTRATOR' : 'MANAGER',
           );
           return toContract(result);
         },
@@ -198,7 +213,11 @@ export function createAbsenceCancellationService(database: WorkLedgerDatabase) {
           'ABSENCE_CANCEL_REQUEST',
         );
         const result = await transaction.absenceRequests.withdrawCancellation({
-          actorEmployeeId: employee.id,
+          actor: {
+            accountId: context.accountId,
+            authority: 'SELF',
+            employeeId: employee.id,
+          },
           cancellationId,
           decidedAt: at,
           expectedVersion: input.expectedVersion,
@@ -232,6 +251,13 @@ function requireActiveEmployeeContext(
   if (context === null || !context.accountActive)
     throw new WorkLedgerApiError({ code: 'AUTH_SESSION_EXPIRED', statusCode: 401 });
   if (!context.employeeCapabilityActive || context.employee?.status !== 'ACTIVE') throw denied();
+  return context;
+}
+function requireActiveAccountContext(
+  context: AccountSelfContextRecord | null,
+): AccountSelfContextRecord {
+  if (context === null || !context.accountActive)
+    throw new WorkLedgerApiError({ code: 'AUTH_SESSION_EXPIRED', statusCode: 401 });
   return context;
 }
 function assertAuthorized(
@@ -269,10 +295,15 @@ async function appendAudit(
   actionCode: string,
   privileged: boolean,
   version: number,
+  actorRole?: 'EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR',
 ) {
   await transaction.audit.appendDomain({
     actionCode,
-    actor: { accountId: context.accountId, kind: 'ACCOUNT', role: auditRole(context.roles) },
+    actor: {
+      accountId: context.accountId,
+      kind: 'ACCOUNT',
+      role: actorRole ?? auditRole(context.roles),
+    },
     facts: { version },
     occurredAt: at,
     organizationId: context.organization.id,
