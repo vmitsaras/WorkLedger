@@ -16,11 +16,81 @@ import {
   resumeAttendanceEnvelopeSchema,
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
+  teamCalendarEnvelopeSchema,
+  teamCalendarQuerySchema,
   teamStatusEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
+
+test('keeps team calendar coverage strict, neutral, and free of protected absence fields', () => {
+  const response = {
+    data: {
+      days: Array.from(
+        { length: 31 },
+        (_, index) => `2026-08-${(index + 1).toString().padStart(2, '0')}`,
+      ),
+      entries: [
+        {
+          availability: 'UNAVAILABLE',
+          coverageKind: 'MINUTE_INTERVAL',
+          employeeDisplayName: 'Employee Example',
+          endsAtMinute: 720,
+          localDate: '2026-08-14',
+          startsAtMinute: 540,
+          teamName: 'Operations',
+        },
+      ],
+      leadingEmptyDays: 5,
+      month: '2026-08',
+      scopeAsOfLocalDate: '2026-08-14',
+      timeZone: 'Europe/Berlin',
+    },
+    meta: { requestId: randomUUID() },
+  };
+
+  expect(teamCalendarQuerySchema.parse({ month: '2026-08' })).toEqual({ month: '2026-08' });
+  expect(() => teamCalendarQuerySchema.parse({ view: 'AGENDA' })).toThrow();
+  expect(teamCalendarEnvelopeSchema.parse(response)).toEqual(response);
+  expect(() =>
+    teamCalendarEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        entries: [{ ...response.data.entries[0], availability: 'SICKNESS' }],
+      },
+    }),
+  ).toThrow();
+  expect(() =>
+    teamCalendarEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        entries: [{ ...response.data.entries[0], endsAtMinute: null }],
+      },
+    }),
+  ).toThrow();
+  for (const protectedField of [
+    'employeeId',
+    'requestId',
+    'absenceType',
+    'sicknessClassification',
+    'reason',
+    'entitlementMinutes',
+    'reviewerHistory',
+  ]) {
+    expect(() =>
+      teamCalendarEnvelopeSchema.parse({
+        ...response,
+        data: {
+          ...response.data,
+          entries: [{ ...response.data.entries[0], [protectedField]: 'private' }],
+        },
+      }),
+    ).toThrow();
+  }
+});
 
 test('keeps team status bounded, strict, and free of protected absence fields', () => {
   const response = {

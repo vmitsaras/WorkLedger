@@ -177,6 +177,24 @@ export type ListTeamStatusInput = Readonly<{
   scope: EmployeeAuthorizationScope;
 }>;
 
+export type ListTeamCalendarInput = Readonly<{
+  actorEmployeeId: DomainId<'Employee'> | null;
+  endDate: LocalDate;
+  organizationId: DomainId<'Organization'>;
+  scope: EmployeeAuthorizationScope;
+  scopeLocalDate: LocalDate;
+  startDate: LocalDate;
+}>;
+
+export type TeamCalendarEntryRecord = Readonly<{
+  coverageKind: AbsenceCoverageSegmentInput['kind'];
+  employeeDisplayName: string;
+  endsAtMinute: number | null;
+  localDate: LocalDate;
+  startsAtMinute: number | null;
+  teamName: string | null;
+}>;
+
 export type TeamStatusMemberRecord = Readonly<{
   availability: TeamAvailabilityState;
   displayName: string;
@@ -668,6 +686,7 @@ export interface ApprovalInboxRepository {
 }
 
 export interface TeamStatusRepository {
+  listCalendar(input: ListTeamCalendarInput): Promise<readonly TeamCalendarEntryRecord[]>;
   listCurrent(input: ListTeamStatusInput): Promise<readonly TeamStatusMemberRecord[]>;
 }
 

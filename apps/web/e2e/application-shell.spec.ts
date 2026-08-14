@@ -72,6 +72,36 @@ const TEAM_STATUS = {
   },
   timeZone: 'Europe/Berlin',
 };
+const TEAM_CALENDAR = {
+  days: Array.from(
+    { length: 31 },
+    (_, index) => `2026-08-${(index + 1).toString().padStart(2, '0')}`,
+  ),
+  entries: [
+    {
+      availability: 'UNAVAILABLE',
+      coverageKind: 'FULL_DAY',
+      employeeDisplayName: 'Maria Chen',
+      endsAtMinute: null,
+      localDate: '2026-08-12',
+      startsAtMinute: null,
+      teamName: 'Client Services',
+    },
+    {
+      availability: 'UNAVAILABLE',
+      coverageKind: 'SECOND_HALF',
+      employeeDisplayName: 'Noah Williams',
+      endsAtMinute: null,
+      localDate: '2026-08-15',
+      startsAtMinute: null,
+      teamName: null,
+    },
+  ],
+  leadingEmptyDays: 5,
+  month: '2026-08',
+  scopeAsOfLocalDate: '2026-08-14',
+  timeZone: 'Europe/Berlin',
+};
 const TODAY_ATTENDANCE = {
   asOf: '2026-08-11T09:30:00Z',
   attendance: {
@@ -909,6 +939,53 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
     true,
   );
   await expect(page.getByText(/sickness|vacation/iu)).toHaveCount(0);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('defaults the team calendar to an equivalent agenda on narrow screens', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const requestedMonths: string[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(MANAGER_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/team/calendar*', async (route) => {
+    const url = new URL(route.request().url());
+    requestedMonths.push(url.searchParams.get('month') ?? '');
+    expect(url.searchParams.has('employee')).toBe(false);
+    expect(url.searchParams.has('absenceType')).toBe(false);
+    await route.fulfill({ json: success(TEAM_CALENDAR), status: 200 });
+  });
+
+  await page.goto('/team-calendar?month=2026-08');
+  await expect(page).toHaveTitle('Team calendar | WorkLedger');
+  await expect(page.getByRole('heading', { name: 'Team calendar' })).toBeFocused();
+  const agenda = page.getByRole('list', { name: 'Team availability agenda for August 2026' });
+  await expect(agenda).toBeVisible();
+  await expect(page.getByRole('table')).toHaveCount(0);
+  await expect(agenda.getByText('Maria Chen')).toBeVisible();
+  await expect(agenda.getByText('Unavailable — full day')).toBeVisible();
+  await expect(agenda.getByText('Noah Williams')).toBeVisible();
+  await expect(agenda.getByText('Unavailable — second half of expected work')).toBeVisible();
+
+  const augustFifteenth = agenda
+    .getByRole('heading', { name: /Saturday, August 15, 2026/u })
+    .locator('..');
+  await augustFifteenth.getByRole('button', { name: 'Select date' }).click();
+  await expect(page.getByText('Selected date')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Saturday, August 15, 2026' }).last(),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Month grid' }).click();
+  const table = page.getByRole('table', { name: /Neutral team unavailability for August 2026/u });
+  await expect(table).toBeVisible();
+  await expect(table.getByText('Maria Chen')).toBeVisible();
+  await expect(table.getByText('Noah Williams')).toBeVisible();
+  expect(requestedMonths).toContain('2026-08');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await expect(page.getByText(/sickness|vacation|medical/iu)).toHaveCount(0);
   await expectPageToHaveNoAxeViolations(page);
 });
 

@@ -20,6 +20,7 @@ import {
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
   teamStatusEnvelopeSchema,
+  teamCalendarEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
   myTimeEnvelopeSchema,
   personalCalendarEnvelopeSchema,
@@ -51,6 +52,8 @@ import {
   type CorrectionReviewItem,
   type SubmitAbsenceCancellation,
   type TeamStatus,
+  type TeamCalendar,
+  type TeamCalendarQuery,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -253,6 +256,22 @@ export async function loadApprovalDetail(
 export async function loadTeamStatus(signal?: AbortSignal): Promise<TeamStatus> {
   const body = await requestJson('/v1/team/status', signal === undefined ? {} : { signal });
   const parsed = teamStatusEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadTeamCalendar(
+  query: TeamCalendarQuery,
+  signal?: AbortSignal,
+): Promise<TeamCalendar> {
+  const search = new URLSearchParams();
+  if (query.month !== undefined) search.set('month', query.month);
+  const suffix = search.size === 0 ? '' : `?${search.toString()}`;
+  const body = await requestJson(
+    `/v1/team/calendar${suffix}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = teamCalendarEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 7 — Manager approvals and team availability
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 3 of 7 Phase 7 tasks complete
-**Current milestone:** Equivalent team availability calendar
-**Active task:** `WL-703`
+**Phase progress:** 4 of 7 Phase 7 tasks complete
+**Current milestone:** Notification history and optional delivery
+**Active task:** `WL-704`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement the equivalent team availability calendar and agenda/list required by `WL-703`.
+Implement durable in-app notification history and optional non-transactional delivery for `WL-704`.
 
 ## Verified decisions
 
@@ -54,6 +54,10 @@ Implement the equivalent team availability calendar and agenda/list required by 
   only display name, current team name, textual availability, and a generic unresolved-record flag.
   It never exposes employee/request IDs, absence subtype, sickness context, notes, reasons,
   entitlement, or reviewer history.
+- `/team-calendar` exposes effective, uncancelled coverage for the manager's current direct reports
+  or HR's organization scope as neutral `UNAVAILABLE` entries. Its month grid and agenda share one
+  selectable-date model; narrow screens start with the agenda, and missing current-team assignments
+  remain explicit rather than guessed.
 - Explicit unauthorized targets return `403`; scoped collections apply authorization before counts and pagination.
 - Self-approval and privileged self-adjustment are prohibited even for combined roles.
 - System-administrator capability grants technical access only, not HR/domain data.
@@ -308,6 +312,29 @@ Implement the equivalent team availability calendar and agenda/list required by 
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-703` — Build team calendar and agenda/list alternative
+
+- Changed: added a strict team-calendar contract, current-scope PostgreSQL coverage read model,
+  `GET /v1/team/calendar`, HR-only navigation parity, and the real `/team-calendar` route with
+  equivalent selectable month and agenda presentations.
+- Verified: contract and component/axe tests plus focused Chromium evidence cover strict coverage,
+  protected-field rejection, view equivalence, keyboard date selection, empty and missing-team
+  states, HR navigation, employee-route denial, narrow agenda-first behavior, reflow, and absence
+  subtype omission. PostgreSQL integration exercises manager/HR/system scope, cancellation,
+  invalid month validation, no-store caching, and serialized privacy when the database harness is
+  enabled.
+- Accessibility: the route uses a focused page heading, native `aria-pressed` view/date buttons, a
+  captioned native table in a named focusable scroll region, grouped agenda lists, a shared selected
+  date section, textual Today/Selected/count/coverage/warning states, and no custom ARIA grid.
+- Security/data: authorization precedes the bounded coverage query in one repeatable-read snapshot;
+  only effective non-cancelled coverage is returned as `UNAVAILABLE`; the DTO omits employee/request
+  identifiers, absence subtype, sickness context, notes, reasons, entitlement, and reviewer history.
+- Documentation: added `docs/77-team-calendar-agenda.md`, regenerated OpenAPI, and advanced Phase 7
+  to `WL-704`.
+- Remaining risk: current scope is deliberately evaluated at request time rather than reconstructed
+  historically. Notification persistence and delivery failure handling remain `WL-704`.
+- Next task: `WL-704`.
 
 ### `WL-702` — Build privacy-safe team current-status list
 
@@ -659,12 +686,12 @@ Implement the equivalent team availability calendar and agenda/list required by 
 
 ## Current blockers
 
-No `WL-703` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
+No `WL-704` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
 to the inbox; D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-703 — Build team calendar and agenda/list alternative.`
+`WL-704 — Implement notification records, in-app history, and optional email delivery.`
 
 ## Update rules
 

@@ -5,6 +5,17 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  TEAM_CALENDAR_COVERAGE_KINDS,
+  teamCalendarEntrySchema,
+  teamCalendarEnvelopeSchema,
+  teamCalendarQuerySchema,
+  teamCalendarSchema,
+  type TeamCalendar,
+  type TeamCalendarEntry,
+  type TeamCalendarQuery,
+} from './team-calendar.js';
+
+export {
   TEAM_AVAILABILITY_STATES,
   teamAvailabilityStateSchema,
   teamStatusEnvelopeSchema,

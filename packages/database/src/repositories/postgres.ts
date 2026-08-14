@@ -128,6 +128,7 @@ import type {
   LeaveEntitlementRepository,
   ListAuthorizedEmployeesInput,
   ListApprovalInboxInput,
+  ListTeamCalendarInput,
   ListTeamStatusInput,
   OrganizationRecord,
   OrganizationRepository,
@@ -140,6 +141,7 @@ import type {
   SubmitSicknessReportInput,
   SubmitAbsenceCancellationInput,
   TeamStatusMemberRecord,
+  TeamCalendarEntryRecord,
   TeamStatusRepository,
   TimeAccountRepository,
   TodayAttendanceRepository,
@@ -723,6 +725,104 @@ class PostgresAttendanceIdempotencyRepository implements AttendanceIdempotencyRe
 
 class PostgresTeamStatusRepository implements TeamStatusRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async listCalendar(input: ListTeamCalendarInput): Promise<readonly TeamCalendarEntryRecord[]> {
+    const scopeCondition = employeeScopeCondition({
+      actorEmployeeId: input.actorEmployeeId,
+      limit: 100_001,
+      localDate: input.scopeLocalDate,
+      offset: 0,
+      organizationId: input.organizationId,
+      scope: input.scope,
+    });
+    const currentManagerJoin = and(
+      eq(managerAssignments.organizationId, input.organizationId),
+      eq(managerAssignments.employeeId, employees.id),
+      lte(managerAssignments.startsOn, input.scopeLocalDate),
+      or(isNull(managerAssignments.endsOn), gt(managerAssignments.endsOn, input.scopeLocalDate)),
+    );
+    const currentTeamJoin = and(
+      eq(teamAssignments.organizationId, input.organizationId),
+      eq(teamAssignments.employeeId, employees.id),
+      lte(teamAssignments.startsOn, input.scopeLocalDate),
+      or(isNull(teamAssignments.endsOn), gt(teamAssignments.endsOn, input.scopeLocalDate)),
+    );
+    const rows = await this.transaction
+      .select({
+        coverageKind: absenceCoverageSegments.kind,
+        employeeDisplayName: employees.displayName,
+        endsAtMinute: absenceCoverageSegments.endsAtMinute,
+        localDate: absenceEffects.localDate,
+        startsAtMinute: absenceCoverageSegments.startsAtMinute,
+        teamName: teams.name,
+      })
+      .from(absenceEffects)
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.id, absenceEffects.absenceCoverageSegmentId),
+          eq(absenceCoverageSegments.organizationId, absenceEffects.organizationId),
+        ),
+      )
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.id, absenceEffects.employeeId),
+          eq(employees.organizationId, absenceEffects.organizationId),
+        ),
+      )
+      .leftJoin(managerAssignments, currentManagerJoin)
+      .leftJoin(teamAssignments, currentTeamJoin)
+      .leftJoin(
+        teams,
+        and(eq(teams.organizationId, input.organizationId), eq(teams.id, teamAssignments.teamId)),
+      )
+      .where(
+        and(
+          eq(absenceEffects.organizationId, input.organizationId),
+          eq(absenceEffects.effectVersion, 1),
+          gte(absenceEffects.localDate, input.startDate),
+          lte(absenceEffects.localDate, input.endDate),
+          eq(employees.status, 'ACTIVE'),
+          scopeCondition,
+          sql`exists (
+            select 1 from ${employmentPeriods}
+            where ${employmentPeriods.organizationId} = ${input.organizationId}
+              and ${employmentPeriods.employeeId} = ${employees.id}
+              and ${employmentPeriods.startsOn} <= ${input.scopeLocalDate}
+              and (${employmentPeriods.endsOn} is null or ${employmentPeriods.endsOn} > ${input.scopeLocalDate})
+          )`,
+          sql`not exists (
+            select 1
+            from ${absenceCancellationSegments}
+            inner join ${absenceCancellations}
+              on ${absenceCancellations.id} = ${absenceCancellationSegments.absenceCancellationId}
+             and ${absenceCancellations.organizationId} = ${input.organizationId}
+             and ${absenceCancellations.status} = 'APPROVED'
+            where ${absenceCancellationSegments.absenceCoverageSegmentId} = ${absenceEffects.absenceCoverageSegmentId}
+          )`,
+        ),
+      )
+      .orderBy(
+        asc(absenceEffects.localDate),
+        asc(employees.displayName),
+        asc(absenceCoverageSegments.id),
+      )
+      .limit(100_001);
+
+    return Object.freeze(
+      rows.map((row) =>
+        Object.freeze({
+          coverageKind: row.coverageKind,
+          employeeDisplayName: row.employeeDisplayName,
+          endsAtMinute: row.endsAtMinute,
+          localDate: mapLocalDate(row.localDate, 'absence_effects', 'local_date'),
+          startsAtMinute: row.startsAtMinute,
+          teamName: row.teamName,
+        }),
+      ),
+    );
+  }
 
   async listCurrent(input: ListTeamStatusInput): Promise<readonly TeamStatusMemberRecord[]> {
     const scopeCondition = employeeScopeCondition({ ...input, limit: 1_000, offset: 0 });

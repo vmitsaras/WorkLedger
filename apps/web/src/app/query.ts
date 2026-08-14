@@ -5,6 +5,7 @@ import {
   todayAttendanceSchema,
   type MyTimeQuery,
   type PersonalCalendarQuery,
+  type TeamCalendarQuery,
 } from '@workledger/contracts';
 
 import {
@@ -18,6 +19,7 @@ import {
   loadSelfProfile,
   loadTodayAttendance,
   loadTeamStatus,
+  loadTeamCalendar,
 } from './api-client.js';
 
 const TODAY_ATTENDANCE_REFRESH_INTERVAL_MS = 30 * 1_000;
@@ -100,6 +102,13 @@ export const teamStatusQuery = () =>
     refetchIntervalInBackground: false,
     refetchOnReconnect: 'always',
     refetchOnWindowFocus: 'always',
+  });
+
+export const teamCalendarQuery = (query: TeamCalendarQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadTeamCalendar(query, signal),
+    queryKey: ['team', 'calendar', query] as const,
   });
 
 function preferNewestTodayAttendance(previous: unknown, next: unknown): unknown {

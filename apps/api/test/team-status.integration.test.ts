@@ -3,7 +3,12 @@ import { fileURLToPath } from 'node:url';
 
 import type pg from 'pg';
 
-import { teamStatusEnvelopeSchema, type TeamStatus } from '@workledger/contracts';
+import {
+  teamCalendarEnvelopeSchema,
+  teamStatusEnvelopeSchema,
+  type TeamCalendar,
+  type TeamStatus,
+} from '@workledger/contracts';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createRuntimeConfig } from '../src/config.js';
@@ -103,6 +108,42 @@ integrationTest(
       );
       assertPrivacyMinimized(status);
 
+      const calendarResponse = await getTeamCalendar(app, managerCookie, '2026-08');
+      expect(calendarResponse.statusCode).toBe(200);
+      expect(calendarResponse.headers['cache-control']).toBe('private, no-store');
+      const calendar = teamCalendarEnvelopeSchema.parse(calendarResponse.json()).data;
+      expect(calendar).toMatchObject({
+        leadingEmptyDays: 5,
+        month: '2026-08',
+        scopeAsOfLocalDate: '2026-08-14',
+        timeZone: 'Europe/Berlin',
+      });
+      expect(calendar.days).toHaveLength(31);
+      expect(calendar.entries).toEqual([
+        {
+          availability: 'UNAVAILABLE',
+          coverageKind: 'FULL_DAY',
+          employeeDisplayName: 'Ari Working',
+          endsAtMinute: null,
+          localDate: '2026-08-14',
+          startsAtMinute: null,
+          teamName: 'Delivery',
+        },
+        {
+          availability: 'UNAVAILABLE',
+          coverageKind: 'FULL_DAY',
+          employeeDisplayName: 'Cleo Away',
+          endsAtMinute: null,
+          localDate: '2026-08-14',
+          startsAtMinute: null,
+          teamName: 'Delivery',
+        },
+      ]);
+      expect(calendar.entries.map(({ employeeDisplayName }) => employeeDisplayName)).not.toEqual(
+        expect.arrayContaining(['Dara Cancelled', 'Former Report', 'Unrelated Employee']),
+      );
+      assertCalendarPrivacyMinimized(calendar);
+
       const hrCookie = await signIn(app, scenario.hrOnly);
       const hrStatus = teamStatusEnvelopeSchema.parse(
         (await getTeamStatus(app, hrCookie)).json(),
@@ -112,11 +153,23 @@ integrationTest(
         expect.arrayContaining(['Former Report', 'Unrelated Employee', 'Team Manager']),
       );
       assertPrivacyMinimized(hrStatus);
+      const hrCalendar = teamCalendarEnvelopeSchema.parse(
+        (await getTeamCalendar(app, hrCookie, '2026-08')).json(),
+      ).data;
+      expect(hrCalendar.entries).toHaveLength(2);
+      assertCalendarPrivacyMinimized(hrCalendar);
 
       const systemCookie = await signIn(app, scenario.system);
       const denied = await getTeamStatus(app, systemCookie);
       expect(denied.statusCode).toBe(403);
       expect(JSON.stringify(denied.json())).not.toContain('Ari Working');
+      const deniedCalendar = await getTeamCalendar(app, systemCookie, '2026-08');
+      expect(deniedCalendar.statusCode).toBe(403);
+      expect(JSON.stringify(deniedCalendar.json())).not.toContain('Ari Working');
+
+      const invalidMonth = await getTeamCalendar(app, managerCookie, '2026-13');
+      expect(invalidMonth.statusCode).toBe(422);
+      expect(JSON.stringify(invalidMonth.json())).not.toContain('Ari Working');
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -385,6 +438,14 @@ function getTeamStatus(app: ReturnType<typeof createApiServer>, cookie: string) 
   return app.inject({ method: 'GET', url: '/v1/team/status', headers: { cookie, origin: ORIGIN } });
 }
 
+function getTeamCalendar(app: ReturnType<typeof createApiServer>, cookie: string, month: string) {
+  return app.inject({
+    method: 'GET',
+    url: `/v1/team/calendar?month=${encodeURIComponent(month)}`,
+    headers: { cookie, origin: ORIGIN },
+  });
+}
+
 function assertPrivacyMinimized(status: TeamStatus) {
   const serialized = JSON.stringify(status);
   for (const forbidden of [
@@ -396,6 +457,22 @@ function assertPrivacyMinimized(status: TeamStatus) {
     'absenceType',
     'reason',
     'entitlement',
+  ]) {
+    expect(serialized).not.toContain(forbidden);
+  }
+}
+
+function assertCalendarPrivacyMinimized(calendar: TeamCalendar) {
+  const serialized = JSON.stringify(calendar);
+  for (const forbidden of [
+    'SICKNESS',
+    'sickness',
+    'requestId',
+    'employeeId',
+    'absenceType',
+    'reason',
+    'entitlement',
+    'reviewer',
   ]) {
     expect(serialized).not.toContain(forbidden);
   }

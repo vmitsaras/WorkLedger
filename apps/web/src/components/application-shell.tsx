@@ -40,6 +40,12 @@ const HR_APPROVAL_ITEM: NavigationItem = {
   to: '/approvals',
 };
 
+const HR_TEAM_CALENDAR_ITEM: NavigationItem = {
+  area: 'HR',
+  label: 'Team calendar',
+  to: '/team-calendar',
+};
+
 const AREA_LABELS: Readonly<Record<NavigationArea, string>> = {
   EMPLOYEE: 'My work',
   HR: 'People administration',
@@ -110,7 +116,7 @@ function NavigationLists({
             const items = [
               ...NAVIGATION_ITEMS.filter((item) => item.area === area),
               ...(area === 'HR' && !context.navigationAreas.includes('MANAGER')
-                ? [HR_APPROVAL_ITEM]
+                ? [HR_APPROVAL_ITEM, HR_TEAM_CALENDAR_ITEM]
                 : []),
             ];
             if (items.length === 0) return null;

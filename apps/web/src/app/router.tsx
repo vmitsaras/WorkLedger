@@ -4,6 +4,7 @@ import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } 
 
 import {
   approvalInboxQuerySchema,
+  teamCalendarQuerySchema,
   type NavigationArea,
   type SelfContext,
 } from '@workledger/contracts';
@@ -17,6 +18,7 @@ import {
   selfProfileQuery,
   todayAttendanceQuery,
   teamStatusQuery,
+  teamCalendarQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -40,6 +42,7 @@ import { PersonalCalendarPage } from '../routes/personal-calendar-page.js';
 import { ApprovalInboxPage } from '../routes/approval-inbox-page.js';
 import { ApprovalDetailPage } from '../routes/approval-detail-page.js';
 import { TeamStatusPage } from '../routes/team-status-page.js';
+import { TeamCalendarPage } from '../routes/team-calendar-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -57,13 +60,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'MANAGER',
-    description: 'Equivalent calendar and agenda views for team availability.',
-    milestone: 'WL-703',
-    path: 'team-calendar',
-    title: 'Team calendar',
   },
   {
     area: 'HR',
@@ -245,6 +241,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               handle: { title: 'Team' },
             },
             {
+              path: 'team-calendar',
+              loader: createTeamCalendarLoader(queryClient),
+              element: <TeamCalendarPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Team calendar' },
+            },
+            {
               path: 'approvals',
               loader: createApprovalInboxLoader(queryClient),
               element: <ApprovalInboxPage />,
@@ -411,6 +414,23 @@ function createTeamStatusLoader(queryClient: QueryClient): LoaderFunction {
     if (!context.navigationAreas.includes('MANAGER')) throw new Response(null, { status: 403 });
     void queryClient.prefetchQuery(teamStatusQuery());
     return null;
+  };
+}
+
+function createTeamCalendarLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    await requireApprovalAudience(queryClient);
+    const searchParams = new URL(request.url).searchParams;
+    const values: Record<string, string> = {};
+    for (const key of new Set(searchParams.keys())) {
+      const entries = searchParams.getAll(key);
+      if (entries.length !== 1 || entries[0] === undefined) return redirect('/team-calendar');
+      values[key] = entries[0];
+    }
+    const parsed = teamCalendarQuerySchema.safeParse(values);
+    if (!parsed.success) return redirect('/team-calendar');
+    void queryClient.prefetchQuery(teamCalendarQuery(parsed.data));
+    return parsed.data;
   };
 }
 
