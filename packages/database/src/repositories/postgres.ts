@@ -69,6 +69,7 @@ import {
   dailyProjections,
   domainAuditEvents,
   employees,
+  entitlementAdjustments,
   employmentPeriods,
   idempotencyRecords,
   holidays,
@@ -98,6 +99,8 @@ import type {
   AccountSelfServiceRepository,
   AccountSessionRecord,
   AdministrationEmployeeRecord,
+  AdministrationAbsenceTypeRecord,
+  AdministrationEntitlementEntryRecord,
   AdministrationRepository,
   AdministrationSystemAccountRecord,
   AdministrationTimePolicyRecord,
@@ -858,6 +861,144 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     return created === undefined ? null : mapAdministrationWeeklySchedule(created, true);
   }
 
+  async createAbsenceTypeVersion(
+    input: Parameters<AdministrationRepository['createAbsenceTypeVersion']>[0],
+  ) {
+    const [organization] = await this.transaction
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.id, input.organizationId))
+      .for('update')
+      .limit(1);
+    if (organization === undefined) return null;
+    const rows = await this.transaction
+      .select()
+      .from(absenceTypes)
+      .where(
+        and(
+          eq(absenceTypes.organizationId, input.organizationId),
+          eq(absenceTypes.code, input.code),
+        ),
+      )
+      .orderBy(asc(absenceTypes.validFrom), asc(absenceTypes.id));
+    if (rows.some((row) => row.validFrom === input.validFrom)) return null;
+    const current = rows.find(
+      (row) =>
+        row.validFrom < input.validFrom && (row.validTo === null || input.validFrom < row.validTo),
+    );
+    if (current !== undefined) {
+      const currentPolicy = mapResolvedAbsenceTypePolicy({
+        ...current,
+        code: mapAbsenceTypeCode(current.code),
+      });
+      if (
+        current.active === input.active &&
+        current.name === input.name &&
+        absencePoliciesEqual(currentPolicy, input.policy)
+      )
+        return null;
+      const updated = await this.transaction
+        .update(absenceTypes)
+        .set({ validTo: input.validFrom })
+        .where(
+          and(
+            eq(absenceTypes.id, current.id),
+            eq(absenceTypes.organizationId, input.organizationId),
+            current.validTo === null
+              ? isNull(absenceTypes.validTo)
+              : eq(absenceTypes.validTo, current.validTo),
+          ),
+        )
+        .returning({ id: absenceTypes.id });
+      if (updated.length !== 1) return null;
+    }
+    const next = rows.find((row) => row.validFrom > input.validFrom);
+    const [created] = await this.transaction
+      .insert(absenceTypes)
+      .values({
+        active: input.active,
+        code: input.code,
+        name: input.name,
+        organizationId: input.organizationId,
+        policy: input.policy,
+        validFrom: input.validFrom,
+        validTo: next?.validFrom ?? null,
+        version: Math.max(0, ...rows.map((row) => row.version)) + 1,
+      })
+      .returning();
+    return created === undefined ? null : mapAdministrationAbsenceType(created, true);
+  }
+
+  async createEntitlementAdjustment(
+    input: Parameters<AdministrationRepository['createEntitlementAdjustment']>[0],
+  ) {
+    if (!(await this.lockActiveEmployee(input.organizationId, input.employeeId))) return null;
+    const [absenceType] = await this.transaction
+      .select()
+      .from(absenceTypes)
+      .where(
+        and(
+          eq(absenceTypes.organizationId, input.organizationId),
+          eq(absenceTypes.id, input.absenceTypeId),
+        ),
+      )
+      .limit(1);
+    if (
+      absenceType === undefined ||
+      absenceType.code === 'SICKNESS' ||
+      !absenceType.active ||
+      absenceType.validFrom > input.effectiveOn ||
+      (absenceType.validTo !== null && input.effectiveOn >= absenceType.validTo)
+    )
+      return null;
+    const policy = mapResolvedAbsenceTypePolicy({
+      ...absenceType,
+      code: mapAbsenceTypeCode(absenceType.code),
+    });
+    if (policy.entitlementAccountCategory === null) return null;
+    const [employment] = await this.transaction
+      .select({ id: employmentPeriods.id })
+      .from(employmentPeriods)
+      .where(
+        and(
+          eq(employmentPeriods.organizationId, input.organizationId),
+          eq(employmentPeriods.employeeId, input.employeeId),
+          lte(employmentPeriods.startsOn, input.effectiveOn),
+          or(isNull(employmentPeriods.endsOn), gt(employmentPeriods.endsOn, input.effectiveOn)),
+        ),
+      )
+      .limit(1);
+    if (employment === undefined) return null;
+    await this.transaction.insert(entitlementAdjustments).values({
+      absenceTypeId: input.absenceTypeId,
+      actorAccountId: input.actorAccountId,
+      effectiveOn: input.effectiveOn,
+      employeeId: input.employeeId,
+      id: input.sourceId,
+      minutes: input.minutes,
+      organizationId: input.organizationId,
+      reason: input.reason,
+    });
+    const [entry] = await this.transaction
+      .insert(leaveEntitlementEntries)
+      .values({
+        absenceTypeId: input.absenceTypeId,
+        effectiveOn: input.effectiveOn,
+        employeeId: input.employeeId,
+        entryType: 'MANUAL_ADJUSTMENT',
+        id: input.entryId,
+        minutes: input.minutes,
+        organizationId: input.organizationId,
+        sourceId: input.sourceId,
+      })
+      .returning();
+    if (entry === undefined) throw new DatabaseValueError('leave_entitlement_entries', 'id');
+    return Object.freeze({
+      ...mapLeaveEntitlementEntry(entry, absenceType.name),
+      reason: input.reason,
+    });
+  }
+
   async createTimePolicyVersion(
     input: Parameters<AdministrationRepository['createTimePolicyVersion']>[0],
   ) {
@@ -1444,6 +1585,74 @@ class PostgresAdministrationRepository implements AdministrationRepository {
         return mapAdministrationTimePolicy(row, latestVersion);
       }),
     );
+  }
+
+  async listAbsenceTypeVersions(
+    organizationId: Parameters<AdministrationRepository['listAbsenceTypeVersions']>[0],
+  ) {
+    const rows = await this.transaction
+      .select()
+      .from(absenceTypes)
+      .where(eq(absenceTypes.organizationId, organizationId))
+      .orderBy(asc(absenceTypes.code), desc(absenceTypes.version), asc(absenceTypes.id))
+      .limit(250);
+    const latestCodes = new Set<string>();
+    return Object.freeze(
+      rows.map((row) => {
+        const latestVersion = !latestCodes.has(row.code);
+        latestCodes.add(row.code);
+        return mapAdministrationAbsenceType(row, latestVersion);
+      }),
+    );
+  }
+
+  async listEmployeeEntitlements(
+    organizationId: Parameters<AdministrationRepository['listEmployeeEntitlements']>[0],
+    employeeId: Parameters<AdministrationRepository['listEmployeeEntitlements']>[1],
+  ) {
+    const [employee] = await this.transaction
+      .select({ id: employees.id })
+      .from(employees)
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)))
+      .limit(1);
+    if (employee === undefined) return null;
+    const rows = await this.transaction
+      .select({
+        adjustmentReason: entitlementAdjustments.reason,
+        absenceTypeName: absenceTypes.name,
+        entry: leaveEntitlementEntries,
+      })
+      .from(leaveEntitlementEntries)
+      .innerJoin(
+        absenceTypes,
+        and(
+          eq(absenceTypes.organizationId, organizationId),
+          eq(absenceTypes.id, leaveEntitlementEntries.absenceTypeId),
+        ),
+      )
+      .leftJoin(
+        entitlementAdjustments,
+        and(
+          eq(entitlementAdjustments.organizationId, organizationId),
+          eq(entitlementAdjustments.id, leaveEntitlementEntries.sourceId),
+        ),
+      )
+      .where(
+        and(
+          eq(leaveEntitlementEntries.organizationId, organizationId),
+          eq(leaveEntitlementEntries.employeeId, employeeId),
+          sql`${absenceTypes.code} <> 'SICKNESS'`,
+        ),
+      )
+      .orderBy(asc(leaveEntitlementEntries.createdAt), asc(leaveEntitlementEntries.id));
+    return Object.freeze(
+      rows.map(({ adjustmentReason, absenceTypeName, entry }) =>
+        Object.freeze({
+          ...mapLeaveEntitlementEntry(entry, absenceTypeName),
+          reason: entry.entryType === 'MANUAL_ADJUSTMENT' ? adjustmentReason : null,
+        }),
+      ),
+    ) as readonly AdministrationEntitlementEntryRecord[];
   }
 
   async listTeams(input: Parameters<AdministrationRepository['listTeams']>[0]) {
@@ -2109,6 +2318,28 @@ function mapAdministrationTimePolicy(
     }),
     version: row.version,
   });
+}
+
+function mapAdministrationAbsenceType(
+  row: typeof absenceTypes.$inferSelect,
+  latestVersion: boolean,
+): AdministrationAbsenceTypeRecord {
+  const code = mapAbsenceTypeCode(row.code);
+  return Object.freeze({
+    active: row.active,
+    code,
+    id: mapDomainId<'AbsenceTypeVersion'>(row.id, 'absence_types', 'id'),
+    latestVersion,
+    name: row.name,
+    policy: mapResolvedAbsenceTypePolicy({ ...row, code }),
+    validFrom: mapLocalDate(row.validFrom, 'absence_types', 'valid_from'),
+    validTo: row.validTo === null ? null : mapLocalDate(row.validTo, 'absence_types', 'valid_to'),
+    version: row.version,
+  });
+}
+
+function absencePoliciesEqual(left: AbsenceTypePolicy, right: AbsenceTypePolicy): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function policyRulesEqual(

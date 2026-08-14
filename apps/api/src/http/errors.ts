@@ -47,6 +47,8 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'The assignment changed. Refresh and review the current history.';
     case 'ACCESS_DENIED':
       return 'You do not have permission to perform this action.';
+    case 'ABSENCE_TYPE_VERSION_CONFLICT':
+      return 'The absence-type version or effective-date history changed. Refresh and review it.';
     case 'AUTH_REQUIRED':
       return 'Sign in to continue.';
     case 'AUTH_SESSION_EXPIRED':
@@ -61,6 +63,8 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'An employee already uses that employee number.';
     case 'EMPLOYEE_STATE_CONFLICT':
       return 'The employee is already in the requested state.';
+    case 'ENTITLEMENT_ADJUSTMENT_CONFLICT':
+      return 'The employee or entitlement account is unavailable for that adjustment.';
     case 'EMPLOYMENT_PERIOD_OVERLAP':
       return 'The employment period overlaps existing history.';
     case 'MALFORMED_REQUEST':

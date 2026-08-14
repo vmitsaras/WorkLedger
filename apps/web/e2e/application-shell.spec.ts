@@ -1507,6 +1507,30 @@ test('creates, invites, and assigns an employee through the keyboard-complete HR
       status: 200,
     });
   });
+  await page.route(`**/v1/hr/employees/${employeeId}/policy`, async (route) => {
+    await route.fulfill({
+      json: success({
+        asOfLocalDate: '2026-08-14',
+        assignablePolicies: [],
+        coverageGaps: [{ endsOn: null, startsOn: '2026-08-18' }],
+        currentAssignment: null,
+        history: [],
+        privilegedActionsAllowed: true,
+      }),
+      status: 200,
+    });
+  });
+  await page.route(`**/v1/hr/employees/${employeeId}/entitlements`, async (route) => {
+    await route.fulfill({
+      json: success({
+        accounts: [],
+        adjustableAbsenceTypes: [],
+        asOfLocalDate: '2026-08-14',
+        privilegedActionsAllowed: true,
+      }),
+      status: 200,
+    });
+  });
   await page.route(`**/v1/hr/employees/${employeeId}/team-assignment`, async (route) => {
     expect(route.request().headers()['x-workledger-csrf']).toBe('h'.repeat(43));
     assignmentBodies.push(route.request().postDataJSON());
@@ -1600,7 +1624,10 @@ test('creates an immutable weekly schedule version with keyboard-recoverable val
     await route.fulfill({ json: success({ token: 's'.repeat(43) }), status: 200 });
   });
   await page.route('**/v1/hr/time-settings', async (route) => {
-    await route.fulfill({ json: success({ scheduleVersions: [] }), status: 200 });
+    await route.fulfill({
+      json: success({ policyVersions: [], scheduleVersions: [] }),
+      status: 200,
+    });
   });
   await page.route('**/v1/hr/time-settings/schedule-versions', async (route) => {
     expect(route.request().headers()['x-workledger-csrf']).toBe('s'.repeat(43));

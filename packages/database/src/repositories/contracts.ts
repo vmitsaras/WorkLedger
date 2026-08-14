@@ -13,6 +13,7 @@ import type {
   PunchEvent,
   PunchEventType,
   ScheduleAssignment,
+  SignedMinutes,
   TimeAccountLedgerEntry,
   MonthlyPeriodStatus,
   CalculationBlockerCode,
@@ -436,6 +437,42 @@ export type CreateAdministrationTimePolicyVersionInput = Readonly<{
   name: string;
   organizationId: DomainId<'Organization'>;
   rules: AdministrationTimePolicyRules;
+}>;
+
+export type AdministrationAbsenceTypeRecord = Readonly<{
+  active: boolean;
+  code: AbsenceTypeCode;
+  id: DomainId<'AbsenceTypeVersion'>;
+  latestVersion: boolean;
+  name: string;
+  policy: AbsenceTypePolicy;
+  validFrom: LocalDate;
+  validTo: LocalDate | null;
+  version: number;
+}>;
+
+export type CreateAdministrationAbsenceTypeVersionInput = Readonly<{
+  active: boolean;
+  code: AbsenceTypeCode;
+  name: string;
+  organizationId: DomainId<'Organization'>;
+  policy: AbsenceTypePolicy;
+  validFrom: LocalDate;
+}>;
+
+export type AdministrationEntitlementEntryRecord = LeaveEntitlementEntryRecord &
+  Readonly<{ reason: string | null }>;
+
+export type AdministrationEntitlementAdjustmentInput = Readonly<{
+  absenceTypeId: DomainId<'AbsenceTypeVersion'>;
+  actorAccountId: DomainId<'Account'>;
+  effectiveOn: LocalDate;
+  employeeId: DomainId<'Employee'>;
+  entryId: DomainId<'LeaveEntitlementEntry'>;
+  minutes: SignedMinutes;
+  organizationId: DomainId<'Organization'>;
+  reason: string;
+  sourceId: DomainId<'LeaveEntitlementSource'>;
 }>;
 
 export type CreateAdministrationEmployeeInput = Readonly<{
@@ -1253,6 +1290,12 @@ export interface AdministrationRepository {
     organizationId: DomainId<'Organization'>;
   }> | null>;
   createEmployee(input: CreateAdministrationEmployeeInput): Promise<AdministrationEmployeeRecord>;
+  createAbsenceTypeVersion(
+    input: CreateAdministrationAbsenceTypeVersionInput,
+  ): Promise<AdministrationAbsenceTypeRecord | null>;
+  createEntitlementAdjustment(
+    input: AdministrationEntitlementAdjustmentInput,
+  ): Promise<AdministrationEntitlementEntryRecord | null>;
   createScheduleVersion(
     input: CreateAdministrationScheduleVersionInput,
   ): Promise<AdministrationWeeklyScheduleRecord | null>;
@@ -1290,6 +1333,10 @@ export interface AdministrationRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<AdministrationEmployeePolicyRecord | null>;
+  listEmployeeEntitlements(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ): Promise<readonly AdministrationEntitlementEntryRecord[] | null>;
   applyManagerAssignmentTransition(
     input: ApplyAdministrationAssignmentTransitionInput,
   ): Promise<string | null>;
@@ -1305,6 +1352,9 @@ export interface AdministrationRepository {
   listTimePolicyVersions(
     organizationId: DomainId<'Organization'>,
   ): Promise<readonly AdministrationTimePolicyRecord[]>;
+  listAbsenceTypeVersions(
+    organizationId: DomainId<'Organization'>,
+  ): Promise<readonly AdministrationAbsenceTypeRecord[]>;
   listEmployees(
     input: Readonly<{
       at: Instant;

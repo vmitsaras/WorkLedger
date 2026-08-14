@@ -134,6 +134,13 @@
       "when": 1786710769628,
       "tag": "0018_bored_medusa",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786737736950,
+      "tag": "0019_stale_loners",
+      "breakpoints": true
     }
   ]
 }

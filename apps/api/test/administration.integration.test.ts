@@ -533,7 +533,7 @@ integrationTest(
 );
 
 integrationTest(
-  `versions weekly schedules and preserves gap-free effective assignment history (${databaseHarness.safeLabel})`,
+  `versions effective time and absence configuration and appends reasoned entitlement adjustments (${databaseHarness.safeLabel})`,
   async () => {
     const fixture = await createPostgresSchemaFixture({
       connectionString: databaseHarness.url,
@@ -789,6 +789,98 @@ integrationTest(
         }),
       ]);
       expect(policyHistory.json().data.coverageGaps).toEqual([]);
+
+      const vacationPolicy = {
+        allowedCoverageUnits: ['FULL_DAY', 'HALF_DAY', 'MINUTES'],
+        availabilityState: 'UNAVAILABLE',
+        entitlementAccountCategory: 'VACATION',
+        maximumRetrospectiveCalendarDays: null,
+        minimumLeadCalendarDays: 0,
+        pendingReservationBehavior: 'RESERVE_PENDING',
+        requestNoteMode: 'OPTIONAL',
+        timeTreatment: 'CREDIT_COVERED_EXPECTATION',
+        workflow: 'APPROVAL_REQUIRED',
+      };
+      const createAbsenceType = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          active: true,
+          code: 'VACATION',
+          effectiveFrom: '2026-08-14',
+          name: 'Vacation',
+          policy: vacationPolicy,
+        },
+        url: '/v1/hr/absence-settings/versions',
+      });
+      expect(createAbsenceType.statusCode, createAbsenceType.payload).toBe(200);
+      const absenceTypeId = String(createAbsenceType.json().data.targetId);
+      const invalidSickness = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          active: true,
+          code: 'SICKNESS',
+          effectiveFrom: '2026-08-14',
+          name: 'Sickness',
+          policy: { ...vacationPolicy, entitlementAccountCategory: 'SICKNESS' },
+        },
+        url: '/v1/hr/absence-settings/versions',
+      });
+      expect(invalidSickness.statusCode).toBe(422);
+      expect(invalidSickness.json()).toMatchObject({
+        error: { code: 'POLICY_CONFIGURATION_INVALID' },
+      });
+      const adjustment = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          absenceTypeId,
+          effectiveOn: '2026-08-14',
+          minutes: 480,
+          reason: 'Initial entitlement allocation after employment review.',
+        },
+        url: `/v1/hr/employees/${employee.employeeId}/entitlement-adjustments`,
+      });
+      expect(adjustment.statusCode, adjustment.payload).toBe(200);
+      const selfAdjustment = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          absenceTypeId,
+          effectiveOn: '2026-08-14',
+          minutes: 60,
+          reason: 'Prohibited self adjustment.',
+        },
+        url: `/v1/hr/employees/${actors.hrEmployeeId}/entitlement-adjustments`,
+      });
+      expect(selfAdjustment.statusCode).toBe(403);
+      const entitlement = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: `/v1/hr/employees/${employee.employeeId}/entitlements`,
+      });
+      expect(entitlement.statusCode).toBe(200);
+      expect(entitlement.json()).toMatchObject({
+        data: {
+          accounts: [
+            {
+              absenceTypeId,
+              availableMinutes: 480,
+              projectedRemainingMinutes: 480,
+              reservedMinutes: 0,
+              entries: [
+                {
+                  entryType: 'MANUAL_ADJUSTMENT',
+                  minutes: 480,
+                  reason: 'Initial entitlement allocation after employment review.',
+                },
+              ],
+            },
+          ],
+          privilegedActionsAllowed: true,
+        },
+      });
 
       const persisted = await fixture.client.query<{
         assignment_count: string;

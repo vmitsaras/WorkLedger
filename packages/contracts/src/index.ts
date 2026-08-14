@@ -5,6 +5,28 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  absenceAdministrationActionEnvelopeSchema,
+  absenceCoverageUnitAdminSchema,
+  absenceSettingsAdminDetailEnvelopeSchema,
+  absenceSettingsAdminDetailSchema,
+  absenceTypeCodeAdminSchema,
+  absenceTypePolicyAdminSchema,
+  absenceTypeVersionAdminSummarySchema,
+  createAbsenceTypeVersionAdminRequestSchema,
+  createEntitlementAdjustmentAdminRequestSchema,
+  employeeEntitlementAccountAdminSchema,
+  employeeEntitlementAdminDetailEnvelopeSchema,
+  employeeEntitlementAdminDetailSchema,
+  entitlementEntryAdminSummarySchema,
+  type AbsenceSettingsAdminDetail,
+  type AbsenceTypePolicyAdmin,
+  type AbsenceTypeVersionAdminSummary,
+  type CreateAbsenceTypeVersionAdminRequest,
+  type CreateEntitlementAdjustmentAdminRequest,
+  type EmployeeEntitlementAdminDetail,
+} from './absence-administration.js';
+
+export {
   EMPLOYEE_ADMIN_STATUSES,
   HR_MANAGED_ROLES,
   TEAM_ADMIN_STATUSES,

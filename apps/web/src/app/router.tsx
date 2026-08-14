@@ -31,10 +31,13 @@ import {
   employeeAdminDetailQuery,
   employeeAssignmentAdminDetailQuery,
   employeeScheduleAdminDetailQuery,
+  employeePolicyAdminDetailQuery,
+  employeeEntitlementAdminDetailQuery,
   employeeAdminPageQuery,
   systemAccountPageQuery,
   teamAdminPageQuery,
   timeSettingsAdminDetailQuery,
+  absenceSettingsAdminDetailQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -75,6 +78,7 @@ import {
 } from '../routes/employee-administration-page.js';
 import { SystemAccountAdministrationPage } from '../routes/system-account-administration-page.js';
 import { TimeSettingsPage } from '../routes/time-settings-page.js';
+import { AbsenceSettingsPage } from '../routes/absence-settings-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -92,13 +96,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'HR',
-    description: 'Absence types and leave-entitlement administration.',
-    milestone: 'WL-904',
-    path: 'settings/absence',
-    title: 'Absence settings',
   },
   {
     area: 'HR',
@@ -320,6 +317,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <TimeSettingsPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Time settings' },
+            },
+            {
+              path: 'settings/absence',
+              loader: createAbsenceSettingsAdminLoader(queryClient),
+              element: <AbsenceSettingsPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Absence settings' },
             },
             {
               path: 'system/accounts',
@@ -568,6 +572,8 @@ function createEmployeeAdminDetailLoader(queryClient: QueryClient): LoaderFuncti
     void queryClient.prefetchQuery(employeeAdminDetailQuery(employeeId));
     void queryClient.prefetchQuery(employeeAssignmentAdminDetailQuery(employeeId));
     void queryClient.prefetchQuery(employeeScheduleAdminDetailQuery(employeeId));
+    void queryClient.prefetchQuery(employeePolicyAdminDetailQuery(employeeId));
+    void queryClient.prefetchQuery(employeeEntitlementAdminDetailQuery(employeeId));
     return null;
   };
 }
@@ -577,6 +583,15 @@ function createTimeSettingsAdminLoader(queryClient: QueryClient): LoaderFunction
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
     void queryClient.prefetchQuery(timeSettingsAdminDetailQuery());
+    return null;
+  };
+}
+
+function createAbsenceSettingsAdminLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
+    void queryClient.prefetchQuery(absenceSettingsAdminDetailQuery());
     return null;
   };
 }

@@ -9,6 +9,7 @@ import {
   type EmployeeAssignmentAdminDetail,
   type EmployeeScheduleAdminDetail,
   type EmployeePolicyAdminDetail,
+  type EmployeeEntitlementAdminDetail,
   type TeamAdminPage,
 } from '@workledger/contracts';
 import { Button, linkVariants, TextField } from '@workledger/ui';
@@ -31,10 +32,12 @@ import {
   employeeAssignmentAdminDetailQuery,
   employeeScheduleAdminDetailQuery,
   employeePolicyAdminDetailQuery,
+  employeeEntitlementAdminDetailQuery,
   teamAdminPageQuery,
 } from '../app/query.js';
 import { EmployeeScheduleAdministration } from '../components/employee-schedule-administration.js';
 import { EmployeePolicyAdministration } from '../components/employee-policy-administration.js';
+import { EmployeeEntitlementAdministration } from '../components/employee-entitlement-administration.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -438,23 +441,32 @@ export function EmployeeAdministrationDetailPage() {
   const assignmentsQuery = useQuery(employeeAssignmentAdminDetailQuery(employeeId));
   const scheduleQuery = useQuery(employeeScheduleAdminDetailQuery(employeeId));
   const policyQuery = useQuery(employeePolicyAdminDetailQuery(employeeId));
+  const entitlementQuery = useQuery(employeeEntitlementAdminDetailQuery(employeeId));
   useEffect(() => {
     if (
       employeeQuery.data !== undefined &&
       assignmentsQuery.data !== undefined &&
       scheduleQuery.data !== undefined &&
-      policyQuery.data !== undefined
+      policyQuery.data !== undefined &&
+      entitlementQuery.data !== undefined
     ) {
       window.requestAnimationFrame(() =>
         document.querySelector<HTMLElement>('[data-route-heading]')?.focus(),
       );
     }
-  }, [assignmentsQuery.data, employeeQuery.data, policyQuery.data, scheduleQuery.data]);
+  }, [
+    assignmentsQuery.data,
+    employeeQuery.data,
+    entitlementQuery.data,
+    policyQuery.data,
+    scheduleQuery.data,
+  ]);
   if (
     employeeQuery.isPending ||
     assignmentsQuery.isPending ||
     scheduleQuery.isPending ||
-    policyQuery.isPending
+    policyQuery.isPending ||
+    entitlementQuery.isPending
   ) {
     return (
       <section aria-busy="true">
@@ -466,12 +478,14 @@ export function EmployeeAdministrationDetailPage() {
   if (assignmentsQuery.isError) throw assignmentsQuery.error;
   if (scheduleQuery.isError) throw scheduleQuery.error;
   if (policyQuery.isError) throw policyQuery.error;
+  if (entitlementQuery.isError) throw entitlementQuery.error;
   return (
     <EmployeeDetail
       assignments={assignmentsQuery.data}
       employee={employeeQuery.data}
       schedule={scheduleQuery.data}
       policy={policyQuery.data}
+      entitlement={entitlementQuery.data}
     />
   );
 }
@@ -481,11 +495,13 @@ function EmployeeDetail({
   employee,
   schedule,
   policy,
+  entitlement,
 }: Readonly<{
   assignments: EmployeeAssignmentAdminDetail;
   employee: EmployeeAdminDetail;
   schedule: EmployeeScheduleAdminDetail;
   policy: EmployeePolicyAdminDetail;
+  entitlement: EmployeeEntitlementAdminDetail;
 }>) {
   const queryClient = useQueryClient();
   const [manager, setManager] = useState(employee.roles.includes('MANAGER'));
@@ -619,6 +635,7 @@ function EmployeeDetail({
 
       <EmployeeScheduleAdministration employeeId={employee.id} schedule={schedule} />
       <EmployeePolicyAdministration employeeId={employee.id} policy={policy} />
+      <EmployeeEntitlementAdministration employeeId={employee.id} entitlement={entitlement} />
 
       {!employee.privilegedActionsAllowed ? (
         <div className="wl-alert rounded-xl border p-4">

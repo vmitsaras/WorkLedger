@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 9 — Administration
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 4 of 8 Phase 9 tasks complete
-**Current milestone:** Absence-type and entitlement administration
-**Active task:** `WL-904`
+**Phase progress:** 5 of 8 Phase 9 tasks complete
+**Current milestone:** Holiday calendar administration
+**Active task:** `WL-905`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Build absence-type configuration and ledger-based entitlement administration with auditable reasons
-for `WL-904`.
+Build date-only holiday calendar management with an authorized recalculation-impact preview for
+`WL-905`.
 
 ## Verified decisions
 
@@ -379,6 +379,16 @@ for `WL-904`.
   assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-904` — Build absence-type and entitlement administration
+
+- Changed: added strict bounded absence-administration contracts and generated OpenAPI, immutable effective-dated absence-type versions, a dedicated restricted-reason adjustment source and generated migration, employee entitlement ledger detail, reason-required signed adjustments, `/settings/absence`, and employee-detail administration.
+- Verified: workspace/toolchain/version checks, reproducible OpenAPI, formatting, lint and 238-file/1,221-import boundaries, strict TypeScript, 24 tooling tests, 295 unit/component tests across 41 files, 20 Chromium scenarios, and the production/workspace build pass. Database integration compiles and its non-database checks pass; PostgreSQL-dependent cases were skipped because the integration database was unavailable. The build retains the known large-chunk advisory.
+- Accessibility: configuration and adjustment forms use visible labels, native controls, coverage fieldsets, textual history/balance/source states, signed values, persistent feedback, pending protection, self-control omission, and component axe coverage.
+- Security/data: routes require active organization-HR authority; mutations are same-origin and CSRF protected, self-adjustment is denied, sickness cannot own an entitlement account, adjustment targets are organization/effective/employment scoped, and source/ledger/audit effects are atomic. Free-text reasons remain in restricted HR source records and out of generic audit facts.
+- Documentation: added `docs/92-absence-entitlement-administration.md`, migration `0019_stale_loners.sql`, regenerated OpenAPI, and synchronized README, TODO, task board, and project status. No version bump is required because this is not the Phase 9 gate.
+- Remaining risk: database-enabled integration was unavailable in this environment. Historical/backdated correction, bulk allocation/import, submitted/approved/locked interactions, and broad concurrency/cross-browser/assistive-technology/performance/security matrices remain later explicit work.
+- Next task: `WL-905`.
 
 ### `WL-903` — Build time-policy management
 
@@ -1129,12 +1139,12 @@ for `WL-904`.
 
 ## Current blockers
 
-No `WL-904` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
+No `WL-905` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
 recovery, and `D-502` remains open before the production browser gate.
 
 ## Next task
 
-`WL-904 — Build absence-type and entitlement administration.`
+`WL-905 — Build holiday calendar management.`
 
 ## Update rules
 

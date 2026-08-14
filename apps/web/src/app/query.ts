@@ -16,6 +16,8 @@ import {
 
 import {
   loadDailyTimeRecord,
+  loadAbsenceSettingsAdminDetail,
+  loadEmployeeEntitlementAdminDetail,
   loadApprovalDetail,
   loadApprovalInbox,
   loadMyTime,
@@ -99,6 +101,18 @@ export const timeSettingsAdminDetailQuery = () =>
   queryOptions({
     queryFn: ({ signal }) => loadTimeSettingsAdminDetail(signal),
     queryKey: ['administration', 'time-settings'] as const,
+  });
+
+export const absenceSettingsAdminDetailQuery = () =>
+  queryOptions({
+    queryFn: ({ signal }) => loadAbsenceSettingsAdminDetail(signal),
+    queryKey: ['administration', 'absence-settings'] as const,
+  });
+
+export const employeeEntitlementAdminDetailQuery = (employeeId: string) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadEmployeeEntitlementAdminDetail(employeeId, signal),
+    queryKey: ['administration', 'employee-entitlements', employeeId] as const,
   });
 
 export const teamAdminPageQuery = (query: TeamAdminQuery) =>

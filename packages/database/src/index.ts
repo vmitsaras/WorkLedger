@@ -41,6 +41,8 @@ export type {
   AdministrationManagerCandidateRecord,
   AdministrationEmployeeScheduleRecord,
   AdministrationEmployeePolicyRecord,
+  AdministrationAbsenceTypeRecord,
+  AdministrationEntitlementEntryRecord,
   AdministrationPolicyAssignmentRecord,
   AdministrationTimePolicyRecord,
   AdministrationTimePolicyRules,

@@ -1070,6 +1070,40 @@ export const leaveEntitlementEntries = pgTable(
   ],
 );
 
+export const entitlementAdjustments = pgTable(
+  'entitlement_adjustments',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    employeeId: employeeId(),
+    absenceTypeId: uuid('absence_type_id').notNull(),
+    actorAccountId: uuid('actor_account_id')
+      .notNull()
+      .references(() => authUsers.id),
+    minutes: integer('minutes').notNull(),
+    effectiveOn: date('effective_on', { mode: 'string' }).notNull(),
+    reason: text('reason').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('entitlement_adjustments_employee_type_date_idx').on(
+      table.employeeId,
+      table.absenceTypeId,
+      table.effectiveOn,
+    ),
+    check('entitlement_adjustments_non_zero_minutes', sql`${table.minutes} <> 0`),
+    check(
+      'entitlement_adjustments_reason_length',
+      sql`char_length(btrim(${table.reason})) between 1 and 1000`,
+    ),
+    foreignKey({
+      columns: [table.organizationId, table.absenceTypeId],
+      foreignColumns: [absenceTypes.organizationId, absenceTypes.id],
+      name: 'entitlement_adjustments_absence_type_organization_fk',
+    }),
+  ],
+);
+
 export const monthlyPeriods = pgTable(
   'monthly_periods',
   {

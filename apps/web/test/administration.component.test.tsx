@@ -10,6 +10,7 @@ import type {
   EmployeeAdminPage,
   EmployeeAssignmentAdminDetail,
   EmployeePolicyAdminDetail,
+  EmployeeEntitlementAdminDetail,
   EmployeeScheduleAdminDetail,
   SelfContext,
   SystemAccountPage,
@@ -246,6 +247,18 @@ const EMPLOYEE_POLICY: EmployeePolicyAdminDetail = {
   privilegedActionsAllowed: true,
 };
 
+const SELF_ENTITLEMENT: EmployeeEntitlementAdminDetail = {
+  accounts: [],
+  adjustableAbsenceTypes: [],
+  asOfLocalDate: '2026-08-14',
+  privilegedActionsAllowed: false,
+};
+
+const EMPLOYEE_ENTITLEMENT: EmployeeEntitlementAdminDetail = {
+  ...SELF_ENTITLEMENT,
+  privilegedActionsAllowed: true,
+};
+
 afterEach(() => {
   clearSessionMemory();
   vi.unstubAllGlobals();
@@ -296,6 +309,7 @@ test('shows separate effective team and manager history with keyboard-focused re
     employeeDetail: { ...SELF_EMPLOYEE_DETAIL, privilegedActionsAllowed: true },
     employeeSchedule: EMPLOYEE_SCHEDULE,
     employeePolicy: EMPLOYEE_POLICY,
+    employeeEntitlement: EMPLOYEE_ENTITLEMENT,
   });
   const user = userEvent.setup();
   const { container } = renderApplication(`/employees/${EMPLOYEE_ID}`);
@@ -373,6 +387,7 @@ function stubFetch(
     employeeAssignments?: EmployeeAssignmentAdminDetail;
     employeeSchedule?: EmployeeScheduleAdminDetail;
     employeePolicy?: EmployeePolicyAdminDetail;
+    employeeEntitlement?: EmployeeEntitlementAdminDetail;
     employeePage?: EmployeeAdminPage;
     systemPage?: SystemAccountPage;
     teamPage?: TeamAdminPage;
@@ -400,6 +415,9 @@ function stubFetch(
       }
       if (url.pathname.endsWith('/policy') && responses.employeeDetail !== undefined) {
         return successResponse(responses.employeePolicy ?? SELF_POLICY);
+      }
+      if (url.pathname.endsWith('/entitlements') && responses.employeeDetail !== undefined) {
+        return successResponse(responses.employeeEntitlement ?? SELF_ENTITLEMENT);
       }
       if (url.pathname.startsWith('/v1/hr/employees/') && responses.employeeDetail !== undefined) {
         return successResponse(responses.employeeDetail);

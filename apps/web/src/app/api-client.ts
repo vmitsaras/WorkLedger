@@ -1,5 +1,7 @@
 import {
   approvalDecisionEnvelopeSchema,
+  absenceSettingsAdminDetailEnvelopeSchema,
+  employeeEntitlementAdminDetailEnvelopeSchema,
   approvalDetailEnvelopeSchema,
   approvalInboxEnvelopeSchema,
   applyCorrectionEnvelopeSchema,
@@ -31,6 +33,10 @@ import {
   personalCalendarEnvelopeSchema,
   type ApiErrorCode,
   type ApprovalInbox,
+  type AbsenceSettingsAdminDetail,
+  type CreateAbsenceTypeVersionAdminRequest,
+  type CreateEntitlementAdjustmentAdminRequest,
+  type EmployeeEntitlementAdminDetail,
   type ApprovalInboxQuery,
   type ApprovalDecisionRequest,
   type ApprovalDecisionResult,
@@ -768,6 +774,28 @@ export async function loadEmployeePolicyAdminDetail(
   return parsed.data.data;
 }
 
+export async function loadAbsenceSettingsAdminDetail(
+  signal?: AbortSignal,
+): Promise<AbsenceSettingsAdminDetail> {
+  const body = await requestJson('/v1/hr/absence-settings', signal === undefined ? {} : { signal });
+  const parsed = absenceSettingsAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadEmployeeEntitlementAdminDetail(
+  employeeId: string,
+  signal?: AbortSignal,
+): Promise<EmployeeEntitlementAdminDetail> {
+  const body = await requestJson(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/entitlements`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = employeeEntitlementAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
 export async function loadTimeSettingsAdminDetail(
   signal?: AbortSignal,
 ): Promise<TimeSettingsAdminDetail> {
@@ -865,6 +893,22 @@ export async function createTimePolicyVersionForAdministration(
   input: CreateTimePolicyVersionAdminRequest,
 ): Promise<AdministrationActionResult> {
   return administrationAction('/v1/hr/time-settings/policy-versions', input);
+}
+
+export async function createAbsenceTypeVersionForAdministration(
+  input: CreateAbsenceTypeVersionAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction('/v1/hr/absence-settings/versions', input);
+}
+
+export async function createEntitlementAdjustmentForAdministration(
+  employeeId: string,
+  input: CreateEntitlementAdjustmentAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/entitlement-adjustments`,
+    input,
+  );
 }
 
 export async function replaceScheduleAssignmentForAdministration(

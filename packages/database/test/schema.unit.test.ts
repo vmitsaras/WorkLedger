@@ -243,6 +243,7 @@ describe('initial PostgreSQL schema', () => {
       '0016_flimsy_oracle',
       '0017_boring_aaron_stack',
       '0018_bored_medusa',
+      '0019_stale_loners',
     ]);
   });
 });

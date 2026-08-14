@@ -119,7 +119,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-901` Build teams and manager assignment.
 - [x] `WL-902` Build schedule and effective-date management.
 - [x] `WL-903` Build time-policy management.
-- [ ] `WL-904` Build absence-type and entitlement management.
+- [x] `WL-904` Build absence-type and entitlement management.
 - [ ] `WL-905` Build holiday calendar management.
 - [ ] `WL-906` Build audit explorer.
 - [ ] `WL-907` Pass the Phase 9 exit gate.
