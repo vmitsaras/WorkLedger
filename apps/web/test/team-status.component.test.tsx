@@ -86,6 +86,9 @@ test('renders an accessible, privacy-safe current direct-report table', async ()
   await waitFor(() => expect(heading).toHaveFocus());
   expect(document.title).toBe('Team | WorkLedger');
   expect(screen.getByText(/As of 12:30 PM on Friday, August 14, 2026/u)).toBeVisible();
+  expect(screen.getByRole('status', { name: 'Team refresh status' })).toHaveTextContent(
+    'Status current for 4 authorized team members.',
+  );
   const summary = screen.getByLabelText('Team status totals');
   expect(summary).toHaveAccessibleName('Team status totals');
 
@@ -146,7 +149,9 @@ test('recovers from a dependency error', async () => {
   renderApplication('/team');
   const user = userEvent.setup();
 
-  expect(await screen.findByRole('heading', { name: 'Team status is unavailable' })).toBeVisible();
+  expect(await screen.findByRole('alert')).toContainElement(
+    screen.getByRole('heading', { name: 'Team status is unavailable' }),
+  );
   await user.click(screen.getByRole('button', { name: 'Try again' }));
   expect(await screen.findByRole('table')).toBeVisible();
   expect(attempts).toBe(3);

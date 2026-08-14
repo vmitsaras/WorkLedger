@@ -375,14 +375,18 @@ function ApprovalResults({
           <h2 id="approval-results-heading" className="m-0 text-xl font-bold">
             Results
           </h2>
-          <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-            {pagination.total} authorized item{pagination.total === 1 ? '' : 's'} after scope and
-            filters.
+          <p
+            className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]"
+            role="status"
+            aria-label="Approval results status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {isFetching
+              ? 'Updating results…'
+              : `${pagination.total.toString()} authorized item${pagination.total === 1 ? '' : 's'} after scope and filters.`}
           </p>
         </div>
-        <p className="m-0 min-h-6 text-sm text-[var(--wl-text-muted)]" role="status">
-          {isFetching ? 'Updating results…' : ''}
-        </p>
       </div>
       {data.items.length === 0 ? (
         <div className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4">

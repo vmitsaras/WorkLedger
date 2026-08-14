@@ -103,7 +103,12 @@ function TeamCalendarContent({
       <section className="grid gap-4" aria-labelledby="team-calendar-month-heading">
         <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface)] p-4">
           <div className="grid gap-2">
-            <h2 id="team-calendar-month-heading" className="m-0 text-xl font-bold">
+            <h2
+              id="team-calendar-month-heading"
+              className="m-0 text-xl font-bold"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               {formatMonth(calendar.month)}
             </h2>
             <p className="m-0 text-sm text-[var(--wl-text-muted)]">
@@ -334,7 +339,12 @@ function SelectedDate({
     >
       <div>
         <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Selected date</p>
-        <h2 id="selected-team-date-heading" className="m-0 mt-1 text-xl font-bold">
+        <h2
+          id="selected-team-date-heading"
+          className="m-0 mt-1 text-xl font-bold"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {formatLocalDate(date)}
           {isToday ? ' — Today' : ''}
         </h2>
@@ -406,7 +416,7 @@ function TeamCalendarLoading() {
 
 function TeamCalendarError({ retry }: Readonly<{ retry: () => void }>) {
   return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4">
+    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
       <h2 className="m-0 text-xl font-bold">Team calendar is unavailable</h2>
       <p className="m-0">
         No restricted employee details were displayed. Try loading the authorized month again.

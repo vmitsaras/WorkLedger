@@ -65,17 +65,27 @@ test('requires a reason and explicit HR override before approving a negative abs
   const heading = await screen.findByRole('heading', { name: 'Review absence request' });
   await waitFor(() => expect(heading).toHaveFocus());
   expect(screen.getByText(/projected remaining −2h 00m/u)).toBeVisible();
+  expect(screen.getByRole('region', { name: 'Absence coverage' })).toHaveAttribute('tabindex', '0');
 
   await user.click(screen.getByRole('button', { name: 'Approve' }));
   let alert = screen.getByRole('alert');
   expect(alert).toHaveTextContent('Enter at least 10 characters');
   await waitFor(() => expect(alert).toHaveFocus());
+  const reason = screen.getByRole('textbox', { name: 'Decision reason' });
+  expect(reason).toHaveAttribute('aria-invalid', 'true');
+  expect(reason).toHaveAttribute(
+    'aria-describedby',
+    'approval-decision-reason-help approval-decision-reason-error',
+  );
+  expect(
+    screen.getByText('Enter at least 10 characters explaining the decision.', { selector: 'p' }),
+  ).toHaveAttribute('id', 'approval-decision-reason-error');
   expect(requests.filter(({ method }) => method === 'POST')).toHaveLength(0);
 
-  await user.type(
-    screen.getByRole('textbox', { name: 'Decision reason' }),
-    'Approved after reviewing the exceptional leave circumstances.',
-  );
+  await user.type(reason, 'Approved after reviewing the exceptional leave circumstances.');
+  expect(reason).not.toHaveAttribute('aria-invalid');
+  expect(reason).toHaveAttribute('aria-describedby', 'approval-decision-reason-help');
+  expect(screen.queryByText('Enter at least 10 characters explaining the decision.')).toBeNull();
   await user.click(screen.getByRole('button', { name: 'Approve' }));
   alert = screen.getByRole('alert');
   expect(alert).toHaveTextContent('Confirm the negative-balance override');

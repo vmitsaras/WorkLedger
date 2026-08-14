@@ -21,6 +21,7 @@ const MANAGER_CONTEXT = {
 };
 const APPROVAL_TEAM_ID = '123e4567-e89b-42d3-a456-426614174500';
 const CORRECTION_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174501';
+const ABSENCE_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174502';
 const APPROVAL_ITEMS = [
   {
     affectedEndDate: '2026-08-12',
@@ -37,7 +38,7 @@ const APPROVAL_ITEMS = [
     affectedEndDate: '2026-08-20',
     affectedStartDate: '2026-08-18',
     employeeDisplayName: 'Noah Williams',
-    id: '123e4567-e89b-42d3-a456-426614174502',
+    id: ABSENCE_APPROVAL_ID,
     kind: 'ABSENCE',
     status: 'WAITING_ON_EMPLOYEE',
     submittedAt: '2026-08-10T08:15:00Z',
@@ -45,6 +46,46 @@ const APPROVAL_ITEMS = [
     version: 3,
   },
 ];
+const ABSENCE_APPROVAL_DETAIL = {
+  absenceTypeName: 'Vacation',
+  affectedEndDate: '2026-08-20',
+  affectedStartDate: '2026-08-18',
+  availableActions: ['APPROVE', 'REQUEST_CHANGES', 'REJECT'],
+  availableEntitlementMinutes: 1_920,
+  canOverrideNegativeBalance: false,
+  coverage: [
+    {
+      endsAtMinute: null,
+      kind: 'FULL_DAY',
+      localDate: '2026-08-18',
+      minutes: 480,
+      startsAtMinute: null,
+    },
+    {
+      endsAtMinute: null,
+      kind: 'FULL_DAY',
+      localDate: '2026-08-19',
+      minutes: 480,
+      startsAtMinute: null,
+    },
+    {
+      endsAtMinute: null,
+      kind: 'FULL_DAY',
+      localDate: '2026-08-20',
+      minutes: 480,
+      startsAtMinute: null,
+    },
+  ],
+  employeeDisplayName: 'Noah Williams',
+  id: ABSENCE_APPROVAL_ID,
+  kind: 'ABSENCE',
+  projectedRemainingMinutes: 480,
+  requestedEntitlementMinutes: 1_440,
+  status: 'SUBMITTED',
+  submittedAt: '2026-08-10T08:15:00Z',
+  version: 3,
+  workflow: 'APPROVAL_REQUIRED',
+};
 const TEAM_STATUS = {
   asOf: '2026-08-14T10:30:45Z',
   localDate: '2026-08-14',
@@ -298,6 +339,102 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('records an approval decision with field-linked errors and keyboard-scrollable detail', async ({
+  page,
+}) => {
+  let decided = false;
+  let submittedDecision: unknown;
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(MANAGER_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'a'.repeat(43) }), status: 200 });
+  });
+  await page.route(`**/v1/approvals/${ABSENCE_APPROVAL_ID}`, async (route) => {
+    await route.fulfill({
+      json: success({
+        ...ABSENCE_APPROVAL_DETAIL,
+        availableActions: decided ? [] : ABSENCE_APPROVAL_DETAIL.availableActions,
+        status: decided ? 'APPROVED' : ABSENCE_APPROVAL_DETAIL.status,
+        version: decided ? 4 : ABSENCE_APPROVAL_DETAIL.version,
+      }),
+      status: 200,
+    });
+  });
+  await page.route(`**/v1/approvals/${ABSENCE_APPROVAL_ID}/decision`, async (route) => {
+    submittedDecision = route.request().postDataJSON();
+    expect(route.request().headers()['x-workledger-csrf']).toBe('a'.repeat(43));
+    decided = true;
+    await route.fulfill({
+      json: success({ id: ABSENCE_APPROVAL_ID, kind: 'ABSENCE', status: 'APPROVED', version: 4 }),
+      status: 200,
+    });
+  });
+
+  await page.goto(`/approvals/${ABSENCE_APPROVAL_ID}`);
+  await expect(page.getByRole('heading', { name: 'Review absence request' })).toBeFocused();
+  const coverage = page.getByRole('region', { name: 'Absence coverage' });
+  await coverage.focus();
+  await expect(coverage).toBeFocused();
+  expect(await coverage.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(
+    true,
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+
+  const approve = page.getByRole('button', { name: 'Approve' });
+  await approve.focus();
+  await page.keyboard.press('Enter');
+  const alert = page.getByRole('alert');
+  await expect(alert).toBeFocused();
+  await expect(alert).toContainText('Enter at least 10 characters');
+  const reason = page.getByRole('textbox', { name: 'Decision reason' });
+  await expect(reason).toHaveAttribute('aria-invalid', 'true');
+  await expect(reason).toHaveAttribute(
+    'aria-describedby',
+    'approval-decision-reason-help approval-decision-reason-error',
+  );
+  await reason.fill('Approved after checking the current request and available entitlement.');
+  await expect(reason).not.toHaveAttribute('aria-invalid');
+
+  await reason.focus();
+  await page.keyboard.press('Tab');
+  await expect(approve).toBeFocused();
+  const forcedColorStyles = await approve.evaluate((button) => {
+    const styles = getComputedStyle(button);
+    return {
+      backgroundColor: styles.backgroundColor,
+      borderColor: styles.borderColor,
+      outlineColor: styles.outlineColor,
+      outlineStyle: styles.outlineStyle,
+    };
+  });
+  expect(forcedColorStyles.borderColor).not.toBe('transparent');
+  expect(forcedColorStyles.borderColor).not.toBe(forcedColorStyles.backgroundColor);
+  expect(forcedColorStyles.outlineColor).not.toBe('transparent');
+  expect(forcedColorStyles.outlineStyle).not.toBe('none');
+  await expect(approve).toHaveCSS('transition-duration', '0.001s');
+  await page.keyboard.press('Enter');
+
+  const status = page.getByRole('status');
+  await expect(status).toBeFocused();
+  await expect(status).toHaveText('Approve recorded. The approval is now approved.');
+  expect(submittedDecision).toEqual({
+    action: 'APPROVE',
+    expectedVersion: 3,
+    negativeBalanceOverride: false,
+    reason: 'Approved after checking the current request and available entitlement.',
+  });
+  await expect(
+    page.getByText('This approval has no action available in its current state.'),
+  ).toBeVisible();
+  await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'reduce' });
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('reviews and dismisses generic notification history without losing keyboard focus', async ({
   page,
 }) => {
@@ -362,7 +499,7 @@ test('reviews and dismisses generic notification history without losing keyboard
   await expect(dismiss).toHaveText('Dismissed');
   await expect(dismiss).toBeFocused();
   await expect(dismiss).toHaveAttribute('aria-disabled', 'true');
-  await expect(page.getByRole('status')).toHaveText(
+  await expect(page.getByRole('status', { name: 'Notification action status' })).toHaveText(
     'Notification dismissed. It remains in your history.',
   );
 

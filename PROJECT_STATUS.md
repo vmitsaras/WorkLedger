@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 7 — Manager approvals and team availability
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 5 of 7 Phase 7 tasks complete
-**Current milestone:** Manager authorization and accessibility review
-**Active task:** `WL-705`
+**Phase progress:** 6 of 7 Phase 7 tasks complete
+**Current milestone:** Phase 7 exit-gate review
+**Active task:** `WL-706`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Complete the Phase 7 manager authorization and accessibility review for `WL-705`.
+Execute the Phase 7 manager approvals and team availability exit-gate review for `WL-706`.
 
 ## Verified decisions
 
@@ -312,6 +312,31 @@ Complete the Phase 7 manager authorization and accessibility review for `WL-705`
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-705` — Complete manager authorization and accessibility review
+
+- Changed: completed the Phase 7 endpoint permission matrix and critical-flow audit; added explicit
+  inactive, employee-only, current/former/unrelated/self manager, HR-only, combined-role,
+  system-admin, and cross-organization approval evidence. Fixed final-heading focus after async
+  detail loading, field-linked decision errors, keyboard access to the overflowing coverage table,
+  native `:focus-visible` support for button-styled buttons/links, and bounded async result feedback.
+- Verified: formatting, lint, typecheck, 24 repository-contract tests, 219 unit/component tests, 17
+  canonical and 2 focused live PostgreSQL tests, 16 Chromium tests, and the production build pass.
+  Evidence covers scope-before-query, no disclosure, HR-only actors, notification ownership, stale
+  decisions, delivery failure, plus the manager decision flow at 320 px with keyboard,
+  reduced-motion, forced-colors, focus/error/status, contained overflow, and axe assertions.
+- Accessibility: native forms, buttons, links, tables, pagination, and calendar/agenda alternatives
+  remain intact. Validation now has both a focused summary and an associated field error; the final
+  route heading, live outcomes, keyboard scrolling, and native forced-colors focus are deliberate.
+- Security/data: the review found no authorization bypass. Current effective direct-manager or HR
+  scope is re-evaluated transactionally; privileged self-decisions remain denied; technical roles
+  do not gain HR access; cross-organization and foreign notification identifiers disclose no data.
+- Documentation: added `docs/79-manager-authorization-accessibility-review.md`, revalidated the
+  resolved `D-352` account-first recommendation, synchronized the README and roadmap memory, and
+  advanced Phase 7 to `WL-706` without a version bump.
+- Remaining risk: automated axe and accessibility-tree checks do not replace a short real
+  VoiceOver/NVDA, Windows High Contrast, keyboard, and zoom/reflow smoke during the Phase 7 gate.
+- Next task: `WL-706`.
 
 ### `WL-704` — Implement generic notification records, history, and optional delivery
 
@@ -709,12 +734,12 @@ Complete the Phase 7 manager authorization and accessibility review for `WL-705`
 
 ## Current blockers
 
-No `WL-705` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
+No `WL-706` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
 to the inbox; D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-705 — Complete authorization and accessibility review.`
+`WL-706 — Pass the Phase 7 exit gate.`
 
 ## Update rules
 

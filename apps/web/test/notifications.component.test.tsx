@@ -84,7 +84,7 @@ test('renders and dismisses generic history without removing focus or private co
   await waitFor(() => expect(dismiss).toHaveTextContent('Dismissed'));
   expect(dismiss).toHaveFocus();
   expect(dismiss).toHaveAttribute('aria-disabled', 'true');
-  expect(screen.getByRole('status')).toHaveTextContent(
+  expect(screen.getByRole('status', { name: 'Notification action status' })).toHaveTextContent(
     'Notification dismissed. It remains in your history.',
   );
   expect(requests.dismissals).toEqual([FIRST_NOTIFICATION_ID]);

@@ -387,6 +387,9 @@ These were confirmed from repository evidence and the architecture ratification.
   effective account/employee link, derives manager or HR authority at the decision instant, aborts
   on missing or ambiguous evidence, then installs required account/authority constraints while
   retaining nullable employee evidence and immutable decision triggers.
+- `WL-705` revalidated HR-only attribution, linked/combined-role self-denial, current-manager scope,
+  and audit evidence. The account-first actor model remains the recommended contract and does not
+  need to be reopened for the Phase 7 gate.
 - See `docs/75-consistent-approval-decisions.md` for the shared decision and recovery contract.
 
 ## Decisions blocking Phase 8

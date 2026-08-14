@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
-import { Drawer, FoundationPreview } from '../src/index.js';
+import { buttonVariants, Drawer, FoundationPreview } from '../src/index.js';
+
+test('keeps button styling focus-visible on native buttons and links', () => {
+  expect(buttonVariants()).toContain('focus-visible:outline-solid');
+  expect(buttonVariants()).toContain('data-[focus-visible]:outline-solid');
+});
 
 test('renders semantic button, link, and described field examples', async () => {
   const { container } = render(<FoundationPreview />);

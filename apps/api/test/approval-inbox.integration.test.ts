@@ -67,7 +67,18 @@ integrationTest(
 
     try {
       const scenario = await createScenario(fixture.client);
+      const unauthenticated = await app.inject({
+        method: 'GET',
+        url: '/v1/approvals',
+        headers: { origin: ORIGIN },
+      });
+      expect(unauthenticated.statusCode).toBe(401);
+
       const managerCookie = await signIn(app, scenario.manager.email, scenario.manager.password);
+      const alphaCookie = await signIn(app, scenario.alpha.email, scenario.alpha.password);
+      const employeeDenied = await getInbox(app, alphaCookie);
+      expect(employeeDenied.statusCode).toBe(403);
+      expect(employeeDenied.json()).toMatchObject({ error: { code: 'ACCESS_DENIED' } });
 
       const response = await getInbox(app, managerCookie);
       expect(response.statusCode).toBe(200);
@@ -97,6 +108,31 @@ integrationTest(
         ]),
       );
       assertPrivacyMinimized(inbox);
+
+      const currentReportDetail = await getApprovalDetail(
+        app,
+        managerCookie,
+        scenario.alphaCorrectionId,
+      );
+      expect(currentReportDetail.statusCode).toBe(200);
+      expect(approvalDetailEnvelopeSchema.parse(currentReportDetail.json()).data).toMatchObject({
+        employeeDisplayName: 'Alpha report',
+        id: scenario.alphaCorrectionId,
+      });
+      for (const deniedId of [scenario.managerCorrectionId, scenario.unrelatedCorrectionId]) {
+        const directDenied = await getApprovalDetail(app, managerCookie, deniedId);
+        expect(directDenied.statusCode).toBe(403);
+        expect(directDenied.json()).toMatchObject({ error: { code: 'ACCESS_DENIED' } });
+        expect(directDenied.payload).not.toMatch(/Inbox manager|Unrelated employee/u);
+      }
+      const crossOrganization = await getApprovalDetail(
+        app,
+        managerCookie,
+        scenario.crossOrganizationCorrectionId,
+      );
+      expect(crossOrganization.statusCode).toBe(404);
+      expect(crossOrganization.json()).toMatchObject({ error: { code: 'ROUTE_NOT_FOUND' } });
+      expect(crossOrganization.payload).not.toContain('Cross-organization employee');
 
       const waiting = await parsedInbox(app, managerCookie, '?status=WAITING_ON_EMPLOYEE');
       expect(waiting.pagination.total).toBe(1);
@@ -194,11 +230,31 @@ integrationTest(
       expect(linkedHr.pagination.total).toBe(16);
       expect(linkedHr.items.map((item) => item.employeeDisplayName)).not.toContain('HR reviewer');
       assertPrivacyMinimized(linkedHr);
+      const combinedRoleSelfDenied = await getApprovalDetail(
+        app,
+        linkedHrCookie,
+        scenario.hrCorrectionId,
+      );
+      expect(combinedRoleSelfDenied.statusCode).toBe(403);
+      expect(combinedRoleSelfDenied.payload).not.toContain('Private HR correction reason');
 
       const systemCookie = await signIn(app, scenario.system.email, scenario.system.password);
       const denied = await getInbox(app, systemCookie);
       expect(denied.statusCode).toBe(403);
       expect(denied.json()).toMatchObject({ error: { code: 'ACCESS_DENIED' } });
+      const systemDetailDenied = await getApprovalDetail(
+        app,
+        systemCookie,
+        scenario.alphaCorrectionId,
+      );
+      expect(systemDetailDenied.statusCode).toBe(403);
+      expect(systemDetailDenied.payload).not.toContain('Private correction reason');
+      await fixture.client.query(`update auth_users set active = false where id = $1`, [
+        scenario.system.accountId,
+      ]);
+      const inactiveDenied = await getInbox(app, systemCookie);
+      expect(inactiveDenied.statusCode).toBe(401);
+      expect(inactiveDenied.json()).toMatchObject({ error: { code: 'AUTH_SESSION_EXPIRED' } });
 
       for (const query of [
         '?type=SICKNESS',
@@ -317,7 +373,6 @@ integrationTest(
         },
       ]);
 
-      const alphaCookie = await signIn(app, scenario.alpha.email, scenario.alpha.password);
       const initialNotifications = await parsedNotifications(app, alphaCookie);
       expect(initialNotifications.pagination).toEqual({
         limit: 20,
@@ -534,6 +589,20 @@ integrationTest(
         title: 'Item approved',
       });
       assertNotificationPrivacy(finalNotifications);
+
+      await fixture.client.query(
+        `update manager_assignments
+         set ends_on = '2026-08-12'
+         where organization_id = $1 and manager_employee_id = $2 and ends_on is null`,
+        [scenario.organizationId, scenario.managerEmployeeId],
+      );
+      const formerManagerDenied = await getApprovalDetail(
+        app,
+        managerCookie,
+        scenario.sicknessReportId,
+      );
+      expect(formerManagerDenied.statusCode).toBe(403);
+      expect(formerManagerDenied.payload).not.toContain('Sickness');
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -640,7 +709,7 @@ async function createScenario(client: pg.PoolClient) {
     employeeId: hrEmployeeId,
     name: 'HR reviewer',
     password: 'safe approval linked hr passphrase 2026',
-    roles: ['HR_ADMINISTRATOR'],
+    roles: ['HR_ADMINISTRATOR', 'MANAGER'],
   });
   const system = await createAccount(client, organizationId, {
     email: 'approval-system@example.test',
@@ -716,24 +785,55 @@ async function createScenario(client: pg.PoolClient) {
     reason: 'Private former report correction reason',
     status: 'SUBMITTED',
   });
-  await createCorrection(client, organizationId, unrelatedEmployeeId, {
-    createdAt: '2026-08-14T13:00:00Z',
-    localDate: '2026-08-14',
-    reason: 'Private unrelated correction reason',
-    status: 'SUBMITTED',
-  });
-  await createCorrection(client, organizationId, managerEmployeeId, {
+  const unrelatedCorrectionId = await createCorrection(
+    client,
+    organizationId,
+    unrelatedEmployeeId,
+    {
+      createdAt: '2026-08-14T13:00:00Z',
+      localDate: '2026-08-14',
+      reason: 'Private unrelated correction reason',
+      status: 'SUBMITTED',
+    },
+  );
+  const managerCorrectionId = await createCorrection(client, organizationId, managerEmployeeId, {
     createdAt: '2026-08-14T14:00:00Z',
     localDate: '2026-08-14',
     reason: 'Private manager correction reason',
     status: 'SUBMITTED',
   });
-  await createCorrection(client, organizationId, hrEmployeeId, {
+  const hrCorrectionId = await createCorrection(client, organizationId, hrEmployeeId, {
     createdAt: '2026-08-14T15:00:00Z',
     localDate: '2026-08-14',
     reason: 'Private HR correction reason',
     status: 'SUBMITTED',
   });
+
+  const crossOrganizationId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into organizations (name, time_zone)
+         values ('Cross-organization approval test', 'Europe/Berlin') returning id`,
+      )
+    ).rows[0]?.id,
+  );
+  const crossOrganizationEmployeeId = await createEmployee(
+    client,
+    crossOrganizationId,
+    'INBOX-CROSS',
+    'Cross-organization employee',
+  );
+  const crossOrganizationCorrectionId = await createCorrection(
+    client,
+    crossOrganizationId,
+    crossOrganizationEmployeeId,
+    {
+      createdAt: '2026-08-14T16:00:00Z',
+      localDate: '2026-08-14',
+      reason: 'Private cross-organization correction reason',
+      status: 'SUBMITTED',
+    },
+  );
 
   return Object.freeze({
     alpha,
@@ -741,12 +841,17 @@ async function createScenario(client: pg.PoolClient) {
     alphaEmployeeId,
     alphaTeamId,
     betaTeamId,
+    crossOrganizationCorrectionId,
+    hrCorrectionId,
     hrOnly,
     linkedHr,
     manager,
+    managerCorrectionId,
+    managerEmployeeId,
     organizationId,
     sicknessReportId: sicknessReport.requestId,
     system,
+    unrelatedCorrectionId,
     vacationTypeId,
   });
 }
@@ -1017,6 +1122,18 @@ async function getInbox(app: ReturnType<typeof createApiServer>, cookie: string,
   return app.inject({
     method: 'GET',
     url: `/v1/approvals${query}`,
+    headers: { cookie, origin: ORIGIN },
+  });
+}
+
+async function getApprovalDetail(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  approvalId: string,
+) {
+  return app.inject({
+    method: 'GET',
+    url: `/v1/approvals/${approvalId}`,
     headers: { cookie, origin: ORIGIN },
   });
 }

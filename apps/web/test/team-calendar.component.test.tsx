@@ -92,6 +92,10 @@ test('presents equivalent accessible month and agenda availability with date sel
   expect(within(table).getByText('Noah Williams')).toBeVisible();
   expect(screen.getByText(/1 availability entry has no current team assignment/u)).toBeVisible();
   expect(screen.getByRole('heading', { name: /Friday, August 14, 2026 — Today/u })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'August 2026' })).toHaveAttribute(
+    'aria-live',
+    'polite',
+  );
 
   await user.click(screen.getByRole('button', { name: 'Agenda list' }));
   const agenda = screen.getByRole('list', { name: 'Team availability agenda for August 2026' });
@@ -106,6 +110,10 @@ test('presents equivalent accessible month and agenda availability with date sel
   if (augustFifteenth === null) throw new Error('Expected an agenda group for August 15.');
   await user.click(within(augustFifteenth).getByRole('button', { name: 'Select date' }));
   expect(screen.getAllByRole('heading', { name: 'Saturday, August 15, 2026' })).toHaveLength(2);
+  expect(document.querySelector('#selected-team-date-heading')).toHaveAttribute(
+    'aria-live',
+    'polite',
+  );
   expect(screen.getAllByText('Noah Williams')).toHaveLength(2);
   expect(screen.queryByText(/sickness|vacation|medical|diagnosis/iu)).not.toBeInTheDocument();
   expect(requestState.calendarRequests).toBeGreaterThan(0);

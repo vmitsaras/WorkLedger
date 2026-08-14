@@ -5,14 +5,15 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 7 — 1 of 7 tasks complete**
+> **Current phase progress: Phase 7 — 6 of 7 tasks complete**
 
 Phases 0–6 have passed their exit gates. The repository now includes the attendance, correction,
-absence, entitlement, personal calendar, and cancellation slices, plus a purpose-minimized,
-scoped approval inbox for corrections, absence requests, and absence cancellations. The inbox
-uses strict URL-owned generic filters and pagination, supports current-manager and HR scope,
-withholds sensitive absence detail, and has accessible narrow-screen table behavior. The next task
-is consistent type-neutral approve, reject, and changes-requested decisions (`WL-701`).
+absence, entitlement, personal calendar, and cancellation slices, plus a purpose-minimized approval
+inbox, consistent correction/absence/cancellation decisions, privacy-safe team status and calendar,
+and durable generic notification history with optional post-commit email delivery. The manager
+surfaces enforce current-direct-report or HR scope, non-self decisions, strict URL-owned filters,
+equivalent calendar/agenda views, and accessible narrow-screen behavior. The authorization and
+accessibility review is complete; the next task is the Phase 7 exit gate (`WL-706`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe

@@ -32,15 +32,18 @@ export function ApprovalDetailPage() {
   const queryClient = useQueryClient();
   const query = useQuery(approvalDetailQuery(approvalId ?? ''));
   const [reason, setReason] = useState('');
+  const [reasonError, setReasonError] = useState<string>();
   const [negativeBalanceOverride, setNegativeBalanceOverride] = useState(false);
   const [feedback, setFeedback] = useState<string>();
   const [feedbackIsError, setFeedbackIsError] = useState(false);
   const feedbackRef = useRef<HTMLDivElement>(null);
+  const presentedApprovalIdRef = useRef<string | undefined>(undefined);
 
   const decision = useMutation({
     mutationFn: ({ input }: DecisionIntent) => decideApproval(approvalId ?? '', input),
     onSuccess: async (result, intent) => {
       setReason('');
+      setReasonError(undefined);
       setNegativeBalanceOverride(false);
       setFeedback(decisionSuccessMessage(intent.action, result.status));
       setFeedbackIsError(false);
@@ -79,6 +82,7 @@ export function ApprovalDetailPage() {
 
   useEffect(() => {
     if (mutationError === null) return;
+    setReasonError(undefined);
     setFeedback(errorMessage(mutationError));
     setFeedbackIsError(true);
     if (
@@ -89,6 +93,21 @@ export function ApprovalDetailPage() {
     }
     focusFeedback(feedbackRef);
   }, [mutationError]);
+
+  useEffect(() => {
+    if (
+      approvalId === undefined ||
+      query.data === undefined ||
+      presentedApprovalIdRef.current === approvalId
+    ) {
+      return;
+    }
+    presentedApprovalIdRef.current = approvalId;
+    const animationFrame = globalThis.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>('[data-route-heading]')?.focus();
+    });
+    return () => globalThis.cancelAnimationFrame(animationFrame);
+  }, [approvalId, query.data]);
 
   if (query.isPending) return <ApprovalDetailLoading />;
   if (query.isError || query.data === undefined) return <ApprovalDetailError error={query.error} />;
@@ -108,11 +127,14 @@ export function ApprovalDetailPage() {
     if (action === null) return;
     const trimmedReason = reason.trim();
     if (action !== 'ACKNOWLEDGE' && trimmedReason.length < 10) {
-      setFeedback('Enter at least 10 characters explaining the decision.');
+      const message = 'Enter at least 10 characters explaining the decision.';
+      setReasonError(message);
+      setFeedback(message);
       setFeedbackIsError(true);
       focusFeedback(feedbackRef);
       return;
     }
+    setReasonError(undefined);
     if (
       action === 'APPROVE' &&
       detail.kind === 'ABSENCE' &&
@@ -208,17 +230,37 @@ export function ApprovalDetailPage() {
             Decision reason
             <textarea
               id="approval-decision-reason"
-              aria-describedby="approval-decision-reason-help"
+              aria-describedby={
+                reasonError === undefined
+                  ? 'approval-decision-reason-help'
+                  : 'approval-decision-reason-help approval-decision-reason-error'
+              }
+              aria-invalid={reasonError === undefined ? undefined : true}
               className="min-h-28 rounded-lg border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-3 font-normal"
               disabled={pending}
               maxLength={2_000}
               value={reason}
-              onChange={(event) => setReason(event.target.value)}
+              onChange={(event) => {
+                setReason(event.target.value);
+                if (reasonError !== undefined) {
+                  setReasonError(undefined);
+                  setFeedback(undefined);
+                  setFeedbackIsError(false);
+                }
+              }}
             />
           </label>
           <p id="approval-decision-reason-help" className="m-0 text-sm text-[var(--wl-text-muted)]">
             The reason is stored with the decision and is not shown in the minimized inbox.
           </p>
+          {reasonError === undefined ? null : (
+            <p
+              id="approval-decision-reason-error"
+              className="wl-alert wl-alert-error m-0 rounded-xl border p-3"
+            >
+              {reasonError}
+            </p>
+          )}
           {detail.kind === 'ABSENCE' &&
           detail.projectedRemainingMinutes !== null &&
           detail.projectedRemainingMinutes < 0 &&
@@ -324,7 +366,7 @@ function ApprovalSummary({ detail }: Readonly<{ detail: ApprovalDetail }>) {
               {formatDuration(detail.projectedRemainingMinutes ?? 0, true)}.
             </p>
           ) : null}
-          <div className="overflow-x-auto" role="region" aria-label="Absence coverage">
+          <div className="overflow-x-auto" role="region" aria-label="Absence coverage" tabIndex={0}>
             <table className="w-full min-w-[34rem] border-collapse text-left">
               <caption className="sr-only">Dates and minutes covered by this approval</caption>
               <thead>

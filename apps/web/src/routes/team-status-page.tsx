@@ -77,8 +77,16 @@ function TeamStatusContent({
               {data.timeZone}).
             </p>
           </div>
-          <p className="m-0 min-h-6 text-sm text-[var(--wl-text-muted)]">
-            {refreshing ? 'Refreshing status…' : ''}
+          <p
+            className="m-0 min-h-6 text-sm text-[var(--wl-text-muted)]"
+            role="status"
+            aria-label="Team refresh status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {refreshing
+              ? 'Refreshing status…'
+              : `Status current for ${data.summary.total.toString()} authorized team member${data.summary.total === 1 ? '' : 's'}.`}
           </p>
         </div>
         <dl className="wl-team-summary m-0 grid gap-3" aria-label="Team status totals">
@@ -184,7 +192,7 @@ function TeamStatusLoading() {
 
 function TeamStatusError({ retry }: Readonly<{ retry: () => void }>) {
   return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4">
+    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
       <h2 className="m-0 text-xl font-bold">Team status is unavailable</h2>
       <p className="m-0">
         No restricted team details were displayed. Try loading the current authorized view again.
