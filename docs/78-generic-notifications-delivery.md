@@ -12,8 +12,8 @@ constraint covers organization, recipient employee, source kind and identifier, 
 version so retrying a stale or already-completed decision cannot create duplicate history.
 
 The schema is ready to distinguish request and monthly-period sources. Phase 7 produces request
-notifications only. Monthly producers and destinations remain owned by `WL-802`, after the Phase 8
-authority decision is resolved.
+notifications only. Monthly producers and destinations remain owned by `WL-802` under the
+current-manager-or-organization-HR authority resolved by `D-402`.
 
 Notifications retain the recipient employee and the active linked account, when one exists, for
 server-side ownership and delivery. Neither identifier is returned to the browser. Dismissal sets a

@@ -42,6 +42,7 @@ explicitly asks to reopen a completed Phase 4 task.
 | Offline clocking | Excluded from MVP | Conflict resolution and trust requirements are non-trivial |
 | Organization grouping | Teams only; departments deferred | Avoid an unused hierarchy with unclear authorization and reporting behavior |
 | Approval delegation | Excluded from MVP | Single-stage approval through the current direct manager or authorized HR keeps scope and audit behavior explicit |
+| Monthly review authority | Current effective direct manager or organization HR, always non-self | Matches the account-first approval model, supports HR-only operational fallback, and keeps historical managers and technical administrators excluded |
 | Default UI locale | English only for MVP; locale-aware formatting and language-neutral API/domain codes | Keeps the first release bounded without blocking later translation |
 | Employee profile | Read-only self-service context and account/session actions | Employment, schedule, team, and role data remain HR-owned |
 | Notification delivery | In-app records are core; external email is optional | Domain decisions must not depend on SMTP availability |
@@ -364,7 +365,7 @@ These were confirmed from repository evidence and the architecture ratification.
 - The inbox has only the generic kinds `CORRECTION`, `ABSENCE`, and `CANCELLATION`, and the generic statuses `ACTION_REQUIRED`, `WAITING_ON_EMPLOYEE`, and `COMPLETED`; `ALL` is query-only.
 - A URL may express broad workflow category, generic status, current team, affected-date range, sort, direction, and page. An absence subtype, including sickness, is never a URL value or list field.
 - Team is a current-date filter, not an authorization scope. Current manager or organization-HR scope, and non-self exclusion, apply before every filter, total, sort, and page.
-- The initial schema excludes monthly-period rows. `WL-802` may add them only after the Phase 8 authority decision is resolved.
+- The initial schema excludes monthly-period rows. `WL-802` may add them under the current-manager-or-organization-HR authority resolved by `D-402`.
 
 ### D-351 — Inbox snapshot consistency
 
@@ -398,9 +399,9 @@ These were confirmed from repository evidence and the architecture ratification.
 
 **Status:** Resolved by `WL-008`.
 
-- Manager approval creates the immutable approval snapshot and moves the period to `APPROVED`.
-- A separate explicit action by the eligible current non-self manager moves that exact approved version to `LOCKED`; it does not rebuild the snapshot.
-- Automatic, scheduled, administrator-only, and approval-implies-lock modes are excluded from the MVP. Before lock, the manager may instead request changes with a reason.
+- An eligible non-self reviewer approval creates the immutable approval snapshot and moves the period to `APPROVED`.
+- A separate explicit action by an eligible non-self reviewer moves that exact approved version to `LOCKED`; it does not rebuild the snapshot.
+- Automatic, scheduled, technical-administrator-only, and approval-implies-lock modes are excluded from the MVP. Before lock, an eligible reviewer may instead request changes with a reason.
 - Lock rechecks current scope, self-action, expected period version, approved snapshot/source fingerprint, and ledger reconciliation atomically. There is no ordinary unlock action.
 
 ### D-401 — Approved snapshot contents
@@ -414,10 +415,27 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-402 — Monthly approval authority
 
-**Status:** Open; resolve before `WL-802`.
+**Status:** Resolved on 2026-08-14 before `WL-802`; ADR 0010 is amended.
 
-- The roles and UX documents permit organization HR to approve or lock monthly periods, while the current domain rules and `ADR-0010` limit those decisions to an eligible current non-self manager.
-- `WL-700` intentionally excludes monthly rows and does not select an authority model. Resolve the source conflict through documentation or an accepted ADR before `WL-802` adds monthly items to the inbox.
+- `REQUEST_CHANGES`, `APPROVE`, and `LOCK` may be performed by either the employee's current
+  effective direct manager under `CURRENT_MANAGER` authority or an organization HR administrator
+  under `ORGANIZATION_HR` authority. Both are ordinary eligible reviewer paths for this workflow;
+  HR does not need a fabricated employee record or a special override reason.
+- Self-action remains prohibited across combined roles. Historical/former managers, unrelated
+  managers, delegated actors, employee-only actors, and system administrators receive no decision
+  or lock authority. If no eligible non-self manager or HR actor exists, the action remains
+  unavailable.
+- Authorization is re-evaluated at each transition. When an actor qualifies through both current-
+  manager and HR roles, `CURRENT_MANAGER` is the deterministic recorded authority; otherwise the
+  successful authority is recorded explicitly.
+- Monthly decisions and snapshots use the account-first actor model from `D-352`: authenticated
+  account ID and authority are required, while employee ID is required evidence for
+  `CURRENT_MANAGER` and optional evidence for `ORGANIZATION_HR`. `WL-802` must migrate the existing
+  employee-only snapshot actor shape before enabling HR-only approval or lock.
+- The same state, expected-version, source-fingerprint, blocker, ledger-reconciliation,
+  transaction, audit, notification, and separate-approval/lock rules apply to both authorities.
+  The resolution grants no HR ability to bypass readiness, alter a snapshot, unlock a period, or
+  perform a privileged self-adjustment.
 
 ## Decisions blocking production release
 

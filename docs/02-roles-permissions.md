@@ -118,6 +118,13 @@ The cells describe what each role alone grants. Managers and HR administrators m
 | Append audit or notification record | `No` | `No` | `No` | `No`; trusted application process only |
 | Manage server configuration, health, backup, restore, or upgrade | `No` | `No` | `No` | `Technical` |
 
+Monthly `Request changes`, `Approve`, and `Lock` transitions use the same account-first reviewer
+model as other approvals. A current effective direct manager acts as `CURRENT_MANAGER`; an
+organization HR administrator acts as `ORGANIZATION_HR`, including from an HR-only account without
+an employee link. If both paths qualify, `CURRENT_MANAGER` is recorded. Both paths prohibit
+self-action and apply identical workflow, version, source, reconciliation, transaction, audit, and
+notification checks. System administrators and historical managers have no fallback authority.
+
 ## Sensitive-data boundaries
 
 - A team availability response contains employee display identity, coverage needed to show availability, and neutral `UNAVAILABLE` state only. It does not expose request ID, sickness classification, absence reason/type, comments, entitlement, reviewer history, or attachments.

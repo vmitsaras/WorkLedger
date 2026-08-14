@@ -24,7 +24,7 @@ This document is the canonical implementation-neutral vocabulary and invariant r
 | Physical identifier type | Accepted, non-conceptual | PostgreSQL UUIDv7 keys provide opaque, time-ordered physical identity without changing domain identity semantics. | `D-201`, resolved by `WL-300`. |
 | Daily projection persistence | Accepted | One versioned replaceable employee/date projection is an explicit-rebuild query cache; raw facts, ledgers, and approved snapshots remain authoritative. | `D-202`, resolved by `WL-300`. |
 | Leave units, half-day definition, negative balance, sickness reporting, and unpaid-leave behavior | Accepted | Leave uses integer minutes; half-days partition date expectation; negative vacation approval needs a non-self HR override; sickness has a bounded retrospective window; unpaid leave reduces covered expectation by default. | `D-300`–`D-304`, resolved by `WL-007`. |
-| Month-lock timing and exact approved snapshot schema | Accepted | Approval creates one immutable snapshot; a separate eligible non-self manager lock transition makes it final, and post-lock effects reference that baseline. | `D-400` and `D-401`, resolved by `WL-008`. |
+| Month-lock timing and exact approved snapshot schema | Accepted | Approval creates one immutable snapshot; a separate eligible non-self reviewer lock transition makes it final, and post-lock effects reference that baseline. | `D-400` and `D-401`, resolved by `WL-008` and authority-amended by `D-402`. |
 | Retention/anonymization | Accepted contract; implementation remains a production gate | A deployment-owned class profile controls purge/minimization and backup expiry without cascade loss of ledger, snapshot, decision, or audit integrity. | `D-500`, resolved by `WL-010`; implement/verify in `WL-1007`. |
 
 ## 3. Canonical domain vocabulary
@@ -523,7 +523,19 @@ Employee submission validates self ownership, current employee capability, readi
 
 ### 13.3 Review transitions and authorization
 
-Only the employee's current effective direct manager may review, approve, request changes, or lock. Scope is re-evaluated for every action; historical scope and delegation grant no access. No actor may approve or lock their own employee period, including through combined roles. HR and system-administrator capability do not independently grant period approval or lock capability.
+An eligible reviewer may request changes, approve, or lock when acting as either the employee's
+current effective direct manager under `CURRENT_MANAGER` authority or an organization HR
+administrator under `ORGANIZATION_HR` authority. Scope is re-evaluated for every action;
+historical scope and delegation grant no access. No actor may decide or lock their own employee
+period, including through combined roles, and system-administrator capability grants no period
+decision authority. If an actor qualifies as both current manager and HR, the transition records
+`CURRENT_MANAGER`; an HR-only account may act with no employee link.
+
+Every review transition records the authenticated actor account and explicit authority. Employee
+identity is required evidence for `CURRENT_MANAGER` and optional evidence for `ORGANIZATION_HR`.
+The same state, expected-version, source-fingerprint, blocker, ledger-reconciliation, transaction,
+audit, notification, and concurrency rules apply to both authorities; HR cannot bypass readiness,
+reconciliation, or locking rules.
 
 | Current state | Command | Required reason | Result |
 |---|---|---|---|
@@ -533,11 +545,11 @@ Only the employee's current effective direct manager may review, approve, reques
 | `APPROVED` | Lock | No | `LOCKED`; fixes the latest approval snapshot as the locked baseline without rebuilding it. |
 | Any other state | Any review command | N/A | `PERIOD_STATE_CONFLICT`; no partial effect. |
 
-Approval and lock are deliberately separate manager actions for the MVP (`D-400`). Installations cannot configure automatic or approval-implies-lock behavior in the initial release. Before either action commits, authorization, state, expected version, source fingerprint, ledger reconciliation, and current blocker status are rechecked inside one transaction. Approval fails if sources differ from submission; lock fails if current sources or ledger differ from the approved snapshot. Each successful command records actor, instant, prior/new state, version, and safe audit/notification data.
+Approval and lock are deliberately separate reviewer actions for the MVP (`D-400`). Installations cannot configure automatic or approval-implies-lock behavior in the initial release. Before either action commits, authorization, state, expected version, source fingerprint, ledger reconciliation, and current blocker status are rechecked inside one transaction. Approval fails if sources differ from submission; lock fails if current sources or ledger differ from the approved snapshot. Each successful command records actor account, authority, optional employee evidence, instant, prior/new state, version, and safe audit/notification data.
 
 ### 13.4 Immutable approval snapshot
 
-An approval snapshot is a canonical persisted document with `snapshotSchemaVersion`, `calculationEngineVersion`, organization/employee/period identity, organization timezone, calendar boundaries, approval-cycle number, snapshot ID, creation instant, approver identity, approved `periodVersion`, submitted source fingerprint, and a canonical snapshot fingerprint.
+An approval snapshot is a canonical persisted document with `snapshotSchemaVersion`, `calculationEngineVersion`, organization/employee/period identity, organization timezone, calendar boundaries, approval-cycle number, snapshot ID, creation instant, required approver account and authority, optional approver employee evidence, approved `periodVersion`, submitted source fingerprint, and a canonical snapshot fingerprint.
 
 It contains an ordered row for every local date with calculation status; source fingerprint; scheduled, holiday-reduction, absence-expected-reduction, expected, worked, break, absence-credit, adjustment, credited, and daily-balance integer minutes; structured warning codes; and references to the effective schedule, policy, holiday, applied-correction, neutral absence-effect, adjustment, and daily-ledger source/version IDs needed for reproduction. It also contains period sums for each minute field, opening and closing posted time-account balances, and the exact ordered ledger-entry IDs/amounts included through month end.
 

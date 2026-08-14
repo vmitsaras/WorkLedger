@@ -41,8 +41,9 @@ sickness context, request/reviewer reasons, entitlement values, protected source
 raw source-reference payloads.
 
 The service reads the existing Phase 3 monthly-period, daily-projection, assignment, workflow, and
-ledger tables; no migration or history rewrite is required. `D-402` remains open because this task
-adds read authorization only and does not select an approval/lock authority for `WL-802`.
+ledger tables; no migration or history rewrite was required for `WL-800`. `D-402` subsequently
+resolved approval/lock authority to current effective direct managers or organization HR, always
+non-self; `WL-802` owns its account-first persistence migration and mutation implementation.
 
 ## User experience and accessibility
 
@@ -77,6 +78,7 @@ coverage exercises the ready view.
 ## Remaining work
 
 `WL-801` owns warning acknowledgement and the versioned employee submission transition. `WL-802`
-must first resolve `D-402`, then add manager changes-requested, approval snapshot creation, and the
-separate lock transition. This read model does not claim that an approved snapshot already exists for
-an open period; `snapshotVersion` identifies the future canonical schema and current source set only.
+adds eligible-reviewer changes-requested, approval snapshot creation, and the separate lock
+transition under resolved `D-402`. This read model does not claim that an approved snapshot already
+exists for an open period; `snapshotVersion` identifies the future canonical schema and current
+source set only.

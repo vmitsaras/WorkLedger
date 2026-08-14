@@ -6,11 +6,12 @@
 
 `/approvals` is now one scoped, paginated inbox for correction, absence, and absence-cancellation
 work. It replaces the correction-only list without removing the existing correction decision and
-application flow: eligible managers can follow a correction row to the manager review route while
-`WL-701` owns the consolidated type-neutral detail and decision experience.
+application flow: eligible reviewers can follow a correction row to the review route while `WL-701`
+owns the consolidated type-neutral detail and decision experience.
 
 Monthly-period rows are not represented yet. Their source workflow begins in Phase 8, and `WL-802`
-owns adding them after the monthly decision-authority conflict in `D-402` is resolved.
+owns adding them under the current-manager-or-organization-HR, always-non-self authority resolved
+by `D-402`.
 
 ## Query and status contract
 

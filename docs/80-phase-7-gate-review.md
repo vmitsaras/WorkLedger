@@ -18,8 +18,9 @@ review. It also covers the affected authorization policy, database constraints a
 audit records, privacy-minimized contracts, OpenAPI, browser behavior, security boundaries, and
 roadmap documentation.
 
-Monthly-period approval items remain outside this gate. `WL-802` may add them only after the
-authority conflict in `D-402` is resolved.
+Monthly-period approval items remain outside this historical gate. `D-402` was subsequently
+resolved in favor of current-manager or organization-HR authority, always non-self; `WL-802` owns
+their implementation.
 
 ## Exit-criterion evidence
 
@@ -76,7 +77,8 @@ release, deployment, supported-version promise, or compatibility guarantee.
 
 ## Handoff
 
-The next task is `WL-800`: implement the monthly period projection, totals, warnings, blockers, and
-snapshot version. It must consume the existing schedule, attendance, absence, entitlement,
-correction, and time-ledger facts without rewriting approved history or beginning the unresolved
-manager approval/lock behavior owned by `WL-802`.
+The next task at gate completion was `WL-800`: implement the monthly period projection, totals,
+warnings, blockers, and snapshot version. It had to consume the existing schedule, attendance,
+absence, entitlement, correction, and time-ledger facts without rewriting approved history or
+beginning the then-unresolved approval/lock behavior owned by `WL-802`; `D-402` has since resolved
+that authority.

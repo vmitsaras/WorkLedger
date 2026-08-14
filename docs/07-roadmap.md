@@ -298,7 +298,7 @@ Create trustworthy monthly records that can be reviewed, locked, exported, and a
 
 - Period calculation and blockers.
 - Employee submission.
-- Manager changes request and approval.
+- Eligible current-manager or organization-HR changes request and approval, always non-self.
 - Locking.
 - Approved snapshot.
 - Post-lock adjustments.

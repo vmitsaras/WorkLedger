@@ -500,15 +500,21 @@ Property-oriented follow-up should generate even/odd expectations, disjoint/inte
 - One missing clock-out.
 - Submission returns `409 PERIOD_NOT_READY` with the authorized affected local date and `ATTENDANCE_INCOMPLETE`; state/version remain `OPEN`/unchanged and no submission audit success or notification is written.
 
-### EX-040 — Manager approval and lock
+### EX-040 — Eligible reviewer approval and lock
 
-- The current non-self manager approves a source-unchanged `SUBMITTED` month.
+- An eligible non-self reviewer—the current direct manager under `CURRENT_MANAGER` authority or an
+  organization HR administrator under `ORGANIZATION_HR` authority—approves a source-unchanged
+  `SUBMITTED` month.
 - State becomes `APPROVED`; approval cycle 1 snapshot, decision, version, audit, and notification commit atomically and its rows/totals/ledger references reconcile.
-- A later explicit lock rechecks the exact snapshot/source and changes state to `LOCKED` without creating another snapshot. Ordinary changes then return `PERIOD_LOCKED` or `PERIOD_ADJUSTMENT_REQUIRED`.
+- The decision and snapshot require the authenticated account and explicit authority; manager
+  authority requires employee evidence, while an HR-only account may record null employee evidence.
+- A later explicit lock by a currently eligible non-self reviewer rechecks the exact
+  snapshot/source and changes state to `LOCKED` without creating another snapshot. Ordinary changes
+  then return `PERIOD_LOCKED` or `PERIOD_ADJUSTMENT_REQUIRED`.
 
 ### EX-041 — Self-approval attempt
 
-- Manager is also requester/employee for own period.
+- Reviewer is also the employee for their own period, including through combined manager/HR roles.
 - Approval returns `APPROVAL_SELF_NOT_ALLOWED`; period/version remain `SUBMITTED`/unchanged and no decision, snapshot, audit success, or notification is written.
 
 ### EX-042 — Former manager access

@@ -85,6 +85,38 @@ describe('central WorkLedger authorization policy', () => {
     });
   });
 
+  it('applies the resolved monthly reviewer authority and deterministic precedence', () => {
+    const manager = createActor({ roles: ['MANAGER'] });
+    const hrOnly = createActor({ employeeId: null, roles: ['HR_ADMINISTRATOR'] });
+    const combined = createActor({ roles: ['MANAGER', 'HR_ADMINISTRATOR'] });
+    const systemAdministrator = createActor({ employeeId: null, roles: ['SYSTEM_ADMINISTRATOR'] });
+
+    expect(employeeDecision(manager, 'MONTHLY_PERIOD_DECIDE', REPORT_ID, true)).toEqual({
+      allowed: true,
+      scope: 'REPORTS_LIMITED',
+    });
+    expect(employeeDecision(manager, 'MONTHLY_PERIOD_LOCK', REPORT_ID, false)).toEqual({
+      allowed: false,
+      code: 'ACCESS_DENIED',
+    });
+    expect(employeeDecision(hrOnly, 'MONTHLY_PERIOD_DECIDE', REPORT_ID, false)).toEqual({
+      allowed: true,
+      scope: 'ORGANIZATION_HR',
+    });
+    expect(employeeDecision(hrOnly, 'MONTHLY_PERIOD_LOCK', REPORT_ID, false)).toEqual({
+      allowed: true,
+      scope: 'ORGANIZATION_HR',
+    });
+    expect(employeeDecision(combined, 'MONTHLY_PERIOD_LOCK', REPORT_ID, true)).toEqual({
+      allowed: true,
+      scope: 'REPORTS_LIMITED',
+    });
+    expect(employeeDecision(systemAdministrator, 'MONTHLY_PERIOD_LOCK', REPORT_ID, false)).toEqual({
+      allowed: false,
+      code: 'ACCESS_DENIED',
+    });
+  });
+
   it('separates HR configuration from technical account and operations access', () => {
     const hr = createActor({ employeeId: null, roles: ['HR_ADMINISTRATOR'] });
     const systemAdministrator = createActor({ employeeId: null, roles: ['SYSTEM_ADMINISTRATOR'] });

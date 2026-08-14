@@ -38,8 +38,12 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
   affected-date metadata; absence subtype, including sickness, is never a list or URL value.
 - Current manager/HR scope and self exclusion apply before filters, totals, sorting, and
   pagination. Rows, totals, and team filter options share one repeatable-read snapshot.
-- Monthly-period items remain excluded until `WL-802` after the authority conflict recorded in
-  `D-402` is resolved.
+- Monthly-period items remain excluded until `WL-802`; `D-402` now authorizes current effective
+  direct managers or organization HR, always non-self, using account-first actor identity.
+- Monthly request-changes, approval, and lock transitions use `CURRENT_MANAGER` when that current
+  scope qualifies, otherwise `ORGANIZATION_HR`; HR-only accounts need no fabricated employee
+  identity, system administrators receive no domain fallback, and both paths apply identical state,
+  version, source, reconciliation, transaction, audit, and notification checks (`D-402`).
 - Approval decisions require the authenticated account and explicit `CURRENT_MANAGER`,
   `ORGANIZATION_HR`, or `SELF` authority; a linked employee identity is optional evidence, so
   HR-only accounts remain attributable without fabricated employee records (`D-352`).
@@ -114,7 +118,8 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
 - Cancellation is a separate versioned workflow that may target exact remaining coverage, restores no more than the linked deduction, and never rewrites the original request/decision.
 - Sickness has no diagnosis, note, clinician, or attachment field; type and sensitive context stay out of team DTOs, URLs, browser persistence, generic notifications/exports, technical audit, and operational logs.
 - Monthly readiness and adjusted-after-lock are derived; persisted workflow states are open, submitted, changes requested, approved, and locked.
-- Approval creates a reconciled immutable snapshot; a separate eligible current non-self manager action locks that exact snapshot, with no MVP unlock.
+- Approval creates a reconciled immutable snapshot; a separate eligible current-manager or
+  organization-HR non-self reviewer action locks that exact snapshot, with no MVP unlock.
 - Submitted/approved months require an explicit changes-requested transition before ordinary mutation; locked changes append uniquely linked adjustments against the preserved baseline.
 - Monthly snapshots include versioned daily calculation/source/ledger evidence but exclude sickness classification, notes, entitlement balances, and other purpose-incompatible HR detail.
 - The MVP application has 31 canonical route patterns plus three explicit host-operator workflows, each with stable implementation ownership.
@@ -311,6 +316,27 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
   canonical quality, and shared `0.5.0` version gate passed (`WL-407`; see
   `docs/58-phase-4-gate-review.md`).
 
+## Latest decision update
+
+### `D-402` — Monthly approval authority
+
+- Resolved: monthly `REQUEST_CHANGES`, `APPROVE`, and `LOCK` transitions accept either the
+  employee's current effective direct manager (`CURRENT_MANAGER`) or organization HR
+  (`ORGANIZATION_HR`), always non-self. Current-manager authority takes deterministic precedence
+  when both roles qualify.
+- Security/data: every transition must re-evaluate scope and record required actor account and
+  authority; current-manager authority requires employee evidence, while HR employee evidence is
+  optional. System administrators, former/unrelated managers, delegation, self-action, and bypasses
+  of readiness or reconciliation remain excluded.
+- Implementation consequence: `WL-802` must migrate the existing employee-only approved-snapshot
+  actor shape to the account-first contract before exposing HR-only decisions or lock. No workflow
+  code or migration was added by the decision-resolution change.
+- Verification: the focused authorization-policy suite passes all six cases; the repository-wide
+  24 contract tests and 229 unit/component tests pass with formatting, lint, strict typecheck, and
+  source-boundary validation.
+- Documentation: amended ADR 0010 and synchronized roles, domain rules, UX, fixtures, Phase 7/8
+  handoff notes, and current project memory.
+
 ## Latest completed task
 
 ### `WL-800` — Implement monthly period summary and blockers
@@ -336,8 +362,9 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
 - Documentation: added `docs/81-monthly-period-summary.md`, regenerated OpenAPI, updated the example
   evidence map and roadmap memory, and advanced Phase 8 to `WL-801`.
 - Remaining risk: `WL-801` must atomically validate the current period/source version and exact
-  warning acknowledgement. `D-402` remains open and must be resolved before `WL-802` implements
-  monthly decisions/lock authority.
+  warning acknowledgement. Resolved `D-402` requires `WL-802` to migrate monthly snapshot/decision
+  actors to required account and authority with nullable employee evidence before enabling HR-only
+  review transitions.
 - Next task: `WL-801`.
 
 ### `WL-706` — Pass the Phase 7 exit gate
@@ -360,8 +387,8 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
   post-commit delivery failure behavior meet the gate.
 - Documentation: added `docs/80-phase-7-gate-review.md`, synchronized README/TODO/task board/status,
   and advanced the roadmap to `WL-800`.
-- Remaining risk: monthly approval/lock authority remains blocked on `D-402` before `WL-802`; the
-  known Vite main-chunk warning remains owned by `WL-1001`.
+- Remaining risk at gate completion: monthly approval/lock authority was blocked on `D-402`, which
+  is now resolved; the known Vite main-chunk warning remains owned by `WL-1001`.
 - Next task: `WL-800`.
 
 ### `WL-705` — Complete manager authorization and accessibility review
@@ -409,7 +436,8 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
 - Documentation: added `docs/78-generic-notifications-delivery.md`, resolved the `D-203`
   implementation owner, regenerated OpenAPI, and advanced Phase 7 to `WL-705`.
 - Remaining risk: the MVP has an adapter boundary and deterministic fake but no production SMTP
-  dependency. Monthly notification production/destinations remain owned by `WL-802` after `D-402`.
+  dependency. Monthly notification production/destinations remain owned by `WL-802` under the
+  authority resolved by `D-402`.
 - Next task: `WL-705`.
 
 ### `WL-703` — Build team calendar and agenda/list alternative
@@ -471,8 +499,9 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
   audit actors use the authenticated account plus decision authority.
 - Documentation: resolved `D-352`, added `docs/75-consistent-approval-decisions.md`, and advanced
   the Phase 7 roadmap to `WL-702`.
-- Remaining risk: monthly approval records remain excluded until `WL-802` resolves `D-402`.
-  Notification delivery remains separate from domain decision persistence and belongs to `WL-704`.
+- Remaining risk at completion: monthly approval records remained excluded pending `D-402`, which
+  is now resolved; implementation remains `WL-802`. Notification delivery remains separate from
+  domain decision persistence and belongs to `WL-704`.
 - Next task: `WL-702`.
 
 ### `WL-700` — Build manager approval inbox and URL-owned filters
@@ -491,8 +520,8 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
   employee IDs; responses are no-store.
 - Documentation: added `docs/74-unified-approval-inbox.md`, synchronized URL/table rules and
   resolved inbox decisions, and recorded the Phase 8 monthly-authority conflict as `D-402`.
-- Remaining risk: `WL-701` must consolidate type-neutral details and decisions. Monthly rows stay
-  out of the inbox until `D-402` is resolved.
+- Remaining risk at completion: `WL-701` had to consolidate type-neutral details and decisions.
+  Monthly rows stay out of the inbox until `WL-802`; `D-402` is now resolved.
 - Next task: `WL-701`.
 
 ### `WL-607` — Pass the Phase 6 exit gate
@@ -785,8 +814,9 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
 
 ## Current blockers
 
-No `WL-801` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
-to the inbox; D-502 remains open before the production browser gate.
+No `WL-801` blocker is known. `D-402` is resolved for `WL-802`; its required account-first monthly
+actor migration is implementation scope, not an open product decision. D-502 remains open before
+the production browser gate.
 
 ## Next task
 
