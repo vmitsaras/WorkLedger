@@ -47,6 +47,8 @@ import {
   type PersonalCalendarQuery,
   type NotificationHistory,
   type MonthlyPeriod,
+  type MonthlyPeriodLockRequest,
+  type MonthlyPeriodReviewRequest,
   type MonthlyPeriodSubmissionRequest,
   type NotificationQuery,
   type DismissedNotification,
@@ -196,6 +198,36 @@ export async function submitMonthlyPeriod(
 ): Promise<MonthlyPeriod> {
   const token = await getCsrfToken();
   const body = await requestJson(`/v1/monthly-periods/${encodeURIComponent(periodId)}/submit`, {
+    body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+  });
+  const parsed = monthlyPeriodEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function reviewMonthlyPeriod(
+  periodId: string,
+  input: MonthlyPeriodReviewRequest,
+): Promise<MonthlyPeriod> {
+  return mutateMonthlyPeriod(periodId, 'review', input);
+}
+
+export async function lockMonthlyPeriod(
+  periodId: string,
+  input: MonthlyPeriodLockRequest,
+): Promise<MonthlyPeriod> {
+  return mutateMonthlyPeriod(periodId, 'lock', input);
+}
+
+async function mutateMonthlyPeriod(
+  periodId: string,
+  action: 'lock' | 'review',
+  input: MonthlyPeriodLockRequest | MonthlyPeriodReviewRequest,
+): Promise<MonthlyPeriod> {
+  const token = await getCsrfToken();
+  const body = await requestJson(`/v1/monthly-periods/${encodeURIComponent(periodId)}/${action}`, {
     body: JSON.stringify(input),
     headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
     method: 'POST',

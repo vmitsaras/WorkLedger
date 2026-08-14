@@ -77,8 +77,9 @@ controls.
   announcement, and Submitted-heading focus.
 - OpenAPI is generated from the strict Fastify/Zod request and response contracts.
 
-## Remaining work
+## Subsequent work
 
-`WL-802` adds account-first current-manager/organization-HR changes-requested, approval, snapshot,
-notification, and separate lock transitions under resolved `D-402`. `WL-803` implements the actual
-post-lock adjustment workflow; `WL-801` only preserves its required boundary.
+`WL-802` now adds the account-first current-manager/organization-HR changes-requested, approval,
+snapshot, notification, and separate lock transitions under resolved `D-402`; see
+`docs/83-monthly-period-review-lock.md`. `WL-803` implements the actual post-lock adjustment
+workflow; `WL-801` only preserves its required boundary.

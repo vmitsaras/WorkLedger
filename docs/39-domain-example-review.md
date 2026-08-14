@@ -45,10 +45,12 @@ fixture has no Phase 2 implementation surface and must be tested at the named la
 | EX-028–EX-031 | Deferred | Privacy DTOs, reservations, decisions, entitlement ledger: `WL-601`–`WL-603` |
 | EX-032, EX-060, EX-065, EX-069–EX-070 | Direct | Absence overlap, odd partition, work-credit cap, exact minute intersection, and warning code |
 | EX-061–EX-064, EX-066–EX-068, EX-071–EX-075 | Deferred | Absence workflow/cancellation/local-boundary/authorization/privacy policy: `WL-600`–`WL-607` |
-| EX-033–EX-037 | Partial | `WL-503`–`WL-505` cover correction workflow/application and `WL-801` directly rejects EX-035 ordinary corrections after submission; reviewer reopen and post-lock adjustment remain `WL-802`–`WL-803`. |
+| EX-033–EX-036 | Partial | `WL-503`–`WL-505` cover correction workflow/application; `WL-801` freezes ordinary submitted-period correction and `WL-802` reopens via changes requested. Post-lock adjustment remains `WL-803`. |
+| EX-037 | Direct | `WL-802` persists schema/engine-versioned canonical snapshots with exact source/snapshot fingerprints, reproduction references, totals, and immutable database evidence. |
 | EX-038–EX-039 | Direct | `WL-800` covers ready/incomplete projection and `WL-801` covers exact source acknowledgement, versioned submission, persisted actor/fingerprint, audit, no snapshot, authorized blocker context, and no-effect failures. |
 | EX-076 | Direct | `monthly-period.unit.test.ts`, `monthly-period.integration.test.ts`, and `monthly-period.component.test.tsx` cover stale warning/source acknowledgement, refresh, focus, and no transition. |
-| EX-040–EX-042, EX-077–EX-085 | Deferred | Reviewer authorization, immutable approval snapshots, changes requested, locking, source races, and adjustment workflow: `WL-802`–`WL-803` |
+| EX-040–EX-042, EX-077–EX-080, EX-085 | Direct | `WL-802` domain, migration, API, inbox, notification, and component tests cover current-manager/HR-only authority, self/former/unrelated denial, account-first actor evidence, source races, reconciliation, two approval cycles, explicit lock, and neutral sickness-effect snapshot privacy. |
+| EX-081–EX-084 | Deferred | Post-lock delta, zero-delta, concurrent decision, and reversal workflow: `WL-803` |
 | EX-043–EX-045 | Deferred | CSV export, scoped reporting and deactivation: `WL-804`–`WL-805`, `WL-900` |
 
 ## Invariant review

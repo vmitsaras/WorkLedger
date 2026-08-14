@@ -29,10 +29,11 @@ export type TeamAvailabilityState = 'OFF_WORK' | 'ON_BREAK' | 'UNAVAILABLE' | 'W
 export type NotificationEvent =
   'ITEM_APPROVED' | 'ITEM_REJECTED' | 'ITEM_CHANGES_REQUESTED' | 'ITEM_ACKNOWLEDGED';
 export type NotificationSourceKind = 'REQUEST' | 'MONTHLY_PERIOD';
+export type NotificationDestinationPath = '/requests' | `/monthly-periods/${string}`;
 export type NotificationDeliveryOutcome = 'DELIVERED' | 'FAILED';
 export type NotificationDeliveryStatus = 'NOT_CONFIGURED' | 'PENDING' | NotificationDeliveryOutcome;
 export type ApprovalInboxStatus = 'ACTION_REQUIRED' | 'COMPLETED' | 'WAITING_ON_EMPLOYEE';
-export type ApprovalInboxType = 'ABSENCE' | 'CANCELLATION' | 'CORRECTION';
+export type ApprovalInboxType = 'ABSENCE' | 'CANCELLATION' | 'CORRECTION' | 'MONTHLY_PERIOD';
 export type ApprovalInboxSort = 'AFFECTED_DATE' | 'EMPLOYEE' | 'SUBMITTED_AT';
 export type AuditOutcome = 'SUCCESS' | 'DENIED' | 'FAILURE';
 export type DomainAuditTargetKind =
@@ -129,7 +130,7 @@ export type AppendSecurityAuditEventInput = Omit<SecurityAuditEventRecord, 'id'>
 
 export type AppendNotificationInput = Readonly<{
   deliveryRequested: boolean;
-  destinationPath: '/requests';
+  destinationPath: NotificationDestinationPath;
   event: NotificationEvent;
   occurredAt: Instant;
   organizationId: DomainId<'Organization'>;
@@ -175,7 +176,7 @@ export type DismissNotificationInput = Readonly<{
 
 export type NotificationListItemRecord = Readonly<{
   deliveryStatus: NotificationDeliveryStatus;
-  destinationPath: '/requests';
+  destinationPath: NotificationDestinationPath;
   dismissedAt: Instant | null;
   event: NotificationEvent;
   id: DomainId<'Notification'>;
@@ -408,6 +409,53 @@ export type MonthlyPeriodProtectionStatus = Extract<
   'APPROVED' | 'LOCKED' | 'SUBMITTED'
 >;
 
+export type MonthlyPeriodDecisionAction = 'APPROVE' | 'LOCK' | 'REQUEST_CHANGES';
+
+export type ApprovedMonthlySnapshotRecord = Readonly<{
+  approvalCycle: number;
+  approvedAt: Instant;
+  approver: DecisionActorRecord;
+  engineVersion: string;
+  id: DomainId<'MonthlySnapshot'>;
+  monthlyPeriodId: DomainId<'MonthlyPeriod'>;
+  organizationId: DomainId<'Organization'>;
+  periodVersion: number;
+  schemaVersion: number;
+  snapshot: Readonly<Record<string, unknown>>;
+  snapshotFingerprint: string;
+  sourceFingerprint: string;
+}>;
+
+export type MonthlyPeriodDecisionRecord = Readonly<{
+  action: MonthlyPeriodDecisionAction;
+  actor: DecisionActorRecord;
+  decidedAt: Instant;
+  id: DomainId<'MonthlyPeriodDecision'>;
+  monthlyPeriodId: DomainId<'MonthlyPeriod'>;
+  monthlySnapshotId: DomainId<'MonthlySnapshot'> | null;
+  nextStatus: Extract<MonthlyPeriodStatus, 'APPROVED' | 'CHANGES_REQUESTED' | 'LOCKED'>;
+  nextVersion: number;
+  organizationId: DomainId<'Organization'>;
+  previousStatus: Extract<MonthlyPeriodStatus, 'APPROVED' | 'SUBMITTED'>;
+  previousVersion: number;
+  reason: string | null;
+}>;
+
+export type AppendApprovedMonthlySnapshotInput = ApprovedMonthlySnapshotRecord;
+
+export type AppendMonthlyPeriodDecisionInput = Omit<MonthlyPeriodDecisionRecord, 'id'>;
+
+export type TransitionMonthlyPeriodInput = Readonly<{
+  action: MonthlyPeriodDecisionAction;
+  approvedAt: Instant | null;
+  expectedStatus: Extract<MonthlyPeriodStatus, 'APPROVED' | 'SUBMITTED'>;
+  expectedVersion: number;
+  lockedAt: Instant | null;
+  nextStatus: Extract<MonthlyPeriodStatus, 'APPROVED' | 'CHANGES_REQUESTED' | 'LOCKED'>;
+  organizationId: DomainId<'Organization'>;
+  periodId: DomainId<'MonthlyPeriod'>;
+}>;
+
 export type SubmitMonthlyPeriodInput = Readonly<{
   actorAccountId: DomainId<'Account'>;
   expectedVersion: number;
@@ -431,6 +479,41 @@ export type MonthlyPeriodRangeRecord = Readonly<{
   startsOn: LocalDate;
 }>;
 
+export type MonthlyScheduleAssignmentRecord = MonthlyPeriodRangeRecord &
+  Readonly<{
+    scheduleId: DomainId<'WeeklySchedule'>;
+    scheduleVersion: number;
+    scheduledMinutesByIsoWeekday: readonly [number, number, number, number, number, number, number];
+  }>;
+
+export type MonthlyPolicyAssignmentRecord = MonthlyPeriodRangeRecord &
+  Readonly<{
+    policyId: DomainId<'TimePolicy'>;
+    policyVersion: number;
+  }>;
+
+export type MonthlyHolidaySourceRecord = Readonly<{
+  holidayId: DomainId<'Holiday'>;
+  localDate: LocalDate;
+}>;
+
+export type MonthlyAbsenceEffectSourceRecord = Readonly<{
+  absenceCreditMinutes: number;
+  absenceExpectedReductionMinutes: number;
+  effectId: DomainId<'AbsenceEffect'>;
+  effectVersion: number;
+  localDate: LocalDate;
+}>;
+
+export type MonthlyAppliedCorrectionSourceRecord = Readonly<{
+  appliedCorrectionId: DomainId<'AppliedCorrection'>;
+  localDate: LocalDate;
+  version: number;
+}>;
+
+export type MonthlyLedgerEntryRecord = TimeAccountLedgerEntry &
+  Readonly<{ sourceFingerprint: string }>;
+
 export type MonthlyPeriodBlockerSourceRecord = Readonly<{
   code: Extract<CalculationBlockerCode, 'ABSENCE_APPROVAL_PENDING' | 'CORRECTION_UNRESOLVED'>;
   localDate: LocalDate;
@@ -439,12 +522,15 @@ export type MonthlyPeriodBlockerSourceRecord = Readonly<{
 }>;
 
 export type MonthlyPeriodProjectionSourceRecord = Readonly<{
+  absenceEffects: readonly MonthlyAbsenceEffectSourceRecord[];
+  appliedCorrections: readonly MonthlyAppliedCorrectionSourceRecord[];
   dailyProjections: readonly DailyProjectionRecord[];
   employmentPeriods: readonly MonthlyPeriodRangeRecord[];
-  ledgerEntries: readonly TimeAccountLedgerEntry[];
+  holidays: readonly MonthlyHolidaySourceRecord[];
+  ledgerEntries: readonly MonthlyLedgerEntryRecord[];
   period: MonthlyPeriodRecord;
-  policyAssignments: readonly MonthlyPeriodRangeRecord[];
-  scheduleAssignments: readonly MonthlyPeriodRangeRecord[];
+  policyAssignments: readonly MonthlyPolicyAssignmentRecord[];
+  scheduleAssignments: readonly MonthlyScheduleAssignmentRecord[];
   sourceBlockers: readonly MonthlyPeriodBlockerSourceRecord[];
 }>;
 
@@ -665,7 +751,11 @@ export type ApprovalInboxItemRecord = Readonly<{
   affectedStartDate: LocalDate;
   employeeDisplayName: string;
   employeeId: DomainId<'Employee'>;
-  id: DomainId<'AbsenceCancellation'> | DomainId<'AbsenceRequest'> | DomainId<'CorrectionRequest'>;
+  id:
+    | DomainId<'AbsenceCancellation'>
+    | DomainId<'AbsenceRequest'>
+    | DomainId<'CorrectionRequest'>
+    | DomainId<'MonthlyPeriod'>;
   status: ApprovalInboxStatus;
   submittedAt: Instant;
   team: ApprovalInboxTeamRecord | null;
@@ -941,6 +1031,8 @@ export interface DailyProjectionRepository {
 }
 
 export interface MonthlyPeriodRepository {
+  appendDecision(input: AppendMonthlyPeriodDecisionInput): Promise<MonthlyPeriodDecisionRecord>;
+  appendSnapshot(input: AppendApprovedMonthlySnapshotInput): Promise<ApprovedMonthlySnapshotRecord>;
   findProtectionForRange(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
@@ -956,11 +1048,20 @@ export interface MonthlyPeriodRepository {
     organizationId: DomainId<'Organization'>,
     periodId: DomainId<'MonthlyPeriod'>,
   ): Promise<MonthlyPeriodProjectionSourceRecord | null>;
+  findLatestSnapshot(
+    organizationId: DomainId<'Organization'>,
+    periodId: DomainId<'MonthlyPeriod'>,
+  ): Promise<ApprovedMonthlySnapshotRecord | null>;
+  listDecisions(
+    organizationId: DomainId<'Organization'>,
+    periodId: DomainId<'MonthlyPeriod'>,
+  ): Promise<readonly MonthlyPeriodDecisionRecord[]>;
   lockForSubmission(
     organizationId: DomainId<'Organization'>,
     periodId: DomainId<'MonthlyPeriod'>,
   ): Promise<MonthlyPeriodRecord | null>;
   submit(input: SubmitMonthlyPeriodInput): Promise<SubmittedMonthlyPeriodRecord | null>;
+  transition(input: TransitionMonthlyPeriodInput): Promise<MonthlyPeriodRecord | null>;
 }
 
 export interface CorrectionRequestRepository {

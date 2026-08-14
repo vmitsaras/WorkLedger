@@ -56,6 +56,8 @@ import {
   correctionRequests,
   correctionDecisions,
   appliedCorrections,
+  approvedMonthlySnapshots,
+  monthlyPeriodDecisions,
   monthlyPeriods,
   notificationDeliveryAttempts,
   notifications,
@@ -121,6 +123,7 @@ import type {
   DecideCorrectionRequestInput,
   AppliedCorrectionRecord,
   ApplyCorrectionInput,
+  ApprovedMonthlySnapshotRecord,
   DailyProjectionRecord,
   DailyProjectionRepository,
   DomainAuditEventRecord,
@@ -134,6 +137,7 @@ import type {
   ListTeamCalendarInput,
   ListTeamStatusInput,
   MonthlyPeriodBlockerSourceRecord,
+  MonthlyPeriodDecisionRecord,
   MonthlyPeriodProjectionSourceRecord,
   MonthlyPeriodRecord,
   MonthlyPeriodRepository,
@@ -588,7 +592,57 @@ class PostgresApprovalInboxRepository implements ApprovalInboxRepository {
         absenceCancellations.version,
       );
 
-    const unified = unionAll(correctionQuery, absenceQuery, cancellationQuery).as('approval_inbox');
+    const monthlyPeriodQuery = this.transaction
+      .select({
+        affectedEndDate:
+          sql<LocalDate>`(${monthlyPeriods.monthStart} + interval '1 month - 1 day')::date`.as(
+            'affected_end_date',
+          ),
+        affectedStartDate: sql<LocalDate>`${monthlyPeriods.monthStart}`.as('affected_start_date'),
+        employeeDisplayName: sql<string>`${employees.displayName}`.as('employee_display_name'),
+        employeeId: sql<string>`${employees.id}`.as('employee_id'),
+        id: sql<string>`${monthlyPeriods.id}`.as('item_id'),
+        status: sql<ApprovalInboxItemRecord['status']>`case
+          when ${monthlyPeriods.status} = 'CHANGES_REQUESTED' then 'WAITING_ON_EMPLOYEE'
+          when ${monthlyPeriods.status} in ('SUBMITTED', 'APPROVED') then 'ACTION_REQUIRED'
+          else 'COMPLETED'
+        end`.as('status'),
+        submittedAt: sql<string>`${monthlyPeriods.submittedAt}`.as('submitted_at'),
+        teamId: sql<string | null>`${teams.id}`.as('team_id'),
+        teamName: sql<string | null>`${teams.name}`.as('team_name'),
+        type: sql<ApprovalInboxItemRecord['type']>`'MONTHLY_PERIOD'`.as('type'),
+        version: sql<number>`${monthlyPeriods.version}`.as('version'),
+      })
+      .from(monthlyPeriods)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.organizationId, input.organizationId),
+          eq(employees.id, monthlyPeriods.employeeId),
+        ),
+      )
+      .leftJoin(managerAssignments, currentManagerJoin)
+      .leftJoin(teamAssignments, currentTeamJoin)
+      .leftJoin(
+        teams,
+        and(eq(teams.organizationId, input.organizationId), eq(teams.id, teamAssignments.teamId)),
+      )
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, input.organizationId),
+          inArray(monthlyPeriods.status, ['SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED', 'LOCKED']),
+          isNotNull(monthlyPeriods.submittedAt),
+          scopeCondition,
+          selfExclusion,
+        ),
+      );
+
+    const unified = unionAll(
+      correctionQuery,
+      absenceQuery,
+      cancellationQuery,
+      monthlyPeriodQuery,
+    ).as('approval_inbox');
     const filters = and(
       input.type === 'ALL' ? undefined : eq(unified.type, input.type),
       input.status === 'ALL' ? undefined : eq(unified.status, input.status),
@@ -994,7 +1048,7 @@ class PostgresNotificationRepository implements NotificationRepository {
     if (row === undefined) throw new DatabaseValueError('notifications', 'id');
     return Object.freeze({
       deliveryRequested,
-      destinationPath: row.destinationPath as '/requests',
+      destinationPath: mapNotificationDestination(row.destinationPath),
       dismissedAt:
         row.dismissedAt === null
           ? null
@@ -1135,6 +1189,17 @@ function notificationCoreSelection() {
     id: notifications.id,
     occurredAt: notifications.occurredAt,
   };
+}
+
+function mapNotificationDestination(value: string): NotificationListItemRecord['destinationPath'] {
+  if (isNotificationDestination(value)) return value;
+  throw new DatabaseValueError('notifications', 'destination_path');
+}
+
+function isNotificationDestination(
+  value: string,
+): value is NotificationListItemRecord['destinationPath'] {
+  return value === '/requests' || /^\/monthly-periods\/[0-9a-f-]{36}$/iu.test(value);
 }
 
 function mapNotificationListItem(
@@ -1518,7 +1583,9 @@ function mapApprovalInboxItem(
       ? mapDomainId<'CorrectionRequest'>(value.id, 'correction_requests', 'id')
       : value.type === 'ABSENCE'
         ? mapDomainId<'AbsenceRequest'>(value.id, 'absence_requests', 'id')
-        : mapDomainId<'AbsenceCancellation'>(value.id, 'absence_cancellations', 'id');
+        : value.type === 'CANCELLATION'
+          ? mapDomainId<'AbsenceCancellation'>(value.id, 'absence_cancellations', 'id')
+          : mapDomainId<'MonthlyPeriod'>(value.id, 'monthly_periods', 'id');
   return Object.freeze({
     affectedEndDate: mapLocalDate(
       value.affectedEndDate,
@@ -1546,7 +1613,9 @@ function approvalInboxSource(type: ApprovalInboxItemRecord['type']): string {
     ? 'correction_requests'
     : type === 'ABSENCE'
       ? 'absence_requests'
-      : 'absence_cancellations';
+      : type === 'CANCELLATION'
+        ? 'absence_cancellations'
+        : 'monthly_periods';
 }
 
 class PostgresOrganizationRepository implements OrganizationRepository {
@@ -2110,6 +2179,57 @@ class PostgresDailyProjectionRepository implements DailyProjectionRepository {
 class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
 
+  async appendDecision(
+    input: Parameters<MonthlyPeriodRepository['appendDecision']>[0],
+  ): Promise<MonthlyPeriodDecisionRecord> {
+    const [row] = await this.transaction
+      .insert(monthlyPeriodDecisions)
+      .values({
+        action: input.action,
+        actorAccountId: input.actor.accountId,
+        actorAuthority: input.actor.authority,
+        actorEmployeeId: input.actor.employeeId,
+        decidedAt: input.decidedAt,
+        monthlyPeriodId: input.monthlyPeriodId,
+        monthlySnapshotId: input.monthlySnapshotId,
+        nextStatus: input.nextStatus,
+        nextVersion: input.nextVersion,
+        organizationId: input.organizationId,
+        previousStatus: input.previousStatus,
+        previousVersion: input.previousVersion,
+        reason: input.reason,
+      })
+      .returning();
+    if (row === undefined) throw new DatabaseValueError('monthly_period_decisions', 'id');
+    return mapMonthlyPeriodDecision(row);
+  }
+
+  async appendSnapshot(
+    input: Parameters<MonthlyPeriodRepository['appendSnapshot']>[0],
+  ): Promise<ApprovedMonthlySnapshotRecord> {
+    const [row] = await this.transaction
+      .insert(approvedMonthlySnapshots)
+      .values({
+        approvalCycle: input.approvalCycle,
+        approvedAt: input.approvedAt,
+        approvedByAccountId: input.approver.accountId,
+        approvedByAuthority: input.approver.authority,
+        approvedByEmployeeId: input.approver.employeeId,
+        engineVersion: input.engineVersion,
+        id: input.id,
+        monthlyPeriodId: input.monthlyPeriodId,
+        organizationId: input.organizationId,
+        periodVersion: input.periodVersion,
+        schemaVersion: input.schemaVersion,
+        snapshot: input.snapshot,
+        snapshotFingerprint: input.snapshotFingerprint,
+        sourceFingerprint: input.sourceFingerprint,
+      })
+      .returning();
+    if (row === undefined) throw new DatabaseValueError('approved_monthly_snapshots', 'id');
+    return mapApprovedMonthlySnapshot(row);
+  }
+
   async findProtectionForRange(
     organizationId: Parameters<MonthlyPeriodRepository['findProtectionForRange']>[0],
     employeeId: Parameters<MonthlyPeriodRepository['findProtectionForRange']>[1],
@@ -2211,9 +2331,25 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
       .select({
         endsOn: scheduleAssignments.endsOn,
         id: scheduleAssignments.id,
+        fridayMinutes: weeklySchedules.fridayMinutes,
+        mondayMinutes: weeklySchedules.mondayMinutes,
+        saturdayMinutes: weeklySchedules.saturdayMinutes,
+        scheduleId: weeklySchedules.id,
+        scheduleVersion: weeklySchedules.version,
         startsOn: scheduleAssignments.startsOn,
+        sundayMinutes: weeklySchedules.sundayMinutes,
+        thursdayMinutes: weeklySchedules.thursdayMinutes,
+        tuesdayMinutes: weeklySchedules.tuesdayMinutes,
+        wednesdayMinutes: weeklySchedules.wednesdayMinutes,
       })
       .from(scheduleAssignments)
+      .innerJoin(
+        weeklySchedules,
+        and(
+          eq(weeklySchedules.organizationId, organizationId),
+          eq(weeklySchedules.id, scheduleAssignments.scheduleId),
+        ),
+      )
       .where(
         and(
           eq(scheduleAssignments.organizationId, organizationId),
@@ -2227,9 +2363,18 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
       .select({
         endsOn: policyAssignments.endsOn,
         id: policyAssignments.id,
+        policyId: timePolicies.id,
+        policyVersion: timePolicies.version,
         startsOn: policyAssignments.startsOn,
       })
       .from(policyAssignments)
+      .innerJoin(
+        timePolicies,
+        and(
+          eq(timePolicies.organizationId, organizationId),
+          eq(timePolicies.id, policyAssignments.policyId),
+        ),
+      )
       .where(
         and(
           eq(policyAssignments.organizationId, organizationId),
@@ -2251,6 +2396,67 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
         ),
       )
       .orderBy(asc(dailyProjections.localDate));
+    const holidayRows = await this.transaction
+      .select({ id: holidays.id, localDate: holidays.holidayDate })
+      .from(holidays)
+      .where(
+        and(
+          eq(holidays.organizationId, organizationId),
+          gte(holidays.holidayDate, period.monthStart),
+          lte(holidays.holidayDate, monthEnd),
+        ),
+      )
+      .orderBy(asc(holidays.holidayDate), asc(holidays.id));
+    const absenceEffectRows = await this.transaction
+      .select({
+        absenceCreditMinutes: absenceEffects.creditMinutes,
+        absenceExpectedReductionMinutes: absenceEffects.expectedReductionMinutes,
+        coverageSegmentId: absenceEffects.absenceCoverageSegmentId,
+        effectId: absenceEffects.id,
+        effectVersion: absenceEffects.effectVersion,
+        localDate: absenceEffects.localDate,
+      })
+      .from(absenceEffects)
+      .where(
+        and(
+          eq(absenceEffects.organizationId, organizationId),
+          eq(absenceEffects.employeeId, period.employeeId),
+          gte(absenceEffects.localDate, period.monthStart),
+          lte(absenceEffects.localDate, monthEnd),
+        ),
+      )
+      .orderBy(
+        asc(absenceEffects.localDate),
+        asc(absenceEffects.absenceCoverageSegmentId),
+        desc(absenceEffects.effectVersion),
+        asc(absenceEffects.id),
+      );
+    const latestAbsenceEffects = new Map<string, (typeof absenceEffectRows)[number]>();
+    for (const effect of absenceEffectRows) {
+      if (!latestAbsenceEffects.has(effect.coverageSegmentId)) {
+        latestAbsenceEffects.set(effect.coverageSegmentId, effect);
+      }
+    }
+    const appliedCorrectionRows = await this.transaction
+      .select({
+        appliedCorrectionId: appliedCorrections.id,
+        localDate: appliedCorrections.localDate,
+        version: appliedCorrections.version,
+      })
+      .from(appliedCorrections)
+      .where(
+        and(
+          eq(appliedCorrections.organizationId, organizationId),
+          eq(appliedCorrections.employeeId, period.employeeId),
+          gte(appliedCorrections.localDate, period.monthStart),
+          lte(appliedCorrections.localDate, monthEnd),
+        ),
+      )
+      .orderBy(
+        asc(appliedCorrections.localDate),
+        asc(appliedCorrections.version),
+        asc(appliedCorrections.id),
+      );
     const ledgerRows = await this.transaction
       .select()
       .from(timeAccountEntries)
@@ -2349,17 +2555,113 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
       .orderBy(asc(absenceCoverageSegments.localDate), asc(absenceCancellations.id));
 
     return Object.freeze({
+      absenceEffects: Object.freeze(
+        [...latestAbsenceEffects.values()].map((effect) =>
+          Object.freeze({
+            absenceCreditMinutes: mapNonNegativeMinutes(
+              effect.absenceCreditMinutes,
+              'absence_effects',
+              'credit_minutes',
+            ),
+            absenceExpectedReductionMinutes: mapNonNegativeMinutes(
+              effect.absenceExpectedReductionMinutes,
+              'absence_effects',
+              'expected_reduction_minutes',
+            ),
+            effectId: mapDomainId<'AbsenceEffect'>(effect.effectId, 'absence_effects', 'id'),
+            effectVersion: mapPositiveVersion(
+              effect.effectVersion,
+              'absence_effects',
+              'effect_version',
+            ),
+            localDate: mapLocalDate(effect.localDate, 'absence_effects', 'local_date'),
+          }),
+        ),
+      ),
+      appliedCorrections: Object.freeze(
+        appliedCorrectionRows.map((correction) =>
+          Object.freeze({
+            appliedCorrectionId: mapDomainId<'AppliedCorrection'>(
+              correction.appliedCorrectionId,
+              'applied_corrections',
+              'id',
+            ),
+            localDate: mapLocalDate(correction.localDate, 'applied_corrections', 'local_date'),
+            version: mapPositiveVersion(correction.version, 'applied_corrections', 'version'),
+          }),
+        ),
+      ),
       dailyProjections: Object.freeze(projectionRows.map(mapDailyProjection)),
       employmentPeriods: Object.freeze(
         employmentRows.map((range) => mapMonthlyRange(range, 'employment_periods')),
       ),
-      ledgerEntries: Object.freeze(ledgerRows.map(mapTimeAccountEntry)),
+      holidays: Object.freeze(
+        holidayRows.map((holiday) =>
+          Object.freeze({
+            holidayId: mapDomainId<'Holiday'>(holiday.id, 'holidays', 'id'),
+            localDate: mapLocalDate(holiday.localDate, 'holidays', 'holiday_date'),
+          }),
+        ),
+      ),
+      ledgerEntries: Object.freeze(
+        ledgerRows.map((entry) =>
+          Object.freeze({
+            ...mapTimeAccountEntry(entry),
+            sourceFingerprint: entry.sourceFingerprint,
+          }),
+        ),
+      ),
       period,
       policyAssignments: Object.freeze(
-        policyRows.map((range) => mapMonthlyRange(range, 'policy_assignments')),
+        policyRows.map((assignment) =>
+          Object.freeze({
+            ...mapMonthlyRange(assignment, 'policy_assignments'),
+            policyId: mapDomainId<'TimePolicy'>(assignment.policyId, 'time_policies', 'id'),
+            policyVersion: mapPositiveVersion(assignment.policyVersion, 'time_policies', 'version'),
+          }),
+        ),
       ),
       scheduleAssignments: Object.freeze(
-        scheduleRows.map((range) => mapMonthlyRange(range, 'schedule_assignments')),
+        scheduleRows.map((assignment) =>
+          Object.freeze({
+            ...mapMonthlyRange(assignment, 'schedule_assignments'),
+            scheduleId: mapDomainId<'WeeklySchedule'>(
+              assignment.scheduleId,
+              'weekly_schedules',
+              'id',
+            ),
+            scheduleVersion: mapPositiveVersion(
+              assignment.scheduleVersion,
+              'weekly_schedules',
+              'version',
+            ),
+            scheduledMinutesByIsoWeekday: Object.freeze([
+              mapNonNegativeMinutes(assignment.mondayMinutes, 'weekly_schedules', 'monday_minutes'),
+              mapNonNegativeMinutes(
+                assignment.tuesdayMinutes,
+                'weekly_schedules',
+                'tuesday_minutes',
+              ),
+              mapNonNegativeMinutes(
+                assignment.wednesdayMinutes,
+                'weekly_schedules',
+                'wednesday_minutes',
+              ),
+              mapNonNegativeMinutes(
+                assignment.thursdayMinutes,
+                'weekly_schedules',
+                'thursday_minutes',
+              ),
+              mapNonNegativeMinutes(assignment.fridayMinutes, 'weekly_schedules', 'friday_minutes'),
+              mapNonNegativeMinutes(
+                assignment.saturdayMinutes,
+                'weekly_schedules',
+                'saturday_minutes',
+              ),
+              mapNonNegativeMinutes(assignment.sundayMinutes, 'weekly_schedules', 'sunday_minutes'),
+            ]) as readonly [number, number, number, number, number, number, number],
+          }),
+        ),
       ),
       sourceBlockers: Object.freeze([
         ...correctionRows.map((source) => mapMonthlyBlocker(source, 'CORRECTION_UNRESOLVED')),
@@ -2367,6 +2669,41 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
         ...cancellationRows.map((source) => mapMonthlyBlocker(source, 'ABSENCE_APPROVAL_PENDING')),
       ]),
     });
+  }
+
+  async findLatestSnapshot(
+    organizationId: Parameters<MonthlyPeriodRepository['findLatestSnapshot']>[0],
+    periodId: Parameters<MonthlyPeriodRepository['findLatestSnapshot']>[1],
+  ): Promise<ApprovedMonthlySnapshotRecord | null> {
+    const [row] = await this.transaction
+      .select()
+      .from(approvedMonthlySnapshots)
+      .where(
+        and(
+          eq(approvedMonthlySnapshots.organizationId, organizationId),
+          eq(approvedMonthlySnapshots.monthlyPeriodId, periodId),
+        ),
+      )
+      .orderBy(desc(approvedMonthlySnapshots.approvalCycle))
+      .limit(1);
+    return row === undefined ? null : mapApprovedMonthlySnapshot(row);
+  }
+
+  async listDecisions(
+    organizationId: Parameters<MonthlyPeriodRepository['listDecisions']>[0],
+    periodId: Parameters<MonthlyPeriodRepository['listDecisions']>[1],
+  ): Promise<readonly MonthlyPeriodDecisionRecord[]> {
+    const rows = await this.transaction
+      .select()
+      .from(monthlyPeriodDecisions)
+      .where(
+        and(
+          eq(monthlyPeriodDecisions.organizationId, organizationId),
+          eq(monthlyPeriodDecisions.monthlyPeriodId, periodId),
+        ),
+      )
+      .orderBy(asc(monthlyPeriodDecisions.nextVersion));
+    return Object.freeze(rows.map(mapMonthlyPeriodDecision));
   }
 
   async lockForSubmission(
@@ -2438,6 +2775,44 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
       submittedSourceFingerprint: row.submittedSourceFingerprint,
       version: row.version,
     });
+  }
+
+  async transition(
+    input: Parameters<MonthlyPeriodRepository['transition']>[0],
+  ): Promise<MonthlyPeriodRecord | null> {
+    const [row] = await this.transaction
+      .update(monthlyPeriods)
+      .set({
+        ...(input.action === 'REQUEST_CHANGES'
+          ? {
+              approvedAt: null,
+              submittedSourceFingerprint: null,
+            }
+          : {}),
+        ...(input.action === 'APPROVE' ? { approvedAt: input.approvedAt } : {}),
+        ...(input.action === 'LOCK' ? { lockedAt: input.lockedAt } : {}),
+        status: input.nextStatus,
+        version: input.expectedVersion + 1,
+      })
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, input.organizationId),
+          eq(monthlyPeriods.id, input.periodId),
+          eq(monthlyPeriods.status, input.expectedStatus),
+          eq(monthlyPeriods.version, input.expectedVersion),
+        ),
+      )
+      .returning();
+    if (row === undefined) return null;
+    const [employee] = await this.transaction
+      .select({ displayName: employees.displayName })
+      .from(employees)
+      .where(
+        and(eq(employees.organizationId, input.organizationId), eq(employees.id, row.employeeId)),
+      )
+      .limit(1);
+    if (employee === undefined) throw new DatabaseValueError('employees', 'display_name');
+    return mapMonthlyPeriod(row, employee.displayName);
   }
 }
 
@@ -4068,6 +4443,105 @@ function mapMonthlyPeriod(
   });
 }
 
+function mapApprovedMonthlySnapshot(
+  row: typeof approvedMonthlySnapshots.$inferSelect,
+): ApprovedMonthlySnapshotRecord {
+  return Object.freeze({
+    approvalCycle: row.approvalCycle,
+    approvedAt: mapInstant(row.approvedAt, 'approved_monthly_snapshots', 'approved_at'),
+    approver: Object.freeze({
+      accountId: mapDomainId<'Account'>(
+        row.approvedByAccountId,
+        'approved_monthly_snapshots',
+        'approved_by_account_id',
+      ),
+      authority: row.approvedByAuthority,
+      employeeId:
+        row.approvedByEmployeeId === null
+          ? null
+          : mapDomainId<'Employee'>(
+              row.approvedByEmployeeId,
+              'approved_monthly_snapshots',
+              'approved_by_employee_id',
+            ),
+    }),
+    engineVersion: row.engineVersion,
+    id: mapDomainId<'MonthlySnapshot'>(row.id, 'approved_monthly_snapshots', 'id'),
+    monthlyPeriodId: mapDomainId<'MonthlyPeriod'>(
+      row.monthlyPeriodId,
+      'approved_monthly_snapshots',
+      'monthly_period_id',
+    ),
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'approved_monthly_snapshots',
+      'organization_id',
+    ),
+    periodVersion: row.periodVersion,
+    schemaVersion: row.schemaVersion,
+    snapshot: Object.freeze({ ...row.snapshot }),
+    snapshotFingerprint: row.snapshotFingerprint,
+    sourceFingerprint: row.sourceFingerprint,
+  });
+}
+
+function mapMonthlyPeriodDecision(
+  row: typeof monthlyPeriodDecisions.$inferSelect,
+): MonthlyPeriodDecisionRecord {
+  if (
+    (row.previousStatus !== 'SUBMITTED' && row.previousStatus !== 'APPROVED') ||
+    (row.nextStatus !== 'CHANGES_REQUESTED' &&
+      row.nextStatus !== 'APPROVED' &&
+      row.nextStatus !== 'LOCKED')
+  ) {
+    throw new DatabaseValueError('monthly_period_decisions', 'status');
+  }
+  return Object.freeze({
+    action: row.action,
+    actor: Object.freeze({
+      accountId: mapDomainId<'Account'>(
+        row.actorAccountId,
+        'monthly_period_decisions',
+        'actor_account_id',
+      ),
+      authority: row.actorAuthority,
+      employeeId:
+        row.actorEmployeeId === null
+          ? null
+          : mapDomainId<'Employee'>(
+              row.actorEmployeeId,
+              'monthly_period_decisions',
+              'actor_employee_id',
+            ),
+    }),
+    decidedAt: mapInstant(row.decidedAt, 'monthly_period_decisions', 'decided_at'),
+    id: mapDomainId<'MonthlyPeriodDecision'>(row.id, 'monthly_period_decisions', 'id'),
+    monthlyPeriodId: mapDomainId<'MonthlyPeriod'>(
+      row.monthlyPeriodId,
+      'monthly_period_decisions',
+      'monthly_period_id',
+    ),
+    monthlySnapshotId:
+      row.monthlySnapshotId === null
+        ? null
+        : mapDomainId<'MonthlySnapshot'>(
+            row.monthlySnapshotId,
+            'monthly_period_decisions',
+            'monthly_snapshot_id',
+          ),
+    nextStatus: row.nextStatus,
+    nextVersion: row.nextVersion,
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'monthly_period_decisions',
+      'organization_id',
+    ),
+    previousStatus: row.previousStatus,
+    previousVersion: row.previousVersion,
+    reason: row.reason,
+  });
+}
+
 function mapMonthlyRange(
   row: Readonly<{ endsOn: string | null; id: string; startsOn: string }>,
   table: 'employment_periods' | 'policy_assignments' | 'schedule_assignments',
@@ -4089,6 +4563,11 @@ function mapMonthlyBlocker(
     sourceId: row.id,
     sourceVersion: row.version,
   });
+}
+
+function mapPositiveVersion(value: number, table: string, column: string): number {
+  if (!Number.isSafeInteger(value) || value < 1) throw new DatabaseValueError(table, column);
+  return value;
 }
 
 function endOfMonth(monthStart: LocalDate): LocalDate {

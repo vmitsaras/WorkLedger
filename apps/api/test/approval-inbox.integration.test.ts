@@ -45,6 +45,7 @@ const migrationFiles = [
   '0014_adorable_piledriver.sql',
   '0015_rainy_nightshade.sql',
   '0016_flimsy_oracle.sql',
+  '0017_boring_aaron_stack.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -92,12 +93,12 @@ integrationTest(
             { id: scenario.betaTeamId, name: 'Beta team' },
           ],
         },
-        pagination: { limit: 20, page: 1, total: 13, totalPages: 1 },
+        pagination: { limit: 20, page: 1, total: 14, totalPages: 1 },
         timeZone: 'Europe/Berlin',
       });
-      expect(inbox.items).toHaveLength(13);
+      expect(inbox.items).toHaveLength(14);
       expect(new Set(inbox.items.map((item) => item.kind))).toEqual(
-        new Set(['ABSENCE', 'CANCELLATION', 'CORRECTION']),
+        new Set(['ABSENCE', 'CANCELLATION', 'CORRECTION', 'MONTHLY_PERIOD']),
       );
       expect(inbox.items.every((item) => item.status === 'ACTION_REQUIRED')).toBe(true);
       expect(inbox.items.map((item) => item.employeeDisplayName)).not.toEqual(
@@ -163,6 +164,22 @@ integrationTest(
         kind: 'CANCELLATION',
       });
 
+      const monthlyPeriods = await parsedInbox(app, managerCookie, '?type=MONTHLY_PERIOD');
+      expect(monthlyPeriods.pagination.total).toBe(1);
+      expect(monthlyPeriods.items).toMatchObject([
+        {
+          affectedEndDate: '2026-07-31',
+          affectedStartDate: '2026-07-01',
+          employeeDisplayName: 'Alpha report',
+          id: scenario.alphaMonthlyPeriodId,
+          kind: 'MONTHLY_PERIOD',
+          status: 'ACTION_REQUIRED',
+          team: { id: scenario.alphaTeamId, name: 'Alpha team' },
+          version: 2,
+        },
+      ]);
+      assertPrivacyMinimized(monthlyPeriods);
+
       const betaTeam = await parsedInbox(app, managerCookie, `?team=${scenario.betaTeamId}`);
       expect(betaTeam.pagination.total).toBe(1);
       expect(betaTeam.items).toMatchObject([
@@ -196,10 +213,10 @@ integrationTest(
         managerCookie,
         '?limit=10&page=2&sort=SUBMITTED_AT&direction=DESC',
       );
-      expect(firstPage.pagination).toEqual({ limit: 10, page: 1, total: 13, totalPages: 2 });
+      expect(firstPage.pagination).toEqual({ limit: 10, page: 1, total: 14, totalPages: 2 });
       expect(firstPage.items).toHaveLength(10);
-      expect(secondPage.pagination).toEqual({ limit: 10, page: 2, total: 13, totalPages: 2 });
-      expect(secondPage.items).toHaveLength(3);
+      expect(secondPage.pagination).toEqual({ limit: 10, page: 2, total: 14, totalPages: 2 });
+      expect(secondPage.items).toHaveLength(4);
       const firstPageIds = new Set(firstPage.items.map(({ id }) => id));
       expect(secondPage.items.every(({ id }) => !firstPageIds.has(id))).toBe(true);
       expect(
@@ -215,7 +232,7 @@ integrationTest(
 
       const hrOnlyCookie = await signIn(app, scenario.hrOnly.email, scenario.hrOnly.password);
       const hrOnly = await parsedInbox(app, hrOnlyCookie);
-      expect(hrOnly.pagination.total).toBe(17);
+      expect(hrOnly.pagination.total).toBe(18);
       expect(hrOnly.items.map((item) => item.employeeDisplayName)).toEqual(
         expect.arrayContaining([
           'Former report',
@@ -228,7 +245,7 @@ integrationTest(
 
       const linkedHrCookie = await signIn(app, scenario.linkedHr.email, scenario.linkedHr.password);
       const linkedHr = await parsedInbox(app, linkedHrCookie);
-      expect(linkedHr.pagination.total).toBe(16);
+      expect(linkedHr.pagination.total).toBe(17);
       expect(linkedHr.items.map((item) => item.employeeDisplayName)).not.toContain('HR reviewer');
       assertPrivacyMinimized(linkedHr);
       const combinedRoleSelfDenied = await getApprovalDetail(
@@ -718,6 +735,18 @@ async function createScenario(client: pg.PoolClient) {
     password: 'safe approval system passphrase 2026',
     roles: ['SYSTEM_ADMINISTRATOR'],
   });
+  const alphaMonthlyPeriodId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into monthly_periods
+          (organization_id, employee_id, month_start, status, version, submitted_at,
+           submitted_by_account_id, submitted_source_fingerprint)
+         values ($1, $2, '2026-07-01', 'SUBMITTED', 2, '2026-08-01T08:00:00Z', $3, $4)
+         returning id`,
+        [organizationId, alphaEmployeeId, alpha.accountId, 'a'.repeat(64)],
+      )
+    ).rows[0]?.id,
+  );
 
   let alphaCorrectionId: string | undefined;
   for (let day = 1; day <= 10; day += 1) {
@@ -840,6 +869,7 @@ async function createScenario(client: pg.PoolClient) {
     alpha,
     alphaCorrectionId: requiredId(alphaCorrectionId),
     alphaEmployeeId,
+    alphaMonthlyPeriodId,
     alphaTeamId,
     betaTeamId,
     crossOrganizationCorrectionId,

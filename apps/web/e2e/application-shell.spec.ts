@@ -253,7 +253,7 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   const scrollRegion = page.getByRole('region', { name: 'Scrollable approval inbox results' });
   await expect(table).toBeVisible();
   await expect(table.locator('caption')).toContainText(
-    'Broad workflow category is shown without absence subtype.',
+    'Monthly periods link to their dedicated review page; absence subtypes remain hidden.',
   );
   await expect(table.getByRole('columnheader', { name: 'Submitted' })).toHaveAttribute(
     'aria-sort',

@@ -17,6 +17,7 @@ const TEAM_ID = '123e4567-e89b-42d3-a456-426614174500';
 const CORRECTION_ID = '123e4567-e89b-42d3-a456-426614174501';
 const ABSENCE_ID = '123e4567-e89b-42d3-a456-426614174502';
 const CANCELLATION_ID = '123e4567-e89b-42d3-a456-426614174503';
+const MONTHLY_PERIOD_ID = '123e4567-e89b-42d3-a456-426614174504';
 let routerSequence = 0;
 
 const MANAGER_CONTEXT: SelfContext = {
@@ -70,6 +71,17 @@ const INBOX_ITEMS: ApprovalInbox['items'] = [
     submittedAt: '2026-08-09T14:00:00Z',
     version: 1,
   },
+  {
+    affectedEndDate: '2026-07-31',
+    affectedStartDate: '2026-07-01',
+    employeeDisplayName: 'Lena Hoffmann',
+    id: MONTHLY_PERIOD_ID,
+    kind: 'MONTHLY_PERIOD',
+    status: 'ACTION_REQUIRED',
+    submittedAt: '2026-08-01T08:00:00Z',
+    team: { id: TEAM_ID, name: 'Client Services' },
+    version: 2,
+  },
 ];
 
 afterEach(() => {
@@ -109,12 +121,18 @@ test('hydrates controls from the URL and renders a privacy-minimized, accessible
   expect(within(table).getByText('Correction')).toBeVisible();
   expect(within(table).getByText('Absence request')).toBeVisible();
   expect(within(table).getByText('Absence cancellation')).toBeVisible();
+  expect(within(table).getByText('Monthly period')).toBeVisible();
   expect(within(table).getByText('Waiting on employee')).toBeVisible();
   expect(
     within(within(table).getByRole('row', { name: /Maria Chen/u })).getByRole('link', {
       name: 'Review correction for Maria Chen',
     }),
   ).toHaveAttribute('href', `/approvals/${CORRECTION_ID}`);
+  expect(
+    within(within(table).getByRole('row', { name: /Lena Hoffmann/u })).getByRole('link', {
+      name: 'Review monthly period for Lena Hoffmann',
+    }),
+  ).toHaveAttribute('href', `/monthly-periods/${MONTHLY_PERIOD_ID}`);
   expect(screen.queryByText(/sickness|vacation/iu)).not.toBeInTheDocument();
   expect(screen.queryByRole('textbox', { name: /employee|person/iu })).not.toBeInTheDocument();
   expect(screen.queryByLabelText(/absence (sub)?type/iu)).not.toBeInTheDocument();
@@ -208,12 +226,18 @@ test('applies broad filters through the URL, resets pagination, and retains filt
   expect(affectedThrough).not.toHaveAttribute('aria-invalid');
   expect(
     within(screen.getByRole('combobox', { name: 'Workflow category' })).getAllByRole('option'),
-  ).toHaveLength(4);
+  ).toHaveLength(5);
   expect(
     within(screen.getByRole('combobox', { name: 'Workflow category' }))
       .getAllByRole('option')
       .map((option) => option.textContent),
-  ).toEqual(['All categories', 'Correction', 'Absence request', 'Absence cancellation']);
+  ).toEqual([
+    'All categories',
+    'Correction',
+    'Absence request',
+    'Absence cancellation',
+    'Monthly period',
+  ]);
 });
 
 test('keeps pagination focus on same-path navigation and restores it after browser back', async () => {

@@ -36,6 +36,7 @@ const migrationFiles = [
   '0014_adorable_piledriver.sql',
   '0015_rainy_nightshade.sql',
   '0016_flimsy_oracle.sql',
+  '0017_boring_aaron_stack.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(

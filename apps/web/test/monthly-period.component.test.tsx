@@ -175,6 +175,139 @@ test('does not expose the employee-only submission action to a reviewer', async 
   expect(screen.queryByRole('button', { name: 'Submit month' })).not.toBeInTheDocument();
 });
 
+test('requires a visible reviewer reason and preserves accessible no-effect validation', async () => {
+  const submitted = reviewerPeriod();
+  let reviewBody: unknown;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestUrl(input).pathname;
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (path === `/v1/monthly-periods/${PERIOD_ID}`) return successResponse(submitted);
+      if (path === `/v1/monthly-periods/${PERIOD_ID}/review`) {
+        reviewBody = JSON.parse(String(init?.body)) as unknown;
+        return successResponse({
+          ...submitted,
+          approvedRecord: null,
+          availableActions: [],
+          reviewHistory: [
+            {
+              action: 'REQUEST_CHANGES',
+              actorAuthority: 'CURRENT_MANAGER',
+              decidedAt: '2026-08-14T10:30:45Z',
+              reason: 'Please correct the missing interval.',
+              resultingStatus: 'CHANGES_REQUESTED',
+              version: 3,
+            },
+          ],
+          workflow: { ...submitted.workflow, periodVersion: 3, status: 'CHANGES_REQUESTED' },
+        });
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  renderApplication();
+
+  await user.type(await screen.findByLabelText('Reason for requesting changes'), 'short');
+  await user.click(screen.getByRole('button', { name: 'Request changes' }));
+  const validation = await screen.findByRole('alert');
+  await waitFor(() => expect(validation).toHaveFocus());
+  expect(validation).toHaveTextContent('Enter a reason of at least 10 characters.');
+  expect(reviewBody).toBeUndefined();
+
+  const reason = screen.getByLabelText('Reason for requesting changes');
+  await user.clear(reason);
+  await user.type(reason, 'Please correct the missing interval.');
+  await user.click(screen.getByRole('button', { name: 'Request changes' }));
+  await waitFor(() =>
+    expect(screen.getByRole('heading', { name: 'Changes requested' })).toHaveFocus(),
+  );
+  expect(reviewBody).toEqual({
+    action: 'REQUEST_CHANGES',
+    expectedPeriodVersion: 2,
+    expectedSourceFingerprint: 'a'.repeat(64),
+    reason: 'Please correct the missing interval.',
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('Changes requested.');
+  expect(screen.getByLabelText('Monthly reviewer history')).toHaveTextContent(
+    'Please correct the missing interval.',
+  );
+});
+
+test('approves, shows the immutable record, and requires permanent-lock confirmation', async () => {
+  const submitted = reviewerPeriod();
+  let current = submitted;
+  let lockBody: unknown;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestUrl(input).pathname;
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (path === `/v1/monthly-periods/${PERIOD_ID}`) return successResponse(current);
+      if (path === `/v1/monthly-periods/${PERIOD_ID}/review`) {
+        current = approvedPeriod(submitted);
+        return successResponse(current);
+      }
+      if (path === `/v1/monthly-periods/${PERIOD_ID}/lock`) {
+        lockBody = JSON.parse(String(init?.body)) as unknown;
+        current = {
+          ...current,
+          availableActions: [],
+          reviewHistory: [
+            ...current.reviewHistory,
+            {
+              action: 'LOCK',
+              actorAuthority: 'ORGANIZATION_HR',
+              decidedAt: '2026-08-14T10:35:45Z',
+              reason: null,
+              resultingStatus: 'LOCKED',
+              version: 4,
+            },
+          ],
+          workflow: {
+            ...current.workflow,
+            lockedAt: '2026-08-14T10:35:45Z',
+            periodVersion: 4,
+            status: 'LOCKED',
+          },
+        };
+        return successResponse(current);
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication();
+
+  await user.click(await screen.findByRole('button', { name: 'Approve month' }));
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Approved' })).toHaveFocus());
+  expect(screen.getByRole('heading', { name: 'Approved record' })).toBeVisible();
+  expect(screen.getByText(/Approval cycle 1/u)).toBeVisible();
+
+  const lockTrigger = screen.getByRole('button', { name: 'Lock month' });
+  await user.click(lockTrigger);
+  expect(screen.getByRole('dialog', { name: 'Permanently lock this month?' })).toHaveTextContent(
+    'There is no ordinary unlock',
+  );
+  await user.click(screen.getByRole('button', { name: 'Cancel' }));
+  await waitFor(() => expect(lockTrigger).toHaveFocus());
+  expect(lockBody).toBeUndefined();
+
+  await user.click(lockTrigger);
+  await user.click(screen.getByRole('button', { name: 'Permanently lock month' }));
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Locked' })).toHaveFocus());
+  expect(lockBody).toEqual({
+    expectedPeriodVersion: 3,
+    expectedSnapshotFingerprint: 'b'.repeat(64),
+    expectedSourceFingerprint: 'a'.repeat(64),
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('Monthly period locked.');
+  await expectNoAxeViolations(container);
+});
+
 test('shows a purpose-safe permission denial without retrying or rendering monthly data', async () => {
   vi.stubGlobal(
     'fetch',
@@ -252,6 +385,7 @@ function stubFetch(period: MonthlyPeriod) {
 
 function readyPeriod(): MonthlyPeriod {
   return {
+    approvedRecord: null,
     availableActions: ['SUBMIT'],
     attention: { blockers: [], warnings: [] },
     employeeDisplayName: 'Monthly Employee',
@@ -264,6 +398,7 @@ function readyPeriod(): MonthlyPeriod {
       monthEnded: true,
       status: 'READY_FOR_SUBMISSION',
     },
+    reviewHistory: [],
     rows: [completeRow('2026-06-30', FIRST_RECORD_ID, 495, 15)],
     snapshotVersion: { schemaVersion: 1, sourceFingerprint: 'a'.repeat(64) },
     timeZone: 'Europe/Berlin',
@@ -340,6 +475,54 @@ function submittedPeriod(period: MonthlyPeriod): MonthlyPeriod {
       periodVersion: period.workflow.periodVersion + 1,
       status: 'SUBMITTED',
       submittedAt: '2026-08-14T10:30:45Z',
+    },
+  };
+}
+
+function reviewerPeriod(): MonthlyPeriod {
+  return {
+    ...readyPeriod(),
+    availableActions: ['REQUEST_CHANGES', 'APPROVE'],
+    readiness: { ...readyPeriod().readiness, status: null },
+    workflow: {
+      ...readyPeriod().workflow,
+      periodVersion: 2,
+      status: 'SUBMITTED',
+      submittedAt: '2026-08-14T10:25:45Z',
+    },
+  };
+}
+
+function approvedPeriod(period: MonthlyPeriod): MonthlyPeriod {
+  return {
+    ...period,
+    approvedRecord: {
+      approvalCycle: 1,
+      approvedAt: '2026-08-14T10:30:45Z',
+      calculationEngineVersion: 'engine-v1',
+      periodVersion: 3,
+      rows: period.rows,
+      schemaVersion: 1,
+      snapshotFingerprint: 'b'.repeat(64),
+      sourceFingerprint: period.snapshotVersion.sourceFingerprint,
+      totals: period.totals,
+    },
+    availableActions: ['REQUEST_CHANGES', 'LOCK'],
+    reviewHistory: [
+      {
+        action: 'APPROVE',
+        actorAuthority: 'CURRENT_MANAGER',
+        decidedAt: '2026-08-14T10:30:45Z',
+        reason: null,
+        resultingStatus: 'APPROVED',
+        version: 3,
+      },
+    ],
+    workflow: {
+      ...period.workflow,
+      approvedAt: '2026-08-14T10:30:45Z',
+      periodVersion: 3,
+      status: 'APPROVED',
     },
   };
 }

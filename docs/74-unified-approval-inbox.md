@@ -4,14 +4,9 @@
 
 ## Outcome
 
-`/approvals` is now one scoped, paginated inbox for correction, absence, and absence-cancellation
-work. It replaces the correction-only list without removing the existing correction decision and
-application flow: eligible reviewers can follow a correction row to the review route while `WL-701`
-owns the consolidated type-neutral detail and decision experience.
-
-Monthly-period rows are not represented yet. Their source workflow begins in Phase 8, and `WL-802`
-owns adding them under the current-manager-or-organization-HR, always-non-self authority resolved
-by `D-402`.
+`/approvals` is one scoped, paginated inbox for correction, absence, absence-cancellation, and
+monthly-period work. Correction, absence, and cancellation rows use the consolidated approval
+detail; monthly rows added by `WL-802` link directly to their dedicated restricted period review.
 
 ## Query and status contract
 
@@ -20,7 +15,7 @@ by `D-402`.
 | State | Values and semantics |
 |---|---|
 | `status` | `ACTION_REQUIRED` by default, `WAITING_ON_EMPLOYEE`, `COMPLETED`, or query-only `ALL` |
-| `type` | Broad non-sensitive workflow category `CORRECTION`, `ABSENCE`, `CANCELLATION`, or `ALL`; never an absence subtype |
+| `type` | Broad non-sensitive workflow category `CORRECTION`, `ABSENCE`, `CANCELLATION`, `MONTHLY_PERIOD`, or `ALL`; never an absence subtype |
 | `team` | Opaque UUID for the employee's current team at the organization-local query date; a filter, never an authorization grant |
 | `from`, `to` | Optional paired inclusive affected-date overlap window, in order and no longer than 366 calendar days |
 | `sort`, `direction` | Allowlisted `SUBMITTED_AT`, `AFFECTED_DATE`, or `EMPLOYEE`, with `ASC` or default `DESC` |
@@ -37,8 +32,9 @@ The normalized list status is intentionally separate from source workflow states
 | Submitted correction; approved correction not yet applied | `ACTION_REQUIRED` |
 | Submitted approval-required absence; reported acknowledgement workflow | `ACTION_REQUIRED` |
 | Pending absence cancellation | `ACTION_REQUIRED` |
+| Submitted or approved monthly period | `ACTION_REQUIRED` |
 | Any changes-requested source | `WAITING_ON_EMPLOYEE` |
-| Applied correction and terminal/non-actionable absence or cancellation states | `COMPLETED` |
+| Applied correction, locked monthly period, and terminal/non-actionable absence or cancellation states | `COMPLETED` |
 
 ## Authorization and privacy
 
@@ -82,7 +78,7 @@ state without a result count, request target, or approval detail.
   sensitive list fields.
 - PostgreSQL/API integration covers manager and HR scope, former/unrelated/self exclusion,
   organization-wide HR without an employee link, system-role denial, all filters, two-page global
-  pagination, no-store caching, and privacy-field absence.
+  pagination, monthly-period month bounds/direct scope, no-store caching, and privacy-field absence.
 - Component tests cover URL restoration, validation, focus retention, loading/empty/error,
   permission/session recovery, manager/HR action presentation, table semantics, privacy, and axe.
 - Playwright covers keyboard filtering and pagination, browser-back restoration, narrow disclosure,

@@ -167,6 +167,11 @@ export const notificationSourceKind = pgEnum('notification_source_kind', [
   'REQUEST',
   'MONTHLY_PERIOD',
 ]);
+export const monthlyPeriodDecisionAction = pgEnum('monthly_period_decision_action', [
+  'REQUEST_CHANGES',
+  'APPROVE',
+  'LOCK',
+]);
 export const notificationDeliveryOutcome = pgEnum('notification_delivery_outcome', [
   'DELIVERED',
   'FAILED',
@@ -1110,9 +1115,12 @@ export const approvedMonthlySnapshots = pgTable(
     engineVersion: varchar('engine_version', { length: 64 }).notNull(),
     sourceFingerprint: varchar('source_fingerprint', { length: 64 }).notNull(),
     snapshotFingerprint: varchar('snapshot_fingerprint', { length: 64 }).notNull(),
-    approvedByEmployeeId: uuid('approved_by_employee_id')
+    approvalCycle: integer('approval_cycle').notNull(),
+    approvedByAccountId: uuid('approved_by_account_id')
       .notNull()
-      .references(() => employees.id),
+      .references(() => authUsers.id),
+    approvedByEmployeeId: uuid('approved_by_employee_id').references(() => employees.id),
+    approvedByAuthority: decisionActorAuthority('approved_by_authority').notNull(),
     approvedAt: timestamp('approved_at', { mode: 'string', withTimezone: true }).notNull(),
     snapshot: jsonb('snapshot').$type<Readonly<Record<string, unknown>>>().notNull(),
     createdAt: createdAt(),
@@ -1122,9 +1130,13 @@ export const approvedMonthlySnapshots = pgTable(
       table.monthlyPeriodId,
       table.periodVersion,
     ),
+    uniqueIndex('approved_monthly_snapshots_period_cycle_uidx').on(
+      table.monthlyPeriodId,
+      table.approvalCycle,
+    ),
     check(
       'approved_monthly_snapshots_positive_versions',
-      sql`${table.periodVersion} > 0 and ${table.schemaVersion} > 0`,
+      sql`${table.periodVersion} > 0 and ${table.schemaVersion} > 0 and ${table.approvalCycle} > 0`,
     ),
     check(
       'approved_monthly_snapshots_source_fingerprint_hex',
@@ -1135,6 +1147,64 @@ export const approvedMonthlySnapshots = pgTable(
       sql`${table.snapshotFingerprint} ~ '^[0-9a-f]{64}$'`,
     ),
     check('approved_monthly_snapshots_object', sql`jsonb_typeof(${table.snapshot}) = 'object'`),
+    check(
+      'approved_monthly_snapshots_actor_shape',
+      sql`(${table.approvedByAuthority} = 'CURRENT_MANAGER' and ${table.approvedByEmployeeId} is not null) or ${table.approvedByAuthority} = 'ORGANIZATION_HR'`,
+    ),
+    foreignKey({
+      columns: [table.organizationId, table.approvedByEmployeeId],
+      foreignColumns: [employees.organizationId, employees.id],
+      name: 'approved_monthly_snapshots_approver_employee_organization_fk',
+    }),
+  ],
+);
+
+export const monthlyPeriodDecisions = pgTable(
+  'monthly_period_decisions',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    monthlyPeriodId: uuid('monthly_period_id')
+      .notNull()
+      .references(() => monthlyPeriods.id),
+    actorAccountId: uuid('actor_account_id')
+      .notNull()
+      .references(() => authUsers.id),
+    actorEmployeeId: uuid('actor_employee_id').references(() => employees.id),
+    actorAuthority: decisionActorAuthority('actor_authority').notNull(),
+    action: monthlyPeriodDecisionAction('action').notNull(),
+    reason: text('reason'),
+    decidedAt: timestamp('decided_at', { mode: 'string', withTimezone: true }).notNull(),
+    previousStatus: periodStatus('previous_status').notNull(),
+    nextStatus: periodStatus('next_status').notNull(),
+    previousVersion: integer('previous_version').notNull(),
+    nextVersion: integer('next_version').notNull(),
+    monthlySnapshotId: uuid('monthly_snapshot_id').references(() => approvedMonthlySnapshots.id),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('monthly_period_decisions_period_version_uidx').on(
+      table.monthlyPeriodId,
+      table.nextVersion,
+    ),
+    index('monthly_period_decisions_period_decided_idx').on(table.monthlyPeriodId, table.decidedAt),
+    check(
+      'monthly_period_decisions_actor_shape',
+      sql`(${table.actorAuthority} = 'CURRENT_MANAGER' and ${table.actorEmployeeId} is not null) or ${table.actorAuthority} = 'ORGANIZATION_HR'`,
+    ),
+    check(
+      'monthly_period_decisions_transition_shape',
+      sql`(${table.action} = 'REQUEST_CHANGES' and ${table.previousStatus} in ('SUBMITTED', 'APPROVED') and ${table.nextStatus} = 'CHANGES_REQUESTED' and length(btrim(${table.reason})) >= 10 and ${table.monthlySnapshotId} is null) or (${table.action} = 'APPROVE' and ${table.previousStatus} = 'SUBMITTED' and ${table.nextStatus} = 'APPROVED' and ${table.reason} is null and ${table.monthlySnapshotId} is not null) or (${table.action} = 'LOCK' and ${table.previousStatus} = 'APPROVED' and ${table.nextStatus} = 'LOCKED' and ${table.reason} is null and ${table.monthlySnapshotId} is not null)`,
+    ),
+    check(
+      'monthly_period_decisions_version_step',
+      sql`${table.previousVersion} > 0 and ${table.nextVersion} = ${table.previousVersion} + 1`,
+    ),
+    foreignKey({
+      columns: [table.organizationId, table.actorEmployeeId],
+      foreignColumns: [employees.organizationId, employees.id],
+      name: 'monthly_period_decisions_actor_employee_organization_fk',
+    }),
   ],
 );
 
@@ -1260,7 +1330,10 @@ export const notifications = pgTable(
       table.id,
     ),
     check('notifications_positive_source_version', sql`${table.sourceVersion} > 0`),
-    check('notifications_destination_path', sql`${table.destinationPath} in ('/requests')`),
+    check(
+      'notifications_destination_path',
+      sql`${table.destinationPath} = '/requests' or ${table.destinationPath} ~ '^/monthly-periods/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'`,
+    ),
     check(
       'notifications_dismissed_after_occurrence',
       sql`${table.dismissedAt} is null or ${table.dismissedAt} >= ${table.occurredAt}`,

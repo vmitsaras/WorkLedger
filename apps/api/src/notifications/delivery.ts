@@ -1,4 +1,8 @@
-import type { NotificationRecord, WorkLedgerDatabase } from '@workledger/database';
+import type {
+  NotificationDestinationPath,
+  NotificationRecord,
+  WorkLedgerDatabase,
+} from '@workledger/database';
 
 import { notificationContent } from './content.js';
 
@@ -11,7 +15,7 @@ export type NotificationDeliveryFailureCode = (typeof NOTIFICATION_DELIVERY_FAIL
 
 export type NotificationDeliveryMessage = Readonly<{
   body: string;
-  destinationPath: '/requests';
+  destinationPath: NotificationDestinationPath;
   notificationId: string;
   recipientEmail: string;
   subject: string;

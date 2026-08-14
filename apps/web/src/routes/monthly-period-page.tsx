@@ -3,8 +3,14 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefOb
 import { Link, useParams } from 'react-router';
 
 import type { MonthlyPeriod } from '@workledger/contracts';
+import { Button, Dialog } from '@workledger/ui';
 
-import { ApiClientError, submitMonthlyPeriod } from '../app/api-client.js';
+import {
+  ApiClientError,
+  lockMonthlyPeriod,
+  reviewMonthlyPeriod,
+  submitMonthlyPeriod,
+} from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { monthlyPeriodQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
@@ -15,8 +21,13 @@ export function MonthlyPeriodPage() {
   const queryClient = useQueryClient();
   const statusHeadingRef = useRef<HTMLHeadingElement>(null);
   const submissionErrorRef = useRef<HTMLDivElement>(null);
+  const reviewErrorRef = useRef<HTMLDivElement>(null);
   const [warningAcknowledged, setWarningAcknowledged] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [reviewReason, setReviewReason] = useState('');
+  const [reviewReasonError, setReviewReasonError] = useState<string | null>(null);
+  const [reviewSuccessMessage, setReviewSuccessMessage] = useState<string | null>(null);
+  const [lockConfirmationOpen, setLockConfirmationOpen] = useState(false);
   const submission = useMutation({
     mutationFn: ({
       acknowledgedSourceFingerprint,
@@ -40,21 +51,95 @@ export function MonthlyPeriodPage() {
       setSuccessMessage('Monthly period submitted for review.');
     },
   });
+  const review = useMutation({
+    mutationFn: ({
+      action,
+      period,
+    }: Readonly<{
+      action: 'APPROVE' | 'REQUEST_CHANGES';
+      period: MonthlyPeriod;
+    }>) =>
+      reviewMonthlyPeriod(
+        period.id,
+        action === 'APPROVE'
+          ? {
+              action,
+              expectedPeriodVersion: period.workflow.periodVersion,
+              expectedSourceFingerprint: period.snapshotVersion.sourceFingerprint,
+            }
+          : {
+              action,
+              expectedPeriodVersion: period.workflow.periodVersion,
+              expectedSourceFingerprint: period.snapshotVersion.sourceFingerprint,
+              reason: reviewReason.trim(),
+            },
+      ),
+    onError: (error) => {
+      setReviewSuccessMessage(null);
+      if (isReviewConflict(error)) void query.refetch();
+    },
+    onSuccess: (period, variables) => {
+      queryClient.setQueryData(monthlyPeriodQuery(period.id).queryKey, period);
+      setReviewReason('');
+      setReviewReasonError(null);
+      setReviewSuccessMessage(
+        variables.action === 'APPROVE'
+          ? 'Monthly period approved. The immutable approved record is ready for a separate lock.'
+          : 'Changes requested. The employee can now correct and resubmit the month.',
+      );
+    },
+  });
+  const lock = useMutation({
+    mutationFn: (period: MonthlyPeriod) => {
+      if (period.approvedRecord === null) throw new Error('Approved record is required.');
+      return lockMonthlyPeriod(period.id, {
+        expectedPeriodVersion: period.workflow.periodVersion,
+        expectedSnapshotFingerprint: period.approvedRecord.snapshotFingerprint,
+        expectedSourceFingerprint: period.snapshotVersion.sourceFingerprint,
+      });
+    },
+    onError: (error) => {
+      setReviewSuccessMessage(null);
+      if (isReviewConflict(error)) void query.refetch();
+    },
+    onSuccess: (period) => {
+      queryClient.setQueryData(monthlyPeriodQuery(period.id).queryKey, period);
+      setLockConfirmationOpen(false);
+      setReviewSuccessMessage(
+        'Monthly period locked. Its approved record is permanent; later changes require an adjustment.',
+      );
+    },
+  });
   const resetSubmission = submission.reset;
+  const resetReview = review.reset;
+  const resetLock = lock.reset;
 
   useEffect(() => {
     setSuccessMessage(null);
+    setReviewSuccessMessage(null);
+    setReviewReason('');
+    setReviewReasonError(null);
+    setLockConfirmationOpen(false);
     setWarningAcknowledged(false);
     resetSubmission();
-  }, [periodId, resetSubmission]);
+    resetReview();
+    resetLock();
+  }, [periodId, resetLock, resetReview, resetSubmission]);
 
   useEffect(() => {
     if (submission.isError) submissionErrorRef.current?.focus();
   }, [submission.isError, submission.error]);
 
   useEffect(() => {
-    if (successMessage !== null) statusHeadingRef.current?.focus();
-  }, [successMessage]);
+    if (review.isError || lock.isError) reviewErrorRef.current?.focus();
+    if (reviewReasonError !== null) reviewErrorRef.current?.focus();
+  }, [lock.error, lock.isError, review.error, review.isError, reviewReasonError]);
+
+  useEffect(() => {
+    if (successMessage !== null || reviewSuccessMessage !== null) {
+      statusHeadingRef.current?.focus();
+    }
+  }, [reviewSuccessMessage, successMessage]);
 
   if (query.isPending)
     return (
@@ -128,6 +213,33 @@ export function MonthlyPeriodPage() {
         successMessage={successMessage}
         warningAcknowledged={warningAcknowledged}
       />
+      <ReviewerSection
+        error={review.error ?? lock.error}
+        errorRef={reviewErrorRef}
+        isPending={review.isPending || lock.isPending}
+        lockConfirmationOpen={lockConfirmationOpen}
+        onApprove={() => review.mutate({ action: 'APPROVE', period })}
+        onLock={() => lock.mutate(period)}
+        onLockConfirmationChange={setLockConfirmationOpen}
+        onReasonChange={(value) => {
+          setReviewReason(value);
+          if (reviewReasonError !== null) setReviewReasonError(null);
+          if (review.isError) review.reset();
+        }}
+        onRequestChanges={() => {
+          if (reviewReason.trim().length < 10) {
+            setReviewReasonError('Enter a reason of at least 10 characters.');
+            return;
+          }
+          setReviewReasonError(null);
+          review.mutate({ action: 'REQUEST_CHANGES', period });
+        }}
+        period={period}
+        reason={reviewReason}
+        reasonError={reviewReasonError}
+        successMessage={reviewSuccessMessage}
+      />
+      <ApprovedRecordSection period={period} />
     </MonthlyPeriodFrame>
   );
 }
@@ -311,6 +423,203 @@ function SubmissionSection({
         <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
           {submissionAvailabilityMessage(period)}
         </p>
+      )}
+    </section>
+  );
+}
+
+function ReviewerSection({
+  error,
+  errorRef,
+  isPending,
+  lockConfirmationOpen,
+  onApprove,
+  onLock,
+  onLockConfirmationChange,
+  onReasonChange,
+  onRequestChanges,
+  period,
+  reason,
+  reasonError,
+  successMessage,
+}: Readonly<{
+  error: unknown;
+  errorRef: RefObject<HTMLDivElement | null>;
+  isPending: boolean;
+  lockConfirmationOpen: boolean;
+  onApprove: () => void;
+  onLock: () => void;
+  onLockConfirmationChange: (open: boolean) => void;
+  onReasonChange: (value: string) => void;
+  onRequestChanges: () => void;
+  period: MonthlyPeriod;
+  reason: string;
+  reasonError: string | null;
+  successMessage: string | null;
+}>) {
+  const canRequestChanges = period.availableActions.includes('REQUEST_CHANGES');
+  const canApprove = period.availableActions.includes('APPROVE');
+  const canLock = period.availableActions.includes('LOCK');
+  const hasReviewerAction = canRequestChanges || canApprove || canLock;
+  return (
+    <section aria-labelledby="monthly-reviewer-heading" className="grid gap-4">
+      <div>
+        <h2 id="monthly-reviewer-heading" className="m-0 text-xl font-bold">
+          Reviewer decision
+        </h2>
+        <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+          Approval creates an immutable record. Lock month is a separate permanent action.
+        </p>
+      </div>
+      {successMessage === null ? null : (
+        <p className="wl-alert wl-alert-success m-0 rounded-xl border p-4" role="status">
+          {successMessage}
+        </p>
+      )}
+      {error === null && reasonError === null ? null : (
+        <div
+          className="wl-alert wl-alert-error grid gap-2 rounded-xl border p-4"
+          ref={errorRef}
+          role="alert"
+          tabIndex={-1}
+        >
+          <h3 className="m-0 text-lg font-bold">No reviewer action was recorded</h3>
+          <p className="m-0">
+            {reasonError ?? reviewErrorMessage(error)}
+            {reasonError === null ? null : (
+              <>
+                {' '}
+                <a href="#monthly-review-reason">Go to decision reason.</a>
+              </>
+            )}
+          </p>
+        </div>
+      )}
+      {hasReviewerAction ? (
+        <div className="grid gap-5 rounded-xl border border-[var(--wl-border)] p-4">
+          {canRequestChanges ? (
+            <div className="grid gap-3">
+              <label className="grid gap-2 font-semibold" htmlFor="monthly-review-reason">
+                Reason for requesting changes
+                <textarea
+                  aria-describedby="monthly-review-reason-help"
+                  aria-invalid={reasonError === null ? undefined : true}
+                  className="min-h-28 rounded-lg border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-3 font-normal"
+                  disabled={isPending}
+                  id="monthly-review-reason"
+                  maxLength={2_000}
+                  onChange={(event) => onReasonChange(event.currentTarget.value)}
+                  value={reason}
+                />
+              </label>
+              <p
+                className="m-0 text-sm text-[var(--wl-text-muted)]"
+                id="monthly-review-reason-help"
+              >
+                At least 10 characters. The employee can read this reason on the restricted monthly
+                detail; it is omitted from notifications and the approval inbox.
+              </p>
+              <Button
+                className="w-fit"
+                isDisabled={isPending}
+                onPress={onRequestChanges}
+                variant="secondary"
+              >
+                {isPending ? 'Recording…' : 'Request changes'}
+              </Button>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap gap-3">
+            {canApprove ? (
+              <Button isDisabled={isPending} onPress={onApprove}>
+                {isPending ? 'Recording…' : 'Approve month'}
+              </Button>
+            ) : null}
+            {canLock && period.approvedRecord !== null ? (
+              <Dialog
+                actions={({ close }) => (
+                  <>
+                    <Button isDisabled={isPending} onPress={close} variant="secondary">
+                      Cancel
+                    </Button>
+                    <Button isDisabled={isPending} onPress={onLock}>
+                      {isPending ? 'Locking…' : 'Permanently lock month'}
+                    </Button>
+                  </>
+                )}
+                isDismissable={!isPending}
+                isOpen={lockConfirmationOpen}
+                onOpenChange={(open) => {
+                  if (!isPending || open) onLockConfirmationChange(open);
+                }}
+                title="Permanently lock this month?"
+                triggerIsDisabled={isPending}
+                triggerLabel="Lock month"
+                triggerVariant="primary"
+              >
+                <p className="m-0">
+                  Locking preserves approval cycle {period.approvedRecord.approvalCycle.toString()}{' '}
+                  as the permanent baseline. There is no ordinary unlock; later accepted changes use
+                  the post-lock adjustment path. Cancel to leave the month approved.
+                </p>
+              </Dialog>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
+          {reviewerAvailabilityMessage(period)}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function ApprovedRecordSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
+  const record = period.approvedRecord;
+  if (record === null && period.reviewHistory.length === 0) return null;
+  return (
+    <section aria-labelledby="monthly-approved-record-heading" className="grid gap-4">
+      <div>
+        <h2 id="monthly-approved-record-heading" className="m-0 text-xl font-bold">
+          Approved record
+        </h2>
+        <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+          Immutable approval evidence is preserved even when changes are later requested.
+        </p>
+      </div>
+      {record === null ? (
+        <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
+          No approval snapshot has been created for the current review cycle.
+        </p>
+      ) : (
+        <div className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4">
+          <p className="m-0">
+            <strong>Approval cycle {record.approvalCycle.toString()}</strong> · workflow version{' '}
+            {record.periodVersion.toString()} · schema {record.schemaVersion.toString()} · engine{' '}
+            {record.calculationEngineVersion}
+          </p>
+          <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+            Approved {formatInstant(record.approvedAt, period.timeZone)}. Snapshot totals: expected{' '}
+            {formatDuration(record.totals.expectedMinutes)}, credited{' '}
+            {formatDuration(record.totals.creditedMinutes)}, balance{' '}
+            {formatDuration(record.totals.balanceMinutes, true)}, closing posted balance{' '}
+            {formatDuration(record.totals.ledgerClosingBalanceMinutes, true)}.
+          </p>
+        </div>
+      )}
+      {period.reviewHistory.length === 0 ? null : (
+        <ol className="m-0 grid gap-3 pl-5" aria-label="Monthly reviewer history">
+          {period.reviewHistory.map((decision) => (
+            <li key={`${decision.version.toString()}-${decision.action}`}>
+              <strong>{reviewActionLabel(decision.action)}</strong> ·{' '}
+              {authorityLabel(decision.actorAuthority)} ·{' '}
+              {formatInstant(decision.decidedAt, period.timeZone)} · version{' '}
+              {decision.version.toString()}
+              {decision.reason === null ? null : <p className="mb-0 mt-1">{decision.reason}</p>}
+            </li>
+          ))}
+        </ol>
       )}
     </section>
   );
@@ -553,6 +862,76 @@ function isSubmissionConflict(error: unknown): boolean {
       'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED',
     ].includes(error.code)
   );
+}
+
+function reviewerAvailabilityMessage(period: MonthlyPeriod): string {
+  if (period.workflow.status === 'SUBMITTED') {
+    return 'Waiting for an eligible current manager or organization HR reviewer.';
+  }
+  if (period.workflow.status === 'CHANGES_REQUESTED') {
+    return 'Changes were requested. The employee must correct and resubmit before another approval.';
+  }
+  if (period.workflow.status === 'APPROVED') {
+    return 'This month is approved. Only a currently eligible non-self reviewer can request changes or lock it.';
+  }
+  if (period.workflow.status === 'LOCKED') {
+    return 'This month is permanently locked. Later accepted changes use post-lock adjustments.';
+  }
+  return 'Reviewer actions become available after employee submission.';
+}
+
+function reviewErrorMessage(error: unknown): string {
+  const code = error instanceof ApiClientError ? error.code : null;
+  switch (code) {
+    case 'PERIOD_SOURCE_CHANGED':
+      return 'The monthly sources changed. Review the refreshed period; no decision was recorded.';
+    case 'PERIOD_VERSION_CONFLICT':
+      return 'The workflow changed in another tab or device. Review the refreshed status; no decision was recorded.';
+    case 'PERIOD_LEDGER_MISMATCH':
+    case 'PERIOD_NOT_READY':
+      return 'The current monthly sources do not reconcile. Resolve the refreshed blockers before approval or lock.';
+    case 'PERIOD_STATE_CONFLICT':
+      return 'This reviewer action is no longer available in the refreshed workflow state.';
+    case 'APPROVAL_SELF_NOT_ALLOWED':
+      return 'You cannot review or lock your own monthly period.';
+    case 'ACCESS_DENIED':
+      return 'Your current role or reporting scope cannot perform this reviewer action.';
+    default:
+      return 'The reviewer action could not be recorded. Check your connection and try again.';
+  }
+}
+
+function isReviewConflict(error: unknown): boolean {
+  return (
+    error instanceof ApiClientError &&
+    [
+      'PERIOD_LEDGER_MISMATCH',
+      'PERIOD_NOT_READY',
+      'PERIOD_SOURCE_CHANGED',
+      'PERIOD_STATE_CONFLICT',
+      'PERIOD_VERSION_CONFLICT',
+    ].includes(error.code)
+  );
+}
+
+function reviewActionLabel(action: MonthlyPeriod['reviewHistory'][number]['action']): string {
+  if (action === 'REQUEST_CHANGES') return 'Changes requested';
+  if (action === 'APPROVE') return 'Approved';
+  return 'Locked';
+}
+
+function authorityLabel(
+  authority: MonthlyPeriod['reviewHistory'][number]['actorAuthority'],
+): string {
+  return authority === 'CURRENT_MANAGER' ? 'Current manager' : 'Organization HR';
+}
+
+function formatInstant(value: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone,
+  }).format(new Date(value));
 }
 
 function attentionLabel(code: string): string {

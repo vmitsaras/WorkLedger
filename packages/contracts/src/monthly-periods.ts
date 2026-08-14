@@ -12,7 +12,8 @@ export const MONTHLY_PERIOD_STATUSES = [
 ] as const;
 export const MONTHLY_READINESS_STATUSES = ['INCOMPLETE', 'READY_FOR_SUBMISSION'] as const;
 export const MONTHLY_DAILY_STATUSES = ['MISSING', 'PROVISIONAL', 'INCOMPLETE', 'COMPLETE'] as const;
-export const MONTHLY_PERIOD_ACTIONS = ['SUBMIT'] as const;
+export const MONTHLY_PERIOD_ACTIONS = ['SUBMIT', 'REQUEST_CHANGES', 'APPROVE', 'LOCK'] as const;
+export const MONTHLY_PERIOD_REVIEW_ACTIONS = ['REQUEST_CHANGES', 'APPROVE'] as const;
 
 const dateSchema = z.iso.date();
 const instantSchema = z.iso.datetime({ offset: true });
@@ -84,14 +85,37 @@ export const monthlyPeriodSnapshotVersionSchema = z.strictObject({
   sourceFingerprint: fingerprintSchema,
 });
 
+export const monthlyPeriodReviewHistoryItemSchema = z.strictObject({
+  action: z.enum(['REQUEST_CHANGES', 'APPROVE', 'LOCK']),
+  actorAuthority: z.enum(['CURRENT_MANAGER', 'ORGANIZATION_HR']),
+  decidedAt: instantSchema,
+  reason: z.string().min(10).max(2_000).nullable(),
+  resultingStatus: z.enum(['CHANGES_REQUESTED', 'APPROVED', 'LOCKED']),
+  version: z.number().int().positive(),
+});
+
+export const monthlyPeriodApprovedRecordSchema = z.strictObject({
+  approvalCycle: z.number().int().positive(),
+  approvedAt: instantSchema,
+  calculationEngineVersion: z.string().min(1).max(64),
+  periodVersion: z.number().int().positive(),
+  rows: z.array(monthlyPeriodRowSchema).max(31),
+  schemaVersion: z.literal(1),
+  snapshotFingerprint: fingerprintSchema,
+  sourceFingerprint: fingerprintSchema,
+  totals: monthlyPeriodTotalsSchema,
+});
+
 export const monthlyPeriodSchema = z.strictObject({
-  availableActions: z.array(z.enum(MONTHLY_PERIOD_ACTIONS)).max(1),
+  approvedRecord: monthlyPeriodApprovedRecordSchema.nullable(),
+  availableActions: z.array(z.enum(MONTHLY_PERIOD_ACTIONS)).max(3),
   attention: monthlyPeriodAttentionSchema,
   employeeDisplayName: z.string().min(1).max(160),
   id: identifierSchema,
   monthEnd: dateSchema,
   monthStart: dateSchema,
   readiness: monthlyPeriodReadinessSchema,
+  reviewHistory: z.array(monthlyPeriodReviewHistoryItemSchema).max(64),
   rows: z.array(monthlyPeriodRowSchema).max(31),
   snapshotVersion: monthlyPeriodSnapshotVersionSchema,
   timeZone: z.string().min(1).max(255),
@@ -106,9 +130,33 @@ export const monthlyPeriodSubmissionRequestSchema = z.strictObject({
   expectedPeriodVersion: z.number().int().positive(),
 });
 
+export const monthlyPeriodReviewRequestSchema = z.discriminatedUnion('action', [
+  z.strictObject({
+    action: z.literal('REQUEST_CHANGES'),
+    expectedPeriodVersion: z.number().int().positive(),
+    expectedSourceFingerprint: fingerprintSchema,
+    reason: z.string().trim().min(10).max(2_000),
+  }),
+  z.strictObject({
+    action: z.literal('APPROVE'),
+    expectedPeriodVersion: z.number().int().positive(),
+    expectedSourceFingerprint: fingerprintSchema,
+  }),
+]);
+
+export const monthlyPeriodLockRequestSchema = z.strictObject({
+  expectedPeriodVersion: z.number().int().positive(),
+  expectedSnapshotFingerprint: fingerprintSchema,
+  expectedSourceFingerprint: fingerprintSchema,
+});
+
 export type MonthlyPeriod = z.infer<typeof monthlyPeriodSchema>;
 export type MonthlyPeriodAction = (typeof MONTHLY_PERIOD_ACTIONS)[number];
 export type MonthlyPeriodAttention = z.infer<typeof monthlyPeriodAttentionSchema>;
+export type MonthlyPeriodApprovedRecord = z.infer<typeof monthlyPeriodApprovedRecordSchema>;
+export type MonthlyPeriodLockRequest = z.infer<typeof monthlyPeriodLockRequestSchema>;
+export type MonthlyPeriodReviewHistoryItem = z.infer<typeof monthlyPeriodReviewHistoryItemSchema>;
+export type MonthlyPeriodReviewRequest = z.infer<typeof monthlyPeriodReviewRequestSchema>;
 export type MonthlyPeriodRow = z.infer<typeof monthlyPeriodRowSchema>;
 export type MonthlyPeriodStatus = z.infer<typeof monthlyPeriodWorkflowSchema>['status'];
 export type MonthlyReadinessStatus = z.infer<typeof monthlyPeriodReadinessSchema>['status'];

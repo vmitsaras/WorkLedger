@@ -19,6 +19,7 @@ import {
   employmentPeriods,
   idempotencyRecords,
   monthlyPeriods,
+  monthlyPeriodDecisions,
   notificationDeliveryAttempts,
   notifications,
   punchEvents,
@@ -128,6 +129,25 @@ describe('initial PostgreSQL schema', () => {
     );
   });
 
+  it('records account-first immutable monthly decisions and approval cycles', () => {
+    const decisionColumns = getTableConfig(monthlyPeriodDecisions).columns;
+    expect(decisionColumns.find(({ name }) => name === 'actor_account_id')?.notNull).toBe(true);
+    expect(decisionColumns.find(({ name }) => name === 'actor_authority')?.notNull).toBe(true);
+    expect(decisionColumns.find(({ name }) => name === 'actor_employee_id')?.notNull).toBe(false);
+
+    const snapshotColumns = getTableConfig(approvedMonthlySnapshots).columns;
+    expect(snapshotColumns.find(({ name }) => name === 'approval_cycle')?.notNull).toBe(true);
+    expect(snapshotColumns.find(({ name }) => name === 'approved_by_account_id')?.notNull).toBe(
+      true,
+    );
+    expect(snapshotColumns.find(({ name }) => name === 'approved_by_authority')?.notNull).toBe(
+      true,
+    );
+    expect(snapshotColumns.find(({ name }) => name === 'approved_by_employee_id')?.notNull).toBe(
+      false,
+    );
+  });
+
   it('keeps generic notification history separate from append-only delivery attempts', () => {
     const notificationConfiguration = getTableConfig(notifications);
     const attemptConfiguration = getTableConfig(notificationDeliveryAttempts);
@@ -179,6 +199,7 @@ describe('initial PostgreSQL schema', () => {
       '0014_adorable_piledriver',
       '0015_rainy_nightshade',
       '0016_flimsy_oracle',
+      '0017_boring_aaron_stack',
     ]);
   });
 });

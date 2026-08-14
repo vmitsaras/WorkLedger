@@ -6,6 +6,7 @@ import type pg from 'pg';
 import {
   monthlyPeriodEnvelopeSchema,
   myTimeEnvelopeSchema,
+  notificationHistoryEnvelopeSchema,
   type MonthlyPeriod,
 } from '@workledger/contracts';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
@@ -37,6 +38,7 @@ const migrationFiles = [
   '0014_adorable_piledriver.sql',
   '0015_rainy_nightshade.sql',
   '0016_flimsy_oracle.sql',
+  '0017_boring_aaron_stack.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -70,7 +72,7 @@ integrationTest(
           blockers: [],
           warnings: [
             {
-              code: 'WORK_ON_HOLIDAY',
+              code: 'FLEX_POSITIVE_THRESHOLD_EXCEEDED',
               localDate: '2026-06-30',
               recordId: scenario.completeProjectionId,
             },
@@ -80,17 +82,18 @@ integrationTest(
         monthEnd: '2026-06-30',
         monthStart: '2026-06-01',
         readiness: {
-          completeDateCount: 1,
-          coveredDateCount: 1,
+          completeDateCount: 2,
+          coveredDateCount: 2,
           monthEnded: true,
           status: 'READY_FOR_SUBMISSION',
         },
         snapshotVersion: { schemaVersion: 1 },
         timeZone: 'Europe/Berlin',
         totals: {
+          absenceCreditMinutes: 480,
           balanceMinutes: 15,
-          creditedMinutes: 495,
-          expectedMinutes: 480,
+          creditedMinutes: 975,
+          expectedMinutes: 960,
           ledgerClosingBalanceMinutes: 615,
           ledgerOpeningBalanceMinutes: 600,
           ledgerPeriodDeltaMinutes: 15,
@@ -100,6 +103,18 @@ integrationTest(
       });
       expect(complete.snapshotVersion.sourceFingerprint).toMatch(/^[0-9a-f]{64}$/u);
       expect(complete.rows).toEqual([
+        {
+          absenceCreditMinutes: 480,
+          adjustmentMinutes: 0,
+          balanceMinutes: 0,
+          breakMinutes: 0,
+          creditedMinutes: 480,
+          expectedMinutes: 480,
+          localDate: '2026-06-29',
+          recordId: scenario.absenceProjectionId,
+          status: 'COMPLETE',
+          workedMinutes: 0,
+        },
         {
           absenceCreditMinutes: 0,
           adjustmentMinutes: 0,
@@ -163,8 +178,9 @@ integrationTest(
       );
       assertPrivacyMinimized(incomplete);
 
-      for (const credentials of [scenario.manager, scenario.hr]) {
-        const cookie = await signIn(app, credentials);
+      const managerCookie = await signIn(app, scenario.manager);
+      const hrCookie = await signIn(app, scenario.hr);
+      for (const cookie of [managerCookie, hrCookie]) {
         const readable = await getPeriod(app, cookie, scenario.completePeriodId);
         expect(readable.statusCode).toBe(200);
         expect(monthlyPeriodEnvelopeSchema.parse(readable.json()).data.availableActions).toEqual(
@@ -180,8 +196,9 @@ integrationTest(
         );
         expect(submitDenied.statusCode).toBe(403);
       }
-      for (const credentials of [scenario.unrelatedManager, scenario.system]) {
-        const cookie = await signIn(app, credentials);
+      const unrelatedCookie = await signIn(app, scenario.unrelatedManager);
+      const systemCookie = await signIn(app, scenario.system);
+      for (const cookie of [unrelatedCookie, systemCookie]) {
         const denied = await getPeriod(app, cookie, scenario.completePeriodId);
         expect(denied.statusCode).toBe(403);
         expect(JSON.stringify(denied.json())).not.toContain('Monthly Employee');
@@ -350,6 +367,317 @@ integrationTest(
         [scenario.completePeriodId],
       );
       expect(successAuditCount.rows[0]?.count).toBe('1');
+
+      const employeeSelfReview = await reviewPeriod(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completePeriodId,
+        {
+          action: 'APPROVE',
+          expectedPeriodVersion: submitted.workflow.periodVersion,
+          expectedSourceFingerprint: submitted.snapshotVersion.sourceFingerprint,
+        },
+      );
+      expect(employeeSelfReview.statusCode).toBe(403);
+      expect(employeeSelfReview.json()).toMatchObject({
+        error: { code: 'APPROVAL_SELF_NOT_ALLOWED' },
+      });
+
+      const unrelatedReview = await reviewPeriod(
+        app,
+        unrelatedCookie,
+        await csrf(app, unrelatedCookie),
+        scenario.completePeriodId,
+        {
+          action: 'APPROVE',
+          expectedPeriodVersion: submitted.workflow.periodVersion,
+          expectedSourceFingerprint: submitted.snapshotVersion.sourceFingerprint,
+        },
+      );
+      expect(unrelatedReview.statusCode).toBe(403);
+
+      await fixture.client.query(
+        `update daily_projections
+            set projection_version = projection_version + 1,
+                source_fingerprint = $2
+          where id = $1`,
+        [scenario.completeProjectionId, 'e'.repeat(64)],
+      );
+      const managerCsrf = await csrf(app, managerCookie);
+      const changedSourceApproval = await reviewPeriod(
+        app,
+        managerCookie,
+        managerCsrf,
+        scenario.completePeriodId,
+        {
+          action: 'APPROVE',
+          expectedPeriodVersion: submitted.workflow.periodVersion,
+          expectedSourceFingerprint: submitted.snapshotVersion.sourceFingerprint,
+        },
+      );
+      expect(changedSourceApproval.statusCode).toBe(409);
+      expect(changedSourceApproval.json()).toMatchObject({
+        error: { code: 'PERIOD_SOURCE_CHANGED', context: { sourceChanged: true } },
+      });
+      expect(
+        (
+          await fixture.client.query<{ count: string }>(
+            `select count(*)::text as count from approved_monthly_snapshots
+              where monthly_period_id = $1`,
+            [scenario.completePeriodId],
+          )
+        ).rows[0]?.count,
+      ).toBe('0');
+
+      const changedSource = monthlyPeriodEnvelopeSchema.parse(
+        (await getPeriod(app, managerCookie, scenario.completePeriodId)).json(),
+      ).data;
+      expect(changedSource.availableActions).toEqual(['REQUEST_CHANGES']);
+      const requestedChangesResponse = await reviewPeriod(
+        app,
+        managerCookie,
+        managerCsrf,
+        scenario.completePeriodId,
+        {
+          action: 'REQUEST_CHANGES',
+          expectedPeriodVersion: changedSource.workflow.periodVersion,
+          expectedSourceFingerprint: changedSource.snapshotVersion.sourceFingerprint,
+          reason: 'Please review the recalculated source before resubmitting.',
+        },
+      );
+      expect(requestedChangesResponse.statusCode).toBe(200);
+      const requestedChanges = monthlyPeriodEnvelopeSchema.parse(
+        requestedChangesResponse.json(),
+      ).data;
+      expect(requestedChanges.workflow).toMatchObject({
+        periodVersion: 3,
+        status: 'CHANGES_REQUESTED',
+      });
+      expect(requestedChanges.reviewHistory).toEqual([
+        expect.objectContaining({
+          action: 'REQUEST_CHANGES',
+          actorAuthority: 'CURRENT_MANAGER',
+          reason: 'Please review the recalculated source before resubmitting.',
+          version: 3,
+        }),
+      ]);
+
+      const resubmittedResponse = await submitPeriod(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completePeriodId,
+        requestedChanges.workflow.periodVersion,
+        requestedChanges.snapshotVersion.sourceFingerprint,
+      );
+      expect(resubmittedResponse.statusCode).toBe(200);
+      const resubmitted = monthlyPeriodEnvelopeSchema.parse(resubmittedResponse.json()).data;
+
+      const hrCsrf = await csrf(app, hrCookie);
+      const approvedResponse = await reviewPeriod(
+        app,
+        hrCookie,
+        hrCsrf,
+        scenario.completePeriodId,
+        {
+          action: 'APPROVE',
+          expectedPeriodVersion: resubmitted.workflow.periodVersion,
+          expectedSourceFingerprint: resubmitted.snapshotVersion.sourceFingerprint,
+        },
+      );
+      expect(approvedResponse.statusCode).toBe(200);
+      const approved = monthlyPeriodEnvelopeSchema.parse(approvedResponse.json()).data;
+      expect(approved.workflow).toMatchObject({ periodVersion: 5, status: 'APPROVED' });
+      expect(approved.approvedRecord).toMatchObject({
+        approvalCycle: 1,
+        periodVersion: 5,
+        rows: approved.rows,
+        totals: {
+          balanceMinutes: 15,
+          ledgerClosingBalanceMinutes: 615,
+          ledgerOpeningBalanceMinutes: 600,
+          ledgerPeriodDeltaMinutes: 15,
+        },
+      });
+      expect(approved.approvedRecord?.snapshotFingerprint).toMatch(/^[0-9a-f]{64}$/u);
+      assertPrivacyMinimized(approved);
+      const storedApprovalSnapshot = (
+        await fixture.client.query<{ snapshot: unknown }>(
+          `select snapshot from approved_monthly_snapshots
+            where monthly_period_id = $1 and approval_cycle = 1`,
+          [scenario.completePeriodId],
+        )
+      ).rows[0]?.snapshot;
+      expect(storedApprovalSnapshot).toMatchObject({
+        approvalCycle: 1,
+        calculationEngineVersion: 'monthly-test-v1',
+        rows: [
+          {
+            absenceCreditMinutes: 480,
+            absenceExpectedReductionMinutes: 0,
+            balanceMinutes: 0,
+            calculationStatus: 'COMPLETE',
+            expectedMinutes: 480,
+            localDate: '2026-06-29',
+            neutralAbsenceEffects: [{ effectId: scenario.absenceEffectId, effectVersion: 1 }],
+            policy: { policyVersion: 1 },
+            schedule: { scheduleVersion: 1 },
+            scheduledMinutes: 480,
+          },
+          {
+            balanceMinutes: 15,
+            dailyLedgerEntries: [
+              expect.objectContaining({ amountMinutes: 15, entryType: 'DAILY_DELTA' }),
+            ],
+            localDate: '2026-06-30',
+            scheduledMinutes: 480,
+            warningCodes: ['FLEX_POSITIVE_THRESHOLD_EXCEEDED'],
+          },
+        ],
+        totals: {
+          balanceMinutes: 15,
+          ledgerClosingBalanceMinutes: 615,
+          ledgerOpeningBalanceMinutes: 600,
+        },
+      });
+      expect(JSON.stringify(storedApprovalSnapshot)).not.toMatch(
+        /Private sickness type|Private correction reason|diagnosis|entitlement/iu,
+      );
+
+      const returnAfterApproval = await reviewPeriod(
+        app,
+        managerCookie,
+        managerCsrf,
+        scenario.completePeriodId,
+        {
+          action: 'REQUEST_CHANGES',
+          expectedPeriodVersion: approved.workflow.periodVersion,
+          expectedSourceFingerprint: approved.snapshotVersion.sourceFingerprint,
+          reason: 'Please confirm the final approved total before locking.',
+        },
+      );
+      expect(returnAfterApproval.statusCode).toBe(200);
+      const returned = monthlyPeriodEnvelopeSchema.parse(returnAfterApproval.json()).data;
+      expect(returned.workflow.status).toBe('CHANGES_REQUESTED');
+      expect(returned.approvedRecord?.approvalCycle).toBe(1);
+
+      const cycleTwoSubmission = monthlyPeriodEnvelopeSchema.parse(
+        (
+          await submitPeriod(
+            app,
+            employeeCookie,
+            employeeCsrf,
+            scenario.completePeriodId,
+            returned.workflow.periodVersion,
+            returned.snapshotVersion.sourceFingerprint,
+          )
+        ).json(),
+      ).data;
+      await fixture.client.query(
+        `insert into account_role_assignments
+          (organization_id, user_id, role, assigned_at)
+         select $1, id, 'HR_ADMINISTRATOR', $3
+           from auth_users where email = $2`,
+        [scenario.organizationId, scenario.manager.email, NOW],
+      );
+      const cycleTwoApproval = monthlyPeriodEnvelopeSchema.parse(
+        (
+          await reviewPeriod(app, managerCookie, managerCsrf, scenario.completePeriodId, {
+            action: 'APPROVE',
+            expectedPeriodVersion: cycleTwoSubmission.workflow.periodVersion,
+            expectedSourceFingerprint: cycleTwoSubmission.snapshotVersion.sourceFingerprint,
+          })
+        ).json(),
+      ).data;
+      expect(cycleTwoApproval.approvedRecord?.approvalCycle).toBe(2);
+      expect(cycleTwoApproval.reviewHistory.at(-1)).toMatchObject({
+        action: 'APPROVE',
+        actorAuthority: 'CURRENT_MANAGER',
+      });
+
+      const staleLock = await lockPeriod(app, hrCookie, hrCsrf, scenario.completePeriodId, {
+        expectedPeriodVersion: cycleTwoApproval.workflow.periodVersion - 1,
+        expectedSnapshotFingerprint: cycleTwoApproval.approvedRecord?.snapshotFingerprint ?? '',
+        expectedSourceFingerprint: cycleTwoApproval.snapshotVersion.sourceFingerprint,
+      });
+      expect(staleLock.statusCode).toBe(409);
+      expect(staleLock.json()).toMatchObject({ error: { code: 'PERIOD_VERSION_CONFLICT' } });
+
+      const lockedResponse = await lockPeriod(app, hrCookie, hrCsrf, scenario.completePeriodId, {
+        expectedPeriodVersion: cycleTwoApproval.workflow.periodVersion,
+        expectedSnapshotFingerprint: cycleTwoApproval.approvedRecord?.snapshotFingerprint ?? '',
+        expectedSourceFingerprint: cycleTwoApproval.snapshotVersion.sourceFingerprint,
+      });
+      expect(lockedResponse.statusCode).toBe(200);
+      const locked = monthlyPeriodEnvelopeSchema.parse(lockedResponse.json()).data;
+      expect(locked.workflow).toMatchObject({ status: 'LOCKED' });
+      expect(locked.approvedRecord?.approvalCycle).toBe(2);
+      expect(locked.reviewHistory.at(-1)).toMatchObject({
+        action: 'LOCK',
+        actorAuthority: 'ORGANIZATION_HR',
+      });
+
+      const workflowEvidence = (
+        await fixture.client.query<{
+          decision_count: string;
+          hr_snapshot_count: string;
+          locked_at: string;
+          notification_count: string;
+          snapshot_count: string;
+          status: string;
+          version: number;
+        }>(
+          `select mp.status, mp.version, mp.locked_at::text,
+                  (select count(*)::text from monthly_period_decisions mpd
+                    where mpd.monthly_period_id = mp.id) as decision_count,
+                  (select count(*)::text from approved_monthly_snapshots ams
+                    where ams.monthly_period_id = mp.id) as snapshot_count,
+                  (select count(*)::text from approved_monthly_snapshots ams
+                    where ams.monthly_period_id = mp.id
+                      and ams.approved_by_authority = 'ORGANIZATION_HR'
+                      and ams.approved_by_employee_id is null
+                      and ams.approved_by_account_id is not null) as hr_snapshot_count,
+                  (select count(*)::text from notifications notification
+                    where notification.source_kind = 'MONTHLY_PERIOD'
+                      and notification.source_id = mp.id
+                      and notification.destination_path = '/monthly-periods/' || mp.id::text) as notification_count
+             from monthly_periods mp where mp.id = $1`,
+          [scenario.completePeriodId],
+        )
+      ).rows[0];
+      expect(workflowEvidence).toMatchObject({
+        decision_count: '5',
+        hr_snapshot_count: '1',
+        notification_count: '5',
+        snapshot_count: '2',
+        status: 'LOCKED',
+        version: 9,
+      });
+      expect(workflowEvidence?.locked_at).not.toBeNull();
+
+      const notificationResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/me/notifications?page=1&limit=20',
+        headers: { cookie: employeeCookie, origin: ORIGIN },
+      });
+      expect(notificationResponse.statusCode).toBe(200);
+      const notificationHistory = notificationHistoryEnvelopeSchema.parse(
+        notificationResponse.json(),
+      ).data;
+      expect(notificationHistory.pagination.total).toBe(5);
+      expect(notificationHistory.items).toHaveLength(5);
+      expect(
+        notificationHistory.items.every(
+          (item) => item.destinationPath === `/monthly-periods/${scenario.completePeriodId}`,
+        ),
+      ).toBe(true);
+      expect(notificationHistory.items.map(({ event }) => event)).toEqual(
+        expect.arrayContaining(['ITEM_ACKNOWLEDGED', 'ITEM_APPROVED', 'ITEM_CHANGES_REQUESTED']),
+      );
+      expect(notificationResponse.payload).not.toMatch(
+        /Please review the recalculated source|Please confirm the final approved total/iu,
+      );
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -369,7 +697,7 @@ async function createScenario(client: pg.PoolClient) {
     ).rows[0]?.id,
   );
   const employeeId = await createEmployee(client, organizationId, 'MONTH-001', 'Monthly Employee', [
-    ['2026-06-30', '2026-07-01'],
+    ['2026-06-29', '2026-07-01'],
     ['2026-07-29', null],
   ]);
   const managerEmployeeId = await createEmployee(
@@ -408,7 +736,7 @@ async function createScenario(client: pg.PoolClient) {
     (
       await client.query<{ id: string }>(
         `insert into time_policies (organization_id, name, version, rules)
-         values ($1, 'Monthly policy', 1, '{}'::jsonb) returning id`,
+         values ($1, 'Monthly policy', 1, '{"flexibleTimeWarningMinutes":10}'::jsonb) returning id`,
         [organizationId],
       )
     ).rows[0]?.id,
@@ -426,6 +754,18 @@ async function createScenario(client: pg.PoolClient) {
 
   const completePeriodId = await createPeriod(client, organizationId, employeeId, '2026-06-01');
   const incompletePeriodId = await createPeriod(client, organizationId, employeeId, '2026-07-01');
+  const absenceProjectionId = await createProjection(
+    client,
+    organizationId,
+    employeeId,
+    '2026-06-29',
+    'COMPLETE',
+    480,
+    0,
+    0,
+    [],
+    480,
+  );
   const completeProjectionId = await createProjection(
     client,
     organizationId,
@@ -435,7 +775,7 @@ async function createScenario(client: pg.PoolClient) {
     480,
     495,
     15,
-    ['WORK_ON_HOLIDAY'],
+    ['FLEX_POSITIVE_THRESHOLD_EXCEEDED'],
   );
   const incompleteProjectionId = await createProjection(
     client,
@@ -465,6 +805,12 @@ async function createScenario(client: pg.PoolClient) {
     sourceId: '49000000-0000-7000-8000-000000000001',
   });
   await createLedgerEntry(client, organizationId, employeeId, {
+    date: '2026-06-29',
+    entryType: 'DAILY_DELTA',
+    minutes: 0,
+    sourceId: absenceProjectionId,
+  });
+  await createLedgerEntry(client, organizationId, employeeId, {
     date: '2026-06-30',
     entryType: 'DAILY_DELTA',
     minutes: 15,
@@ -492,6 +838,50 @@ async function createScenario(client: pg.PoolClient) {
          values ($1, 'VACATION', 'Private vacation type', 1, true, '2026-01-01', $2::jsonb)
          returning id`,
         [organizationId, JSON.stringify({ workflow: 'APPROVAL_REQUIRED' })],
+      )
+    ).rows[0]?.id,
+  );
+  const sicknessTypeId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into absence_types
+          (organization_id, code, name, version, active, valid_from, policy)
+         values ($1, 'SICKNESS', 'Private sickness type', 1, true, '2026-01-01', $2::jsonb)
+         returning id`,
+        [organizationId, JSON.stringify({ workflow: 'REPORT_AND_ACKNOWLEDGE' })],
+      )
+    ).rows[0]?.id,
+  );
+  const sicknessRequestId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into absence_requests
+          (organization_id, employee_id, absence_type_id, requested_by_employee_id, status,
+           version, submitted_at)
+         values ($1, $2, $3, $2, 'APPROVED', 1, $4) returning id`,
+        [organizationId, employeeId, sicknessTypeId, NOW],
+      )
+    ).rows[0]?.id,
+  );
+  const sicknessSegmentId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into absence_coverage_segments
+          (organization_id, absence_request_id, local_date, kind)
+         values ($1, $2, '2026-06-29', 'FULL_DAY') returning id`,
+        [organizationId, sicknessRequestId],
+      )
+    ).rows[0]?.id,
+  );
+  const absenceEffectId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into absence_effects
+          (organization_id, absence_request_id, absence_coverage_segment_id, employee_id,
+           local_date, expected_reduction_minutes, credit_minutes, entitlement_minutes,
+           effect_version)
+         values ($1, $2, $3, $4, '2026-06-29', 0, 480, 0, 1) returning id`,
+        [organizationId, sicknessRequestId, sicknessSegmentId, employeeId],
       )
     ).rows[0]?.id,
   );
@@ -547,6 +937,8 @@ async function createScenario(client: pg.PoolClient) {
     role: 'SYSTEM_ADMINISTRATOR',
   });
   return Object.freeze({
+    absenceEffectId,
+    absenceProjectionId,
     completePeriodId,
     completeProjectionId,
     employee,
@@ -555,6 +947,7 @@ async function createScenario(client: pg.PoolClient) {
     incompletePeriodId,
     incompleteProjectionId,
     manager,
+    organizationId,
     system,
     unrelatedManager,
   });
@@ -613,6 +1006,7 @@ async function createProjection(
   workedMinutes: number,
   balanceMinutes: number,
   warningCodes: readonly string[] = [],
+  absenceCreditMinutes = 0,
 ) {
   return requiredId(
     (
@@ -622,8 +1016,9 @@ async function createProjection(
            engine_version, source_fingerprint, expected_minutes, worked_minutes, break_minutes,
            absence_credit_minutes, adjustment_minutes, credited_minutes, balance_minutes,
            warning_codes, source_references, calculated_at)
-         values ($1, $2, $3, $4, 1, 'monthly-test-v1', $5, $6, $7, 0, 0, 0, $7, $8,
-                 $9::jsonb, '{}'::jsonb, $10) returning id`,
+         values ($1, $2, $3, $4, 1, 'monthly-test-v1', $5, $6, $7, 0, $10, 0,
+                 $7::integer + $10::integer, $8,
+                 $9::jsonb, '{}'::jsonb, $11) returning id`,
         [
           organizationId,
           employeeId,
@@ -634,6 +1029,7 @@ async function createProjection(
           workedMinutes,
           balanceMinutes,
           JSON.stringify(warningCodes),
+          absenceCreditMinutes,
           NOW,
         ],
       )
@@ -763,6 +1159,61 @@ function submitPeriod(
       'x-workledger-csrf': token,
     },
     payload: { acknowledgedSourceFingerprint, expectedPeriodVersion },
+  });
+}
+
+function reviewPeriod(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  token: string,
+  periodId: string,
+  payload:
+    | Readonly<{
+        action: 'APPROVE';
+        expectedPeriodVersion: number;
+        expectedSourceFingerprint: string;
+      }>
+    | Readonly<{
+        action: 'REQUEST_CHANGES';
+        expectedPeriodVersion: number;
+        expectedSourceFingerprint: string;
+        reason: string;
+      }>,
+) {
+  return app.inject({
+    method: 'POST',
+    url: `/v1/monthly-periods/${encodeURIComponent(periodId)}/review`,
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: ORIGIN,
+      'x-workledger-csrf': token,
+    },
+    payload,
+  });
+}
+
+function lockPeriod(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  token: string,
+  periodId: string,
+  payload: Readonly<{
+    expectedPeriodVersion: number;
+    expectedSnapshotFingerprint: string;
+    expectedSourceFingerprint: string;
+  }>,
+) {
+  return app.inject({
+    method: 'POST',
+    url: `/v1/monthly-periods/${encodeURIComponent(periodId)}/lock`,
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: ORIGIN,
+      'x-workledger-csrf': token,
+    },
+    payload,
   });
 }
 

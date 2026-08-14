@@ -25,6 +25,12 @@ const preDecisionActorMigrations = [
   '0012_silly_magik.sql',
   '0013_brave_bulldozer.sql',
 ].map((file) => `${packageDirectory}/migrations/${file}`);
+const preMonthlyActorMigrations = [
+  ...preDecisionActorMigrations,
+  '0014_adorable_piledriver.sql',
+  '0015_rainy_nightshade.sql',
+  '0016_flimsy_oracle.sql',
+].map((file) => (file.startsWith('/') ? file : `${packageDirectory}/migrations/${file}`));
 
 integrationTest(
   `applies the initial migrations and enforces core invariants (${databaseHarness.safeLabel})`,
@@ -37,7 +43,7 @@ integrationTest(
         `select count(*) from information_schema.tables where table_schema = $1`,
         [schemaName],
       );
-      expect(Number(tableCount.rows[0]?.count)).toBe(42);
+      expect(Number(tableCount.rows[0]?.count)).toBe(43);
 
       const organization = await client.query<{ id: string }>(
         `insert into organizations (name, time_zone) values ($1, $2) returning id`,
@@ -354,6 +360,109 @@ integrationTest(
           actor_employee_id: managerEmployeeId,
         },
       ]);
+    } finally {
+      await fixture.cleanup();
+    }
+  },
+);
+
+integrationTest(
+  `backfills historical monthly snapshot accounts, manager authority, and approval cycles (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'monthly_snapshot_actor_backfill',
+      migrationFiles: preMonthlyActorMigrations,
+    });
+    try {
+      const organizationId = (
+        await fixture.client.query<{ id: string }>(
+          `insert into organizations (name, time_zone)
+           values ('Monthly snapshot backfill', 'Europe/Berlin') returning id`,
+        )
+      ).rows[0]?.id;
+      const employees = await fixture.client.query<{ id: string }>(
+        `insert into employees (organization_id, employee_number, display_name)
+         values ($1, 'MONTH-BACKFILL-MANAGER', 'Historical month manager'),
+                ($1, 'MONTH-BACKFILL-TARGET', 'Historical month employee') returning id`,
+        [organizationId],
+      );
+      const managerEmployeeId = employees.rows[0]?.id;
+      const targetEmployeeId = employees.rows[1]?.id;
+      const accountId = (
+        await fixture.client.query<{ id: string }>(
+          `insert into auth_users (name, email)
+           values ('Historical month manager', 'historical-month-manager@example.test') returning id`,
+        )
+      ).rows[0]?.id;
+      await fixture.client.query(
+        `insert into account_employee_links
+          (organization_id, user_id, employee_id, linked_at)
+         values ($1, $2, $3, '2026-01-01T00:00:00Z')`,
+        [organizationId, accountId, managerEmployeeId],
+      );
+      await fixture.client.query(
+        `insert into account_role_assignments
+          (organization_id, user_id, role, assigned_at)
+         values ($1, $2, 'MANAGER', '2026-01-01T00:00:00Z')`,
+        [organizationId, accountId],
+      );
+      await fixture.client.query(
+        `insert into manager_assignments
+          (organization_id, employee_id, manager_employee_id, starts_on)
+         values ($1, $2, $3, '2026-01-01')`,
+        [organizationId, targetEmployeeId, managerEmployeeId],
+      );
+      const periodId = (
+        await fixture.client.query<{ id: string }>(
+          `insert into monthly_periods
+            (organization_id, employee_id, month_start, status, version, submitted_at,
+             approved_at, locked_at)
+           values ($1, $2, '2026-06-01', 'LOCKED', 4,
+                   '2026-07-01T09:00:00Z', '2026-07-02T09:00:00Z', '2026-07-03T09:00:00Z')
+           returning id`,
+          [organizationId, targetEmployeeId],
+        )
+      ).rows[0]?.id;
+      const snapshotId = (
+        await fixture.client.query<{ id: string }>(
+          `insert into approved_monthly_snapshots
+            (organization_id, monthly_period_id, period_version, schema_version, engine_version,
+             source_fingerprint, snapshot_fingerprint, approved_by_employee_id, approved_at,
+             snapshot)
+           values ($1, $2, 3, 1, 'historical-engine', $3, $4, $5,
+                   '2026-07-02T09:00:00Z', '{}'::jsonb) returning id`,
+          [organizationId, periodId, 'a'.repeat(64), 'b'.repeat(64), managerEmployeeId],
+        )
+      ).rows[0]?.id;
+
+      const actorMigration = readFileSync(
+        `${packageDirectory}/migrations/0017_boring_aaron_stack.sql`,
+        'utf8',
+      ).replaceAll('"public".', `"${fixture.schemaName}".`);
+      await fixture.client.query(actorMigration);
+      const backfilled = await fixture.client.query<{
+        approval_cycle: number;
+        approved_by_account_id: string;
+        approved_by_authority: string;
+        approved_by_employee_id: string;
+      }>(
+        `select approval_cycle, approved_by_account_id, approved_by_authority,
+                approved_by_employee_id
+           from approved_monthly_snapshots where id = $1`,
+        [snapshotId],
+      );
+      expect(backfilled.rows).toEqual([
+        {
+          approval_cycle: 1,
+          approved_by_account_id: accountId,
+          approved_by_authority: 'CURRENT_MANAGER',
+          approved_by_employee_id: managerEmployeeId,
+        },
+      ]);
+      await expect(
+        fixture.client.query(`delete from approved_monthly_snapshots where id = $1`, [snapshotId]),
+      ).rejects.toMatchObject({ code: '55000' });
     } finally {
       await fixture.cleanup();
     }

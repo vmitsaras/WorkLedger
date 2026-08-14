@@ -11,9 +11,9 @@ database transaction as the decision, its domain effects, and audit evidence. A 
 constraint covers organization, recipient employee, source kind and identifier, event, and source
 version so retrying a stale or already-completed decision cannot create duplicate history.
 
-The schema is ready to distinguish request and monthly-period sources. Phase 7 produces request
-notifications only. Monthly producers and destinations remain owned by `WL-802` under the
-current-manager-or-organization-HR authority resolved by `D-402`.
+The schema distinguishes request and monthly-period sources. `WL-802` adds atomic monthly
+changes-requested, approved, and locked outcomes under current-manager-or-organization-HR
+authority.
 
 Notifications retain the recipient employee and the active linked account, when one exists, for
 server-side ownership and delivery. Neither identifier is returned to the browser. Dismissal sets a
@@ -29,10 +29,10 @@ The browser and optional-delivery DTOs use a small server-owned event vocabulary
 - item acknowledged.
 
 Titles, bodies, and email subjects are generic. They omit request kind, absence subtype, sickness
-classification, dates, reason, note, entitlement, reviewer, employee, and source identifiers. Every
-notification links only to `/requests`; that route performs its own current authorization checks.
-The notification record is not an authorization grant and cannot be used to open the underlying
-source directly.
+classification, dates, reason, note, entitlement, reviewer, employee, and source identifiers.
+Request notifications link to `/requests`; monthly outcomes link to the strict
+`/monthly-periods/:periodId` destination. Each destination performs its own current authorization
+checks. The notification record is not an authorization grant.
 
 `GET /v1/me/notifications` accepts only bounded page and limit values and returns the authenticated
 account's own active-linked employee/account history under `private, no-store`. A foreign dismiss
@@ -67,8 +67,8 @@ reflow states are explicit.
 ## Evidence
 
 Strict contract tests reject protected fields, unsupported filters, inconsistent dismissal state,
-and non-generic destinations. PostgreSQL integration proves atomic notification creation for
-correction, sickness-report, and vacation decisions; duplicate prevention after stale decisions;
+and non-allowlisted destinations. PostgreSQL integration proves atomic notification creation for
+correction, sickness-report, vacation, and monthly decisions; duplicate prevention after stale decisions;
 two persisted failed-delivery attempts; decision success despite delivery failure; self-only list
 and dismiss behavior; retained history; and generic serialized content. Component and Chromium
 coverage verifies keyboard dismissal, focus retention, live status, failure wording, empty history,

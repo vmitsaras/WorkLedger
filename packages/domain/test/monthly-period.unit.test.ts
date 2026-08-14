@@ -6,6 +6,7 @@ import {
   parseNonNegativeMinutes,
   parseSignedMinutes,
   validateMonthlyPeriodSubmission,
+  validateMonthlyPeriodReview,
   type MonthlyPeriodDailyInput,
 } from '../src/index.js';
 
@@ -252,6 +253,126 @@ test('rejects blocked and invalid monthly submission states without a transition
     ).toEqual({ ok: false, error: { code } });
   }
 });
+
+test('validates changes-requested, approval-cycle, and separate-lock transitions', () => {
+  const submitted = reviewInput({ action: 'APPROVE', currentStatus: 'SUBMITTED' });
+  expect(validateMonthlyPeriodReview(submitted)).toEqual({
+    ok: true,
+    value: {
+      action: 'APPROVE',
+      approvalCycle: 1,
+      nextStatus: 'APPROVED',
+      nextVersion: 4,
+      sourceFingerprint: 'a'.repeat(64),
+    },
+  });
+
+  expect(
+    validateMonthlyPeriodReview({
+      ...reviewInput({ action: 'REQUEST_CHANGES', currentStatus: 'APPROVED' }),
+      latestSnapshot: {
+        approvalCycle: 1,
+        snapshotFingerprint: 'b'.repeat(64),
+        sourceFingerprint: 'a'.repeat(64),
+      },
+      reason: 'Please correct the missing interval.',
+    }),
+  ).toEqual({
+    ok: true,
+    value: {
+      action: 'REQUEST_CHANGES',
+      nextStatus: 'CHANGES_REQUESTED',
+      nextVersion: 4,
+      reason: 'Please correct the missing interval.',
+    },
+  });
+
+  expect(
+    validateMonthlyPeriodReview({
+      ...reviewInput({ action: 'LOCK', currentStatus: 'APPROVED' }),
+      expectedSnapshotFingerprint: 'b'.repeat(64),
+      latestSnapshot: {
+        approvalCycle: 2,
+        snapshotFingerprint: 'b'.repeat(64),
+        sourceFingerprint: 'a'.repeat(64),
+      },
+    }),
+  ).toEqual({
+    ok: true,
+    value: {
+      action: 'LOCK',
+      approvalCycle: 2,
+      nextStatus: 'LOCKED',
+      nextVersion: 4,
+      snapshotFingerprint: 'b'.repeat(64),
+    },
+  });
+});
+
+test('rejects stale, unreconciled, source-changed, and invalid reviewer transitions', () => {
+  expect(
+    validateMonthlyPeriodReview({
+      ...reviewInput({ action: 'REQUEST_CHANGES', currentStatus: 'SUBMITTED' }),
+      reason: 'short',
+    }),
+  ).toEqual({ ok: false, error: { code: 'APPROVAL_REASON_REQUIRED' } });
+  expect(
+    validateMonthlyPeriodReview({
+      ...reviewInput({ action: 'APPROVE', currentStatus: 'SUBMITTED' }),
+      expectedPeriodVersion: 2,
+    }),
+  ).toEqual({ ok: false, error: { code: 'PERIOD_VERSION_CONFLICT' } });
+  expect(
+    validateMonthlyPeriodReview({
+      ...reviewInput({ action: 'APPROVE', currentStatus: 'SUBMITTED' }),
+      currentSourceFingerprint: 'c'.repeat(64),
+    }),
+  ).toEqual({ ok: false, error: { code: 'PERIOD_SOURCE_CHANGED' } });
+  expect(
+    validateMonthlyPeriodReview({
+      ...reviewInput({ action: 'APPROVE', currentStatus: 'SUBMITTED' }),
+      ledgerReconciled: false,
+    }),
+  ).toEqual({ ok: false, error: { code: 'PERIOD_LEDGER_MISMATCH' } });
+  expect(
+    validateMonthlyPeriodReview({
+      ...reviewInput({ action: 'APPROVE', currentStatus: 'APPROVED' }),
+    }),
+  ).toEqual({ ok: false, error: { code: 'PERIOD_STATE_CONFLICT' } });
+  expect(
+    validateMonthlyPeriodReview({
+      ...reviewInput({ action: 'LOCK', currentStatus: 'APPROVED' }),
+      expectedSnapshotFingerprint: 'b'.repeat(64),
+      latestSnapshot: {
+        approvalCycle: 1,
+        snapshotFingerprint: 'd'.repeat(64),
+        sourceFingerprint: 'a'.repeat(64),
+      },
+    }),
+  ).toEqual({ ok: false, error: { code: 'PERIOD_SOURCE_CHANGED' } });
+});
+
+function reviewInput(
+  input: Readonly<{
+    action: 'APPROVE' | 'LOCK' | 'REQUEST_CHANGES';
+    currentStatus: 'APPROVED' | 'SUBMITTED';
+  }>,
+) {
+  return {
+    action: input.action,
+    currentSourceFingerprint: 'a'.repeat(64),
+    currentStatus: input.currentStatus,
+    currentVersion: 3,
+    expectedPeriodVersion: 3,
+    expectedSnapshotFingerprint: null,
+    expectedSourceFingerprint: 'a'.repeat(64),
+    hasBlockers: false,
+    latestSnapshot: null,
+    ledgerReconciled: true,
+    reason: null,
+    submittedSourceFingerprint: 'a'.repeat(64),
+  } as const;
+}
 
 function daily(
   localDate: string,

@@ -22,12 +22,20 @@ export const notificationQuerySchema = z.strictObject({
 
 export const notificationEventSchema = z.enum(NOTIFICATION_EVENTS);
 export const notificationDeliveryStatusSchema = z.enum(NOTIFICATION_DELIVERY_STATUSES);
+export const notificationDestinationPathSchema = z.union([
+  z.literal('/requests'),
+  z
+    .string()
+    .regex(
+      /^\/monthly-periods\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu,
+    ),
+]);
 
 export const notificationItemSchema = z
   .strictObject({
     body: z.string().min(1).max(240),
     deliveryStatus: notificationDeliveryStatusSchema,
-    destinationPath: z.literal('/requests'),
+    destinationPath: notificationDestinationPathSchema,
     dismissedAt: z.iso.datetime({ offset: true }).nullable(),
     event: notificationEventSchema,
     id: z.uuid(),
@@ -70,6 +78,7 @@ export const dismissedNotificationEnvelopeSchema = createSuccessEnvelopeSchema(
 );
 
 export type NotificationDeliveryStatus = z.infer<typeof notificationDeliveryStatusSchema>;
+export type NotificationDestinationPath = z.infer<typeof notificationDestinationPathSchema>;
 export type NotificationEvent = z.infer<typeof notificationEventSchema>;
 export type NotificationHistory = z.infer<typeof notificationHistorySchema>;
 export type NotificationItem = z.infer<typeof notificationItemSchema>;

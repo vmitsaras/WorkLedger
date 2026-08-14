@@ -92,7 +92,7 @@ Navigation visibility is convenience only; the API enforces authorization.
 |---|---|---|
 | `/team` | Current manager views privacy-safe current status and unresolved-record indicators for current direct reports only. It never reveals an absence type or medical context. | `WL-702` |
 | `/approvals` | Current manager or HR reviews a scoped, paginated queue with URL-owned non-sensitive generic-status, broad-workflow-category, current-team, affected-date, sort, and page state; counts and pagination are calculated after authorization scope. | `WL-504`, `WL-700`–`WL-701`, `WL-802` |
-| `/approvals/:approvalId` | Current eligible non-self decision maker reviews one type-neutral correction, absence, cancellation, or monthly-period item and performs only actions valid for its policy and state. | `WL-504`, `WL-701`, `WL-802` |
+| `/approvals/:approvalId` | Current eligible non-self decision maker reviews one type-neutral correction, absence, or cancellation item and performs only actions valid for its policy and state. Monthly rows link to `/monthly-periods/:periodId`. | `WL-504`, `WL-701`, `WL-802` |
 | `/team-calendar` | Current manager or HR views neutral availability for authorized employees in equivalent calendar and agenda/list presentations. | `WL-703` |
 
 ### HR-administration routes

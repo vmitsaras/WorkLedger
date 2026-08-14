@@ -98,7 +98,7 @@ export function ApprovalInboxPage() {
       <PageHeader
         eyebrow="Approvals"
         title="Approval inbox"
-        description="Review current, authorized work across corrections, absence requests, and absence cancellations. Filters never expose absence subtypes or employee search text."
+        description="Review current, authorized work across corrections, absence requests, absence cancellations, and monthly periods. Filters never expose absence subtypes or employee search text."
       />
       <ApprovalFilters
         draft={draft}
@@ -211,6 +211,7 @@ function ApprovalFilters({
                 ['CORRECTION', 'Correction'],
                 ['ABSENCE', 'Absence request'],
                 ['CANCELLATION', 'Absence cancellation'],
+                ['MONTHLY_PERIOD', 'Monthly period'],
               ]}
             />
             <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-team">
@@ -410,7 +411,8 @@ function ApprovalResults({
         >
           <table className="w-full min-w-[58rem] border-collapse text-left">
             <caption className="p-3 text-left text-sm text-[var(--wl-text-muted)]">
-              Unified approval inbox. Broad workflow category is shown without absence subtype.
+              Unified approval inbox. Monthly periods link to their dedicated review page; absence
+              subtypes remain hidden.
             </caption>
             <thead>
               <tr className="border-y border-[var(--wl-border)] text-sm">
@@ -457,7 +459,11 @@ function ApprovalResults({
                       <Link
                         aria-label={`Review ${workflowLabel(item.kind).toLowerCase()} for ${item.employeeDisplayName}`}
                         className={buttonVariants({ variant: 'secondary' })}
-                        to={`/approvals/${encodeURIComponent(item.id)}`}
+                        to={
+                          item.kind === 'MONTHLY_PERIOD'
+                            ? `/monthly-periods/${encodeURIComponent(item.id)}`
+                            : `/approvals/${encodeURIComponent(item.id)}`
+                        }
                       >
                         Review
                       </Link>
@@ -614,7 +620,9 @@ function workflowLabel(kind: ApprovalInbox['items'][number]['kind']): string {
     ? 'Correction'
     : kind === 'ABSENCE'
       ? 'Absence request'
-      : 'Absence cancellation';
+      : kind === 'CANCELLATION'
+        ? 'Absence cancellation'
+        : 'Monthly period';
 }
 
 function statusLabel(status: ApprovalInboxStatus): string {

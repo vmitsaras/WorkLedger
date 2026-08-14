@@ -13,7 +13,13 @@ export const APPROVAL_INBOX_ITEM_STATUSES = [
   'WAITING_ON_EMPLOYEE',
   'COMPLETED',
 ] as const;
-export const APPROVAL_INBOX_TYPES = ['ALL', 'CORRECTION', 'ABSENCE', 'CANCELLATION'] as const;
+export const APPROVAL_INBOX_TYPES = [
+  'ALL',
+  'CORRECTION',
+  'ABSENCE',
+  'CANCELLATION',
+  'MONTHLY_PERIOD',
+] as const;
 export const APPROVAL_INBOX_SORTS = ['SUBMITTED_AT', 'AFFECTED_DATE', 'EMPLOYEE'] as const;
 export const APPROVAL_INBOX_DIRECTIONS = ['ASC', 'DESC'] as const;
 
@@ -121,6 +127,10 @@ export const approvalInboxItemSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     ...approvalInboxItemCommonShape,
     kind: z.literal('CANCELLATION'),
+  }),
+  z.strictObject({
+    ...approvalInboxItemCommonShape,
+    kind: z.literal('MONTHLY_PERIOD'),
   }),
 ]);
 

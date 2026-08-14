@@ -162,6 +162,63 @@ export type MonthlyPeriodSubmissionError =
   | DomainError<'PERIOD_VERSION_CONFLICT'>
   | DomainError<'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED'>;
 
+export const monthlyPeriodReviewActions = Object.freeze([
+  'REQUEST_CHANGES',
+  'APPROVE',
+  'LOCK',
+] as const);
+
+export type MonthlyPeriodReviewAction = (typeof monthlyPeriodReviewActions)[number];
+
+export type MonthlyPeriodReviewInput = Readonly<{
+  action: MonthlyPeriodReviewAction;
+  currentSourceFingerprint: string;
+  currentStatus: MonthlyPeriodStatus;
+  currentVersion: number;
+  expectedPeriodVersion: number;
+  expectedSnapshotFingerprint: string | null;
+  expectedSourceFingerprint: string;
+  hasBlockers: boolean;
+  latestSnapshot: Readonly<{
+    approvalCycle: number;
+    snapshotFingerprint: string;
+    sourceFingerprint: string;
+  }> | null;
+  ledgerReconciled: boolean;
+  reason: string | null;
+  submittedSourceFingerprint: string | null;
+}>;
+
+export type MonthlyPeriodReview =
+  | Readonly<{
+      action: 'REQUEST_CHANGES';
+      nextStatus: 'CHANGES_REQUESTED';
+      nextVersion: number;
+      reason: string;
+    }>
+  | Readonly<{
+      action: 'APPROVE';
+      approvalCycle: number;
+      nextStatus: 'APPROVED';
+      nextVersion: number;
+      sourceFingerprint: string;
+    }>
+  | Readonly<{
+      action: 'LOCK';
+      approvalCycle: number;
+      nextStatus: 'LOCKED';
+      nextVersion: number;
+      snapshotFingerprint: string;
+    }>;
+
+export type MonthlyPeriodReviewError =
+  | DomainError<'APPROVAL_REASON_REQUIRED'>
+  | DomainError<'PERIOD_LEDGER_MISMATCH'>
+  | DomainError<'PERIOD_NOT_READY'>
+  | DomainError<'PERIOD_SOURCE_CHANGED'>
+  | DomainError<'PERIOD_STATE_CONFLICT'>
+  | DomainError<'PERIOD_VERSION_CONFLICT'>;
+
 export type MonthlyPeriodProjectionError =
   | DomainError<'MONTHLY_PERIOD_DATE_RANGE_INVALID'>
   | DomainError<'MONTHLY_PERIOD_DUPLICATE_DATE'>
@@ -183,6 +240,8 @@ const PERIOD_VERSION_CONFLICT = Object.freeze({ code: 'PERIOD_VERSION_CONFLICT' 
 const PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED = Object.freeze({
   code: 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED',
 } as const);
+const APPROVAL_REASON_REQUIRED = Object.freeze({ code: 'APPROVAL_REASON_REQUIRED' } as const);
+const PERIOD_SOURCE_CHANGED = Object.freeze({ code: 'PERIOD_SOURCE_CHANGED' } as const);
 
 /**
  * Derives one immutable monthly review projection from already identified daily and ledger facts.
@@ -344,6 +403,85 @@ export function validateMonthlyPeriodSubmission(
       submittedSourceFingerprint: input.projection.snapshotVersion.sourceFingerprint,
     }),
   );
+}
+
+/**
+ * Validates one reviewer transition against the exact source and workflow version currently held.
+ * Authorization and persistence stay outside the domain package; failed validation has no effects.
+ */
+export function validateMonthlyPeriodReview(
+  input: MonthlyPeriodReviewInput,
+): Result<MonthlyPeriodReview, MonthlyPeriodReviewError> {
+  if (!reviewActionAllowed(input.currentStatus, input.action)) {
+    return failure(PERIOD_STATE_CONFLICT);
+  }
+  if (input.currentVersion !== input.expectedPeriodVersion) {
+    return failure(PERIOD_VERSION_CONFLICT);
+  }
+  if (input.expectedSourceFingerprint !== input.currentSourceFingerprint) {
+    return failure(PERIOD_SOURCE_CHANGED);
+  }
+
+  if (input.action === 'REQUEST_CHANGES') {
+    const reason = input.reason?.trim() ?? '';
+    if (reason.length < 10) return failure(APPROVAL_REASON_REQUIRED);
+    return success(
+      Object.freeze({
+        action: 'REQUEST_CHANGES',
+        nextStatus: 'CHANGES_REQUESTED',
+        nextVersion: input.currentVersion + 1,
+        reason,
+      }),
+    );
+  }
+
+  if (!input.ledgerReconciled) return failure(PERIOD_LEDGER_MISMATCH);
+  if (input.hasBlockers) return failure(PERIOD_NOT_READY);
+
+  if (input.action === 'APPROVE') {
+    if (
+      input.submittedSourceFingerprint === null ||
+      input.submittedSourceFingerprint !== input.currentSourceFingerprint
+    ) {
+      return failure(PERIOD_SOURCE_CHANGED);
+    }
+    return success(
+      Object.freeze({
+        action: 'APPROVE',
+        approvalCycle: (input.latestSnapshot?.approvalCycle ?? 0) + 1,
+        nextStatus: 'APPROVED',
+        nextVersion: input.currentVersion + 1,
+        sourceFingerprint: input.currentSourceFingerprint,
+      }),
+    );
+  }
+
+  if (
+    input.latestSnapshot === null ||
+    input.expectedSnapshotFingerprint === null ||
+    input.latestSnapshot.snapshotFingerprint !== input.expectedSnapshotFingerprint ||
+    input.latestSnapshot.sourceFingerprint !== input.currentSourceFingerprint
+  ) {
+    return failure(PERIOD_SOURCE_CHANGED);
+  }
+  return success(
+    Object.freeze({
+      action: 'LOCK',
+      approvalCycle: input.latestSnapshot.approvalCycle,
+      nextStatus: 'LOCKED',
+      nextVersion: input.currentVersion + 1,
+      snapshotFingerprint: input.latestSnapshot.snapshotFingerprint,
+    }),
+  );
+}
+
+function reviewActionAllowed(
+  status: MonthlyPeriodStatus,
+  action: MonthlyPeriodReviewAction,
+): boolean {
+  if (action === 'REQUEST_CHANGES') return status === 'SUBMITTED' || status === 'APPROVED';
+  if (action === 'APPROVE') return status === 'SUBMITTED';
+  return status === 'APPROVED';
 }
 
 function deriveReadiness(

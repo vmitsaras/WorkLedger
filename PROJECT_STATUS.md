@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 8 — Monthly closure and reporting
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 2 of 7 Phase 8 tasks complete
-**Current milestone:** Eligible-reviewer monthly decisions and locking
-**Active task:** `WL-802`
+**Phase progress:** 3 of 7 Phase 8 tasks complete
+**Current milestone:** Post-lock correction and adjustment linkage
+**Active task:** `WL-803`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement current-manager/organization-HR changes-requested, approval snapshot, notification, and
-separate lock transitions for `WL-802` under resolved `D-402`.
+Implement post-lock correction requests, decisions, adjustment-ledger linkage, and
+approved-versus-adjusted monthly views for `WL-803`.
 
 ## Verified decisions
 
@@ -34,13 +34,14 @@ separate lock transitions for `WL-802` under resolved `D-402`.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
 - Teams are the only MVP organization grouping; departments are deferred.
 - Approval delegation is excluded from the MVP.
-- `/approvals` is a purpose-minimized inbox for corrections, absence requests, and absence
-  cancellations. It exposes only generic workflow category and status, current-team and
-  affected-date metadata; absence subtype, including sickness, is never a list or URL value.
+- `/approvals` is a purpose-minimized inbox for corrections, absence requests, absence
+  cancellations, and monthly periods. It exposes only generic workflow category and status,
+  current-team and affected-date metadata; absence subtype, including sickness, is never a list or
+  URL value.
 - Current manager/HR scope and self exclusion apply before filters, totals, sorting, and
   pagination. Rows, totals, and team filter options share one repeatable-read snapshot.
-- Monthly-period items remain excluded until `WL-802`; `D-402` now authorizes current effective
-  direct managers or organization HR, always non-self, using account-first actor identity.
+- Monthly-period rows use month bounds and direct restricted-period links; scope and self-exclusion
+  apply before filters, totals, sorting, and pagination, and reasons/source detail stay excluded.
 - Monthly request-changes, approval, and lock transitions use `CURRENT_MANAGER` when that current
   scope qualifies, otherwise `ORGANIZATION_HR`; HR-only accounts need no fabricated employee
   identity, system administrators receive no domain fallback, and both paths apply identical state,
@@ -329,9 +330,9 @@ separate lock transitions for `WL-802` under resolved `D-402`.
   authority; current-manager authority requires employee evidence, while HR employee evidence is
   optional. System administrators, former/unrelated managers, delegation, self-action, and bypasses
   of readiness or reconciliation remain excluded.
-- Implementation consequence: `WL-802` must migrate the existing employee-only approved-snapshot
-  actor shape to the account-first contract before exposing HR-only decisions or lock. No workflow
-  code or migration was added by the decision-resolution change.
+- Implemented by `WL-802`: migration `0017` backfills the existing employee-only approved-snapshot
+  actor shape to the account-first contract before exposing HR-only decisions or lock. The earlier
+  decision-resolution change itself added no workflow code or migration.
 - Verification: the focused authorization-policy suite passes all six cases; the repository-wide
   24 contract tests and 229 unit/component tests pass with formatting, lint, strict typecheck, and
   source-boundary validation.
@@ -339,6 +340,35 @@ separate lock transitions for `WL-802` under resolved `D-402`.
   handoff notes, and current project memory.
 
 ## Latest completed task
+
+### `WL-802` — Implement eligible-reviewer changes request, approval, and lock
+
+- Changed: added pure request-changes/approve/lock transitions; strict reviewer and lock contracts;
+  migration `0017` with account-first snapshot backfill, numbered approval cycles, and immutable
+  decision records; current-manager/HR-only serializable commands; canonical reproducible approval
+  snapshots; separate exact-snapshot lock; reviewer audit and generic notification records; monthly
+  approval-inbox rows; approved-record/history UI; and the accessible permanent-lock confirmation.
+- Verified: workspace/phase/config contracts, formatting, ESLint and 204-file/970-import boundaries,
+  strict TypeScript, reproducible OpenAPI, 24 tooling-contract tests, 242 unit/component tests, 35
+  PostgreSQL integration tests across 19 files, 16 Chromium scenarios, and the production build
+  pass. The build retains the existing large-chunk advisory.
+- Accessibility: reviewer actions have distinct labels and textual availability; the visible reason
+  is audience-labelled and linked to a focused error summary; stale conflicts preserve safe typed
+  text while refetching; approval and lock outcomes focus the updated status; the confirmation
+  explains permanence/snapshot/adjustment consequences and restores cancel focus; approved evidence
+  and history remain semantic, textual, keyboard complete, and axe-covered.
+- Security/data: current scope and self denial, expected state/version/source, blockers, ledger
+  reconciliation, snapshot identity, decision, audit, and notification are rechecked and committed
+  atomically. Current-manager authority takes precedence for combined roles; HR-only evidence may
+  omit employee identity. Canonical snapshots include exact configuration/effect/ledger references
+  but serialize sickness only as neutral effect/minute evidence and exclude classification, notes,
+  diagnosis, entitlement, and protected payloads.
+- Documentation: added `docs/83-monthly-period-review-lock.md`, regenerated OpenAPI, updated the
+  unified inbox and notification contracts, mapped EX-037/EX-040–EX-042/EX-077–EX-080/EX-085 to
+  direct evidence, and synchronized README, TODO, task board, and status.
+- Remaining risk: `WL-803` must implement the post-lock request/decision and append-only adjustment
+  chain, including zero-delta evidence, concurrency, reversal, and approved-versus-adjusted views.
+- Next task: `WL-803`.
 
 ### `WL-801` — Implement employee review and submit transition
 
@@ -845,14 +875,11 @@ separate lock transitions for `WL-802` under resolved `D-402`.
 
 ## Current blockers
 
-No `WL-802` blocker is known. `D-402` resolves its reviewer authority to a current effective direct
-manager or organization HR, always non-self, with required account/authority evidence and nullable
-employee evidence. D-502 remains open before the production browser gate.
+No `WL-803` blocker is known. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-802 — Implement eligible-reviewer changes requested, approval, snapshot, notification, and
-separate lock transitions.`
+`WL-803 — Implement post-lock correction and adjustment linkage.`
 
 ## Update rules
 

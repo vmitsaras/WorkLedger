@@ -17,6 +17,8 @@ import {
   notificationHistoryEnvelopeSchema,
   notificationQuerySchema,
   monthlyPeriodEnvelopeSchema,
+  monthlyPeriodLockRequestSchema,
+  monthlyPeriodReviewRequestSchema,
   monthlyPeriodSubmissionRequestSchema,
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
@@ -31,6 +33,7 @@ import {
 test('keeps monthly review data strict, bounded, and free of protected absence fields', () => {
   const response = {
     data: {
+      approvedRecord: null,
       availableActions: ['SUBMIT'],
       attention: {
         blockers: [],
@@ -52,6 +55,7 @@ test('keeps monthly review data strict, bounded, and free of protected absence f
         monthEnded: true,
         status: 'READY_FOR_SUBMISSION',
       },
+      reviewHistory: [],
       rows: [
         {
           absenceCreditMinutes: 0,
@@ -126,6 +130,47 @@ test('binds monthly submission to one strict period version and acknowledged sou
   ).toThrow();
 });
 
+test('keeps monthly reviewer commands action-specific and source/version bound', () => {
+  expect(
+    monthlyPeriodReviewRequestSchema.parse({
+      action: 'REQUEST_CHANGES',
+      expectedPeriodVersion: 3,
+      expectedSourceFingerprint: 'a'.repeat(64),
+      reason: 'Please correct the missing interval.',
+    }),
+  ).toMatchObject({ action: 'REQUEST_CHANGES' });
+  expect(
+    monthlyPeriodReviewRequestSchema.parse({
+      action: 'APPROVE',
+      expectedPeriodVersion: 3,
+      expectedSourceFingerprint: 'a'.repeat(64),
+    }),
+  ).toMatchObject({ action: 'APPROVE' });
+  expect(() =>
+    monthlyPeriodReviewRequestSchema.parse({
+      action: 'REQUEST_CHANGES',
+      expectedPeriodVersion: 3,
+      expectedSourceFingerprint: 'a'.repeat(64),
+      reason: 'short',
+    }),
+  ).toThrow();
+  expect(() =>
+    monthlyPeriodReviewRequestSchema.parse({
+      action: 'APPROVE',
+      expectedPeriodVersion: 3,
+      expectedSourceFingerprint: 'a'.repeat(64),
+      reason: 'Approval does not accept an invented reason.',
+    }),
+  ).toThrow();
+  expect(
+    monthlyPeriodLockRequestSchema.parse({
+      expectedPeriodVersion: 4,
+      expectedSnapshotFingerprint: 'b'.repeat(64),
+      expectedSourceFingerprint: 'a'.repeat(64),
+    }),
+  ).toMatchObject({ expectedPeriodVersion: 4 });
+});
+
 test('keeps notification history generic, strict, and pagination-bounded', () => {
   const response = {
     data: {
@@ -156,6 +201,20 @@ test('keeps notification history generic, strict, and pagination-bounded', () =>
   expect(() => notificationQuerySchema.parse({ limit: '51' })).toThrow();
   expect(() => notificationQuerySchema.parse({ absenceType: 'SICKNESS' })).toThrow();
   expect(notificationHistoryEnvelopeSchema.parse(response)).toEqual(response);
+  expect(
+    notificationHistoryEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        items: [
+          {
+            ...response.data.items[0],
+            destinationPath: `/monthly-periods/${randomUUID()}`,
+          },
+        ],
+      },
+    }),
+  ).toBeDefined();
   expect(() =>
     notificationHistoryEnvelopeSchema.parse({
       ...response,
@@ -377,7 +436,9 @@ test('keeps unified approval-inbox items strict, discriminated, and purpose-mini
       version: baseItem.version,
     }),
   ).not.toHaveProperty('team');
-  expect(() => approvalInboxItemSchema.parse({ ...baseItem, kind: 'MONTHLY_PERIOD' })).toThrow();
+  expect(approvalInboxItemSchema.parse({ ...baseItem, kind: 'MONTHLY_PERIOD' })).toMatchObject({
+    kind: 'MONTHLY_PERIOD',
+  });
   expect(() =>
     approvalInboxItemSchema.parse({
       ...baseItem,
