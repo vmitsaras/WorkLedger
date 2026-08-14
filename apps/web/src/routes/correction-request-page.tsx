@@ -35,9 +35,11 @@ export function CorrectionRequestPage() {
   const [fieldErrors, setFieldErrors] = useState<Readonly<Record<string, string>>>({});
   const [formError, setFormError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState<Readonly<{ localDate: string; minutes: number }> | null>(
-    null,
-  );
+  const [success, setSuccess] = useState<Readonly<{
+    applicationMode: 'ORDINARY_CORRECTION' | 'POST_LOCK_ADJUSTMENT';
+    localDate: string;
+    minutes: number;
+  }> | null>(null);
   const recordQuery = useQuery({
     ...dailyTimeRecordQuery(recordId ?? ''),
     enabled: recordId !== null,
@@ -91,7 +93,11 @@ export function CorrectionRequestPage() {
         reason: values.reason.trim(),
         recordId: correctionRecordId,
       });
-      setSuccess({ localDate: submitted.localDate, minutes: submitted.proposedDurationMinutes });
+      setSuccess({
+        applicationMode: submitted.applicationMode,
+        localDate: submitted.localDate,
+        minutes: submitted.proposedDurationMinutes,
+      });
     } catch (error) {
       if (error instanceof ApiClientError && error.code === 'VALIDATION_FAILED') {
         setFieldErrors(mapServerFieldErrors(error.fields));
@@ -242,7 +248,10 @@ export function CorrectionRequestPage() {
           <p className="m-0">
             Your proposed {formatDuration(success.minutes)} interval for{' '}
             {formatLocalDate(success.localDate)} is awaiting review. Your recorded events and
-            calculation have not changed.
+            calculation have not changed.{' '}
+            {success.applicationMode === 'POST_LOCK_ADJUSTMENT'
+              ? 'Because this month is locked, approval will append an adjustment while preserving the approved monthly record.'
+              : 'If approved and applied, the unlocked daily calculation will be replaced.'}
           </p>
           <Link
             className="wl-button-secondary w-fit"

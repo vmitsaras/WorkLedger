@@ -592,7 +592,22 @@ function projectMonthlyPeriod(
   );
   const dailyResults = source.dailyProjections
     .filter((projection) => coveredDates.includes(projection.localDate))
-    .map((projection) => toDailyInput(projection, source));
+    .map((projection) => {
+      const postLockDelta = source.postLockAdjustments
+        .filter(({ localDate }) => localDate === projection.localDate)
+        .reduce((total, adjustment) => total + adjustment.minutes, 0);
+      return toDailyInput(
+        postLockDelta === 0
+          ? projection
+          : {
+              ...projection,
+              balanceMinutes: projection.balanceMinutes + postLockDelta,
+              creditedMinutes: projection.creditedMinutes + postLockDelta,
+              workedMinutes: projection.workedMinutes + postLockDelta,
+            },
+        source,
+      );
+    });
   const sourceFingerprint = fingerprintSource({
     absenceEffects: source.absenceEffects,
     appliedCorrections: source.appliedCorrections,
@@ -607,6 +622,7 @@ function projectMonthlyPeriod(
       organizationId: source.period.organizationId,
     },
     policyAssignments: source.policyAssignments,
+    postLockAdjustments: source.postLockAdjustments,
     scheduleAssignments: source.scheduleAssignments,
     coveredDates,
     sourceBlockers: [...source.sourceBlockers, ...configurationBlockers],
@@ -628,6 +644,49 @@ function projectMonthlyPeriod(
     status: source.period.status,
   });
   if (!projected.ok) throw internalError();
+  const approved = latestSnapshot === null ? null : approvedRecord(latestSnapshot);
+  const cumulativePostLockDelta = source.postLockAdjustments.reduce(
+    (total, adjustment) => total + adjustment.minutes,
+    0,
+  );
+  const postLockView =
+    source.period.status !== 'LOCKED'
+      ? null
+      : approved === null
+        ? (() => {
+            throw internalError();
+          })()
+        : Object.freeze({
+            adjustedClosingBalanceMinutes:
+              approved.totals.ledgerClosingBalanceMinutes + cumulativePostLockDelta,
+            adjustments: source.postLockAdjustments.map((adjustment) =>
+              Object.freeze({
+                adjustmentVersion: adjustment.adjustmentVersion,
+                createdAt: adjustment.createdAt,
+                id: adjustment.id,
+                localDate: adjustment.localDate,
+                minutes: adjustment.minutes,
+                previousAdjustedWorkedMinutes: adjustment.previousAdjustedWorkedMinutes,
+                proposedWorkedMinutes: adjustment.proposedWorkedMinutes,
+                reversesAdjustmentId: adjustment.reversesAdjustmentId,
+                sourceRequestId: adjustment.correctionRequestId,
+              }),
+            ),
+            cumulativeDeltaMinutes: cumulativePostLockDelta,
+            currentViewVersion: source.postLockAdjustments.at(-1)?.adjustmentVersion ?? 0,
+            originalClosingBalanceMinutes: approved.totals.ledgerClosingBalanceMinutes,
+            status:
+              source.postLockAdjustments.length === 0
+                ? ('LOCKED_BASELINE' as const)
+                : ('ADJUSTED_AFTER_LOCK' as const),
+          });
+  if (
+    postLockView !== null &&
+    postLockView.adjustedClosingBalanceMinutes !==
+      projected.value.totals.ledgerClosingBalanceMinutes
+  ) {
+    throw internalError();
+  }
   const availableActions: MonthlyPeriod['availableActions'] = [];
   if (permissions.canSubmit && projected.value.readiness === 'READY_FOR_SUBMISSION') {
     availableActions.push('SUBMIT');
@@ -655,7 +714,7 @@ function projectMonthlyPeriod(
   }
 
   return Object.freeze({
-    approvedRecord: latestSnapshot === null ? null : approvedRecord(latestSnapshot),
+    approvedRecord: approved,
     availableActions,
     attention: Object.freeze({
       blockers: projected.value.attention.blockers.map((blocker) => Object.freeze({ ...blocker })),
@@ -665,6 +724,7 @@ function projectMonthlyPeriod(
     id: source.period.id,
     monthEnd,
     monthStart: source.period.monthStart,
+    postLockView,
     readiness: Object.freeze({
       completeDateCount: projected.value.completeDateCount,
       coveredDateCount: projected.value.coveredDateCount,

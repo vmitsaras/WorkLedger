@@ -106,6 +106,27 @@ export const monthlyPeriodApprovedRecordSchema = z.strictObject({
   totals: monthlyPeriodTotalsSchema,
 });
 
+export const monthlyPostLockAdjustmentSchema = z.strictObject({
+  adjustmentVersion: z.number().int().positive(),
+  createdAt: instantSchema,
+  id: identifierSchema,
+  localDate: dateSchema,
+  minutes: signedMinuteSchema,
+  proposedWorkedMinutes: minuteSchema,
+  previousAdjustedWorkedMinutes: minuteSchema,
+  reversesAdjustmentId: identifierSchema.nullable(),
+  sourceRequestId: identifierSchema,
+});
+
+export const monthlyPostLockViewSchema = z.strictObject({
+  adjustedClosingBalanceMinutes: signedMinuteSchema,
+  adjustments: z.array(monthlyPostLockAdjustmentSchema).max(256),
+  cumulativeDeltaMinutes: signedMinuteSchema,
+  currentViewVersion: z.number().int().min(0),
+  originalClosingBalanceMinutes: signedMinuteSchema,
+  status: z.enum(['LOCKED_BASELINE', 'ADJUSTED_AFTER_LOCK']),
+});
+
 export const monthlyPeriodSchema = z.strictObject({
   approvedRecord: monthlyPeriodApprovedRecordSchema.nullable(),
   availableActions: z.array(z.enum(MONTHLY_PERIOD_ACTIONS)).max(3),
@@ -114,6 +135,7 @@ export const monthlyPeriodSchema = z.strictObject({
   id: identifierSchema,
   monthEnd: dateSchema,
   monthStart: dateSchema,
+  postLockView: monthlyPostLockViewSchema.nullable(),
   readiness: monthlyPeriodReadinessSchema,
   reviewHistory: z.array(monthlyPeriodReviewHistoryItemSchema).max(64),
   rows: z.array(monthlyPeriodRowSchema).max(31),

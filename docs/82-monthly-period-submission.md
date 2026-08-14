@@ -81,5 +81,5 @@ controls.
 
 `WL-802` now adds the account-first current-manager/organization-HR changes-requested, approval,
 snapshot, notification, and separate lock transitions under resolved `D-402`; see
-`docs/83-monthly-period-review-lock.md`. `WL-803` implements the actual post-lock adjustment
-workflow; `WL-801` only preserves its required boundary.
+`docs/83-monthly-period-review-lock.md`. The correction-specific post-lock adjustment workflow is
+implemented by `WL-803`; see `docs/84-post-lock-correction-adjustments.md`.

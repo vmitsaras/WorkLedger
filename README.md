@@ -5,16 +5,17 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 8 — 3 of 7 tasks complete**
+> **Current phase progress: Phase 8 — 4 of 7 tasks complete**
 
 Phases 0–7 have passed their exit gates. The repository now includes the attendance, correction,
 absence, entitlement, manager-approval/team, and notification slices plus monthly employee review
 and submission. Monthly review derives ended-month readiness, complete-date totals, warnings,
 blockers, ledger reconciliation, and a source-fingerprinted schema version; self-only submission
 binds warning acknowledgement to that exact source and freezes ordinary mutations. Current
-managers or organization HR can now request changes, create numbered immutable approval snapshots,
-and separately lock an exact approved record. Phase 8 continues with post-lock adjustments
-(`WL-803`).
+managers or organization HR can request changes, create numbered immutable approval snapshots, and
+separately lock an exact approved record. Locked-date corrections now append a source-linked delta
+without changing that approved record, and the monthly view separates the original from its ordered
+adjustments. Phase 8 continues with scoped reports (`WL-804`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe

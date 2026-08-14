@@ -37,7 +37,7 @@ export function registerCorrectionRequestRoutes(
       schema: {
         body: submitCorrectionRequestSchema,
         description:
-          'Submits an employee-owned proposed work interval for review. Raw attendance events and daily calculations remain unchanged until a later authorized decision applies a correction.',
+          'Submits an employee-owned proposed work interval for review. Raw attendance events remain immutable. A locked target names its exact approved snapshot and approval later appends a post-lock adjustment.',
         operationId: 'submitEmployeeCorrectionRequest',
         response: {
           201: submitCorrectionRequestEnvelopeSchema,
@@ -47,7 +47,7 @@ export function registerCorrectionRequestRoutes(
           422: apiErrorEnvelopeSchema,
           503: apiErrorEnvelopeSchema,
         },
-        summary: 'Submit a correction request for a daily record',
+        summary: 'Submit an ordinary or post-lock correction request',
         tags: ['Correction requests'],
       },
     },

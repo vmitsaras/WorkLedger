@@ -149,8 +149,8 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-800 | Implement monthly period projection, totals, warnings, blockers, and snapshot version | WL-506, WL-607 | Seeded complete/incomplete months calculate correctly | Done |
 | WL-801 | Implement employee review and submit transition | WL-800 | Blocking-error and warning-acknowledgement tests | Done |
 | WL-802 | Implement eligible-reviewer changes request, approval, and lock | WL-801, WL-303 | Current-manager/HR-only scope, self-denial, account-first actor migration, transaction, snapshot, and audit tests | Done |
-| WL-803 | Implement post-lock correction and adjustment linkage | WL-505, WL-802 | Approved snapshot preserved; delta report correct | Ready |
-| WL-804 | Build monthly, balance, leave, missing-record, and approval reports | WL-800–WL-803 | Scoped queries, pagination, empty/loading/error/accessibility states | Not started |
+| WL-803 | Implement post-lock correction and adjustment linkage | WL-505, WL-802 | Approved snapshot preserved; delta report correct | Done |
+| WL-804 | Build monthly, balance, leave, missing-record, and approval reports | WL-800–WL-803 | Scoped queries, pagination, empty/loading/error/accessibility states | Ready |
 | WL-805 | Implement authorized CSV export, printable monthly record, and explicit safe clipboard behavior where offered | WL-804 | Formula/encoding/filename, permission/scope-change, field-minimization, clipboard, and print tests | Not started |
 | WL-806 | Execute Phase 8 gate review | WL-800–WL-805 | End-to-end close/export/adjust scenario passes | Not started |
 

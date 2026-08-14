@@ -2,6 +2,7 @@ import {
   elapsedMinutesBetweenInstants,
   localDateInstantBounds,
   parseDomainId,
+  parseLocalDate,
   parseTimeZoneId,
   reconstructAttendance,
   validateManualAttendanceInterval,
@@ -70,13 +71,32 @@ export function createCorrectionRequestService(
         );
         if (projection === null)
           throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
-        await assertMonthlyPeriodAllowsOrdinaryMutation(
-          transaction,
+        const monthStart = parseLocalDate(`${projection.localDate.slice(0, 7)}-01`);
+        if (!monthStart.ok)
+          throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+        const monthlyPeriod = await transaction.monthlyPeriods.findByEmployeeMonth(
           context.organization.id,
           employee.id,
-          projection.localDate,
-          projection.localDate,
+          monthStart.value,
         );
+        let lockedMonthlySnapshotId: DomainId<'MonthlySnapshot'> | null = null;
+        if (monthlyPeriod?.status === 'LOCKED') {
+          const snapshot = await transaction.monthlyPeriods.findLatestSnapshot(
+            context.organization.id,
+            monthlyPeriod.id,
+          );
+          if (snapshot === null)
+            throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+          lockedMonthlySnapshotId = snapshot.id;
+        } else {
+          await assertMonthlyPeriodAllowsOrdinaryMutation(
+            transaction,
+            context.organization.id,
+            employee.id,
+            projection.localDate,
+            projection.localDate,
+          );
+        }
 
         const timeZone = parseTimeZoneId(context.organization.timeZone);
         if (!timeZone.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
@@ -119,6 +139,7 @@ export function createCorrectionRequestService(
         const submitted = await transaction.correctionRequests.submit({
           employeeId: employee.id,
           localDate: projection.localDate,
+          lockedMonthlySnapshotId,
           organizationId: context.organization.id,
           originalInterpretation: Object.freeze({
             calculation: Object.freeze({
@@ -167,6 +188,10 @@ export function createCorrectionRequestService(
           targetKind: 'CORRECTION_REQUEST',
         });
         return Object.freeze({
+          applicationMode:
+            lockedMonthlySnapshotId === null
+              ? ('ORDINARY_CORRECTION' as const)
+              : ('POST_LOCK_ADJUSTMENT' as const),
           id: submitted.id,
           localDate: submitted.localDate,
           proposedDurationMinutes: elapsedMinutesBetweenInstants(

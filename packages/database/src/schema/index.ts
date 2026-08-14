@@ -633,6 +633,9 @@ export const correctionRequests = pgTable(
     proposedInterpretation: jsonb('proposed_interpretation')
       .$type<Readonly<Record<string, unknown>>>()
       .notNull(),
+    lockedMonthlySnapshotId: uuid('locked_monthly_snapshot_id').references(
+      () => approvedMonthlySnapshots.id,
+    ),
     version: integer('version').default(1).notNull(),
     createdAt: createdAt(),
   },
@@ -642,6 +645,7 @@ export const correctionRequests = pgTable(
       table.localDate,
       table.status,
     ),
+    index('correction_requests_locked_snapshot_idx').on(table.lockedMonthlySnapshotId),
     check('correction_requests_reason_not_blank', sql`length(btrim(${table.reason})) > 0`),
     check('correction_requests_positive_version', sql`${table.version} > 0`),
   ],
@@ -1218,7 +1222,14 @@ export const postLockAdjustments = pgTable(
       .references(() => approvedMonthlySnapshots.id),
     employeeId: employeeId(),
     sourceId: uuid('source_id').notNull(),
+    correctionRequestId: uuid('correction_request_id').references(() => correctionRequests.id),
+    correctionDecisionId: uuid('correction_decision_id').references(() => correctionDecisions.id),
+    appliedCorrectionId: uuid('applied_correction_id').references(() => appliedCorrections.id),
     localDate: date('local_date', { mode: 'string' }).notNull(),
+    adjustmentVersion: integer('adjustment_version'),
+    previousAdjustedWorkedMinutes: integer('previous_adjusted_worked_minutes'),
+    proposedWorkedMinutes: integer('proposed_worked_minutes'),
+    reversesAdjustmentId: uuid('reverses_adjustment_id'),
     minutes: integer('minutes').notNull(),
     reason: text('reason').notNull(),
     createdAt: createdAt(),
@@ -1228,9 +1239,30 @@ export const postLockAdjustments = pgTable(
       table.monthlySnapshotId,
       table.sourceId,
     ),
+    uniqueIndex('post_lock_adjustments_applied_correction_uidx').on(table.appliedCorrectionId),
+    uniqueIndex('post_lock_adjustments_snapshot_version_uidx').on(
+      table.monthlySnapshotId,
+      table.adjustmentVersion,
+    ),
     index('post_lock_adjustments_employee_date_idx').on(table.employeeId, table.localDate),
-    check('post_lock_adjustments_non_zero_minutes', sql`${table.minutes} <> 0`),
+    check(
+      'post_lock_adjustments_linkage_shape',
+      sql`(${table.correctionRequestId} is null and ${table.correctionDecisionId} is null and ${table.appliedCorrectionId} is null and ${table.adjustmentVersion} is null and ${table.previousAdjustedWorkedMinutes} is null and ${table.proposedWorkedMinutes} is null) or (${table.correctionRequestId} is not null and ${table.correctionDecisionId} is not null and ${table.appliedCorrectionId} is not null and ${table.adjustmentVersion} is not null and ${table.previousAdjustedWorkedMinutes} is not null and ${table.proposedWorkedMinutes} is not null)`,
+    ),
+    check(
+      'post_lock_adjustments_worked_delta_reconciles',
+      sql`${table.previousAdjustedWorkedMinutes} is null or (${table.previousAdjustedWorkedMinutes} >= 0 and ${table.proposedWorkedMinutes} >= 0 and ${table.minutes} = ${table.proposedWorkedMinutes} - ${table.previousAdjustedWorkedMinutes})`,
+    ),
+    check(
+      'post_lock_adjustments_positive_version',
+      sql`${table.adjustmentVersion} is null or ${table.adjustmentVersion} > 0`,
+    ),
     check('post_lock_adjustments_reason_not_blank', sql`length(btrim(${table.reason})) > 0`),
+    foreignKey({
+      columns: [table.reversesAdjustmentId],
+      foreignColumns: [table.id],
+      name: 'post_lock_adjustments_reversal_fk',
+    }),
   ],
 );
 

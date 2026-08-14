@@ -8,8 +8,9 @@
 
 `WL-802` implements the resolved `D-402` reviewer workflow for monthly periods. A current effective
 direct manager or organization HR administrator may request changes, approve, and later lock a
-period, always non-self. Approval and lock remain separate actions; post-lock correction effects
-remain `WL-803` scope.
+period, always non-self. Approval and lock remain separate actions; correction-specific post-lock
+effects are implemented by `WL-803` and documented in
+`docs/84-post-lock-correction-adjustments.md`.
 
 ## Authority and transitions
 
@@ -82,7 +83,8 @@ remain textual and do not depend on color.
   approved record, permanent-lock confirmation/cancel focus, direct inbox link, keyboard behavior,
   narrow reflow, and accessible semantics.
 
-## Remaining work
+## Post-lock continuation
 
-`WL-803` implements post-lock request, decision, adjustment-ledger linkage, approved-versus-adjusted
-views, zero-delta evidence, concurrency safety, and reversal. No ordinary unlock exists.
+`WL-803` now implements post-lock correction request linkage, atomic decision/application,
+adjustment-ledger evidence, approved-versus-adjusted views, zero-delta retention, concurrency safety,
+and reversal. No ordinary unlock exists; see `docs/84-post-lock-correction-adjustments.md`.

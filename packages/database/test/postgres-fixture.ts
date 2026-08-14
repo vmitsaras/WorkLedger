@@ -22,6 +22,7 @@ const migrationFiles = [
   '0015_rainy_nightshade.sql',
   '0016_flimsy_oracle.sql',
   '0017_boring_aaron_stack.sql',
+  '0018_bored_medusa.sql',
 ] as const;
 
 export type MigratedPostgresFixture = Awaited<ReturnType<typeof createMigratedPostgresFixture>>;

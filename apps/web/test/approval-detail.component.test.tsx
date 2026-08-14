@@ -152,6 +152,69 @@ test('acknowledges a sickness report without requiring or transmitting a reason'
   });
 });
 
+test('labels locked correction approval as an immediate post-lock adjustment', async () => {
+  let applied = false;
+  let postedBody: unknown;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = requestUrl(input);
+      const method = init?.method ?? 'GET';
+      if (url.pathname === '/v1/me/context') return successResponse(HR_CONTEXT);
+      if (url.pathname === '/v1/me/csrf') {
+        return successResponse({ token: 'csrf-token-for-approval-tests-2026' });
+      }
+      if (url.pathname === `/v1/approvals/${APPROVAL_ID}` && method === 'GET') {
+        return successResponse(correctionDetail(applied));
+      }
+      if (url.pathname === `/v1/approvals/${APPROVAL_ID}/decision` && method === 'POST') {
+        postedBody = typeof init?.body === 'string' ? JSON.parse(init.body) : null;
+        applied = true;
+        return successResponse({
+          id: APPROVAL_ID,
+          kind: 'CORRECTION',
+          status: 'APPROVED',
+          version: 2,
+        });
+      }
+      throw new Error(`Unexpected test request: ${method} ${url.pathname}`);
+    }),
+  );
+  const { container } = renderApplication();
+  const user = userEvent.setup();
+
+  expect(
+    await screen.findByText(
+      /Locked-period adjustment. Approval appends an adjustment immediately/u,
+    ),
+  ).toBeVisible();
+  await waitFor(() =>
+    expect(screen.getByRole('heading', { name: 'Review correction request' })).toHaveFocus(),
+  );
+  const reason = screen.getByRole('textbox', { name: 'Decision reason' });
+  await user.clear(reason);
+  await user.type(reason, 'The correction matches the submitted evidence.');
+  expect(reason).toHaveValue('The correction matches the submitted evidence.');
+  await user.click(screen.getByRole('button', { name: 'Approve correction' }));
+
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  await waitFor(() => expect(postedBody).toBeDefined());
+  const status = await screen.findByRole('status');
+  expect(status).toHaveTextContent(/post-lock adjustment was appended/u);
+  await waitFor(() => expect(status).toHaveFocus());
+  expect(postedBody).toEqual({
+    action: 'APPROVE',
+    expectedVersion: 1,
+    negativeBalanceOverride: false,
+    reason: 'The correction matches the submitted evidence.',
+  });
+  expect(
+    await screen.findByText('This approval has no action available in its current state.'),
+  ).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Apply correction' })).not.toBeInTheDocument();
+  await expectNoAxeViolations(container);
+});
+
 function renderApplication() {
   const queryClient = createWorkLedgerQueryClient();
   const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
@@ -220,6 +283,32 @@ function sicknessDetail(acknowledged: boolean): ApprovalDetail {
     submittedAt: '2026-08-14T09:00:00Z',
     version: acknowledged ? 2 : 1,
     workflow: 'REPORT_AND_ACKNOWLEDGE',
+  };
+}
+
+function correctionDetail(applied: boolean): ApprovalDetail {
+  return {
+    affectedEndDate: '2026-06-30',
+    affectedStartDate: '2026-06-30',
+    applicationMode: 'POST_LOCK_ADJUSTMENT',
+    availableActions: applied ? [] : ['APPROVE', 'REQUEST_CHANGES', 'REJECT'],
+    employeeDisplayName: 'Maria Chen',
+    events: [],
+    id: APPROVAL_ID,
+    kind: 'CORRECTION',
+    originalCalculation: {
+      balanceMinutes: 15,
+      breakMinutes: 0,
+      creditedMinutes: 495,
+      expectedMinutes: 480,
+      workedMinutes: 495,
+    },
+    proposedEndsAt: '2026-06-30T15:28:00Z',
+    proposedStartsAt: '2026-06-30T07:00:00Z',
+    requestReason: 'The locked record omitted thirteen minutes of accepted work.',
+    status: applied ? 'APPLIED' : 'SUBMITTED',
+    submittedAt: '2026-08-14T09:00:00Z',
+    version: applied ? 2 : 1,
   };
 }
 

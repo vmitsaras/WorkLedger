@@ -22,6 +22,7 @@ export const submitCorrectionRequestSchema = z.strictObject({
 });
 
 export const submittedCorrectionRequestSchema = z.strictObject({
+  applicationMode: z.enum(['ORDINARY_CORRECTION', 'POST_LOCK_ADJUSTMENT']),
   id: opaqueIdentifierSchema,
   localDate: dateSchema,
   proposedDurationMinutes: z.number().int().min(0),
@@ -46,6 +47,7 @@ const correctionCalculationSchema = z.strictObject({
   workedMinutes: z.number().int().min(0),
 });
 export const correctionReviewItemSchema = z.strictObject({
+  applicationMode: z.enum(['ORDINARY_CORRECTION', 'POST_LOCK_ADJUSTMENT']),
   employeeDisplayName: z.string().min(1).max(160),
   events: z.array(correctionEventSchema).max(500),
   id: opaqueIdentifierSchema,

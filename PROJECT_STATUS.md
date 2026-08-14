@@ -2,16 +2,15 @@
 
 **Current phase:** Phase 8 — Monthly closure and reporting
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 3 of 7 Phase 8 tasks complete
-**Current milestone:** Post-lock correction and adjustment linkage
-**Active task:** `WL-803`
+**Phase progress:** 4 of 7 Phase 8 tasks complete
+**Current milestone:** Scoped operational reports
+**Active task:** `WL-804`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement post-lock correction requests, decisions, adjustment-ledger linkage, and
-approved-versus-adjusted monthly views for `WL-803`.
+Build scoped monthly, balance, leave, missing-record, and approval reports for `WL-804`.
 
 ## Verified decisions
 
@@ -124,6 +123,10 @@ approved-versus-adjusted monthly views for `WL-803`.
   organization-HR non-self reviewer action locks that exact snapshot, with no MVP unlock.
 - Submitted/approved months require an explicit changes-requested transition before ordinary mutation; locked changes append uniquely linked adjustments against the preserved baseline.
 - Monthly snapshots include versioned daily calculation/source/ledger evidence but exclude sickness classification, notes, entitlement balances, and other purpose-incompatible HR detail.
+- Locked-date corrections reference the exact approved snapshot and approval atomically appends an
+  ordered adjustment, nonzero time-account delta, audit, and generic notification without changing
+  raw punches, the daily projection, or approved snapshot. The monthly DTO and UI separate the
+  immutable approved record from its reconciled adjusted view.
 - The MVP application has 31 canonical route patterns plus three explicit host-operator workflows, each with stable implementation ownership.
 - Request and approval routes are type-neutral; sensitive workflow types, notes, reasons, entitlement values, and person-identifying search text never become URL state.
 - Route navigation updates the document title and visible heading with deterministic focus behavior; screen states have persistent, non-duplicative focus and announcement rules.
@@ -340,6 +343,34 @@ approved-versus-adjusted monthly views for `WL-803`.
   handoff notes, and current project memory.
 
 ## Latest completed task
+
+### `WL-803` — Implement post-lock correction and adjustment linkage
+
+- Changed: linked locked-period correction requests to the exact latest approved snapshot; added
+  migration `0018` with complete request/decision/applied/adjustment/reversal evidence; made approval
+  atomically create the applied interpretation, ordered adjustment, optional nonzero
+  `POST_LOCK_ADJUSTMENT` ledger entry, audit, and generic notification; and added reconciled original
+  versus adjusted monthly contract and UI views.
+- Verified: exact toolchain/workspace/version/config checks, formatting, ESLint and 204-file/970-import
+  boundaries, strict TypeScript, reproducible OpenAPI, 24 tooling tests, 246 unit/component tests, 36
+  PostgreSQL integration tests across 19 files, 16 Chromium scenarios, and the production/workspace
+  build pass. The build retains the existing large-chunk advisory; integration retains the existing
+  `pg` concurrent-query deprecation warning.
+- Accessibility: employee and reviewer screens identify the post-lock application path in text;
+  approval reports its immediate adjustment result; and the monthly page separates the immutable
+  approved record from a captioned, keyboard-scrollable adjustment table with textual zero-delta
+  and reversal states. Focus/live feedback and component axe checks pass.
+- Security/data: current manager/HR authority, non-self access, expected request version, locked
+  period, and exact snapshot are rechecked in one serializable transaction. Unique linkage prevents
+  duplicate effects; raw punches, daily projection, and snapshot stay unchanged. Reasons remain in
+  restricted storage and are excluded from the monthly DTO, generic notifications, and audit facts.
+- Documentation: added `docs/84-post-lock-correction-adjustments.md`, regenerated OpenAPI, mapped
+  EX-033–EX-036 and EX-081–EX-084 to direct evidence, and synchronized README, TODO, task board, and
+  status.
+- Remaining risk: the active task is correction-specific. Locked absence cancellation still returns
+  `PERIOD_ADJUSTMENT_REQUIRED` and must receive its broader domain-contract implementation before a
+  phase/release gate claims that path. The existing web chunk-size advisory also remains.
+- Next task: `WL-804`.
 
 ### `WL-802` — Implement eligible-reviewer changes request, approval, and lock
 
@@ -875,11 +906,12 @@ approved-versus-adjusted monthly views for `WL-803`.
 
 ## Current blockers
 
-No `WL-803` blocker is known. D-502 remains open before the production browser gate.
+No `WL-804` blocker is known. Locked absence-cancellation adjustment ownership remains an explicit
+gap before the applicable phase/release gate. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-803 — Implement post-lock correction and adjustment linkage.`
+`WL-804 — Build monthly, balance, leave, missing-record, and approval reports.`
 
 ## Update rules
 

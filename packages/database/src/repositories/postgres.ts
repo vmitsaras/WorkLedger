@@ -57,6 +57,7 @@ import {
   correctionDecisions,
   appliedCorrections,
   approvedMonthlySnapshots,
+  postLockAdjustments,
   monthlyPeriodDecisions,
   monthlyPeriods,
   notificationDeliveryAttempts,
@@ -123,6 +124,7 @@ import type {
   DecideCorrectionRequestInput,
   AppliedCorrectionRecord,
   ApplyCorrectionInput,
+  AppendPostLockAdjustmentInput,
   ApprovedMonthlySnapshotRecord,
   DailyProjectionRecord,
   DailyProjectionRepository,
@@ -142,6 +144,7 @@ import type {
   MonthlyPeriodRecord,
   MonthlyPeriodRepository,
   MonthlyPeriodRangeRecord,
+  PostLockAdjustmentRecord,
   OrganizationRecord,
   OrganizationRepository,
   NotificationListItemRecord,
@@ -2457,6 +2460,30 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
         asc(appliedCorrections.version),
         asc(appliedCorrections.id),
       );
+    const postLockAdjustmentRows = await this.transaction
+      .select({ adjustment: postLockAdjustments })
+      .from(postLockAdjustments)
+      .innerJoin(
+        approvedMonthlySnapshots,
+        and(
+          eq(approvedMonthlySnapshots.id, postLockAdjustments.monthlySnapshotId),
+          eq(approvedMonthlySnapshots.organizationId, postLockAdjustments.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(postLockAdjustments.organizationId, organizationId),
+          eq(postLockAdjustments.employeeId, period.employeeId),
+          eq(approvedMonthlySnapshots.monthlyPeriodId, period.id),
+          isNotNull(postLockAdjustments.adjustmentVersion),
+          isNotNull(postLockAdjustments.appliedCorrectionId),
+          isNotNull(postLockAdjustments.correctionDecisionId),
+          isNotNull(postLockAdjustments.correctionRequestId),
+          isNotNull(postLockAdjustments.previousAdjustedWorkedMinutes),
+          isNotNull(postLockAdjustments.proposedWorkedMinutes),
+        ),
+      )
+      .orderBy(asc(postLockAdjustments.adjustmentVersion), asc(postLockAdjustments.id));
     const ledgerRows = await this.transaction
       .select()
       .from(timeAccountEntries)
@@ -2612,6 +2639,9 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
         ),
       ),
       period,
+      postLockAdjustments: Object.freeze(
+        postLockAdjustmentRows.map(({ adjustment }) => mapPostLockAdjustment(adjustment)),
+      ),
       policyAssignments: Object.freeze(
         policyRows.map((assignment) =>
           Object.freeze({
@@ -2825,6 +2855,7 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
       .values({
         employeeId: input.employeeId,
         localDate: input.localDate,
+        lockedMonthlySnapshotId: input.lockedMonthlySnapshotId,
         organizationId: input.organizationId,
         originalInterpretation: input.originalInterpretation,
         proposedInterpretation: input.proposedInterpretation,
@@ -2857,6 +2888,34 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
     return row === undefined
       ? null
       : mapDomainId<'CorrectionDecision'>(row.id, 'correction_decisions', 'id');
+  }
+
+  async appendPostLockAdjustment(
+    input: AppendPostLockAdjustmentInput,
+  ): Promise<PostLockAdjustmentRecord | null> {
+    const [row] = await this.transaction
+      .insert(postLockAdjustments)
+      .values({
+        adjustmentVersion: input.adjustmentVersion,
+        appliedCorrectionId: input.appliedCorrectionId,
+        correctionDecisionId: input.correctionDecisionId,
+        correctionRequestId: input.correctionRequestId,
+        createdAt: input.createdAt,
+        employeeId: input.employeeId,
+        id: input.id,
+        localDate: input.localDate,
+        minutes: input.minutes,
+        monthlySnapshotId: input.monthlySnapshotId,
+        organizationId: input.organizationId,
+        previousAdjustedWorkedMinutes: input.previousAdjustedWorkedMinutes,
+        proposedWorkedMinutes: input.proposedWorkedMinutes,
+        reason: input.reason,
+        reversesAdjustmentId: input.reversesAdjustmentId,
+        sourceId: input.sourceId,
+      })
+      .onConflictDoNothing()
+      .returning();
+    return row === undefined ? null : mapPostLockAdjustment(row);
   }
 
   async hasLockedMonth(
@@ -2954,6 +3013,29 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
     return Object.freeze(
       rows.map((row) => mapCorrectionReview(row.request, row.employeeDisplayName)),
     );
+  }
+
+  async listPostLockAdjustments(
+    organizationId: DomainId<'Organization'>,
+    monthlySnapshotId: DomainId<'MonthlySnapshot'>,
+  ): Promise<readonly PostLockAdjustmentRecord[]> {
+    const rows = await this.transaction
+      .select()
+      .from(postLockAdjustments)
+      .where(
+        and(
+          eq(postLockAdjustments.organizationId, organizationId),
+          eq(postLockAdjustments.monthlySnapshotId, monthlySnapshotId),
+          isNotNull(postLockAdjustments.adjustmentVersion),
+          isNotNull(postLockAdjustments.appliedCorrectionId),
+          isNotNull(postLockAdjustments.correctionDecisionId),
+          isNotNull(postLockAdjustments.correctionRequestId),
+          isNotNull(postLockAdjustments.previousAdjustedWorkedMinutes),
+          isNotNull(postLockAdjustments.proposedWorkedMinutes),
+        ),
+      )
+      .orderBy(asc(postLockAdjustments.adjustmentVersion), asc(postLockAdjustments.id));
+    return Object.freeze(rows.map(mapPostLockAdjustment));
   }
 
   async findForReview(
@@ -4246,6 +4328,14 @@ function mapCorrectionRequest(
     employeeId: mapDomainId<'Employee'>(row.employeeId, 'correction_requests', 'employee_id'),
     id: mapDomainId<'CorrectionRequest'>(row.id, 'correction_requests', 'id'),
     localDate: mapLocalDate(row.localDate, 'correction_requests', 'local_date'),
+    lockedMonthlySnapshotId:
+      row.lockedMonthlySnapshotId === null
+        ? null
+        : mapDomainId<'MonthlySnapshot'>(
+            row.lockedMonthlySnapshotId,
+            'correction_requests',
+            'locked_monthly_snapshot_id',
+          ),
     organizationId: mapDomainId<'Organization'>(
       row.organizationId,
       'correction_requests',
@@ -4269,6 +4359,78 @@ function mapCorrectionReview(
   employeeDisplayName: string,
 ): CorrectionReviewRecord {
   return Object.freeze({ ...mapCorrectionRequest(row), employeeDisplayName });
+}
+
+function mapPostLockAdjustment(
+  row: typeof postLockAdjustments.$inferSelect,
+): PostLockAdjustmentRecord {
+  if (
+    row.adjustmentVersion === null ||
+    row.appliedCorrectionId === null ||
+    row.correctionDecisionId === null ||
+    row.correctionRequestId === null ||
+    row.previousAdjustedWorkedMinutes === null ||
+    row.proposedWorkedMinutes === null
+  ) {
+    throw new DatabaseValueError('post_lock_adjustments', 'linkage');
+  }
+  return Object.freeze({
+    adjustmentVersion: mapPositiveVersion(
+      row.adjustmentVersion,
+      'post_lock_adjustments',
+      'adjustment_version',
+    ),
+    appliedCorrectionId: mapDomainId<'AppliedCorrection'>(
+      row.appliedCorrectionId,
+      'post_lock_adjustments',
+      'applied_correction_id',
+    ),
+    correctionDecisionId: mapDomainId<'CorrectionDecision'>(
+      row.correctionDecisionId,
+      'post_lock_adjustments',
+      'correction_decision_id',
+    ),
+    correctionRequestId: mapDomainId<'CorrectionRequest'>(
+      row.correctionRequestId,
+      'post_lock_adjustments',
+      'correction_request_id',
+    ),
+    createdAt: mapInstant(row.createdAt, 'post_lock_adjustments', 'created_at'),
+    employeeId: mapDomainId<'Employee'>(row.employeeId, 'post_lock_adjustments', 'employee_id'),
+    id: mapDomainId<'PostLockAdjustment'>(row.id, 'post_lock_adjustments', 'id'),
+    localDate: mapLocalDate(row.localDate, 'post_lock_adjustments', 'local_date'),
+    minutes: mapSignedMinutes(row.minutes, 'post_lock_adjustments', 'minutes'),
+    monthlySnapshotId: mapDomainId<'MonthlySnapshot'>(
+      row.monthlySnapshotId,
+      'post_lock_adjustments',
+      'monthly_snapshot_id',
+    ),
+    organizationId: mapDomainId<'Organization'>(
+      row.organizationId,
+      'post_lock_adjustments',
+      'organization_id',
+    ),
+    previousAdjustedWorkedMinutes: mapNonNegativeMinutes(
+      row.previousAdjustedWorkedMinutes,
+      'post_lock_adjustments',
+      'previous_adjusted_worked_minutes',
+    ),
+    proposedWorkedMinutes: mapNonNegativeMinutes(
+      row.proposedWorkedMinutes,
+      'post_lock_adjustments',
+      'proposed_worked_minutes',
+    ),
+    reason: row.reason,
+    reversesAdjustmentId:
+      row.reversesAdjustmentId === null
+        ? null
+        : mapDomainId<'PostLockAdjustment'>(
+            row.reversesAdjustmentId,
+            'post_lock_adjustments',
+            'reverses_adjustment_id',
+          ),
+    sourceId: mapDomainId<'AppliedCorrection'>(row.sourceId, 'post_lock_adjustments', 'source_id'),
+  });
 }
 
 function mapVacationRequest(row: typeof absenceRequests.$inferSelect): VacationRequestRecord {

@@ -49,6 +49,7 @@ test('keeps monthly review data strict, bounded, and free of protected absence f
       id: randomUUID(),
       monthEnd: '2026-07-31',
       monthStart: '2026-07-01',
+      postLockView: null,
       readiness: {
         completeDateCount: 1,
         coveredDateCount: 1,
@@ -111,6 +112,91 @@ test('keeps monthly review data strict, bounded, and free of protected absence f
       }),
     ).toThrow();
   }
+});
+
+test('keeps post-lock reconciliation ordered, explicit, and free of decision reasons', () => {
+  const response = {
+    data: {
+      ...monthlyPeriodEnvelopeSchema.parse({
+        data: {
+          approvedRecord: null,
+          availableActions: [],
+          attention: { blockers: [], warnings: [] },
+          employeeDisplayName: 'Employee Example',
+          id: randomUUID(),
+          monthEnd: '2026-07-31',
+          monthStart: '2026-07-01',
+          postLockView: null,
+          readiness: {
+            completeDateCount: 0,
+            coveredDateCount: 0,
+            monthEnded: true,
+            status: null,
+          },
+          reviewHistory: [],
+          rows: [],
+          snapshotVersion: { schemaVersion: 1, sourceFingerprint: 'a'.repeat(64) },
+          timeZone: 'Europe/Berlin',
+          totals: {
+            absenceCreditMinutes: 0,
+            adjustmentMinutes: 0,
+            balanceMinutes: 0,
+            breakMinutes: 0,
+            creditedMinutes: 0,
+            expectedMinutes: 0,
+            ledgerClosingBalanceMinutes: 615,
+            ledgerOpeningBalanceMinutes: 615,
+            ledgerPeriodDeltaMinutes: 0,
+            workedMinutes: 0,
+          },
+          workflow: {
+            approvedAt: '2026-08-01T09:00:00Z',
+            lockedAt: '2026-08-02T09:00:00Z',
+            periodVersion: 4,
+            status: 'LOCKED',
+            submittedAt: '2026-08-01T08:00:00Z',
+          },
+        },
+        meta: { requestId: randomUUID() },
+      }).data,
+      postLockView: {
+        adjustedClosingBalanceMinutes: 628,
+        adjustments: [
+          {
+            adjustmentVersion: 1,
+            createdAt: '2026-08-03T09:00:00Z',
+            id: randomUUID(),
+            localDate: '2026-07-31',
+            minutes: 13,
+            previousAdjustedWorkedMinutes: 480,
+            proposedWorkedMinutes: 493,
+            reversesAdjustmentId: null,
+            sourceRequestId: randomUUID(),
+          },
+        ],
+        cumulativeDeltaMinutes: 13,
+        currentViewVersion: 1,
+        originalClosingBalanceMinutes: 615,
+        status: 'ADJUSTED_AFTER_LOCK',
+      },
+    },
+    meta: { requestId: randomUUID() },
+  };
+  expect(monthlyPeriodEnvelopeSchema.parse(response)).toEqual(response);
+  expect(() =>
+    monthlyPeriodEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        postLockView: {
+          ...response.data.postLockView,
+          adjustments: [
+            { ...response.data.postLockView.adjustments[0], reason: 'Private decision reason' },
+          ],
+        },
+      },
+    }),
+  ).toThrow();
 });
 
 test('binds monthly submission to one strict period version and acknowledged source', () => {

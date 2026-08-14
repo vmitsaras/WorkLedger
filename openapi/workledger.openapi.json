@@ -1242,6 +1242,10 @@
                               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
                               "type": "string"
                             },
+                            "applicationMode": {
+                              "enum": ["ORDINARY_CORRECTION", "POST_LOCK_ADJUSTMENT"],
+                              "type": "string"
+                            },
                             "availableActions": {
                               "items": {
                                 "enum": [
@@ -1371,6 +1375,7 @@
                             "id",
                             "submittedAt",
                             "version",
+                            "applicationMode",
                             "events",
                             "kind",
                             "originalCalculation",
@@ -4898,6 +4903,10 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
+                              "applicationMode": {
+                                "enum": ["ORDINARY_CORRECTION", "POST_LOCK_ADJUSTMENT"],
+                                "type": "string"
+                              },
                               "employeeDisplayName": {
                                 "maxLength": 160,
                                 "minLength": 1,
@@ -5001,6 +5010,7 @@
                               }
                             },
                             "required": [
+                              "applicationMode",
                               "employeeDisplayName",
                               "events",
                               "id",
@@ -6816,7 +6826,7 @@
             "description": "Default Response"
           }
         },
-        "summary": "Apply an approved correction to an unlocked daily record",
+        "summary": "Apply an approved ordinary or legacy post-lock correction",
         "tags": ["Correction requests"]
       }
     },
@@ -8028,7 +8038,7 @@
             "description": "Default Response"
           }
         },
-        "summary": "Record a manager correction decision without applying it",
+        "summary": "Decide a correction and atomically apply an approved locked adjustment",
         "tags": ["Correction requests"]
       }
     },
@@ -17904,7 +17914,7 @@
     },
     "/v1/me/correction-requests": {
       "post": {
-        "description": "Submits an employee-owned proposed work interval for review. Raw attendance events and daily calculations remain unchanged until a later authorized decision applies a correction.",
+        "description": "Submits an employee-owned proposed work interval for review. Raw attendance events remain immutable. A locked target names its exact approved snapshot and approval later appends a post-lock adjustment.",
         "operationId": "submitEmployeeCorrectionRequest",
         "requestBody": {
           "content": {
@@ -17968,6 +17978,10 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
+                        "applicationMode": {
+                          "enum": ["ORDINARY_CORRECTION", "POST_LOCK_ADJUSTMENT"],
+                          "type": "string"
+                        },
                         "id": {
                           "format": "uuid",
                           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
@@ -17991,6 +18005,7 @@
                         }
                       },
                       "required": [
+                        "applicationMode",
                         "id",
                         "localDate",
                         "proposedDurationMinutes",
@@ -18956,7 +18971,7 @@
             "description": "Default Response"
           }
         },
-        "summary": "Submit a correction request for a daily record",
+        "summary": "Submit an ordinary or post-lock correction request",
         "tags": ["Correction requests"]
       }
     },
@@ -26485,6 +26500,112 @@
                           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
                           "type": "string"
                         },
+                        "postLockView": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "adjustedClosingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "adjustments": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "adjustmentVersion": {
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991,
+                                        "type": "integer"
+                                      },
+                                      "createdAt": {
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                        "type": "string"
+                                      },
+                                      "id": { "maxLength": 128, "minLength": 1, "type": "string" },
+                                      "localDate": {
+                                        "format": "date",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                        "type": "string"
+                                      },
+                                      "minutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": -9007199254740991,
+                                        "type": "integer"
+                                      },
+                                      "previousAdjustedWorkedMinutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                      },
+                                      "proposedWorkedMinutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                      },
+                                      "reversesAdjustmentId": {
+                                        "anyOf": [
+                                          { "maxLength": 128, "minLength": 1, "type": "string" },
+                                          { "type": "null" }
+                                        ]
+                                      },
+                                      "sourceRequestId": {
+                                        "maxLength": 128,
+                                        "minLength": 1,
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "adjustmentVersion",
+                                      "createdAt",
+                                      "id",
+                                      "localDate",
+                                      "minutes",
+                                      "proposedWorkedMinutes",
+                                      "previousAdjustedWorkedMinutes",
+                                      "reversesAdjustmentId",
+                                      "sourceRequestId"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "maxItems": 256,
+                                  "type": "array"
+                                },
+                                "cumulativeDeltaMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "currentViewVersion": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "originalClosingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "status": {
+                                  "enum": ["LOCKED_BASELINE", "ADJUSTED_AFTER_LOCK"],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "adjustedClosingBalanceMinutes",
+                                "adjustments",
+                                "cumulativeDeltaMinutes",
+                                "currentViewVersion",
+                                "originalClosingBalanceMinutes",
+                                "status"
+                              ],
+                              "type": "object"
+                            },
+                            { "type": "null" }
+                          ]
+                        },
                         "readiness": {
                           "additionalProperties": false,
                           "properties": {
@@ -26787,6 +26908,7 @@
                         "id",
                         "monthEnd",
                         "monthStart",
+                        "postLockView",
                         "readiness",
                         "reviewHistory",
                         "rows",
@@ -27951,6 +28073,112 @@
                           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
                           "type": "string"
                         },
+                        "postLockView": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "adjustedClosingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "adjustments": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "adjustmentVersion": {
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991,
+                                        "type": "integer"
+                                      },
+                                      "createdAt": {
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                        "type": "string"
+                                      },
+                                      "id": { "maxLength": 128, "minLength": 1, "type": "string" },
+                                      "localDate": {
+                                        "format": "date",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                        "type": "string"
+                                      },
+                                      "minutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": -9007199254740991,
+                                        "type": "integer"
+                                      },
+                                      "previousAdjustedWorkedMinutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                      },
+                                      "proposedWorkedMinutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                      },
+                                      "reversesAdjustmentId": {
+                                        "anyOf": [
+                                          { "maxLength": 128, "minLength": 1, "type": "string" },
+                                          { "type": "null" }
+                                        ]
+                                      },
+                                      "sourceRequestId": {
+                                        "maxLength": 128,
+                                        "minLength": 1,
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "adjustmentVersion",
+                                      "createdAt",
+                                      "id",
+                                      "localDate",
+                                      "minutes",
+                                      "proposedWorkedMinutes",
+                                      "previousAdjustedWorkedMinutes",
+                                      "reversesAdjustmentId",
+                                      "sourceRequestId"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "maxItems": 256,
+                                  "type": "array"
+                                },
+                                "cumulativeDeltaMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "currentViewVersion": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "originalClosingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "status": {
+                                  "enum": ["LOCKED_BASELINE", "ADJUSTED_AFTER_LOCK"],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "adjustedClosingBalanceMinutes",
+                                "adjustments",
+                                "cumulativeDeltaMinutes",
+                                "currentViewVersion",
+                                "originalClosingBalanceMinutes",
+                                "status"
+                              ],
+                              "type": "object"
+                            },
+                            { "type": "null" }
+                          ]
+                        },
                         "readiness": {
                           "additionalProperties": false,
                           "properties": {
@@ -28253,6 +28481,7 @@
                         "id",
                         "monthEnd",
                         "monthStart",
+                        "postLockView",
                         "readiness",
                         "reviewHistory",
                         "rows",
@@ -29814,6 +30043,112 @@
                           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
                           "type": "string"
                         },
+                        "postLockView": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "adjustedClosingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "adjustments": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "adjustmentVersion": {
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991,
+                                        "type": "integer"
+                                      },
+                                      "createdAt": {
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                        "type": "string"
+                                      },
+                                      "id": { "maxLength": 128, "minLength": 1, "type": "string" },
+                                      "localDate": {
+                                        "format": "date",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                        "type": "string"
+                                      },
+                                      "minutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": -9007199254740991,
+                                        "type": "integer"
+                                      },
+                                      "previousAdjustedWorkedMinutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                      },
+                                      "proposedWorkedMinutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                      },
+                                      "reversesAdjustmentId": {
+                                        "anyOf": [
+                                          { "maxLength": 128, "minLength": 1, "type": "string" },
+                                          { "type": "null" }
+                                        ]
+                                      },
+                                      "sourceRequestId": {
+                                        "maxLength": 128,
+                                        "minLength": 1,
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "adjustmentVersion",
+                                      "createdAt",
+                                      "id",
+                                      "localDate",
+                                      "minutes",
+                                      "proposedWorkedMinutes",
+                                      "previousAdjustedWorkedMinutes",
+                                      "reversesAdjustmentId",
+                                      "sourceRequestId"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "maxItems": 256,
+                                  "type": "array"
+                                },
+                                "cumulativeDeltaMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "currentViewVersion": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "originalClosingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "status": {
+                                  "enum": ["LOCKED_BASELINE", "ADJUSTED_AFTER_LOCK"],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "adjustedClosingBalanceMinutes",
+                                "adjustments",
+                                "cumulativeDeltaMinutes",
+                                "currentViewVersion",
+                                "originalClosingBalanceMinutes",
+                                "status"
+                              ],
+                              "type": "object"
+                            },
+                            { "type": "null" }
+                          ]
+                        },
                         "readiness": {
                           "additionalProperties": false,
                           "properties": {
@@ -30116,6 +30451,7 @@
                         "id",
                         "monthEnd",
                         "monthStart",
+                        "postLockView",
                         "readiness",
                         "reviewHistory",
                         "rows",
@@ -31652,6 +31988,112 @@
                           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
                           "type": "string"
                         },
+                        "postLockView": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "adjustedClosingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "adjustments": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "adjustmentVersion": {
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991,
+                                        "type": "integer"
+                                      },
+                                      "createdAt": {
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                        "type": "string"
+                                      },
+                                      "id": { "maxLength": 128, "minLength": 1, "type": "string" },
+                                      "localDate": {
+                                        "format": "date",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                        "type": "string"
+                                      },
+                                      "minutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": -9007199254740991,
+                                        "type": "integer"
+                                      },
+                                      "previousAdjustedWorkedMinutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                      },
+                                      "proposedWorkedMinutes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                      },
+                                      "reversesAdjustmentId": {
+                                        "anyOf": [
+                                          { "maxLength": 128, "minLength": 1, "type": "string" },
+                                          { "type": "null" }
+                                        ]
+                                      },
+                                      "sourceRequestId": {
+                                        "maxLength": 128,
+                                        "minLength": 1,
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "adjustmentVersion",
+                                      "createdAt",
+                                      "id",
+                                      "localDate",
+                                      "minutes",
+                                      "proposedWorkedMinutes",
+                                      "previousAdjustedWorkedMinutes",
+                                      "reversesAdjustmentId",
+                                      "sourceRequestId"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "maxItems": 256,
+                                  "type": "array"
+                                },
+                                "cumulativeDeltaMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "currentViewVersion": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "originalClosingBalanceMinutes": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "status": {
+                                  "enum": ["LOCKED_BASELINE", "ADJUSTED_AFTER_LOCK"],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "adjustedClosingBalanceMinutes",
+                                "adjustments",
+                                "cumulativeDeltaMinutes",
+                                "currentViewVersion",
+                                "originalClosingBalanceMinutes",
+                                "status"
+                              ],
+                              "type": "object"
+                            },
+                            { "type": "null" }
+                          ]
+                        },
                         "readiness": {
                           "additionalProperties": false,
                           "properties": {
@@ -31954,6 +32396,7 @@
                         "id",
                         "monthEnd",
                         "monthStart",
+                        "postLockView",
                         "readiness",
                         "reviewHistory",
                         "rows",

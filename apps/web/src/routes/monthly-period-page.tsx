@@ -240,6 +240,7 @@ export function MonthlyPeriodPage() {
         successMessage={reviewSuccessMessage}
       />
       <ApprovedRecordSection period={period} />
+      <PostLockAdjustmentsSection period={period} />
     </MonthlyPeriodFrame>
   );
 }
@@ -625,6 +626,103 @@ function ApprovedRecordSection({ period }: Readonly<{ period: MonthlyPeriod }>) 
   );
 }
 
+function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
+  const view = period.postLockView;
+  if (view === null) return null;
+  return (
+    <section aria-labelledby="monthly-adjusted-view-heading" className="grid gap-4">
+      <div>
+        <h2 id="monthly-adjusted-view-heading" className="m-0 text-xl font-bold">
+          Current adjusted view
+        </h2>
+        <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+          The approved record above remains immutable. This view adds the ordered post-lock
+          correction chain to that baseline.
+        </p>
+      </div>
+      <dl
+        aria-label="Post-lock balance reconciliation"
+        className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        <Total label="Original closing balance" value={view.originalClosingBalanceMinutes} signed />
+        <Total label="Cumulative post-lock delta" value={view.cumulativeDeltaMinutes} signed />
+        <Total label="Adjusted closing balance" value={view.adjustedClosingBalanceMinutes} signed />
+        <div>
+          <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">
+            Current view version
+          </dt>
+          <dd className="m-0 mt-1 text-xl font-bold tabular-nums">
+            {view.currentViewVersion.toString()}
+          </dd>
+        </div>
+      </dl>
+      {view.adjustments.length === 0 ? (
+        <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
+          No post-lock adjustment has been accepted. The current view equals the approved baseline.
+        </p>
+      ) : (
+        <div
+          className="overflow-x-auto rounded-xl border border-[var(--wl-border)]"
+          role="region"
+          aria-label="Scrollable post-lock adjustment history"
+          tabIndex={0}
+        >
+          <table className="w-full min-w-[52rem] border-collapse text-left">
+            <caption className="sr-only">
+              Ordered post-lock corrections applied to the approved monthly baseline
+            </caption>
+            <thead>
+              <tr className="border-b border-[var(--wl-border)] text-sm">
+                {['Version', 'Date', 'Worked before', 'Worked after', 'Balance delta', 'Link'].map(
+                  (label) => (
+                    <th className="p-3" key={label} scope="col">
+                      {label}
+                    </th>
+                  ),
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {view.adjustments.map((adjustment) => (
+                <tr
+                  className="border-b border-[var(--wl-border)] last:border-0"
+                  key={adjustment.id}
+                >
+                  <th className="p-3" scope="row">
+                    {adjustment.adjustmentVersion.toString()}
+                  </th>
+                  <td className="p-3">{formatLocalDate(adjustment.localDate)}</td>
+                  <td className="p-3 tabular-nums">
+                    {formatDuration(adjustment.previousAdjustedWorkedMinutes)}
+                  </td>
+                  <td className="p-3 tabular-nums">
+                    {formatDuration(adjustment.proposedWorkedMinutes)}
+                  </td>
+                  <td className="p-3 tabular-nums">{formatDuration(adjustment.minutes, true)}</td>
+                  <td className="p-3">
+                    {adjustment.reversesAdjustmentId === null
+                      ? adjustment.minutes === 0
+                        ? 'Zero-delta evidence'
+                        : 'Correction adjustment'
+                      : `Reverses version ${reversedVersion(view, adjustment.reversesAdjustmentId)}`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function reversedVersion(view: NonNullable<MonthlyPeriod['postLockView']>, adjustmentId: string) {
+  return (
+    view.adjustments.find(({ id }) => id === adjustmentId)?.adjustmentVersion.toString() ??
+    'unknown'
+  );
+}
+
 function TotalsSection({ totals }: Readonly<{ totals: MonthlyPeriod['totals'] }>) {
   return (
     <section aria-labelledby="monthly-totals-heading" className="grid gap-4">
@@ -812,7 +910,9 @@ function readinessExplanation(period: MonthlyPeriod): string {
     return 'This period is approved and remains read-only before its separate lock action.';
   }
   if (period.workflow.status === 'LOCKED') {
-    return 'This period is locked. Ordinary edits cannot change its approved record.';
+    return period.postLockView?.status === 'ADJUSTED_AFTER_LOCK'
+      ? 'This period is locked and has accepted post-lock adjustments. The approved record remains unchanged; current totals include the ordered adjustment chain.'
+      : 'This period is locked. Ordinary edits cannot change its approved record.';
   }
   return 'This period is read-only in its current workflow state.';
 }

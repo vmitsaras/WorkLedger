@@ -185,6 +185,7 @@ const approvalDetailCommonShape = {
 export const approvalDetailSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     ...approvalDetailCommonShape,
+    applicationMode: z.enum(['ORDINARY_CORRECTION', 'POST_LOCK_ADJUSTMENT']),
     events: z.array(
       z.strictObject({
         occurredAt: instantSchema,

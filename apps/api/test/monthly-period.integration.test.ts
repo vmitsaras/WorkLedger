@@ -39,6 +39,7 @@ const migrationFiles = [
   '0015_rainy_nightshade.sql',
   '0016_flimsy_oracle.sql',
   '0017_boring_aaron_stack.sql',
+  '0018_bored_medusa.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -617,6 +618,97 @@ integrationTest(
         action: 'LOCK',
         actorAuthority: 'ORGANIZATION_HR',
       });
+      expect(locked.postLockView).toEqual({
+        adjustedClosingBalanceMinutes: 615,
+        adjustments: [],
+        cumulativeDeltaMinutes: 0,
+        currentViewVersion: 0,
+        originalClosingBalanceMinutes: 615,
+        status: 'LOCKED_BASELINE',
+      });
+      const lockedSnapshot = await fixture.client.query<{ id: string; snapshot: unknown }>(
+        `select id, snapshot from approved_monthly_snapshots
+          where monthly_period_id = $1 order by approval_cycle desc limit 1`,
+        [scenario.completePeriodId],
+      );
+      const lockedSnapshotId = requiredId(lockedSnapshot.rows[0]?.id);
+      const adjustmentOne = await insertPostLockAdjustment(fixture.client, {
+        adjustmentVersion: 1,
+        employeeId: scenario.employeeId,
+        localDate: '2026-06-30',
+        minutes: 13,
+        organizationId: scenario.organizationId,
+        previousAdjustedWorkedMinutes: 495,
+        proposedWorkedMinutes: 508,
+        snapshotId: lockedSnapshotId,
+      });
+      const adjusted = monthlyPeriodEnvelopeSchema.parse(
+        (await getPeriod(app, employeeCookie, scenario.completePeriodId)).json(),
+      ).data;
+      expect(adjusted.approvedRecord).toEqual(locked.approvedRecord);
+      expect(adjusted.rows.find(({ localDate }) => localDate === '2026-06-30')).toMatchObject({
+        balanceMinutes: 28,
+        creditedMinutes: 508,
+        workedMinutes: 508,
+      });
+      expect(adjusted.totals).toMatchObject({
+        balanceMinutes: 28,
+        ledgerClosingBalanceMinutes: 628,
+        ledgerPeriodDeltaMinutes: 28,
+        workedMinutes: 508,
+      });
+      expect(adjusted.postLockView).toMatchObject({
+        adjustedClosingBalanceMinutes: 628,
+        cumulativeDeltaMinutes: 13,
+        currentViewVersion: 1,
+        originalClosingBalanceMinutes: 615,
+        status: 'ADJUSTED_AFTER_LOCK',
+      });
+
+      await insertPostLockAdjustment(fixture.client, {
+        adjustmentVersion: 2,
+        employeeId: scenario.employeeId,
+        localDate: '2026-06-30',
+        minutes: 0,
+        organizationId: scenario.organizationId,
+        previousAdjustedWorkedMinutes: 508,
+        proposedWorkedMinutes: 508,
+        snapshotId: lockedSnapshotId,
+      });
+      await insertPostLockAdjustment(fixture.client, {
+        adjustmentVersion: 3,
+        employeeId: scenario.employeeId,
+        localDate: '2026-06-30',
+        minutes: -13,
+        organizationId: scenario.organizationId,
+        previousAdjustedWorkedMinutes: 508,
+        proposedWorkedMinutes: 495,
+        reversesAdjustmentId: adjustmentOne,
+        snapshotId: lockedSnapshotId,
+      });
+      const reversed = monthlyPeriodEnvelopeSchema.parse(
+        (await getPeriod(app, employeeCookie, scenario.completePeriodId)).json(),
+      ).data;
+      expect(reversed.approvedRecord).toEqual(locked.approvedRecord);
+      expect(reversed.postLockView).toMatchObject({
+        adjustedClosingBalanceMinutes: 615,
+        cumulativeDeltaMinutes: 0,
+        currentViewVersion: 3,
+        originalClosingBalanceMinutes: 615,
+        status: 'ADJUSTED_AFTER_LOCK',
+      });
+      expect(reversed.postLockView?.adjustments.map(({ minutes }) => minutes)).toEqual([
+        13, 0, -13,
+      ]);
+      expect(reversed.postLockView?.adjustments.at(-1)?.reversesAdjustmentId).toBe(adjustmentOne);
+      expect(
+        (
+          await fixture.client.query<{ snapshot: unknown }>(
+            'select snapshot from approved_monthly_snapshots where id = $1',
+            [lockedSnapshotId],
+          )
+        ).rows[0]?.snapshot,
+      ).toEqual(lockedSnapshot.rows[0]?.snapshot);
 
       const workflowEvidence = (
         await fixture.client.query<{
@@ -1065,6 +1157,139 @@ async function createLedgerEntry(
       NOW,
     ],
   );
+}
+
+async function insertPostLockAdjustment(
+  client: pg.PoolClient,
+  input: Readonly<{
+    adjustmentVersion: number;
+    employeeId: string;
+    localDate: string;
+    minutes: number;
+    organizationId: string;
+    previousAdjustedWorkedMinutes: number;
+    proposedWorkedMinutes: number;
+    reversesAdjustmentId?: string;
+    snapshotId: string;
+  }>,
+) {
+  const reviewer = (
+    await client.query<{ account_id: string; employee_id: string }>(
+      `select user_account.id as account_id, employee.id as employee_id
+         from auth_users user_account
+         join account_employee_links link on link.user_id = user_account.id
+         join employees employee on employee.id = link.employee_id
+        where user_account.email = 'monthly-manager@example.test'`,
+    )
+  ).rows[0];
+  const requestId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into correction_requests
+          (organization_id, employee_id, requested_by_employee_id, local_date, status, reason,
+           original_interpretation, proposed_interpretation, locked_monthly_snapshot_id, version)
+         values ($1, $2, $2, $3, 'APPROVED', $4, $5::jsonb, $6::jsonb, $7, 2)
+         returning id`,
+        [
+          input.organizationId,
+          input.employeeId,
+          input.localDate,
+          `Accepted post-lock correction version ${input.adjustmentVersion.toString()}.`,
+          JSON.stringify({
+            projectionId: 'source',
+            workedMinutes: input.previousAdjustedWorkedMinutes,
+          }),
+          JSON.stringify({ workedMinutes: input.proposedWorkedMinutes }),
+          input.snapshotId,
+        ],
+      )
+    ).rows[0]?.id,
+  );
+  const decisionId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into correction_decisions
+          (organization_id, correction_request_id, actor_account_id, actor_employee_id,
+           actor_authority, action, reason, decided_at)
+         values ($1, $2, $3, $4, 'CURRENT_MANAGER', 'APPROVE', $5, $6) returning id`,
+        [
+          input.organizationId,
+          requestId,
+          reviewer?.account_id,
+          reviewer?.employee_id,
+          'The submitted correction evidence is sufficient.',
+          NOW,
+        ],
+      )
+    ).rows[0]?.id,
+  );
+  const appliedId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into applied_corrections
+          (organization_id, correction_request_id, correction_decision_id, employee_id,
+           local_date, version, interpretation)
+         values ($1, $2, $3, $4, $5, 1, $6::jsonb) returning id`,
+        [
+          input.organizationId,
+          requestId,
+          decisionId,
+          input.employeeId,
+          input.localDate,
+          JSON.stringify({ workedMinutes: input.proposedWorkedMinutes }),
+        ],
+      )
+    ).rows[0]?.id,
+  );
+  const adjustmentId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into post_lock_adjustments
+          (organization_id, monthly_snapshot_id, employee_id, source_id, correction_request_id,
+           correction_decision_id, applied_correction_id, local_date, adjustment_version,
+           previous_adjusted_worked_minutes, proposed_worked_minutes, reverses_adjustment_id,
+           minutes, reason, created_at)
+         values ($1, $2, $3, $4, $5, $6, $4, $7, $8, $9, $10, $11, $12, $13, $14)
+         returning id`,
+        [
+          input.organizationId,
+          input.snapshotId,
+          input.employeeId,
+          appliedId,
+          requestId,
+          decisionId,
+          input.localDate,
+          input.adjustmentVersion,
+          input.previousAdjustedWorkedMinutes,
+          input.proposedWorkedMinutes,
+          input.reversesAdjustmentId ?? null,
+          input.minutes,
+          `Accepted post-lock correction version ${input.adjustmentVersion.toString()}.`,
+          NOW,
+        ],
+      )
+    ).rows[0]?.id,
+  );
+  if (input.minutes !== 0) {
+    await client.query(
+      `insert into time_account_entries
+        (organization_id, employee_id, local_date, entry_type, minutes, source_id,
+         source_fingerprint, actor_kind, actor_id, explanation_code, posted_at)
+       values ($1, $2, $3, 'POST_LOCK_ADJUSTMENT', $4, $5, $6, 'ACCOUNT', $7,
+               'POST_LOCK_CORRECTION', $8)`,
+      [
+        input.organizationId,
+        input.employeeId,
+        input.localDate,
+        input.minutes,
+        adjustmentId,
+        input.adjustmentVersion.toString().repeat(64),
+        reviewer?.account_id,
+        NOW,
+      ],
+    );
+  }
+  return adjustmentId;
 }
 
 async function createAccount(

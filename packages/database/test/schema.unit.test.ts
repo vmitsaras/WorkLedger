@@ -14,6 +14,7 @@ import {
   authSessions,
   authUsers,
   correctionDecisions,
+  correctionRequests,
   dailyProjections,
   domainAuditEvents,
   employmentPeriods,
@@ -23,6 +24,7 @@ import {
   notificationDeliveryAttempts,
   notifications,
   punchEvents,
+  postLockAdjustments,
   securityAuditEvents,
   timeAccountEntries,
 } from '../src/schema/index.js';
@@ -148,6 +150,46 @@ describe('initial PostgreSQL schema', () => {
     );
   });
 
+  it('links correction requests and append-only adjustment versions to locked snapshots', () => {
+    expect(getTableConfig(correctionRequests).columns.map(({ name }) => name)).toContain(
+      'locked_monthly_snapshot_id',
+    );
+    const adjustmentConfiguration = getTableConfig(postLockAdjustments);
+    expect(adjustmentConfiguration.columns.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'adjustment_version',
+        'applied_correction_id',
+        'correction_decision_id',
+        'correction_request_id',
+        'previous_adjusted_worked_minutes',
+        'proposed_worked_minutes',
+        'reverses_adjustment_id',
+      ]),
+    );
+    expect(adjustmentConfiguration.indexes.map(({ config }) => config.name)).toEqual(
+      expect.arrayContaining([
+        'post_lock_adjustments_applied_correction_uidx',
+        'post_lock_adjustments_snapshot_version_uidx',
+      ]),
+    );
+    expect(adjustmentConfiguration.checks.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'post_lock_adjustments_linkage_shape',
+        'post_lock_adjustments_positive_version',
+        'post_lock_adjustments_worked_delta_reconciles',
+      ]),
+    );
+    expect(adjustmentConfiguration.checks.map(({ name }) => name)).not.toContain(
+      'post_lock_adjustments_non_zero_minutes',
+    );
+
+    const migration = readFileSync(`${packageDirectory}/migrations/0018_bored_medusa.sql`, 'utf8');
+    expect(migration).toContain('correction_requests_locked_snapshot_organization_fk');
+    expect(migration).toContain('applied_corrections_request_organization_fk');
+    expect(migration).toContain('post_lock_adjustments_request_organization_fk');
+    expect(migration).toContain('post_lock_adjustments_reversal_organization_fk');
+  });
+
   it('keeps generic notification history separate from append-only delivery attempts', () => {
     const notificationConfiguration = getTableConfig(notifications);
     const attemptConfiguration = getTableConfig(notificationDeliveryAttempts);
@@ -200,6 +242,7 @@ describe('initial PostgreSQL schema', () => {
       '0015_rainy_nightshade',
       '0016_flimsy_oracle',
       '0017_boring_aaron_stack',
+      '0018_bored_medusa',
     ]);
   });
 });

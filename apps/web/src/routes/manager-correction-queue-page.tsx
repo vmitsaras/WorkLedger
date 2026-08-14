@@ -51,7 +51,9 @@ export function ManagerCorrectionQueuePage() {
       setSelected(null);
       setReason('');
       setMessage(
-        `Decision recorded: ${action.replace('_', ' ').toLowerCase()}. This has not applied a correction.`,
+        action === 'APPROVE' && item.applicationMode === 'POST_LOCK_ADJUSTMENT'
+          ? 'Decision recorded: approved. The linked post-lock adjustment was appended without changing the approved monthly record.'
+          : `Decision recorded: ${action.replace('_', ' ').toLowerCase()}. This has not applied a correction.`,
       );
     } catch (error) {
       setMessage(
@@ -118,6 +120,9 @@ export function ManagerCorrectionQueuePage() {
               </h2>
               <p className="m-0 text-sm">
                 Submitted correction request · {request.status.replace('_', ' ').toLowerCase()}
+                {request.applicationMode === 'POST_LOCK_ADJUSTMENT'
+                  ? ' · locked-period adjustment'
+                  : ''}
               </p>
               <Button
                 type="button"
@@ -164,7 +169,9 @@ export function ManagerCorrectionQueuePage() {
                 {item.proposedStartsAt} to {item.proposedEndsAt}
               </p>
               <p className="text-sm text-[var(--wl-text-muted)]">
-                Approval must still be applied before the daily calculation changes.
+                {item.applicationMode === 'POST_LOCK_ADJUSTMENT'
+                  ? 'Approval appends the locked-period adjustment immediately and preserves the approved monthly record.'
+                  : 'Approval must still be applied before the daily calculation changes.'}
               </p>
             </section>
           </div>
@@ -194,7 +201,11 @@ export function ManagerCorrectionQueuePage() {
               </label>
               <div className="flex flex-wrap gap-3">
                 <Button isDisabled={pending} onPress={() => void decide('APPROVE')}>
-                  {pending ? 'Recording…' : 'Approve for later application'}
+                  {pending
+                    ? 'Recording…'
+                    : item.applicationMode === 'POST_LOCK_ADJUSTMENT'
+                      ? 'Approve and record adjustment'
+                      : 'Approve for later application'}
                 </Button>
                 <Button
                   isDisabled={pending}

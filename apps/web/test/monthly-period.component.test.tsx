@@ -308,6 +308,29 @@ test('approves, shows the immutable record, and requires permanent-lock confirma
   await expectNoAxeViolations(container);
 });
 
+test('separates the immutable approved baseline from an accessible adjusted view and reversal chain', async () => {
+  stubFetch(adjustedLockedPeriod());
+  const { container } = renderApplication();
+
+  expect(await screen.findByRole('heading', { name: 'Current adjusted view' })).toBeVisible();
+  expect(screen.getByText(/accepted post-lock adjustments/u)).toBeVisible();
+  const reconciliation = screen.getByLabelText('Post-lock balance reconciliation');
+  expect(reconciliation).toHaveTextContent('Original closing balance+10h 15m');
+  expect(reconciliation).toHaveTextContent('Cumulative post-lock delta0h 00m');
+  expect(reconciliation).toHaveTextContent('Adjusted closing balance+10h 15m');
+  expect(reconciliation).toHaveTextContent('Current view version3');
+  const region = screen.getByRole('region', { name: 'Scrollable post-lock adjustment history' });
+  expect(region).toHaveAttribute('tabindex', '0');
+  const table = within(region).getByRole('table', {
+    name: 'Ordered post-lock corrections applied to the approved monthly baseline',
+  });
+  expect(within(table).getByText('Zero-delta evidence')).toBeVisible();
+  expect(within(table).getByText('Reverses version 1')).toBeVisible();
+  expect(screen.getByText(/closing posted balance \+10h 15m/u)).toBeVisible();
+  expect(screen.getByLabelText('Monthly calculated totals')).toHaveTextContent('+0h 15m');
+  await expectNoAxeViolations(container);
+});
+
 test('shows a purpose-safe permission denial without retrying or rendering monthly data', async () => {
   vi.stubGlobal(
     'fetch',
@@ -392,6 +415,7 @@ function readyPeriod(): MonthlyPeriod {
     id: PERIOD_ID,
     monthEnd: '2026-06-30',
     monthStart: '2026-06-01',
+    postLockView: null,
     readiness: {
       completeDateCount: 1,
       coveredDateCount: 1,
@@ -523,6 +547,62 @@ function approvedPeriod(period: MonthlyPeriod): MonthlyPeriod {
       approvedAt: '2026-08-14T10:30:45Z',
       periodVersion: 3,
       status: 'APPROVED',
+    },
+  };
+}
+
+function adjustedLockedPeriod(): MonthlyPeriod {
+  const baseline = approvedPeriod(reviewerPeriod());
+  return {
+    ...baseline,
+    availableActions: [],
+    postLockView: {
+      adjustedClosingBalanceMinutes: 615,
+      adjustments: [
+        {
+          adjustmentVersion: 1,
+          createdAt: '2026-08-14T10:40:45Z',
+          id: '60000000-0000-7000-8000-000000000001',
+          localDate: '2026-06-30',
+          minutes: 13,
+          previousAdjustedWorkedMinutes: 495,
+          proposedWorkedMinutes: 508,
+          reversesAdjustmentId: null,
+          sourceRequestId: '61000000-0000-7000-8000-000000000001',
+        },
+        {
+          adjustmentVersion: 2,
+          createdAt: '2026-08-14T10:41:45Z',
+          id: '60000000-0000-7000-8000-000000000002',
+          localDate: '2026-06-30',
+          minutes: 0,
+          previousAdjustedWorkedMinutes: 508,
+          proposedWorkedMinutes: 508,
+          reversesAdjustmentId: null,
+          sourceRequestId: '61000000-0000-7000-8000-000000000002',
+        },
+        {
+          adjustmentVersion: 3,
+          createdAt: '2026-08-14T10:42:45Z',
+          id: '60000000-0000-7000-8000-000000000003',
+          localDate: '2026-06-30',
+          minutes: -13,
+          previousAdjustedWorkedMinutes: 508,
+          proposedWorkedMinutes: 495,
+          reversesAdjustmentId: '60000000-0000-7000-8000-000000000001',
+          sourceRequestId: '61000000-0000-7000-8000-000000000003',
+        },
+      ],
+      cumulativeDeltaMinutes: 0,
+      currentViewVersion: 3,
+      originalClosingBalanceMinutes: 615,
+      status: 'ADJUSTED_AFTER_LOCK',
+    },
+    workflow: {
+      ...baseline.workflow,
+      lockedAt: '2026-08-14T10:35:45Z',
+      periodVersion: 4,
+      status: 'LOCKED',
     },
   };
 }

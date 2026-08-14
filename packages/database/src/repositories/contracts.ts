@@ -511,6 +511,27 @@ export type MonthlyAppliedCorrectionSourceRecord = Readonly<{
   version: number;
 }>;
 
+export type PostLockAdjustmentRecord = Readonly<{
+  adjustmentVersion: number;
+  appliedCorrectionId: DomainId<'AppliedCorrection'>;
+  correctionDecisionId: DomainId<'CorrectionDecision'>;
+  correctionRequestId: DomainId<'CorrectionRequest'>;
+  createdAt: Instant;
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'PostLockAdjustment'>;
+  localDate: LocalDate;
+  minutes: number;
+  monthlySnapshotId: DomainId<'MonthlySnapshot'>;
+  organizationId: DomainId<'Organization'>;
+  previousAdjustedWorkedMinutes: number;
+  proposedWorkedMinutes: number;
+  reason: string;
+  reversesAdjustmentId: DomainId<'PostLockAdjustment'> | null;
+  sourceId: DomainId<'AppliedCorrection'>;
+}>;
+
+export type AppendPostLockAdjustmentInput = PostLockAdjustmentRecord;
+
 export type MonthlyLedgerEntryRecord = TimeAccountLedgerEntry &
   Readonly<{ sourceFingerprint: string }>;
 
@@ -529,6 +550,7 @@ export type MonthlyPeriodProjectionSourceRecord = Readonly<{
   holidays: readonly MonthlyHolidaySourceRecord[];
   ledgerEntries: readonly MonthlyLedgerEntryRecord[];
   period: MonthlyPeriodRecord;
+  postLockAdjustments: readonly PostLockAdjustmentRecord[];
   policyAssignments: readonly MonthlyPolicyAssignmentRecord[];
   scheduleAssignments: readonly MonthlyScheduleAssignmentRecord[];
   sourceBlockers: readonly MonthlyPeriodBlockerSourceRecord[];
@@ -541,6 +563,7 @@ export type CorrectionRequestRecord = Readonly<{
   employeeId: DomainId<'Employee'>;
   id: DomainId<'CorrectionRequest'>;
   localDate: LocalDate;
+  lockedMonthlySnapshotId: DomainId<'MonthlySnapshot'> | null;
   organizationId: DomainId<'Organization'>;
   originalInterpretation: Readonly<Record<string, unknown>>;
   proposedInterpretation: Readonly<Record<string, unknown>>;
@@ -1065,6 +1088,9 @@ export interface MonthlyPeriodRepository {
 }
 
 export interface CorrectionRequestRepository {
+  appendPostLockAdjustment(
+    input: AppendPostLockAdjustmentInput,
+  ): Promise<PostLockAdjustmentRecord | null>;
   apply(input: ApplyCorrectionInput): Promise<AppliedCorrectionRecord | null>;
   decide(input: DecideCorrectionRequestInput): Promise<CorrectionReviewRecord | null>;
   findForReview(
@@ -1088,6 +1114,10 @@ export interface CorrectionRequestRepository {
     organizationId: DomainId<'Organization'>,
     employeeIds: readonly DomainId<'Employee'>[],
   ): Promise<readonly CorrectionReviewRecord[]>;
+  listPostLockAdjustments(
+    organizationId: DomainId<'Organization'>,
+    monthlySnapshotId: DomainId<'MonthlySnapshot'>,
+  ): Promise<readonly PostLockAdjustmentRecord[]>;
   submit(input: SubmitCorrectionRequestInput): Promise<CorrectionRequestRecord>;
 }
 

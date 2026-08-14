@@ -19,6 +19,7 @@ import {
   approvedMonthlySnapshots,
   authAccounts,
   authUsers,
+  appliedCorrections,
   correctionDecisions,
   correctionRequests,
   dailyProjections,
@@ -709,7 +710,7 @@ async function insertPeriodsAndAudit(transaction: SeedTransaction): Promise<void
               creditedMinutes: 480,
               expectedMinutes: 480,
               localDate: '2026-01-15',
-              recordId: null,
+              recordId: seedId(4709),
               status: 'COMPLETE',
               workedMinutes: 480,
             },
@@ -806,16 +807,80 @@ async function insertPeriodsAndAudit(transaction: SeedTransaction): Promise<void
       sourceFingerprint: '5'.repeat(64),
     },
   ]);
+  await transaction.insert(correctionRequests).values({
+    createdAt,
+    employeeId: owenId,
+    id: seedId(5022),
+    localDate: '2026-01-15',
+    lockedMonthlySnapshotId: seedId(5010),
+    organizationId,
+    originalInterpretation: {
+      calculation: {
+        balanceMinutes: 0,
+        breakMinutes: 0,
+        creditedMinutes: 480,
+        expectedMinutes: 480,
+        workedMinutes: 480,
+      },
+      events: [],
+      projectionId: seedId(4709),
+      projectionVersion: 1,
+      reconstructionStatus: 'VALID',
+    },
+    proposedInterpretation: {
+      endsAt: '2026-01-15T15:13:00Z',
+      kind: 'REPLACE_DAILY_WORK_INTERVAL',
+      startsAt: '2026-01-15T07:00:00Z',
+    },
+    reason: 'The accepted meeting evidence adds thirteen worked minutes.',
+    requestedByEmployeeId: owenId,
+    status: 'APPROVED',
+    version: 2,
+  });
+  await transaction.insert(correctionDecisions).values({
+    action: 'APPROVE',
+    actorAccountId: accountId(personaDefinitions[5]),
+    actorAuthority: 'CURRENT_MANAGER',
+    actorEmployeeId: alexId,
+    correctionRequestId: seedId(5022),
+    createdAt,
+    decidedAt: '2026-02-05T09:00:00.000Z',
+    id: seedId(5023),
+    organizationId,
+    reason: 'The submitted evidence supports the corrected interval.',
+  });
+  await transaction.insert(appliedCorrections).values({
+    correctionDecisionId: seedId(5023),
+    correctionRequestId: seedId(5022),
+    createdAt,
+    employeeId: owenId,
+    id: seedId(5024),
+    interpretation: {
+      kind: 'REPLACE_DAILY_WORK_INTERVAL',
+      lockedMonthlySnapshotId: seedId(5010),
+      previousAdjustedWorkedMinutes: 480,
+      workedMinutes: 493,
+    },
+    localDate: '2026-01-15',
+    organizationId,
+    version: 1,
+  });
   await transaction.insert(postLockAdjustments).values({
+    adjustmentVersion: 1,
+    appliedCorrectionId: seedId(5024),
+    correctionDecisionId: seedId(5023),
+    correctionRequestId: seedId(5022),
     createdAt,
     employeeId: owenId,
     id: seedId(5020),
-    localDate: '2026-01-22',
+    localDate: '2026-01-15',
     minutes: 13,
     monthlySnapshotId: seedId(5010),
     organizationId,
+    previousAdjustedWorkedMinutes: 480,
+    proposedWorkedMinutes: 493,
     reason: 'Approved correction to the recorded start time.',
-    sourceId: seedId(5021),
+    sourceId: seedId(5024),
   });
 
   await transaction.insert(domainAuditEvents).values([
@@ -1070,6 +1135,18 @@ function createDailyProjections(): Array<typeof dailyProjections.$inferInsert> {
     projection(seedId(4708), emmaId, '2026-02-19', 'COMPLETE', 480, 120, 0, 360, 480, 0, [
       'WORK_DURING_ABSENCE',
     ]),
+    projection(
+      seedId(4709),
+      employeeId(personaDefinitions[8]),
+      '2026-01-15',
+      'COMPLETE',
+      480,
+      480,
+      0,
+      0,
+      480,
+      0,
+    ),
   ];
 }
 
@@ -1159,10 +1236,10 @@ function createTimeAccountEntries(): Array<typeof timeAccountEntries.$inferInser
     timeEntry(
       seedId(4820),
       employeeId(personaDefinitions[8]),
-      '2026-01-22',
+      '2026-01-15',
       'POST_LOCK_ADJUSTMENT',
       13,
-      seedId(5021),
+      seedId(5020),
       'POST_LOCK_CORRECTION',
     ),
   ];

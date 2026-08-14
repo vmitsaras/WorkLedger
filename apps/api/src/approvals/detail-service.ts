@@ -30,7 +30,10 @@ import {
   type EmployeeTargetAction,
 } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
-import { toCorrectionReviewItem } from '../corrections/correction-review-service.js';
+import {
+  applyApprovedCorrectionInTransaction,
+  toCorrectionReviewItem,
+} from '../corrections/correction-review-service.js';
 import {
   deliverCommittedNotification,
   disabledNotificationDeliveryAdapter,
@@ -231,6 +234,7 @@ async function toDetail(
     return Object.freeze({
       affectedEndDate: item.localDate,
       affectedStartDate: item.localDate,
+      applicationMode: item.applicationMode,
       availableActions: actionsFor(approval),
       employeeDisplayName: item.employeeDisplayName,
       events: item.events,
@@ -315,6 +319,16 @@ async function decideCorrection(
     requestId: state.approval.record.id,
   });
   if (updated === null) throw stateConflict();
+  if (input.action === 'APPROVE' && updated.lockedMonthlySnapshotId !== null) {
+    await applyApprovedCorrectionInTransaction({
+      at,
+      authorizationScope: state.authorization.scope,
+      context: state.context,
+      expectedVersion: updated.version,
+      request: updated,
+      transaction,
+    });
+  }
   await appendDecisionAudit(transaction, state.context, actor, {
     action: input.action,
     at,

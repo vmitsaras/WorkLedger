@@ -37,6 +37,7 @@ const migrationFiles = [
   '0015_rainy_nightshade.sql',
   '0016_flimsy_oracle.sql',
   '0017_boring_aaron_stack.sql',
+  '0018_bored_medusa.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -280,9 +281,205 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `applies locked corrections as append-only adjustments with zero, reversal, and concurrency evidence (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'post_lock_correction',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+
+    try {
+      const employee = await createEmployee(fixture.client);
+      const projectionId = await insertProjection(fixture.client, employee);
+      const manager = await createManager(fixture.client, employee);
+      const snapshotId = await insertLockedSnapshot(
+        fixture.client,
+        employee,
+        manager,
+        projectionId,
+      );
+      const originalSnapshot = (
+        await fixture.client.query<{ snapshot: unknown }>(
+          'select snapshot from approved_monthly_snapshots where id = $1',
+          [snapshotId],
+        )
+      ).rows[0]?.snapshot;
+      const employeeCookie = await signIn(app);
+      const employeeToken = await csrfToken(app, employeeCookie);
+      const managerCookie = await signIn(app, MANAGER_EMAIL, MANAGER_PASSWORD);
+      const managerToken = await csrfToken(app, managerCookie);
+
+      const positive = await submitCorrection(app, employeeCookie, employeeToken, projectionId, {
+        endsAtLocalTime: '11:13',
+        reason: 'The locked record omitted thirteen minutes of accepted work.',
+        startsAtLocalTime: '09:00',
+      });
+      expect(positive.statusCode).toBe(201);
+      expect(positive.json()).toMatchObject({
+        data: { applicationMode: 'POST_LOCK_ADJUSTMENT', proposedDurationMinutes: 133 },
+      });
+      const positiveId = positive.json<{ data: { id: string } }>().data.id;
+      const positiveDecision = await decideCorrectionApproval(
+        app,
+        managerCookie,
+        managerToken,
+        positiveId,
+      );
+      expect(positiveDecision.statusCode).toBe(200);
+
+      const positiveEvidence = await fixture.client.query<{
+        adjustment_version: number;
+        minutes: number;
+        previous_adjusted_worked_minutes: number;
+        proposed_worked_minutes: number;
+      }>(
+        `select adjustment_version, minutes, previous_adjusted_worked_minutes,
+                proposed_worked_minutes
+           from post_lock_adjustments`,
+      );
+      expect(positiveEvidence.rows).toEqual([
+        {
+          adjustment_version: 1,
+          minutes: 13,
+          previous_adjusted_worked_minutes: 120,
+          proposed_worked_minutes: 133,
+        },
+      ]);
+      expect(
+        (
+          await fixture.client.query<{
+            entry_type: string;
+            minutes: number;
+          }>('select entry_type, minutes from time_account_entries')
+        ).rows,
+      ).toEqual([{ entry_type: 'POST_LOCK_ADJUSTMENT', minutes: 13 }]);
+      expect(
+        (
+          await fixture.client.query<{
+            projection_version: number;
+            worked_minutes: number;
+          }>('select projection_version, worked_minutes from daily_projections where id = $1', [
+            projectionId,
+          ])
+        ).rows[0],
+      ).toEqual({ projection_version: 1, worked_minutes: 120 });
+      expect(
+        (
+          await fixture.client.query<{ snapshot: unknown }>(
+            'select snapshot from approved_monthly_snapshots where id = $1',
+            [snapshotId],
+          )
+        ).rows[0]?.snapshot,
+      ).toEqual(originalSnapshot);
+
+      const zero = await submitCorrection(app, employeeCookie, employeeToken, projectionId, {
+        endsAtLocalTime: '11:13',
+        reason: 'This confirms the accepted adjusted duration without a balance change.',
+        startsAtLocalTime: '09:00',
+      });
+      await decideCorrectionApproval(
+        app,
+        managerCookie,
+        managerToken,
+        zero.json<{ data: { id: string } }>().data.id,
+      );
+      expect(
+        (
+          await fixture.client.query<{ adjustment_version: number; minutes: number }>(
+            'select adjustment_version, minutes from post_lock_adjustments order by adjustment_version',
+          )
+        ).rows,
+      ).toEqual([
+        { adjustment_version: 1, minutes: 13 },
+        { adjustment_version: 2, minutes: 0 },
+      ]);
+      expect(
+        (await fixture.client.query<{ count: string }>('select count(*) from time_account_entries'))
+          .rows[0]?.count,
+      ).toBe('1');
+
+      const reversal = await submitCorrection(app, employeeCookie, employeeToken, projectionId, {
+        endsAtLocalTime: '11:00',
+        reason: 'New evidence restores the original locked worked duration exactly.',
+        startsAtLocalTime: '09:00',
+      });
+      await decideCorrectionApproval(
+        app,
+        managerCookie,
+        managerToken,
+        reversal.json<{ data: { id: string } }>().data.id,
+      );
+      const reversalEvidence = await fixture.client.query<{
+        adjustment_version: number;
+        minutes: number;
+        reverses_version: number | null;
+      }>(
+        `select current.adjustment_version, current.minutes,
+                reversed.adjustment_version as reverses_version
+           from post_lock_adjustments current
+           left join post_lock_adjustments reversed on reversed.id = current.reverses_adjustment_id
+          order by current.adjustment_version`,
+      );
+      expect(reversalEvidence.rows.at(-1)).toEqual({
+        adjustment_version: 3,
+        minutes: -13,
+        reverses_version: 1,
+      });
+
+      const concurrent = await submitCorrection(app, employeeCookie, employeeToken, projectionId, {
+        endsAtLocalTime: '11:10',
+        reason: 'The final evidence supports ten more minutes than the locked baseline.',
+        startsAtLocalTime: '09:00',
+      });
+      const concurrentId = concurrent.json<{ data: { id: string } }>().data.id;
+      const outcomes = await Promise.all([
+        decideCorrectionApproval(app, managerCookie, managerToken, concurrentId),
+        decideCorrectionApproval(app, managerCookie, managerToken, concurrentId),
+      ]);
+      expect(outcomes.map(({ statusCode }) => statusCode).sort()).toEqual([200, 409]);
+      expect(
+        (
+          await fixture.client.query<{ count: string }>(
+            'select count(*) from post_lock_adjustments',
+          )
+        ).rows[0]?.count,
+      ).toBe('4');
+      expect(
+        (
+          await fixture.client.query<{ count: string }>(
+            `select count(*) from domain_audit_events
+              where action_code = 'POST_LOCK_CORRECTION_APPLIED'`,
+          )
+        ).rows[0]?.count,
+      ).toBe('4');
+      expect(
+        (
+          await fixture.client.query<{ count: string }>(
+            `select count(*) from notifications where event = 'ITEM_APPROVED'`,
+          )
+        ).rows[0]?.count,
+      ).toBe('4');
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createEmployee(
   client: pg.PoolClient,
-): Promise<Readonly<{ employeeId: string; organizationId: string }>> {
+): Promise<Readonly<{ accountId: string; employeeId: string; organizationId: string }>> {
   const organization = await client.query<{ id: string }>(
     `insert into organizations (name, time_zone) values ('Correction organization', 'Europe/Berlin') returning id`,
   );
@@ -317,7 +514,7 @@ async function createEmployee(
     `insert into punch_events (organization_id, employee_id, event_sequence, event_type, occurred_at, actor_employee_id, command_id) values ($1, $2, 1, 'CLOCK_IN', '2026-02-03T08:00:00Z', $2, uuidv7())`,
     [organizationId, employeeId],
   );
-  return Object.freeze({ employeeId, organizationId });
+  return Object.freeze({ accountId, employeeId, organizationId });
 }
 
 async function insertProjection(
@@ -366,6 +563,145 @@ async function createManager(
     `insert into manager_assignments (organization_id, employee_id, manager_employee_id, starts_on) values ($1, $2, $3, '2025-01-01')`,
     [employee.organizationId, employee.employeeId, employeeId],
   );
+  return Object.freeze({ accountId, employeeId });
+}
+
+async function insertLockedSnapshot(
+  client: pg.PoolClient,
+  employee: Readonly<{ employeeId: string; organizationId: string }>,
+  manager: Readonly<{ accountId: string; employeeId: string }>,
+  projectionId: string,
+) {
+  const periodId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into monthly_periods
+          (organization_id, employee_id, month_start, status, version, submitted_at, approved_at,
+           locked_at)
+         values ($1, $2, '2026-02-01', 'LOCKED', 4, $3, $3, $3) returning id`,
+        [employee.organizationId, employee.employeeId, NOW],
+      )
+    ).rows[0]?.id,
+  );
+  const approvedRecord = {
+    approvalCycle: 1,
+    approvedAt: NOW,
+    calculationEngineVersion: 'test',
+    periodVersion: 3,
+    rows: [
+      {
+        absenceCreditMinutes: 0,
+        adjustmentMinutes: 0,
+        balanceMinutes: -360,
+        breakMinutes: 0,
+        creditedMinutes: 120,
+        expectedMinutes: 480,
+        localDate: '2026-02-03',
+        recordId: projectionId,
+        status: 'COMPLETE',
+        workedMinutes: 120,
+      },
+    ],
+    schemaVersion: 1,
+    snapshotFingerprint: 'd'.repeat(64),
+    sourceFingerprint: 'c'.repeat(64),
+    totals: {
+      absenceCreditMinutes: 0,
+      adjustmentMinutes: 0,
+      balanceMinutes: -360,
+      breakMinutes: 0,
+      creditedMinutes: 120,
+      expectedMinutes: 480,
+      ledgerClosingBalanceMinutes: -360,
+      ledgerOpeningBalanceMinutes: 0,
+      ledgerPeriodDeltaMinutes: -360,
+      workedMinutes: 120,
+    },
+  };
+  return requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into approved_monthly_snapshots
+          (organization_id, monthly_period_id, period_version, schema_version, engine_version,
+           source_fingerprint, snapshot_fingerprint, approval_cycle, approved_by_account_id,
+           approved_by_employee_id, approved_by_authority, approved_at, snapshot)
+         values ($1, $2, 3, 1, 'test', $3, $4, 1, $5, $6, 'CURRENT_MANAGER', $7, $8::jsonb)
+         returning id`,
+        [
+          employee.organizationId,
+          periodId,
+          'c'.repeat(64),
+          'd'.repeat(64),
+          manager.accountId,
+          manager.employeeId,
+          NOW,
+          JSON.stringify({ approvedRecord }),
+        ],
+      )
+    ).rows[0]?.id,
+  );
+}
+
+async function csrfToken(app: ReturnType<typeof createApiServer>, cookie: string) {
+  const response = await app.inject({
+    method: 'GET',
+    url: '/v1/me/csrf',
+    headers: { cookie, origin: ORIGIN },
+  });
+  return response.json<{ data: { token: string } }>().data.token;
+}
+
+async function submitCorrection(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  token: string,
+  recordId: string,
+  input: Readonly<{ endsAtLocalTime: string; reason: string; startsAtLocalTime: string }>,
+) {
+  return app.inject({
+    method: 'POST',
+    url: '/v1/me/correction-requests',
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: ORIGIN,
+      'x-workledger-csrf': token,
+    },
+    payload: {
+      interval: {
+        endsAtLocalTime: input.endsAtLocalTime,
+        endsAtUtcOffset: null,
+        startsAtLocalTime: input.startsAtLocalTime,
+        startsAtUtcOffset: null,
+      },
+      reason: input.reason,
+      recordId,
+    },
+  });
+}
+
+async function decideCorrectionApproval(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  token: string,
+  requestId: string,
+) {
+  return app.inject({
+    method: 'POST',
+    url: `/v1/approvals/${requestId}/decision`,
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: ORIGIN,
+      'x-workledger-csrf': token,
+    },
+    payload: {
+      action: 'APPROVE',
+      expectedVersion: 1,
+      negativeBalanceOverride: false,
+      reason: 'The submitted evidence supports this locked-period correction.',
+    },
+  });
 }
 
 async function signIn(

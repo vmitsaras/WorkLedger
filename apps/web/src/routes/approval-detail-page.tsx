@@ -45,7 +45,13 @@ export function ApprovalDetailPage() {
       setReason('');
       setReasonError(undefined);
       setNegativeBalanceOverride(false);
-      setFeedback(decisionSuccessMessage(intent.action, result.status));
+      setFeedback(
+        intent.action === 'APPROVE' &&
+          query.data?.kind === 'CORRECTION' &&
+          query.data.applicationMode === 'POST_LOCK_ADJUSTMENT'
+          ? 'Correction approved. The post-lock adjustment was appended and the approved monthly record remains unchanged.'
+          : decisionSuccessMessage(intent.action, result.status),
+      );
       setFeedbackIsError(false);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['approvals', 'detail', approvalId] }),
@@ -202,7 +208,9 @@ export function ApprovalDetailPage() {
             Apply approved correction
           </h2>
           <p className="m-0">
-            Applying updates the unlocked daily record and records an explainable balance delta.
+            {detail.applicationMode === 'POST_LOCK_ADJUSTMENT'
+              ? 'Applying appends a post-lock adjustment and preserves the immutable approved monthly record.'
+              : 'Applying updates the unlocked daily record and records an explainable balance delta.'}
           </p>
           <button
             className={buttonVariants({ className: 'w-fit' })}
@@ -341,6 +349,12 @@ function ApprovalSummary({ detail }: Readonly<{ detail: ApprovalDetail }>) {
           </div>
           <p className="m-0">
             <strong>Employee reason:</strong> {detail.requestReason}
+          </p>
+          <p className="m-0 rounded-lg border border-[var(--wl-border)] p-3">
+            <strong>Application path:</strong>{' '}
+            {detail.applicationMode === 'POST_LOCK_ADJUSTMENT'
+              ? 'Locked-period adjustment. Approval appends an adjustment immediately; the approved monthly record is preserved.'
+              : 'Ordinary correction. Approval is followed by a separate application step to the unlocked daily record.'}
           </p>
           <section>
             <h3 className="m-0 text-base font-bold">Immutable punch events</h3>
@@ -493,7 +507,7 @@ function actionLabel(action: ApprovalDecisionAction, kind: ApprovalDetail['kind'
   if (action === 'ACKNOWLEDGE') return 'Acknowledge report';
   if (action === 'REQUEST_CHANGES') return 'Request changes';
   if (action === 'REJECT') return 'Reject';
-  return kind === 'CORRECTION' ? 'Approve for later application' : 'Approve';
+  return kind === 'CORRECTION' ? 'Approve correction' : 'Approve';
 }
 
 function statusLabel(status: string): string {
