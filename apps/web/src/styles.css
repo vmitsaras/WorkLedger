@@ -169,6 +169,10 @@
     cursor: pointer;
   }
 
+  .wl-print-only {
+    display: none;
+  }
+
   .wl-today-grid {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
   }
@@ -280,5 +284,67 @@
     .wl-skip-link {
       transition: none;
     }
+  }
+}
+
+@media print {
+  @page {
+    margin: 1.2cm;
+  }
+
+  body,
+  #root {
+    min-width: 0;
+    min-height: 0;
+    background: white;
+    color: black;
+  }
+
+  .wl-app-header,
+  .wl-desktop-navigation,
+  .wl-mobile-navigation,
+  .wl-screen-only,
+  .wl-skip-link {
+    display: none !important;
+  }
+
+  .wl-app-shell,
+  .wl-shell-grid {
+    display: block;
+    min-height: 0;
+  }
+
+  #main-content {
+    padding: 0;
+  }
+
+  #main-content > div {
+    display: block;
+    width: auto;
+    max-width: none;
+  }
+
+  .wl-print-only {
+    display: grid !important;
+    gap: 1.25rem;
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+
+  .wl-print-only section,
+  .wl-print-only table,
+  .wl-print-only tr {
+    break-inside: avoid;
+  }
+
+  .wl-print-only table {
+    table-layout: auto;
+  }
+
+  .wl-print-only th,
+  .wl-print-only td {
+    border: 1px solid black;
+    padding: 0.25rem;
+    vertical-align: top;
   }
 }

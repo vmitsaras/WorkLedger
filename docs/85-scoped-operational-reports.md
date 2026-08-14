@@ -8,8 +8,8 @@
 
 `WL-804` replaces the reports placeholder with an authorized catalog and five purpose-specific
 read models: monthly time, flexible time, leave balances, missing records, and pending approvals.
-The slice is read-only. CSV, print, and clipboard behavior remain owned by `WL-805` and do not
-appear as inactive or misleading controls.
+The original slice is read-only. `WL-805` subsequently added CSV, print, and clipboard behavior on
+top of these purpose-minimized sources; see `docs/86-safe-report-portability.md`.
 
 `GET /v1/reports` returns only report definitions allowed for the current actor plus the
 organization-local current-month default range. `GET /v1/reports/:reportKey` accepts an inclusive
@@ -86,8 +86,7 @@ area. A technical-only account receives neither navigation nor API access.
 
 ## Remaining work
 
-`WL-805` must authorize again at generation time and reuse these purpose-minimized scope semantics
-for CSV and print. It also owns formula neutralization, encoding, safe filenames, bounded streaming,
-explicit clipboard behavior, and export/print accessibility. The existing locked absence-
-cancellation adjustment gap remains outside this reporting slice and must be closed before the
-applicable phase or release gate.
+`WL-805` is complete and reauthorizes CSV, print, and clipboard actions against these minimized
+scope semantics. `WL-806` owns the Phase 8 gate review. The existing locked absence-cancellation
+adjustment gap remains outside this reporting slice and must be closed before the applicable phase
+or release gate.

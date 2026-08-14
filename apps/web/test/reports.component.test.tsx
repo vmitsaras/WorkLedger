@@ -96,6 +96,7 @@ const MONTHLY_REPORT: ReportResult = {
 
 afterEach(() => {
   clearSessionMemory();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -137,7 +138,9 @@ test('renders scoped full-result totals, partial context, and an accessible repo
     'href',
     `/monthly-periods/${PERIOD_ID}`,
   );
-  expect(screen.queryByRole('button', { name: /export|print/iu })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Export CSV' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Copy report summary' })).toBeVisible();
+  expect(screen.getByText(/omits internal identifiers.*sickness classification/iu)).toBeVisible();
   await waitFor(() => expect(reportUrls).toHaveLength(1));
   expect(Object.fromEntries(reportUrls[0]?.searchParams ?? [])).toEqual({
     direction: 'ASC',
@@ -148,6 +151,66 @@ test('renders scoped full-result totals, partial context, and an accessible repo
     to: '2026-08-31',
   });
   await expectNoAxeViolations(container);
+});
+
+test('downloads an authorized CSV and copies only a freshly authorized visible summary', async () => {
+  const { exportBodies, reportUrls } = stubReportFetch();
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+  const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:report-export');
+  const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+  let downloadedFilename: string | undefined;
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+    downloadedFilename = this.download;
+  });
+  renderApplication(
+    '/reports/monthly-time?direction=ASC&from=2026-08-01&limit=20&page=1&sort=EMPLOYEE&to=2026-08-31',
+  );
+
+  await user.click(await screen.findByRole('button', { name: 'Export CSV' }));
+  expect(
+    await screen.findByRole('status', { name: 'Report portability status' }),
+  ).toHaveTextContent('Formula-significant text was prefixed with an apostrophe');
+  expect(exportBodies).toEqual([
+    {
+      direction: 'ASC',
+      from: '2026-08-01',
+      sort: 'EMPLOYEE',
+      to: '2026-08-31',
+    },
+  ]);
+  expect(downloadedFilename).toBe('workledger-monthly-time-2026-08-01-to-2026-08-31.csv');
+  expect(createObjectUrl).toHaveBeenCalledOnce();
+  await waitFor(() => expect(revokeObjectUrl).toHaveBeenCalledWith('blob:report-export'));
+
+  await user.click(screen.getByRole('button', { name: 'Copy report summary' }));
+  expect(
+    await screen.findByRole('status', { name: 'Report portability status' }),
+  ).toHaveTextContent('No table rows or hidden fields were copied');
+  expect(reportUrls).toHaveLength(2);
+  expect(writeText).toHaveBeenCalledOnce();
+  const copied = String(writeText.mock.calls[0]?.[0]);
+  expect(copied).toContain('Monthly time');
+  expect(copied).toContain('Scope: your own records');
+  expect(copied).toContain('Matching rows: 1');
+  expect(copied).toContain('Balance: +0h 30m');
+  expect(copied).not.toContain('Emma Reed');
+  expect(copied).not.toMatch(/monthlyPeriodId|sickness|reason|note/iu);
+});
+
+test('announces an export scope loss without creating a download', async () => {
+  stubReportFetch({ onExport: () => apiErrorResponse('ACCESS_DENIED', 403) });
+  const user = userEvent.setup();
+  const createObjectUrl = vi.spyOn(URL, 'createObjectURL');
+  renderApplication(
+    '/reports/monthly-time?direction=ASC&from=2026-08-01&limit=20&page=1&sort=EMPLOYEE&to=2026-08-31',
+  );
+
+  await user.click(await screen.findByRole('button', { name: 'Export CSV' }));
+  expect(
+    await screen.findByRole('status', { name: 'Report portability status' }),
+  ).toHaveTextContent('Your report scope changed. The CSV was not completed.');
+  expect(createObjectUrl).not.toHaveBeenCalled();
 });
 
 test('validates report dates before changing URL state or rerunning the report', async () => {
@@ -255,15 +318,35 @@ function renderApplication(initialEntry: string) {
 }
 
 function stubReportFetch(
-  options: Readonly<{ onReport?: (url: URL) => Response | Promise<Response> }> = {},
+  options: Readonly<{
+    onExport?: (url: URL, init: RequestInit | undefined) => Response | Promise<Response>;
+    onReport?: (url: URL) => Response | Promise<Response>;
+  }> = {},
 ) {
   const reportUrls: URL[] = [];
+  const exportBodies: unknown[] = [];
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: RequestInfo | URL) => {
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = requestUrl(input);
       if (url.pathname === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (url.pathname === '/v1/me/csrf') {
+        return successResponse({ token: 'c'.repeat(64) });
+      }
       if (url.pathname === '/v1/reports') return successResponse(CATALOG);
+      if (url.pathname === '/v1/reports/monthly-time/export') {
+        exportBodies.push(JSON.parse(String(init?.body)) as unknown);
+        return (
+          options.onExport?.(url, init) ??
+          new Response('employee_name,month\r\nEmma Reed,2026-08-01\r\n', {
+            headers: {
+              'content-disposition':
+                'attachment; filename="workledger-monthly-time-2026-08-01-to-2026-08-31.csv"',
+              'content-type': 'text/csv; charset=utf-8',
+            },
+          })
+        );
+      }
       if (url.pathname === '/v1/reports/monthly-time') {
         reportUrls.push(url);
         return options.onReport?.(url) ?? successResponse(MONTHLY_REPORT);
@@ -275,7 +358,7 @@ function stubReportFetch(
       throw new Error(`Unexpected test request: ${url.pathname}`);
     }),
   );
-  return { reportUrls };
+  return { exportBodies, reportUrls };
 }
 
 function successResponse(data: unknown): Response {

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { flushSync } from 'react-dom';
 import { Link, useParams } from 'react-router';
 
 import type { MonthlyPeriod } from '@workledger/contracts';
@@ -13,6 +14,7 @@ import {
 } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { monthlyPeriodQuery } from '../app/query.js';
+import { MonthlyPeriodPrintView } from '../components/monthly-period-print.js';
 import { PageHeader } from '../components/page-header.js';
 
 export function MonthlyPeriodPage() {
@@ -28,6 +30,9 @@ export function MonthlyPeriodPage() {
   const [reviewReasonError, setReviewReasonError] = useState<string | null>(null);
   const [reviewSuccessMessage, setReviewSuccessMessage] = useState<string | null>(null);
   const [lockConfirmationOpen, setLockConfirmationOpen] = useState(false);
+  const [printPending, setPrintPending] = useState(false);
+  const [printPeriod, setPrintPeriod] = useState<MonthlyPeriod | null>(null);
+  const [printStatus, setPrintStatus] = useState<string | null>(null);
   const submission = useMutation({
     mutationFn: ({
       acknowledgedSourceFingerprint,
@@ -120,6 +125,9 @@ export function MonthlyPeriodPage() {
     setReviewReason('');
     setReviewReasonError(null);
     setLockConfirmationOpen(false);
+    setPrintPeriod(null);
+    setPrintStatus(null);
+    setPrintPending(false);
     setWarningAcknowledged(false);
     resetSubmission();
     resetReview();
@@ -157,90 +165,118 @@ export function MonthlyPeriodPage() {
 
   const period = query.data;
   return (
-    <MonthlyPeriodFrame period={period}>
-      <section
-        aria-labelledby="monthly-status-heading"
-        className="grid gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface)] p-4"
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2
-              id="monthly-status-heading"
-              className="m-0 text-xl font-bold"
-              ref={statusHeadingRef}
-              tabIndex={-1}
-            >
-              {workflowLabel(period.workflow.status)}
-            </h2>
-            <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-              Workflow version {period.workflow.periodVersion.toString()} · snapshot schema{' '}
-              {period.snapshotVersion.schemaVersion.toString()}
-            </p>
-          </div>
-          <span className="rounded-full border border-[var(--wl-border)] px-3 py-1 text-sm font-semibold">
-            {readinessLabel(period)}
-          </span>
-        </div>
-        <p className="m-0">{readinessExplanation(period)}</p>
-        <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          {period.readiness.completeDateCount.toString()} of{' '}
-          {period.readiness.coveredDateCount.toString()} covered employment dates have complete
-          daily calculations. The source fingerprint changes whenever the reviewed source set
-          changes.
-        </p>
-      </section>
-
-      <AttentionSection period={period} />
-      <TotalsSection totals={period.totals} />
-      <DailyRows rows={period.rows} monthStart={period.monthStart} />
-      <SubmissionSection
-        error={submission.error}
-        errorRef={submissionErrorRef}
-        isPending={submission.isPending}
-        onAcknowledgementChange={(checked) => {
-          setWarningAcknowledged(checked);
-          if (submission.isError) submission.reset();
-        }}
-        onSubmit={(event) => {
-          event.preventDefault();
-          submission.mutate({
-            acknowledgedSourceFingerprint: period.snapshotVersion.sourceFingerprint,
-            expectedPeriodVersion: period.workflow.periodVersion,
-            id: period.id,
-          });
-        }}
-        period={period}
-        successMessage={successMessage}
-        warningAcknowledged={warningAcknowledged}
-      />
-      <ReviewerSection
-        error={review.error ?? lock.error}
-        errorRef={reviewErrorRef}
-        isPending={review.isPending || lock.isPending}
-        lockConfirmationOpen={lockConfirmationOpen}
-        onApprove={() => review.mutate({ action: 'APPROVE', period })}
-        onLock={() => lock.mutate(period)}
-        onLockConfirmationChange={setLockConfirmationOpen}
-        onReasonChange={(value) => {
-          setReviewReason(value);
-          if (reviewReasonError !== null) setReviewReasonError(null);
-          if (review.isError) review.reset();
-        }}
-        onRequestChanges={() => {
-          if (reviewReason.trim().length < 10) {
-            setReviewReasonError('Enter a reason of at least 10 characters.');
-            return;
+    <MonthlyPeriodFrame
+      period={period}
+      printAction={{
+        isPending: printPending,
+        onPrint: async () => {
+          setPrintPending(true);
+          setPrintStatus(null);
+          try {
+            const refreshed = await query.refetch({ throwOnError: true });
+            if (refreshed.data === undefined) {
+              throw new Error('Monthly period refresh returned no data.');
+            }
+            flushSync(() => setPrintPeriod(refreshed.data));
+            window.print();
+            setPrintStatus(
+              'Print dialog opened with the refreshed purpose-minimized monthly record.',
+            );
+          } catch (error) {
+            setPrintStatus(printErrorMessage(error));
+          } finally {
+            setPrintPending(false);
           }
-          setReviewReasonError(null);
-          review.mutate({ action: 'REQUEST_CHANGES', period });
-        }}
-        period={period}
-        reason={reviewReason}
-        reasonError={reviewReasonError}
-        successMessage={reviewSuccessMessage}
-      />
-      <ApprovedRecordSection period={period} />
-      <PostLockAdjustmentsSection period={period} />
+        },
+        status: printStatus,
+      }}
+    >
+      <div className="wl-screen-only grid gap-8">
+        <section
+          aria-labelledby="monthly-status-heading"
+          className="grid gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface)] p-4"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2
+                id="monthly-status-heading"
+                className="m-0 text-xl font-bold"
+                ref={statusHeadingRef}
+                tabIndex={-1}
+              >
+                {workflowLabel(period.workflow.status)}
+              </h2>
+              <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+                Workflow version {period.workflow.periodVersion.toString()} · snapshot schema{' '}
+                {period.snapshotVersion.schemaVersion.toString()}
+              </p>
+            </div>
+            <span className="rounded-full border border-[var(--wl-border)] px-3 py-1 text-sm font-semibold">
+              {readinessLabel(period)}
+            </span>
+          </div>
+          <p className="m-0">{readinessExplanation(period)}</p>
+          <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+            {period.readiness.completeDateCount.toString()} of{' '}
+            {period.readiness.coveredDateCount.toString()} covered employment dates have complete
+            daily calculations. The source fingerprint changes whenever the reviewed source set
+            changes.
+          </p>
+        </section>
+
+        <AttentionSection period={period} />
+        <TotalsSection totals={period.totals} />
+        <DailyRows rows={period.rows} monthStart={period.monthStart} />
+        <SubmissionSection
+          error={submission.error}
+          errorRef={submissionErrorRef}
+          isPending={submission.isPending}
+          onAcknowledgementChange={(checked) => {
+            setWarningAcknowledged(checked);
+            if (submission.isError) submission.reset();
+          }}
+          onSubmit={(event) => {
+            event.preventDefault();
+            submission.mutate({
+              acknowledgedSourceFingerprint: period.snapshotVersion.sourceFingerprint,
+              expectedPeriodVersion: period.workflow.periodVersion,
+              id: period.id,
+            });
+          }}
+          period={period}
+          successMessage={successMessage}
+          warningAcknowledged={warningAcknowledged}
+        />
+        <ReviewerSection
+          error={review.error ?? lock.error}
+          errorRef={reviewErrorRef}
+          isPending={review.isPending || lock.isPending}
+          lockConfirmationOpen={lockConfirmationOpen}
+          onApprove={() => review.mutate({ action: 'APPROVE', period })}
+          onLock={() => lock.mutate(period)}
+          onLockConfirmationChange={setLockConfirmationOpen}
+          onReasonChange={(value) => {
+            setReviewReason(value);
+            if (reviewReasonError !== null) setReviewReasonError(null);
+            if (review.isError) review.reset();
+          }}
+          onRequestChanges={() => {
+            if (reviewReason.trim().length < 10) {
+              setReviewReasonError('Enter a reason of at least 10 characters.');
+              return;
+            }
+            setReviewReasonError(null);
+            review.mutate({ action: 'REQUEST_CHANGES', period });
+          }}
+          period={period}
+          reason={reviewReason}
+          reasonError={reviewReasonError}
+          successMessage={reviewSuccessMessage}
+        />
+        <ApprovedRecordSection period={period} />
+        <PostLockAdjustmentsSection period={period} />
+      </div>
+      <MonthlyPeriodPrintView period={printPeriod ?? period} />
     </MonthlyPeriodFrame>
   );
 }
@@ -248,18 +284,59 @@ export function MonthlyPeriodPage() {
 function MonthlyPeriodFrame({
   children,
   period,
-}: Readonly<{ children: ReactNode; period?: MonthlyPeriod }>) {
+  printAction,
+}: Readonly<{
+  children: ReactNode;
+  period?: MonthlyPeriod;
+  printAction?: Readonly<{
+    isPending: boolean;
+    onPrint: () => Promise<void>;
+    status: string | null;
+  }>;
+}>) {
   return (
     <section className="grid max-w-6xl gap-8">
-      <PageHeader
-        eyebrow="Monthly record"
-        title="Monthly period"
-        description={
-          period === undefined
-            ? 'Review monthly calculations, blockers, warnings, and ledger reconciliation.'
-            : `${period.employeeDisplayName} · ${formatLocalDate(period.monthStart)} to ${formatLocalDate(period.monthEnd)} · ${period.timeZone}`
-        }
-      />
+      <div className="wl-screen-only">
+        <PageHeader
+          eyebrow="Monthly record"
+          title="Monthly period"
+          description={
+            period === undefined
+              ? 'Review monthly calculations, blockers, warnings, and ledger reconciliation.'
+              : `${period.employeeDisplayName} · ${formatLocalDate(period.monthStart)} to ${formatLocalDate(period.monthEnd)} · ${period.timeZone}`
+          }
+        >
+          {printAction === undefined ? null : (
+            <div className="grid gap-2">
+              <Button
+                className="w-fit"
+                isDisabled={printAction.isPending}
+                onPress={() => void printAction.onPrint()}
+                variant="secondary"
+              >
+                {printAction.isPending ? 'Preparing print…' : 'Print monthly record'}
+              </Button>
+              <p className="m-0 max-w-2xl text-sm text-[var(--wl-text-muted)]">
+                Printing refreshes current authorization first. The print contains monthly status,
+                totals, daily values, the approved baseline, and post-lock deltas where present; it
+                omits internal identifiers, sickness classification, notes, decision reasons, and
+                reviewer comments.
+              </p>
+              {printAction.status === null ? null : (
+                <p
+                  aria-label="Monthly print status"
+                  aria-atomic="true"
+                  aria-live="polite"
+                  className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]"
+                  role="status"
+                >
+                  {printAction.status}
+                </p>
+              )}
+            </div>
+          )}
+        </PageHeader>
+      </div>
       {children}
     </section>
   );
@@ -878,6 +955,18 @@ function MonthlyError({ error, retry }: Readonly<{ error: unknown; retry: () => 
       <Link to="/my-time">Return to My time</Link>
     </div>
   );
+}
+
+function printErrorMessage(error: unknown): string {
+  if (error instanceof ApiClientError) {
+    if (error.code === 'ACCESS_DENIED') {
+      return 'Your reporting scope changed. The print dialog was not opened.';
+    }
+    if (error.code === 'AUTH_REQUIRED' || error.code === 'AUTH_SESSION_EXPIRED') {
+      return 'Your session ended. The print dialog was not opened.';
+    }
+  }
+  return 'The monthly record could not be refreshed. The print dialog was not opened.';
 }
 
 function workflowLabel(status: MonthlyPeriod['workflow']['status']): string {

@@ -78,7 +78,7 @@ export function createApiServer(
         dependencies.now,
         dependencies.notificationDelivery ?? disabledNotificationDeliveryAdapter,
       );
-      registerReportRoutes(app, authentication, database, dependencies.now);
+      registerReportRoutes(app, config, authentication, database, dependencies.now);
       registerTeamStatusRoutes(app, authentication, database, dependencies.now);
       registerVacationRequestRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {

@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 
 import {
+  csrfBootstrapEnvelopeSchema,
   reportCatalogEnvelopeSchema,
   reportResultEnvelopeSchema,
   type ReportResult,
@@ -234,6 +235,109 @@ integrationTest(
         expect(invalid.json()).toMatchObject({ error: { code: 'VALIDATION_FAILED' } });
         expect(invalid.payload).not.toContain('private');
       }
+
+      const csrfToken = await csrf(app, managerCookie);
+      const missingCsrf = await postExport(app, managerCookie, '', 'flexible-time', {
+        direction: 'ASC',
+        employeeId: emmaId,
+        from: '2026-01-01',
+        sort: 'EMPLOYEE',
+        to: '2026-02-28',
+      });
+      expect(missingCsrf.statusCode).toBe(403);
+      expect(missingCsrf.json()).toMatchObject({ error: { code: 'AUTH_CSRF_INVALID' } });
+
+      await fixture.client.query(`update employees set display_name = $1 where id = $2`, [
+        '=2+2, "Northstar"',
+        emmaId,
+      ]);
+      const exported = await postExport(app, managerCookie, csrfToken, 'flexible-time', {
+        direction: 'ASC',
+        employeeId: emmaId,
+        from: '2026-01-01',
+        sort: 'EMPLOYEE',
+        to: '2026-02-28',
+      });
+      expect(exported.statusCode, exported.payload).toBe(200);
+      expect(exported.headers['cache-control']).toBe('private, no-store');
+      expect(exported.headers['content-type']).toBe('text/csv; charset=utf-8');
+      expect(exported.headers['content-disposition']).toBe(
+        'attachment; filename="workledger-flexible-time-2026-01-01-to-2026-02-28.csv"',
+      );
+      expect(exported.headers['x-content-type-options']).toBe('nosniff');
+      expect(exported.payload).toContain(
+        'employee_name,opening_balance_minutes,range_change_minutes,closing_balance_minutes\r\n',
+      );
+      expect(exported.payload).toContain('"\'=2+2, ""Northstar"""');
+      expect(exported.payload.endsWith('\r\n')).toBe(true);
+      expect(Buffer.from(exported.rawPayload).toString('utf8')).toBe(exported.payload);
+      expect(exported.payload).not.toMatch(
+        /employee_id|source_id|approval_id|monthly_period_id|sickness|reason|note/iu,
+      );
+      expect(exported.headers['content-disposition']).not.toContain('Emma');
+
+      const auditRows = await fixture.client.query<{
+        action_code: string;
+        facts: Readonly<{ sourceCount: number }>;
+        outcome: string;
+        reason_code: string;
+        subject_employee_id: string | null;
+        target_kind: string;
+      }>(
+        `select action_code, facts, outcome, reason_code, subject_employee_id, target_kind
+         from domain_audit_events
+         where action_code = 'REPORT_FLEXIBLE_TIME_EXPORTED'`,
+      );
+      expect(auditRows.rows).toEqual([
+        expect.objectContaining({
+          action_code: 'REPORT_FLEXIBLE_TIME_EXPORTED',
+          facts: { sourceCount: 1 },
+          outcome: 'SUCCESS',
+          reason_code: 'SCOPE_SELF_AND_REPORTS',
+          subject_employee_id: emmaId,
+          target_kind: 'EXPORT',
+        }),
+      ]);
+
+      await fixture.client.query(
+        `update manager_assignments
+         set ends_on = '2026-02-13'
+         where employee_id = $1 and ends_on is null`,
+        [emmaId],
+      );
+      const afterScopeLoss = await postExport(app, managerCookie, csrfToken, 'flexible-time', {
+        direction: 'ASC',
+        employeeId: emmaId,
+        from: '2026-01-01',
+        sort: 'EMPLOYEE',
+        to: '2026-02-28',
+      });
+      expect(afterScopeLoss.statusCode).toBe(403);
+      expect(afterScopeLoss.json()).toMatchObject({ error: { code: 'ACCESS_DENIED' } });
+      const auditCount = await fixture.client.query<{ count: string }>(
+        `select count(*)::text as count
+         from domain_audit_events
+         where action_code = 'REPORT_FLEXIBLE_TIME_EXPORTED'`,
+      );
+      expect(auditCount.rows[0]?.count).toBe('1');
+
+      const extraPaginationField = await postExport(
+        app,
+        hrCookie,
+        await csrf(app, hrCookie),
+        'flexible-time',
+        {
+          direction: 'ASC',
+          from: '2026-01-01',
+          limit: 20,
+          sort: 'EMPLOYEE',
+          to: '2026-02-28',
+        },
+      );
+      expect(extraPaginationField.statusCode).toBe(422);
+      expect(extraPaginationField.json()).toMatchObject({
+        error: { code: 'VALIDATION_FAILED' },
+      });
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -276,6 +380,32 @@ function reportPath(
 
 function get(app: ReturnType<typeof createApiServer>, cookie: string, url: string) {
   return app.inject({ method: 'GET', url, headers: { cookie, origin: ORIGIN } });
+}
+
+function postExport(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  csrfToken: string,
+  key: string,
+  payload: Readonly<Record<string, unknown>>,
+) {
+  return app.inject({
+    method: 'POST',
+    url: `/v1/reports/${key}/export`,
+    headers: {
+      cookie,
+      'content-type': 'application/json',
+      origin: ORIGIN,
+      'x-workledger-csrf': csrfToken,
+    },
+    payload,
+  });
+}
+
+async function csrf(app: ReturnType<typeof createApiServer>, cookie: string): Promise<string> {
+  const response = await get(app, cookie, '/v1/me/csrf');
+  expect(response.statusCode).toBe(200);
+  return csrfBootstrapEnvelopeSchema.parse(response.json()).data.token;
 }
 
 async function signIn(app: ReturnType<typeof createApiServer>, email: string): Promise<string> {

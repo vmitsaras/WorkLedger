@@ -600,6 +600,9 @@ Property-oriented follow-up should generate period transition sequences, daily r
 - After control/leading-whitespace inspection, an employee-entered cell beginning with `=`, `+`, `-`, `@`, tab, carriage return, or line feed is formula-significant.
 - The canonical CSV cell value prefixes one apostrophe before the normalized original text and then applies ordinary CSV quoting. Example: `=2+2` serializes as the cell text `'=2+2`; reopening the export cannot execute it as a formula.
 - Non-formula text is preserved, and the exporter adds no hidden column, macro, link, or metadata.
+- Direct `WL-805` evidence covers the formula/control/whitespace prefix matrix, quote ordering,
+  numeric negative preservation, hostile UTF-8 employee text in PostgreSQL/API integration, exact
+  CRLF output, bounded encoded bytes, and forbidden-column absence.
 
 ### EX-044 — Scoped report
 

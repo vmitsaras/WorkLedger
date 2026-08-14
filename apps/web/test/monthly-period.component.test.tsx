@@ -27,6 +27,7 @@ const EMPLOYEE_CONTEXT: SelfContext = {
 
 afterEach(() => {
   clearSessionMemory();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -58,7 +59,10 @@ test('renders a ready monthly review with captioned totals and keyboard-scrollab
   expect(
     screen.getByText(/source fingerprint changes whenever the reviewed source set changes/u),
   ).toBeVisible();
-  expect(screen.queryByText(/sickness|private reason|entitlement/iu)).not.toBeInTheDocument();
+  expect(screen.getByText(/Printing refreshes current authorization first/u)).toHaveTextContent(
+    'omits internal identifiers, sickness classification, notes, decision reasons, and reviewer comments',
+  );
+  expect(screen.queryByText('Private reason', { exact: true })).not.toBeInTheDocument();
   await expectNoAxeViolations(container);
 });
 
@@ -329,6 +333,97 @@ test('separates the immutable approved baseline from an accessible adjusted view
   expect(screen.getByText(/closing posted balance \+10h 15m/u)).toBeVisible();
   expect(screen.getByLabelText('Monthly calculated totals')).toHaveTextContent('+0h 15m');
   await expectNoAxeViolations(container);
+});
+
+test('reauthorizes before opening a purpose-minimized monthly print view', async () => {
+  const period = {
+    ...adjustedLockedPeriod(),
+    reviewHistory: [
+      {
+        action: 'REQUEST_CHANGES' as const,
+        actorAuthority: 'CURRENT_MANAGER' as const,
+        decidedAt: '2026-08-14T10:20:45Z',
+        reason: 'Private reviewer reason that must not print.',
+        resultingStatus: 'CHANGES_REQUESTED' as const,
+        version: 2,
+      },
+    ],
+  };
+  const refreshedPeriod = { ...period, employeeDisplayName: 'Refreshed Employee' };
+  let monthlyLoads = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestUrl(input).pathname;
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === `/v1/monthly-periods/${PERIOD_ID}`) {
+        monthlyLoads += 1;
+        return successResponse(monthlyLoads === 1 ? period : refreshedPeriod);
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    }),
+  );
+  let printedText = '';
+  const print = vi.spyOn(window, 'print').mockImplementation(() => {
+    printedText = document.querySelector('[data-print-monthly-record]')?.textContent ?? '';
+  });
+  const user = userEvent.setup();
+  const { container } = renderApplication();
+
+  const printButton = await screen.findByRole('button', { name: 'Print monthly record' });
+  expect(screen.getByText(/Printing refreshes current authorization first/u)).toBeVisible();
+  await user.click(printButton);
+
+  await waitFor(() => expect(print).toHaveBeenCalledOnce());
+  expect(monthlyLoads).toBeGreaterThanOrEqual(2);
+  expect(printedText).toContain('Refreshed Employee');
+  expect(screen.getByRole('status', { name: 'Monthly print status' })).toHaveTextContent(
+    'refreshed purpose-minimized monthly record',
+  );
+  const printView = container.querySelector<HTMLElement>('[data-print-monthly-record]');
+  expect(printView).not.toBeNull();
+  expect(printView).toHaveClass('wl-print-only');
+  expect(printView).toHaveTextContent('Monthly record');
+  expect(printView).toHaveTextContent('Approved record');
+  expect(printView).toHaveTextContent('Current adjusted record');
+  expect(printView).not.toHaveTextContent('Private reviewer reason that must not print.');
+  expect(printView).not.toHaveTextContent(period.snapshotVersion.sourceFingerprint);
+  expect(printView).not.toHaveTextContent(FIRST_RECORD_ID);
+  expect(printView).not.toHaveTextContent('60000000-0000-7000-8000-000000000001');
+});
+
+test('keeps the print dialog closed when monthly scope is lost during refresh', async () => {
+  let monthlyLoads = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestUrl(input).pathname;
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === `/v1/monthly-periods/${PERIOD_ID}`) {
+        monthlyLoads += 1;
+        if (monthlyLoads === 1) return successResponse(readyPeriod());
+        return new Response(
+          JSON.stringify({
+            error: { code: 'ACCESS_DENIED', message: 'Access denied.', requestId: REQUEST_ID },
+            meta: { idempotentReplay: false },
+          }),
+          { headers: { 'content-type': 'application/json' }, status: 403 },
+        );
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    }),
+  );
+  const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+  const user = userEvent.setup();
+  renderApplication();
+
+  await user.click(await screen.findByRole('button', { name: 'Print monthly record' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Your current role or reporting scope cannot view this monthly period.',
+  );
+  expect(monthlyLoads).toBe(2);
+  expect(print).not.toHaveBeenCalled();
 });
 
 test('shows a purpose-safe permission denial without retrying or rendering monthly data', async () => {

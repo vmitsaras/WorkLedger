@@ -54,13 +54,11 @@ function gregorianDayNumber(value: string): number {
   );
 }
 
-export const reportQuerySchema = z
+const reportFilterSchema = z
   .strictObject({
     direction: reportDirectionSchema.default('ASC'),
     employeeId: opaqueIdentifierSchema.optional(),
     from: dateSchema,
-    limit: z.coerce.number().int().min(10).max(50).default(20),
-    page: z.coerce.number().int().min(1).max(10_000).default(1),
     sort: reportSortSchema.default('EMPLOYEE'),
     to: dateSchema,
   })
@@ -83,6 +81,13 @@ export const reportQuerySchema = z
       });
     }
   });
+
+export const reportExportRequestSchema = reportFilterSchema;
+
+export const reportQuerySchema = reportFilterSchema.safeExtend({
+  limit: z.coerce.number().int().min(10).max(50).default(20),
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
+});
 
 export const reportCatalogItemSchema = z
   .strictObject({
@@ -283,6 +288,7 @@ export const reportResultEnvelopeSchema = createSuccessEnvelopeSchema(reportResu
 export type ReportCatalog = z.infer<typeof reportCatalogSchema>;
 export type ReportCatalogItem = z.infer<typeof reportCatalogItemSchema>;
 export type ReportDirection = z.infer<typeof reportDirectionSchema>;
+export type ReportExportRequest = z.infer<typeof reportExportRequestSchema>;
 export type ReportKey = z.infer<typeof reportKeySchema>;
 export type ReportQuery = z.infer<typeof reportQuerySchema>;
 export type ReportResult = z.infer<typeof reportResultSchema>;

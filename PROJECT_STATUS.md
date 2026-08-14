@@ -2,15 +2,16 @@
 
 **Current phase:** Phase 8 — Monthly closure and reporting
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 5 of 7 Phase 8 tasks complete
-**Current milestone:** Safe report portability
-**Active task:** `WL-805`
+**Phase progress:** 6 of 7 Phase 8 tasks complete
+**Current milestone:** Phase 8 exit gate
+**Active task:** `WL-806`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Build authorized CSV, printable monthly records, and explicit safe clipboard behavior for `WL-805`.
+Execute the Phase 8 gate review, including the end-to-end close/export/adjust scenario, for
+`WL-806`.
 
 ## Verified decisions
 
@@ -48,6 +49,15 @@ Build authorized CSV, printable monthly records, and explicit safe clipboard beh
 - Report URLs contain only bounded dates, pagination, allow-listed sorting, and an optional opaque
   authorized employee target. Generic report DTOs exclude sickness classification, reasons, notes,
   source/employee identifiers, and entitlement detail outside generic leave-account totals.
+- Report CSV generation is a strict same-origin, CSRF-protected POST that re-evaluates the current
+  report permission and `RECORD_EXPORT` scope inside one repeatable-read transaction. Complete
+  authorized results are bounded to 100,000 rows and 32 MiB of UTF-8; formula-significant text is
+  apostrophe-prefixed before ordinary CSV quoting, filenames are non-person-identifying, and the
+  success audit stores only actor/authority, report action, scope, time, and source count.
+- Monthly print and report-summary clipboard writes occur only after labelled user actions and an
+  action-time authorization refresh. Their dedicated purpose-minimized representations omit
+  internal identifiers, sickness classification, notes, decision reasons, reviewer comments, and
+  hidden content; failure never opens print or claims a successful copy.
 - Monthly request-changes, approval, and lock transitions use `CURRENT_MANAGER` when that current
   scope qualifies, otherwise `ORGANIZATION_HR`; HR-only accounts need no fabricated employee
   identity, system administrators receive no domain fallback, and both paths apply identical state,
@@ -350,6 +360,36 @@ Build authorized CSV, printable monthly records, and explicit safe clipboard beh
   handoff notes, and current project memory.
 
 ## Latest completed task
+
+### `WL-805` — Build safe report portability
+
+- Changed: added a strict authorized CSV export for all five scoped reports with complete-result
+  bounds, exact UTF-8/CRLF/filename behavior, formula neutralization, and minimized audit evidence;
+  added explicit report download and freshly authorized summary-copy controls; and added a
+  dedicated monthly print representation that commits refreshed data before opening the browser
+  dialog.
+- Verified: exact toolchain/workspace/version/config checks, formatting, ESLint and 215-file/1,040-
+  import boundaries, strict TypeScript, reproducible OpenAPI, 24 tooling tests, 276 unit/component
+  tests, 37 PostgreSQL integration tests across 20 files, 17 Chromium scenarios, and the
+  production/workspace build pass. The build retains the existing large-chunk advisory;
+  integration retains the existing `pg` concurrent-query deprecation warning.
+- Accessibility: export, copy, and print use labelled real buttons with pending and outcome text;
+  failures are announced without false success; print preserves headings, descriptions, table
+  captions/headers, textual state, monochrome boundaries, and print-safe layout while application
+  navigation and controls are removed. Refreshed-print timing, scope loss, narrow-screen download,
+  keyboard behavior, and axe are covered.
+- Security/data: Origin, CSRF, active session, report permission, export permission, current direct-
+  manager/HR scope, and explicit target authorization are rechecked at generation time. CSV is
+  bounded to 100,000 rows/32 MiB and excludes hidden identifiers and private absence/reviewer
+  fields; formula-significant text is neutralized. Clipboard copies no rows, and print omits source
+  fingerprints/reviewer history. Successful export audit stores no rows, names, filters, or
+  document content. No dependency, schema, migration, or persisted export was added.
+- Documentation: added `docs/86-safe-report-portability.md`, documented the 413 error, regenerated
+  OpenAPI, mapped EX-043 to direct evidence, and synchronized README, TODO, task board, and status.
+- Remaining risk: `WL-806` must execute the Phase 8 close/export/adjust gate scenario and assess the
+  existing locked absence-cancellation adjustment gap. The existing large web chunk advisory and
+  `pg` deprecation warning also remain.
+- Next task: `WL-806`.
 
 ### `WL-804` — Build scoped operational reports
 
@@ -940,12 +980,12 @@ Build authorized CSV, printable monthly records, and explicit safe clipboard beh
 
 ## Current blockers
 
-No `WL-805` blocker is known. Locked absence-cancellation adjustment ownership remains an explicit
-gap before the applicable phase/release gate. D-502 remains open before the production browser gate.
+No `WL-806` blocker is known. Its gate review must explicitly assess the locked absence-
+cancellation adjustment ownership gap. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-805 — Implement authorized CSV export, printable monthly records, and explicit safe clipboard behavior.`
+`WL-806 — Execute the Phase 8 gate review.`
 
 ## Update rules
 

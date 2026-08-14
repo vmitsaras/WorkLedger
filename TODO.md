@@ -110,7 +110,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-802` Implement eligible-reviewer approval and lock.
 - [x] `WL-803` Implement post-lock adjustment workflow.
 - [x] `WL-804` Build monthly, balance, leave, and missing-record reports.
-- [ ] `WL-805` Build safe CSV, print, and explicit clipboard behavior.
+- [x] `WL-805` Build safe CSV, print, and explicit clipboard behavior.
 - [ ] `WL-806` Pass the Phase 8 exit gate.
 
 ## Phase 9 — Administration

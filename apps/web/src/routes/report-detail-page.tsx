@@ -20,6 +20,7 @@ import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/da
 import { reportResultQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
+import { ReportPortabilityActions } from '../components/report-portability-actions.js';
 
 export type ReportRouteLoaderData = Readonly<{
   catalog: ReportCatalog;
@@ -133,6 +134,12 @@ export function ReportDetailPage() {
           isFetching={query.isFetching}
           onPage={(page) => setSearchParams(toSearchParams({ ...loaderData.query, page }))}
           query={loaderData.query}
+          refresh={async () => {
+            const refreshed = await query.refetch({ throwOnError: true });
+            if (refreshed.data === undefined) throw new Error('Report refresh returned no data.');
+            return refreshed.data;
+          }}
+          report={loaderData.report}
         />
       )}
     </section>
@@ -264,11 +271,15 @@ function ReportResults({
   isFetching,
   onPage,
   query,
+  refresh,
+  report,
 }: Readonly<{
   data: ReportResult;
   isFetching: boolean;
   onPage: (page: number) => void;
   query: ReportQuery;
+  refresh: () => Promise<ReportResult>;
+  report: ReportCatalogItem;
 }>) {
   return (
     <section className="grid gap-5" aria-labelledby="report-results-heading">
@@ -308,9 +319,7 @@ function ReportResults({
         <ReportTable data={data} query={query} />
       )}
       <ReportPagination data={data} onPage={onPage} />
-      <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-        This report is view-only. Export and print controls are handled separately.
-      </p>
+      <ReportPortabilityActions data={data} query={query} refresh={refresh} report={report} />
     </section>
   );
 }

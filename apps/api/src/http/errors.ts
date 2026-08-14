@@ -55,6 +55,8 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'Too many requests. Try again later.';
     case 'REQUEST_TOO_LARGE':
       return 'The request is too large.';
+    case 'REPORT_EXPORT_TOO_LARGE':
+      return 'The report contains too many rows to export. Narrow the date range or employee scope.';
     case 'ROUTE_NOT_FOUND':
       return 'The requested endpoint was not found.';
     case 'UNSUPPORTED_MEDIA_TYPE':

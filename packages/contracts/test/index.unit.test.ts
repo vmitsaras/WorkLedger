@@ -20,6 +20,7 @@ import {
   monthlyPeriodLockRequestSchema,
   monthlyPeriodReviewRequestSchema,
   monthlyPeriodSubmissionRequestSchema,
+  reportExportRequestSchema,
   reportQuerySchema,
   reportResultEnvelopeSchema,
   selfProfileEnvelopeSchema,
@@ -48,6 +49,30 @@ test('bounds report URLs to strict, inclusive calendar ranges', () => {
   expect(() =>
     reportQuerySchema.parse({ from: '2026-08-01', person: 'private', to: '2026-08-02' }),
   ).toThrow();
+});
+
+test('keeps report export filters strict and independent from pagination', () => {
+  expect(
+    reportExportRequestSchema.parse({
+      direction: 'DESC',
+      from: '2026-08-01',
+      sort: 'VALUE',
+      to: '2026-08-31',
+    }),
+  ).toEqual({
+    direction: 'DESC',
+    from: '2026-08-01',
+    sort: 'VALUE',
+    to: '2026-08-31',
+  });
+  expect(() =>
+    reportExportRequestSchema.parse({
+      from: '2026-08-01',
+      limit: 20,
+      to: '2026-08-31',
+    }),
+  ).toThrow();
+  expect(() => reportExportRequestSchema.parse({ from: '2026-08-31', to: '2026-08-01' })).toThrow();
 });
 
 test('keeps report rows strict and free of private workflow or employee identifiers', () => {

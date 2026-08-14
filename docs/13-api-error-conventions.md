@@ -72,6 +72,7 @@ Rules:
 | Domain conflict | `ATTENDANCE_ALREADY_WORKING` | 409 |
 | Concurrency conflict | `RECORD_VERSION_CONFLICT` | 409 |
 | Idempotency conflict | `IDEMPOTENCY_KEY_CONFLICT` | 409 |
+| Bounded export | `REPORT_EXPORT_TOO_LARGE` | 413 |
 | Rate limit | `RATE_LIMITED` | 429 |
 | Dependency unavailable | `DATABASE_UNAVAILABLE` | 503 |
 | Internal | `INTERNAL_ERROR` | 500 |
@@ -183,6 +184,15 @@ For the MVP, a request explicitly naming an unauthorized employee or resource re
 - `PERIOD_LOCKED`
 - `PERIOD_ADJUSTMENT_REQUIRED`
 - `PERIOD_VERSION_CONFLICT`
+
+### Reporting and export
+
+- `REPORT_EXPORT_TOO_LARGE`
+
+`REPORT_EXPORT_TOO_LARGE` is a safe `413` response for an authorized report whose complete CSV
+would exceed the configured row or encoded-byte bound. It exposes no row count, employee identity,
+filter value, or generated content. The user may narrow the date range or select one employee they
+are currently authorized to report on.
 
 ## 6. Warning and blocker codes
 

@@ -54,6 +54,7 @@ import {
   type MonthlyPeriodSubmissionRequest,
   type NotificationQuery,
   type ReportCatalog,
+  type ReportExportRequest,
   type ReportKey,
   type ReportQuery,
   type ReportResult,
@@ -226,6 +227,53 @@ export async function loadReport(
   const parsed = reportResultEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
+}
+
+export type ReportCsvDownload = Readonly<{
+  blob: Blob;
+  filename: string;
+}>;
+
+export async function exportReportCsv(
+  reportKey: ReportKey,
+  query: ReportExportRequest,
+): Promise<ReportCsvDownload> {
+  const token = await getCsrfToken();
+  let response: Response;
+  try {
+    response = await fetch(`/v1/reports/${encodeURIComponent(reportKey)}/export`, {
+      body: JSON.stringify(query),
+      credentials: 'same-origin',
+      headers: {
+        accept: 'text/csv',
+        'content-type': 'application/json',
+        'x-workledger-csrf': token,
+      },
+      method: 'POST',
+    });
+  } catch {
+    throw new ApiClientError('DEPENDENCY_FAILURE', 0);
+  }
+  if (!response.ok) {
+    const body = await safeJson(response);
+    const parsedError = apiErrorEnvelopeSchema.safeParse(body);
+    throw new ApiClientError(
+      parsedError.success ? parsedError.data.error.code : 'DEPENDENCY_FAILURE',
+      response.status,
+      parsedError.success ? parsedError.data.error.requestId : undefined,
+      parsedError.success ? parsedError.data.error.context : undefined,
+      parsedError.success ? parsedError.data.meta?.idempotentReplay : undefined,
+      parsedError.success ? parsedError.data.error.fields : undefined,
+    );
+  }
+  const expectedFilename = reportExportFilename(reportKey, query.from, query.to);
+  if (
+    response.headers.get('content-type')?.toLocaleLowerCase() !== 'text/csv; charset=utf-8' ||
+    response.headers.get('content-disposition') !== `attachment; filename="${expectedFilename}"`
+  ) {
+    throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  }
+  return Object.freeze({ blob: await response.blob(), filename: expectedFilename });
 }
 
 export async function submitMonthlyPeriod(
@@ -655,4 +703,8 @@ function isErrorCodeRecord(value: unknown): value is Readonly<{ code: string }> 
   return (
     typeof value === 'object' && value !== null && 'code' in value && typeof value.code === 'string'
   );
+}
+
+function reportExportFilename(reportKey: ReportKey, from: string, to: string): string {
+  return `workledger-${reportKey}-${from}-to-${to}.csv`;
 }

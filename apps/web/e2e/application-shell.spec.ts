@@ -344,8 +344,12 @@ test('opens an authorized report, applies URL filters, and contains its table at
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const reportQueries: URLSearchParams[] = [];
+  const exportBodies: unknown[] = [];
   await page.route('**/v1/me/context', async (route) => {
     await route.fulfill({ json: success(MANAGER_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'r'.repeat(43) }), status: 200 });
   });
   await page.route('**/v1/reports', async (route) => {
     await route.fulfill({
@@ -362,6 +366,22 @@ test('opens an authorized report, applies URL filters, and contains its table at
         ],
         timeZone: 'Europe/Berlin',
       }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/reports/flexible-time/export', async (route) => {
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().headers()['x-workledger-csrf']).toBe('r'.repeat(43));
+    exportBodies.push(route.request().postDataJSON());
+    await route.fulfill({
+      body:
+        'employee_name,opening_balance_minutes,range_change_minutes,closing_balance_minutes\r\n' +
+        "'=2+2,600,30,630\r\n",
+      headers: {
+        'content-disposition':
+          'attachment; filename="workledger-flexible-time-2026-08-10-to-2026-08-20.csv"',
+        'content-type': 'text/csv; charset=utf-8',
+      },
       status: 200,
     });
   });
@@ -431,6 +451,24 @@ test('opens an authorized report, applies URL filters, and contains its table at
     to: '2026-08-20',
   });
 
+  const downloadEvent = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export CSV' }).click();
+  const download = await downloadEvent;
+  expect(download.suggestedFilename()).toBe(
+    'workledger-flexible-time-2026-08-10-to-2026-08-20.csv',
+  );
+  expect(exportBodies).toEqual([
+    {
+      direction: 'DESC',
+      from: '2026-08-10',
+      sort: 'EMPLOYEE',
+      to: '2026-08-20',
+    },
+  ]);
+  await expect(page.getByRole('status', { name: 'Report portability status' })).toContainText(
+    'Formula-significant text was prefixed with an apostrophe',
+  );
+
   const region = page.getByRole('region', { name: 'Flexible time report table' });
   await region.focus();
   await expect(region).toBeFocused();
@@ -438,7 +476,10 @@ test('opens an authorized report, applies URL filters, and contains its table at
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  await expect(page.getByText(/sickness|medical|request reason/iu)).toHaveCount(0);
+  await expect(
+    page.getByText(/It omits internal identifiers, absence subtype, sickness classification/iu),
+  ).toBeVisible();
+  await expect(page.getByText(/diagnosis|medical details|private request reason/iu)).toHaveCount(0);
   await expectPageToHaveNoAxeViolations(page);
 });
 

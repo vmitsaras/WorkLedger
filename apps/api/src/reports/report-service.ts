@@ -2,6 +2,7 @@ import {
   reportRecordIssueCodeSchema,
   type ReportCatalog,
   type ReportCatalogItem,
+  type ReportExportRequest,
   type ReportKey,
   type ReportQuery,
   type ReportResult,
@@ -26,6 +27,12 @@ import type {
 
 import { employeeCollectionScope } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import {
+  createReportCsv,
+  REPORT_EXPORT_MAX_ROWS,
+  reportCsvFitsBounds,
+  type ReportCsvDocument,
+} from './csv.js';
 
 const MAX_REPORT_EMPLOYEES = 500;
 
@@ -111,13 +118,7 @@ export function createReportService(database: WorkLedgerDatabase) {
       return database.transaction(
         async (transaction) => {
           const state = await reportContext(transaction, identity, at);
-          const definition = REPORT_CATALOG.find((candidate) => candidate.key === key);
-          if (definition === undefined) {
-            throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
-          }
-          if (!definition.availableSorts.includes(query.sort)) {
-            throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
-          }
+          requireReportDefinition(key, query.sort);
           const action = key === 'pending-approvals' ? 'REPORT_PENDING_RUN' : 'REPORT_TIME_RUN';
           const scope = employeeCollectionScope(action, state.actor);
           if (scope === null) throw denied();
@@ -145,6 +146,67 @@ export function createReportService(database: WorkLedgerDatabase) {
         { isolationLevel: 'repeatable read' },
       );
     },
+
+    async exportCsv(
+      identity: ReportIdentity,
+      key: ReportKey,
+      query: ReportExportRequest,
+      at: Instant,
+      requestId: DomainId<'Request'>,
+    ): Promise<ReportCsvDocument> {
+      return database.transaction(
+        async (transaction) => {
+          const state = await reportContext(transaction, identity, at);
+          requireReportDefinition(key, query.sort);
+          const action = key === 'pending-approvals' ? 'REPORT_PENDING_RUN' : 'REPORT_TIME_RUN';
+          const scope = employeeCollectionScope(action, state.actor);
+          if (scope === null || employeeCollectionScope('RECORD_EXPORT', state.actor) === null) {
+            throw denied();
+          }
+          const exportQuery = Object.freeze({
+            ...query,
+            limit: REPORT_EXPORT_MAX_ROWS + 1,
+            page: 1,
+          });
+          const page =
+            key === 'pending-approvals'
+              ? await pendingApprovalReport(transaction, state, scope, exportQuery)
+              : await employeeReport(transaction, state, scope, key, exportQuery);
+          if (page.total > REPORT_EXPORT_MAX_ROWS || page.rows.length > REPORT_EXPORT_MAX_ROWS) {
+            throw exportTooLarge();
+          }
+          const document = createReportCsv(
+            key,
+            Object.freeze({ from: query.from, to: query.to }),
+            page.rows,
+          );
+          if (!reportCsvFitsBounds(document, page.total)) {
+            throw exportTooLarge();
+          }
+          await transaction.audit.appendDomain({
+            actionCode: `REPORT_${key.replaceAll('-', '_').toUpperCase()}_EXPORTED`,
+            actor: {
+              accountId: state.context.accountId,
+              kind: 'ACCOUNT',
+              role: exportAuditRole(scope),
+            },
+            facts: { sourceCount: document.rowCount },
+            occurredAt: at,
+            organizationId: state.context.organization.id,
+            outcome: 'SUCCESS',
+            privileged: scope === 'ORGANIZATION',
+            reasonCode: `SCOPE_${scope}`,
+            requestId,
+            restrictedReasonId: null,
+            subjectEmployeeId: page.targetEmployeeId,
+            targetId: requestId,
+            targetKind: 'EXPORT',
+          });
+          return document;
+        },
+        { isolationLevel: 'repeatable read' },
+      );
+    },
   });
 }
 
@@ -162,11 +224,16 @@ async function employeeReport(
   scope: EmployeeAuthorizationScope,
   key: Exclude<ReportKey, 'pending-approvals'>,
   query: ReportQuery,
-): Promise<Pick<ReportResult, 'rows' | 'summary'> & { total: number }> {
-  const authorizedEmployeeIds = restrictToTargetEmployee(
-    await reportEmployeeIds(transaction, state, scope),
-    query.employeeId,
-  );
+): Promise<
+  Pick<ReportResult, 'rows' | 'summary'> & {
+    targetEmployeeId: DomainId<'Employee'> | null;
+    total: number;
+  }
+> {
+  const employeeIds = await reportEmployeeIds(transaction, state, scope);
+  const targetEmployeeId = targetEmployee(employeeIds, query.employeeId);
+  const authorizedEmployeeIds =
+    targetEmployeeId === null ? employeeIds : Object.freeze([targetEmployeeId]);
   const input = Object.freeze({
     authorizedEmployeeIds,
     direction: query.direction,
@@ -196,6 +263,7 @@ async function employeeReport(
         }),
       ),
       summary: Object.freeze({ kind: 'MONTHLY_TIME' as const, ...result.summary }),
+      targetEmployeeId,
       total: result.total,
     });
   }
@@ -212,6 +280,7 @@ async function employeeReport(
         }),
       ),
       summary: Object.freeze({ kind: 'FLEXIBLE_TIME' as const, ...result.summary }),
+      targetEmployeeId,
       total: result.total,
     });
   }
@@ -231,6 +300,7 @@ async function employeeReport(
         }),
       ),
       summary: Object.freeze({ kind: 'LEAVE' as const, ...result.summary }),
+      targetEmployeeId,
       total: result.total,
     });
   }
@@ -248,6 +318,7 @@ async function employeeReport(
       }),
     ),
     summary: Object.freeze({ kind: 'MISSING_RECORD' as const, recordCount: result.total }),
+    targetEmployeeId,
     total: result.total,
   });
 }
@@ -257,16 +328,21 @@ async function pendingApprovalReport(
   state: Awaited<ReturnType<typeof reportContext>>,
   scope: EmployeeAuthorizationScope,
   query: ReportQuery,
-): Promise<Pick<ReportResult, 'rows' | 'summary'> & { total: number }> {
-  const employeeId = targetEmployee(
+): Promise<
+  Pick<ReportResult, 'rows' | 'summary'> & {
+    targetEmployeeId: DomainId<'Employee'> | null;
+    total: number;
+  }
+> {
+  const targetEmployeeId = targetEmployee(
     await reportEmployeeIds(transaction, state, scope),
     query.employeeId,
   );
-  if (employeeId !== null && employeeId === state.actor.employeeId) throw denied();
+  if (targetEmployeeId !== null && targetEmployeeId === state.actor.employeeId) throw denied();
   const result = await transaction.approvalInbox.list({
     actorEmployeeId: state.actor.employeeId,
     direction: query.direction,
-    employeeId,
+    employeeId: targetEmployeeId,
     from: parseReportDate(query.from),
     limit: query.limit,
     localDate: state.localDate,
@@ -293,6 +369,7 @@ async function pendingApprovalReport(
       }),
     ),
     summary: Object.freeze({ itemCount: result.total, kind: 'PENDING_APPROVAL' as const }),
+    targetEmployeeId,
     total: result.total,
   });
 }
@@ -327,14 +404,6 @@ function targetEmployee(
   }
   if (!authorizedEmployeeIds.includes(parsed.value)) throw denied();
   return parsed.value;
-}
-
-function restrictToTargetEmployee(
-  authorizedEmployeeIds: readonly DomainId<'Employee'>[],
-  employeeIdValue: string | undefined,
-): readonly DomainId<'Employee'>[] {
-  const target = targetEmployee(authorizedEmployeeIds, employeeIdValue);
-  return target === null ? authorizedEmployeeIds : Object.freeze([target]);
 }
 
 async function reportContext(
@@ -381,4 +450,29 @@ function parseReportDate(value: string): LocalDate {
 
 function denied() {
   return new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
+}
+
+function requireReportDefinition(key: ReportKey, sort: ReportQuery['sort']): ReportCatalogItem {
+  const definition = REPORT_CATALOG.find((candidate) => candidate.key === key);
+  if (definition === undefined) {
+    throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
+  }
+  if (!definition.availableSorts.includes(sort)) {
+    throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
+  }
+  return definition;
+}
+
+function exportTooLarge(): WorkLedgerApiError {
+  return new WorkLedgerApiError({
+    code: 'REPORT_EXPORT_TOO_LARGE',
+    context: { maxRows: REPORT_EXPORT_MAX_ROWS },
+    statusCode: 413,
+  });
+}
+
+function exportAuditRole(scope: EmployeeAuthorizationScope) {
+  if (scope === 'ORGANIZATION') return 'HR_ADMINISTRATOR' as const;
+  if (scope === 'REPORTS' || scope === 'SELF_AND_REPORTS') return 'MANAGER' as const;
+  return 'EMPLOYEE' as const;
 }
