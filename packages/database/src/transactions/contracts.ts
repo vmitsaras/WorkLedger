@@ -12,6 +12,7 @@ import type {
   LeaveEntitlementRepository,
   OrganizationRepository,
   NotificationRepository,
+  MonthlyPeriodRepository,
   TimeAccountRepository,
   TeamStatusRepository,
   TodayAttendanceRepository,
@@ -43,6 +44,7 @@ export interface WorkLedgerTransaction {
   readonly leaveEntitlements: LeaveEntitlementRepository;
   readonly organizations: OrganizationRepository;
   readonly notifications: NotificationRepository;
+  readonly monthlyPeriods: MonthlyPeriodRepository;
   readonly timeAccount: TimeAccountRepository;
   readonly teamStatus: TeamStatusRepository;
   readonly todayAttendance: TodayAttendanceRepository;

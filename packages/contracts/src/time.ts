@@ -92,6 +92,7 @@ export const dailyTimeRecordSchema = z.strictObject({
 
 export const myTimePeriodSchema = z.strictObject({
   endDate: dateSchema,
+  monthlyPeriodId: opaqueIdentifierSchema.nullable(),
   startDate: dateSchema,
   view: z.enum(MY_TIME_VIEWS),
 });

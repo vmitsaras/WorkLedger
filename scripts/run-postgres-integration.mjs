@@ -32,6 +32,7 @@ const args = pnpmScript
       'apps/api/test/authorization.integration.test.ts',
       'apps/api/test/audit.integration.test.ts',
       'apps/api/test/today-attendance.integration.test.ts',
+      'apps/api/test/monthly-period.integration.test.ts',
     ]
   : [
       'exec',
@@ -48,6 +49,7 @@ const args = pnpmScript
       'apps/api/test/authorization.integration.test.ts',
       'apps/api/test/audit.integration.test.ts',
       'apps/api/test/today-attendance.integration.test.ts',
+      'apps/api/test/monthly-period.integration.test.ts',
     ];
 
 const child = spawn(command, args, {

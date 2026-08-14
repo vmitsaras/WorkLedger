@@ -16,6 +16,7 @@ import {
   resumeAttendanceEnvelopeSchema,
   notificationHistoryEnvelopeSchema,
   notificationQuerySchema,
+  monthlyPeriodEnvelopeSchema,
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
   teamCalendarEnvelopeSchema,
@@ -25,6 +26,86 @@ import {
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
+
+test('keeps monthly review data strict, bounded, and free of protected absence fields', () => {
+  const response = {
+    data: {
+      attention: {
+        blockers: [],
+        warnings: [
+          {
+            code: 'WORK_ON_HOLIDAY',
+            localDate: '2026-07-31',
+            recordId: randomUUID(),
+          },
+        ],
+      },
+      employeeDisplayName: 'Employee Example',
+      id: randomUUID(),
+      monthEnd: '2026-07-31',
+      monthStart: '2026-07-01',
+      readiness: {
+        completeDateCount: 1,
+        coveredDateCount: 1,
+        monthEnded: true,
+        status: 'READY_FOR_SUBMISSION',
+      },
+      rows: [
+        {
+          absenceCreditMinutes: 0,
+          adjustmentMinutes: 0,
+          balanceMinutes: 30,
+          breakMinutes: 30,
+          creditedMinutes: 510,
+          expectedMinutes: 480,
+          localDate: '2026-07-31',
+          recordId: randomUUID(),
+          status: 'COMPLETE',
+          workedMinutes: 510,
+        },
+      ],
+      snapshotVersion: { schemaVersion: 1, sourceFingerprint: 'a'.repeat(64) },
+      timeZone: 'Europe/Berlin',
+      totals: {
+        absenceCreditMinutes: 0,
+        adjustmentMinutes: 0,
+        balanceMinutes: 30,
+        breakMinutes: 30,
+        creditedMinutes: 510,
+        expectedMinutes: 480,
+        ledgerClosingBalanceMinutes: 630,
+        ledgerOpeningBalanceMinutes: 600,
+        ledgerPeriodDeltaMinutes: 30,
+        workedMinutes: 510,
+      },
+      workflow: {
+        approvedAt: null,
+        lockedAt: null,
+        periodVersion: 1,
+        status: 'OPEN',
+        submittedAt: null,
+      },
+    },
+    meta: { requestId: randomUUID() },
+  };
+
+  expect(monthlyPeriodEnvelopeSchema.parse(response)).toEqual(response);
+  for (const protectedField of [
+    'absenceType',
+    'sicknessClassification',
+    'requestReason',
+    'reviewerReason',
+    'entitlementMinutes',
+    'sourceReferences',
+  ]) {
+    expect(() =>
+      monthlyPeriodEnvelopeSchema.parse({
+        ...response,
+        data: { ...response.data, [protectedField]: 'private' },
+      }),
+    ).toThrow();
+  }
+});
 
 test('keeps notification history generic, strict, and pagination-bounded', () => {
   const response = {

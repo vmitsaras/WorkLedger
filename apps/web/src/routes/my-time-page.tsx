@@ -113,6 +113,16 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
               {summary.recordedDayCount} recorded day{summary.recordedDayCount === 1 ? '' : 's'};{' '}
               {summary.incompleteRecordCount} incomplete.
             </p>
+            {period.view === 'MONTH' && period.monthlyPeriodId !== null ? (
+              <p className="m-0 mt-3">
+                <Link
+                  className="wl-button-secondary inline-flex"
+                  to={`/monthly-periods/${encodeURIComponent(period.monthlyPeriodId)}`}
+                >
+                  Review monthly period
+                </Link>
+              </p>
+            ) : null}
           </div>
           <div className="overflow-x-auto rounded-xl border border-[var(--wl-border)]">
             <table className="w-full border-collapse text-left">

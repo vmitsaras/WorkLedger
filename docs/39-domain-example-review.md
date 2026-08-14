@@ -46,7 +46,8 @@ fixture has no Phase 2 implementation surface and must be tested at the named la
 | EX-032, EX-060, EX-065, EX-069–EX-070 | Direct | Absence overlap, odd partition, work-credit cap, exact minute intersection, and warning code |
 | EX-061–EX-064, EX-066–EX-068, EX-071–EX-075 | Deferred | Absence workflow/cancellation/local-boundary/authorization/privacy policy: `WL-600`–`WL-607` |
 | EX-033–EX-037 | Deferred | Correction workflow, submitted/locked interpretation and persistence: `WL-503`–`WL-505`, `WL-800`–`WL-803` |
-| EX-038–EX-042, EX-076–EX-085 | Deferred | Monthly readiness, submission, authorization, snapshot and adjustment workflow: `WL-800`–`WL-803` |
+| EX-038–EX-039 | Partial | `WL-800` directly covers ready/incomplete monthly projection, totals, posting reconciliation, blockers, and current read scope; submission/no-effect conflict transitions remain `WL-801`. |
+| EX-040–EX-042, EX-076–EX-085 | Deferred | Monthly submission/decision authorization, immutable approval snapshots, locking, source races, and adjustment workflow: `WL-801`–`WL-803` |
 | EX-043–EX-045 | Deferred | CSV export, scoped reporting and deactivation: `WL-804`–`WL-805`, `WL-900` |
 
 ## Invariant review

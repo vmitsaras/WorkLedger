@@ -19,6 +19,7 @@ import { registerOpenApiRoute } from './http/openapi.js';
 import { registerApprovalInboxRoutes } from './approvals/routes.js';
 import { registerTeamStatusRoutes } from './team/routes.js';
 import { registerNotificationRoutes } from './notifications/routes.js';
+import { registerMonthlyPeriodRoutes } from './monthly/routes.js';
 import {
   disabledNotificationDeliveryAdapter,
   type NotificationDeliveryAdapter,
@@ -68,6 +69,7 @@ export function createApiServer(
         dependencies.notificationDelivery ?? disabledNotificationDeliveryAdapter,
       );
       registerNotificationRoutes(app, config, authentication, database, dependencies.now);
+      registerMonthlyPeriodRoutes(app, authentication, database, dependencies.now);
       registerTeamStatusRoutes(app, authentication, database, dependencies.now);
       registerVacationRequestRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {

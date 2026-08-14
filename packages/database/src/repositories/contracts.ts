@@ -14,6 +14,8 @@ import type {
   PunchEventType,
   ScheduleAssignment,
   TimeAccountLedgerEntry,
+  MonthlyPeriodStatus,
+  CalculationBlockerCode,
 } from '@workledger/domain';
 
 export type EmployeeStatus = 'ACTIVE' | 'INACTIVE';
@@ -384,6 +386,42 @@ export type DailyProjectionRecord = Readonly<{
   sourceReferences: Readonly<Record<string, unknown>>;
   warningCodes: readonly string[];
   workedMinutes: number;
+}>;
+
+export type MonthlyPeriodRecord = Readonly<{
+  approvedAt: Instant | null;
+  employeeDisplayName: string;
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'MonthlyPeriod'>;
+  lockedAt: Instant | null;
+  monthStart: LocalDate;
+  organizationId: DomainId<'Organization'>;
+  status: MonthlyPeriodStatus;
+  submittedAt: Instant | null;
+  version: number;
+}>;
+
+export type MonthlyPeriodRangeRecord = Readonly<{
+  endsOn: LocalDate | null;
+  id: string;
+  startsOn: LocalDate;
+}>;
+
+export type MonthlyPeriodBlockerSourceRecord = Readonly<{
+  code: Extract<CalculationBlockerCode, 'ABSENCE_APPROVAL_PENDING' | 'CORRECTION_UNRESOLVED'>;
+  localDate: LocalDate;
+  sourceId: string;
+  sourceVersion: number;
+}>;
+
+export type MonthlyPeriodProjectionSourceRecord = Readonly<{
+  dailyProjections: readonly DailyProjectionRecord[];
+  employmentPeriods: readonly MonthlyPeriodRangeRecord[];
+  ledgerEntries: readonly TimeAccountLedgerEntry[];
+  period: MonthlyPeriodRecord;
+  policyAssignments: readonly MonthlyPeriodRangeRecord[];
+  scheduleAssignments: readonly MonthlyPeriodRangeRecord[];
+  sourceBlockers: readonly MonthlyPeriodBlockerSourceRecord[];
 }>;
 
 export type ReplaceDailyProjectionInput = Omit<DailyProjectionRecord, 'id'>;
@@ -876,6 +914,18 @@ export interface DailyProjectionRepository {
     endDate: LocalDate,
   ): Promise<readonly DailyProjectionRecord[]>;
   replaceNext(input: ReplaceDailyProjectionInput): Promise<DailyProjectionRecord | null>;
+}
+
+export interface MonthlyPeriodRepository {
+  findByEmployeeMonth(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    monthStart: LocalDate,
+  ): Promise<MonthlyPeriodRecord | null>;
+  loadProjectionSource(
+    organizationId: DomainId<'Organization'>,
+    periodId: DomainId<'MonthlyPeriod'>,
+  ): Promise<MonthlyPeriodProjectionSourceRecord | null>;
 }
 
 export interface CorrectionRequestRepository {

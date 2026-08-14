@@ -16,6 +16,24 @@ export {
   type DailyCalculationSignalsInput,
 } from './calculation-signals.js';
 export {
+  calculateMonthlyPeriodProjection,
+  monthlyDailyStatuses,
+  monthlyPeriodStatuses,
+  monthlyReadinessStatuses,
+  monthlySnapshotSchemaVersion,
+  type MonthlyDailyStatus,
+  type MonthlyPeriodAttention,
+  type MonthlyPeriodDailyInput,
+  type MonthlyPeriodDailyRow,
+  type MonthlyPeriodProjection,
+  type MonthlyPeriodProjectionError,
+  type MonthlyPeriodProjectionInput,
+  type MonthlyPeriodSourceBlocker,
+  type MonthlyPeriodStatus,
+  type MonthlyPeriodTotals,
+  type MonthlyReadinessStatus,
+} from './monthly-period.js';
+export {
   calculateCurrentDayAttendance,
   type CurrentDayAttendance,
   type CurrentDayAttendanceEstimate,

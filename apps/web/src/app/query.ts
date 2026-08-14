@@ -16,6 +16,7 @@ import {
   loadMyTime,
   loadPersonalCalendar,
   loadManagerCorrectionQueue,
+  loadMonthlyPeriod,
   loadSelfContext,
   loadSelfProfile,
   loadTodayAttendance,
@@ -82,6 +83,12 @@ export const dailyTimeRecordQuery = (recordId: string) =>
   queryOptions({
     queryFn: ({ signal }) => loadDailyTimeRecord(recordId, signal),
     queryKey: ['self', 'time-record', recordId] as const,
+  });
+
+export const monthlyPeriodQuery = (periodId: string) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadMonthlyPeriod(periodId, signal),
+    queryKey: ['monthly-periods', 'detail', periodId] as const,
   });
 
 export const managerCorrectionQueueQuery = () =>

@@ -24,6 +24,7 @@ import {
   todayAttendanceEnvelopeSchema,
   myTimeEnvelopeSchema,
   notificationHistoryEnvelopeSchema,
+  monthlyPeriodEnvelopeSchema,
   dismissedNotificationEnvelopeSchema,
   personalCalendarEnvelopeSchema,
   type ApiErrorCode,
@@ -45,6 +46,7 @@ import {
   type PersonalCalendar,
   type PersonalCalendarQuery,
   type NotificationHistory,
+  type MonthlyPeriod,
   type NotificationQuery,
   type DismissedNotification,
   type SubmitCorrectionRequest,
@@ -170,6 +172,19 @@ export async function loadDailyTimeRecord(
     signal === undefined ? {} : { signal },
   );
   const parsed = dailyTimeRecordEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadMonthlyPeriod(
+  periodId: string,
+  signal?: AbortSignal,
+): Promise<MonthlyPeriod> {
+  const body = await requestJson(
+    `/v1/monthly-periods/${encodeURIComponent(periodId)}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = monthlyPeriodEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

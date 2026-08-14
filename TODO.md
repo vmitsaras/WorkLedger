@@ -105,7 +105,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 8 — Monthly closure and reporting
 
-- [ ] `WL-800` Implement monthly period summary and blockers.
+- [x] `WL-800` Implement monthly period summary and blockers.
 - [ ] `WL-801` Implement employee submission.
 - [ ] `WL-802` Implement manager approval and lock.
 - [ ] `WL-803` Implement post-lock adjustment workflow.

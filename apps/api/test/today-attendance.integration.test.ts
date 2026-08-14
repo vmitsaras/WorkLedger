@@ -217,7 +217,12 @@ integrationTest(
             ],
             ledger: { page: 1, total: 2 },
           },
-          period: { endDate: '2026-02-08', startDate: '2026-02-02', view: 'WEEK' },
+          period: {
+            endDate: '2026-02-08',
+            monthlyPeriodId: null,
+            startDate: '2026-02-02',
+            view: 'WEEK',
+          },
           summary: { completeBalanceMinutes: 45, incompleteRecordCount: 1, recordedDayCount: 3 },
           timeZone: 'Europe/Berlin',
         },

@@ -5,16 +5,14 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 8 — 0 of 7 tasks complete**
+> **Current phase progress: Phase 8 — 1 of 7 tasks complete**
 
 Phases 0–7 have passed their exit gates. The repository now includes the attendance, correction,
-absence, entitlement, personal calendar, and cancellation slices, plus a purpose-minimized approval
-inbox, consistent correction/absence/cancellation decisions, privacy-safe team status and calendar,
-and durable generic notification history with optional post-commit email delivery. The manager
-surfaces enforce current-direct-report or HR scope, non-self decisions, strict URL-owned filters,
-equivalent calendar/agenda views, and accessible narrow-screen behavior. Phase 7 has passed its
-exit gate; the next task is monthly period projection, totals, warnings, blockers, and snapshot
-versioning (`WL-800`).
+absence, entitlement, manager-approval/team, and notification slices plus a read-only monthly review
+projection. Monthly review derives ended-month readiness, complete-date totals, warnings, blockers,
+ledger reconciliation, and a source-fingerprinted snapshot schema version through a scoped,
+privacy-minimized API and accessible detail route. Phase 8 is in progress; the next task is employee
+warning acknowledgement and submission (`WL-801`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe

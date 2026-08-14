@@ -72,25 +72,34 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
         if (!authorization.allowed)
           throw new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 });
 
-        const [periodProjections, allProjections, ledgerEntries, leaveEntries] = await Promise.all([
-          transaction.dailyProjections.listForEmployeeRange(
-            context.organization.id,
-            employee.id,
-            period.startDate,
-            period.endDate,
-          ),
-          transaction.dailyProjections.listForEmployeeThroughDate(
-            context.organization.id,
-            employee.id,
-            period.endDate,
-          ),
-          transaction.timeAccount.listForEmployeeThroughDate(
-            context.organization.id,
-            employee.id,
-            period.endDate,
-          ),
-          transaction.leaveEntitlements.listForEmployee(context.organization.id, employee.id),
-        ]);
+        const periodProjections = await transaction.dailyProjections.listForEmployeeRange(
+          context.organization.id,
+          employee.id,
+          period.startDate,
+          period.endDate,
+        );
+        const allProjections = await transaction.dailyProjections.listForEmployeeThroughDate(
+          context.organization.id,
+          employee.id,
+          period.endDate,
+        );
+        const ledgerEntries = await transaction.timeAccount.listForEmployeeThroughDate(
+          context.organization.id,
+          employee.id,
+          period.endDate,
+        );
+        const leaveEntries = await transaction.leaveEntitlements.listForEmployee(
+          context.organization.id,
+          employee.id,
+        );
+        const monthlyPeriod =
+          query.view === 'MONTH'
+            ? await transaction.monthlyPeriods.findByEmployeeMonth(
+                context.organization.id,
+                employee.id,
+                period.startDate,
+              )
+            : null;
 
         const totals = calculateTimeAccountLedger({
           entries: ledgerEntries,
@@ -210,7 +219,11 @@ export function createMyTimeService(database: WorkLedgerDatabase): MyTimeService
               total: leaveLedgerEntries.length,
             }),
           }),
-          period: Object.freeze({ ...period, view: query.view }),
+          period: Object.freeze({
+            ...period,
+            monthlyPeriodId: monthlyPeriod?.id ?? null,
+            view: query.view,
+          }),
           records,
           summary: Object.freeze({
             completeBalanceMinutes,

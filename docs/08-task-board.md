@@ -146,7 +146,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-800 | Implement monthly period projection, totals, warnings, blockers, and snapshot version | WL-506, WL-607 | Seeded complete/incomplete months calculate correctly | Not started |
+| WL-800 | Implement monthly period projection, totals, warnings, blockers, and snapshot version | WL-506, WL-607 | Seeded complete/incomplete months calculate correctly | Done |
 | WL-801 | Implement employee review and submit transition | WL-800 | Blocking-error and warning-acknowledgement tests | Not started |
 | WL-802 | Implement manager changes request, approval, and lock | WL-801, WL-303 | Scope/self-approval, transaction, snapshot, audit tests | Not started |
 | WL-803 | Implement post-lock correction and adjustment linkage | WL-505, WL-802 | Approved snapshot preserved; delta report correct | Not started |

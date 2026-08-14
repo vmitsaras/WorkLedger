@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 8 — Monthly closure and reporting
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 7 Phase 8 tasks complete
-**Current milestone:** Monthly period summary and blockers
-**Active task:** `WL-800`
+**Phase progress:** 1 of 7 Phase 8 tasks complete
+**Current milestone:** Employee monthly review and submission
+**Active task:** `WL-801`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement monthly period projection, totals, warnings, blockers, and snapshot version for `WL-800`.
+Implement employee warning acknowledgement and the versioned monthly submit transition for `WL-801`.
 
 ## Verified decisions
 
@@ -312,6 +312,33 @@ Implement monthly period projection, totals, warnings, blockers, and snapshot ve
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-800` — Implement monthly period summary and blockers
+
+- Changed: added a pure ended-month readiness/totals/attention calculator, a repeatable-read monthly
+  source repository, strict minimized contracts, `GET /v1/monthly-periods/:periodId`, a My Time
+  handoff, and the real accessible monthly-detail route. Snapshot schema version 1 and a canonical
+  SHA-256 source fingerprint identify the exact review source set without creating an approval
+  snapshot.
+- Verified: toolchain/workspace/version/config checks, formatting, lint/boundaries, strict typecheck,
+  generated OpenAPI, 24 repository-contract tests, 228 unit/component tests, 34 PostgreSQL
+  integration tests, 16 Chromium scenarios, and the production build pass. The database scenario
+  verifies self/current-manager/HR access, unrelated-manager/system denial, exact complete-date and
+  ledger totals, blocker derivation, privacy minimization, and no-store caching.
+- Accessibility: workflow and derived readiness are separate text; blockers/warnings have recovery
+  links; calculated and posted totals are explicitly labelled; final amounts are withheld for
+  missing/incomplete dates; and the captioned native table uses a named, keyboard-focusable
+  horizontal-scroll region with route focus, retry, denial, and axe coverage.
+- Security/data: scope is re-evaluated before projection in one repeatable-read transaction. The DTO
+  contains no absence classification, sickness context, reasons, entitlement, protected source IDs,
+  or raw source-reference payloads. No schema migration, mutable history, snapshot creation, or
+  Phase 8 transition was added.
+- Documentation: added `docs/81-monthly-period-summary.md`, regenerated OpenAPI, updated the example
+  evidence map and roadmap memory, and advanced Phase 8 to `WL-801`.
+- Remaining risk: `WL-801` must atomically validate the current period/source version and exact
+  warning acknowledgement. `D-402` remains open and must be resolved before `WL-802` implements
+  monthly decisions/lock authority.
+- Next task: `WL-801`.
 
 ### `WL-706` — Pass the Phase 7 exit gate
 
@@ -758,12 +785,12 @@ Implement monthly period projection, totals, warnings, blockers, and snapshot ve
 
 ## Current blockers
 
-No `WL-800` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
+No `WL-801` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval items
 to the inbox; D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-800 — Implement monthly period summary and blockers.`
+`WL-801 — Implement employee submission.`
 
 ## Update rules
 

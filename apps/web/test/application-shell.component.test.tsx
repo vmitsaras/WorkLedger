@@ -144,7 +144,12 @@ const MY_TIME: MyTime = {
       total: 2,
     },
   },
-  period: { endDate: '2026-08-16', startDate: '2026-08-10', view: 'WEEK' },
+  period: {
+    endDate: '2026-08-16',
+    monthlyPeriodId: null,
+    startDate: '2026-08-10',
+    view: 'WEEK',
+  },
   records: [
     {
       attention: { blockers: [], warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'] },
@@ -309,6 +314,30 @@ test('renders URL-owned time records and keeps posted and projected balance sepa
   expect(screen.getByText(/Projected balance excludes incomplete records/u)).toBeVisible();
   expect(screen.getByRole('table', { name: /Daily time record summaries/u })).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Posted ledger entries' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('links an available month summary to its monthly review', async () => {
+  const monthlyPeriodId = '123e4567-e89b-42d3-a456-426614174399';
+  vi.stubGlobal(
+    'fetch',
+    authenticatedFetch(TODAY_ATTENDANCE, DAILY_TIME_RECORD, {
+      ...MY_TIME,
+      period: {
+        endDate: '2026-08-31',
+        monthlyPeriodId,
+        startDate: '2026-08-01',
+        view: 'MONTH',
+      },
+    }),
+  );
+  const { container } = renderApplication('/my-time?date=2026-08-11&view=MONTH&page=1&limit=20');
+
+  expect(await screen.findByRole('heading', { name: 'My time' })).toBeVisible();
+  expect(await screen.findByRole('link', { name: 'Review monthly period' })).toHaveAttribute(
+    'href',
+    `/monthly-periods/${monthlyPeriodId}`,
+  );
   await expectNoAxeViolations(container);
 });
 
@@ -1167,12 +1196,13 @@ function apiErrorResponse(code: string, status: number): Response {
 function authenticatedFetch(
   today: TodayAttendance = TODAY_ATTENDANCE,
   dailyTimeRecord: DailyTimeRecord = DAILY_TIME_RECORD,
+  myTime: MyTime = MY_TIME,
 ) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const path = requestPath(input);
     if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
     if (path === '/v1/me/attendance/today') return successResponse(today);
-    if (path === '/v1/me/time') return successResponse(MY_TIME);
+    if (path === '/v1/me/time') return successResponse(myTime);
     if (path === '/v1/me/calendar') return successResponse(PERSONAL_CALENDAR);
     if (path.startsWith('/v1/me/time-records/')) return successResponse(dailyTimeRecord);
     throw new Error(`Unexpected test request: ${path}`);

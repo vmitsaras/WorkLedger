@@ -21,6 +21,7 @@ import {
   teamStatusQuery,
   teamCalendarQuery,
   notificationHistoryQuery,
+  monthlyPeriodQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -46,6 +47,7 @@ import { ApprovalDetailPage } from '../routes/approval-detail-page.js';
 import { TeamStatusPage } from '../routes/team-status-page.js';
 import { TeamCalendarPage } from '../routes/team-calendar-page.js';
 import { NotificationsPage } from '../routes/notifications-page.js';
+import { MonthlyPeriodPage } from '../routes/monthly-period-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -201,6 +203,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <DailyTimeRecordPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Daily record' },
+            },
+            {
+              path: 'monthly-periods/:periodId',
+              loader: createMonthlyPeriodLoader(queryClient),
+              element: <MonthlyPeriodPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Monthly period' },
             },
             {
               path: 'requests/new',
@@ -461,6 +470,16 @@ function createApprovalDetailLoader(queryClient: QueryClient): LoaderFunction {
     const approvalId = params['approvalId'];
     if (approvalId === undefined) throw new Response(null, { status: 404 });
     void queryClient.prefetchQuery(approvalDetailQuery(approvalId));
+    return null;
+  };
+}
+
+function createMonthlyPeriodLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ params }) => {
+    await requireContext(queryClient);
+    const periodId = params['periodId'];
+    if (periodId === undefined) throw new Response(null, { status: 404 });
+    void queryClient.prefetchQuery(monthlyPeriodQuery(periodId));
     return null;
   };
 }
