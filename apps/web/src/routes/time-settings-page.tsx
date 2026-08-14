@@ -1,10 +1,14 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { WeeklyScheduleMinutes } from '@workledger/contracts';
+import type { TimePolicyRules, WeeklyScheduleMinutes } from '@workledger/contracts';
 import { Button, TextField } from '@workledger/ui';
 
-import { ApiClientError, createScheduleVersionForAdministration } from '../app/api-client.js';
+import {
+  ApiClientError,
+  createScheduleVersionForAdministration,
+  createTimePolicyVersionForAdministration,
+} from '../app/api-client.js';
 import { formatDuration } from '../app/date-time-format.js';
 import { timeSettingsAdminDetailQuery } from '../app/query.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
@@ -87,7 +91,7 @@ export function TimeSettingsPage() {
       <PageHeader
         eyebrow="HR administration"
         title="Time settings"
-        description="Create immutable weekly schedule versions. Time-policy administration follows in WL-903."
+        description="Create immutable weekly schedule and bounded time-policy versions. Assignments change only from an employee record."
       />
 
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
@@ -147,6 +151,8 @@ export function TimeSettingsPage() {
         </form>
       </section>
 
+      <TimePolicyVersionAdministration policyVersions={query.data?.policyVersions ?? []} />
+
       <section className="grid gap-4" aria-labelledby="schedule-versions-heading">
         <div>
           <h2 id="schedule-versions-heading" className="m-0 text-2xl font-bold">
@@ -192,6 +198,104 @@ export function TimeSettingsPage() {
   );
 }
 
+function TimePolicyVersionAdministration({
+  policyVersions,
+}: Readonly<{ policyVersions: import('@workledger/contracts').PolicyVersionAdminSummary[] }>) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState('');
+  const [threshold, setThreshold] = useState('30');
+  const [message, setMessage] = useState<Readonly<{ kind: 'error' | 'success'; text: string }>>();
+  const mutation = useMutation({ mutationFn: createTimePolicyVersionForAdministration });
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage(undefined);
+    const minutes = Number(threshold);
+    if (name.trim() === '') {
+      setMessage({ kind: 'error', text: 'Enter a time-policy name.' });
+      document.querySelector<HTMLElement>('#policy-name')?.focus();
+      return;
+    }
+    if (!Number.isInteger(minutes) || minutes < 0 || minutes > 1_440) {
+      setMessage({ kind: 'error', text: 'Enter a warning threshold from 0 to 1,440 minutes.' });
+      document.querySelector<HTMLElement>('#policy-threshold')?.focus();
+      return;
+    }
+    const rules: TimePolicyRules = {
+      breakHandling: 'MANUAL_WITH_WARNINGS',
+      flexibleTimeWarningMinutes: minutes,
+      rounding: 'NONE',
+    };
+    try {
+      await mutation.mutateAsync({ name: name.trim(), rules });
+      await queryClient.invalidateQueries({ queryKey: ['administration', 'time-settings'] });
+      setName('');
+      setMessage({
+        kind: 'success',
+        text: 'The immutable time-policy version was created. Employee assignments are unchanged.',
+      });
+    } catch (error) {
+      setMessage({ kind: 'error', text: policyMutationError(error) });
+    }
+  }
+  return (
+    <section className="grid gap-4" aria-labelledby="time-policy-versions-heading">
+      <div>
+        <h2 id="time-policy-versions-heading" className="m-0 text-2xl font-bold">
+          Time-policy versions
+        </h2>
+        <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
+          The MVP policy is deliberately bounded: exact minutes, manual breaks with warnings, and no
+          hidden rounding.
+        </p>
+      </div>
+      {message === undefined ? null : (
+        <div
+          role={message.kind === 'error' ? 'alert' : 'status'}
+          className={`wl-alert ${message.kind === 'success' ? 'wl-alert-success' : 'wl-alert-error'} rounded-xl border p-4`}
+        >
+          {message.text}
+        </div>
+      )}
+      <form className="wl-panel grid max-w-3xl gap-4" onSubmit={submit} noValidate>
+        <TextField id="policy-name" label="Time-policy name" value={name} onChange={setName} />
+        <TextField
+          id="policy-threshold"
+          type="number"
+          label="Flexible-time warning threshold in minutes"
+          description="A warning signal only. It never caps, rounds, or discards worked time."
+          value={threshold}
+          onChange={setThreshold}
+        />
+        <p className="m-0 text-sm">
+          Preview: warn when the absolute flexible-time difference reaches{' '}
+          {formatDuration(Number(threshold) || 0)}; keep manual breaks and exact minute arithmetic.
+        </p>
+        <Button type="submit" isDisabled={mutation.isPending}>
+          {mutation.isPending ? 'Creating policy…' : 'Create time-policy version'}
+        </Button>
+      </form>
+      {policyVersions.length === 0 ? (
+        <div className="wl-panel">No time-policy versions have been created.</div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {policyVersions.map((policy) => (
+            <article key={policy.id} className="wl-panel">
+              <h3 className="m-0 text-xl font-bold">
+                {policy.name} · version {policy.version}
+              </h3>
+              <p className="mb-0 font-semibold">
+                {policy.latestVersion ? 'Latest version' : 'Historical version'} ·{' '}
+                {formatDuration(policy.rules.flexibleTimeWarningMinutes)} warning threshold
+              </p>
+              <p className="mb-0 text-sm">Manual breaks with warnings · no rounding</p>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function scheduleMutationError(error: unknown): string {
   if (error instanceof ApiClientError) {
     if (error.code === 'SCHEDULE_VERSION_NO_CHANGE') {
@@ -202,4 +306,14 @@ function scheduleMutationError(error: unknown): string {
     }
   }
   return 'The schedule version could not be created. Try again.';
+}
+
+function policyMutationError(error: unknown): string {
+  if (error instanceof ApiClientError) {
+    if (error.code === 'POLICY_VERSION_NO_CHANGE')
+      return 'The latest version with this name already has those rules.';
+    if (error.code === 'POLICY_VERSION_CONFLICT')
+      return 'Time-policy versions changed. Refresh and review them before trying again.';
+  }
+  return 'The time-policy version could not be created. Try again.';
 }

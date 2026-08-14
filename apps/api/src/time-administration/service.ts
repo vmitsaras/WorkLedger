@@ -1,8 +1,11 @@
 import type {
   AdministrationActionResult,
   CreateScheduleVersionAdminRequest,
+  CreateTimePolicyVersionAdminRequest,
+  EmployeePolicyAdminDetail,
   EmployeeScheduleAdminDetail,
   ReplaceScheduleAssignmentAdminRequest,
+  ReplacePolicyAssignmentAdminRequest,
   TimeSettingsAdminDetail,
 } from '@workledger/contracts';
 import {
@@ -20,6 +23,8 @@ import {
 } from '@workledger/domain';
 import type {
   AdministrationEmployeeScheduleRecord,
+  AdministrationEmployeePolicyRecord,
+  AdministrationPolicyAssignmentRecord,
   AdministrationScheduleAssignmentRecord,
   AuthorizationActorRecord,
   WorkLedgerDatabase,
@@ -36,6 +41,47 @@ export type TimeAdministrationIdentity = Readonly<{
 
 export function createTimeAdministrationService(database: WorkLedgerDatabase) {
   return Object.freeze({
+    async createTimePolicyVersion(
+      identity: TimeAdministrationIdentity,
+      input: CreateTimePolicyVersionAdminRequest,
+      at: Instant,
+      requestId: DomainId<'Request'>,
+    ): Promise<AdministrationActionResult> {
+      try {
+        return await database.transaction(async (transaction) => {
+          const { actor, context } = await requireOrganizationConfiguration(
+            transaction,
+            identity,
+            at,
+          );
+          const policy = await transaction.administration.createTimePolicyVersion({
+            name: input.name,
+            organizationId: context.organization.id,
+            rules: input.rules,
+          });
+          if (policy === null)
+            throw new WorkLedgerApiError({ code: 'POLICY_VERSION_NO_CHANGE', statusCode: 409 });
+          await transaction.audit.appendDomain({
+            actionCode: 'TIME_POLICY_VERSION_CREATED',
+            actor: hrAuditActor(actor),
+            facts: { version: policy.version },
+            occurredAt: at,
+            organizationId: context.organization.id,
+            outcome: 'SUCCESS',
+            privileged: true,
+            reasonCode: null,
+            requestId,
+            restrictedReasonId: null,
+            subjectEmployeeId: null,
+            targetId: policy.id,
+            targetKind: 'CONFIGURATION',
+          });
+          return actionResult('TIME_POLICY_VERSION_CREATED', policy.id, at);
+        }, serializableRetry);
+      } catch (error) {
+        throw mapScheduleDatabaseError(error);
+      }
+    },
     async createScheduleVersion(
       identity: TimeAdministrationIdentity,
       input: CreateScheduleVersionAdminRequest,
@@ -103,6 +149,29 @@ export function createTimeAdministrationService(database: WorkLedgerDatabase) {
       });
     },
 
+    async getEmployeePolicy(
+      identity: TimeAdministrationIdentity,
+      employeeId: DomainId<'Employee'>,
+      at: Instant,
+    ): Promise<EmployeePolicyAdminDetail> {
+      return database.transaction(async (transaction) => {
+        const { actor, context, localDate } = await requireEmployeeConfiguration(
+          transaction,
+          identity,
+          employeeId,
+          at,
+          'EMPLOYEE_PROFILE_READ',
+        );
+        const record = await transaction.administration.findEmployeePolicy(
+          context.organization.id,
+          employeeId,
+        );
+        if (record === null)
+          throw new WorkLedgerApiError({ code: 'EMPLOYEE_NOT_FOUND', statusCode: 404 });
+        return mapEmployeePolicy(record, employeeId, localDate, actor.employeeId !== employeeId);
+      });
+    },
+
     async getTimeSettings(
       identity: TimeAdministrationIdentity,
       at: Instant,
@@ -110,6 +179,9 @@ export function createTimeAdministrationService(database: WorkLedgerDatabase) {
       return database.transaction(async (transaction) => {
         const { context } = await requireOrganizationConfiguration(transaction, identity, at);
         return Object.freeze({
+          policyVersions: [
+            ...(await transaction.administration.listTimePolicyVersions(context.organization.id)),
+          ],
           scheduleVersions: [
             ...(await transaction.administration.listScheduleVersions(context.organization.id)),
           ],
@@ -194,6 +266,83 @@ export function createTimeAdministrationService(database: WorkLedgerDatabase) {
             targetKind: 'ASSIGNMENT',
           });
           return actionResult('SCHEDULE_ASSIGNMENT_CHANGED', assignmentId, at);
+        }, serializableRetry);
+      } catch (error) {
+        throw mapScheduleDatabaseError(error);
+      }
+    },
+
+    async replacePolicyAssignment(
+      identity: TimeAdministrationIdentity,
+      employeeId: DomainId<'Employee'>,
+      input: ReplacePolicyAssignmentAdminRequest,
+      at: Instant,
+      requestId: DomainId<'Request'>,
+    ): Promise<AdministrationActionResult> {
+      try {
+        return await database.transaction(async (transaction) => {
+          const { actor, context, localDate } = await requireEmployeeConfiguration(
+            transaction,
+            identity,
+            employeeId,
+            at,
+            'EMPLOYEE_CONFIGURATION_ASSIGN',
+          );
+          const record = await transaction.administration.findEmployeePolicy(
+            context.organization.id,
+            employeeId,
+          );
+          if (record === null)
+            throw new WorkLedgerApiError({ code: 'EMPLOYEE_NOT_FOUND', statusCode: 404 });
+          if (
+            record.employeeStatus !== 'ACTIVE' ||
+            !record.employmentHistory.some((period) =>
+              contains(period, input.effectiveFrom as LocalDate),
+            )
+          ) {
+            throw new WorkLedgerApiError({ code: 'EMPLOYEE_STATE_CONFLICT', statusCode: 409 });
+          }
+          const history = effectivePolicyHistory(employeeId, record.history);
+          const transition = planEffectiveAssignmentTransition(
+            history,
+            employeeId,
+            localDate,
+            input.effectiveFrom as LocalDate,
+            input.policyId,
+          );
+          if (!transition.ok) throw assignmentPlanningError(transition.error.code);
+          const gaps = findEffectiveAssignmentGaps(
+            applyTransition(history, employeeId, transition.value),
+            employeeId,
+            record.employmentHistory,
+            localDate,
+          );
+          if (!gaps.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+          if (gaps.value.length > 0)
+            throw new WorkLedgerApiError({ code: 'POLICY_NOT_ASSIGNED', statusCode: 409 });
+          const assignmentId = await transaction.administration.applyPolicyAssignmentTransition({
+            employeeId,
+            organizationId: context.organization.id,
+            transition: transition.value,
+          });
+          if (assignmentId === null)
+            throw new WorkLedgerApiError({ code: 'POLICY_VERSION_CONFLICT', statusCode: 409 });
+          await transaction.audit.appendDomain({
+            actionCode: 'TIME_POLICY_ASSIGNMENT_CHANGED',
+            actor: hrAuditActor(actor),
+            facts: { effectiveDate: input.effectiveFrom as LocalDate, nextStatus: 'ASSIGNED' },
+            occurredAt: at,
+            organizationId: context.organization.id,
+            outcome: 'SUCCESS',
+            privileged: true,
+            reasonCode: null,
+            requestId,
+            restrictedReasonId: null,
+            subjectEmployeeId: employeeId,
+            targetId: assignmentId,
+            targetKind: 'ASSIGNMENT',
+          });
+          return actionResult('TIME_POLICY_ASSIGNMENT_CHANGED', assignmentId, at);
         }, serializableRetry);
       } catch (error) {
         throw mapScheduleDatabaseError(error);
@@ -284,6 +433,43 @@ function mapEmployeeSchedule(
     history: [...record.history],
     privilegedActionsAllowed,
   });
+}
+
+function mapEmployeePolicy(
+  record: AdministrationEmployeePolicyRecord,
+  employeeId: DomainId<'Employee'>,
+  localDate: LocalDate,
+  privilegedActionsAllowed: boolean,
+): EmployeePolicyAdminDetail {
+  const history = effectivePolicyHistory(employeeId, record.history);
+  const gaps = findEffectiveAssignmentGaps(
+    history,
+    employeeId,
+    record.employmentHistory,
+    localDate,
+  );
+  if (!gaps.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  return Object.freeze({
+    asOfLocalDate: localDate,
+    assignablePolicies: [...record.policies],
+    coverageGaps: [...gaps.value],
+    currentAssignment: record.history.find((assignment) => contains(assignment, localDate)) ?? null,
+    history: [...record.history],
+    privilegedActionsAllowed,
+  });
+}
+
+function effectivePolicyHistory(
+  employeeId: DomainId<'Employee'>,
+  history: readonly AdministrationPolicyAssignmentRecord[],
+): readonly EffectiveAssignmentRecord[] {
+  return history.map((assignment) => ({
+    endsOn: assignment.endsOn,
+    id: assignment.id,
+    startsOn: assignment.startsOn,
+    subjectId: employeeId,
+    targetId: assignment.policy.id,
+  }));
 }
 
 function effectiveHistory(
@@ -402,6 +588,15 @@ function mapScheduleDatabaseError(error: unknown): Error {
   }
   if (candidate?.code === '23P01' && candidate.constraint === 'schedule_assignments_no_overlap') {
     return new WorkLedgerApiError({ code: 'SCHEDULE_ASSIGNMENT_OVERLAP', statusCode: 409 });
+  }
+  if (
+    candidate?.code === '23505' &&
+    candidate.constraint === 'time_policies_organization_name_version_uidx'
+  ) {
+    return new WorkLedgerApiError({ code: 'POLICY_VERSION_CONFLICT', statusCode: 409 });
+  }
+  if (candidate?.code === '23P01' && candidate.constraint === 'policy_assignments_no_overlap') {
+    return new WorkLedgerApiError({ code: 'POLICY_ASSIGNMENT_OVERLAP', statusCode: 409 });
   }
   return error instanceof Error
     ? error

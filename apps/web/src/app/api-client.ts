@@ -79,6 +79,7 @@ import {
   systemAccountPageEnvelopeSchema,
   teamAdminPageEnvelopeSchema,
   employeeScheduleAdminDetailEnvelopeSchema,
+  employeePolicyAdminDetailEnvelopeSchema,
   timeSettingsAdminDetailEnvelopeSchema,
   type ActivateEmployeeAdminRequest,
   type AdministrationActionResult,
@@ -98,8 +99,11 @@ import {
   type TeamAdminPage,
   type TeamAdminQuery,
   type CreateScheduleVersionAdminRequest,
+  type CreateTimePolicyVersionAdminRequest,
+  type EmployeePolicyAdminDetail,
   type EmployeeScheduleAdminDetail,
   type ReplaceScheduleAssignmentAdminRequest,
+  type ReplacePolicyAssignmentAdminRequest,
   type TimeSettingsAdminDetail,
 } from '@workledger/contracts';
 
@@ -751,6 +755,19 @@ export async function loadEmployeeScheduleAdminDetail(
   return parsed.data.data;
 }
 
+export async function loadEmployeePolicyAdminDetail(
+  employeeId: string,
+  signal?: AbortSignal,
+): Promise<EmployeePolicyAdminDetail> {
+  const body = await requestJson(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/policy`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = employeePolicyAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
 export async function loadTimeSettingsAdminDetail(
   signal?: AbortSignal,
 ): Promise<TimeSettingsAdminDetail> {
@@ -844,12 +861,28 @@ export async function createScheduleVersionForAdministration(
   return administrationAction('/v1/hr/time-settings/schedule-versions', input);
 }
 
+export async function createTimePolicyVersionForAdministration(
+  input: CreateTimePolicyVersionAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction('/v1/hr/time-settings/policy-versions', input);
+}
+
 export async function replaceScheduleAssignmentForAdministration(
   employeeId: string,
   input: ReplaceScheduleAssignmentAdminRequest,
 ): Promise<AdministrationActionResult> {
   return administrationAction(
     `/v1/hr/employees/${encodeURIComponent(employeeId)}/schedule-assignment`,
+    input,
+  );
+}
+
+export async function replacePolicyAssignmentForAdministration(
+  employeeId: string,
+  input: ReplacePolicyAssignmentAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/policy-assignment`,
     input,
   );
 }

@@ -5,8 +5,11 @@ import { z } from 'zod';
 import {
   apiErrorEnvelopeSchema,
   createScheduleVersionAdminRequestSchema,
+  createTimePolicyVersionAdminRequestSchema,
+  employeePolicyAdminDetailEnvelopeSchema,
   employeeScheduleAdminDetailEnvelopeSchema,
   replaceScheduleAssignmentAdminRequestSchema,
+  replacePolicyAssignmentAdminRequestSchema,
   scheduleAdministrationActionEnvelopeSchema,
   timeSettingsAdminDetailEnvelopeSchema,
 } from '@workledger/contracts';
@@ -93,6 +96,32 @@ export function registerTimeAdministrationRoutes(
     },
   );
 
+  api.post(
+    '/v1/hr/time-settings/policy-versions',
+    {
+      schema: {
+        body: createTimePolicyVersionAdminRequestSchema,
+        description:
+          'Creates the next immutable version for one bounded organization time policy; employee assignments remain unchanged.',
+        operationId: 'createTimePolicyVersion',
+        response: { 200: scheduleAdministrationActionEnvelopeSchema, ...MUTATION_ERRORS },
+        summary: 'Create a time-policy version',
+        tags: ['Time administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.createTimePolicyVersion(
+        prepared.identity,
+        request.body,
+        prepared.at,
+        requestIdentifier(request),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
   api.get(
     '/v1/hr/employees/:employeeId/schedule',
     {
@@ -135,6 +164,59 @@ export function registerTimeAdministrationRoutes(
     async (request, reply) => {
       const prepared = await mutationIdentity(request, config, authentication, now);
       const data = await service.replaceScheduleAssignment(
+        prepared.identity,
+        parseAdministrationId<'Employee'>(request.params.employeeId),
+        request.body,
+        prepared.at,
+        requestIdentifier(request),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.get(
+    '/v1/hr/employees/:employeeId/policy',
+    {
+      schema: {
+        description:
+          'Returns current and preserved time-policy assignment history plus current/future employment coverage gaps.',
+        operationId: 'getEmployeePolicyForAdministration',
+        params: employeeParamsSchema,
+        response: { 200: employeePolicyAdminDetailEnvelopeSchema, ...READ_ERRORS },
+        summary: 'Get employee time-policy administration detail',
+        tags: ['Time administration'],
+      },
+    },
+    async (request, reply) => {
+      const identity = await readIdentity(request, authentication);
+      const data = await service.getEmployeePolicy(
+        identity,
+        parseAdministrationId<'Employee'>(request.params.employeeId),
+        requestInstant(now),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.post(
+    '/v1/hr/employees/:employeeId/policy-assignment',
+    {
+      schema: {
+        body: replacePolicyAssignmentAdminRequestSchema,
+        description:
+          'Creates an adjacent current-or-future policy assignment without changing earlier rows and rejects any resulting employed-date gap.',
+        operationId: 'replaceEmployeePolicyAssignment',
+        params: employeeParamsSchema,
+        response: { 200: scheduleAdministrationActionEnvelopeSchema, ...MUTATION_ERRORS },
+        summary: 'Change an employee time policy',
+        tags: ['Time administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.replacePolicyAssignment(
         prepared.identity,
         parseAdministrationId<'Employee'>(request.params.employeeId),
         request.body,

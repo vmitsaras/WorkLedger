@@ -23,6 +23,19 @@ const HR_CONTEXT: SelfContext = {
 };
 
 const TIME_SETTINGS: TimeSettingsAdminDetail = {
+  policyVersions: [
+    {
+      id: 'standard-policy-v1',
+      latestVersion: true,
+      name: 'Standard policy',
+      rules: {
+        breakHandling: 'MANUAL_WITH_WARNINGS',
+        flexibleTimeWarningMinutes: 30,
+        rounding: 'NONE',
+      },
+      version: 1,
+    },
+  ],
   scheduleVersions: [
     {
       id: 'standard-v2',
@@ -114,6 +127,33 @@ test('creates a new version without changing assignments', async () => {
   ]);
 });
 
+test('previews and creates a bounded immutable time-policy version', async () => {
+  const requestBodies: unknown[] = [];
+  stubFetch(requestBodies);
+  const user = userEvent.setup();
+  const { container } = renderApplication();
+
+  expect(await screen.findByRole('heading', { name: 'Standard policy · version 1' })).toBeVisible();
+  await user.type(screen.getByLabelText('Time-policy name'), 'Standard policy');
+  await user.clear(screen.getByLabelText('Flexible-time warning threshold in minutes'));
+  await user.type(screen.getByLabelText('Flexible-time warning threshold in minutes'), '45');
+  expect(screen.getByText(/Preview: warn.*0h 45m/iu)).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Create time-policy version' }));
+
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    /Employee assignments are unchanged/iu,
+  );
+  expect(requestBodies).toContainEqual({
+    name: 'Standard policy',
+    rules: {
+      breakHandling: 'MANUAL_WITH_WARNINGS',
+      flexibleTimeWarningMinutes: 45,
+      rounding: 'NONE',
+    },
+  });
+  await expectNoAxeViolations(container);
+});
+
 function renderApplication() {
   const queryClient = createWorkLedgerQueryClient();
   const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
@@ -148,6 +188,14 @@ function stubFetch(requestBodies: unknown[] = []) {
           action: 'SCHEDULE_VERSION_CREATED',
           occurredAt: '2026-08-14T10:00:00Z',
           targetId: 'reduced-friday-v1',
+        });
+      }
+      if (url.pathname === '/v1/hr/time-settings/policy-versions') {
+        requestBodies.push(JSON.parse(String(init?.body ?? (await request?.text()))));
+        return successResponse({
+          action: 'TIME_POLICY_VERSION_CREATED',
+          occurredAt: '2026-08-14T10:00:00Z',
+          targetId: 'standard-policy-v2',
         });
       }
       throw new Error(`Unexpected request: ${url.pathname}${url.search}`);

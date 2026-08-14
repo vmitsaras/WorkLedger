@@ -404,6 +404,40 @@ export type CreateAdministrationScheduleVersionInput = Readonly<{
   scheduledMinutes: Readonly<Record<Weekday, NonNegativeMinutes>>;
 }>;
 
+export type AdministrationTimePolicyRules = Readonly<{
+  breakHandling: 'MANUAL_WITH_WARNINGS';
+  flexibleTimeWarningMinutes: number;
+  rounding: 'NONE';
+}>;
+
+export type AdministrationTimePolicyRecord = Readonly<{
+  id: DomainId<'TimePolicyVersion'>;
+  latestVersion: boolean;
+  name: string;
+  rules: AdministrationTimePolicyRules;
+  version: number;
+}>;
+
+export type AdministrationPolicyAssignmentRecord = Readonly<{
+  endsOn: LocalDate | null;
+  id: DomainId<'PolicyAssignment'>;
+  policy: AdministrationTimePolicyRecord;
+  startsOn: LocalDate;
+}>;
+
+export type AdministrationEmployeePolicyRecord = Readonly<{
+  employeeStatus: EmployeeStatus;
+  employmentHistory: readonly AdministrationEmploymentPeriodRecord[];
+  history: readonly AdministrationPolicyAssignmentRecord[];
+  policies: readonly AdministrationTimePolicyRecord[];
+}>;
+
+export type CreateAdministrationTimePolicyVersionInput = Readonly<{
+  name: string;
+  organizationId: DomainId<'Organization'>;
+  rules: AdministrationTimePolicyRules;
+}>;
+
 export type CreateAdministrationEmployeeInput = Readonly<{
   accountEmail: string;
   accountName: string;
@@ -1202,6 +1236,9 @@ export interface EmployeeRepository {
 }
 
 export interface AdministrationRepository {
+  applyPolicyAssignmentTransition(
+    input: ApplyAdministrationAssignmentTransitionInput,
+  ): Promise<string | null>;
   applyScheduleAssignmentTransition(
     input: ApplyAdministrationAssignmentTransitionInput,
   ): Promise<string | null>;
@@ -1219,6 +1256,9 @@ export interface AdministrationRepository {
   createScheduleVersion(
     input: CreateAdministrationScheduleVersionInput,
   ): Promise<AdministrationWeeklyScheduleRecord | null>;
+  createTimePolicyVersion(
+    input: CreateAdministrationTimePolicyVersionInput,
+  ): Promise<AdministrationTimePolicyRecord | null>;
   createTeam(
     organizationId: DomainId<'Organization'>,
     name: string,
@@ -1246,6 +1286,10 @@ export interface AdministrationRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
   ): Promise<AdministrationEmployeeScheduleRecord | null>;
+  findEmployeePolicy(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ): Promise<AdministrationEmployeePolicyRecord | null>;
   applyManagerAssignmentTransition(
     input: ApplyAdministrationAssignmentTransitionInput,
   ): Promise<string | null>;
@@ -1258,6 +1302,9 @@ export interface AdministrationRepository {
   listScheduleVersions(
     organizationId: DomainId<'Organization'>,
   ): Promise<readonly AdministrationWeeklyScheduleRecord[]>;
+  listTimePolicyVersions(
+    organizationId: DomainId<'Organization'>,
+  ): Promise<readonly AdministrationTimePolicyRecord[]>;
   listEmployees(
     input: Readonly<{
       at: Instant;

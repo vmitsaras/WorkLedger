@@ -9,6 +9,7 @@ import type {
   EmployeeAdminDetail,
   EmployeeAdminPage,
   EmployeeAssignmentAdminDetail,
+  EmployeePolicyAdminDetail,
   EmployeeScheduleAdminDetail,
   SelfContext,
   SystemAccountPage,
@@ -231,6 +232,20 @@ const EMPLOYEE_SCHEDULE: EmployeeScheduleAdminDetail = {
   privilegedActionsAllowed: true,
 };
 
+const SELF_POLICY: EmployeePolicyAdminDetail = {
+  asOfLocalDate: '2026-08-14',
+  assignablePolicies: [],
+  coverageGaps: [],
+  currentAssignment: null,
+  history: [],
+  privilegedActionsAllowed: false,
+};
+
+const EMPLOYEE_POLICY: EmployeePolicyAdminDetail = {
+  ...SELF_POLICY,
+  privilegedActionsAllowed: true,
+};
+
 afterEach(() => {
   clearSessionMemory();
   vi.unstubAllGlobals();
@@ -280,6 +295,7 @@ test('shows separate effective team and manager history with keyboard-focused re
     employeeAssignments: EMPLOYEE_ASSIGNMENTS,
     employeeDetail: { ...SELF_EMPLOYEE_DETAIL, privilegedActionsAllowed: true },
     employeeSchedule: EMPLOYEE_SCHEDULE,
+    employeePolicy: EMPLOYEE_POLICY,
   });
   const user = userEvent.setup();
   const { container } = renderApplication(`/employees/${EMPLOYEE_ID}`);
@@ -356,6 +372,7 @@ function stubFetch(
     employeeDetail?: EmployeeAdminDetail;
     employeeAssignments?: EmployeeAssignmentAdminDetail;
     employeeSchedule?: EmployeeScheduleAdminDetail;
+    employeePolicy?: EmployeePolicyAdminDetail;
     employeePage?: EmployeeAdminPage;
     systemPage?: SystemAccountPage;
     teamPage?: TeamAdminPage;
@@ -380,6 +397,9 @@ function stubFetch(
       }
       if (url.pathname.endsWith('/schedule') && responses.employeeDetail !== undefined) {
         return successResponse(responses.employeeSchedule ?? SELF_SCHEDULE);
+      }
+      if (url.pathname.endsWith('/policy') && responses.employeeDetail !== undefined) {
+        return successResponse(responses.employeePolicy ?? SELF_POLICY);
       }
       if (url.pathname.startsWith('/v1/hr/employees/') && responses.employeeDetail !== undefined) {
         return successResponse(responses.employeeDetail);

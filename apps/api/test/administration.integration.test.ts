@@ -719,6 +719,77 @@ integrationTest(
       ]);
       expect(preservedHistory.json().data.coverageGaps).toEqual([]);
 
+      const policyRules = {
+        breakHandling: 'MANUAL_WITH_WARNINGS',
+        flexibleTimeWarningMinutes: 30,
+        rounding: 'NONE',
+      };
+      const createPolicyOne = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { name: 'Standard policy', rules: policyRules },
+        url: '/v1/hr/time-settings/policy-versions',
+      });
+      expect(createPolicyOne.statusCode, createPolicyOne.payload).toBe(200);
+      const policyOneId = String(createPolicyOne.json().data.targetId);
+      const duplicatePolicy = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { name: 'Standard policy', rules: policyRules },
+        url: '/v1/hr/time-settings/policy-versions',
+      });
+      expect(duplicatePolicy.statusCode).toBe(409);
+      expect(duplicatePolicy.json()).toMatchObject({ error: { code: 'POLICY_VERSION_NO_CHANGE' } });
+      const createPolicyTwo = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          name: 'Standard policy',
+          rules: { ...policyRules, flexibleTimeWarningMinutes: 45 },
+        },
+        url: '/v1/hr/time-settings/policy-versions',
+      });
+      expect(createPolicyTwo.statusCode, createPolicyTwo.payload).toBe(200);
+      const policyTwoId = String(createPolicyTwo.json().data.targetId);
+      const futureInitialPolicy = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-08-15', policyId: policyOneId },
+        url: `/v1/hr/employees/${employee.employeeId}/policy-assignment`,
+      });
+      expect(futureInitialPolicy.statusCode).toBe(409);
+      expect(futureInitialPolicy.json()).toMatchObject({ error: { code: 'POLICY_NOT_ASSIGNED' } });
+      for (const [effectiveFrom, policyId] of [
+        ['2026-08-14', policyOneId],
+        ['2026-09-01', policyTwoId],
+      ] as const) {
+        const response = await app.inject({
+          headers: mutationHeaders(hrCookie, hrCsrf),
+          method: 'POST',
+          payload: { effectiveFrom, policyId },
+          url: `/v1/hr/employees/${employee.employeeId}/policy-assignment`,
+        });
+        expect(response.statusCode, response.payload).toBe(200);
+      }
+      const policyHistory = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: `/v1/hr/employees/${employee.employeeId}/policy`,
+      });
+      expect(policyHistory.statusCode).toBe(200);
+      expect(policyHistory.json().data.history).toEqual([
+        expect.objectContaining({
+          startsOn: '2026-09-01',
+          policy: expect.objectContaining({ id: policyTwoId, version: 2 }),
+        }),
+        expect.objectContaining({
+          endsOn: '2026-09-01',
+          startsOn: '2026-08-14',
+          policy: expect.objectContaining({ id: policyOneId, version: 1 }),
+        }),
+      ]);
+      expect(policyHistory.json().data.coverageGaps).toEqual([]);
+
       const persisted = await fixture.client.query<{
         assignment_count: string;
         assignment_audit_count: string;

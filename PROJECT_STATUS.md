@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 9 — Administration
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 3 of 8 Phase 9 tasks complete
-**Current milestone:** Effective-dated time-policy management
-**Active task:** `WL-903`
+**Phase progress:** 4 of 8 Phase 9 tasks complete
+**Current milestone:** Absence-type and entitlement administration
+**Active task:** `WL-904`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Build immutable time-policy versions, effective assignments, and policy-impact preview behavior for
-`WL-903`.
+Build absence-type configuration and ledger-based entitlement administration with auditable reasons
+for `WL-904`.
 
 ## Verified decisions
 
@@ -379,6 +379,16 @@ Build immutable time-policy versions, effective assignments, and policy-impact p
   assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-903` — Build time-policy management
+
+- Changed: added strict bounded time-policy contracts and generated OpenAPI, immutable serialized policy versions, current/future gap-free employee policy assignments, minimized atomic audit evidence, and accessible version, history, assignment, and impact-preview surfaces.
+- Verified: workspace/toolchain/version checks, formatting, lint and 231-file/1,164-import boundaries, strict TypeScript, 24 tooling tests, and 293 unit/component tests across 39 files pass. Database integration compiles and its non-database checks pass; PostgreSQL-dependent cases were skipped because the integration database was unavailable.
+- Accessibility: policy forms use visible labels, native controls, textual latest/history/current/gap states, a polite textual impact preview, pending protection, persistent feedback, self-control omission, and component axe coverage.
+- Security/data: routes require active organization-HR authority; mutations are same-origin and CSRF protected, self-assignment and cross-organization policy references are denied, effective history is validated inside serializable transactions, and audit facts omit complete rules and form payloads.
+- Documentation: added `docs/91-effective-dated-time-policy-administration.md`, regenerated OpenAPI, and synchronized TODO, task board, and project status. No migration or version bump is required because the existing policy tables and constraints cover the slice and this is not the Phase 9 gate.
+- Remaining risk: database-enabled integration was unavailable in this environment; broad concurrency, cross-browser, assistive-technology, performance, and production-security matrices remain Phase 10 work. Automatic-break, rounding, payroll/overtime, and arbitrary policy workflows remain excluded.
+- Next task: `WL-904`.
 
 ### `WL-902` — Build effective-dated schedule management
 
@@ -1119,12 +1129,12 @@ Build immutable time-policy versions, effective assignments, and policy-impact p
 
 ## Current blockers
 
-No `WL-903` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
+No `WL-904` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
 recovery, and `D-502` remains open before the production browser gate.
 
 ## Next task
 
-`WL-903 — Build time-policy management.`
+`WL-904 — Build absence-type and entitlement administration.`
 
 ## Update rules
 

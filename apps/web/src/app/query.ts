@@ -34,6 +34,7 @@ import {
   loadEmployeeAdminPage,
   loadEmployeeAssignmentAdminDetail,
   loadEmployeeScheduleAdminDetail,
+  loadEmployeePolicyAdminDetail,
   loadTimeSettingsAdminDetail,
   loadTeamAdminPage,
   loadSystemAccountPage,
@@ -86,6 +87,12 @@ export const employeeScheduleAdminDetailQuery = (employeeId: string) =>
   queryOptions({
     queryFn: ({ signal }) => loadEmployeeScheduleAdminDetail(employeeId, signal),
     queryKey: ['administration', 'employee-schedule', employeeId] as const,
+  });
+
+export const employeePolicyAdminDetailQuery = (employeeId: string) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadEmployeePolicyAdminDetail(employeeId, signal),
+    queryKey: ['administration', 'employee-policy', employeeId] as const,
   });
 
 export const timeSettingsAdminDetailQuery = () =>

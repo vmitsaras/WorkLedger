@@ -83,6 +83,10 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'The schedule versions changed. Refresh and review the current versions.';
     case 'SCHEDULE_VERSION_NO_CHANGE':
       return 'The latest schedule version already has those weekday minutes.';
+    case 'POLICY_VERSION_CONFLICT':
+      return 'The time-policy versions changed. Refresh and review the current versions.';
+    case 'POLICY_VERSION_NO_CHANGE':
+      return 'The latest time-policy version already has those rules.';
     case 'TEAM_NAME_ALREADY_EXISTS':
       return 'A team already uses that name.';
     case 'TEAM_STATE_CONFLICT':

@@ -100,6 +100,7 @@ import type {
   AdministrationEmployeeRecord,
   AdministrationRepository,
   AdministrationSystemAccountRecord,
+  AdministrationTimePolicyRecord,
   AdministrationWeeklyScheduleRecord,
   AbsenceCoverageSegmentInput,
   AbsenceCancellationRecord,
@@ -470,6 +471,47 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     return created?.id ?? null;
   }
 
+  async applyPolicyAssignmentTransition(
+    input: Parameters<AdministrationRepository['applyPolicyAssignmentTransition']>[0],
+  ) {
+    if (!(await this.lockActiveEmployee(input.organizationId, input.employeeId))) return null;
+    const insert = input.transition.insert;
+    if (insert !== null) {
+      const [policy] = await this.transaction
+        .select({ id: timePolicies.id })
+        .from(timePolicies)
+        .where(
+          and(
+            eq(timePolicies.organizationId, input.organizationId),
+            eq(
+              timePolicies.id,
+              mapDomainId<'TimePolicyVersion'>(insert.targetId, 'policy_assignments', 'policy_id'),
+            ),
+          ),
+        )
+        .limit(1);
+      if (policy === undefined) return null;
+    }
+    const closedId = await this.closePolicyAssignment(input);
+    if (input.transition.closeAssignmentId !== null && closedId === null) return null;
+    if (insert === null) return closedId;
+    const [created] = await this.transaction
+      .insert(policyAssignments)
+      .values({
+        employeeId: input.employeeId,
+        endsOn: insert.endsOn,
+        organizationId: input.organizationId,
+        policyId: mapDomainId<'TimePolicyVersion'>(
+          insert.targetId,
+          'policy_assignments',
+          'policy_id',
+        ),
+        startsOn: input.transition.effectiveFrom,
+      })
+      .returning({ id: policyAssignments.id });
+    return created?.id ?? null;
+  }
+
   async applyManagerAssignmentTransition(
     input: Parameters<AdministrationRepository['applyManagerAssignmentTransition']>[0],
   ) {
@@ -814,6 +856,45 @@ class PostgresAdministrationRepository implements AdministrationRepository {
       })
       .returning();
     return created === undefined ? null : mapAdministrationWeeklySchedule(created, true);
+  }
+
+  async createTimePolicyVersion(
+    input: Parameters<AdministrationRepository['createTimePolicyVersion']>[0],
+  ) {
+    const [organization] = await this.transaction
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.id, input.organizationId))
+      .for('update')
+      .limit(1);
+    if (organization === undefined) return null;
+    const [latest] = await this.transaction
+      .select()
+      .from(timePolicies)
+      .where(
+        and(
+          eq(timePolicies.organizationId, input.organizationId),
+          eq(timePolicies.name, input.name),
+        ),
+      )
+      .orderBy(desc(timePolicies.version))
+      .limit(1);
+    if (
+      latest !== undefined &&
+      policyRulesEqual(mapAdministrationTimePolicy(latest, true), input.rules)
+    ) {
+      return null;
+    }
+    const [created] = await this.transaction
+      .insert(timePolicies)
+      .values({
+        name: input.name,
+        organizationId: input.organizationId,
+        rules: input.rules,
+        version: (latest?.version ?? 0) + 1,
+      })
+      .returning();
+    return created === undefined ? null : mapAdministrationTimePolicy(created, true);
   }
 
   async createTechnicalAccount(
@@ -1191,6 +1272,92 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     });
   }
 
+  async findEmployeePolicy(
+    organizationId: Parameters<AdministrationRepository['findEmployeePolicy']>[0],
+    employeeId: Parameters<AdministrationRepository['findEmployeePolicy']>[1],
+  ) {
+    const [employee] = await this.transaction
+      .select({ status: employees.status })
+      .from(employees)
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)))
+      .limit(1);
+    if (employee === undefined) return null;
+    const employmentRows = await this.transaction
+      .select({
+        endsOn: employmentPeriods.endsOn,
+        id: employmentPeriods.id,
+        startsOn: employmentPeriods.startsOn,
+      })
+      .from(employmentPeriods)
+      .where(
+        and(
+          eq(employmentPeriods.organizationId, organizationId),
+          eq(employmentPeriods.employeeId, employeeId),
+        ),
+      )
+      .orderBy(asc(employmentPeriods.startsOn), asc(employmentPeriods.id));
+    const assignmentRows = await this.transaction
+      .select({
+        assignmentEndsOn: policyAssignments.endsOn,
+        assignmentId: policyAssignments.id,
+        assignmentStartsOn: policyAssignments.startsOn,
+        policy: timePolicies,
+      })
+      .from(policyAssignments)
+      .innerJoin(
+        timePolicies,
+        and(
+          eq(timePolicies.organizationId, organizationId),
+          eq(timePolicies.id, policyAssignments.policyId),
+        ),
+      )
+      .where(
+        and(
+          eq(policyAssignments.organizationId, organizationId),
+          eq(policyAssignments.employeeId, employeeId),
+        ),
+      )
+      .orderBy(desc(policyAssignments.startsOn), desc(policyAssignments.id));
+    const policies = await this.listTimePolicyVersions(organizationId);
+    const latestByName = new Map(
+      policies
+        .filter(({ latestVersion }) => latestVersion)
+        .map((policy) => [policy.name, policy.version]),
+    );
+    return Object.freeze({
+      employeeStatus: employee.status,
+      employmentHistory: Object.freeze(
+        employmentRows.map((row) =>
+          Object.freeze({
+            endsOn:
+              row.endsOn === null
+                ? null
+                : mapLocalDate(row.endsOn, 'employment_periods', 'ends_on'),
+            id: mapDomainId<'EmploymentPeriod'>(row.id, 'employment_periods', 'id'),
+            startsOn: mapLocalDate(row.startsOn, 'employment_periods', 'starts_on'),
+          }),
+        ),
+      ),
+      history: Object.freeze(
+        assignmentRows.map((row) =>
+          Object.freeze({
+            endsOn:
+              row.assignmentEndsOn === null
+                ? null
+                : mapLocalDate(row.assignmentEndsOn, 'policy_assignments', 'ends_on'),
+            id: mapDomainId<'PolicyAssignment'>(row.assignmentId, 'policy_assignments', 'id'),
+            policy: mapAdministrationTimePolicy(
+              row.policy,
+              latestByName.get(row.policy.name) === row.policy.version,
+            ),
+            startsOn: mapLocalDate(row.assignmentStartsOn, 'policy_assignments', 'starts_on'),
+          }),
+        ),
+      ),
+      policies,
+    });
+  }
+
   async listEmployees(input: Parameters<AdministrationRepository['listEmployees']>[0]) {
     const statusCondition = input.status === null ? undefined : eq(employees.status, input.status);
     const where = and(eq(employees.organizationId, input.organizationId), statusCondition);
@@ -1256,6 +1423,25 @@ class PostgresAdministrationRepository implements AdministrationRepository {
         const latestVersion = !latestNames.has(row.name);
         latestNames.add(row.name);
         return mapAdministrationWeeklySchedule(row, latestVersion);
+      }),
+    );
+  }
+
+  async listTimePolicyVersions(
+    organizationId: Parameters<AdministrationRepository['listTimePolicyVersions']>[0],
+  ) {
+    const rows = await this.transaction
+      .select()
+      .from(timePolicies)
+      .where(eq(timePolicies.organizationId, organizationId))
+      .orderBy(asc(timePolicies.name), desc(timePolicies.version), asc(timePolicies.id))
+      .limit(250);
+    const latestNames = new Set<string>();
+    return Object.freeze(
+      rows.map((row) => {
+        const latestVersion = !latestNames.has(row.name);
+        latestNames.add(row.name);
+        return mapAdministrationTimePolicy(row, latestVersion);
       }),
     );
   }
@@ -1549,6 +1735,36 @@ class PostgresAdministrationRepository implements AdministrationRepository {
         ),
       )
       .returning({ id: scheduleAssignments.id });
+    return rows[0]?.id ?? null;
+  }
+
+  private async closePolicyAssignment(
+    input: Parameters<AdministrationRepository['applyPolicyAssignmentTransition']>[0],
+  ): Promise<string | null> {
+    if (input.transition.closeAssignmentId === null) return null;
+    const rows = await this.transaction
+      .update(policyAssignments)
+      .set({ endsOn: input.transition.effectiveFrom })
+      .where(
+        and(
+          eq(policyAssignments.organizationId, input.organizationId),
+          eq(policyAssignments.employeeId, input.employeeId),
+          eq(
+            policyAssignments.id,
+            mapDomainId<'PolicyAssignment'>(
+              input.transition.closeAssignmentId,
+              'policy_assignments',
+              'id',
+            ),
+          ),
+          lt(policyAssignments.startsOn, input.transition.effectiveFrom),
+          or(
+            isNull(policyAssignments.endsOn),
+            gt(policyAssignments.endsOn, input.transition.effectiveFrom),
+          ),
+        ),
+      )
+      .returning({ id: policyAssignments.id });
     return rows[0]?.id ?? null;
   }
 
@@ -1860,6 +2076,49 @@ function scheduleMinutesEqual(
 ): boolean {
   return Object.entries(minutes).every(
     ([weekday, value]) => schedule.scheduledMinutes[weekday as keyof typeof minutes] === value,
+  );
+}
+
+function mapAdministrationTimePolicy(
+  row: Readonly<{
+    id: string;
+    name: string;
+    rules: Readonly<Record<string, unknown>>;
+    version: number;
+  }>,
+  latestVersion: boolean,
+): AdministrationTimePolicyRecord {
+  const { breakHandling, flexibleTimeWarningMinutes, rounding } = row.rules;
+  if (
+    breakHandling !== 'MANUAL_WITH_WARNINGS' ||
+    rounding !== 'NONE' ||
+    !Number.isInteger(flexibleTimeWarningMinutes) ||
+    (flexibleTimeWarningMinutes as number) < 0 ||
+    (flexibleTimeWarningMinutes as number) > 1_440
+  ) {
+    throw new DatabaseValueError('time_policies', 'rules');
+  }
+  return Object.freeze({
+    id: mapDomainId<'TimePolicyVersion'>(row.id, 'time_policies', 'id'),
+    latestVersion,
+    name: row.name,
+    rules: Object.freeze({
+      breakHandling,
+      flexibleTimeWarningMinutes: flexibleTimeWarningMinutes as number,
+      rounding,
+    }),
+    version: row.version,
+  });
+}
+
+function policyRulesEqual(
+  policy: AdministrationTimePolicyRecord,
+  rules: AdministrationTimePolicyRecord['rules'],
+): boolean {
+  return (
+    policy.rules.breakHandling === rules.breakHandling &&
+    policy.rules.flexibleTimeWarningMinutes === rules.flexibleTimeWarningMinutes &&
+    policy.rules.rounding === rules.rounding
   );
 }
 
