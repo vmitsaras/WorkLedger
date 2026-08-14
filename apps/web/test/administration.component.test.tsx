@@ -9,6 +9,7 @@ import type {
   EmployeeAdminDetail,
   EmployeeAdminPage,
   EmployeeAssignmentAdminDetail,
+  EmployeeScheduleAdminDetail,
   SelfContext,
   SystemAccountPage,
   TeamAdminPage,
@@ -186,6 +187,50 @@ const EMPLOYEE_ASSIGNMENTS: EmployeeAssignmentAdminDetail = {
   ],
 };
 
+const SCHEDULE_VERSION = {
+  id: 'schedule-standard-v1',
+  latestVersion: true,
+  name: 'Standard 40 hours',
+  scheduledMinutes: {
+    FRIDAY: 480,
+    MONDAY: 480,
+    SATURDAY: 0,
+    SUNDAY: 0,
+    THURSDAY: 480,
+    TUESDAY: 480,
+    WEDNESDAY: 480,
+  },
+  version: 1,
+  weeklyTotalMinutes: 2_400,
+} as const;
+
+const SELF_SCHEDULE: EmployeeScheduleAdminDetail = {
+  asOfLocalDate: '2026-08-14',
+  assignableSchedules: [SCHEDULE_VERSION],
+  coverageGaps: [],
+  currentAssignment: {
+    endsOn: null,
+    id: 'schedule-assignment-current',
+    schedule: SCHEDULE_VERSION,
+    startsOn: '2025-01-01',
+  },
+  history: [
+    {
+      endsOn: null,
+      id: 'schedule-assignment-current',
+      schedule: SCHEDULE_VERSION,
+      startsOn: '2025-01-01',
+    },
+  ],
+  privilegedActionsAllowed: false,
+};
+
+const EMPLOYEE_SCHEDULE: EmployeeScheduleAdminDetail = {
+  ...SELF_SCHEDULE,
+  coverageGaps: [{ endsOn: null, startsOn: '2026-09-01' }],
+  privilegedActionsAllowed: true,
+};
+
 afterEach(() => {
   clearSessionMemory();
   vi.unstubAllGlobals();
@@ -226,6 +271,7 @@ test('keeps privileged self-edit controls absent on an HR administrator’s own 
   expect(screen.queryByRole('button', { name: 'Save roles' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Deactivate employee/iu })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Save team assignment' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Save weekly schedule' })).not.toBeInTheDocument();
   await expectNoAxeViolations(container);
 });
 
@@ -233,6 +279,7 @@ test('shows separate effective team and manager history with keyboard-focused re
   stubFetch(HR_CONTEXT, {
     employeeAssignments: EMPLOYEE_ASSIGNMENTS,
     employeeDetail: { ...SELF_EMPLOYEE_DETAIL, privilegedActionsAllowed: true },
+    employeeSchedule: EMPLOYEE_SCHEDULE,
   });
   const user = userEvent.setup();
   const { container } = renderApplication(`/employees/${EMPLOYEE_ID}`);
@@ -245,6 +292,11 @@ test('shows separate effective team and manager history with keyboard-focused re
   expect(screen.getByRole('alert')).toHaveTextContent(/Choose a manager change/iu);
   expect(screen.getByLabelText('Direct-manager change')).toHaveFocus();
   expect(screen.getByRole('option', { name: 'Sam Rivera (MGR-002)' })).toBeVisible();
+  expect(screen.getAllByText(/Standard 40 hours · version 1/iu).length).toBeGreaterThanOrEqual(2);
+  expect(screen.getByText(/Schedule coverage needs attention/iu)).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Save weekly schedule' }));
+  expect(screen.getByText(/Choose a weekly schedule version/iu)).toBeVisible();
+  expect(screen.getByLabelText('Weekly schedule version')).toHaveFocus();
   await expectNoAxeViolations(container);
 });
 
@@ -303,6 +355,7 @@ function stubFetch(
   responses: Readonly<{
     employeeDetail?: EmployeeAdminDetail;
     employeeAssignments?: EmployeeAssignmentAdminDetail;
+    employeeSchedule?: EmployeeScheduleAdminDetail;
     employeePage?: EmployeeAdminPage;
     systemPage?: SystemAccountPage;
     teamPage?: TeamAdminPage;
@@ -324,6 +377,9 @@ function stubFetch(
       }
       if (url.pathname.endsWith('/assignments') && responses.employeeAssignments !== undefined) {
         return successResponse(responses.employeeAssignments);
+      }
+      if (url.pathname.endsWith('/schedule') && responses.employeeDetail !== undefined) {
+        return successResponse(responses.employeeSchedule ?? SELF_SCHEDULE);
       }
       if (url.pathname.startsWith('/v1/hr/employees/') && responses.employeeDetail !== undefined) {
         return successResponse(responses.employeeDetail);

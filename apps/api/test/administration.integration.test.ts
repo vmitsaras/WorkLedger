@@ -532,6 +532,220 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `versions weekly schedules and preserves gap-free effective assignment history (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'schedule_administration',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => AT },
+    );
+
+    try {
+      const actors = await createAdministrationActors(fixture.client);
+      const passwordHash = await hashPassword(ADMIN_PASSWORD);
+      const employee = await createManagedEmployee(
+        fixture.client,
+        actors.organizationId,
+        passwordHash,
+        'Schedule Employee',
+        'schedule-employee@example.test',
+        'EMP-902',
+        false,
+      );
+      const hrCookie = await signIn(app, 'hr@example.test', ADMIN_PASSWORD);
+      const hrCsrf = await getCsrf(app, hrCookie);
+      const standardMinutes = {
+        FRIDAY: 480,
+        MONDAY: 480,
+        SATURDAY: 0,
+        SUNDAY: 0,
+        THURSDAY: 480,
+        TUESDAY: 480,
+        WEDNESDAY: 480,
+      };
+
+      const emptySettings = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: '/v1/hr/time-settings',
+      });
+      expect(emptySettings.statusCode).toBe(200);
+      expect(emptySettings.json()).toMatchObject({ data: { scheduleVersions: [] } });
+
+      const createVersionOne = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { name: 'Standard week', scheduledMinutes: standardMinutes },
+        url: '/v1/hr/time-settings/schedule-versions',
+      });
+      expect(createVersionOne.statusCode, createVersionOne.payload).toBe(200);
+      const versionOneId = String(createVersionOne.json().data.targetId);
+
+      const noChange = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { name: 'Standard week', scheduledMinutes: standardMinutes },
+        url: '/v1/hr/time-settings/schedule-versions',
+      });
+      expect(noChange.statusCode).toBe(409);
+      expect(noChange.json()).toMatchObject({ error: { code: 'SCHEDULE_VERSION_NO_CHANGE' } });
+
+      const createVersionTwo = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          name: 'Standard week',
+          scheduledMinutes: { ...standardMinutes, FRIDAY: 360 },
+        },
+        url: '/v1/hr/time-settings/schedule-versions',
+      });
+      expect(createVersionTwo.statusCode, createVersionTwo.payload).toBe(200);
+      const versionTwoId = String(createVersionTwo.json().data.targetId);
+
+      const settings = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: '/v1/hr/time-settings',
+      });
+      expect(settings.statusCode).toBe(200);
+      expect(settings.json().data.scheduleVersions).toEqual([
+        expect.objectContaining({ id: versionTwoId, latestVersion: true, version: 2 }),
+        expect.objectContaining({ id: versionOneId, latestVersion: false, version: 1 }),
+      ]);
+
+      const uncovered = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: `/v1/hr/employees/${employee.employeeId}/schedule`,
+      });
+      expect(uncovered.statusCode).toBe(200);
+      expect(uncovered.json()).toMatchObject({
+        data: {
+          coverageGaps: [{ endsOn: null, startsOn: '2026-08-14' }],
+          currentAssignment: null,
+          privilegedActionsAllowed: true,
+        },
+      });
+
+      const futureInitialAssignment = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-08-15', scheduleId: versionOneId },
+        url: `/v1/hr/employees/${employee.employeeId}/schedule-assignment`,
+      });
+      expect(futureInitialAssignment.statusCode).toBe(409);
+      expect(futureInitialAssignment.json()).toMatchObject({
+        error: { code: 'SCHEDULE_NOT_ASSIGNED' },
+      });
+
+      const initialAssignment = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-08-14', scheduleId: versionOneId },
+        url: `/v1/hr/employees/${employee.employeeId}/schedule-assignment`,
+      });
+      expect(initialAssignment.statusCode, initialAssignment.payload).toBe(200);
+
+      const futureVersionChange = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-09-01', scheduleId: versionTwoId },
+        url: `/v1/hr/employees/${employee.employeeId}/schedule-assignment`,
+      });
+      expect(futureVersionChange.statusCode, futureVersionChange.payload).toBe(200);
+
+      const selfAssignment = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: { effectiveFrom: '2026-08-14', scheduleId: versionOneId },
+        url: `/v1/hr/employees/${actors.hrEmployeeId}/schedule-assignment`,
+      });
+      expect(selfAssignment.statusCode).toBe(403);
+
+      const otherOrganization = await fixture.client.query<{ id: string }>(
+        `insert into organizations (name, time_zone)
+         values ('Other Schedule Organization', 'Europe/Berlin') returning id`,
+      );
+      const otherOrganizationId = otherOrganization.rows[0]?.id;
+      if (otherOrganizationId === undefined) throw new Error('Expected other organization ID.');
+      const otherSchedule = await fixture.client.query<{ id: string }>(
+        `insert into weekly_schedules
+           (organization_id, name, version, monday_minutes, tuesday_minutes, wednesday_minutes,
+            thursday_minutes, friday_minutes, saturday_minutes, sunday_minutes)
+         values ($1, 'Other schedule', 1, 480, 480, 480, 480, 480, 0, 0) returning id`,
+        [otherOrganizationId],
+      );
+      const crossOrganizationAssignment = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          effectiveFrom: '2026-10-01',
+          scheduleId: otherSchedule.rows[0]?.id,
+        },
+        url: `/v1/hr/employees/${employee.employeeId}/schedule-assignment`,
+      });
+      expect(crossOrganizationAssignment.statusCode).toBe(409);
+      expect(crossOrganizationAssignment.json()).toMatchObject({
+        error: { code: 'SCHEDULE_VERSION_CONFLICT' },
+      });
+
+      const preservedHistory = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: `/v1/hr/employees/${employee.employeeId}/schedule`,
+      });
+      expect(preservedHistory.statusCode).toBe(200);
+      expect(preservedHistory.json().data.history).toEqual([
+        expect.objectContaining({
+          endsOn: null,
+          schedule: expect.objectContaining({ id: versionTwoId, version: 2 }),
+          startsOn: '2026-09-01',
+        }),
+        expect.objectContaining({
+          endsOn: '2026-09-01',
+          schedule: expect.objectContaining({ id: versionOneId, version: 1 }),
+          startsOn: '2026-08-14',
+        }),
+      ]);
+      expect(preservedHistory.json().data.coverageGaps).toEqual([]);
+
+      const persisted = await fixture.client.query<{
+        assignment_count: string;
+        assignment_audit_count: string;
+        version_audit_count: string;
+      }>(
+        `select
+           (select count(*) from schedule_assignments where employee_id = $1)::text as assignment_count,
+           (select count(*) from domain_audit_events
+              where subject_employee_id = $1 and action_code = 'SCHEDULE_ASSIGNMENT_CHANGED')::text
+              as assignment_audit_count,
+           (select count(*) from domain_audit_events
+              where organization_id = $2 and action_code = 'SCHEDULE_VERSION_CREATED')::text
+              as version_audit_count`,
+        [employee.employeeId, actors.organizationId],
+      );
+      expect(persisted.rows[0]).toEqual({
+        assignment_audit_count: '2',
+        assignment_count: '2',
+        version_audit_count: '2',
+      });
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createAdministrationActors(client: pg.PoolClient) {
   const passwordHash = await hashPassword(ADMIN_PASSWORD);
   const organization = await client.query<{ id: string }>(

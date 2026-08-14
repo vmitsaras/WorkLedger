@@ -78,6 +78,8 @@ import {
   invitationActivationEnvelopeSchema,
   systemAccountPageEnvelopeSchema,
   teamAdminPageEnvelopeSchema,
+  employeeScheduleAdminDetailEnvelopeSchema,
+  timeSettingsAdminDetailEnvelopeSchema,
   type ActivateEmployeeAdminRequest,
   type AdministrationActionResult,
   type CreateEmployeeAdminRequest,
@@ -95,6 +97,10 @@ import {
   type SystemAccountQuery,
   type TeamAdminPage,
   type TeamAdminQuery,
+  type CreateScheduleVersionAdminRequest,
+  type EmployeeScheduleAdminDetail,
+  type ReplaceScheduleAssignmentAdminRequest,
+  type TimeSettingsAdminDetail,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -732,6 +738,28 @@ export async function loadEmployeeAssignmentAdminDetail(
   return parsed.data.data;
 }
 
+export async function loadEmployeeScheduleAdminDetail(
+  employeeId: string,
+  signal?: AbortSignal,
+): Promise<EmployeeScheduleAdminDetail> {
+  const body = await requestJson(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/schedule`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = employeeScheduleAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadTimeSettingsAdminDetail(
+  signal?: AbortSignal,
+): Promise<TimeSettingsAdminDetail> {
+  const body = await requestJson('/v1/hr/time-settings', signal === undefined ? {} : { signal });
+  const parsed = timeSettingsAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
 export async function loadTeamAdminPage(
   query: TeamAdminQuery,
   signal?: AbortSignal,
@@ -806,6 +834,22 @@ export async function replaceManagerAssignmentForAdministration(
 ): Promise<AdministrationActionResult> {
   return administrationAction(
     `/v1/hr/employees/${encodeURIComponent(employeeId)}/manager-assignment`,
+    input,
+  );
+}
+
+export async function createScheduleVersionForAdministration(
+  input: CreateScheduleVersionAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction('/v1/hr/time-settings/schedule-versions', input);
+}
+
+export async function replaceScheduleAssignmentForAdministration(
+  employeeId: string,
+  input: ReplaceScheduleAssignmentAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction(
+    `/v1/hr/employees/${encodeURIComponent(employeeId)}/schedule-assignment`,
     input,
   );
 }

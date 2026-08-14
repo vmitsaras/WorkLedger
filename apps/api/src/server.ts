@@ -23,6 +23,7 @@ import { registerMonthlyPeriodRoutes } from './monthly/routes.js';
 import { registerReportRoutes } from './reports/routes.js';
 import { registerAdministrationRoutes } from './administration/routes.js';
 import type { AccountInvitationSender } from './administration/service.js';
+import { registerTimeAdministrationRoutes } from './time-administration/routes.js';
 import {
   disabledNotificationDeliveryAdapter,
   type NotificationDeliveryAdapter,
@@ -92,6 +93,7 @@ export function createApiServer(
         dependencies.now,
         dependencies.invitationSender,
       );
+      registerTimeAdministrationRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {
         await Promise.all([authentication.close(), database.close()]);
       });

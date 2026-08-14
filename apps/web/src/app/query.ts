@@ -33,6 +33,8 @@ import {
   loadEmployeeAdminDetail,
   loadEmployeeAdminPage,
   loadEmployeeAssignmentAdminDetail,
+  loadEmployeeScheduleAdminDetail,
+  loadTimeSettingsAdminDetail,
   loadTeamAdminPage,
   loadSystemAccountPage,
 } from './api-client.js';
@@ -78,6 +80,18 @@ export const employeeAssignmentAdminDetailQuery = (employeeId: string) =>
   queryOptions({
     queryFn: ({ signal }) => loadEmployeeAssignmentAdminDetail(employeeId, signal),
     queryKey: ['administration', 'employee-assignments', employeeId] as const,
+  });
+
+export const employeeScheduleAdminDetailQuery = (employeeId: string) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadEmployeeScheduleAdminDetail(employeeId, signal),
+    queryKey: ['administration', 'employee-schedule', employeeId] as const,
+  });
+
+export const timeSettingsAdminDetailQuery = () =>
+  queryOptions({
+    queryFn: ({ signal }) => loadTimeSettingsAdminDetail(signal),
+    queryKey: ['administration', 'time-settings'] as const,
   });
 
 export const teamAdminPageQuery = (query: TeamAdminQuery) =>

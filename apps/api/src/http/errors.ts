@@ -77,6 +77,12 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'The report contains too many rows to export. Narrow the date range or employee scope.';
     case 'ROUTE_NOT_FOUND':
       return 'The requested endpoint was not found.';
+    case 'SCHEDULE_NOT_ASSIGNED':
+      return 'The change would leave employed dates without a work schedule.';
+    case 'SCHEDULE_VERSION_CONFLICT':
+      return 'The schedule versions changed. Refresh and review the current versions.';
+    case 'SCHEDULE_VERSION_NO_CHANGE':
+      return 'The latest schedule version already has those weekday minutes.';
     case 'TEAM_NAME_ALREADY_EXISTS':
       return 'A team already uses that name.';
     case 'TEAM_STATE_CONFLICT':

@@ -30,9 +30,11 @@ import {
   reportResultQuery,
   employeeAdminDetailQuery,
   employeeAssignmentAdminDetailQuery,
+  employeeScheduleAdminDetailQuery,
   employeeAdminPageQuery,
   systemAccountPageQuery,
   teamAdminPageQuery,
+  timeSettingsAdminDetailQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -72,6 +74,7 @@ import {
   NewEmployeeAdministrationPage,
 } from '../routes/employee-administration-page.js';
 import { SystemAccountAdministrationPage } from '../routes/system-account-administration-page.js';
+import { TimeSettingsPage } from '../routes/time-settings-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -89,13 +92,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'HR',
-    description: 'Effective-dated weekly schedules and time policies.',
-    milestone: 'WL-902 and WL-903',
-    path: 'settings/time',
-    title: 'Time settings',
   },
   {
     area: 'HR',
@@ -317,6 +313,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <EmployeeAdministrationDetailPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Employee' },
+            },
+            {
+              path: 'settings/time',
+              loader: createTimeSettingsAdminLoader(queryClient),
+              element: <TimeSettingsPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Time settings' },
             },
             {
               path: 'system/accounts',
@@ -564,6 +567,16 @@ function createEmployeeAdminDetailLoader(queryClient: QueryClient): LoaderFuncti
     if (employeeId === undefined) throw new Response(null, { status: 404 });
     void queryClient.prefetchQuery(employeeAdminDetailQuery(employeeId));
     void queryClient.prefetchQuery(employeeAssignmentAdminDetailQuery(employeeId));
+    void queryClient.prefetchQuery(employeeScheduleAdminDetailQuery(employeeId));
+    return null;
+  };
+}
+
+function createTimeSettingsAdminLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
+    void queryClient.prefetchQuery(timeSettingsAdminDetailQuery());
     return null;
   };
 }

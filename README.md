@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 9 — 2 of 8 tasks complete**
+> **Current phase progress: Phase 9 — 3 of 8 tasks complete**
 
 Phases 0–8 have passed their exit gates. The repository now includes the attendance, correction,
 absence, entitlement, manager-approval/team, and notification slices plus monthly employee review
@@ -18,9 +18,11 @@ without changing that approved record, and the monthly view separates the origin
 adjustments. Scoped operational reports now include reauthorized, formula-safe bounded CSV export,
 a minimized printable monthly record, and explicit safe summary copy. Phase 9 now includes
 accessible HR employee create/invite/activate/deactivate/history workflows and a purpose-separated
-technical account, system-role, and session surface. Organization HR can now manage teams and
+technical account, system-role, and session surface. Organization HR can manage teams and
 effective-dated team/direct-manager history, with current manager scope changing immediately and
-past attribution preserved. Effective-dated weekly schedule management is next (`WL-902`).
+past attribution preserved. HR can also create immutable weekly schedule versions and maintain
+gap-free current/future employee schedule history without rewriting earlier boundaries.
+Effective-dated time-policy management is next (`WL-903`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe
@@ -212,6 +214,7 @@ versions and makes no response-time or production-support promise.
 | [docs/57-employee-attendance-accessibility-review.md](docs/57-employee-attendance-accessibility-review.md) | Phase-wide keyboard, announcement, reflow, touch, forced-colors, reduced-motion, and viewport evidence |
 | [docs/58-phase-4-gate-review.md](docs/58-phase-4-gate-review.md) | Phase 4 vertical-slice exit criteria, cross-cutting review, verification, versioning, and Phase 5 handoff |
 | [docs/59-my-time-and-flexible-balance.md](docs/59-my-time-and-flexible-balance.md) through [docs/87-phase-8-gate-review.md](docs/87-phase-8-gate-review.md) | Phase 5–8 employee time, absence, approvals, monthly closure, scoped-report, safe-portability, and gate evidence |
+| [docs/88-employee-account-administration.md](docs/88-employee-account-administration.md) through [docs/90-effective-dated-schedule-administration.md](docs/90-effective-dated-schedule-administration.md) | Phase 9 employee/account separation, team/manager, and weekly-schedule administration evidence |
 
 ## License
 

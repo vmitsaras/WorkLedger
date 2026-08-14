@@ -15,6 +15,13 @@ export type EffectiveAssignmentTransition = Readonly<{
   insert: Readonly<{ endsOn: LocalDate | null; targetId: string }> | null;
 }>;
 
+export type EffectiveCoverageRange = Readonly<{
+  endsOn: LocalDate | null;
+  startsOn: LocalDate;
+}>;
+
+export type EffectiveAssignmentGap = EffectiveCoverageRange;
+
 export type EffectiveAssignmentDateInPastError = DomainError<'EFFECTIVE_ASSIGNMENT_DATE_IN_PAST'>;
 export type EffectiveAssignmentHistoryInvalidError =
   DomainError<'EFFECTIVE_ASSIGNMENT_HISTORY_INVALID'>;
@@ -97,6 +104,60 @@ export function validateManagerAssignmentGraph(
   return success(true);
 }
 
+export function findEffectiveAssignmentGaps(
+  assignments: readonly EffectiveAssignmentRecord[],
+  subjectId: string,
+  coverageRanges: readonly EffectiveCoverageRange[],
+  from: LocalDate,
+): Result<readonly EffectiveAssignmentGap[], EffectiveAssignmentHistoryInvalidError> {
+  if (!validSubjectHistory(assignments, subjectId) || !validCoverageRanges(coverageRanges)) {
+    return failure(HISTORY_INVALID);
+  }
+  const history = assignments
+    .filter((assignment) => assignment.subjectId === subjectId)
+    .slice()
+    .sort((left, right) => left.startsOn.localeCompare(right.startsOn));
+  const gaps: EffectiveAssignmentGap[] = [];
+
+  for (const coverage of coverageRanges) {
+    const coverageStart = coverage.startsOn < from ? from : coverage.startsOn;
+    if (coverage.endsOn !== null && coverageStart >= coverage.endsOn) continue;
+    let cursor: LocalDate | null = coverageStart;
+
+    for (const assignment of history) {
+      if (cursor === null) break;
+      if (assignment.endsOn !== null && assignment.endsOn <= cursor) continue;
+      if (coverage.endsOn !== null && assignment.startsOn >= coverage.endsOn) break;
+      if (assignment.startsOn > cursor) {
+        const gapEnd =
+          coverage.endsOn === null || assignment.startsOn < coverage.endsOn
+            ? assignment.startsOn
+            : coverage.endsOn;
+        gaps.push(Object.freeze({ endsOn: gapEnd, startsOn: cursor }));
+        cursor = gapEnd;
+        if (coverage.endsOn !== null && cursor >= coverage.endsOn) break;
+      }
+      if (assignment.startsOn <= cursor) {
+        if (assignment.endsOn === null) {
+          cursor = coverage.endsOn;
+          break;
+        }
+        if (assignment.endsOn > cursor) {
+          cursor =
+            coverage.endsOn === null || assignment.endsOn < coverage.endsOn
+              ? assignment.endsOn
+              : coverage.endsOn;
+        }
+      }
+    }
+    if (cursor !== null && (coverage.endsOn === null || cursor < coverage.endsOn)) {
+      gaps.push(Object.freeze({ endsOn: coverage.endsOn, startsOn: cursor }));
+    }
+  }
+
+  return success(Object.freeze(gaps));
+}
+
 function validSubjectHistory(
   assignments: readonly EffectiveAssignmentRecord[],
   subjectId: string,
@@ -118,6 +179,17 @@ function validSubjectHistory(
     }
   }
   return true;
+}
+
+function validCoverageRanges(ranges: readonly EffectiveCoverageRange[]): boolean {
+  const sorted = ranges.slice().sort((left, right) => left.startsOn.localeCompare(right.startsOn));
+  return sorted.every((range, index) => {
+    const next = sorted[index + 1];
+    return (
+      (range.endsOn === null || range.startsOn < range.endsOn) &&
+      (next === undefined || (range.endsOn !== null && range.endsOn <= next.startsOn))
+    );
+  });
 }
 
 function contains(assignment: EffectiveAssignmentRecord, localDate: LocalDate): boolean {

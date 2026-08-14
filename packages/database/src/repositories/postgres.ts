@@ -100,6 +100,7 @@ import type {
   AdministrationEmployeeRecord,
   AdministrationRepository,
   AdministrationSystemAccountRecord,
+  AdministrationWeeklyScheduleRecord,
   AbsenceCoverageSegmentInput,
   AbsenceCancellationRecord,
   AbsenceCancellationDecisionResult,
@@ -424,6 +425,51 @@ class PostgresAccountSelfServiceRepository implements AccountSelfServiceReposito
 class PostgresAdministrationRepository implements AdministrationRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
 
+  async applyScheduleAssignmentTransition(
+    input: Parameters<AdministrationRepository['applyScheduleAssignmentTransition']>[0],
+  ) {
+    if (!(await this.lockActiveEmployee(input.organizationId, input.employeeId))) return null;
+    const insert = input.transition.insert;
+    if (insert !== null) {
+      const [schedule] = await this.transaction
+        .select({ id: weeklySchedules.id })
+        .from(weeklySchedules)
+        .where(
+          and(
+            eq(weeklySchedules.organizationId, input.organizationId),
+            eq(
+              weeklySchedules.id,
+              mapDomainId<'WorkScheduleVersion'>(
+                insert.targetId,
+                'schedule_assignments',
+                'schedule_id',
+              ),
+            ),
+          ),
+        )
+        .limit(1);
+      if (schedule === undefined) return null;
+    }
+    const closedId = await this.closeScheduleAssignment(input);
+    if (input.transition.closeAssignmentId !== null && closedId === null) return null;
+    if (insert === null) return closedId;
+    const [created] = await this.transaction
+      .insert(scheduleAssignments)
+      .values({
+        employeeId: input.employeeId,
+        endsOn: insert.endsOn,
+        organizationId: input.organizationId,
+        scheduleId: mapDomainId<'WorkScheduleVersion'>(
+          insert.targetId,
+          'schedule_assignments',
+          'schedule_id',
+        ),
+        startsOn: input.transition.effectiveFrom,
+      })
+      .returning({ id: scheduleAssignments.id });
+    return created?.id ?? null;
+  }
+
   async applyManagerAssignmentTransition(
     input: Parameters<AdministrationRepository['applyManagerAssignmentTransition']>[0],
   ) {
@@ -725,6 +771,51 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     });
   }
 
+  async createScheduleVersion(
+    input: Parameters<AdministrationRepository['createScheduleVersion']>[0],
+  ) {
+    const [organization] = await this.transaction
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.id, input.organizationId))
+      .for('update')
+      .limit(1);
+    if (organization === undefined) return null;
+    const [latest] = await this.transaction
+      .select()
+      .from(weeklySchedules)
+      .where(
+        and(
+          eq(weeklySchedules.organizationId, input.organizationId),
+          eq(weeklySchedules.name, input.name),
+        ),
+      )
+      .orderBy(desc(weeklySchedules.version))
+      .limit(1);
+    if (
+      latest !== undefined &&
+      scheduleMinutesEqual(mapAdministrationWeeklySchedule(latest, true), input.scheduledMinutes)
+    ) {
+      return null;
+    }
+    const [created] = await this.transaction
+      .insert(weeklySchedules)
+      .values({
+        fridayMinutes: input.scheduledMinutes.FRIDAY,
+        mondayMinutes: input.scheduledMinutes.MONDAY,
+        name: input.name,
+        organizationId: input.organizationId,
+        saturdayMinutes: input.scheduledMinutes.SATURDAY,
+        sundayMinutes: input.scheduledMinutes.SUNDAY,
+        thursdayMinutes: input.scheduledMinutes.THURSDAY,
+        tuesdayMinutes: input.scheduledMinutes.TUESDAY,
+        version: (latest?.version ?? 0) + 1,
+        wednesdayMinutes: input.scheduledMinutes.WEDNESDAY,
+      })
+      .returning();
+    return created === undefined ? null : mapAdministrationWeeklySchedule(created, true);
+  }
+
   async createTechnicalAccount(
     input: Parameters<AdministrationRepository['createTechnicalAccount']>[0],
   ) {
@@ -1014,6 +1105,92 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     });
   }
 
+  async findEmployeeSchedule(
+    organizationId: Parameters<AdministrationRepository['findEmployeeSchedule']>[0],
+    employeeId: Parameters<AdministrationRepository['findEmployeeSchedule']>[1],
+  ) {
+    const [employee] = await this.transaction
+      .select({ status: employees.status })
+      .from(employees)
+      .where(and(eq(employees.organizationId, organizationId), eq(employees.id, employeeId)))
+      .limit(1);
+    if (employee === undefined) return null;
+    const employmentRows = await this.transaction
+      .select({
+        endsOn: employmentPeriods.endsOn,
+        id: employmentPeriods.id,
+        startsOn: employmentPeriods.startsOn,
+      })
+      .from(employmentPeriods)
+      .where(
+        and(
+          eq(employmentPeriods.organizationId, organizationId),
+          eq(employmentPeriods.employeeId, employeeId),
+        ),
+      )
+      .orderBy(asc(employmentPeriods.startsOn), asc(employmentPeriods.id));
+    const assignmentRows = await this.transaction
+      .select({
+        assignmentEndsOn: scheduleAssignments.endsOn,
+        assignmentId: scheduleAssignments.id,
+        assignmentStartsOn: scheduleAssignments.startsOn,
+        schedule: weeklySchedules,
+      })
+      .from(scheduleAssignments)
+      .innerJoin(
+        weeklySchedules,
+        and(
+          eq(weeklySchedules.organizationId, organizationId),
+          eq(weeklySchedules.id, scheduleAssignments.scheduleId),
+        ),
+      )
+      .where(
+        and(
+          eq(scheduleAssignments.organizationId, organizationId),
+          eq(scheduleAssignments.employeeId, employeeId),
+        ),
+      )
+      .orderBy(desc(scheduleAssignments.startsOn), desc(scheduleAssignments.id));
+    const schedules = await this.listScheduleVersions(organizationId);
+    const latestByName = new Map(
+      schedules
+        .filter(({ latestVersion }) => latestVersion)
+        .map((schedule) => [schedule.name, schedule.version]),
+    );
+    return Object.freeze({
+      employeeStatus: employee.status,
+      employmentHistory: Object.freeze(
+        employmentRows.map((row) =>
+          Object.freeze({
+            endsOn:
+              row.endsOn === null
+                ? null
+                : mapLocalDate(row.endsOn, 'employment_periods', 'ends_on'),
+            id: mapDomainId<'EmploymentPeriod'>(row.id, 'employment_periods', 'id'),
+            startsOn: mapLocalDate(row.startsOn, 'employment_periods', 'starts_on'),
+          }),
+        ),
+      ),
+      history: Object.freeze(
+        assignmentRows.map((row) =>
+          Object.freeze({
+            endsOn:
+              row.assignmentEndsOn === null
+                ? null
+                : mapLocalDate(row.assignmentEndsOn, 'schedule_assignments', 'ends_on'),
+            id: mapDomainId<'ScheduleAssignment'>(row.assignmentId, 'schedule_assignments', 'id'),
+            schedule: mapAdministrationWeeklySchedule(
+              row.schedule,
+              latestByName.get(row.schedule.name) === row.schedule.version,
+            ),
+            startsOn: mapLocalDate(row.assignmentStartsOn, 'schedule_assignments', 'starts_on'),
+          }),
+        ),
+      ),
+      schedules,
+    });
+  }
+
   async listEmployees(input: Parameters<AdministrationRepository['listEmployees']>[0]) {
     const statusCondition = input.status === null ? undefined : eq(employees.status, input.status);
     const where = and(eq(employees.organizationId, input.organizationId), statusCondition);
@@ -1061,6 +1238,25 @@ class PostgresAdministrationRepository implements AdministrationRepository {
           targetId: row.managerEmployeeId,
         }),
       ),
+    );
+  }
+
+  async listScheduleVersions(
+    organizationId: Parameters<AdministrationRepository['listScheduleVersions']>[0],
+  ) {
+    const rows = await this.transaction
+      .select()
+      .from(weeklySchedules)
+      .where(eq(weeklySchedules.organizationId, organizationId))
+      .orderBy(asc(weeklySchedules.name), desc(weeklySchedules.version), asc(weeklySchedules.id))
+      .limit(250);
+    const latestNames = new Set<string>();
+    return Object.freeze(
+      rows.map((row) => {
+        const latestVersion = !latestNames.has(row.name);
+        latestNames.add(row.name);
+        return mapAdministrationWeeklySchedule(row, latestVersion);
+      }),
     );
   }
 
@@ -1323,6 +1519,36 @@ class PostgresAdministrationRepository implements AdministrationRepository {
         ),
       )
       .returning({ id: managerAssignments.id });
+    return rows[0]?.id ?? null;
+  }
+
+  private async closeScheduleAssignment(
+    input: Parameters<AdministrationRepository['applyScheduleAssignmentTransition']>[0],
+  ): Promise<string | null> {
+    if (input.transition.closeAssignmentId === null) return null;
+    const rows = await this.transaction
+      .update(scheduleAssignments)
+      .set({ endsOn: input.transition.effectiveFrom })
+      .where(
+        and(
+          eq(scheduleAssignments.organizationId, input.organizationId),
+          eq(scheduleAssignments.employeeId, input.employeeId),
+          eq(
+            scheduleAssignments.id,
+            mapDomainId<'ScheduleAssignment'>(
+              input.transition.closeAssignmentId,
+              'schedule_assignments',
+              'id',
+            ),
+          ),
+          lt(scheduleAssignments.startsOn, input.transition.effectiveFrom),
+          or(
+            isNull(scheduleAssignments.endsOn),
+            gt(scheduleAssignments.endsOn, input.transition.effectiveFrom),
+          ),
+        ),
+      )
+      .returning({ id: scheduleAssignments.id });
     return rows[0]?.id ?? null;
   }
 
@@ -1589,6 +1815,52 @@ class PostgresAdministrationRepository implements AdministrationRepository {
       await this.transaction.delete(authSessions).where(eq(authSessions.userId, accountId));
     }
   }
+}
+
+function mapAdministrationWeeklySchedule(
+  row: Readonly<{
+    fridayMinutes: number;
+    id: string;
+    mondayMinutes: number;
+    name: string;
+    saturdayMinutes: number;
+    sundayMinutes: number;
+    thursdayMinutes: number;
+    tuesdayMinutes: number;
+    version: number;
+    wednesdayMinutes: number;
+  }>,
+  latestVersion: boolean,
+): AdministrationWeeklyScheduleRecord {
+  const scheduledMinutes = Object.freeze({
+    FRIDAY: mapNonNegativeMinutes(row.fridayMinutes, 'weekly_schedules', 'friday_minutes'),
+    MONDAY: mapNonNegativeMinutes(row.mondayMinutes, 'weekly_schedules', 'monday_minutes'),
+    SATURDAY: mapNonNegativeMinutes(row.saturdayMinutes, 'weekly_schedules', 'saturday_minutes'),
+    SUNDAY: mapNonNegativeMinutes(row.sundayMinutes, 'weekly_schedules', 'sunday_minutes'),
+    THURSDAY: mapNonNegativeMinutes(row.thursdayMinutes, 'weekly_schedules', 'thursday_minutes'),
+    TUESDAY: mapNonNegativeMinutes(row.tuesdayMinutes, 'weekly_schedules', 'tuesday_minutes'),
+    WEDNESDAY: mapNonNegativeMinutes(row.wednesdayMinutes, 'weekly_schedules', 'wednesday_minutes'),
+  });
+  return Object.freeze({
+    id: mapDomainId<'WorkScheduleVersion'>(row.id, 'weekly_schedules', 'id'),
+    latestVersion,
+    name: row.name,
+    scheduledMinutes,
+    version: row.version,
+    weeklyTotalMinutes: Object.values(scheduledMinutes).reduce(
+      (total, minutes) => total + minutes,
+      0,
+    ),
+  });
+}
+
+function scheduleMinutesEqual(
+  schedule: AdministrationWeeklyScheduleRecord,
+  minutes: AdministrationWeeklyScheduleRecord['scheduledMinutes'],
+): boolean {
+  return Object.entries(minutes).every(
+    ([weekday, value]) => schedule.scheduledMinutes[weekday as keyof typeof minutes] === value,
+  );
 }
 
 function mapAdministrationTeamAssignment(

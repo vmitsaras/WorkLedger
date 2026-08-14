@@ -18,6 +18,7 @@ import type {
   CalculationBlockerCode,
   EffectiveAssignmentRecord,
   EffectiveAssignmentTransition,
+  Weekday,
 } from '@workledger/domain';
 
 export type EmployeeStatus = 'ACTIVE' | 'INACTIVE';
@@ -372,6 +373,35 @@ export type ApplyAdministrationAssignmentTransitionInput = Readonly<{
   employeeId: DomainId<'Employee'>;
   organizationId: DomainId<'Organization'>;
   transition: EffectiveAssignmentTransition;
+}>;
+
+export type AdministrationWeeklyScheduleRecord = Readonly<{
+  id: DomainId<'WorkScheduleVersion'>;
+  latestVersion: boolean;
+  name: string;
+  scheduledMinutes: Readonly<Record<Weekday, NonNegativeMinutes>>;
+  version: number;
+  weeklyTotalMinutes: number;
+}>;
+
+export type AdministrationScheduleAssignmentRecord = Readonly<{
+  endsOn: LocalDate | null;
+  id: DomainId<'ScheduleAssignment'>;
+  schedule: AdministrationWeeklyScheduleRecord;
+  startsOn: LocalDate;
+}>;
+
+export type AdministrationEmployeeScheduleRecord = Readonly<{
+  employeeStatus: EmployeeStatus;
+  employmentHistory: readonly AdministrationEmploymentPeriodRecord[];
+  history: readonly AdministrationScheduleAssignmentRecord[];
+  schedules: readonly AdministrationWeeklyScheduleRecord[];
+}>;
+
+export type CreateAdministrationScheduleVersionInput = Readonly<{
+  name: string;
+  organizationId: DomainId<'Organization'>;
+  scheduledMinutes: Readonly<Record<Weekday, NonNegativeMinutes>>;
 }>;
 
 export type CreateAdministrationEmployeeInput = Readonly<{
@@ -1172,6 +1202,9 @@ export interface EmployeeRepository {
 }
 
 export interface AdministrationRepository {
+  applyScheduleAssignmentTransition(
+    input: ApplyAdministrationAssignmentTransitionInput,
+  ): Promise<string | null>;
   activateEmployee(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
@@ -1183,6 +1216,9 @@ export interface AdministrationRepository {
     organizationId: DomainId<'Organization'>;
   }> | null>;
   createEmployee(input: CreateAdministrationEmployeeInput): Promise<AdministrationEmployeeRecord>;
+  createScheduleVersion(
+    input: CreateAdministrationScheduleVersionInput,
+  ): Promise<AdministrationWeeklyScheduleRecord | null>;
   createTeam(
     organizationId: DomainId<'Organization'>,
     name: string,
@@ -1206,6 +1242,10 @@ export interface AdministrationRepository {
     employeeId: DomainId<'Employee'>,
     localDate: LocalDate,
   ): Promise<AdministrationEmployeeAssignmentsRecord | null>;
+  findEmployeeSchedule(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+  ): Promise<AdministrationEmployeeScheduleRecord | null>;
   applyManagerAssignmentTransition(
     input: ApplyAdministrationAssignmentTransitionInput,
   ): Promise<string | null>;
@@ -1215,6 +1255,9 @@ export interface AdministrationRepository {
   listManagerAssignmentGraph(
     organizationId: DomainId<'Organization'>,
   ): Promise<readonly EffectiveAssignmentRecord[]>;
+  listScheduleVersions(
+    organizationId: DomainId<'Organization'>,
+  ): Promise<readonly AdministrationWeeklyScheduleRecord[]>;
   listEmployees(
     input: Readonly<{
       at: Instant;

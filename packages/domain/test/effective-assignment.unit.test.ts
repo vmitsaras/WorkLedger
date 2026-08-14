@@ -1,4 +1,5 @@
 import {
+  findEffectiveAssignmentGaps,
   parseLocalDate,
   planEffectiveAssignmentTransition,
   validateManagerAssignmentGraph,
@@ -117,4 +118,38 @@ test('accepts changing acyclic manager graphs across effective boundaries', () =
       assignment('b-c', 'b', 'c', '2026-01-01'),
     ]),
   ).toEqual({ ok: true, value: true });
+});
+
+test('finds only current and future assignment gaps inside employment coverage', () => {
+  expect(
+    findEffectiveAssignmentGaps(
+      [
+        assignment('current', 'employee', 'schedule-a', '2026-01-01', '2026-09-01'),
+        assignment('future', 'employee', 'schedule-b', '2026-10-01'),
+      ],
+      'employee',
+      [{ endsOn: null, startsOn: date('2026-01-01') }],
+      date('2026-08-14'),
+    ),
+  ).toEqual({
+    ok: true,
+    value: [{ endsOn: '2026-10-01', startsOn: '2026-09-01' }],
+  });
+});
+
+test('does not treat time between employment periods as an assignment gap', () => {
+  expect(
+    findEffectiveAssignmentGaps(
+      [
+        assignment('first', 'employee', 'schedule-a', '2026-01-01', '2026-03-01'),
+        assignment('second', 'employee', 'schedule-b', '2026-06-01'),
+      ],
+      'employee',
+      [
+        { endsOn: date('2026-03-01'), startsOn: date('2026-01-01') },
+        { endsOn: null, startsOn: date('2026-06-01') },
+      ],
+      date('2026-01-01'),
+    ),
+  ).toEqual({ ok: true, value: [] });
 });

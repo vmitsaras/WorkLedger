@@ -162,8 +162,8 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 |---|---|---|---|---|
 | WL-900 | Build HR employee create/invite/activate/deactivate/history plus separated technical-account, system-role, and session administration routes | WL-309, WL-400 | Complex-form accessibility; deactivation revokes sessions and preserves history; HR/system fields and self-role actions remain separated | Done |
 | WL-901 | Build teams, manager assignments, and effective scope changes | WL-900 | Scope changes reflected immediately; historical attribution preserved | Done |
-| WL-902 | Build effective-dated schedule management | WL-201, WL-900 | Overlap/gap validation; future change does not rewrite history | Ready |
-| WL-903 | Build time-policy management | WL-902 | Policy preview and effective-date behavior tested | Not started |
+| WL-902 | Build effective-dated schedule management | WL-201, WL-900 | Overlap/gap validation; future change does not rewrite history | Done |
+| WL-903 | Build time-policy management | WL-902 | Policy preview and effective-date behavior tested | Ready |
 | WL-904 | Build absence-type and entitlement administration | WL-600, WL-601, WL-900 | Ledger-based adjustments and audit reasons | Not started |
 | WL-905 | Build holiday calendar management | WL-900 | Date-only handling and recalculation impact preview | Not started |
 | WL-906 | Build authorized audit explorer with filters and safe detail | WL-305, WL-400 | Scope, redaction, pagination, and accessibility tests | Not started |

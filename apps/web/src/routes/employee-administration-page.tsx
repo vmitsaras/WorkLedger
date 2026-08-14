@@ -7,6 +7,7 @@ import {
   type EmployeeAdminDetail,
   type EmployeeAdminQuery,
   type EmployeeAssignmentAdminDetail,
+  type EmployeeScheduleAdminDetail,
   type TeamAdminPage,
 } from '@workledger/contracts';
 import { Button, linkVariants, TextField } from '@workledger/ui';
@@ -27,8 +28,10 @@ import {
   employeeAdminDetailQuery,
   employeeAdminPageQuery,
   employeeAssignmentAdminDetailQuery,
+  employeeScheduleAdminDetailQuery,
   teamAdminPageQuery,
 } from '../app/query.js';
+import { EmployeeScheduleAdministration } from '../components/employee-schedule-administration.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -430,14 +433,19 @@ export function EmployeeAdministrationDetailPage() {
   if (employeeId === undefined) throw new Response(null, { status: 404 });
   const employeeQuery = useQuery(employeeAdminDetailQuery(employeeId));
   const assignmentsQuery = useQuery(employeeAssignmentAdminDetailQuery(employeeId));
+  const scheduleQuery = useQuery(employeeScheduleAdminDetailQuery(employeeId));
   useEffect(() => {
-    if (employeeQuery.data !== undefined && assignmentsQuery.data !== undefined) {
+    if (
+      employeeQuery.data !== undefined &&
+      assignmentsQuery.data !== undefined &&
+      scheduleQuery.data !== undefined
+    ) {
       window.requestAnimationFrame(() =>
         document.querySelector<HTMLElement>('[data-route-heading]')?.focus(),
       );
     }
-  }, [assignmentsQuery.data, employeeQuery.data]);
-  if (employeeQuery.isPending || assignmentsQuery.isPending) {
+  }, [assignmentsQuery.data, employeeQuery.data, scheduleQuery.data]);
+  if (employeeQuery.isPending || assignmentsQuery.isPending || scheduleQuery.isPending) {
     return (
       <section aria-busy="true">
         <PageHeader title="Employee" description="Loading lifecycle history…" />
@@ -446,13 +454,25 @@ export function EmployeeAdministrationDetailPage() {
   }
   if (employeeQuery.isError) throw employeeQuery.error;
   if (assignmentsQuery.isError) throw assignmentsQuery.error;
-  return <EmployeeDetail assignments={assignmentsQuery.data} employee={employeeQuery.data} />;
+  if (scheduleQuery.isError) throw scheduleQuery.error;
+  return (
+    <EmployeeDetail
+      assignments={assignmentsQuery.data}
+      employee={employeeQuery.data}
+      schedule={scheduleQuery.data}
+    />
+  );
 }
 
 function EmployeeDetail({
   assignments,
   employee,
-}: Readonly<{ assignments: EmployeeAssignmentAdminDetail; employee: EmployeeAdminDetail }>) {
+  schedule,
+}: Readonly<{
+  assignments: EmployeeAssignmentAdminDetail;
+  employee: EmployeeAdminDetail;
+  schedule: EmployeeScheduleAdminDetail;
+}>) {
   const queryClient = useQueryClient();
   const [manager, setManager] = useState(employee.roles.includes('MANAGER'));
   const [hrAdministrator, setHrAdministrator] = useState(
@@ -582,6 +602,8 @@ function EmployeeDetail({
       </div>
 
       <AssignmentAdministration assignments={assignments} employeeId={employee.id} />
+
+      <EmployeeScheduleAdministration employeeId={employee.id} schedule={schedule} />
 
       {!employee.privilegedActionsAllowed ? (
         <div className="wl-alert rounded-xl border p-4">

@@ -73,6 +73,26 @@ export {
 } from './administration.js';
 
 export {
+  createScheduleVersionAdminRequestSchema,
+  employeeScheduleAdminDetailEnvelopeSchema,
+  employeeScheduleAdminDetailSchema,
+  replaceScheduleAssignmentAdminRequestSchema,
+  scheduleAdministrationActionEnvelopeSchema,
+  scheduleAssignmentAdminSummarySchema,
+  scheduleCoverageGapSchema,
+  scheduleVersionAdminSummarySchema,
+  timeSettingsAdminDetailEnvelopeSchema,
+  timeSettingsAdminDetailSchema,
+  weeklyScheduleMinutesSchema,
+  type CreateScheduleVersionAdminRequest,
+  type EmployeeScheduleAdminDetail,
+  type ReplaceScheduleAssignmentAdminRequest,
+  type ScheduleVersionAdminSummary,
+  type TimeSettingsAdminDetail,
+  type WeeklyScheduleMinutes,
+} from './time-administration.js';
+
+export {
   REPORT_DIRECTIONS,
   REPORT_KEYS,
   REPORT_SCOPES,

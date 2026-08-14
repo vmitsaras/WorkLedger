@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 9 — Administration
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 2 of 8 Phase 9 tasks complete
-**Current milestone:** Effective-dated weekly schedule management
-**Active task:** `WL-902`
+**Phase progress:** 3 of 8 Phase 9 tasks complete
+**Current milestone:** Effective-dated time-policy management
+**Active task:** `WL-903`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Build effective-dated weekly schedule administration with overlap/gap validation and future changes
-that preserve approved history for `WL-902`.
+Build immutable time-policy versions, effective assignments, and policy-impact preview behavior for
+`WL-903`.
 
 ## Verified decisions
 
@@ -78,6 +78,13 @@ that preserve approved history for `WL-902`.
 - Effective assignment changes cannot be backdated or replace an existing same-day boundary,
   preserve already scheduled later boundaries, and validate the full current/future manager graph
   against self-links and direct or indirect cycles inside the serializable mutation transaction.
+- Weekly schedule versions are immutable organization-scoped seven-day minute records. Reusing a
+  name with changed minutes creates the next serialized version, while an identical repeat is
+  rejected and creating a version never changes employee assignments.
+- Ordinary schedule assignment changes are current/future-only half-open transitions that preserve
+  earlier and already scheduled later boundaries. Every current/future employed date must remain
+  covered, periods between separate employments need no schedule, and PostgreSQL exclusion and
+  organization-scoped foreign-key constraints remain final integrity guards.
 - Inactive teams remain readable in history but unavailable for new assignments; a team with a
   current or scheduled assignment cannot be deactivated.
 - `/team` uses active attendance before neutral organization-local date absence coverage and exposes
@@ -372,6 +379,35 @@ that preserve approved history for `WL-902`.
   assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-902` — Build effective-dated schedule management
+
+- Changed: added strict contracts and generated OpenAPI for immutable weekly schedule versions and
+  employee schedule current/history/gap detail; implemented current/future coverage validation,
+  serialized version numbering, serializable assignment close/insert/audit transactions, an
+  accessible `/settings/time` surface, and schedule controls on employee detail.
+- Verified: pinned toolchain/workspace/version/configuration checks, reproducible OpenAPI,
+  formatting, ESLint and 230-file/1,157-import boundaries, strict TypeScript, 24 tooling tests, 292
+  unit/component tests across 39 files, 22 database-enabled integration tests across 11 focused
+  files, 20 Chromium scenarios, and the production/workspace build pass. The build retains the
+  known large-chunk advisory; database integration retains the existing `pg` concurrent-query
+  deprecation warning.
+- Accessibility: creation and assignment use visible labels, native controls, textual latest,
+  historical, current, total, date-range, and gap states, semantic ordered history, linked focused
+  error recovery, persistent results, pending protection, privileged self-control omission, and
+  component/browser axe coverage through keyboard-operable workflows.
+- Security/data: all routes enforce active account and organization-HR authority; mutations are
+  same-origin and CSRF protected, privileged self-assignment and cross-organization versions are
+  denied, and version or lock/validate/close/insert/audit effects commit atomically in serializable
+  transactions. Audit facts omit names, weekday arrays, and form payloads.
+- Documentation: added `docs/90-effective-dated-schedule-administration.md`, regenerated OpenAPI,
+  and synchronized README, TODO, task board, and project status. No migration or version bump is
+  needed because existing schedule constraints cover the slice and this is not the Phase 9 gate.
+- Remaining risk: historical/locked-period schedule corrections require a later explicit workflow;
+  broad performance, concurrency, cross-browser, assistive-technology, and production-security
+  matrices remain Phase 10 work. The large web chunk advisory, `pg` warning, `D-502`, and `D-504`
+  also remain explicit.
+- Next task: `WL-903`.
 
 ### `WL-901` — Build teams, manager assignments, and effective scope changes
 
@@ -1083,12 +1119,12 @@ that preserve approved history for `WL-902`.
 
 ## Current blockers
 
-No `WL-902` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
+No `WL-903` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
 recovery, and `D-502` remains open before the production browser gate.
 
 ## Next task
 
-`WL-902 — Build effective-dated schedule management.`
+`WL-903 — Build time-policy management.`
 
 ## Update rules
 
