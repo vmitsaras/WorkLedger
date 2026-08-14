@@ -1,7 +1,22 @@
 import { createHash } from 'node:crypto';
 
-import { and, asc, desc, eq, gt, gte, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { unionAll } from 'drizzle-orm/pg-core';
 
 import {
   createLocalDateRange,
@@ -53,6 +68,8 @@ import {
   securityAuditEvents,
   timeAccountEntries,
   timePolicies,
+  teamAssignments,
+  teams,
   weeklySchedules,
 } from '../schema/index.js';
 import {
@@ -71,6 +88,8 @@ import type {
   AbsenceCancellationRecord,
   AbsenceCancellationDecisionResult,
   AbsenceRequestRepository,
+  ApprovalInboxItemRecord,
+  ApprovalInboxRepository,
   AbsenceRequestConfigurationInput,
   DecideAbsenceCancellationInput,
   AdvanceAttendanceHeadInput,
@@ -101,6 +120,7 @@ import type {
   LeaveEntitlementEntryRecord,
   LeaveEntitlementRepository,
   ListAuthorizedEmployeesInput,
+  ListApprovalInboxInput,
   OrganizationRecord,
   OrganizationRepository,
   PersonalCalendarRecords,
@@ -144,6 +164,7 @@ export type RepositoryTransaction = Parameters<Parameters<RootDatabase['transact
 export function createTransactionRepositories(transaction: RepositoryTransaction): Readonly<{
   accountSelfService: AccountSelfServiceRepository;
   absenceRequests: AbsenceRequestRepository;
+  approvalInbox: ApprovalInboxRepository;
   audit: AuditRepository;
   attendance: AttendanceRepository;
   attendanceIdempotency: AttendanceIdempotencyRepository;
@@ -159,6 +180,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   return Object.freeze({
     accountSelfService: new PostgresAccountSelfServiceRepository(transaction),
     absenceRequests: new PostgresAbsenceRequestRepository(transaction),
+    approvalInbox: new PostgresApprovalInboxRepository(transaction),
     audit: new PostgresAuditRepository(transaction),
     attendance: new PostgresAttendanceRepository(transaction),
     attendanceIdempotency: new PostgresAttendanceIdempotencyRepository(transaction),
@@ -338,6 +360,255 @@ class PostgresAccountSelfServiceRepository implements AccountSelfServiceReposito
       .for('update')
       .limit(1);
     return row === undefined ? null : mapAccountSession(row);
+  }
+}
+
+class PostgresApprovalInboxRepository implements ApprovalInboxRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async list(input: ListApprovalInboxInput) {
+    const scopeCondition = employeeScopeCondition(input);
+    const selfExclusion =
+      input.actorEmployeeId === null ? undefined : sql`${employees.id} <> ${input.actorEmployeeId}`;
+    const currentManagerJoin = and(
+      eq(managerAssignments.organizationId, input.organizationId),
+      eq(managerAssignments.employeeId, employees.id),
+      lte(managerAssignments.startsOn, input.localDate),
+      or(isNull(managerAssignments.endsOn), gt(managerAssignments.endsOn, input.localDate)),
+    );
+    const currentTeamJoin = and(
+      eq(teamAssignments.organizationId, input.organizationId),
+      eq(teamAssignments.employeeId, employees.id),
+      lte(teamAssignments.startsOn, input.localDate),
+      or(isNull(teamAssignments.endsOn), gt(teamAssignments.endsOn, input.localDate)),
+    );
+
+    const correctionQuery = this.transaction
+      .select({
+        affectedEndDate: sql<LocalDate>`${correctionRequests.localDate}`.as('affected_end_date'),
+        affectedStartDate: sql<LocalDate>`${correctionRequests.localDate}`.as(
+          'affected_start_date',
+        ),
+        employeeDisplayName: sql<string>`${employees.displayName}`.as('employee_display_name'),
+        employeeId: sql<string>`${employees.id}`.as('employee_id'),
+        id: sql<string>`${correctionRequests.id}`.as('item_id'),
+        status: sql<ApprovalInboxItemRecord['status']>`case
+          when ${correctionRequests.status} = 'CHANGES_REQUESTED' then 'WAITING_ON_EMPLOYEE'
+          when ${correctionRequests.status} = 'APPROVED' and exists (
+            select 1 from ${appliedCorrections}
+            where ${appliedCorrections.organizationId} = ${input.organizationId}
+              and ${appliedCorrections.correctionRequestId} = ${correctionRequests.id}
+          ) then 'COMPLETED'
+          when ${correctionRequests.status} in ('SUBMITTED', 'APPROVED') then 'ACTION_REQUIRED'
+          else 'COMPLETED'
+        end`.as('status'),
+        submittedAt: sql<string>`${correctionRequests.createdAt}`.as('submitted_at'),
+        teamId: sql<string | null>`${teams.id}`.as('team_id'),
+        teamName: sql<string | null>`${teams.name}`.as('team_name'),
+        type: sql<ApprovalInboxItemRecord['type']>`'CORRECTION'`.as('type'),
+        version: sql<number>`${correctionRequests.version}`.as('version'),
+      })
+      .from(correctionRequests)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.organizationId, input.organizationId),
+          eq(employees.id, correctionRequests.employeeId),
+        ),
+      )
+      .leftJoin(managerAssignments, currentManagerJoin)
+      .leftJoin(teamAssignments, currentTeamJoin)
+      .leftJoin(
+        teams,
+        and(eq(teams.organizationId, input.organizationId), eq(teams.id, teamAssignments.teamId)),
+      )
+      .where(
+        and(
+          eq(correctionRequests.organizationId, input.organizationId),
+          scopeCondition,
+          selfExclusion,
+        ),
+      );
+
+    const absenceQuery = this.transaction
+      .select({
+        affectedEndDate: sql<LocalDate>`max(${absenceCoverageSegments.localDate})`.as(
+          'affected_end_date',
+        ),
+        affectedStartDate: sql<LocalDate>`min(${absenceCoverageSegments.localDate})`.as(
+          'affected_start_date',
+        ),
+        employeeDisplayName: sql<string>`${employees.displayName}`.as('employee_display_name'),
+        employeeId: sql<string>`${employees.id}`.as('employee_id'),
+        id: sql<string>`${absenceRequests.id}`.as('item_id'),
+        status: sql<ApprovalInboxItemRecord['status']>`case
+          when ${absenceRequests.status} = 'CHANGES_REQUESTED' then 'WAITING_ON_EMPLOYEE'
+          when ${absenceRequests.status} in ('SUBMITTED', 'REPORTED') then 'ACTION_REQUIRED'
+          else 'COMPLETED'
+        end`.as('status'),
+        submittedAt: sql<string>`${absenceRequests.submittedAt}`.as('submitted_at'),
+        teamId: sql<string | null>`${teams.id}`.as('team_id'),
+        teamName: sql<string | null>`${teams.name}`.as('team_name'),
+        type: sql<ApprovalInboxItemRecord['type']>`'ABSENCE'`.as('type'),
+        version: sql<number>`${absenceRequests.version}`.as('version'),
+      })
+      .from(absenceRequests)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.organizationId, input.organizationId),
+          eq(employees.id, absenceRequests.employeeId),
+        ),
+      )
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.organizationId, input.organizationId),
+          eq(absenceCoverageSegments.absenceRequestId, absenceRequests.id),
+        ),
+      )
+      .leftJoin(managerAssignments, currentManagerJoin)
+      .leftJoin(teamAssignments, currentTeamJoin)
+      .leftJoin(
+        teams,
+        and(eq(teams.organizationId, input.organizationId), eq(teams.id, teamAssignments.teamId)),
+      )
+      .where(
+        and(
+          eq(absenceRequests.organizationId, input.organizationId),
+          scopeCondition,
+          selfExclusion,
+        ),
+      )
+      .groupBy(
+        absenceRequests.id,
+        employees.id,
+        teams.id,
+        teams.name,
+        absenceRequests.status,
+        absenceRequests.submittedAt,
+        absenceRequests.version,
+      );
+
+    const cancellationQuery = this.transaction
+      .select({
+        affectedEndDate: sql<LocalDate>`max(${absenceCoverageSegments.localDate})`.as(
+          'affected_end_date',
+        ),
+        affectedStartDate: sql<LocalDate>`min(${absenceCoverageSegments.localDate})`.as(
+          'affected_start_date',
+        ),
+        employeeDisplayName: sql<string>`${employees.displayName}`.as('employee_display_name'),
+        employeeId: sql<string>`${employees.id}`.as('employee_id'),
+        id: sql<string>`${absenceCancellations.id}`.as('item_id'),
+        status: sql<ApprovalInboxItemRecord['status']>`case
+          when ${absenceCancellations.status} = 'CHANGES_REQUESTED' then 'WAITING_ON_EMPLOYEE'
+          when ${absenceCancellations.status} = 'PENDING_DECISION' then 'ACTION_REQUIRED'
+          else 'COMPLETED'
+        end`.as('status'),
+        submittedAt: sql<string>`${absenceCancellations.submittedAt}`.as('submitted_at'),
+        teamId: sql<string | null>`${teams.id}`.as('team_id'),
+        teamName: sql<string | null>`${teams.name}`.as('team_name'),
+        type: sql<ApprovalInboxItemRecord['type']>`'CANCELLATION'`.as('type'),
+        version: sql<number>`${absenceCancellations.version}`.as('version'),
+      })
+      .from(absenceCancellations)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.organizationId, input.organizationId),
+          eq(employees.id, absenceCancellations.employeeId),
+        ),
+      )
+      .innerJoin(
+        absenceCancellationSegments,
+        and(
+          eq(absenceCancellationSegments.organizationId, input.organizationId),
+          eq(absenceCancellationSegments.absenceCancellationId, absenceCancellations.id),
+        ),
+      )
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.organizationId, input.organizationId),
+          eq(absenceCoverageSegments.id, absenceCancellationSegments.absenceCoverageSegmentId),
+        ),
+      )
+      .leftJoin(managerAssignments, currentManagerJoin)
+      .leftJoin(teamAssignments, currentTeamJoin)
+      .leftJoin(
+        teams,
+        and(eq(teams.organizationId, input.organizationId), eq(teams.id, teamAssignments.teamId)),
+      )
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, input.organizationId),
+          scopeCondition,
+          selfExclusion,
+        ),
+      )
+      .groupBy(
+        absenceCancellations.id,
+        employees.id,
+        teams.id,
+        teams.name,
+        absenceCancellations.status,
+        absenceCancellations.submittedAt,
+        absenceCancellations.version,
+      );
+
+    const unified = unionAll(correctionQuery, absenceQuery, cancellationQuery).as('approval_inbox');
+    const filters = and(
+      input.type === 'ALL' ? undefined : eq(unified.type, input.type),
+      input.status === 'ALL' ? undefined : eq(unified.status, input.status),
+      input.teamId === null ? undefined : eq(unified.teamId, input.teamId),
+      input.from === null ? undefined : gte(unified.affectedEndDate, input.from),
+      input.to === null ? undefined : lte(unified.affectedStartDate, input.to),
+    );
+    const direction = input.direction === 'ASC' ? asc : desc;
+    const primarySort =
+      input.sort === 'AFFECTED_DATE'
+        ? unified.affectedStartDate
+        : input.sort === 'EMPLOYEE'
+          ? sql`lower(${unified.employeeDisplayName})`
+          : unified.submittedAt;
+    const rows = await this.transaction
+      .select()
+      .from(unified)
+      .where(filters)
+      .orderBy(
+        direction(primarySort),
+        direction(unified.submittedAt),
+        direction(unified.type),
+        direction(unified.id),
+      )
+      .limit(input.limit)
+      .offset(input.offset);
+    const [countRow] = await this.transaction
+      .select({ total: sql<number>`count(*)::integer`.mapWith(Number) })
+      .from(unified)
+      .where(filters);
+    const teamRows = await this.transaction
+      .selectDistinct({ id: unified.teamId, name: unified.teamName })
+      .from(unified)
+      .where(isNotNull(unified.teamId))
+      .orderBy(asc(unified.teamName), asc(unified.teamId));
+
+    return Object.freeze({
+      items: Object.freeze(rows.map(mapApprovalInboxItem)),
+      teams: Object.freeze(
+        teamRows.map((team) => {
+          if (team.id === null || team.name === null) {
+            throw new DatabaseValueError('teams', 'id');
+          }
+          return Object.freeze({
+            id: mapDomainId<'Team'>(team.id, 'teams', 'id'),
+            name: team.name,
+          });
+        }),
+      ),
+      total: countRow?.total ?? 0,
+    });
   }
 }
 
@@ -762,6 +1033,68 @@ function employeeScopeCondition(input: ListAuthorizedEmployeesInput) {
 
 function mapEmployeeId(value: string) {
   return mapDomainId<'Employee'>(value, 'employees', 'id');
+}
+
+function mapApprovalInboxItem(
+  value: Readonly<{
+    affectedEndDate: string;
+    affectedStartDate: string;
+    employeeDisplayName: string;
+    employeeId: string;
+    id: string;
+    status: ApprovalInboxItemRecord['status'];
+    submittedAt: string;
+    teamId: string | null;
+    teamName: string | null;
+    type: ApprovalInboxItemRecord['type'];
+    version: number;
+  }>,
+): ApprovalInboxItemRecord {
+  const team =
+    value.teamId === null && value.teamName === null
+      ? null
+      : value.teamId !== null && value.teamName !== null
+        ? Object.freeze({
+            id: mapDomainId<'Team'>(value.teamId, 'teams', 'id'),
+            name: value.teamName,
+          })
+        : (() => {
+            throw new DatabaseValueError('team_assignments', 'team_id');
+          })();
+  const id =
+    value.type === 'CORRECTION'
+      ? mapDomainId<'CorrectionRequest'>(value.id, 'correction_requests', 'id')
+      : value.type === 'ABSENCE'
+        ? mapDomainId<'AbsenceRequest'>(value.id, 'absence_requests', 'id')
+        : mapDomainId<'AbsenceCancellation'>(value.id, 'absence_cancellations', 'id');
+  return Object.freeze({
+    affectedEndDate: mapLocalDate(
+      value.affectedEndDate,
+      approvalInboxSource(value.type),
+      'affected_end_date',
+    ),
+    affectedStartDate: mapLocalDate(
+      value.affectedStartDate,
+      approvalInboxSource(value.type),
+      'affected_start_date',
+    ),
+    employeeDisplayName: value.employeeDisplayName,
+    employeeId: mapEmployeeId(value.employeeId),
+    id,
+    status: value.status,
+    submittedAt: mapInstant(value.submittedAt, approvalInboxSource(value.type), 'submitted_at'),
+    team,
+    type: value.type,
+    version: value.version,
+  });
+}
+
+function approvalInboxSource(type: ApprovalInboxItemRecord['type']): string {
+  return type === 'CORRECTION'
+    ? 'correction_requests'
+    : type === 'ABSENCE'
+      ? 'absence_requests'
+      : 'absence_cancellations';
 }
 
 class PostgresOrganizationRepository implements OrganizationRepository {

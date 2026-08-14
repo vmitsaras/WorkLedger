@@ -16,6 +16,7 @@ import { createWorkLedgerAuthentication } from './auth/authentication.js';
 import { registerAuthenticationRoutes } from './auth/fastify-auth.js';
 import { createRequestId, registerHttpFoundation } from './http/foundation.js';
 import { registerOpenApiRoute } from './http/openapi.js';
+import { registerApprovalInboxRoutes } from './approvals/routes.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
 
@@ -49,6 +50,7 @@ export function createApiServer(
       registerMyTimeRoutes(app, authentication, database, dependencies.now);
       registerCorrectionRequestRoutes(app, config, authentication, database, dependencies.now);
       registerCorrectionReviewRoutes(app, config, authentication, database, dependencies.now);
+      registerApprovalInboxRoutes(app, authentication, database, dependencies.now);
       registerVacationRequestRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {
         await Promise.all([authentication.close(), database.close()]);

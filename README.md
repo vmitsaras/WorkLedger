@@ -5,21 +5,14 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 4 — 6 of 8 tasks complete**
+> **Current phase progress: Phase 7 — 1 of 7 tasks complete**
 
-Phase 3 passed its exit gate and the repository is now in **Phase 4: employee attendance vertical
-slice**. The workspace, project boundaries, strict tooling, test and CI baseline, local
-PostgreSQL environment, runtime configuration, React Aria UI foundation, contributor documentation,
-framework-independent domain engine, initial PostgreSQL schema/generated migrations, narrow
-repository/transaction boundary, accepted Better Auth credential/session foundation,
-deny-by-default application authorization, shared Zod/Fastify API contract and safe error boundary,
-append-only audience-separated audit foundation, protected attendance idempotency claim/replay
-persistence, a deterministic local-only Northstar development seed, reproducible hardened OpenAPI
-JSON exposure, the authenticated application shell/profile/session slice, the authorized
-organization-local Today attendance read model, protected end-to-end clock-in/break/resume/clock-out
-sequence, explainable responsive Today timeline and daily calculation breakdown, and attendance
-retry/offline/stale-device/dependency recovery are implemented. The next task is the phase-wide
-employee-attendance accessibility and mobile review (`WL-406`).
+Phases 0–6 have passed their exit gates. The repository now includes the attendance, correction,
+absence, entitlement, personal calendar, and cancellation slices, plus a purpose-minimized,
+scoped approval inbox for corrections, absence requests, and absence cancellations. The inbox
+uses strict URL-owned generic filters and pagination, supports current-manager and HR scope,
+withholds sensitive absence detail, and has accessible narrow-screen table behavior. The next task
+is consistent type-neutral approve, reject, and changes-requested decisions (`WL-701`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe

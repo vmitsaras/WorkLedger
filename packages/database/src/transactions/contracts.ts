@@ -1,6 +1,7 @@
 import type {
   AccountSelfServiceRepository,
   AbsenceRequestRepository,
+  ApprovalInboxRepository,
   AuditRepository,
   AttendanceIdempotencyRepository,
   AttendanceRepository,
@@ -29,6 +30,7 @@ export type TransactionOptions = Readonly<{
 export interface WorkLedgerTransaction {
   readonly accountSelfService: AccountSelfServiceRepository;
   readonly absenceRequests: AbsenceRequestRepository;
+  readonly approvalInbox: ApprovalInboxRepository;
   readonly audit: AuditRepository;
   readonly attendance: AttendanceRepository;
   readonly attendanceIdempotency: AttendanceIdempotencyRepository;

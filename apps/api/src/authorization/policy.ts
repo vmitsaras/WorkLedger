@@ -11,6 +11,7 @@ export type EmployeeTargetAction =
   | 'ABSENCE_DECIDE'
   | 'ABSENCE_REQUEST'
   | 'ABSENCE_READ'
+  | 'APPROVAL_INBOX_READ'
   | 'ASSIGNED_CONFIGURATION_READ'
   | 'ATTENDANCE_ADJUST'
   | 'ATTENDANCE_CLOCK'
@@ -77,6 +78,7 @@ const EMPLOYEE_RULES: Readonly<Record<EmployeeTargetAction, EmployeeRule>> = Obj
   ABSENCE_DECIDE: { hr: true, reports: true, selfProhibitedForPrivileged: true },
   ABSENCE_REQUEST: { self: true },
   ABSENCE_READ: { hr: true, reports: true, self: true },
+  APPROVAL_INBOX_READ: { hr: true, reports: true },
   ASSIGNED_CONFIGURATION_READ: { hr: true, reports: true, self: true },
   ATTENDANCE_ADJUST: { hr: true, selfProhibitedForPrivileged: true },
   ATTENDANCE_CLOCK: { self: true },

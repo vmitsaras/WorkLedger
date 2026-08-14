@@ -1,0 +1,656 @@
+import { hashPassword } from 'better-auth/crypto';
+import { fileURLToPath } from 'node:url';
+
+import type pg from 'pg';
+
+import { approvalInboxEnvelopeSchema, type ApprovalInbox } from '@workledger/contracts';
+import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
+
+import { createRuntimeConfig } from '../src/config.js';
+import { createApiServer } from '../src/server.js';
+
+const databaseHarness = createDatabaseHarnessState(process.env);
+const integrationTest = databaseHarness.enabled ? test : test.skip;
+const ORIGIN = 'https://ledger.example.test';
+const AUTH_SECRET = 'approval-inbox-secret-with-more-than-thirty-two-bytes';
+const NOW = '2026-08-13T10:30:45Z';
+const repositoryDirectory = fileURLToPath(new URL('../../..', import.meta.url));
+const migrationFiles = [
+  '0000_initial_schema.sql',
+  '0001_integrity_constraints.sql',
+  '0002_auth_foundation.sql',
+  '0003_authorization_foundation.sql',
+  '0004_audit_foundation.sql',
+  '0005_idempotency_foundation.sql',
+  '0006_zero_daily_delta.sql',
+  '0007_correction_request_snapshots.sql',
+  '0008_nappy_bromley.sql',
+  '0009_married_justin_hammer.sql',
+  '0010_broad_sunfire.sql',
+  '0011_nasty_red_hulk.sql',
+  '0012_silly_magik.sql',
+  '0013_brave_bulldozer.sql',
+].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
+
+integrationTest(
+  `returns a privacy-minimized inbox after authorization scope and self-exclusion (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'approval_inbox',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => NOW },
+    );
+
+    try {
+      const scenario = await createScenario(fixture.client);
+      const managerCookie = await signIn(app, scenario.manager.email, scenario.manager.password);
+
+      const response = await getInbox(app, managerCookie);
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      const inbox = approvalInboxEnvelopeSchema.parse(response.json()).data;
+      expect(inbox).toMatchObject({
+        filterOptions: {
+          teams: [
+            { id: scenario.alphaTeamId, name: 'Alpha team' },
+            { id: scenario.betaTeamId, name: 'Beta team' },
+          ],
+        },
+        pagination: { limit: 20, page: 1, total: 13, totalPages: 1 },
+        timeZone: 'Europe/Berlin',
+      });
+      expect(inbox.items).toHaveLength(13);
+      expect(new Set(inbox.items.map((item) => item.kind))).toEqual(
+        new Set(['ABSENCE', 'CANCELLATION', 'CORRECTION']),
+      );
+      expect(inbox.items.every((item) => item.status === 'ACTION_REQUIRED')).toBe(true);
+      expect(inbox.items.map((item) => item.employeeDisplayName)).not.toEqual(
+        expect.arrayContaining([
+          'Former report',
+          'HR reviewer',
+          'Inbox manager',
+          'Unrelated employee',
+        ]),
+      );
+      assertPrivacyMinimized(inbox);
+
+      const waiting = await parsedInbox(app, managerCookie, '?status=WAITING_ON_EMPLOYEE');
+      expect(waiting.pagination.total).toBe(1);
+      expect(waiting.items).toMatchObject([
+        { employeeDisplayName: 'Alpha report', kind: 'CORRECTION', status: 'WAITING_ON_EMPLOYEE' },
+      ]);
+
+      const absences = await parsedInbox(app, managerCookie, '?type=ABSENCE');
+      expect(absences.pagination.total).toBe(1);
+      expect(absences.items).toMatchObject([
+        {
+          affectedEndDate: '2026-08-14',
+          affectedStartDate: '2026-08-13',
+          employeeDisplayName: 'Alpha report',
+          kind: 'ABSENCE',
+          status: 'ACTION_REQUIRED',
+        },
+      ]);
+      assertPrivacyMinimized(absences);
+
+      const cancellation = await parsedInbox(app, managerCookie, '?type=CANCELLATION');
+      expect(cancellation.pagination.total).toBe(1);
+      expect(cancellation.items[0]).toMatchObject({
+        affectedEndDate: '2026-08-21',
+        affectedStartDate: '2026-08-20',
+        employeeDisplayName: 'Alpha report',
+        kind: 'CANCELLATION',
+      });
+
+      const betaTeam = await parsedInbox(app, managerCookie, `?team=${scenario.betaTeamId}`);
+      expect(betaTeam.pagination.total).toBe(1);
+      expect(betaTeam.items).toMatchObject([
+        {
+          employeeDisplayName: 'Beta report',
+          kind: 'CORRECTION',
+          team: { id: scenario.betaTeamId, name: 'Beta team' },
+        },
+      ]);
+
+      const affectedDate = await parsedInbox(app, managerCookie, '?from=2026-08-13&to=2026-08-13');
+      expect(affectedDate.pagination.total).toBe(1);
+      expect(affectedDate.items[0]).toMatchObject({
+        affectedEndDate: '2026-08-14',
+        affectedStartDate: '2026-08-13',
+        kind: 'ABSENCE',
+      });
+
+      const completed = await parsedInbox(app, managerCookie, '?status=COMPLETED');
+      expect(completed.pagination.total).toBe(2);
+      expect(completed.items.every((item) => item.kind === 'ABSENCE')).toBe(true);
+      assertPrivacyMinimized(completed);
+
+      const firstPage = await parsedInbox(
+        app,
+        managerCookie,
+        '?limit=10&page=1&sort=SUBMITTED_AT&direction=DESC',
+      );
+      const secondPage = await parsedInbox(
+        app,
+        managerCookie,
+        '?limit=10&page=2&sort=SUBMITTED_AT&direction=DESC',
+      );
+      expect(firstPage.pagination).toEqual({ limit: 10, page: 1, total: 13, totalPages: 2 });
+      expect(firstPage.items).toHaveLength(10);
+      expect(secondPage.pagination).toEqual({ limit: 10, page: 2, total: 13, totalPages: 2 });
+      expect(secondPage.items).toHaveLength(3);
+      const firstPageIds = new Set(firstPage.items.map(({ id }) => id));
+      expect(secondPage.items.every(({ id }) => !firstPageIds.has(id))).toBe(true);
+      expect(
+        [...firstPage.items, ...secondPage.items].map((item) => item.employeeDisplayName),
+      ).not.toEqual(
+        expect.arrayContaining([
+          'Former report',
+          'HR reviewer',
+          'Inbox manager',
+          'Unrelated employee',
+        ]),
+      );
+
+      const hrOnlyCookie = await signIn(app, scenario.hrOnly.email, scenario.hrOnly.password);
+      const hrOnly = await parsedInbox(app, hrOnlyCookie);
+      expect(hrOnly.pagination.total).toBe(17);
+      expect(hrOnly.items.map((item) => item.employeeDisplayName)).toEqual(
+        expect.arrayContaining([
+          'Former report',
+          'HR reviewer',
+          'Inbox manager',
+          'Unrelated employee',
+        ]),
+      );
+      assertPrivacyMinimized(hrOnly);
+
+      const linkedHrCookie = await signIn(app, scenario.linkedHr.email, scenario.linkedHr.password);
+      const linkedHr = await parsedInbox(app, linkedHrCookie);
+      expect(linkedHr.pagination.total).toBe(16);
+      expect(linkedHr.items.map((item) => item.employeeDisplayName)).not.toContain('HR reviewer');
+      assertPrivacyMinimized(linkedHr);
+
+      const systemCookie = await signIn(app, scenario.system.email, scenario.system.password);
+      const denied = await getInbox(app, systemCookie);
+      expect(denied.statusCode).toBe(403);
+      expect(denied.json()).toMatchObject({ error: { code: 'ACCESS_DENIED' } });
+
+      for (const query of [
+        '?type=SICKNESS',
+        '?from=2026-08-01',
+        '?page=0',
+        '?unsupported=do-not-reflect-this-value',
+      ]) {
+        const invalid = await getInbox(app, managerCookie, query);
+        expect(invalid.statusCode).toBe(422);
+        expect(invalid.json()).toMatchObject({ error: { code: 'VALIDATION_FAILED' } });
+        expect(invalid.payload).not.toContain('do-not-reflect-this-value');
+      }
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
+type Credentials = Readonly<{ email: string; password: string }>;
+
+async function createScenario(client: pg.PoolClient) {
+  const organizationId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into organizations (name, time_zone)
+         values ('Approval inbox organization', 'Europe/Berlin') returning id`,
+      )
+    ).rows[0]?.id,
+  );
+  const alphaTeamId = await createTeam(client, organizationId, 'Alpha team');
+  const betaTeamId = await createTeam(client, organizationId, 'Beta team');
+  const managerEmployeeId = await createEmployee(
+    client,
+    organizationId,
+    'INBOX-MGR',
+    'Inbox manager',
+  );
+  const alphaEmployeeId = await createEmployee(
+    client,
+    organizationId,
+    'INBOX-ALPHA',
+    'Alpha report',
+  );
+  const betaEmployeeId = await createEmployee(client, organizationId, 'INBOX-BETA', 'Beta report');
+  const formerEmployeeId = await createEmployee(
+    client,
+    organizationId,
+    'INBOX-FORMER',
+    'Former report',
+  );
+  const unrelatedEmployeeId = await createEmployee(
+    client,
+    organizationId,
+    'INBOX-UNRELATED',
+    'Unrelated employee',
+  );
+  const hrEmployeeId = await createEmployee(client, organizationId, 'INBOX-HR', 'HR reviewer');
+
+  await client.query(
+    `insert into manager_assignments
+      (organization_id, employee_id, manager_employee_id, starts_on, ends_on)
+     values ($1, $2, $3, '2025-01-01', null),
+            ($1, $4, $3, '2025-01-01', null),
+            ($1, $5, $3, '2025-01-01', '2026-08-01')`,
+    [organizationId, alphaEmployeeId, managerEmployeeId, betaEmployeeId, formerEmployeeId],
+  );
+  await client.query(
+    `insert into team_assignments
+      (organization_id, employee_id, team_id, starts_on)
+     values ($1, $2, $3, '2025-01-01'),
+            ($1, $4, $5, '2025-01-01')`,
+    [organizationId, alphaEmployeeId, alphaTeamId, betaEmployeeId, betaTeamId],
+  );
+
+  const manager = await createAccount(client, organizationId, {
+    email: 'approval-manager@example.test',
+    employeeId: managerEmployeeId,
+    name: 'Inbox manager',
+    password: 'safe approval manager passphrase 2026',
+    roles: ['MANAGER'],
+  });
+  const hrOnly = await createAccount(client, organizationId, {
+    email: 'approval-hr-only@example.test',
+    name: 'HR only reviewer',
+    password: 'safe approval hr only passphrase 2026',
+    roles: ['HR_ADMINISTRATOR'],
+  });
+  const linkedHr = await createAccount(client, organizationId, {
+    email: 'approval-linked-hr@example.test',
+    employeeId: hrEmployeeId,
+    name: 'HR reviewer',
+    password: 'safe approval linked hr passphrase 2026',
+    roles: ['HR_ADMINISTRATOR'],
+  });
+  const system = await createAccount(client, organizationId, {
+    email: 'approval-system@example.test',
+    name: 'System administrator',
+    password: 'safe approval system passphrase 2026',
+    roles: ['SYSTEM_ADMINISTRATOR'],
+  });
+
+  for (let day = 1; day <= 10; day += 1) {
+    const localDate = `2026-08-${String(day).padStart(2, '0')}`;
+    await createCorrection(client, organizationId, alphaEmployeeId, {
+      createdAt: `${localDate}T08:00:00Z`,
+      localDate,
+      reason: `Private correction reason ${day}`,
+      status: 'SUBMITTED',
+    });
+  }
+  await createCorrection(client, organizationId, betaEmployeeId, {
+    createdAt: '2026-08-12T08:00:00Z',
+    localDate: '2026-08-12',
+    reason: 'Private beta correction reason',
+    status: 'SUBMITTED',
+  });
+  await createCorrection(client, organizationId, alphaEmployeeId, {
+    createdAt: '2026-08-09T09:00:00Z',
+    localDate: '2026-08-09',
+    reason: 'Private waiting correction reason',
+    status: 'CHANGES_REQUESTED',
+  });
+
+  const sicknessTypeId = await createAbsenceType(client, organizationId, 'SICKNESS', 'Sickness');
+  const vacationTypeId = await createAbsenceType(client, organizationId, 'VACATION', 'Vacation');
+  await createAbsence(client, organizationId, alphaEmployeeId, sicknessTypeId, {
+    dates: ['2026-08-13', '2026-08-14'],
+    status: 'SUBMITTED',
+    submittedAt: '2026-08-13T09:00:00Z',
+  });
+  await createAbsence(client, organizationId, alphaEmployeeId, vacationTypeId, {
+    dates: ['2026-08-05'],
+    status: 'REJECTED',
+    submittedAt: '2026-08-04T09:00:00Z',
+  });
+  const cancellationSource = await createAbsence(
+    client,
+    organizationId,
+    alphaEmployeeId,
+    vacationTypeId,
+    {
+      dates: ['2026-08-20', '2026-08-21'],
+      status: 'APPROVED',
+      submittedAt: '2026-08-11T09:00:00Z',
+    },
+  );
+  await createCancellation(
+    client,
+    organizationId,
+    alphaEmployeeId,
+    cancellationSource.requestId,
+    cancellationSource.segmentIds,
+  );
+
+  await createCorrection(client, organizationId, formerEmployeeId, {
+    createdAt: '2026-08-14T12:00:00Z',
+    localDate: '2026-08-14',
+    reason: 'Private former report correction reason',
+    status: 'SUBMITTED',
+  });
+  await createCorrection(client, organizationId, unrelatedEmployeeId, {
+    createdAt: '2026-08-14T13:00:00Z',
+    localDate: '2026-08-14',
+    reason: 'Private unrelated correction reason',
+    status: 'SUBMITTED',
+  });
+  await createCorrection(client, organizationId, managerEmployeeId, {
+    createdAt: '2026-08-14T14:00:00Z',
+    localDate: '2026-08-14',
+    reason: 'Private manager correction reason',
+    status: 'SUBMITTED',
+  });
+  await createCorrection(client, organizationId, hrEmployeeId, {
+    createdAt: '2026-08-14T15:00:00Z',
+    localDate: '2026-08-14',
+    reason: 'Private HR correction reason',
+    status: 'SUBMITTED',
+  });
+
+  return Object.freeze({
+    alphaTeamId,
+    betaTeamId,
+    hrOnly,
+    linkedHr,
+    manager,
+    system,
+  });
+}
+
+async function createTeam(client: pg.PoolClient, organizationId: string, name: string) {
+  return requiredId(
+    (
+      await client.query<{ id: string }>(
+        'insert into teams (organization_id, name) values ($1, $2) returning id',
+        [organizationId, name],
+      )
+    ).rows[0]?.id,
+  );
+}
+
+async function createEmployee(
+  client: pg.PoolClient,
+  organizationId: string,
+  employeeNumber: string,
+  displayName: string,
+) {
+  const employeeId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into employees (organization_id, employee_number, display_name, status)
+         values ($1, $2, $3, 'ACTIVE') returning id`,
+        [organizationId, employeeNumber, displayName],
+      )
+    ).rows[0]?.id,
+  );
+  await client.query(
+    `insert into employment_periods (organization_id, employee_id, starts_on)
+     values ($1, $2, '2025-01-01')`,
+    [organizationId, employeeId],
+  );
+  return employeeId;
+}
+
+async function createAccount(
+  client: pg.PoolClient,
+  organizationId: string,
+  input: Readonly<{
+    email: string;
+    employeeId?: string;
+    name: string;
+    password: string;
+    roles: readonly ('HR_ADMINISTRATOR' | 'MANAGER' | 'SYSTEM_ADMINISTRATOR')[];
+  }>,
+): Promise<Credentials> {
+  const accountId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into auth_users (name, email, email_verified, active)
+         values ($1, $2, true, true) returning id`,
+        [input.name, input.email],
+      )
+    ).rows[0]?.id,
+  );
+  await client.query(
+    `insert into auth_accounts (user_id, account_id, provider_id, password)
+     values ($1, $2, 'credential', $3)`,
+    [accountId, accountId, await hashPassword(input.password)],
+  );
+  if (input.employeeId !== undefined) {
+    await client.query(
+      `insert into account_employee_links (organization_id, user_id, employee_id)
+       values ($1, $2, $3)`,
+      [organizationId, accountId, input.employeeId],
+    );
+  }
+  for (const role of input.roles) {
+    await client.query(
+      `insert into account_role_assignments (organization_id, user_id, role)
+       values ($1, $2, $3)`,
+      [organizationId, accountId, role],
+    );
+  }
+  return Object.freeze({ email: input.email, password: input.password });
+}
+
+async function createCorrection(
+  client: pg.PoolClient,
+  organizationId: string,
+  employeeId: string,
+  input: Readonly<{
+    createdAt: string;
+    localDate: string;
+    reason: string;
+    status: 'CHANGES_REQUESTED' | 'SUBMITTED';
+  }>,
+) {
+  await client.query(
+    `insert into correction_requests
+      (organization_id, employee_id, requested_by_employee_id, local_date, status, reason,
+       original_interpretation, proposed_interpretation, version, created_at)
+     values ($1, $2, $2, $3, $4, $5, $6::jsonb, $7::jsonb, 1, $8)`,
+    [
+      organizationId,
+      employeeId,
+      input.localDate,
+      input.status,
+      input.reason,
+      JSON.stringify({ events: [{ private: 'raw-event-must-not-leave-api' }] }),
+      JSON.stringify({ proposed: 'source-record-must-not-leave-api' }),
+      input.createdAt,
+    ],
+  );
+}
+
+async function createAbsenceType(
+  client: pg.PoolClient,
+  organizationId: string,
+  code: 'SICKNESS' | 'VACATION',
+  name: string,
+) {
+  return requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into absence_types
+          (organization_id, code, name, version, active, valid_from, policy)
+         values ($1, $2, $3, 1, true, '2025-01-01', '{}'::jsonb) returning id`,
+        [organizationId, code, name],
+      )
+    ).rows[0]?.id,
+  );
+}
+
+async function createAbsence(
+  client: pg.PoolClient,
+  organizationId: string,
+  employeeId: string,
+  absenceTypeId: string,
+  input: Readonly<{
+    dates: readonly string[];
+    status: 'APPROVED' | 'REJECTED' | 'SUBMITTED';
+    submittedAt: string;
+  }>,
+) {
+  const requestId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into absence_requests
+          (organization_id, employee_id, absence_type_id, requested_by_employee_id, status,
+           version, submitted_at, created_at)
+         values ($1, $2, $3, $2, $4, 1, $5, $5) returning id`,
+        [organizationId, employeeId, absenceTypeId, input.status, input.submittedAt],
+      )
+    ).rows[0]?.id,
+  );
+  const segmentIds: string[] = [];
+  for (const localDate of input.dates) {
+    segmentIds.push(
+      requiredId(
+        (
+          await client.query<{ id: string }>(
+            `insert into absence_coverage_segments
+              (organization_id, absence_request_id, local_date, kind)
+             values ($1, $2, $3, 'FULL_DAY') returning id`,
+            [organizationId, requestId, localDate],
+          )
+        ).rows[0]?.id,
+      ),
+    );
+  }
+  return Object.freeze({ requestId, segmentIds: Object.freeze(segmentIds) });
+}
+
+async function createCancellation(
+  client: pg.PoolClient,
+  organizationId: string,
+  employeeId: string,
+  absenceRequestId: string,
+  segmentIds: readonly string[],
+) {
+  const cancellationId = requiredId(
+    (
+      await client.query<{ id: string }>(
+        `insert into absence_cancellations
+          (organization_id, absence_request_id, employee_id, requested_by_employee_id, status,
+           version, submitted_at, created_at)
+         values ($1, $2, $3, $3, 'PENDING_DECISION', 1,
+                 '2026-08-12T10:00:00Z', '2026-08-12T10:00:00Z') returning id`,
+        [organizationId, absenceRequestId, employeeId],
+      )
+    ).rows[0]?.id,
+  );
+  for (const segmentId of segmentIds) {
+    await client.query(
+      `insert into absence_cancellation_segments
+        (organization_id, absence_cancellation_id, absence_coverage_segment_id)
+       values ($1, $2, $3)`,
+      [organizationId, cancellationId, segmentId],
+    );
+  }
+}
+
+async function parsedInbox(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  query = '',
+): Promise<ApprovalInbox> {
+  const response = await getInbox(app, cookie, query);
+  expect(response.statusCode).toBe(200);
+  return approvalInboxEnvelopeSchema.parse(response.json()).data;
+}
+
+async function getInbox(app: ReturnType<typeof createApiServer>, cookie: string, query = '') {
+  return app.inject({
+    method: 'GET',
+    url: `/v1/approvals${query}`,
+    headers: { cookie, origin: ORIGIN },
+  });
+}
+
+async function signIn(
+  app: ReturnType<typeof createApiServer>,
+  email: string,
+  password: string,
+): Promise<string> {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/api/auth/sign-in/email',
+    headers: { 'content-type': 'application/json', origin: ORIGIN },
+    payload: { email, password },
+  });
+  expect(response.statusCode).toBe(200);
+  const setCookie = Array.isArray(response.headers['set-cookie'])
+    ? response.headers['set-cookie'][0]
+    : response.headers['set-cookie'];
+  const cookie = setCookie?.split(';', 1)[0];
+  if (cookie === undefined) throw new Error('Expected session cookie.');
+  return cookie;
+}
+
+function assertPrivacyMinimized(inbox: ApprovalInbox) {
+  const serialized = JSON.stringify(inbox);
+  for (const forbiddenValue of [
+    'SICKNESS',
+    'Sickness',
+    'VACATION',
+    'Vacation',
+    'Private ',
+    'raw-event-must-not-leave-api',
+    'source-record-must-not-leave-api',
+  ]) {
+    expect(serialized).not.toContain(forbiddenValue);
+  }
+  const keys = collectKeys(inbox);
+  for (const forbiddenKey of [
+    'absenceSubtype',
+    'absenceType',
+    'absenceTypeCode',
+    'absenceTypeId',
+    'absenceTypeName',
+    'employeeId',
+    'entitlement',
+    'entitlementMinutes',
+    'events',
+    'reason',
+    'sourceRecord',
+    'sourceStatus',
+    'statusCode',
+  ]) {
+    expect(keys).not.toContain(forbiddenKey);
+  }
+}
+
+function collectKeys(value: unknown, keys: string[] = []): readonly string[] {
+  if (Array.isArray(value)) {
+    for (const item of value) collectKeys(item, keys);
+    return keys;
+  }
+  if (value === null || typeof value !== 'object') return keys;
+  for (const [key, nested] of Object.entries(value)) {
+    keys.push(key);
+    collectKeys(nested, keys);
+  }
+  return keys;
+}
+
+function requiredId(value: string | undefined): string {
+  if (value === undefined) throw new Error('Expected database identifier.');
+  return value;
+}

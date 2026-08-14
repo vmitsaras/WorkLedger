@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 7 — Manager approvals and team availability
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 0 of 4 Phase 7 tasks complete
-**Current milestone:** Manager approval inbox
-**Active task:** `WL-700`
+**Phase progress:** 1 of 7 Phase 7 tasks complete
+**Current milestone:** Consistent approval decisions
+**Active task:** `WL-701`
 **Status:** Ready
-**Last verified:** 2026-08-13
+**Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement the manager approval inbox required by `WL-700`.
+Implement the consistent non-self approval decision experience required by `WL-701`.
 
 ## Verified decisions
 
@@ -33,6 +33,13 @@ Implement the manager approval inbox required by `WL-700`.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
 - Teams are the only MVP organization grouping; departments are deferred.
 - Approval delegation is excluded from the MVP.
+- `/approvals` is a purpose-minimized inbox for corrections, absence requests, and absence
+  cancellations. It exposes only generic workflow category and status, current-team and
+  affected-date metadata; absence subtype, including sickness, is never a list or URL value.
+- Current manager/HR scope and self exclusion apply before filters, totals, sorting, and
+  pagination. Rows, totals, and team filter options share one repeatable-read snapshot.
+- Monthly-period items remain excluded until `WL-802` after the authority conflict recorded in
+  `D-402` is resolved.
 - English is the only shipped MVP locale; formatting remains locale-aware.
 - Employee self-service profile data is read-only; HR-owned employment facts are not self-editable.
 - The self-context/profile transport exposes only active account, organization, employee summary,
@@ -294,6 +301,26 @@ Implement the manager approval inbox required by `WL-700`.
   `docs/58-phase-4-gate-review.md`).
 
 ## Latest completed task
+
+### `WL-700` — Build manager approval inbox and URL-owned filters
+
+- Changed: added a strict shared approval-inbox contract, a purpose-specific scoped PostgreSQL
+  read model, and `GET /v1/approvals`; replaced the correction-only `/approvals` list with the
+  paginated generic inbox while preserving manager access to the existing correction review flow.
+- Verified: focused contract, web component, live PostgreSQL API integration, and Chromium
+  browser coverage exercise strict query state, current direct-report/HR scope, generic
+  filtering, pagination, privacy minimization, keyboard focus, 320 px reflow, and axe.
+- Accessibility: the inbox uses labelled native filters and disclosure, applied-filter and date
+  error feedback, named loading states, a captioned sortable table, contained narrow-screen
+  scrolling, and deliberate route/pagination/session/permission focus behavior.
+- Security/data: HR-only access is supported without employee capability; linked HR and managers
+  cannot see their own rows; the generic DTO omits source details, absence subtype, notes, and
+  employee IDs; responses are no-store.
+- Documentation: added `docs/74-unified-approval-inbox.md`, synchronized URL/table rules and
+  resolved inbox decisions, and recorded the Phase 8 monthly-authority conflict as `D-402`.
+- Remaining risk: `WL-701` must consolidate type-neutral details and decisions. Monthly rows stay
+  out of the inbox until `D-402` is resolved.
+- Next task: `WL-701`.
 
 ### `WL-607` — Pass the Phase 6 exit gate
 
@@ -585,11 +612,12 @@ Implement the manager approval inbox required by `WL-700`.
 
 ## Current blockers
 
-No `WL-602` blocker is known. D-502 remains open before the production browser gate.
+No `WL-701` blocker is known. `D-402` must be resolved before `WL-802` adds monthly approval
+items to the inbox; D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-602 — Implement vacation request calculation and form.`
+`WL-701 — Implement approve, reject, and changes-requested decisions consistently.`
 
 ## Update rules
 

@@ -11,6 +11,40 @@ const EMPLOYEE_CONTEXT = {
   organization: { name: 'Northstar Studio' },
   roles: ['EMPLOYEE'],
 };
+const MANAGER_CONTEXT = {
+  account: { email: 'maja@northstar.test', name: 'Maja Novak' },
+  defaultPath: '/profile',
+  employee: { displayName: 'Maja Novak', employeeNumber: 'NS-010', status: 'ACTIVE' },
+  navigationAreas: ['MANAGER'],
+  organization: { name: 'Northstar Studio' },
+  roles: ['MANAGER'],
+};
+const APPROVAL_TEAM_ID = '123e4567-e89b-42d3-a456-426614174500';
+const CORRECTION_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174501';
+const APPROVAL_ITEMS = [
+  {
+    affectedEndDate: '2026-08-12',
+    affectedStartDate: '2026-08-12',
+    employeeDisplayName: 'Maria Chen',
+    id: CORRECTION_APPROVAL_ID,
+    kind: 'CORRECTION',
+    status: 'ACTION_REQUIRED',
+    submittedAt: '2026-08-11T09:30:00Z',
+    team: { id: APPROVAL_TEAM_ID, name: 'Client Services' },
+    version: 2,
+  },
+  {
+    affectedEndDate: '2026-08-20',
+    affectedStartDate: '2026-08-18',
+    employeeDisplayName: 'Noah Williams',
+    id: '123e4567-e89b-42d3-a456-426614174502',
+    kind: 'ABSENCE',
+    status: 'WAITING_ON_EMPLOYEE',
+    submittedAt: '2026-08-10T08:15:00Z',
+    team: { id: APPROVAL_TEAM_ID, name: 'Client Services' },
+    version: 3,
+  },
+];
 const TODAY_ATTENDANCE = {
   asOf: '2026-08-11T09:30:00Z',
   attendance: {
@@ -72,6 +106,138 @@ test('signs in through the accessible form and focuses the destination route', a
   await expect(page).toHaveTitle('Today | WorkLedger');
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('uses the unified approval inbox by keyboard with canonical URL, focus, and narrow reflow', async ({
+  page,
+}) => {
+  const approvalQueries: URLSearchParams[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(MANAGER_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/approvals*', async (route) => {
+    const url = new URL(route.request().url());
+    approvalQueries.push(url.searchParams);
+    expect(url.searchParams.has('absenceType')).toBe(false);
+    expect(url.searchParams.has('employee')).toBe(false);
+    expect(url.searchParams.get('type')).not.toBe('SICKNESS');
+    expect(url.searchParams.get('type')).not.toBe('VACATION');
+    const limit = Number(url.searchParams.get('limit'));
+    const pageNumber = Number(url.searchParams.get('page'));
+    const items =
+      url.searchParams.get('type') === 'CORRECTION' ? APPROVAL_ITEMS.slice(0, 1) : APPROVAL_ITEMS;
+    await route.fulfill({
+      json: success({
+        filterOptions: {
+          teams: [{ id: APPROVAL_TEAM_ID, name: 'Client Services' }],
+        },
+        items,
+        pagination: {
+          limit,
+          page: pageNumber,
+          total: 25,
+          totalPages: 3,
+        },
+        timeZone: 'Europe/Berlin',
+      }),
+      status: 200,
+    });
+  });
+
+  await page.goto(
+    '/approvals?status=ALL&type=ALL&sort=SUBMITTED_AT&direction=DESC&page=3&limit=10',
+  );
+  await expect(page).toHaveTitle('Approvals | WorkLedger');
+  await expect(page.getByRole('heading', { name: 'Approval inbox' })).toBeFocused();
+
+  const table = page.getByRole('table', { name: /Unified approval inbox/u });
+  const scrollRegion = page.getByRole('region', { name: 'Scrollable approval inbox results' });
+  await expect(table).toBeVisible();
+  await expect(table.locator('caption')).toContainText(
+    'Broad workflow category is shown without absence subtype.',
+  );
+  await expect(table.getByRole('columnheader', { name: 'Submitted' })).toHaveAttribute(
+    'aria-sort',
+    'descending',
+  );
+  await expect(table.getByText('Absence request')).toBeVisible();
+  await expect(
+    table.getByRole('link', { name: 'Review correction for Maria Chen' }),
+  ).toHaveAttribute('href', `/approvals/${CORRECTION_APPROVAL_ID}`);
+
+  const status = page.getByRole('combobox', { name: 'Queue status' });
+  await status.selectOption('ACTION_REQUIRED');
+  await expect(status).toHaveValue('ACTION_REQUIRED');
+  const category = page.getByRole('combobox', { name: 'Workflow category' });
+  await category.selectOption('CORRECTION');
+  await expect(category).toHaveValue('CORRECTION');
+  const team = page.getByRole('combobox', { name: 'Current team' });
+  await team.selectOption(APPROVAL_TEAM_ID);
+  await expect(team).toHaveValue(APPROVAL_TEAM_ID);
+  const sort = page.getByRole('combobox', { name: 'Sort by' });
+  await sort.selectOption('AFFECTED_DATE');
+  await expect(sort).toHaveValue('AFFECTED_DATE');
+  const direction = page.getByRole('combobox', { name: 'Sort direction' });
+  await direction.selectOption('ASC');
+  await expect(direction).toHaveValue('ASC');
+  await page.getByLabel('Affected from').fill('2026-08-01');
+  await page.getByLabel('Affected through').fill('2026-08-31');
+
+  const applyFilters = page.getByRole('button', { name: 'Apply filters' });
+  await applyFilters.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/page=1/u);
+  await expect(applyFilters).toBeFocused();
+  await expect(table.getByRole('columnheader', { name: 'Affected dates' })).toHaveAttribute(
+    'aria-sort',
+    'ascending',
+  );
+  expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual({
+    direction: 'ASC',
+    from: '2026-08-01',
+    limit: '10',
+    page: '1',
+    sort: 'AFFECTED_DATE',
+    status: 'ACTION_REQUIRED',
+    team: APPROVAL_TEAM_ID,
+    to: '2026-08-31',
+    type: 'CORRECTION',
+  });
+
+  const nextPage = page.getByRole('button', { name: 'Next page' });
+  await nextPage.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/page=2/u);
+  await expect(page.getByText('Page 2 of 3')).toBeVisible();
+  await expect(nextPage).toBeFocused();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/page=1/u);
+  await expect(page.getByText('Page 1 of 3')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next page' })).toBeFocused();
+  expect(approvalQueries.length).toBeGreaterThanOrEqual(3);
+
+  await page.setViewportSize({ width: 320, height: 900 });
+  const filterDisclosure = page.getByText('Show approval filters', { exact: true });
+  await expect(filterDisclosure).toBeVisible();
+  await expect(status).toBeHidden();
+  await expect(page.getByText(/^Applied:/u)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Clear approval filters' })).toBeVisible();
+  await filterDisclosure.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('Hide approval filters', { exact: true })).toBeFocused();
+  await expect(status).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  const tableOverflow = await scrollRegion.evaluate((region) => ({
+    clientWidth: region.clientWidth,
+    scrollWidth: region.scrollWidth,
+  }));
+  expect(tableOverflow.scrollWidth).toBeGreaterThan(tableOverflow.clientWidth);
   await expectPageToHaveNoAxeViolations(page);
 });
 

@@ -1,6 +1,7 @@
-import { QueryClient, queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, QueryClient, queryOptions } from '@tanstack/react-query';
 
 import {
+  type ApprovalInboxQuery,
   todayAttendanceSchema,
   type MyTimeQuery,
   type PersonalCalendarQuery,
@@ -8,6 +9,7 @@ import {
 
 import {
   loadDailyTimeRecord,
+  loadApprovalInbox,
   loadMyTime,
   loadPersonalCalendar,
   loadManagerCorrectionQueue,
@@ -72,6 +74,13 @@ export const managerCorrectionQueueQuery = () =>
   queryOptions({
     queryFn: ({ signal }) => loadManagerCorrectionQueue(signal),
     queryKey: ['manager', 'correction-requests'] as const,
+  });
+
+export const approvalInboxQuery = (query: ApprovalInboxQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadApprovalInbox(query, signal),
+    queryKey: ['approvals', 'inbox', query] as const,
   });
 
 function preferNewestTodayAttendance(previous: unknown, next: unknown): unknown {

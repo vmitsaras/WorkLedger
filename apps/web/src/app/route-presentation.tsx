@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import {
   Outlet,
   ScrollRestoration,
@@ -14,6 +14,7 @@ export function RoutePresentation() {
   const location = useLocation();
   const navigationType = useNavigationType();
   const matches = useMatches();
+  const previousPathname = useRef<string | undefined>(undefined);
   const title = [...matches]
     .reverse()
     .map((match) => match.handle as RouteHandle | undefined)
@@ -35,6 +36,13 @@ export function RoutePresentation() {
   }, [location.key]);
 
   useEffect(() => {
+    const pathnameChanged = previousPathname.current !== location.pathname;
+    previousPathname.current = location.pathname;
+
+    // Search-parameter changes are in-page interactions. Keep focus on the
+    // filter or pagination control that initiated a PUSH/REPLACE navigation.
+    if (!pathnameChanged && navigationType !== 'POP') return;
+
     const animationFrame = window.requestAnimationFrame(() => {
       const rememberedKey =
         navigationType === 'POP' ? focusByLocationKey.get(location.key) : undefined;
@@ -48,7 +56,7 @@ export function RoutePresentation() {
       target?.focus({ preventScroll: navigationType === 'POP' });
     });
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [location.key, navigationType]);
+  }, [location.key, location.pathname, navigationType]);
 
   return (
     <>

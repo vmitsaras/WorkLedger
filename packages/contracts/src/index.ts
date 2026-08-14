@@ -5,6 +5,34 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  APPROVAL_INBOX_DIRECTIONS,
+  APPROVAL_INBOX_ITEM_STATUSES,
+  APPROVAL_INBOX_SORTS,
+  APPROVAL_INBOX_STATUSES,
+  APPROVAL_INBOX_TYPES,
+  approvalInboxDirectionSchema,
+  approvalInboxEnvelopeSchema,
+  approvalInboxFilterOptionsSchema,
+  approvalInboxItemSchema,
+  approvalInboxItemStatusSchema,
+  approvalInboxPaginationSchema,
+  approvalInboxQuerySchema,
+  approvalInboxSchema,
+  approvalInboxSortSchema,
+  approvalInboxStatusSchema,
+  approvalInboxTeamSchema,
+  approvalInboxTypeSchema,
+  type ApprovalInbox,
+  type ApprovalInboxDirection,
+  type ApprovalInboxItem,
+  type ApprovalInboxItemStatus,
+  type ApprovalInboxQuery,
+  type ApprovalInboxSort,
+  type ApprovalInboxStatus,
+  type ApprovalInboxType,
+} from './approvals.js';
+
+export {
   absenceCancellationSchema,
   decideAbsenceCancellationSchema,
   decidedAbsenceCancellationEnvelopeSchema,

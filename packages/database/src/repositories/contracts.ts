@@ -21,6 +21,9 @@ export type CorrectionRequestStatus =
 export type CorrectionDecisionAction = 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES';
 export type ApplicationRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR';
 export type EmployeeAuthorizationScope = 'ORGANIZATION' | 'REPORTS' | 'SELF' | 'SELF_AND_REPORTS';
+export type ApprovalInboxStatus = 'ACTION_REQUIRED' | 'COMPLETED' | 'WAITING_ON_EMPLOYEE';
+export type ApprovalInboxType = 'ABSENCE' | 'CANCELLATION' | 'CORRECTION';
+export type ApprovalInboxSort = 'AFFECTED_DATE' | 'EMPLOYEE' | 'SUBMITTED_AT';
 export type AuditOutcome = 'SUCCESS' | 'DENIED' | 'FAILURE';
 export type DomainAuditTargetKind =
   | 'EMPLOYEE'
@@ -483,6 +486,46 @@ export type PersonalCalendarRecords = Readonly<{
   holidays: readonly PersonalCalendarHolidayRecord[];
 }>;
 
+export type ApprovalInboxTeamRecord = Readonly<{
+  id: DomainId<'Team'>;
+  name: string;
+}>;
+
+export type ApprovalInboxItemRecord = Readonly<{
+  affectedEndDate: LocalDate;
+  affectedStartDate: LocalDate;
+  employeeDisplayName: string;
+  employeeId: DomainId<'Employee'>;
+  id: DomainId<'AbsenceCancellation'> | DomainId<'AbsenceRequest'> | DomainId<'CorrectionRequest'>;
+  status: ApprovalInboxStatus;
+  submittedAt: Instant;
+  team: ApprovalInboxTeamRecord | null;
+  type: ApprovalInboxType;
+  version: number;
+}>;
+
+export type ApprovalInboxPageRecord = Readonly<{
+  items: readonly ApprovalInboxItemRecord[];
+  teams: readonly ApprovalInboxTeamRecord[];
+  total: number;
+}>;
+
+export type ListApprovalInboxInput = Readonly<{
+  actorEmployeeId: DomainId<'Employee'> | null;
+  direction: 'ASC' | 'DESC';
+  from: LocalDate | null;
+  limit: number;
+  localDate: LocalDate;
+  offset: number;
+  organizationId: DomainId<'Organization'>;
+  scope: EmployeeAuthorizationScope;
+  sort: ApprovalInboxSort;
+  status: 'ALL' | ApprovalInboxStatus;
+  teamId: DomainId<'Team'> | null;
+  to: LocalDate | null;
+  type: 'ALL' | ApprovalInboxType;
+}>;
+
 export type AttendanceIdempotencySuccessSnapshot = Readonly<{
   attendanceRevision: number;
   command: AttendanceCommand;
@@ -536,6 +579,10 @@ export type CompleteAttendanceIdempotencyInput = Readonly<{
 
 export interface OrganizationRepository {
   findById(organizationId: DomainId<'Organization'>): Promise<OrganizationRecord | null>;
+}
+
+export interface ApprovalInboxRepository {
+  list(input: ListApprovalInboxInput): Promise<ApprovalInboxPageRecord>;
 }
 
 export interface AuditRepository {

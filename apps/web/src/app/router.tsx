@@ -2,11 +2,16 @@ import type { ReactNode } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from 'react-router';
 
-import type { NavigationArea, SelfContext } from '@workledger/contracts';
+import {
+  approvalInboxQuerySchema,
+  type NavigationArea,
+  type SelfContext,
+} from '@workledger/contracts';
 
 import { ApiClientError, clearSessionMemory } from './api-client.js';
 import {
   personalCalendarQuery,
+  approvalInboxQuery,
   selfContextQuery,
   selfProfileQuery,
   todayAttendanceQuery,
@@ -31,6 +36,7 @@ import { ManagerCorrectionQueuePage } from '../routes/manager-correction-queue-p
 import { VacationRequestPage } from '../routes/vacation-request-page.js';
 import { SicknessReportPage } from '../routes/sickness-report-page.js';
 import { PersonalCalendarPage } from '../routes/personal-calendar-page.js';
+import { ApprovalInboxPage } from '../routes/approval-inbox-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -237,10 +243,17 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
             },
             {
               path: 'approvals',
+              loader: createApprovalInboxLoader(queryClient),
+              element: <ApprovalInboxPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Approvals' },
+            },
+            {
+              path: 'approvals/:approvalId',
               loader: createAreaLoader(queryClient, 'MANAGER'),
               element: <ManagerCorrectionQueuePage />,
               errorElement: <RouteBoundary />,
-              handle: { title: 'Correction requests' },
+              handle: { title: 'Approval review' },
             },
             ...PLACEHOLDER_ROUTES.map((route) => ({
               path: route.path,
@@ -370,6 +383,30 @@ function createPersonalCalendarLoader(queryClient: QueryClient): LoaderFunction 
     );
     return null;
   };
+}
+
+function createApprovalInboxLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    await requireApprovalAudience(queryClient);
+    const searchParams = new URL(request.url).searchParams;
+    const values: Record<string, string> = {};
+    for (const key of new Set(searchParams.keys())) {
+      const entries = searchParams.getAll(key);
+      if (entries.length !== 1 || entries[0] === undefined) return redirect('/approvals');
+      values[key] = entries[0];
+    }
+    const parsed = approvalInboxQuerySchema.safeParse(values);
+    if (!parsed.success) return redirect('/approvals');
+    void queryClient.prefetchQuery(approvalInboxQuery(parsed.data));
+    return parsed.data;
+  };
+}
+
+async function requireApprovalAudience(queryClient: QueryClient): Promise<void> {
+  const context = await requireContext(queryClient);
+  if (!context.navigationAreas.includes('MANAGER') && !context.navigationAreas.includes('HR')) {
+    throw new Response(null, { status: 403 });
+  }
 }
 
 async function requireContext(queryClient: QueryClient): Promise<SelfContext> {

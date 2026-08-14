@@ -56,7 +56,7 @@ Navigation visibility is convenience only; the API enforces authorization.
 - Protected routes redirect an unauthenticated actor to `/sign-in`. An authenticated actor without the required capability receives an explicit permission-denied route state. A named target outside the actor's current scope produces `403 ACCESS_DENIED`; an authorized lookup of a genuinely absent target produces not found.
 - The default authenticated destination is `/today` for an account with active employee capability and `/system/operations` for a technical-only system-administrator account. A signed-in actor who visits an authentication route returns to their eligible default destination.
 - Path parameters use opaque record identifiers except for date-only `YYYY-MM-DD`, calendar-month `YYYY-MM`, and allow-listed report keys. Route titles and analytics-free operational logs never interpolate sensitive request data.
-- URL search state is limited to non-sensitive view, date range, page, sort, generic workflow status, and opaque team/employee identifiers where the actor is already authorized. Absence type, sickness classification, notes, reasons, entitlement values, names, email addresses, and other person-identifying search text never appear in a path, query, or hash.
+- URL search state is limited to non-sensitive view, date range, page, sort, generic workflow status, broad non-sensitive workflow category, and opaque team/employee identifiers where the actor is already authorized. An absence subtype, including sickness classification, notes, reasons, entitlement values, names, email addresses, and other person-identifying search text never appear in a path, query, or hash.
 - `/requests/new`, `/requests/:requestId`, and `/approvals/:approvalId` are type-neutral. The authorized response determines the workflow presentation; sickness or another sensitive absence type is never encoded in the route.
 - A route may render several role-specific actions, but the server-authorized resource and current state determine which actions are available. Client route guards and hidden navigation are never authorization evidence.
 - Browser back/forward restores the prior route and non-sensitive filters. Draft complex-form state is not persisted in the URL or browser storage; after an unexpected navigation, only server-saved drafts explicitly added by a later scoped task may be restored.
@@ -91,7 +91,7 @@ Navigation visibility is convenience only; the API enforces authorization.
 | Route | Eligible actor and observable purpose | Implementation owner |
 |---|---|---|
 | `/team` | Current manager views privacy-safe current status and unresolved-record indicators for current direct reports only. It never reveals an absence type or medical context. | `WL-702` |
-| `/approvals` | Current manager or HR reviews a scoped, paginated queue with URL-owned non-sensitive status/date/team filters; counts and pagination are calculated after authorization scope. | `WL-504`, `WL-700`–`WL-701`, `WL-802` |
+| `/approvals` | Current manager or HR reviews a scoped, paginated queue with URL-owned non-sensitive generic-status, broad-workflow-category, current-team, affected-date, sort, and page state; counts and pagination are calculated after authorization scope. | `WL-504`, `WL-700`–`WL-701`, `WL-802` |
 | `/approvals/:approvalId` | Current eligible non-self decision maker reviews one type-neutral correction, absence, cancellation, or monthly-period item and performs only actions valid for its policy and state. | `WL-504`, `WL-701`, `WL-802` |
 | `/team-calendar` | Current manager or HR views neutral availability for authorized employees in equivalent calendar and agenda/list presentations. | `WL-703` |
 
@@ -280,7 +280,7 @@ Use native tables for passive summaries. Use React Aria Table when row selection
 - Caption or equivalent accessible naming.
 - Header cells and sort direction.
 - Row actions accessible without hover.
-- URL-owned pagination and approved non-sensitive filters only. Opaque authorized team/employee IDs may be used where the route contract permits; absence type, sickness classification, notes/reasons, entitlement, names, email addresses, and person-identifying free-text searches never enter the URL.
+- URL-owned pagination and approved non-sensitive filters only. Opaque authorized team/employee IDs and broad workflow category may be used where the route contract permits; absence subtype, sickness classification, notes/reasons, entitlement, names, email addresses, and person-identifying free-text searches never enter the URL.
 - Empty and partial-result states.
 - Horizontal scrolling with preserved focus and context where needed.
 - Card transformation only when relationships remain understandable.

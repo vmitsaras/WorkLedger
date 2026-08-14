@@ -95,7 +95,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 7 — Manager approvals and team availability
 
-- [ ] `WL-700` Build manager approval inbox and URL-owned filters.
+- [x] `WL-700` Build manager approval inbox and URL-owned filters.
 - [ ] `WL-701` Build approve, reject, and changes-requested decisions.
 - [ ] `WL-702` Build team status and privacy-safe availability.
 - [ ] `WL-703` Build team calendar and agenda alternative.

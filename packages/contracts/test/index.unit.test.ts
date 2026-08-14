@@ -3,6 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import {
+  approvalInboxEnvelopeSchema,
+  approvalInboxItemSchema,
+  approvalInboxQuerySchema,
   apiErrorEnvelopeSchema,
   apiRecoveryContextSchema,
   clockInEnvelopeSchema,
@@ -17,6 +20,130 @@ import {
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
+
+test('applies bounded approval-inbox URL-filter defaults', () => {
+  expect(approvalInboxQuerySchema.parse({})).toEqual({
+    direction: 'DESC',
+    limit: 20,
+    page: 1,
+    sort: 'SUBMITTED_AT',
+    status: 'ACTION_REQUIRED',
+    type: 'ALL',
+  });
+  expect(
+    approvalInboxQuerySchema.parse({
+      direction: 'ASC',
+      limit: '50',
+      page: '10000',
+      sort: 'EMPLOYEE',
+      status: 'COMPLETED',
+      type: 'CANCELLATION',
+    }),
+  ).toMatchObject({ direction: 'ASC', limit: 50, page: 10_000, sort: 'EMPLOYEE' });
+
+  expect(() => approvalInboxQuerySchema.parse({ limit: '9' })).toThrow();
+  expect(() => approvalInboxQuerySchema.parse({ page: '10001' })).toThrow();
+  expect(() => approvalInboxQuerySchema.parse({ employee: 'not-url-safe-filter-state' })).toThrow();
+});
+
+test('requires a correctly ordered approval-inbox date pair of at most 366 calendar days', () => {
+  expect(approvalInboxQuerySchema.parse({ from: '2024-01-01', to: '2024-12-31' })).toMatchObject({
+    from: '2024-01-01',
+    to: '2024-12-31',
+  });
+  expect(approvalInboxQuerySchema.parse({ from: '2023-03-01', to: '2024-02-29' })).toMatchObject({
+    from: '2023-03-01',
+    to: '2024-02-29',
+  });
+
+  expect(() => approvalInboxQuerySchema.parse({ from: '2024-01-01' })).toThrow();
+  expect(() => approvalInboxQuerySchema.parse({ to: '2024-01-01' })).toThrow();
+  expect(() => approvalInboxQuerySchema.parse({ from: '2024-01-02', to: '2024-01-01' })).toThrow();
+  expect(() => approvalInboxQuerySchema.parse({ from: '2024-01-01', to: '2025-01-01' })).toThrow();
+});
+
+test('keeps unified approval-inbox items strict, discriminated, and purpose-minimized', () => {
+  const team = { id: randomUUID(), name: 'Operations' };
+  const baseItem = {
+    affectedEndDate: '2026-08-13',
+    affectedStartDate: '2026-08-12',
+    employeeDisplayName: 'Employee Example',
+    id: randomUUID(),
+    status: 'ACTION_REQUIRED' as const,
+    submittedAt: '2026-08-13T09:15:00+02:00',
+    team,
+    version: 1,
+  };
+
+  for (const kind of ['CORRECTION', 'ABSENCE', 'CANCELLATION'] as const) {
+    expect(approvalInboxItemSchema.parse({ ...baseItem, kind })).toMatchObject({ kind });
+  }
+  expect(
+    approvalInboxItemSchema.parse({
+      affectedEndDate: baseItem.affectedEndDate,
+      affectedStartDate: baseItem.affectedStartDate,
+      employeeDisplayName: baseItem.employeeDisplayName,
+      id: baseItem.id,
+      kind: 'CORRECTION',
+      status: baseItem.status,
+      submittedAt: baseItem.submittedAt,
+      version: baseItem.version,
+    }),
+  ).not.toHaveProperty('team');
+  expect(() => approvalInboxItemSchema.parse({ ...baseItem, kind: 'MONTHLY_PERIOD' })).toThrow();
+  expect(() =>
+    approvalInboxItemSchema.parse({
+      ...baseItem,
+      kind: 'ABSENCE',
+      team: { ...team, managerId: randomUUID() },
+    }),
+  ).toThrow();
+
+  const forbiddenFields = {
+    absenceSubtype: 'SICKNESS',
+    employeeId: randomUUID(),
+    entitlementMinutes: 480,
+    events: [],
+    reason: 'Purpose-incompatible detail',
+    sourceStatus: 'SUBMITTED',
+  };
+  for (const [field, value] of Object.entries(forbiddenFields)) {
+    expect(() =>
+      approvalInboxItemSchema.parse({ ...baseItem, [field]: value, kind: 'ABSENCE' }),
+    ).toThrow();
+  }
+});
+
+test('validates the strict, paginated approval-inbox response shape', () => {
+  const response = {
+    data: {
+      filterOptions: { teams: [{ id: randomUUID(), name: 'Operations' }] },
+      items: [
+        {
+          affectedEndDate: '2026-08-13',
+          affectedStartDate: '2026-08-13',
+          employeeDisplayName: 'Employee Example',
+          id: randomUUID(),
+          kind: 'CANCELLATION',
+          status: 'WAITING_ON_EMPLOYEE',
+          submittedAt: '2026-08-13T09:15:00Z',
+          version: 2,
+        },
+      ],
+      pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+      timeZone: 'Europe/Berlin',
+    },
+    meta: { requestId: randomUUID() },
+  };
+
+  expect(approvalInboxEnvelopeSchema.parse(response)).toEqual(response);
+  expect(() =>
+    approvalInboxEnvelopeSchema.parse({
+      ...response,
+      data: { ...response.data, organizationId: randomUUID() },
+    }),
+  ).toThrow();
+});
 
 test('exposes the contracts package boundary identity', () => {
   expect(workspacePackage).toBe('@workledger/contracts');

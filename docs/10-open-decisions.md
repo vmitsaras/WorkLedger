@@ -353,6 +353,23 @@ These were confirmed from repository evidence and the architecture ratification.
 - A fully covered 480-minute day therefore has expected `0`, credited `0`, and balance `0`; unpaid absence remains separately reportable.
 - A versioned organization policy may deliberately choose `NO_TIME_EFFECT` for future requests. Existing requests retain the policy version they captured.
 
+## Resolved Phase 7 entry decisions
+
+### D-350 — Unified approval inbox semantics
+
+**Status:** Resolved by `WL-700`.
+
+- The inbox has only the generic kinds `CORRECTION`, `ABSENCE`, and `CANCELLATION`, and the generic statuses `ACTION_REQUIRED`, `WAITING_ON_EMPLOYEE`, and `COMPLETED`; `ALL` is query-only.
+- A URL may express broad workflow category, generic status, current team, affected-date range, sort, direction, and page. An absence subtype, including sickness, is never a URL value or list field.
+- Team is a current-date filter, not an authorization scope. Current manager or organization-HR scope, and non-self exclusion, apply before every filter, total, sort, and page.
+- The initial schema excludes monthly-period rows. `WL-802` may add them only after the Phase 8 authority decision is resolved.
+
+### D-351 — Inbox snapshot consistency
+
+**Status:** Resolved by `WL-700`.
+
+- Rows, total count, and authorized team options are read in one repeatable-read transaction so a concurrent workflow, assignment, or team change cannot mix snapshots within one inbox response.
+
 ## Decisions blocking Phase 8
 
 ### D-400 — Month lock timing
@@ -372,6 +389,13 @@ These were confirmed from repository evidence and the architecture ratification.
 - Each ordered local-date row records its status, source fingerprint, full integer-minute calculation breakdown, warnings, and the effective schedule, policy, holiday, correction, neutral absence effect, adjustment, and daily-ledger source/version references.
 - Period sums, opening/closing posted time-account balances, and the ordered included ledger-entry IDs/amounts must reconcile to the rows.
 - The snapshot contains no sickness classification, request/reviewer notes, diagnosis, entitlement balance, or unrestricted protected-record payload. Later adjustments reference it and never replace it.
+
+### D-402 — Monthly approval authority
+
+**Status:** Open; resolve before `WL-802`.
+
+- The roles and UX documents permit organization HR to approve or lock monthly periods, while the current domain rules and `ADR-0010` limit those decisions to an eligible current non-self manager.
+- `WL-700` intentionally excludes monthly rows and does not select an authority model. Resolve the source conflict through documentation or an accepted ADR before `WL-802` adds monthly items to the inbox.
 
 ## Decisions blocking production release
 

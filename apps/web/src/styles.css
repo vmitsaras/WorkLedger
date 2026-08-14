@@ -129,6 +129,25 @@
     font-weight: 700;
   }
 
+  .wl-approval-filter-summary {
+    min-block-size: 2.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .wl-approval-filter-summary:focus-visible {
+    outline: 3px solid var(--wl-focus-ring);
+    outline-offset: 3px;
+  }
+
+  .wl-approval-filter-disclosure[open] > .wl-approval-filter-summary {
+    border-block-end: 1px solid var(--wl-border);
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+
   .wl-auth-layout {
     background:
       linear-gradient(145deg, transparent 35%, oklch(0.89 0.045 225 / 0.72)), var(--wl-surface);
@@ -225,6 +244,12 @@
     }
   }
 
+  @media (min-width: 48rem) {
+    .wl-approval-filter-summary {
+      display: none;
+    }
+  }
+
   @media (forced-colors: active) {
     .wl-nav-link-active {
       border-color: Highlight;
@@ -233,6 +258,7 @@
     }
 
     .wl-alert,
+    .wl-approval-filter-disclosure,
     .wl-panel,
     .wl-skip-link,
     .wl-zero-expected-note {

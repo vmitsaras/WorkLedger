@@ -1,4 +1,5 @@
 import {
+  approvalInboxEnvelopeSchema,
   applyCorrectionEnvelopeSchema,
   apiErrorEnvelopeSchema,
   clockInEnvelopeSchema,
@@ -20,6 +21,8 @@ import {
   myTimeEnvelopeSchema,
   personalCalendarEnvelopeSchema,
   type ApiErrorCode,
+  type ApprovalInbox,
+  type ApprovalInboxQuery,
   type ApiFieldErrors,
   type ApiRecoveryContext,
   type AttendanceCommand,
@@ -201,6 +204,30 @@ export async function loadManagerCorrectionQueue(
   const parsed = correctionReviewQueueEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data.items;
+}
+
+export async function loadApprovalInbox(
+  query: ApprovalInboxQuery,
+  signal?: AbortSignal,
+): Promise<ApprovalInbox> {
+  const search = new URLSearchParams({
+    direction: query.direction,
+    limit: query.limit.toString(),
+    page: query.page.toString(),
+    sort: query.sort,
+    status: query.status,
+    type: query.type,
+  });
+  if (query.from !== undefined) search.set('from', query.from);
+  if (query.team !== undefined) search.set('team', query.team);
+  if (query.to !== undefined) search.set('to', query.to);
+  const body = await requestJson(
+    `/v1/approvals?${search.toString()}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = approvalInboxEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
 }
 
 export async function decideManagerCorrectionRequest(

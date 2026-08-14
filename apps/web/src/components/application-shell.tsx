@@ -34,6 +34,12 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   { area: 'SYSTEM', label: 'Technical audit', to: '/system/audit' },
 ];
 
+const HR_APPROVAL_ITEM: NavigationItem = {
+  area: 'HR',
+  label: 'Approvals',
+  to: '/approvals',
+};
+
 const AREA_LABELS: Readonly<Record<NavigationArea, string>> = {
   EMPLOYEE: 'My work',
   HR: 'People administration',
@@ -101,7 +107,12 @@ function NavigationLists({
       <nav aria-label={mode === 'mobile' ? 'Mobile primary' : 'Primary'}>
         <div className="grid gap-6">
           {context.navigationAreas.map((area) => {
-            const items = NAVIGATION_ITEMS.filter((item) => item.area === area);
+            const items = [
+              ...NAVIGATION_ITEMS.filter((item) => item.area === area),
+              ...(area === 'HR' && !context.navigationAreas.includes('MANAGER')
+                ? [HR_APPROVAL_ITEM]
+                : []),
+            ];
             if (items.length === 0) return null;
             return (
               <div key={area} className="grid gap-2">

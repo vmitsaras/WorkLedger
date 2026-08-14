@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useParams } from 'react-router';
+
+import { Button, buttonVariants } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -11,9 +14,10 @@ import { managerCorrectionQueueQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
 
 export function ManagerCorrectionQueuePage() {
+  const { approvalId } = useParams();
   const queryClient = useQueryClient();
   const query = useQuery(managerCorrectionQueueQuery());
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(approvalId ?? null);
   const [reason, setReason] = useState('');
   const [message, setMessage] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -87,6 +91,12 @@ export function ManagerCorrectionQueuePage() {
         title="Correction requests"
         description="Review only current direct reports. A decision does not change attendance, calculation, or balance yet."
       />
+      <Link
+        className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
+        to="/approvals"
+      >
+        Back to approval inbox
+      </Link>
       {message === undefined ? null : (
         <p role="status" className="wl-alert m-0 rounded-xl border p-4">
           {message}
@@ -109,17 +119,18 @@ export function ManagerCorrectionQueuePage() {
               <p className="m-0 text-sm">
                 Submitted correction request · {request.status.replace('_', ' ').toLowerCase()}
               </p>
-              <button
+              <Button
                 type="button"
-                className="wl-button-secondary w-fit"
-                onClick={() => {
+                variant="secondary"
+                className="w-fit"
+                onPress={() => {
                   setSelected(request.id);
                   setReason('');
                   setMessage(undefined);
                 }}
               >
                 Review request
-              </button>
+              </Button>
             </article>
           ))}
         </div>
@@ -166,13 +177,9 @@ export function ManagerCorrectionQueuePage() {
                 This request is approved but has not been applied. Applying it updates the unlocked
                 daily record and adds an explainable balance delta.
               </p>
-              <button
-                disabled={pending}
-                className="wl-button-primary w-fit"
-                onClick={() => void apply()}
-              >
+              <Button isDisabled={pending} className="w-fit" onPress={() => void apply()}>
                 {pending ? 'Applying…' : 'Apply approved correction'}
-              </button>
+              </Button>
             </div>
           ) : (
             <>
@@ -186,27 +193,23 @@ export function ManagerCorrectionQueuePage() {
                 />
               </label>
               <div className="flex flex-wrap gap-3">
-                <button
-                  disabled={pending}
-                  className="wl-button-primary"
-                  onClick={() => void decide('APPROVE')}
-                >
+                <Button isDisabled={pending} onPress={() => void decide('APPROVE')}>
                   {pending ? 'Recording…' : 'Approve for later application'}
-                </button>
-                <button
-                  disabled={pending}
-                  className="wl-button-secondary"
-                  onClick={() => void decide('REQUEST_CHANGES')}
+                </Button>
+                <Button
+                  isDisabled={pending}
+                  variant="secondary"
+                  onPress={() => void decide('REQUEST_CHANGES')}
                 >
                   Request changes
-                </button>
-                <button
-                  disabled={pending}
-                  className="wl-button-secondary"
-                  onClick={() => void decide('REJECT')}
+                </Button>
+                <Button
+                  isDisabled={pending}
+                  variant="secondary"
+                  onPress={() => void decide('REJECT')}
                 >
                   Reject
-                </button>
+                </Button>
               </div>
             </>
           )}
