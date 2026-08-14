@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import type { MonthlyPeriod } from '@workledger/contracts';
+import type { MonthlyPeriod, MonthlyPeriodSubmissionRequest } from '@workledger/contracts';
 import {
   addLocalDateDays,
   calculateMonthlyPeriodProjection,
@@ -12,6 +12,7 @@ import {
   parseNonNegativeMinutes,
   parseSignedMinutes,
   parseTimeZoneId,
+  validateMonthlyPeriodSubmission,
   type CalculationBlockerCode,
   type CalculationWarningCode,
   type DomainId,
@@ -88,9 +89,144 @@ export function createMonthlyPeriodService(database: WorkLedgerDatabase) {
           });
           if (!authorization.allowed) throw denied();
 
-          return projectMonthlyPeriod(source, currentLocalDate, timeZone.value);
+          const submissionAuthorization = authorizeEmployeeTarget({
+            action: 'MONTHLY_PERIOD_SUBMIT',
+            actor,
+            isCurrentManager: false,
+            sessionFresh: identity.sessionFresh,
+            targetEmployeeId: source.period.employeeId,
+            targetOrganizationId: source.period.organizationId,
+          });
+          return projectMonthlyPeriod(
+            source,
+            currentLocalDate,
+            timeZone.value,
+            submissionAuthorization.allowed,
+          );
         },
         { isolationLevel: 'repeatable read' },
+      );
+    },
+    async submit(
+      identity: MonthlyPeriodIdentity,
+      periodId: DomainId<'MonthlyPeriod'>,
+      input: MonthlyPeriodSubmissionRequest,
+      at: Instant,
+    ): Promise<MonthlyPeriod> {
+      return database.transaction(
+        async (transaction) => {
+          const context = requireActiveContext(
+            await transaction.accountSelfService.findContext(identity.accountId, at),
+          );
+          const timeZone = parseTimeZoneId(context.organization.timeZone);
+          if (!timeZone.ok) throw internalError();
+          const currentLocalDate = localDateAtInstant(at, timeZone.value);
+          const actor = await transaction.authorization.findActor(
+            context.organization.id,
+            context.accountId,
+            currentLocalDate,
+          );
+          if (actor === null) throw denied();
+
+          const lockedPeriod = await transaction.monthlyPeriods.lockForSubmission(
+            context.organization.id,
+            periodId,
+          );
+          if (lockedPeriod === null) {
+            throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
+          }
+          const authorization = authorizeEmployeeTarget({
+            action: 'MONTHLY_PERIOD_SUBMIT',
+            actor,
+            isCurrentManager: false,
+            sessionFresh: identity.sessionFresh,
+            targetEmployeeId: lockedPeriod.employeeId,
+            targetOrganizationId: lockedPeriod.organizationId,
+          });
+          if (!authorization.allowed) throw denied();
+
+          const source = await transaction.monthlyPeriods.loadProjectionSource(
+            context.organization.id,
+            periodId,
+          );
+          if (source === null || source.period.version !== lockedPeriod.version) {
+            throw internalError();
+          }
+          const projection = projectMonthlyPeriod(source, currentLocalDate, timeZone.value, true);
+          const transition = validateMonthlyPeriodSubmission({
+            acknowledgedSourceFingerprint: input.acknowledgedSourceFingerprint,
+            currentStatus: source.period.status,
+            currentVersion: source.period.version,
+            expectedPeriodVersion: input.expectedPeriodVersion,
+            projection: {
+              attention: { blockers: projection.attention.blockers },
+              readiness: projection.readiness.status,
+              snapshotVersion: projection.snapshotVersion,
+            },
+          });
+          if (!transition.ok) throw submissionError(transition.error.code, projection);
+
+          const submitted = await transaction.monthlyPeriods.submit({
+            actorAccountId: context.accountId,
+            expectedVersion: source.period.version,
+            organizationId: context.organization.id,
+            periodId,
+            sourceFingerprint: transition.value.submittedSourceFingerprint,
+            submittedAt: at,
+          });
+          if (submitted === null) {
+            throw new WorkLedgerApiError({
+              code: 'PERIOD_VERSION_CONFLICT',
+              context: { periodVersion: source.period.version },
+              statusCode: 409,
+            });
+          }
+
+          await transaction.audit.appendDomain({
+            actionCode: 'MONTHLY_PERIOD_SUBMITTED',
+            actor: {
+              accountId: context.accountId,
+              kind: 'ACCOUNT',
+              role: auditRole(context.roles),
+            },
+            facts: {
+              nextStatus: submitted.status,
+              previousStatus: source.period.status,
+              version: submitted.version,
+            },
+            occurredAt: at,
+            organizationId: context.organization.id,
+            outcome: 'SUCCESS',
+            privileged: false,
+            reasonCode: null,
+            requestId: null,
+            restrictedReasonId: null,
+            subjectEmployeeId: source.period.employeeId,
+            targetId: source.period.id,
+            targetKind: 'MONTHLY_PERIOD',
+          });
+
+          return projectMonthlyPeriod(
+            {
+              ...source,
+              period: {
+                ...source.period,
+                status: submitted.status,
+                submittedAt: submitted.submittedAt,
+                submittedByAccountId: submitted.submittedByAccountId,
+                submittedSourceFingerprint: submitted.submittedSourceFingerprint,
+                version: submitted.version,
+              },
+            },
+            currentLocalDate,
+            timeZone.value,
+            true,
+          );
+        },
+        {
+          isolationLevel: 'serializable',
+          retry: { maxAttempts: 3, mode: 'DATABASE_ONLY' },
+        },
       );
     },
   });
@@ -118,6 +254,7 @@ function projectMonthlyPeriod(
   source: MonthlyPeriodProjectionSourceRecord,
   currentLocalDate: LocalDate,
   timeZone: string,
+  canSubmit: boolean,
 ): MonthlyPeriod {
   const monthEnd = endOfMonth(source.period.monthStart);
   const coveredDates = listCoveredDates(
@@ -153,7 +290,17 @@ function projectMonthlyPeriod(
     .filter((projection) => coveredDates.includes(projection.localDate))
     .map((projection) => toDailyInput(projection, source));
   const sourceFingerprint = fingerprintSource({
-    ...source,
+    dailyProjections: source.dailyProjections,
+    employmentPeriods: source.employmentPeriods,
+    ledgerEntries: source.ledgerEntries,
+    period: {
+      employeeId: source.period.employeeId,
+      id: source.period.id,
+      monthStart: source.period.monthStart,
+      organizationId: source.period.organizationId,
+    },
+    policyAssignments: source.policyAssignments,
+    scheduleAssignments: source.scheduleAssignments,
     coveredDates,
     sourceBlockers: [...source.sourceBlockers, ...configurationBlockers],
   });
@@ -174,8 +321,11 @@ function projectMonthlyPeriod(
     status: source.period.status,
   });
   if (!projected.ok) throw internalError();
+  const availableActions: MonthlyPeriod['availableActions'] =
+    canSubmit && projected.value.readiness === 'READY_FOR_SUBMISSION' ? ['SUBMIT'] : [];
 
   return Object.freeze({
+    availableActions,
     attention: Object.freeze({
       blockers: projected.value.attention.blockers.map((blocker) => Object.freeze({ ...blocker })),
       warnings: projected.value.attention.warnings.map((warning) => Object.freeze({ ...warning })),
@@ -368,4 +518,46 @@ function denied() {
 
 function internalError() {
   return new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+}
+
+function submissionError(
+  code:
+    | 'PERIOD_ALREADY_SUBMITTED'
+    | 'PERIOD_LEDGER_MISMATCH'
+    | 'PERIOD_LOCKED'
+    | 'PERIOD_NOT_READY'
+    | 'PERIOD_STATE_CONFLICT'
+    | 'PERIOD_VERSION_CONFLICT'
+    | 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED',
+  period: MonthlyPeriod,
+): WorkLedgerApiError {
+  const blockerCodes = [...new Set(period.attention.blockers.map(({ code: value }) => value))];
+  const affectedDates = [
+    ...new Set(
+      period.attention.blockers.flatMap(({ localDate }) => (localDate === null ? [] : [localDate])),
+    ),
+  ];
+  return new WorkLedgerApiError({
+    code,
+    context:
+      code === 'PERIOD_NOT_READY' || code === 'PERIOD_LEDGER_MISMATCH'
+        ? {
+            affectedDates,
+            blockerCodes,
+            periodVersion: period.workflow.periodVersion,
+          }
+        : code === 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED'
+          ? { periodVersion: period.workflow.periodVersion, sourceChanged: true }
+          : { periodVersion: period.workflow.periodVersion },
+    statusCode: 409,
+  });
+}
+
+function auditRole(
+  roles: readonly ('EMPLOYEE' | 'MANAGER' | 'HR_ADMINISTRATOR' | 'SYSTEM_ADMINISTRATOR')[],
+) {
+  if (roles.includes('EMPLOYEE')) return 'EMPLOYEE' as const;
+  if (roles.includes('MANAGER')) return 'MANAGER' as const;
+  if (roles.includes('HR_ADMINISTRATOR')) return 'HR_ADMINISTRATOR' as const;
+  return null;
 }

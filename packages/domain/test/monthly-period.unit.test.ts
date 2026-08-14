@@ -5,6 +5,7 @@ import {
   parseLocalDate,
   parseNonNegativeMinutes,
   parseSignedMinutes,
+  validateMonthlyPeriodSubmission,
   type MonthlyPeriodDailyInput,
 } from '../src/index.js';
 
@@ -143,6 +144,113 @@ test('does not assign open-style readiness to a submitted period', () => {
 
   expect(result.ok).toBe(true);
   if (result.ok) expect(result.value.readiness).toBeNull();
+});
+
+test('submits only a ready current version with the exact acknowledged source fingerprint', () => {
+  const projectionResult = calculateMonthlyPeriodProjection({
+    coveredDates: [date('2026-07-31')],
+    currentLocalDate: date('2026-08-01'),
+    dailyResults: [
+      daily('2026-07-31', '47000000-0000-7000-8000-000000000006', 480, 480, 0, ['WORK_ON_HOLIDAY']),
+    ],
+    ledgerClosingBalanceMinutes: signed(600),
+    ledgerOpeningBalanceMinutes: signed(600),
+    monthEnd: date('2026-07-31'),
+    monthStart: date('2026-07-01'),
+    periodId: id<'MonthlyPeriod'>('50000000-0000-7000-8000-000000000004'),
+    periodVersion: 3,
+    sourceBlockers: [],
+    sourceFingerprint: 'd'.repeat(64),
+    status: 'CHANGES_REQUESTED',
+  });
+  expect(projectionResult.ok).toBe(true);
+  if (!projectionResult.ok) return;
+
+  expect(
+    validateMonthlyPeriodSubmission({
+      acknowledgedSourceFingerprint: 'd'.repeat(64),
+      currentStatus: 'CHANGES_REQUESTED',
+      currentVersion: 3,
+      expectedPeriodVersion: 3,
+      projection: projectionResult.value,
+    }),
+  ).toEqual({
+    ok: true,
+    value: {
+      nextStatus: 'SUBMITTED',
+      nextVersion: 4,
+      submittedSourceFingerprint: 'd'.repeat(64),
+    },
+  });
+
+  expect(
+    validateMonthlyPeriodSubmission({
+      acknowledgedSourceFingerprint: 'e'.repeat(64),
+      currentStatus: 'CHANGES_REQUESTED',
+      currentVersion: 3,
+      expectedPeriodVersion: 3,
+      projection: projectionResult.value,
+    }),
+  ).toEqual({ ok: false, error: { code: 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED' } });
+  expect(
+    validateMonthlyPeriodSubmission({
+      acknowledgedSourceFingerprint: 'd'.repeat(64),
+      currentStatus: 'CHANGES_REQUESTED',
+      currentVersion: 3,
+      expectedPeriodVersion: 2,
+      projection: projectionResult.value,
+    }),
+  ).toEqual({ ok: false, error: { code: 'PERIOD_VERSION_CONFLICT' } });
+});
+
+test('rejects blocked and invalid monthly submission states without a transition', () => {
+  const projectionResult = calculateMonthlyPeriodProjection({
+    coveredDates: [date('2026-07-31')],
+    currentLocalDate: date('2026-08-01'),
+    dailyResults: [
+      {
+        ...daily('2026-07-31', '47000000-0000-7000-8000-000000000007', 480, 480, 0),
+        basePosted: false,
+      },
+    ],
+    ledgerClosingBalanceMinutes: signed(600),
+    ledgerOpeningBalanceMinutes: signed(600),
+    monthEnd: date('2026-07-31'),
+    monthStart: date('2026-07-01'),
+    periodId: id<'MonthlyPeriod'>('50000000-0000-7000-8000-000000000005'),
+    periodVersion: 1,
+    sourceBlockers: [],
+    sourceFingerprint: 'f'.repeat(64),
+    status: 'OPEN',
+  });
+  expect(projectionResult.ok).toBe(true);
+  if (!projectionResult.ok) return;
+
+  expect(
+    validateMonthlyPeriodSubmission({
+      acknowledgedSourceFingerprint: 'f'.repeat(64),
+      currentStatus: 'OPEN',
+      currentVersion: 1,
+      expectedPeriodVersion: 1,
+      projection: projectionResult.value,
+    }),
+  ).toEqual({ ok: false, error: { code: 'PERIOD_LEDGER_MISMATCH' } });
+
+  for (const [status, code] of [
+    ['SUBMITTED', 'PERIOD_ALREADY_SUBMITTED'],
+    ['APPROVED', 'PERIOD_STATE_CONFLICT'],
+    ['LOCKED', 'PERIOD_LOCKED'],
+  ] as const) {
+    expect(
+      validateMonthlyPeriodSubmission({
+        acknowledgedSourceFingerprint: 'f'.repeat(64),
+        currentStatus: status,
+        currentVersion: 1,
+        expectedPeriodVersion: 1,
+        projection: projectionResult.value,
+      }),
+    ).toEqual({ ok: false, error: { code } });
+  }
 });
 
 function daily(

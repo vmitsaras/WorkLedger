@@ -47,6 +47,7 @@ import {
   type PersonalCalendarQuery,
   type NotificationHistory,
   type MonthlyPeriod,
+  type MonthlyPeriodSubmissionRequest,
   type NotificationQuery,
   type DismissedNotification,
   type SubmitCorrectionRequest,
@@ -184,6 +185,21 @@ export async function loadMonthlyPeriod(
     `/v1/monthly-periods/${encodeURIComponent(periodId)}`,
     signal === undefined ? {} : { signal },
   );
+  const parsed = monthlyPeriodEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function submitMonthlyPeriod(
+  periodId: string,
+  input: MonthlyPeriodSubmissionRequest,
+): Promise<MonthlyPeriod> {
+  const token = await getCsrfToken();
+  const body = await requestJson(`/v1/monthly-periods/${encodeURIComponent(periodId)}/submit`, {
+    body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+  });
   const parsed = monthlyPeriodEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;

@@ -22,6 +22,7 @@ import type {
 
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import { assertMonthlyPeriodAllowsOrdinaryMutation } from '../monthly/period-protection.js';
 import {
   asCoverageSegmentInput,
   assertCoverageAllowed,
@@ -47,6 +48,13 @@ export function createSicknessReportService(database: WorkLedgerDatabase) {
           assertSelfAuthorized(context, identity.sessionFresh, employee.id, 'ABSENCE_REQUEST');
           const requestCoverage = parseRequestCoverage(input);
           const { startDate, endDate } = coverageDateRange(requestCoverage);
+          await assertMonthlyPeriodAllowsOrdinaryMutation(
+            transaction,
+            context.organization.id,
+            employee.id,
+            startDate,
+            endDate,
+          );
           const timeZone = parseTimeZoneId(context.organization.timeZone);
           if (!timeZone.ok)
             throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });

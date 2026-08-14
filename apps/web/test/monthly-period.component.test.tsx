@@ -86,6 +86,95 @@ test('labels missing/incomplete dates and links actionable blockers and warnings
   );
 });
 
+test('requires warning acknowledgement and focuses the submitted state after success', async () => {
+  const source = warningPeriod('a');
+  let submittedBody: unknown;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestUrl(input).pathname;
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (path === `/v1/monthly-periods/${PERIOD_ID}` && init?.method !== 'POST') {
+        return successResponse(source);
+      }
+      if (path === `/v1/monthly-periods/${PERIOD_ID}/submit`) {
+        submittedBody = JSON.parse(String(init?.body)) as unknown;
+        return successResponse(submittedPeriod(source));
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication();
+
+  const submitButton = await screen.findByRole('button', { name: 'Submit month' });
+  expect(submitButton).toBeDisabled();
+  expect(screen.getByText(/Review and acknowledge the current warnings/u)).toBeVisible();
+  await user.click(
+    screen.getByRole('checkbox', {
+      name: /I reviewed all 1 warning in this monthly source version/u,
+    }),
+  );
+  expect(submitButton).toBeEnabled();
+  await user.click(submitButton);
+
+  const submittedHeading = await screen.findByRole('heading', { name: 'Submitted' });
+  await waitFor(() => expect(submittedHeading).toHaveFocus());
+  expect(screen.getByRole('status')).toHaveTextContent('Monthly period submitted for review.');
+  expect(submittedBody).toEqual({
+    acknowledgedSourceFingerprint: 'a'.repeat(64),
+    expectedPeriodVersion: 1,
+  });
+  expect(screen.queryByRole('button', { name: 'Submit month' })).not.toBeInTheDocument();
+  await expectNoAxeViolations(container);
+});
+
+test('focuses a persistent error summary and invalidates acknowledgement when sources change', async () => {
+  let reviewLoads = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestUrl(input).pathname;
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (path === `/v1/monthly-periods/${PERIOD_ID}`) {
+        reviewLoads += 1;
+        return successResponse(warningPeriod(reviewLoads === 1 ? 'a' : 'b'));
+      }
+      if (path === `/v1/monthly-periods/${PERIOD_ID}/submit`) {
+        return submissionErrorResponse('PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED');
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  renderApplication();
+
+  const acknowledgement = await screen.findByRole('checkbox', {
+    name: /I reviewed all 1 warning in this monthly source version/u,
+  });
+  await user.click(acknowledgement);
+  await user.click(screen.getByRole('button', { name: 'Submit month' }));
+
+  const error = await screen.findByRole('alert');
+  await waitFor(() => expect(error).toHaveFocus());
+  expect(error).toHaveTextContent(/reviewed source changed/u);
+  expect(acknowledgement).not.toBeChecked();
+  expect(screen.getByRole('button', { name: 'Submit month' })).toBeDisabled();
+  expect(reviewLoads).toBeGreaterThan(1);
+});
+
+test('does not expose the employee-only submission action to a reviewer', async () => {
+  stubFetch({ ...readyPeriod(), availableActions: [] });
+  renderApplication();
+
+  expect(
+    await screen.findByText('Only the employee who owns this monthly period can submit it.'),
+  ).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Submit month' })).not.toBeInTheDocument();
+});
+
 test('shows a purpose-safe permission denial without retrying or rendering monthly data', async () => {
   vi.stubGlobal(
     'fetch',
@@ -163,6 +252,7 @@ function stubFetch(period: MonthlyPeriod) {
 
 function readyPeriod(): MonthlyPeriod {
   return {
+    availableActions: ['SUBMIT'],
     attention: { blockers: [], warnings: [] },
     employeeDisplayName: 'Monthly Employee',
     id: PERIOD_ID,
@@ -202,6 +292,7 @@ function readyPeriod(): MonthlyPeriod {
 function incompletePeriod(): MonthlyPeriod {
   return {
     ...readyPeriod(),
+    availableActions: [],
     attention: {
       blockers: [
         { code: 'ABSENCE_APPROVAL_PENDING', localDate: '2026-07-29', recordId: null },
@@ -222,6 +313,34 @@ function incompletePeriod(): MonthlyPeriod {
       emptyRow('2026-07-30', FIRST_RECORD_ID, 'INCOMPLETE'),
       completeRow('2026-07-31', SECOND_RECORD_ID, 510, 30),
     ],
+  };
+}
+
+function warningPeriod(fingerprintCharacter: string): MonthlyPeriod {
+  return {
+    ...readyPeriod(),
+    attention: {
+      blockers: [],
+      warnings: [{ code: 'WORK_ON_HOLIDAY', localDate: '2026-06-30', recordId: FIRST_RECORD_ID }],
+    },
+    snapshotVersion: {
+      schemaVersion: 1,
+      sourceFingerprint: fingerprintCharacter.repeat(64),
+    },
+  };
+}
+
+function submittedPeriod(period: MonthlyPeriod): MonthlyPeriod {
+  return {
+    ...period,
+    availableActions: [],
+    readiness: { ...period.readiness, status: null },
+    workflow: {
+      ...period.workflow,
+      periodVersion: period.workflow.periodVersion + 1,
+      status: 'SUBMITTED',
+      submittedAt: '2026-08-14T10:30:45Z',
+    },
   };
 }
 
@@ -269,6 +388,21 @@ function apiErrorResponse() {
       meta: { idempotentReplay: false },
     }),
     { headers: { 'content-type': 'application/json' }, status: 503 },
+  );
+}
+
+function submissionErrorResponse(code: 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED') {
+  return new Response(
+    JSON.stringify({
+      error: {
+        code,
+        context: { periodVersion: 1, sourceChanged: true },
+        message: 'The request could not be completed.',
+        requestId: REQUEST_ID,
+      },
+      meta: { idempotentReplay: false },
+    }),
+    { headers: { 'content-type': 'application/json' }, status: 409 },
   );
 }
 

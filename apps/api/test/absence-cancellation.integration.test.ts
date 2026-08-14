@@ -35,6 +35,7 @@ const migrationFiles = [
   '0013_brave_bulldozer.sql',
   '0014_adorable_piledriver.sql',
   '0015_rainy_nightshade.sql',
+  '0016_flimsy_oracle.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -143,7 +144,7 @@ integrationTest(
 );
 
 integrationTest(
-  `routes locked cancellation targets to post-lock adjustment (${databaseHarness.safeLabel})`,
+  `routes submitted and locked cancellation targets to the required recovery flow (${databaseHarness.safeLabel})`,
   async () => {
     const fixture = await createPostgresSchemaFixture({
       connectionString: databaseHarness.url,
@@ -163,19 +164,34 @@ integrationTest(
       const employee = await createEmployee(fixture.client);
       const source = await createEffectiveVacation(fixture.client, employee);
       await fixture.client.query(
-        `insert into monthly_periods (organization_id, employee_id, month_start, status, locked_at)
-         values ($1, $2, '2026-02-01', 'LOCKED', $3)`,
+        `insert into monthly_periods (organization_id, employee_id, month_start, status, submitted_at)
+         values ($1, $2, '2026-02-01', 'SUBMITTED', $3)`,
         [employee.organizationId, employee.employeeId, NOW],
       );
       const cookie = await signIn(app);
-      const response = await app.inject({
+      const token = await csrf(app, cookie);
+      const submittedResponse = await app.inject({
         method: 'POST',
         url: `/v1/me/absence-requests/${source.requestId}/cancellations`,
-        headers: requestHeaders(cookie, await csrf(app, cookie)),
+        headers: requestHeaders(cookie, token),
         payload: { expectedRequestVersion: 1 },
       });
-      expect(response.statusCode).toBe(409);
-      expect(response.json()).toMatchObject({ error: { code: 'PERIOD_ADJUSTMENT_REQUIRED' } });
+      expect(submittedResponse.statusCode).toBe(409);
+      expect(submittedResponse.json()).toMatchObject({ error: { code: 'PERIOD_REOPEN_REQUIRED' } });
+      await fixture.client.query(
+        `update monthly_periods set status = 'LOCKED', locked_at = $2 where employee_id = $1`,
+        [employee.employeeId, NOW],
+      );
+      const lockedResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/me/absence-requests/${source.requestId}/cancellations`,
+        headers: requestHeaders(cookie, token),
+        payload: { expectedRequestVersion: 1 },
+      });
+      expect(lockedResponse.statusCode).toBe(409);
+      expect(lockedResponse.json()).toMatchObject({
+        error: { code: 'PERIOD_ADJUSTMENT_REQUIRED' },
+      });
       expect(await scalar(fixture.client, 'select count(*) from absence_cancellations')).toBe('0');
     } finally {
       await app.close();

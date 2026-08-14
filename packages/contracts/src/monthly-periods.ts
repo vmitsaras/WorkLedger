@@ -12,6 +12,7 @@ export const MONTHLY_PERIOD_STATUSES = [
 ] as const;
 export const MONTHLY_READINESS_STATUSES = ['INCOMPLETE', 'READY_FOR_SUBMISSION'] as const;
 export const MONTHLY_DAILY_STATUSES = ['MISSING', 'PROVISIONAL', 'INCOMPLETE', 'COMPLETE'] as const;
+export const MONTHLY_PERIOD_ACTIONS = ['SUBMIT'] as const;
 
 const dateSchema = z.iso.date();
 const instantSchema = z.iso.datetime({ offset: true });
@@ -84,6 +85,7 @@ export const monthlyPeriodSnapshotVersionSchema = z.strictObject({
 });
 
 export const monthlyPeriodSchema = z.strictObject({
+  availableActions: z.array(z.enum(MONTHLY_PERIOD_ACTIONS)).max(1),
   attention: monthlyPeriodAttentionSchema,
   employeeDisplayName: z.string().min(1).max(160),
   id: identifierSchema,
@@ -99,8 +101,15 @@ export const monthlyPeriodSchema = z.strictObject({
 
 export const monthlyPeriodEnvelopeSchema = createSuccessEnvelopeSchema(monthlyPeriodSchema);
 
+export const monthlyPeriodSubmissionRequestSchema = z.strictObject({
+  acknowledgedSourceFingerprint: fingerprintSchema,
+  expectedPeriodVersion: z.number().int().positive(),
+});
+
 export type MonthlyPeriod = z.infer<typeof monthlyPeriodSchema>;
+export type MonthlyPeriodAction = (typeof MONTHLY_PERIOD_ACTIONS)[number];
 export type MonthlyPeriodAttention = z.infer<typeof monthlyPeriodAttentionSchema>;
 export type MonthlyPeriodRow = z.infer<typeof monthlyPeriodRowSchema>;
 export type MonthlyPeriodStatus = z.infer<typeof monthlyPeriodWorkflowSchema>['status'];
 export type MonthlyReadinessStatus = z.infer<typeof monthlyPeriodReadinessSchema>['status'];
+export type MonthlyPeriodSubmissionRequest = z.infer<typeof monthlyPeriodSubmissionRequestSchema>;

@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
 import { Link, useParams } from 'react-router';
 
 import type { MonthlyPeriod } from '@workledger/contracts';
 
-import { ApiClientError } from '../app/api-client.js';
+import { ApiClientError, submitMonthlyPeriod } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { monthlyPeriodQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
@@ -12,6 +12,49 @@ import { PageHeader } from '../components/page-header.js';
 export function MonthlyPeriodPage() {
   const periodId = useParams()['periodId'];
   const query = useQuery(monthlyPeriodQuery(periodId ?? ''));
+  const queryClient = useQueryClient();
+  const statusHeadingRef = useRef<HTMLHeadingElement>(null);
+  const submissionErrorRef = useRef<HTMLDivElement>(null);
+  const [warningAcknowledged, setWarningAcknowledged] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const submission = useMutation({
+    mutationFn: ({
+      acknowledgedSourceFingerprint,
+      expectedPeriodVersion,
+      id,
+    }: Readonly<{
+      acknowledgedSourceFingerprint: string;
+      expectedPeriodVersion: number;
+      id: string;
+    }>) => submitMonthlyPeriod(id, { acknowledgedSourceFingerprint, expectedPeriodVersion }),
+    onError: (error) => {
+      setSuccessMessage(null);
+      if (isSubmissionConflict(error)) {
+        setWarningAcknowledged(false);
+        void query.refetch();
+      }
+    },
+    onSuccess: (period) => {
+      queryClient.setQueryData(monthlyPeriodQuery(period.id).queryKey, period);
+      setWarningAcknowledged(false);
+      setSuccessMessage('Monthly period submitted for review.');
+    },
+  });
+  const resetSubmission = submission.reset;
+
+  useEffect(() => {
+    setSuccessMessage(null);
+    setWarningAcknowledged(false);
+    resetSubmission();
+  }, [periodId, resetSubmission]);
+
+  useEffect(() => {
+    if (submission.isError) submissionErrorRef.current?.focus();
+  }, [submission.isError, submission.error]);
+
+  useEffect(() => {
+    if (successMessage !== null) statusHeadingRef.current?.focus();
+  }, [successMessage]);
 
   if (query.isPending)
     return (
@@ -36,7 +79,12 @@ export function MonthlyPeriodPage() {
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 id="monthly-status-heading" className="m-0 text-xl font-bold">
+            <h2
+              id="monthly-status-heading"
+              className="m-0 text-xl font-bold"
+              ref={statusHeadingRef}
+              tabIndex={-1}
+            >
               {workflowLabel(period.workflow.status)}
             </h2>
             <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
@@ -60,6 +108,26 @@ export function MonthlyPeriodPage() {
       <AttentionSection period={period} />
       <TotalsSection totals={period.totals} />
       <DailyRows rows={period.rows} monthStart={period.monthStart} />
+      <SubmissionSection
+        error={submission.error}
+        errorRef={submissionErrorRef}
+        isPending={submission.isPending}
+        onAcknowledgementChange={(checked) => {
+          setWarningAcknowledged(checked);
+          if (submission.isError) submission.reset();
+        }}
+        onSubmit={(event) => {
+          event.preventDefault();
+          submission.mutate({
+            acknowledgedSourceFingerprint: period.snapshotVersion.sourceFingerprint,
+            expectedPeriodVersion: period.workflow.periodVersion,
+            id: period.id,
+          });
+        }}
+        period={period}
+        successMessage={successMessage}
+        warningAcknowledged={warningAcknowledged}
+      />
     </MonthlyPeriodFrame>
   );
 }
@@ -94,7 +162,7 @@ function AttentionSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
           Blockers prevent submission. Warnings preserve calculated values but must be reviewed in
-          the later submission step.
+          the submission step.
         </p>
       </div>
       {blockers.length === 0 ? (
@@ -150,6 +218,99 @@ function AttentionSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
             ))}
           </ul>
         </div>
+      )}
+    </section>
+  );
+}
+
+function SubmissionSection({
+  error,
+  errorRef,
+  isPending,
+  onAcknowledgementChange,
+  onSubmit,
+  period,
+  successMessage,
+  warningAcknowledged,
+}: Readonly<{
+  error: unknown;
+  errorRef: RefObject<HTMLDivElement | null>;
+  isPending: boolean;
+  onAcknowledgementChange: (checked: boolean) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  period: MonthlyPeriod;
+  successMessage: string | null;
+  warningAcknowledged: boolean;
+}>) {
+  const canSubmit = period.availableActions.includes('SUBMIT');
+  const hasWarnings = period.attention.warnings.length > 0;
+  return (
+    <section aria-labelledby="monthly-submission-heading" className="grid gap-4">
+      <div>
+        <h2 id="monthly-submission-heading" className="m-0 text-xl font-bold">
+          Submission
+        </h2>
+        <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+          Submission freezes ordinary edits until an eligible reviewer requests changes.
+        </p>
+      </div>
+
+      {successMessage === null ? null : (
+        <p className="wl-alert wl-alert-success m-0 rounded-xl border p-4" role="status">
+          {successMessage}
+        </p>
+      )}
+      {error === null ? null : (
+        <div
+          className="wl-alert wl-alert-error grid gap-2 rounded-xl border p-4"
+          ref={errorRef}
+          role="alert"
+          tabIndex={-1}
+        >
+          <h3 className="m-0 text-lg font-bold">The month was not submitted</h3>
+          <p className="m-0">{submissionErrorMessage(error)}</p>
+        </div>
+      )}
+
+      {canSubmit ? (
+        <form
+          className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4"
+          onSubmit={onSubmit}
+        >
+          {hasWarnings ? (
+            <label className="flex items-start gap-3" htmlFor="monthly-warning-acknowledgement">
+              <input
+                checked={warningAcknowledged}
+                className="mt-1 size-5"
+                id="monthly-warning-acknowledgement"
+                onChange={(event) => onAcknowledgementChange(event.currentTarget.checked)}
+                type="checkbox"
+              />
+              <span>
+                I reviewed all {period.attention.warnings.length.toString()} warning
+                {period.attention.warnings.length === 1 ? '' : 's'} in this monthly source version.
+              </span>
+            </label>
+          ) : (
+            <p className="m-0">No warning acknowledgement is required for this source version.</p>
+          )}
+          <button
+            className="wl-button-primary w-fit"
+            disabled={isPending || (hasWarnings && !warningAcknowledged)}
+            type="submit"
+          >
+            {isPending ? 'Submitting…' : 'Submit month'}
+          </button>
+          {hasWarnings && !warningAcknowledged ? (
+            <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+              Review and acknowledge the current warnings to enable submission.
+            </p>
+          ) : null}
+        </form>
+      ) : (
+        <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
+          {submissionAvailabilityMessage(period)}
+        </p>
       )}
     </section>
   );
@@ -335,7 +496,63 @@ function readinessExplanation(period: MonthlyPeriod): string {
   if (period.readiness.status === 'INCOMPLETE') {
     return 'Resolve every listed blocker and complete every covered date before submission.';
   }
-  return 'This period is read-only in its current workflow state. Later Phase 8 tasks add its permitted transition actions.';
+  if (period.workflow.status === 'SUBMITTED') {
+    return 'This period was submitted and is read-only while it waits for reviewer action.';
+  }
+  if (period.workflow.status === 'APPROVED') {
+    return 'This period is approved and remains read-only before its separate lock action.';
+  }
+  if (period.workflow.status === 'LOCKED') {
+    return 'This period is locked. Ordinary edits cannot change its approved record.';
+  }
+  return 'This period is read-only in its current workflow state.';
+}
+
+function submissionAvailabilityMessage(period: MonthlyPeriod): string {
+  if (period.workflow.status === 'SUBMITTED') return 'Submitted for reviewer action.';
+  if (period.workflow.status === 'APPROVED') return 'Approved; submission is already complete.';
+  if (period.workflow.status === 'LOCKED') return 'Locked; submission is already complete.';
+  if (period.readiness.status === 'INCOMPLETE') {
+    return 'Submission is unavailable until every blocker is resolved and every covered date is complete.';
+  }
+  return 'Only the employee who owns this monthly period can submit it.';
+}
+
+function submissionErrorMessage(error: unknown): string {
+  const code = error instanceof ApiClientError ? error.code : null;
+  switch (code) {
+    case 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED':
+      return 'The reviewed source changed. Review the refreshed warnings and acknowledge the current version before trying again.';
+    case 'PERIOD_NOT_READY':
+    case 'PERIOD_LEDGER_MISMATCH':
+      return 'The refreshed period is not ready. Resolve its current blockers before trying again.';
+    case 'PERIOD_VERSION_CONFLICT':
+      return 'The workflow changed while you were reviewing it. Review the refreshed period before trying again.';
+    case 'PERIOD_ALREADY_SUBMITTED':
+      return 'This period has already been submitted.';
+    case 'PERIOD_LOCKED':
+    case 'PERIOD_STATE_CONFLICT':
+      return 'Submission is no longer available in the current workflow state.';
+    case 'ACCESS_DENIED':
+      return 'Your current account cannot submit this monthly period.';
+    default:
+      return 'The monthly period could not be submitted. Check your connection and try again.';
+  }
+}
+
+function isSubmissionConflict(error: unknown): boolean {
+  return (
+    error instanceof ApiClientError &&
+    [
+      'PERIOD_ALREADY_SUBMITTED',
+      'PERIOD_LEDGER_MISMATCH',
+      'PERIOD_LOCKED',
+      'PERIOD_NOT_READY',
+      'PERIOD_STATE_CONFLICT',
+      'PERIOD_VERSION_CONFLICT',
+      'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED',
+    ].includes(error.code)
+  );
 }
 
 function attentionLabel(code: string): string {

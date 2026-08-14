@@ -69,7 +69,7 @@ export function createApiServer(
         dependencies.notificationDelivery ?? disabledNotificationDeliveryAdapter,
       );
       registerNotificationRoutes(app, config, authentication, database, dependencies.now);
-      registerMonthlyPeriodRoutes(app, authentication, database, dependencies.now);
+      registerMonthlyPeriodRoutes(app, config, authentication, database, dependencies.now);
       registerTeamStatusRoutes(app, authentication, database, dependencies.now);
       registerVacationRequestRoutes(app, config, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {

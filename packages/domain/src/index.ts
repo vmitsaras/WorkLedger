@@ -21,6 +21,7 @@ export {
   monthlyPeriodStatuses,
   monthlyReadinessStatuses,
   monthlySnapshotSchemaVersion,
+  validateMonthlyPeriodSubmission,
   type MonthlyDailyStatus,
   type MonthlyPeriodAttention,
   type MonthlyPeriodDailyInput,
@@ -30,6 +31,9 @@ export {
   type MonthlyPeriodProjectionInput,
   type MonthlyPeriodSourceBlocker,
   type MonthlyPeriodStatus,
+  type MonthlyPeriodSubmission,
+  type MonthlyPeriodSubmissionError,
+  type MonthlyPeriodSubmissionInput,
   type MonthlyPeriodTotals,
   type MonthlyReadinessStatus,
 } from './monthly-period.js';

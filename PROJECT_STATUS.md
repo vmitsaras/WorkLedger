@@ -2,15 +2,16 @@
 
 **Current phase:** Phase 8 — Monthly closure and reporting
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 1 of 7 Phase 8 tasks complete
-**Current milestone:** Employee monthly review and submission
-**Active task:** `WL-801`
+**Phase progress:** 2 of 7 Phase 8 tasks complete
+**Current milestone:** Eligible-reviewer monthly decisions and locking
+**Active task:** `WL-802`
 **Status:** Ready
 **Last verified:** 2026-08-14
 
 ## Current objective
 
-Implement employee warning acknowledgement and the versioned monthly submit transition for `WL-801`.
+Implement current-manager/organization-HR changes-requested, approval snapshot, notification, and
+separate lock transitions for `WL-802` under resolved `D-402`.
 
 ## Verified decisions
 
@@ -338,6 +339,36 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
   handoff notes, and current project memory.
 
 ## Latest completed task
+
+### `WL-801` — Implement employee review and submit transition
+
+- Changed: added the pure versioned submission transition, strict fingerprint acknowledgement
+  contract, migration `0016`, row-locked serializable persistence, self-only submission route,
+  persisted submitting account/time/source evidence, one success audit event, server-derived
+  available actions, and the accessible monthly submit interface. The source fingerprint now
+  excludes mutable workflow/display state so it remains stable across submission. Ordinary
+  correction, vacation, sickness, and cancellation mutations are protected after submission;
+  pending cancellations also block readiness.
+- Verified: the pinned-toolchain equivalents of workspace/version/config, formatting,
+  lint/boundaries, strict typecheck, reproducible OpenAPI, 24 tooling-contract tests, 236
+  unit/component tests, 34 PostgreSQL integration tests across 19 files, 16 Chromium scenarios,
+  and the production build pass. The pnpm managed-runtime wrapper requested and safely aborted a
+  non-interactive dependency refresh; no dependency or lockfile changed.
+- Accessibility: warning acknowledgement uses a visible native checkbox and explanatory disabled
+  state; reviewers never receive the employee-only action; conflicts persist in a focused alert,
+  refetch the source, and clear stale acknowledgement; success is announced once and focuses the
+  textual Submitted heading. Component axe coverage passes.
+- Security/data: active self employee authorization, same-origin and CSRF checks, expected version,
+  exact source, readiness, blocker, and ledger reconciliation are rechecked inside one serializable
+  transaction. Error context contains only authorized blocker codes/dates; no source internals,
+  absence classification, reasons, or approval snapshot are exposed or created.
+- Documentation: added `docs/82-monthly-period-submission.md`, clarified submission versus reviewer
+  notification evidence, regenerated OpenAPI, mapped EX-035/EX-038/EX-039/EX-076, and synchronized
+  README, TODO, task board, and status.
+- Remaining risk: `WL-802` must implement account-first current-manager/organization-HR decisions,
+  source-unchanged approval snapshots, reviewer outcome notifications, and the separate lock
+  action. The production build still reports the existing large-chunk advisory.
+- Next task: `WL-802`.
 
 ### `WL-800` — Implement monthly period summary and blockers
 
@@ -814,13 +845,14 @@ Implement employee warning acknowledgement and the versioned monthly submit tran
 
 ## Current blockers
 
-No `WL-801` blocker is known. `D-402` is resolved for `WL-802`; its required account-first monthly
-actor migration is implementation scope, not an open product decision. D-502 remains open before
-the production browser gate.
+No `WL-802` blocker is known. `D-402` resolves its reviewer authority to a current effective direct
+manager or organization HR, always non-self, with required account/authority evidence and nullable
+employee evidence. D-502 remains open before the production browser gate.
 
 ## Next task
 
-`WL-801 — Implement employee submission.`
+`WL-802 — Implement eligible-reviewer changes requested, approval, snapshot, notification, and
+separate lock transitions.`
 
 ## Update rules
 

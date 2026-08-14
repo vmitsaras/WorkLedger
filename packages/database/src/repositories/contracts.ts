@@ -398,6 +398,30 @@ export type MonthlyPeriodRecord = Readonly<{
   organizationId: DomainId<'Organization'>;
   status: MonthlyPeriodStatus;
   submittedAt: Instant | null;
+  submittedByAccountId: DomainId<'Account'> | null;
+  submittedSourceFingerprint: string | null;
+  version: number;
+}>;
+
+export type MonthlyPeriodProtectionStatus = Extract<
+  MonthlyPeriodStatus,
+  'APPROVED' | 'LOCKED' | 'SUBMITTED'
+>;
+
+export type SubmitMonthlyPeriodInput = Readonly<{
+  actorAccountId: DomainId<'Account'>;
+  expectedVersion: number;
+  organizationId: DomainId<'Organization'>;
+  periodId: DomainId<'MonthlyPeriod'>;
+  sourceFingerprint: string;
+  submittedAt: Instant;
+}>;
+
+export type SubmittedMonthlyPeriodRecord = Readonly<{
+  status: 'SUBMITTED';
+  submittedAt: Instant;
+  submittedByAccountId: DomainId<'Account'>;
+  submittedSourceFingerprint: string;
   version: number;
 }>;
 
@@ -917,6 +941,12 @@ export interface DailyProjectionRepository {
 }
 
 export interface MonthlyPeriodRepository {
+  findProtectionForRange(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    startDate: LocalDate,
+    endDate: LocalDate,
+  ): Promise<MonthlyPeriodProtectionStatus | null>;
   findByEmployeeMonth(
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
@@ -926,6 +956,11 @@ export interface MonthlyPeriodRepository {
     organizationId: DomainId<'Organization'>,
     periodId: DomainId<'MonthlyPeriod'>,
   ): Promise<MonthlyPeriodProjectionSourceRecord | null>;
+  lockForSubmission(
+    organizationId: DomainId<'Organization'>,
+    periodId: DomainId<'MonthlyPeriod'>,
+  ): Promise<MonthlyPeriodRecord | null>;
+  submit(input: SubmitMonthlyPeriodInput): Promise<SubmittedMonthlyPeriodRecord | null>;
 }
 
 export interface CorrectionRequestRepository {

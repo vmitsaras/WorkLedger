@@ -133,6 +133,35 @@ export type MonthlyPeriodProjection = Readonly<{
   totals: MonthlyPeriodTotals;
 }>;
 
+export type MonthlyPeriodSubmissionInput = Readonly<{
+  acknowledgedSourceFingerprint: string;
+  currentStatus: MonthlyPeriodStatus;
+  currentVersion: number;
+  expectedPeriodVersion: number;
+  projection: Readonly<{
+    attention: Readonly<{
+      blockers: readonly Readonly<{ code: CalculationBlockerCode }>[];
+    }>;
+    readiness: MonthlyReadinessStatus | null;
+    snapshotVersion: Readonly<{ sourceFingerprint: string }>;
+  }>;
+}>;
+
+export type MonthlyPeriodSubmission = Readonly<{
+  nextStatus: 'SUBMITTED';
+  nextVersion: number;
+  submittedSourceFingerprint: string;
+}>;
+
+export type MonthlyPeriodSubmissionError =
+  | DomainError<'PERIOD_ALREADY_SUBMITTED'>
+  | DomainError<'PERIOD_LEDGER_MISMATCH'>
+  | DomainError<'PERIOD_LOCKED'>
+  | DomainError<'PERIOD_NOT_READY'>
+  | DomainError<'PERIOD_STATE_CONFLICT'>
+  | DomainError<'PERIOD_VERSION_CONFLICT'>
+  | DomainError<'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED'>;
+
 export type MonthlyPeriodProjectionError =
   | DomainError<'MONTHLY_PERIOD_DATE_RANGE_INVALID'>
   | DomainError<'MONTHLY_PERIOD_DUPLICATE_DATE'>
@@ -145,6 +174,15 @@ const DUPLICATE_DATE = Object.freeze({ code: 'MONTHLY_PERIOD_DUPLICATE_DATE' } a
 const SCOPE_INVALID = Object.freeze({ code: 'MONTHLY_PERIOD_SCOPE_INVALID' } as const);
 const TOTAL_INVALID = Object.freeze({ code: 'MONTHLY_PERIOD_TOTAL_INVALID' } as const);
 const VERSION_INVALID = Object.freeze({ code: 'MONTHLY_PERIOD_VERSION_INVALID' } as const);
+const PERIOD_ALREADY_SUBMITTED = Object.freeze({ code: 'PERIOD_ALREADY_SUBMITTED' } as const);
+const PERIOD_LEDGER_MISMATCH = Object.freeze({ code: 'PERIOD_LEDGER_MISMATCH' } as const);
+const PERIOD_LOCKED = Object.freeze({ code: 'PERIOD_LOCKED' } as const);
+const PERIOD_NOT_READY = Object.freeze({ code: 'PERIOD_NOT_READY' } as const);
+const PERIOD_STATE_CONFLICT = Object.freeze({ code: 'PERIOD_STATE_CONFLICT' } as const);
+const PERIOD_VERSION_CONFLICT = Object.freeze({ code: 'PERIOD_VERSION_CONFLICT' } as const);
+const PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED = Object.freeze({
+  code: 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED',
+} as const);
 
 /**
  * Derives one immutable monthly review projection from already identified daily and ledger facts.
@@ -269,6 +307,41 @@ export function calculateMonthlyPeriodProjection(
         sourceFingerprint: input.sourceFingerprint,
       }),
       totals,
+    }),
+  );
+}
+
+/**
+ * Validates the complete employee submission transition without persisting it.
+ * The acknowledged fingerprint binds the warning acknowledgement to the exact reviewed source.
+ */
+export function validateMonthlyPeriodSubmission(
+  input: MonthlyPeriodSubmissionInput,
+): Result<MonthlyPeriodSubmission, MonthlyPeriodSubmissionError> {
+  if (input.currentStatus === 'LOCKED') return failure(PERIOD_LOCKED);
+  if (input.currentStatus === 'SUBMITTED') return failure(PERIOD_ALREADY_SUBMITTED);
+  if (input.currentStatus !== 'OPEN' && input.currentStatus !== 'CHANGES_REQUESTED') {
+    return failure(PERIOD_STATE_CONFLICT);
+  }
+  if (input.currentVersion !== input.expectedPeriodVersion) {
+    return failure(PERIOD_VERSION_CONFLICT);
+  }
+  if (input.projection.readiness !== 'READY_FOR_SUBMISSION') {
+    return failure(
+      input.projection.attention.blockers.some(({ code }) => code === 'LEDGER_SOURCE_MISMATCH')
+        ? PERIOD_LEDGER_MISMATCH
+        : PERIOD_NOT_READY,
+    );
+  }
+  if (input.acknowledgedSourceFingerprint !== input.projection.snapshotVersion.sourceFingerprint) {
+    return failure(PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED);
+  }
+
+  return success(
+    Object.freeze({
+      nextStatus: 'SUBMITTED',
+      nextVersion: input.currentVersion + 1,
+      submittedSourceFingerprint: input.projection.snapshotVersion.sourceFingerprint,
     }),
   );
 }

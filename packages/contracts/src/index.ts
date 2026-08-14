@@ -6,6 +6,7 @@ export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
   MONTHLY_DAILY_STATUSES,
+  MONTHLY_PERIOD_ACTIONS,
   MONTHLY_PERIOD_STATUSES,
   MONTHLY_READINESS_STATUSES,
   monthlyPeriodAttentionSchema,
@@ -15,13 +16,16 @@ export {
   monthlyPeriodRowSchema,
   monthlyPeriodSchema,
   monthlyPeriodSnapshotVersionSchema,
+  monthlyPeriodSubmissionRequestSchema,
   monthlyPeriodTotalsSchema,
   monthlyPeriodWarningSchema,
   monthlyPeriodWorkflowSchema,
   type MonthlyPeriod,
+  type MonthlyPeriodAction,
   type MonthlyPeriodAttention,
   type MonthlyPeriodRow,
   type MonthlyPeriodStatus,
+  type MonthlyPeriodSubmissionRequest,
   type MonthlyReadinessStatus,
 } from './monthly-periods.js';
 

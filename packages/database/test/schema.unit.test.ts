@@ -18,6 +18,7 @@ import {
   domainAuditEvents,
   employmentPeriods,
   idempotencyRecords,
+  monthlyPeriods,
   notificationDeliveryAttempts,
   notifications,
   punchEvents,
@@ -113,6 +114,20 @@ describe('initial PostgreSQL schema', () => {
     }
   });
 
+  it('records current monthly submission actor and exact source fingerprint', () => {
+    const configuration = getTableConfig(monthlyPeriods);
+    expect(configuration.columns.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'submitted_at',
+        'submitted_by_account_id',
+        'submitted_source_fingerprint',
+      ]),
+    );
+    expect(configuration.checks.map(({ name }) => name)).toContain(
+      'monthly_periods_submitted_fingerprint_format',
+    );
+  });
+
   it('keeps generic notification history separate from append-only delivery attempts', () => {
     const notificationConfiguration = getTableConfig(notifications);
     const attemptConfiguration = getTableConfig(notificationDeliveryAttempts);
@@ -163,6 +178,7 @@ describe('initial PostgreSQL schema', () => {
       '0013_brave_bulldozer',
       '0014_adorable_piledriver',
       '0015_rainy_nightshade',
+      '0016_flimsy_oracle',
     ]);
   });
 });

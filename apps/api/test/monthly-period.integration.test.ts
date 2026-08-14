@@ -36,6 +36,7 @@ const migrationFiles = [
   '0013_brave_bulldozer.sql',
   '0014_adorable_piledriver.sql',
   '0015_rainy_nightshade.sql',
+  '0016_flimsy_oracle.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -64,7 +65,17 @@ integrationTest(
       expect(completeResponse.headers['cache-control']).toBe('private, no-store');
       const complete = monthlyPeriodEnvelopeSchema.parse(completeResponse.json()).data;
       expect(complete).toMatchObject({
-        attention: { blockers: [], warnings: [] },
+        availableActions: ['SUBMIT'],
+        attention: {
+          blockers: [],
+          warnings: [
+            {
+              code: 'WORK_ON_HOLIDAY',
+              localDate: '2026-06-30',
+              recordId: scenario.completeProjectionId,
+            },
+          ],
+        },
         employeeDisplayName: 'Monthly Employee',
         monthEnd: '2026-06-30',
         monthStart: '2026-06-01',
@@ -154,7 +165,20 @@ integrationTest(
 
       for (const credentials of [scenario.manager, scenario.hr]) {
         const cookie = await signIn(app, credentials);
-        expect((await getPeriod(app, cookie, scenario.completePeriodId)).statusCode).toBe(200);
+        const readable = await getPeriod(app, cookie, scenario.completePeriodId);
+        expect(readable.statusCode).toBe(200);
+        expect(monthlyPeriodEnvelopeSchema.parse(readable.json()).data.availableActions).toEqual(
+          [],
+        );
+        const submitDenied = await submitPeriod(
+          app,
+          cookie,
+          await csrf(app, cookie),
+          scenario.completePeriodId,
+          complete.workflow.periodVersion,
+          complete.snapshotVersion.sourceFingerprint,
+        );
+        expect(submitDenied.statusCode).toBe(403);
       }
       for (const credentials of [scenario.unrelatedManager, scenario.system]) {
         const cookie = await signIn(app, credentials);
@@ -163,6 +187,169 @@ integrationTest(
         expect(JSON.stringify(denied.json())).not.toContain('Monthly Employee');
       }
       expect((await getPeriod(app, employeeCookie, 'not-a-period-id')).statusCode).toBe(404);
+
+      const employeeCsrf = await csrf(app, employeeCookie);
+      const blockedSubmission = await submitPeriod(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.incompletePeriodId,
+        incomplete.workflow.periodVersion,
+        incomplete.snapshotVersion.sourceFingerprint,
+      );
+      expect(blockedSubmission.statusCode).toBe(409);
+      expect(blockedSubmission.json()).toMatchObject({
+        error: {
+          code: 'PERIOD_NOT_READY',
+          context: {
+            affectedDates: ['2026-07-29', '2026-07-30', '2026-07-31'],
+            blockerCodes: expect.arrayContaining([
+              'ABSENCE_APPROVAL_PENDING',
+              'ATTENDANCE_INCOMPLETE',
+              'CORRECTION_UNRESOLVED',
+            ]),
+            periodVersion: 1,
+          },
+        },
+      });
+
+      const staleAcknowledgement = await submitPeriod(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completePeriodId,
+        complete.workflow.periodVersion,
+        'f'.repeat(64),
+      );
+      expect(staleAcknowledgement.statusCode).toBe(409);
+      expect(staleAcknowledgement.json()).toMatchObject({
+        error: {
+          code: 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED',
+          context: { periodVersion: 1, sourceChanged: true },
+        },
+      });
+
+      const staleVersion = await submitPeriod(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completePeriodId,
+        2,
+        complete.snapshotVersion.sourceFingerprint,
+      );
+      expect(staleVersion.statusCode).toBe(409);
+      expect(staleVersion.json()).toMatchObject({
+        error: { code: 'PERIOD_VERSION_CONFLICT', context: { periodVersion: 1 } },
+      });
+
+      const submittedResponse = await submitPeriod(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completePeriodId,
+        complete.workflow.periodVersion,
+        complete.snapshotVersion.sourceFingerprint,
+      );
+      expect(submittedResponse.statusCode).toBe(200);
+      expect(submittedResponse.headers['cache-control']).toBe('private, no-store');
+      const submitted = monthlyPeriodEnvelopeSchema.parse(submittedResponse.json()).data;
+      expect(submitted.workflow).toMatchObject({
+        periodVersion: 2,
+        status: 'SUBMITTED',
+        submittedAt: NOW,
+      });
+      expect(submitted.readiness.status).toBeNull();
+      expect(submitted.snapshotVersion.sourceFingerprint).toBe(
+        complete.snapshotVersion.sourceFingerprint,
+      );
+
+      const persisted = (
+        await fixture.client.query<{
+          audit_count: string;
+          snapshot_count: string;
+          status: string;
+          submitted_by_email: string;
+          submitted_source_fingerprint: string;
+          version: number;
+        }>(
+          `select mp.status, mp.version, mp.submitted_source_fingerprint,
+                  au.email as submitted_by_email,
+                  (select count(*)::text from domain_audit_events dae
+                   where dae.organization_id = mp.organization_id
+                     and dae.target_kind = 'MONTHLY_PERIOD'
+                     and dae.target_id = mp.id::text
+                     and dae.action_code = 'MONTHLY_PERIOD_SUBMITTED'
+                     and dae.outcome = 'SUCCESS') as audit_count,
+                  (select count(*)::text from approved_monthly_snapshots ams
+                   where ams.monthly_period_id = mp.id) as snapshot_count
+             from monthly_periods mp
+             inner join auth_users au on au.id = mp.submitted_by_account_id
+            where mp.id = $1`,
+          [scenario.completePeriodId],
+        )
+      ).rows[0];
+      expect(persisted).toEqual({
+        audit_count: '1',
+        snapshot_count: '0',
+        status: 'SUBMITTED',
+        submitted_by_email: scenario.employee.email,
+        submitted_source_fingerprint: complete.snapshotVersion.sourceFingerprint,
+        version: 2,
+      });
+
+      const frozenCorrection = await app.inject({
+        method: 'POST',
+        url: '/v1/me/correction-requests',
+        headers: {
+          'content-type': 'application/json',
+          cookie: employeeCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': employeeCsrf,
+        },
+        payload: {
+          interval: {
+            endsAtLocalTime: '10:00',
+            endsAtUtcOffset: null,
+            startsAtLocalTime: '09:00',
+            startsAtUtcOffset: null,
+          },
+          reason: 'This ordinary correction must wait for the period to be reopened.',
+          recordId: scenario.completeProjectionId,
+        },
+      });
+      expect(frozenCorrection.statusCode).toBe(409);
+      expect(frozenCorrection.json()).toMatchObject({ error: { code: 'PERIOD_REOPEN_REQUIRED' } });
+      const frozenCorrectionEffects = await fixture.client.query<{
+        audit_count: string;
+        request_count: string;
+      }>(
+        `select
+           (select count(*)::text from correction_requests
+             where employee_id = $1 and local_date = '2026-06-30') as request_count,
+           (select count(*)::text from domain_audit_events
+             where subject_employee_id = $1
+               and action_code = 'CORRECTION_REQUEST_SUBMITTED'
+               and facts->>'effectiveDate' = '2026-06-30') as audit_count`,
+        [scenario.employeeId],
+      );
+      expect(frozenCorrectionEffects.rows[0]).toEqual({ audit_count: '0', request_count: '0' });
+
+      const replay = await submitPeriod(
+        app,
+        employeeCookie,
+        employeeCsrf,
+        scenario.completePeriodId,
+        complete.workflow.periodVersion,
+        complete.snapshotVersion.sourceFingerprint,
+      );
+      expect(replay.statusCode).toBe(409);
+      expect(replay.json()).toMatchObject({ error: { code: 'PERIOD_ALREADY_SUBMITTED' } });
+      const successAuditCount = await fixture.client.query<{ count: string }>(
+        `select count(*)::text as count from domain_audit_events
+          where target_id = $1 and action_code = 'MONTHLY_PERIOD_SUBMITTED' and outcome = 'SUCCESS'`,
+        [scenario.completePeriodId],
+      );
+      expect(successAuditCount.rows[0]?.count).toBe('1');
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -248,6 +435,7 @@ async function createScenario(client: pg.PoolClient) {
     480,
     495,
     15,
+    ['WORK_ON_HOLIDAY'],
   );
   const incompleteProjectionId = await createProjection(
     client,
@@ -362,6 +550,7 @@ async function createScenario(client: pg.PoolClient) {
     completePeriodId,
     completeProjectionId,
     employee,
+    employeeId,
     hr,
     incompletePeriodId,
     incompleteProjectionId,
@@ -543,6 +732,37 @@ function getPeriod(app: ReturnType<typeof createApiServer>, cookie: string, peri
     method: 'GET',
     url: `/v1/monthly-periods/${encodeURIComponent(periodId)}`,
     headers: { cookie, origin: ORIGIN },
+  });
+}
+
+async function csrf(app: ReturnType<typeof createApiServer>, cookie: string): Promise<string> {
+  const response = await app.inject({
+    method: 'GET',
+    url: '/v1/me/csrf',
+    headers: { cookie, origin: ORIGIN },
+  });
+  expect(response.statusCode).toBe(200);
+  return response.json<{ data: { token: string } }>().data.token;
+}
+
+function submitPeriod(
+  app: ReturnType<typeof createApiServer>,
+  cookie: string,
+  token: string,
+  periodId: string,
+  expectedPeriodVersion: number,
+  acknowledgedSourceFingerprint: string,
+) {
+  return app.inject({
+    method: 'POST',
+    url: `/v1/monthly-periods/${encodeURIComponent(periodId)}/submit`,
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: ORIGIN,
+      'x-workledger-csrf': token,
+    },
+    payload: { acknowledgedSourceFingerprint, expectedPeriodVersion },
   });
 }
 

@@ -17,6 +17,7 @@ import {
   notificationHistoryEnvelopeSchema,
   notificationQuerySchema,
   monthlyPeriodEnvelopeSchema,
+  monthlyPeriodSubmissionRequestSchema,
   selfProfileEnvelopeSchema,
   startBreakEnvelopeSchema,
   teamCalendarEnvelopeSchema,
@@ -30,6 +31,7 @@ import {
 test('keeps monthly review data strict, bounded, and free of protected absence fields', () => {
   const response = {
     data: {
+      availableActions: ['SUBMIT'],
       attention: {
         blockers: [],
         warnings: [
@@ -105,6 +107,23 @@ test('keeps monthly review data strict, bounded, and free of protected absence f
       }),
     ).toThrow();
   }
+});
+
+test('binds monthly submission to one strict period version and acknowledged source', () => {
+  const input = {
+    acknowledgedSourceFingerprint: 'a'.repeat(64),
+    expectedPeriodVersion: 3,
+  };
+  expect(monthlyPeriodSubmissionRequestSchema.parse(input)).toEqual(input);
+  expect(() =>
+    monthlyPeriodSubmissionRequestSchema.parse({ ...input, acknowledgedWarnings: [] }),
+  ).toThrow();
+  expect(() =>
+    monthlyPeriodSubmissionRequestSchema.parse({
+      ...input,
+      acknowledgedSourceFingerprint: 'not-a-fingerprint',
+    }),
+  ).toThrow();
 });
 
 test('keeps notification history generic, strict, and pagination-bounded', () => {

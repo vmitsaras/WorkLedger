@@ -13,6 +13,7 @@ import type { SubmitCorrectionRequest, SubmittedCorrectionRequest } from '@workl
 
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import { assertMonthlyPeriodAllowsOrdinaryMutation } from '../monthly/period-protection.js';
 
 export type CorrectionRequestIdentity = Readonly<{
   accountId: DomainId<'Account'>;
@@ -69,6 +70,13 @@ export function createCorrectionRequestService(
         );
         if (projection === null)
           throw new WorkLedgerApiError({ code: 'ROUTE_NOT_FOUND', statusCode: 404 });
+        await assertMonthlyPeriodAllowsOrdinaryMutation(
+          transaction,
+          context.organization.id,
+          employee.id,
+          projection.localDate,
+          projection.localDate,
+        );
 
         const timeZone = parseTimeZoneId(context.organization.timeZone);
         if (!timeZone.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
@@ -137,7 +145,11 @@ export function createCorrectionRequestService(
         });
         await transaction.audit.appendDomain({
           actionCode: 'CORRECTION_REQUEST_SUBMITTED',
-          actor: { accountId: context.accountId, kind: 'ACCOUNT', role: auditRole(context.roles) },
+          actor: {
+            accountId: context.accountId,
+            kind: 'ACCOUNT',
+            role: auditRole(context.roles),
+          },
           facts: {
             effectiveDate: projection.localDate,
             sourceCount: recordEvents.length,

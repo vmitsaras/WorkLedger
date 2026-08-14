@@ -176,7 +176,10 @@ import {
   validateOriginalHttpStatus,
   validateRequestFingerprint,
 } from './idempotency-values.js';
-import { AbsenceCancellationLockedPeriodError } from './absence-cancellation-errors.js';
+import {
+  AbsenceCancellationLockedPeriodError,
+  AbsenceCancellationReopenPeriodError,
+} from './absence-cancellation-errors.js';
 
 import * as schema from '../schema/index.js';
 
@@ -2107,6 +2110,38 @@ class PostgresDailyProjectionRepository implements DailyProjectionRepository {
 class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
 
+  async findProtectionForRange(
+    organizationId: Parameters<MonthlyPeriodRepository['findProtectionForRange']>[0],
+    employeeId: Parameters<MonthlyPeriodRepository['findProtectionForRange']>[1],
+    startDate: Parameters<MonthlyPeriodRepository['findProtectionForRange']>[2],
+    endDate: Parameters<MonthlyPeriodRepository['findProtectionForRange']>[3],
+  ): ReturnType<MonthlyPeriodRepository['findProtectionForRange']> {
+    const rows = await this.transaction
+      .select({ status: monthlyPeriods.status })
+      .from(monthlyPeriods)
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, organizationId),
+          eq(monthlyPeriods.employeeId, employeeId),
+          gte(monthlyPeriods.monthStart, `${startDate.slice(0, 7)}-01`),
+          lte(monthlyPeriods.monthStart, `${endDate.slice(0, 7)}-01`),
+        ),
+      )
+      .orderBy(
+        sql`case ${monthlyPeriods.status} when 'LOCKED' then 1 when 'APPROVED' then 2 when 'SUBMITTED' then 3 else 4 end`,
+        asc(monthlyPeriods.monthStart),
+      )
+      .for('share');
+    const row = rows[0];
+    if (
+      row === undefined ||
+      (row.status !== 'SUBMITTED' && row.status !== 'APPROVED' && row.status !== 'LOCKED')
+    ) {
+      return null;
+    }
+    return row.status;
+  }
+
   async findByEmployeeMonth(
     organizationId: Parameters<MonthlyPeriodRepository['findByEmployeeMonth']>[0],
     employeeId: Parameters<MonthlyPeriodRepository['findByEmployeeMonth']>[1],
@@ -2281,6 +2316,37 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
         ),
       )
       .orderBy(asc(absenceCoverageSegments.localDate), asc(absenceRequests.id));
+    const cancellationRows = await this.transaction
+      .selectDistinct({
+        id: absenceCancellations.id,
+        localDate: absenceCoverageSegments.localDate,
+        version: absenceCancellations.version,
+      })
+      .from(absenceCancellations)
+      .innerJoin(
+        absenceCancellationSegments,
+        and(
+          eq(absenceCancellationSegments.absenceCancellationId, absenceCancellations.id),
+          eq(absenceCancellationSegments.organizationId, absenceCancellations.organizationId),
+        ),
+      )
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.id, absenceCancellationSegments.absenceCoverageSegmentId),
+          eq(absenceCoverageSegments.organizationId, absenceCancellations.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, organizationId),
+          eq(absenceCancellations.employeeId, period.employeeId),
+          gte(absenceCoverageSegments.localDate, period.monthStart),
+          lte(absenceCoverageSegments.localDate, monthEnd),
+          inArray(absenceCancellations.status, ['PENDING_DECISION', 'CHANGES_REQUESTED']),
+        ),
+      )
+      .orderBy(asc(absenceCoverageSegments.localDate), asc(absenceCancellations.id));
 
     return Object.freeze({
       dailyProjections: Object.freeze(projectionRows.map(mapDailyProjection)),
@@ -2298,7 +2364,79 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
       sourceBlockers: Object.freeze([
         ...correctionRows.map((source) => mapMonthlyBlocker(source, 'CORRECTION_UNRESOLVED')),
         ...absenceRows.map((source) => mapMonthlyBlocker(source, 'ABSENCE_APPROVAL_PENDING')),
+        ...cancellationRows.map((source) => mapMonthlyBlocker(source, 'ABSENCE_APPROVAL_PENDING')),
       ]),
+    });
+  }
+
+  async lockForSubmission(
+    organizationId: Parameters<MonthlyPeriodRepository['lockForSubmission']>[0],
+    periodId: Parameters<MonthlyPeriodRepository['lockForSubmission']>[1],
+  ): Promise<MonthlyPeriodRecord | null> {
+    const [row] = await this.transaction
+      .select({ employeeDisplayName: employees.displayName, period: monthlyPeriods })
+      .from(monthlyPeriods)
+      .innerJoin(
+        employees,
+        and(
+          eq(employees.id, monthlyPeriods.employeeId),
+          eq(employees.organizationId, monthlyPeriods.organizationId),
+        ),
+      )
+      .where(
+        and(eq(monthlyPeriods.organizationId, organizationId), eq(monthlyPeriods.id, periodId)),
+      )
+      .for('update', { of: monthlyPeriods })
+      .limit(1);
+    return row === undefined ? null : mapMonthlyPeriod(row.period, row.employeeDisplayName);
+  }
+
+  async submit(
+    input: Parameters<MonthlyPeriodRepository['submit']>[0],
+  ): ReturnType<MonthlyPeriodRepository['submit']> {
+    const [row] = await this.transaction
+      .update(monthlyPeriods)
+      .set({
+        status: 'SUBMITTED',
+        submittedAt: input.submittedAt,
+        submittedByAccountId: input.actorAccountId,
+        submittedSourceFingerprint: input.sourceFingerprint,
+        version: input.expectedVersion + 1,
+      })
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, input.organizationId),
+          eq(monthlyPeriods.id, input.periodId),
+          inArray(monthlyPeriods.status, ['OPEN', 'CHANGES_REQUESTED']),
+          eq(monthlyPeriods.version, input.expectedVersion),
+        ),
+      )
+      .returning({
+        status: monthlyPeriods.status,
+        submittedAt: monthlyPeriods.submittedAt,
+        submittedByAccountId: monthlyPeriods.submittedByAccountId,
+        submittedSourceFingerprint: monthlyPeriods.submittedSourceFingerprint,
+        version: monthlyPeriods.version,
+      });
+    if (
+      row === undefined ||
+      row.status !== 'SUBMITTED' ||
+      row.submittedAt === null ||
+      row.submittedByAccountId === null ||
+      row.submittedSourceFingerprint === null
+    ) {
+      return null;
+    }
+    return Object.freeze({
+      status: row.status,
+      submittedAt: mapInstant(row.submittedAt, 'monthly_periods', 'submitted_at'),
+      submittedByAccountId: mapDomainId<'Account'>(
+        row.submittedByAccountId,
+        'monthly_periods',
+        'submitted_by_account_id',
+      ),
+      submittedSourceFingerprint: row.submittedSourceFingerprint,
+      version: row.version,
     });
   }
 }
@@ -2796,19 +2934,26 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     if (existing.length > 0) return null;
 
     const monthStarts = [...new Set(coverageRows.map((row) => `${row.localDate.slice(0, 7)}-01`))];
-    const locked = await this.transaction
-      .select({ id: monthlyPeriods.id })
+    const [protectedPeriod] = await this.transaction
+      .select({ status: monthlyPeriods.status })
       .from(monthlyPeriods)
       .where(
         and(
           eq(monthlyPeriods.organizationId, input.organizationId),
           eq(monthlyPeriods.employeeId, input.employeeId),
-          eq(monthlyPeriods.status, 'LOCKED'),
+          inArray(monthlyPeriods.status, ['SUBMITTED', 'APPROVED', 'LOCKED']),
           inArray(monthlyPeriods.monthStart, monthStarts),
         ),
       )
+      .orderBy(
+        sql`case ${monthlyPeriods.status} when 'LOCKED' then 1 when 'APPROVED' then 2 else 3 end`,
+      )
+      .for('share')
       .limit(1);
-    if (locked.length > 0) throw new AbsenceCancellationLockedPeriodError();
+    if (protectedPeriod?.status === 'LOCKED') throw new AbsenceCancellationLockedPeriodError();
+    if (protectedPeriod?.status === 'SUBMITTED' || protectedPeriod?.status === 'APPROVED') {
+      throw new AbsenceCancellationReopenPeriodError();
+    }
 
     const [cancellation] = await this.transaction
       .insert(absenceCancellations)
@@ -3910,6 +4055,15 @@ function mapMonthlyPeriod(
       row.submittedAt === null
         ? null
         : mapInstant(row.submittedAt, 'monthly_periods', 'submitted_at'),
+    submittedByAccountId:
+      row.submittedByAccountId === null
+        ? null
+        : mapDomainId<'Account'>(
+            row.submittedByAccountId,
+            'monthly_periods',
+            'submitted_by_account_id',
+          ),
+    submittedSourceFingerprint: row.submittedSourceFingerprint,
     version: row.version,
   });
 }

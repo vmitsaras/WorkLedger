@@ -1,0 +1,4 @@
+ALTER TABLE "monthly_periods" ADD COLUMN "submitted_by_account_id" uuid;--> statement-breakpoint
+ALTER TABLE "monthly_periods" ADD COLUMN "submitted_source_fingerprint" varchar(64);--> statement-breakpoint
+ALTER TABLE "monthly_periods" ADD CONSTRAINT "monthly_periods_submitted_by_account_id_auth_users_id_fk" FOREIGN KEY ("submitted_by_account_id") REFERENCES "public"."auth_users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "monthly_periods" ADD CONSTRAINT "monthly_periods_submitted_fingerprint_format" CHECK ("monthly_periods"."submitted_source_fingerprint" is null or "monthly_periods"."submitted_source_fingerprint" ~ '^[0-9a-f]{64}$');

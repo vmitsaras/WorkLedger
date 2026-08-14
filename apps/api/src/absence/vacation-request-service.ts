@@ -14,6 +14,7 @@ import type { SubmitVacationRequest, SubmittedVacationRequest } from '@workledge
 
 import { authorizeEmployeeTarget } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import { assertMonthlyPeriodAllowsOrdinaryMutation } from '../monthly/period-protection.js';
 import {
   asCoverageSegmentInput,
   assertCoverageAllowed,
@@ -67,6 +68,13 @@ export function createVacationRequestService(database: WorkLedgerDatabase): Vaca
           }
           const requestCoverage = parseRequestCoverage(input);
           const { startDate, endDate } = coverageDateRange(requestCoverage);
+          await assertMonthlyPeriodAllowsOrdinaryMutation(
+            transaction,
+            context.organization.id,
+            employee.id,
+            startDate,
+            endDate,
+          );
 
           const configuration = await transaction.absenceRequests.loadConfiguration({
             absenceCode: 'VACATION',

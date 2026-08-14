@@ -1071,6 +1071,8 @@ export const monthlyPeriods = pgTable(
     status: periodStatus('status').default('OPEN').notNull(),
     version: integer('version').default(1).notNull(),
     submittedAt: timestamp('submitted_at', { mode: 'string', withTimezone: true }),
+    submittedByAccountId: uuid('submitted_by_account_id').references(() => authUsers.id),
+    submittedSourceFingerprint: varchar('submitted_source_fingerprint', { length: 64 }),
     approvedAt: timestamp('approved_at', { mode: 'string', withTimezone: true }),
     lockedAt: timestamp('locked_at', { mode: 'string', withTimezone: true }),
     createdAt: createdAt(),
@@ -1084,6 +1086,10 @@ export const monthlyPeriods = pgTable(
     ),
     check('monthly_periods_first_day', sql`extract(day from ${table.monthStart}) = 1`),
     check('monthly_periods_positive_version', sql`${table.version} > 0`),
+    check(
+      'monthly_periods_submitted_fingerprint_format',
+      sql`${table.submittedSourceFingerprint} is null or ${table.submittedSourceFingerprint} ~ '^[0-9a-f]{64}$'`,
+    ),
     check(
       'monthly_periods_lock_shape',
       sql`${table.status} <> 'LOCKED' or ${table.lockedAt} is not null`,

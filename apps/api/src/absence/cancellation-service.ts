@@ -8,6 +8,7 @@ import {
 } from '@workledger/domain';
 import {
   AbsenceCancellationLockedPeriodError,
+  AbsenceCancellationReopenPeriodError,
   type AccountSelfContextRecord,
   type WorkLedgerDatabase,
   type WorkLedgerTransaction,
@@ -80,6 +81,9 @@ export function createAbsenceCancellationService(database: WorkLedgerDatabase) {
           } catch (error) {
             if (error instanceof AbsenceCancellationLockedPeriodError) {
               throw new WorkLedgerApiError({ code: 'PERIOD_ADJUSTMENT_REQUIRED', statusCode: 409 });
+            }
+            if (error instanceof AbsenceCancellationReopenPeriodError) {
+              throw new WorkLedgerApiError({ code: 'PERIOD_REOPEN_REQUIRED', statusCode: 409 });
             }
             throw error;
           }
