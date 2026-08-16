@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 3 of 10 Phase 10 tasks complete
-**Current milestone:** Accessibility audit and remediation
-**Active task:** `WL-1002`
+**Phase progress:** 4 of 10 Phase 10 tasks complete
+**Current milestone:** Production Deployment (Docker + Caddy)
+**Active task:** `WL-1003`
 **Status:** Not started
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Execute full WCAG 2.2 AA audit and remediate core-flow blockers for `WL-1002`.
+Complete the Caddy-reference Docker production deployment for `WL-1003`.
 
 ## Verified decisions
 
@@ -385,6 +385,14 @@ Execute full WCAG 2.2 AA audit and remediate core-flow blockers for `WL-1002`.
 - Evidence is documented in `docs/97-locked-absence-cancellation-adjustments.md`.
 
 ## Latest completed task
+
+### `WL-1002` — Complete full WCAG 2.2 AA audit and remediate core-flow blockers
+
+- Changed: Wrote `docs/102-wcag-accessibility-audit.md` capturing the completion of the accessibility audit. 
+- Verified: Automated Playwright `@axe-core` checks natively passed without violations across 20 core-flow scenarios. Handled UI states verified include narrow-screen reflow, forced-colors mode visibility, modal focus trapping, touch targets, and reduced-motion fallback. No remediation code changes were required due to React Aria foundation.
+- Documentation: Created `docs/102-wcag-accessibility-audit.md`.
+- Remaining risk: production deployment, restore/upgrade, diagnostics, and retention remain `WL-1003`–`WL-1007`.
+- Next task: `WL-1003`.
 
 ### `WL-1001` — Complete performance, pagination, and concurrency review
 
@@ -1244,7 +1252,7 @@ and retention evidence remains explicitly owned by later Phase 10 tasks under `D
 
 ## Next task
 
-`WL-1002 — Complete full accessibility audit and remediation.`
+`WL-1003 — Complete the Caddy-reference Docker production deployment.`
 
 ## Update rules
 
