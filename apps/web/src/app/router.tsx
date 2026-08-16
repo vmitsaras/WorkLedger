@@ -41,6 +41,7 @@ import {
   absenceSettingsAdminDetailQuery,
   domainAuditPageQuery,
   holidaySettingsAdminDetailQuery,
+  systemDiagnosticsQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -80,6 +81,8 @@ import {
   NewEmployeeAdministrationPage,
 } from '../routes/employee-administration-page.js';
 import { SystemAccountAdministrationPage } from '../routes/system-account-administration-page.js';
+import { SystemOperationsPage } from '../routes/system-operations-page.js';
+import { SystemAuditPage } from '../routes/system-audit-page.js';
 import { TimeSettingsPage } from '../routes/time-settings-page.js';
 import { AbsenceSettingsPage } from '../routes/absence-settings-page.js';
 import { AuditPage } from '../routes/audit-page.js';
@@ -101,20 +104,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'SYSTEM',
-    description: 'Safe service health and technical operations without HR data.',
-    milestone: 'WL-1006',
-    path: 'system/operations',
-    title: 'Operations',
-  },
-  {
-    area: 'SYSTEM',
-    description: 'Security and technical audit evidence separated from domain history.',
-    milestone: 'WL-906 and WL-1006',
-    path: 'system/audit',
-    title: 'Technical audit',
   },
 ];
 
@@ -336,6 +325,20 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <SystemAccountAdministrationPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Accounts and sessions' },
+            },
+            {
+              path: 'system/operations',
+              loader: createSystemOperationsLoader(queryClient),
+              element: <SystemOperationsPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Operations' },
+            },
+            {
+              path: 'system/audit',
+              loader: createSystemAuditLoader(queryClient),
+              element: <SystemAuditPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Technical audit' },
             },
             ...PLACEHOLDER_ROUTES.map((route) => ({
               path: route.path,
@@ -631,6 +634,23 @@ function createSystemAccountAdminLoader(queryClient: QueryClient): LoaderFunctio
     const query = parsed.success ? parsed.data : { limit: 20, page: 1 };
     void queryClient.prefetchQuery(systemAccountPageQuery(query));
     return query;
+  };
+}
+
+function createSystemOperationsLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('SYSTEM')) throw new Response(null, { status: 403 });
+    void queryClient.prefetchQuery(systemDiagnosticsQuery());
+    return null;
+  };
+}
+
+function createSystemAuditLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('SYSTEM')) throw new Response(null, { status: 403 });
+    return null;
   };
 }
 

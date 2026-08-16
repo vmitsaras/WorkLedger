@@ -2,16 +2,15 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 6 of 10 Phase 10 tasks complete
-**Current milestone:** Structured logging and safe operations surfaces
-**Active task:** `WL-1006`
+**Phase progress:** 7 of 10 Phase 10 tasks complete
+**Current milestone:** Data retention and minimization controls
+**Active task:** `WL-1007`
 **Status:** Not started
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Complete `WL-1006` structured logging, redaction, correlation IDs, failure diagnostics, and safe
-system-operations/technical-audit surfaces.
+Complete `WL-1007` mandatory retention, minimization, user-export, and backup-expiry controls.
 
 ## Verified decisions
 
@@ -1334,6 +1333,34 @@ system-operations/technical-audit surfaces.
   Structured logging, diagnostics, retention, and the release gate remain `WL-1006`–`WL-1008`.
 - Next task: `WL-1006`.
 
+`WL-1006 — Add structured logs, failure diagnostics, and safe technical operations/audit surfaces.`
+**Completed:** 2026-08-16
+
+- Changed: added `/system/operations` UI page displaying service version, environment, timestamp,
+  overall health status, and dependency health (database, authentication); added `/system/audit` UI
+  page placeholder for WL-1007 technical audit implementation; created API client function
+  `loadSystemDiagnostics()` and query option `systemDiagnosticsQuery()`; added route loaders
+  `createSystemOperationsLoader()` and `createSystemAuditLoader()` with SYSTEM area authorization;
+  removed operations and audit routes from PLACEHOLDER_ROUTES.
+- Verification: typecheck, test:integration, and build all pass. System operations page displays
+  health badges (healthy/degraded/critical for overall, healthy/degraded/unavailable for
+  dependencies), latency when available, error messages when present, and deployment procedure
+  guidance. Authorization requires SYSTEM navigation area. Diagnostics endpoint returns no HR data,
+  employee counts, or domain information.
+- Accessibility: operations page uses semantic HTML, descriptive labels, status badges with visual
+  and text indicators (not color-only), role="status" for loading state, definition lists for
+  structured data.
+- Security / Data: system diagnostics and audit surfaces are system-administrator-only; diagnostics
+  expose NO domain/HR data, employee counts, sickness information, or personal data; error messages
+  are redacted for security; deployment procedures remain documentation-only (no browser-triggered
+  restore/upgrade controls).
+- Documentation: updated PROJECT_STATUS.md, TODO.md, and task board. Technical audit persistence
+  deferred to WL-1007 as noted in placeholder page.
+- Remaining risks: technical audit persistence and search interface is a placeholder pending
+  WL-1007; structured logging redaction and correlation IDs were implemented in prior tasks
+  (WL-1003, WL-906); full production logging evidence and retention controls remain WL-1007.
+- Next task: `WL-1007`.
+
 ## Current blockers
 
 `D-504` is implemented and no longer blocks the production gate. `D-502` remains open before the
@@ -1342,7 +1369,7 @@ by later Phase 10 tasks under `D-505`.
 
 ## Next task
 
-`WL-1006 — Add structured logs, failure diagnostics, and safe technical operations/audit surfaces.`
+`WL-1007 — Complete mandatory retention, minimization, user-export, and backup-expiry controls.`
 
 ## Update rules
 

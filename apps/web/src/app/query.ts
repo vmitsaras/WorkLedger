@@ -42,6 +42,7 @@ import {
   loadEmployeePolicyAdminDetail,
   loadTimeSettingsAdminDetail,
   loadTeamAdminPage,
+  loadSystemDiagnostics,
   loadSystemAccountPage,
 } from './api-client.js';
 
@@ -234,6 +235,13 @@ export const teamCalendarQuery = (query: TeamCalendarQuery) =>
     placeholderData: keepPreviousData,
     queryFn: ({ signal }) => loadTeamCalendar(query, signal),
     queryKey: ['team', 'calendar', query] as const,
+  });
+
+export const systemDiagnosticsQuery = () =>
+  queryOptions({
+    queryFn: ({ signal }) => loadSystemDiagnostics(signal),
+    queryKey: ['system', 'diagnostics'] as const,
+    staleTime: 10 * 1_000,
   });
 
 function preferNewestTodayAttendance(previous: unknown, next: unknown): unknown {

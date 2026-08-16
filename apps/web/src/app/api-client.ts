@@ -120,6 +120,8 @@ import {
   type ReplaceScheduleAssignmentAdminRequest,
   type ReplacePolicyAssignmentAdminRequest,
   type TimeSettingsAdminDetail,
+  systemDiagnosticsResponseSchema,
+  type SystemDiagnosticsResponse,
 } from '@workledger/contracts';
 
 export class ApiClientError extends Error {
@@ -1057,6 +1059,13 @@ export async function revokeSelfSession(sessionId: string) {
   const parsed = revokeSelfSessionEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
+}
+
+export async function loadSystemDiagnostics(signal?: AbortSignal): Promise<SystemDiagnosticsResponse> {
+  const body = await requestJson('/v1/system/operations', signal === undefined ? {} : { signal });
+  const parsed = systemDiagnosticsResponseSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data;
 }
 
 export function clearSessionMemory(): void {
