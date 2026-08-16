@@ -909,6 +909,103 @@ integrationTest(
   },
 );
 
+integrationTest(
+  `previews and creates date-only holidays without crossing protected history (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'holiday_administration',
+      migrationFiles,
+    });
+    const app = createApiServer(
+      createRuntimeConfig({
+        WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+        WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_ORIGIN: ORIGIN,
+      }),
+      { now: () => AT },
+    );
+
+    try {
+      const actors = await createAdministrationActors(fixture.client);
+      const schedule = await fixture.client.query<{ id: string }>(
+        `insert into weekly_schedules
+           (organization_id, name, version, monday_minutes, tuesday_minutes, wednesday_minutes,
+            thursday_minutes, friday_minutes, saturday_minutes, sunday_minutes)
+         values ($1, 'Standard week', 1, 480, 480, 480, 480, 480, 0, 0) returning id`,
+        [actors.organizationId],
+      );
+      await fixture.client.query(
+        `insert into schedule_assignments (organization_id, employee_id, schedule_id, starts_on)
+         values ($1, $2, $3, '2025-01-01')`,
+        [actors.organizationId, actors.hrEmployeeId, schedule.rows[0]?.id],
+      );
+      const hrCookie = await signIn(app, 'hr@example.test', ADMIN_PASSWORD);
+      const csrf = await getCsrf(app, hrCookie);
+      const preview = await app.inject({
+        headers: mutationHeaders(hrCookie, csrf),
+        method: 'POST',
+        payload: { holidayDate: '2026-08-17', name: 'Founders day' },
+        url: '/v1/hr/holiday-settings/impact-preview',
+      });
+      expect(preview.statusCode, preview.payload).toBe(200);
+      expect(preview.json()).toMatchObject({
+        data: {
+          affectedEmployeeCount: 1,
+          affectedProjectionCount: 0,
+          alreadyConfigured: false,
+          blockedPeriodCount: 0,
+          holidayDate: '2026-08-17',
+          mutationAllowed: true,
+        },
+      });
+      const created = await app.inject({
+        headers: mutationHeaders(hrCookie, csrf),
+        method: 'POST',
+        payload: { holidayDate: '2026-08-17', impactAcknowledged: true, name: 'Founders day' },
+        url: '/v1/hr/holiday-settings',
+      });
+      expect(created.statusCode, created.payload).toBe(200);
+      expect(created.json()).toMatchObject({ data: { action: 'HOLIDAY_CREATED' } });
+      const duplicate = await app.inject({
+        headers: mutationHeaders(hrCookie, csrf),
+        method: 'POST',
+        payload: { holidayDate: '2026-08-17', impactAcknowledged: true, name: 'Other name' },
+        url: '/v1/hr/holiday-settings',
+      });
+      expect(duplicate.statusCode).toBe(409);
+      expect(duplicate.json()).toMatchObject({ error: { code: 'HOLIDAY_CHANGE_BLOCKED' } });
+      const past = await app.inject({
+        headers: mutationHeaders(hrCookie, csrf),
+        method: 'POST',
+        payload: { holidayDate: '2026-08-13', name: 'Past holiday' },
+        url: '/v1/hr/holiday-settings/impact-preview',
+      });
+      expect(past.statusCode).toBe(200);
+      expect(past.json()).toMatchObject({ data: { mutationAllowed: false } });
+      const settings = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: '/v1/hr/holiday-settings',
+      });
+      expect(settings.statusCode).toBe(200);
+      expect(settings.json()).toMatchObject({
+        data: { holidays: [{ holidayDate: '2026-08-17', name: 'Founders day' }] },
+      });
+      const audit = await fixture.client.query<{ count: string }>(
+        `select count(*)::text as count from domain_audit_events
+         where organization_id = $1 and action_code = 'HOLIDAY_CREATED'`,
+        [actors.organizationId],
+      );
+      expect(audit.rows[0]?.count).toBe('1');
+    } finally {
+      await app.close();
+      await fixture.cleanup();
+    }
+  },
+);
+
 async function createAdministrationActors(client: pg.PoolClient) {
   const passwordHash = await hashPassword(ADMIN_PASSWORD);
   const organization = await client.query<{ id: string }>(

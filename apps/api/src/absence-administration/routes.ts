@@ -9,6 +9,11 @@ import {
   createAbsenceTypeVersionAdminRequestSchema,
   createEntitlementAdjustmentAdminRequestSchema,
   employeeEntitlementAdminDetailEnvelopeSchema,
+  createHolidayAdminRequestSchema,
+  holidayAdministrationActionEnvelopeSchema,
+  holidayImpactPreviewAdminEnvelopeSchema,
+  holidayImpactPreviewAdminRequestSchema,
+  holidaySettingsAdminDetailEnvelopeSchema,
 } from '@workledger/contracts';
 import type { DomainId, Instant } from '@workledger/domain';
 import type { WorkLedgerDatabase } from '@workledger/database';
@@ -49,6 +54,66 @@ export function registerAbsenceAdministrationRoutes(
 ): void {
   const api = app.withTypeProvider<ZodTypeProvider>();
   const service = createAbsenceAdministrationService(database);
+  api.get(
+    '/v1/hr/holiday-settings',
+    {
+      schema: {
+        operationId: 'getHolidaySettingsForAdministration',
+        response: { 200: holidaySettingsAdminDetailEnvelopeSchema, ...READ_ERRORS },
+        summary: 'Get organization holidays',
+        tags: ['Holiday administration'],
+      },
+    },
+    async (request, reply) => {
+      const data = await service.getHolidaySettings(
+        await readIdentity(request, authentication),
+        requestInstant(now),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+  api.post(
+    '/v1/hr/holiday-settings/impact-preview',
+    {
+      schema: {
+        body: holidayImpactPreviewAdminRequestSchema,
+        operationId: 'previewHolidayImpactForAdministration',
+        response: { 200: holidayImpactPreviewAdminEnvelopeSchema, ...READ_ERRORS },
+        summary: 'Preview holiday recalculation impact',
+        tags: ['Holiday administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.previewHolidayImpact(prepared.identity, request.body, prepared.at);
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+  api.post(
+    '/v1/hr/holiday-settings',
+    {
+      schema: {
+        body: createHolidayAdminRequestSchema,
+        operationId: 'createHolidayForAdministration',
+        response: { 200: holidayAdministrationActionEnvelopeSchema, ...MUTATION_ERRORS },
+        summary: 'Create an organization holiday',
+        tags: ['Holiday administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.createHoliday(
+        prepared.identity,
+        request.body,
+        prepared.at,
+        requestId(request),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
   api.get(
     '/v1/hr/absence-settings',
     {

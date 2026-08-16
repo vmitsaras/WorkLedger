@@ -106,7 +106,7 @@ Navigation visibility is convenience only; the API enforces authorization.
 | `/reports/:reportKey` | Eligible actor runs one allow-listed `monthly-time`, `flexible-time`, `leave`, `missing-records`, or `pending-approvals` report; scope is applied before totals/pagination and export/print uses the same minimized data. | `WL-804`–`WL-805` |
 | `/settings/time` | HR manages effective-dated schedules, time policies, assignments, and the constrained organization-timezone setting with impact explanation. | `WL-902`–`WL-903` |
 | `/settings/absence` | HR manages absence-type versions and employee entitlement ledger adjustments without exposing sickness records as configuration. | `WL-904` |
-| `/settings/calendars` | HR manages organization holiday calendars and sees affected-date/recalculation impact before saving. | `WL-905` |
+| `/settings/holidays` | HR manages organization holiday calendars and sees affected-date/recalculation impact before saving. | `WL-905` |
 | `/audit` | HR searches authorized domain audit events through redacted summaries and purpose-specific detail. | `WL-906` |
 
 ### System-administration and operator routes

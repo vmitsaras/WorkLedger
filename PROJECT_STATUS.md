@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 9 — Administration
 **Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 5 of 8 Phase 9 tasks complete
-**Current milestone:** Holiday calendar administration
-**Active task:** `WL-905`
+**Phase progress:** 6 of 8 Phase 9 tasks complete
+**Current milestone:** Authorized audit explorer
+**Active task:** `WL-906`
 **Status:** Ready
-**Last verified:** 2026-08-14
+**Last verified:** 2026-08-16
 
 ## Current objective
 
-Build date-only holiday calendar management with an authorized recalculation-impact preview for
-`WL-905`.
+Build the authorized audit explorer with bounded filters, redaction, pagination, and accessible
+detail for `WL-906`.
 
 ## Verified decisions
 
@@ -379,6 +379,16 @@ Build date-only holiday calendar management with an authorized recalculation-imp
   assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-905` — Build holiday calendar management
+
+- Changed: added strict holiday-administration contracts and generated OpenAPI, organization-scoped date-only listing, aggregate recalculation-impact preview, protected-period and duplicate/past safeguards, serializable create plus minimized audit evidence, and the accessible `/settings/holidays` surface.
+- Verified: workspace/toolchain/version checks, reproducible OpenAPI, formatting, lint and 241-file/1,245-import boundaries, strict TypeScript, 24 tooling tests, and 296 unit/component tests across 42 files pass. Database integration compiles and its 8 non-database checks pass; 33 PostgreSQL-dependent cases were skipped because the integration database was unavailable.
+- Accessibility: the form uses visible labels and a native date input, invalidates stale previews, requires an explicit two-step preview/confirm action, presents counts and blockers textually, protects pending actions, provides focusable error and polite success feedback, and has component axe coverage.
+- Security/data: all routes require current organization-HR authority; previews and mutations are same-origin and CSRF protected, mutation rechecks impact and authorization inside a serializable transaction, protected periods fail closed, and aggregate responses/audit facts omit employee identities and schedule detail.
+- Documentation: added `docs/93-holiday-calendar-administration.md`, aligned the documented route with `/settings/holidays`, regenerated OpenAPI, and synchronized TODO, task board, and project status. No migration or version bump is required because the existing date-only holiday table covers the slice and this is not the Phase 9 gate.
+- Remaining risk: the projection rebuild mechanism is not yet available, so affected existing projections are honestly identified but not silently marked recalculated. Database-enabled integration was unavailable; bulk/region/recurrence/edit/delete flows and production-scale concurrency/browser/assistive-technology/performance/security matrices remain outside the slice.
+- Next task: `WL-906`.
 
 ### `WL-904` — Build absence-type and entitlement administration
 
@@ -1139,12 +1149,12 @@ Build date-only holiday calendar management with an authorized recalculation-imp
 
 ## Current blockers
 
-No `WL-905` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
+No `WL-906` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
 recovery, and `D-502` remains open before the production browser gate.
 
 ## Next task
 
-`WL-905 — Build holiday calendar management.`
+`WL-906 — Build authorized audit explorer with filters and safe detail.`
 
 ## Update rules
 

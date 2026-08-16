@@ -49,6 +49,10 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'You do not have permission to perform this action.';
     case 'ABSENCE_TYPE_VERSION_CONFLICT':
       return 'The absence-type version or effective-date history changed. Refresh and review it.';
+    case 'HOLIDAY_CHANGE_BLOCKED':
+      return 'The holiday date is not eligible or belongs to a protected monthly period.';
+    case 'HOLIDAY_DATE_CONFLICT':
+      return 'A holiday already exists on that date.';
     case 'AUTH_REQUIRED':
       return 'Sign in to continue.';
     case 'AUTH_SESSION_EXPIRED':

@@ -460,6 +460,25 @@ export type CreateAdministrationAbsenceTypeVersionInput = Readonly<{
   validFrom: LocalDate;
 }>;
 
+export type AdministrationHolidayRecord = Readonly<{
+  holidayDate: LocalDate;
+  id: DomainId<'Holiday'>;
+  name: string;
+}>;
+
+export type AdministrationHolidayImpactRecord = Readonly<{
+  affectedEmployeeCount: number;
+  affectedProjectionCount: number;
+  alreadyConfigured: boolean;
+  blockedPeriodCount: number;
+}>;
+
+export type CreateAdministrationHolidayInput = Readonly<{
+  holidayDate: LocalDate;
+  name: string;
+  organizationId: DomainId<'Organization'>;
+}>;
+
 export type AdministrationEntitlementEntryRecord = LeaveEntitlementEntryRecord &
   Readonly<{ reason: string | null }>;
 
@@ -1296,6 +1315,9 @@ export interface AdministrationRepository {
   createEntitlementAdjustment(
     input: AdministrationEntitlementAdjustmentInput,
   ): Promise<AdministrationEntitlementEntryRecord | null>;
+  createHoliday(
+    input: CreateAdministrationHolidayInput,
+  ): Promise<AdministrationHolidayRecord | null>;
   createScheduleVersion(
     input: CreateAdministrationScheduleVersionInput,
   ): Promise<AdministrationWeeklyScheduleRecord | null>;
@@ -1355,6 +1377,13 @@ export interface AdministrationRepository {
   listAbsenceTypeVersions(
     organizationId: DomainId<'Organization'>,
   ): Promise<readonly AdministrationAbsenceTypeRecord[]>;
+  listHolidays(
+    organizationId: DomainId<'Organization'>,
+  ): Promise<readonly AdministrationHolidayRecord[]>;
+  previewHolidayImpact(
+    organizationId: DomainId<'Organization'>,
+    holidayDate: LocalDate,
+  ): Promise<AdministrationHolidayImpactRecord>;
   listEmployees(
     input: Readonly<{
       at: Instant;

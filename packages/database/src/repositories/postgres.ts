@@ -929,6 +929,110 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     return created === undefined ? null : mapAdministrationAbsenceType(created, true);
   }
 
+  async createHoliday(input: Parameters<AdministrationRepository['createHoliday']>[0]) {
+    const [created] = await this.transaction
+      .insert(holidays)
+      .values(input)
+      .onConflictDoNothing({ target: [holidays.organizationId, holidays.holidayDate] })
+      .returning();
+    return created === undefined
+      ? null
+      : Object.freeze({
+          holidayDate: mapLocalDate(created.holidayDate, 'holidays', 'holidayDate'),
+          id: mapDomainId<'Holiday'>(created.id, 'holidays', 'id'),
+          name: created.name,
+        });
+  }
+
+  async listHolidays(organizationId: Parameters<AdministrationRepository['listHolidays']>[0]) {
+    const rows = await this.transaction
+      .select({ holidayDate: holidays.holidayDate, id: holidays.id, name: holidays.name })
+      .from(holidays)
+      .where(eq(holidays.organizationId, organizationId))
+      .orderBy(asc(holidays.holidayDate), asc(holidays.id))
+      .limit(500);
+    return Object.freeze(
+      rows.map((row) =>
+        Object.freeze({
+          holidayDate: mapLocalDate(row.holidayDate, 'holidays', 'holidayDate'),
+          id: mapDomainId<'Holiday'>(row.id, 'holidays', 'id'),
+          name: row.name,
+        }),
+      ),
+    );
+  }
+
+  async previewHolidayImpact(
+    organizationId: Parameters<AdministrationRepository['previewHolidayImpact']>[0],
+    holidayDate: Parameters<AdministrationRepository['previewHolidayImpact']>[1],
+  ) {
+    const scheduledMinutes = sql<number>`case extract(isodow from ${holidayDate}::date)
+      when 1 then ${weeklySchedules.mondayMinutes}
+      when 2 then ${weeklySchedules.tuesdayMinutes}
+      when 3 then ${weeklySchedules.wednesdayMinutes}
+      when 4 then ${weeklySchedules.thursdayMinutes}
+      when 5 then ${weeklySchedules.fridayMinutes}
+      when 6 then ${weeklySchedules.saturdayMinutes}
+      when 7 then ${weeklySchedules.sundayMinutes}
+      else 0 end`;
+    const [existing, affected, projections, protectedPeriods] = await Promise.all([
+      this.transaction
+        .select({ value: count() })
+        .from(holidays)
+        .where(
+          and(eq(holidays.organizationId, organizationId), eq(holidays.holidayDate, holidayDate)),
+        ),
+      this.transaction
+        .select({ value: sql<number>`count(distinct ${employees.id})::integer`.mapWith(Number) })
+        .from(employees)
+        .innerJoin(
+          employmentPeriods,
+          and(
+            eq(employmentPeriods.organizationId, organizationId),
+            eq(employmentPeriods.employeeId, employees.id),
+            lte(employmentPeriods.startsOn, holidayDate),
+            or(isNull(employmentPeriods.endsOn), gt(employmentPeriods.endsOn, holidayDate)),
+          ),
+        )
+        .innerJoin(
+          scheduleAssignments,
+          and(
+            eq(scheduleAssignments.organizationId, organizationId),
+            eq(scheduleAssignments.employeeId, employees.id),
+            lte(scheduleAssignments.startsOn, holidayDate),
+            or(isNull(scheduleAssignments.endsOn), gt(scheduleAssignments.endsOn, holidayDate)),
+          ),
+        )
+        .innerJoin(weeklySchedules, eq(weeklySchedules.id, scheduleAssignments.scheduleId))
+        .where(and(eq(employees.organizationId, organizationId), sql`${scheduledMinutes} > 0`)),
+      this.transaction
+        .select({ value: count() })
+        .from(dailyProjections)
+        .where(
+          and(
+            eq(dailyProjections.organizationId, organizationId),
+            eq(dailyProjections.localDate, holidayDate),
+          ),
+        ),
+      this.transaction
+        .select({ value: count() })
+        .from(monthlyPeriods)
+        .where(
+          and(
+            eq(monthlyPeriods.organizationId, organizationId),
+            eq(monthlyPeriods.monthStart, `${holidayDate.slice(0, 7)}-01`),
+            inArray(monthlyPeriods.status, ['SUBMITTED', 'APPROVED', 'LOCKED']),
+          ),
+        ),
+    ]);
+    return Object.freeze({
+      affectedEmployeeCount: Number(affected[0]?.value ?? 0),
+      affectedProjectionCount: Number(projections[0]?.value ?? 0),
+      alreadyConfigured: Number(existing[0]?.value ?? 0) > 0,
+      blockedPeriodCount: Number(protectedPeriods[0]?.value ?? 0),
+    });
+  }
+
   async createEntitlementAdjustment(
     input: Parameters<AdministrationRepository['createEntitlementAdjustment']>[0],
   ) {

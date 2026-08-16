@@ -17,6 +17,7 @@ import {
 import {
   loadDailyTimeRecord,
   loadAbsenceSettingsAdminDetail,
+  loadHolidaySettingsAdminDetail,
   loadEmployeeEntitlementAdminDetail,
   loadApprovalDetail,
   loadApprovalInbox,
@@ -107,6 +108,12 @@ export const absenceSettingsAdminDetailQuery = () =>
   queryOptions({
     queryFn: ({ signal }) => loadAbsenceSettingsAdminDetail(signal),
     queryKey: ['administration', 'absence-settings'] as const,
+  });
+
+export const holidaySettingsAdminDetailQuery = () =>
+  queryOptions({
+    queryFn: ({ signal }) => loadHolidaySettingsAdminDetail(signal),
+    queryKey: ['administration', 'holiday-settings'] as const,
   });
 
 export const employeeEntitlementAdminDetailQuery = (employeeId: string) =>

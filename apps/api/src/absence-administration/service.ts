@@ -4,6 +4,10 @@ import type {
   CreateAbsenceTypeVersionAdminRequest,
   CreateEntitlementAdjustmentAdminRequest,
   EmployeeEntitlementAdminDetail,
+  CreateHolidayAdminRequest,
+  HolidayImpactPreviewAdmin,
+  HolidayImpactPreviewAdminRequest,
+  HolidaySettingsAdminDetail,
 } from '@workledger/contracts';
 import {
   calculateLeaveEntitlementLedger,
@@ -49,6 +53,94 @@ export function createAbsenceAdministrationService(database: WorkLedgerDatabase)
           ).map(mapAbsenceVersion),
         });
       });
+    },
+
+    async getHolidaySettings(
+      identity: AbsenceAdministrationIdentity,
+      at: Instant,
+    ): Promise<HolidaySettingsAdminDetail> {
+      return database.transaction(async (transaction) => {
+        const { context, localDate } = await requireOrganizationConfiguration(
+          transaction,
+          identity,
+          at,
+        );
+        return Object.freeze({
+          asOfLocalDate: localDate,
+          holidays: [...(await transaction.administration.listHolidays(context.organization.id))],
+        });
+      });
+    },
+
+    async previewHolidayImpact(
+      identity: AbsenceAdministrationIdentity,
+      input: HolidayImpactPreviewAdminRequest,
+      at: Instant,
+    ): Promise<HolidayImpactPreviewAdmin> {
+      return database.transaction(async (transaction) => {
+        const { context, localDate } = await requireOrganizationConfiguration(
+          transaction,
+          identity,
+          at,
+        );
+        const impact = await transaction.administration.previewHolidayImpact(
+          context.organization.id,
+          input.holidayDate as LocalDate,
+        );
+        return mapHolidayImpact(input.holidayDate as LocalDate, localDate, impact);
+      });
+    },
+
+    async createHoliday(
+      identity: AbsenceAdministrationIdentity,
+      input: CreateHolidayAdminRequest,
+      at: Instant,
+      requestId: DomainId<'Request'>,
+    ): Promise<AdministrationActionResult> {
+      try {
+        return await database.transaction(async (transaction) => {
+          const { actor, context, localDate } = await requireOrganizationConfiguration(
+            transaction,
+            identity,
+            at,
+          );
+          const impact = await transaction.administration.previewHolidayImpact(
+            context.organization.id,
+            input.holidayDate as LocalDate,
+          );
+          const preview = mapHolidayImpact(input.holidayDate as LocalDate, localDate, impact);
+          if (!preview.mutationAllowed)
+            throw new WorkLedgerApiError({ code: 'HOLIDAY_CHANGE_BLOCKED', statusCode: 409 });
+          const created = await transaction.administration.createHoliday({
+            holidayDate: input.holidayDate as LocalDate,
+            name: input.name.trim(),
+            organizationId: context.organization.id,
+          });
+          if (created === null)
+            throw new WorkLedgerApiError({ code: 'HOLIDAY_DATE_CONFLICT', statusCode: 409 });
+          await transaction.audit.appendDomain({
+            actionCode: 'HOLIDAY_CREATED',
+            actor: hrActor(actor),
+            facts: {
+              effectiveDate: created.holidayDate,
+              sourceCount: preview.affectedProjectionCount,
+            },
+            occurredAt: at,
+            organizationId: context.organization.id,
+            outcome: 'SUCCESS',
+            privileged: true,
+            reasonCode: null,
+            requestId,
+            restrictedReasonId: null,
+            subjectEmployeeId: null,
+            targetId: created.id,
+            targetKind: 'CONFIGURATION',
+          });
+          return result('HOLIDAY_CREATED', created.id, at);
+        }, serializableRetry);
+      } catch (error) {
+        throw mapDatabaseError(error);
+      }
     },
 
     async createAbsenceTypeVersion(
@@ -393,3 +485,16 @@ const serializableRetry = Object.freeze({
   isolationLevel: 'serializable' as const,
   retry: { maxAttempts: 3, mode: 'DATABASE_ONLY' as const },
 });
+
+function mapHolidayImpact(
+  holidayDate: LocalDate,
+  localDate: LocalDate,
+  impact: Awaited<ReturnType<WorkLedgerTransaction['administration']['previewHolidayImpact']>>,
+): HolidayImpactPreviewAdmin {
+  return Object.freeze({
+    ...impact,
+    holidayDate,
+    mutationAllowed:
+      holidayDate >= localDate && !impact.alreadyConfigured && impact.blockedPeriodCount === 0,
+  });
+}

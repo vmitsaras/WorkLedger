@@ -38,6 +38,7 @@ import {
   teamAdminPageQuery,
   timeSettingsAdminDetailQuery,
   absenceSettingsAdminDetailQuery,
+  holidaySettingsAdminDetailQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
@@ -79,6 +80,7 @@ import {
 import { SystemAccountAdministrationPage } from '../routes/system-account-administration-page.js';
 import { TimeSettingsPage } from '../routes/time-settings-page.js';
 import { AbsenceSettingsPage } from '../routes/absence-settings-page.js';
+import { HolidaySettingsPage } from '../routes/holiday-settings-page.js';
 
 type PlaceholderRoute = Readonly<{
   area?: NavigationArea;
@@ -96,13 +98,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'HR',
-    description: 'Organization public-holiday calendars and impact review.',
-    milestone: 'WL-905',
-    path: 'settings/holidays',
-    title: 'Holiday calendars',
   },
   {
     area: 'HR',
@@ -324,6 +319,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <AbsenceSettingsPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Absence settings' },
+            },
+            {
+              path: 'settings/holidays',
+              loader: createHolidaySettingsAdminLoader(queryClient),
+              element: <HolidaySettingsPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Holiday calendars' },
             },
             {
               path: 'system/accounts',
@@ -592,6 +594,15 @@ function createAbsenceSettingsAdminLoader(queryClient: QueryClient): LoaderFunct
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
     void queryClient.prefetchQuery(absenceSettingsAdminDetailQuery());
+    return null;
+  };
+}
+
+function createHolidaySettingsAdminLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
+    void queryClient.prefetchQuery(holidaySettingsAdminDetailQuery());
     return null;
   };
 }

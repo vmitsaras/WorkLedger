@@ -1,6 +1,8 @@
 import {
   approvalDecisionEnvelopeSchema,
   absenceSettingsAdminDetailEnvelopeSchema,
+  holidayImpactPreviewAdminEnvelopeSchema,
+  holidaySettingsAdminDetailEnvelopeSchema,
   employeeEntitlementAdminDetailEnvelopeSchema,
   approvalDetailEnvelopeSchema,
   approvalInboxEnvelopeSchema,
@@ -34,6 +36,10 @@ import {
   type ApiErrorCode,
   type ApprovalInbox,
   type AbsenceSettingsAdminDetail,
+  type CreateHolidayAdminRequest,
+  type HolidayImpactPreviewAdmin,
+  type HolidayImpactPreviewAdminRequest,
+  type HolidaySettingsAdminDetail,
   type CreateAbsenceTypeVersionAdminRequest,
   type CreateEntitlementAdjustmentAdminRequest,
   type EmployeeEntitlementAdminDetail,
@@ -783,6 +789,24 @@ export async function loadAbsenceSettingsAdminDetail(
   return parsed.data.data;
 }
 
+export async function loadHolidaySettingsAdminDetail(
+  signal?: AbortSignal,
+): Promise<HolidaySettingsAdminDetail> {
+  const body = await requestJson('/v1/hr/holiday-settings', signal === undefined ? {} : { signal });
+  const parsed = holidaySettingsAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function previewHolidayImpactForAdministration(
+  input: HolidayImpactPreviewAdminRequest,
+): Promise<HolidayImpactPreviewAdmin> {
+  const body = await administrationMutation('/v1/hr/holiday-settings/impact-preview', input);
+  const parsed = holidayImpactPreviewAdminEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
 export async function loadEmployeeEntitlementAdminDetail(
   employeeId: string,
   signal?: AbortSignal,
@@ -899,6 +923,12 @@ export async function createAbsenceTypeVersionForAdministration(
   input: CreateAbsenceTypeVersionAdminRequest,
 ): Promise<AdministrationActionResult> {
   return administrationAction('/v1/hr/absence-settings/versions', input);
+}
+
+export async function createHolidayForAdministration(
+  input: CreateHolidayAdminRequest,
+): Promise<AdministrationActionResult> {
+  return administrationAction('/v1/hr/holiday-settings', input);
 }
 
 export async function createEntitlementAdjustmentForAdministration(

@@ -25,6 +25,20 @@ export {
   type CreateEntitlementAdjustmentAdminRequest,
   type EmployeeEntitlementAdminDetail,
 } from './absence-administration.js';
+export {
+  createHolidayAdminRequestSchema,
+  holidayAdministrationActionEnvelopeSchema,
+  holidayAdminSummarySchema,
+  holidayImpactPreviewAdminEnvelopeSchema,
+  holidayImpactPreviewAdminRequestSchema,
+  holidayImpactPreviewAdminSchema,
+  holidaySettingsAdminDetailEnvelopeSchema,
+  holidaySettingsAdminDetailSchema,
+  type CreateHolidayAdminRequest,
+  type HolidayImpactPreviewAdmin,
+  type HolidayImpactPreviewAdminRequest,
+  type HolidaySettingsAdminDetail,
+} from './holiday-administration.js';
 
 export {
   EMPLOYEE_ADMIN_STATUSES,
