@@ -475,8 +475,8 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-504 — Locked absence-cancellation adjustment contract
 
-**Status:** Open; resolution owner `WL-1000`, and production release remains blocked until the
-required implementation is scheduled and completed before `WL-1008`.
+**Status:** Contract resolved by `WL-1000`; implementation owner `WL-1000A`, and production release
+remains blocked until that task is complete before `WL-1008`.
 
 - Current behavior is fail-closed: cancellation of coverage touching a locked monthly period
   returns `409 PERIOD_ADJUSTMENT_REQUIRED` before any cancellation decision, coverage/effect
@@ -485,10 +485,40 @@ required implementation is scheduled and completed before `WL-1008`.
 - Phase 8 does not silently reinterpret this as a correction. Its exact gate criterion and `WL-803`
   task are post-lock **correction** scoped, and their linked snapshot/adjustment contract is now
   complete. The Phase 8 gate therefore passes while retaining this separate release blocker.
-- Resolution must define employee intent, current non-self reviewer/HR authority, self-action,
-  snapshot linkage, replacement absence-effect versions, entitlement restoration or compensation,
-  signed time-account impact, idempotency/concurrency, audit/notification evidence, privacy-safe
-  responses, and original-versus-adjusted reporting without rewriting locked history.
-- `WL-1000` must resolve that contract against the threat/permission matrix and either own the
-  bounded implementation or add an explicit dependency-ordered task before `WL-1008`. A production
-  gate cannot waive the path merely because the current denial is safe.
+- Employee intent remains an absence-cancellation request and uses exact remaining coverage-segment
+  identifiers. It is not converted into an attendance correction and does not edit the locked
+  monthly period, approved snapshot, original absence request, coverage, effect, or ledger rows.
+- Submission captures the exact locked snapshot ID and its source fingerprint for every affected
+  month. Mixed locked/unlocked targets are one atomic request; they are not partially accepted.
+- Decision authority remains the employee's current non-self direct manager or an organization HR
+  administrator. Combined roles cannot decide their own request, former managers have no retained
+  scope, and system administrators receive no domain fallback.
+- Approval appends the next absence-effect version for each target, the exact positive entitlement
+  restoration when applicable, and one signed time-account adjustment per affected locked snapshot.
+  The adjustment is the difference between the immutable approved result and the result with the
+  approved cancellation effect; zero-valued time adjustments are recorded as reconciled evidence
+  but do not create a zero ledger row.
+- The request version, snapshot/source fingerprints, semantic source uniqueness, row locks, and one
+  serializable transaction make approval safe across retries and concurrent decisions. Rejection,
+  changes requested, and stale conflicts create no financial or time effect.
+- Success appends purpose-minimized domain audit and generic notification evidence in the same
+  transaction. Browser and generic report DTOs omit absence subtype, note/reason text, entitlement
+  detail, internal source identifiers, and sickness context. Authorized monthly/report views show
+  immutable original and reconciled adjusted totals separately.
+- `WL-1000A` owns the bounded schema/repository/service/contract/UI/test/documentation slice. The
+  existing fail-closed `409 PERIOD_ADJUSTMENT_REQUIRED` remains until that slice is complete.
+
+### D-505 — Phase 10 threat-evidence ownership
+
+**Status:** Resolved by `WL-1000`.
+
+- `WL-1000` establishes the `T-001`–`T-020` evidence register, closes confirmed application-layer
+  Critical/High findings, and adds an exhaustive central permission-policy regression matrix.
+- It does not claim deployment or operational evidence before that evidence exists. Expected-scale
+  denial-of-service evidence belongs to `WL-1001`; proxy/CSP/network isolation to `WL-1003`;
+  encrypted restore to `WL-1004`; upgrade and rollback to `WL-1005`; structured logging and safe
+  diagnostics to `WL-1006`; and retention/minimization to `WL-1007`.
+- Each downstream task updates the same evidence register. `WL-1008`, not `WL-1000`, is the only
+  task allowed to declare every threat control release-ready and no known Critical/High issue open.
+- This resolves the prior contradiction between the original `WL-1000` wording and the evidence
+  that can only be produced by its later Phase 10 peer tasks.

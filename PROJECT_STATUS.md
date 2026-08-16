@@ -2,15 +2,16 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 0 of 9 Phase 10 tasks complete
-**Current milestone:** Threat-model and permission/privacy remediation
-**Active task:** `WL-1000`
+**Phase progress:** 1 of 10 Phase 10 tasks complete
+**Current milestone:** Locked-period absence-cancellation adjustments
+**Active task:** `WL-1000A`
 **Status:** Ready
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Remediate the threat model and complete the permission/privacy regression suite for `WL-1000`.
+Implement the resolved snapshot-linked locked-period absence-cancellation adjustment contract for
+`WL-1000A`.
 
 ## Verified decisions
 
@@ -158,6 +159,14 @@ Remediate the threat model and complete the permission/privacy regression suite 
   ordered adjustment, nonzero time-account delta, audit, and generic notification without changing
   raw punches, the daily projection, or approved snapshot. The monthly DTO and UI separate the
   immutable approved record from its reconciled adjusted view.
+- Locked-period absence cancellation remains fail-closed until `WL-1000A`; its resolved contract
+  preserves employee cancellation intent, links every affected immutable snapshot/source
+  fingerprint, applies exact append-only absence/entitlement/time adjustments under current
+  non-self reviewer authority, and exposes original versus reconciled results without sensitive
+  absence detail (`D-504`).
+- Phase 10 threat evidence is cumulative: `WL-1000` owns the application baseline and central
+  permission matrix, while load, deployment, restore, upgrade, diagnostics, and retention tasks add
+  their required operational evidence before `WL-1008` can close `T-001`–`T-020` (`D-505`).
 - The MVP application has 31 canonical route patterns plus three explicit host-operator workflows, each with stable implementation ownership.
 - Request and approval routes are type-neutral; sensitive workflow types, notes, reasons, entitlement values, and person-identifying search text never become URL state.
 - Route navigation updates the document title and visible heading with deterministic focus behavior; screen states have persistent, non-duplicative focus and announcement rules.
@@ -243,6 +252,10 @@ Remediate the threat model and complete the permission/privacy regression suite 
 
 ## Work completed
 
+- [x] `T-001`–`T-020` application evidence baseline, executable 36 employee/five account/seven
+  installation action catalogs, exhaustive central permission-policy regressions, Phase 10
+  evidence ownership, and the locked-cancellation implementation contract completed (`WL-1000`;
+  see `docs/96-phase-10-threat-permission-baseline.md`).
 - [x] Planning files reviewed for consistency (`WL-001`; see `docs/17-planning-audit.md`).
 - [x] MVP scope, non-goals, assumptions, and success criteria finalized (`WL-002`).
 - [x] Roles, resource scopes, permission matrix, and self-action rules finalized (`WL-003`).
@@ -378,6 +391,35 @@ Remediate the threat model and complete the permission/privacy regression suite 
   assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-1000` — Establish the threat, permission, and privacy baseline
+
+- Changed: added executable central catalogs for all 36 employee-target, five account-target, and
+  seven installation authorization actions; expanded the unit suite into an exhaustive role,
+  scope, organization, inactivity, and freshness matrix; created the `T-001`–`T-020` evidence
+  register; resolved the threat-evidence ownership contradiction in `D-505`; and resolved/scheduled
+  the locked absence-cancellation contract as required `WL-1000A` under `D-504`.
+- Verified: formatting, workspace/version/boundary contracts, strict composite TypeScript,
+  reproducible OpenAPI, ESLint, 24 tooling tests, 299 unit/component tests across 43 files, all 41
+  PostgreSQL-backed integration tests across 21 files, all 20 Chromium scenarios, and the
+  production/workspace build pass. The canonical pnpm wrapper remains unavailable on the host
+  Node `24.19.0` runtime because the repository pins `24.18.x`; installed local binaries were used
+  without changing dependencies. Integration retains the known `pg` 9 deprecation warning, and
+  the build retains the known 825 kB main-chunk advisory.
+- Accessibility: no interface semantics or interaction changed. Existing Chromium coverage still
+  passes keyboard, focus, narrow reflow, forced-colors, touch, grant cleanup, and axe scenarios.
+- Security/data: no confirmed unresolved application-layer Critical/High vulnerability was found.
+  The evidence register explicitly keeps production proxy/CSP, load, restore, upgrade, logging,
+  diagnostics, and retention controls open under their real Phase 10 owners; it makes no premature
+  production-readiness claim. No secret value, protected payload, analytics, or persistence was
+  added.
+- Documentation: added `docs/96-phase-10-threat-permission-baseline.md`; resolved `D-504`/`D-505`;
+  and synchronized TODO, task board, and project status.
+- Remaining risk: `WL-1000A` must implement locked-period cancellation adjustments. `WL-1001`–
+  `WL-1007` must replace partial/open threat rows with measured operational evidence before
+  `WL-1008`. The host toolchain mismatch, existing `pg` warning, large web chunk, and `D-502`
+  browser matrix remain explicit.
+- Next task: `WL-1000A`.
 
 ### `WL-907` — Pass the Phase 9 administration exit gate
 
@@ -1168,12 +1210,14 @@ Remediate the threat model and complete the permission/privacy regression suite 
 
 ## Current blockers
 
-No `WL-1000` start blocker is known. `D-504` is a production blocker explicitly owned by this task,
-and `D-502` remains open before the production browser gate.
+`WL-1000A` must implement the resolved `D-504` contract before the production gate. The current
+denial path remains safe and atomic, but users cannot yet cancel coverage touching a locked period.
+`D-502` remains open before the production browser gate. Deployment, restore, upgrade, diagnostic,
+load, and retention evidence remains explicitly owned by later Phase 10 tasks under `D-505`.
 
 ## Next task
 
-`WL-1000 — Remediate the threat model and complete security/privacy/permission tests.`
+`WL-1000A — Implement locked-period absence-cancellation adjustments.`
 
 ## Update rules
 

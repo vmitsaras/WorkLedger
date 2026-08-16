@@ -126,7 +126,8 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 10 — Production hardening and self-hosting
 
-- [ ] `WL-1000` Remediate the threat model and complete security/privacy/permission tests.
+- [x] `WL-1000` Establish the threat evidence baseline and complete application security/privacy/permission remediation.
+- [ ] `WL-1000A` Implement locked-period absence-cancellation adjustments.
 - [ ] `WL-1001` Complete performance, pagination, and concurrency review.
 - [ ] `WL-1002` Complete full accessibility audit and remediation.
 - [ ] `WL-1003` Complete the Caddy-reference Docker production deployment.

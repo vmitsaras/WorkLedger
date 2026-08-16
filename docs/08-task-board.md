@@ -175,7 +175,8 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-1000 | Complete `T-001`–`T-020` threat-model remediation and permission/privacy regression suite | WL-907 | Every control has evidence and no unresolved Critical/High issue remains | Not started |
+| WL-1000 | Establish the `T-001`–`T-020` evidence register, remediate confirmed application-layer Critical/High findings, complete central permission/privacy regressions, and resolve `D-504` ownership | WL-907 | Evidence baseline and exhaustive central policy matrix; no confirmed application-layer Critical/High issue remains; downstream evidence owners are explicit | Done |
+| WL-1000A | Implement the resolved `D-504` locked-period absence-cancellation adjustment contract | WL-1000 | Immutable snapshot linkage, exact entitlement/time adjustments, scoped non-self decision, concurrency/idempotency, audit/notification, minimized DTO, and original-versus-adjusted evidence pass | Ready |
 | WL-1001 | Test expected-scale performance, indexing, pagination, and concurrent mutations | WL-907 | Defined targets and measured results | Not started |
 | WL-1002 | Complete full WCAG 2.2 AA audit and remediate core-flow blockers | WL-907 | Automated plus manual report | Not started |
 | WL-1003 | Build production Docker Compose with the Caddy reference proxy, private API/database network, trusted-header/origin controls, health/readiness, and safe config | WL-907 | Clean production-style HTTPS deployment passes direct-port, forged-header, secret, and diagnostic-shape checks | Not started |
@@ -183,7 +184,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-1005 | Document and test migration/upgrade from prior release fixture | WL-1003 | Backup, readiness/maintenance, auth-profile, upgrade/rollback, and integrity checks pass | Not started |
 | WL-1006 | Add allowlisted structured logging, redaction, correlation IDs, failure diagnostics, and safe system-operations/technical-audit surfaces | WL-1003 | Secret/HR/query/body/hostile-text redaction, role-separated DTOs, and healthy/degraded/dependency-failure scenarios pass | Not started |
 | WL-1007 | Implement/document the mandatory retention profile, class-specific purge/minimization, user export, deactivation/anonymization, and backup-expiry controls | WL-1000 | Production rejects unset classes; purge/minimization/restore tests preserve ledger/snapshot/audit integrity | Not started |
-| WL-1008 | Execute production release gate | WL-1000–WL-1007 | Release checklist signed off | Not started |
+| WL-1008 | Execute production release gate | WL-1000A, WL-1000–WL-1007 | Release checklist signed off and every `T-001`–`T-020` row is release-ready | Not started |
 
 ---
 
