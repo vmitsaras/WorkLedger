@@ -68,5 +68,10 @@
     "react-dom": "19.2.8",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
+  },
+  "dependencies": {
+    "@types/pino": "7.0.5",
+    "pino": "10.3.1",
+    "pino-pretty": "13.1.3"
   }
 }

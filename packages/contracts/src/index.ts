@@ -500,3 +500,10 @@ export {
   type TimeAccountLedgerEntry,
   type TimeRecord,
 } from './time.js';
+
+export {
+  readinessStatusResponseSchema,
+  systemDiagnosticsResponseSchema,
+  type ReadinessStatusResponse,
+  type SystemDiagnosticsResponse,
+} from './system-operations.js';

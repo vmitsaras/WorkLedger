@@ -26,10 +26,12 @@ import type { AccountInvitationSender } from './administration/service.js';
 import { registerTimeAdministrationRoutes } from './time-administration/routes.js';
 import { registerAbsenceAdministrationRoutes } from './absence-administration/routes.js';
 import { registerDomainAuditRoutes } from './audit/routes.js';
+import { registerSystemOperationsRoutes } from './system/operations-routes.js';
 import {
   disabledNotificationDeliveryAdapter,
   type NotificationDeliveryAdapter,
 } from './notifications/delivery.js';
+import { createWorkLedgerLogger, type WorkLedgerLogger } from './logging/logger.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
 const READY_RESPONSE_SCHEMA = z.strictObject({ status: z.enum(['ready', 'not_ready']) });
@@ -40,8 +42,17 @@ export function createApiServer(
     invitationSender?: AccountInvitationSender;
     notificationDelivery?: NotificationDeliveryAdapter;
     now?: ApiClock;
+    logger?: WorkLedgerLogger;
   }> = {},
 ): FastifyInstance {
+  const logger =
+    dependencies.logger ??
+    createWorkLedgerLogger({
+      environment: config.environment,
+      service: 'workledger-api',
+      version: '0.10.0',
+    });
+
   const app = Fastify({
     genReqId: createRequestId,
     logger: false,
@@ -50,6 +61,11 @@ export function createApiServer(
   });
 
   registerHttpFoundation(app);
+
+  app.addHook('onResponse', async (request, reply) => {
+    const latencyMs = reply.elapsedTime;
+    logger.logRequest(request, reply, latencyMs);
+  });
 
   app.after(() => {
     let readinessCheck: (() => Promise<boolean>) | undefined;
@@ -101,6 +117,14 @@ export function createApiServer(
       registerTimeAdministrationRoutes(app, config, authentication, database, dependencies.now);
       registerAbsenceAdministrationRoutes(app, config, authentication, database, dependencies.now);
       registerDomainAuditRoutes(app, authentication, database, dependencies.now);
+      registerSystemOperationsRoutes(
+        app,
+        config,
+        authentication,
+        database,
+        logger,
+        dependencies.now,
+      );
       app.addHook('onClose', async () => {
         await Promise.all([authentication.close(), database.close()]);
       });

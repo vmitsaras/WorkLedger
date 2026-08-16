@@ -1,16 +1,28 @@
 import { createRuntimeConfig } from './config.js';
 import { loadRuntimeEnvironment } from './runtime-environment.js';
 import { createApiServer } from './server.js';
+import { createWorkLedgerLogger } from './logging/logger.js';
 
 async function main() {
   const environment = await loadRuntimeEnvironment(process.env);
   const config = createRuntimeConfig(environment);
-  const server = createApiServer(config);
+
+  const logger = createWorkLedgerLogger({
+    environment: config.environment,
+    service: 'workledger-api',
+    version: '0.10.0',
+  });
+
+  const server = createApiServer(config, { logger });
 
   const envPort = process.env['PORT'];
   const port = envPort ? parseInt(envPort, 10) : 3000;
   await server.listen({ host: '0.0.0.0', port });
-  console.log(`WorkLedger API started on port ${port}`);
+
+  logger.info('WorkLedger API started', {
+    port,
+    environment: config.environment,
+  });
 }
 
 main().catch((err) => {
