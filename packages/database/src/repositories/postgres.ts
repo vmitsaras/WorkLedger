@@ -973,56 +973,54 @@ class PostgresAdministrationRepository implements AdministrationRepository {
       when 6 then ${weeklySchedules.saturdayMinutes}
       when 7 then ${weeklySchedules.sundayMinutes}
       else 0 end`;
-    const [existing, affected, projections, protectedPeriods] = await Promise.all([
-      this.transaction
-        .select({ value: count() })
-        .from(holidays)
-        .where(
-          and(eq(holidays.organizationId, organizationId), eq(holidays.holidayDate, holidayDate)),
+    const existing = await this.transaction
+      .select({ value: count() })
+      .from(holidays)
+      .where(
+        and(eq(holidays.organizationId, organizationId), eq(holidays.holidayDate, holidayDate)),
+      );
+    const affected = await this.transaction
+      .select({ value: sql<number>`count(distinct ${employees.id})::integer`.mapWith(Number) })
+      .from(employees)
+      .innerJoin(
+        employmentPeriods,
+        and(
+          eq(employmentPeriods.organizationId, organizationId),
+          eq(employmentPeriods.employeeId, employees.id),
+          lte(employmentPeriods.startsOn, holidayDate),
+          or(isNull(employmentPeriods.endsOn), gt(employmentPeriods.endsOn, holidayDate)),
         ),
-      this.transaction
-        .select({ value: sql<number>`count(distinct ${employees.id})::integer`.mapWith(Number) })
-        .from(employees)
-        .innerJoin(
-          employmentPeriods,
-          and(
-            eq(employmentPeriods.organizationId, organizationId),
-            eq(employmentPeriods.employeeId, employees.id),
-            lte(employmentPeriods.startsOn, holidayDate),
-            or(isNull(employmentPeriods.endsOn), gt(employmentPeriods.endsOn, holidayDate)),
-          ),
-        )
-        .innerJoin(
-          scheduleAssignments,
-          and(
-            eq(scheduleAssignments.organizationId, organizationId),
-            eq(scheduleAssignments.employeeId, employees.id),
-            lte(scheduleAssignments.startsOn, holidayDate),
-            or(isNull(scheduleAssignments.endsOn), gt(scheduleAssignments.endsOn, holidayDate)),
-          ),
-        )
-        .innerJoin(weeklySchedules, eq(weeklySchedules.id, scheduleAssignments.scheduleId))
-        .where(and(eq(employees.organizationId, organizationId), sql`${scheduledMinutes} > 0`)),
-      this.transaction
-        .select({ value: count() })
-        .from(dailyProjections)
-        .where(
-          and(
-            eq(dailyProjections.organizationId, organizationId),
-            eq(dailyProjections.localDate, holidayDate),
-          ),
+      )
+      .innerJoin(
+        scheduleAssignments,
+        and(
+          eq(scheduleAssignments.organizationId, organizationId),
+          eq(scheduleAssignments.employeeId, employees.id),
+          lte(scheduleAssignments.startsOn, holidayDate),
+          or(isNull(scheduleAssignments.endsOn), gt(scheduleAssignments.endsOn, holidayDate)),
         ),
-      this.transaction
-        .select({ value: count() })
-        .from(monthlyPeriods)
-        .where(
-          and(
-            eq(monthlyPeriods.organizationId, organizationId),
-            eq(monthlyPeriods.monthStart, `${holidayDate.slice(0, 7)}-01`),
-            inArray(monthlyPeriods.status, ['SUBMITTED', 'APPROVED', 'LOCKED']),
-          ),
+      )
+      .innerJoin(weeklySchedules, eq(weeklySchedules.id, scheduleAssignments.scheduleId))
+      .where(and(eq(employees.organizationId, organizationId), sql`${scheduledMinutes} > 0`));
+    const projections = await this.transaction
+      .select({ value: count() })
+      .from(dailyProjections)
+      .where(
+        and(
+          eq(dailyProjections.organizationId, organizationId),
+          eq(dailyProjections.localDate, holidayDate),
         ),
-    ]);
+      );
+    const protectedPeriods = await this.transaction
+      .select({ value: count() })
+      .from(monthlyPeriods)
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, organizationId),
+          eq(monthlyPeriods.monthStart, `${holidayDate.slice(0, 7)}-01`),
+          inArray(monthlyPeriods.status, ['SUBMITTED', 'APPROVED', 'LOCKED']),
+        ),
+      );
     return Object.freeze({
       affectedEmployeeCount: Number(affected[0]?.value ?? 0),
       affectedProjectionCount: Number(projections[0]?.value ?? 0),
@@ -3710,16 +3708,17 @@ class PostgresAuditRepository implements AuditRepository {
       conditions.push(eq(domainAuditEvents.targetKind, input.targetKind));
     if (input.to !== null) conditions.push(sql`${localDate} <= ${input.to}::date`);
     const where = and(...conditions);
-    const [rows, totals] = await Promise.all([
-      this.transaction
-        .select()
-        .from(domainAuditEvents)
-        .where(where)
-        .orderBy(desc(domainAuditEvents.occurredAt), desc(domainAuditEvents.id))
-        .limit(input.limit)
-        .offset(input.offset),
-      this.transaction.select({ value: count() }).from(domainAuditEvents).where(where),
-    ]);
+    const rows = await this.transaction
+      .select()
+      .from(domainAuditEvents)
+      .where(where)
+      .orderBy(desc(domainAuditEvents.occurredAt), desc(domainAuditEvents.id))
+      .limit(input.limit)
+      .offset(input.offset);
+    const totals = await this.transaction
+      .select({ value: count() })
+      .from(domainAuditEvents)
+      .where(where);
     return Object.freeze({
       items: Object.freeze(rows.map(mapDomainAuditEvent)),
       total: Number(totals[0]?.value ?? 0),
@@ -6312,69 +6311,67 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
   async loadConfiguration(
     input: AbsenceRequestConfigurationInput,
   ): Promise<VacationRequestConfigurationRecord> {
-    const [absenceTypeRows, scheduleRows, holidayRows] = await Promise.all([
-      this.transaction
-        .select({
-          active: absenceTypes.active,
-          id: absenceTypes.id,
-          name: absenceTypes.name,
-          policy: absenceTypes.policy,
-          validFrom: absenceTypes.validFrom,
-          validTo: absenceTypes.validTo,
-        })
-        .from(absenceTypes)
-        .where(
-          and(
-            eq(absenceTypes.organizationId, input.organizationId),
-            eq(absenceTypes.code, input.absenceCode),
-            lte(absenceTypes.validFrom, input.startDate),
-            or(isNull(absenceTypes.validTo), gt(absenceTypes.validTo, input.endDate)),
-          ),
-        )
-        .orderBy(asc(absenceTypes.validFrom), asc(absenceTypes.id)),
-      this.transaction
-        .select({
-          assignmentEndsOn: scheduleAssignments.endsOn,
-          assignmentId: scheduleAssignments.id,
-          assignmentStartsOn: scheduleAssignments.startsOn,
-          fridayMinutes: weeklySchedules.fridayMinutes,
-          mondayMinutes: weeklySchedules.mondayMinutes,
-          saturdayMinutes: weeklySchedules.saturdayMinutes,
-          scheduleId: weeklySchedules.id,
-          sundayMinutes: weeklySchedules.sundayMinutes,
-          thursdayMinutes: weeklySchedules.thursdayMinutes,
-          tuesdayMinutes: weeklySchedules.tuesdayMinutes,
-          wednesdayMinutes: weeklySchedules.wednesdayMinutes,
-        })
-        .from(scheduleAssignments)
-        .innerJoin(
-          weeklySchedules,
-          and(
-            eq(weeklySchedules.id, scheduleAssignments.scheduleId),
-            eq(weeklySchedules.organizationId, scheduleAssignments.organizationId),
-          ),
-        )
-        .where(
-          and(
-            eq(scheduleAssignments.organizationId, input.organizationId),
-            eq(scheduleAssignments.employeeId, input.employeeId),
-            lte(scheduleAssignments.startsOn, input.endDate),
-            or(isNull(scheduleAssignments.endsOn), gt(scheduleAssignments.endsOn, input.startDate)),
-          ),
-        )
-        .orderBy(asc(scheduleAssignments.startsOn), asc(scheduleAssignments.id)),
-      this.transaction
-        .select({ localDate: holidays.holidayDate })
-        .from(holidays)
-        .where(
-          and(
-            eq(holidays.organizationId, input.organizationId),
-            gte(holidays.holidayDate, input.startDate),
-            lte(holidays.holidayDate, input.endDate),
-          ),
-        )
-        .orderBy(asc(holidays.holidayDate)),
-    ]);
+    const absenceTypeRows = await this.transaction
+      .select({
+        active: absenceTypes.active,
+        id: absenceTypes.id,
+        name: absenceTypes.name,
+        policy: absenceTypes.policy,
+        validFrom: absenceTypes.validFrom,
+        validTo: absenceTypes.validTo,
+      })
+      .from(absenceTypes)
+      .where(
+        and(
+          eq(absenceTypes.organizationId, input.organizationId),
+          eq(absenceTypes.code, input.absenceCode),
+          lte(absenceTypes.validFrom, input.startDate),
+          or(isNull(absenceTypes.validTo), gt(absenceTypes.validTo, input.endDate)),
+        ),
+      )
+      .orderBy(asc(absenceTypes.validFrom), asc(absenceTypes.id));
+    const scheduleRows = await this.transaction
+      .select({
+        assignmentEndsOn: scheduleAssignments.endsOn,
+        assignmentId: scheduleAssignments.id,
+        assignmentStartsOn: scheduleAssignments.startsOn,
+        fridayMinutes: weeklySchedules.fridayMinutes,
+        mondayMinutes: weeklySchedules.mondayMinutes,
+        saturdayMinutes: weeklySchedules.saturdayMinutes,
+        scheduleId: weeklySchedules.id,
+        sundayMinutes: weeklySchedules.sundayMinutes,
+        thursdayMinutes: weeklySchedules.thursdayMinutes,
+        tuesdayMinutes: weeklySchedules.tuesdayMinutes,
+        wednesdayMinutes: weeklySchedules.wednesdayMinutes,
+      })
+      .from(scheduleAssignments)
+      .innerJoin(
+        weeklySchedules,
+        and(
+          eq(weeklySchedules.id, scheduleAssignments.scheduleId),
+          eq(weeklySchedules.organizationId, scheduleAssignments.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(scheduleAssignments.organizationId, input.organizationId),
+          eq(scheduleAssignments.employeeId, input.employeeId),
+          lte(scheduleAssignments.startsOn, input.endDate),
+          or(isNull(scheduleAssignments.endsOn), gt(scheduleAssignments.endsOn, input.startDate)),
+        ),
+      )
+      .orderBy(asc(scheduleAssignments.startsOn), asc(scheduleAssignments.id));
+    const holidayRows = await this.transaction
+      .select({ localDate: holidays.holidayDate })
+      .from(holidays)
+      .where(
+        and(
+          eq(holidays.organizationId, input.organizationId),
+          gte(holidays.holidayDate, input.startDate),
+          lte(holidays.holidayDate, input.endDate),
+        ),
+      )
+      .orderBy(asc(holidays.holidayDate));
 
     const assignments = scheduleRows.map((row) => {
       const range = createLocalDateRange(
@@ -6483,60 +6480,58 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     startDate: LocalDate,
     endDate: LocalDate,
   ): Promise<PersonalCalendarRecords> {
-    const [absenceRows, holidayRows] = await Promise.all([
-      this.transaction
-        .select({
-          absenceTypeName: absenceTypes.name,
-          endsAtMinute: absenceCoverageSegments.endsAtMinute,
-          kind: absenceCoverageSegments.kind,
-          localDate: absenceCoverageSegments.localDate,
-          startsAtMinute: absenceCoverageSegments.startsAtMinute,
-          status: absenceRequests.status,
-        })
-        .from(absenceRequests)
-        .innerJoin(
-          absenceCoverageSegments,
-          and(
-            eq(absenceCoverageSegments.absenceRequestId, absenceRequests.id),
-            eq(absenceCoverageSegments.organizationId, absenceRequests.organizationId),
-          ),
-        )
-        .innerJoin(
-          absenceTypes,
-          and(
-            eq(absenceTypes.id, absenceRequests.absenceTypeId),
-            eq(absenceTypes.organizationId, absenceRequests.organizationId),
-          ),
-        )
-        .where(
-          and(
-            eq(absenceRequests.organizationId, organizationId),
-            eq(absenceRequests.employeeId, employeeId),
-            gte(absenceCoverageSegments.localDate, startDate),
-            lte(absenceCoverageSegments.localDate, endDate),
-            inArray(absenceRequests.status, [
-              'SUBMITTED',
-              'REPORTED',
-              'ACKNOWLEDGED',
-              'CHANGES_REQUESTED',
-              'APPROVED',
-              'PARTIALLY_CANCELLED',
-            ]),
-          ),
-        )
-        .orderBy(asc(absenceCoverageSegments.localDate), asc(absenceRequests.submittedAt)),
-      this.transaction
-        .select({ localDate: holidays.holidayDate, name: holidays.name })
-        .from(holidays)
-        .where(
-          and(
-            eq(holidays.organizationId, organizationId),
-            gte(holidays.holidayDate, startDate),
-            lte(holidays.holidayDate, endDate),
-          ),
-        )
-        .orderBy(asc(holidays.holidayDate), asc(holidays.id)),
-    ]);
+    const absenceRows = await this.transaction
+      .select({
+        absenceTypeName: absenceTypes.name,
+        endsAtMinute: absenceCoverageSegments.endsAtMinute,
+        kind: absenceCoverageSegments.kind,
+        localDate: absenceCoverageSegments.localDate,
+        startsAtMinute: absenceCoverageSegments.startsAtMinute,
+        status: absenceRequests.status,
+      })
+      .from(absenceRequests)
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.absenceRequestId, absenceRequests.id),
+          eq(absenceCoverageSegments.organizationId, absenceRequests.organizationId),
+        ),
+      )
+      .innerJoin(
+        absenceTypes,
+        and(
+          eq(absenceTypes.id, absenceRequests.absenceTypeId),
+          eq(absenceTypes.organizationId, absenceRequests.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(absenceRequests.organizationId, organizationId),
+          eq(absenceRequests.employeeId, employeeId),
+          gte(absenceCoverageSegments.localDate, startDate),
+          lte(absenceCoverageSegments.localDate, endDate),
+          inArray(absenceRequests.status, [
+            'SUBMITTED',
+            'REPORTED',
+            'ACKNOWLEDGED',
+            'CHANGES_REQUESTED',
+            'APPROVED',
+            'PARTIALLY_CANCELLED',
+          ]),
+        ),
+      )
+      .orderBy(asc(absenceCoverageSegments.localDate), asc(absenceRequests.submittedAt));
+    const holidayRows = await this.transaction
+      .select({ localDate: holidays.holidayDate, name: holidays.name })
+      .from(holidays)
+      .where(
+        and(
+          eq(holidays.organizationId, organizationId),
+          gte(holidays.holidayDate, startDate),
+          lte(holidays.holidayDate, endDate),
+        ),
+      )
+      .orderBy(asc(holidays.holidayDate), asc(holidays.id));
 
     return Object.freeze({
       absences: Object.freeze(

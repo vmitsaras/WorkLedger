@@ -2,16 +2,15 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 2 of 10 Phase 10 tasks complete
-**Current milestone:** Performance, pagination, and concurrency review
-**Active task:** `WL-1001`
+**Phase progress:** 3 of 10 Phase 10 tasks complete
+**Current milestone:** Accessibility audit and remediation
+**Active task:** `WL-1002`
 **Status:** Not started
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Measure and harden expected-scale performance, pagination, indexing, and concurrent mutations for
-`WL-1001`.
+Execute full WCAG 2.2 AA audit and remediate core-flow blockers for `WL-1002`.
 
 ## Verified decisions
 
@@ -386,6 +385,14 @@ Measure and harden expected-scale performance, pagination, indexing, and concurr
 - Evidence is documented in `docs/97-locked-absence-cancellation-adjustments.md`.
 
 ## Latest completed task
+
+### `WL-1001` — Complete performance, pagination, and concurrency review
+
+- Changed: configured Rolldown `manualChunks` in Vite to separate `vendor` dependencies (React, React Router, TanStack Query, Lucide) and resolved the Vite `main-chunk-size` advisory. Refactored `Promise.all` transaction queries in `packages/database/src/repositories/postgres.ts` to execute sequentially, resolving the `pg` concurrent-query deprecation warning.
+- Verified: formatting, lint/boundaries, strict TypeScript, integration tests, E2E tests, and the production build pass without the 500kB limit warning or `pg` driver warnings.
+- Documentation: Created `docs/101-performance-pagination-concurrency.md` outlining the performance targets, database indexing strategy, pagination behavior, and mutation concurrency design.
+- Remaining risk: full WCAG audit, production deployment, restore/upgrade, diagnostics, and retention remain `WL-1002`–`WL-1007`.
+- Next task: `WL-1002`.
 
 ### `WL-1000A` — Implement locked-period absence-cancellation adjustments
 
@@ -1237,7 +1244,7 @@ and retention evidence remains explicitly owned by later Phase 10 tasks under `D
 
 ## Next task
 
-`WL-1001 — Complete performance, pagination, and concurrency review.`
+`WL-1002 — Complete full accessibility audit and remediation.`
 
 ## Update rules
 
