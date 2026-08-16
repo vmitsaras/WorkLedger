@@ -51,6 +51,10 @@ Northstar-Demo-2026!
 These credentials are public test data, never production defaults. The password is stored only as
 a Better Auth-compatible scrypt hash in PostgreSQL and is not printed by the seed command.
 
+Emma is the default interactive attendance persona. Her deterministic history ends in a completed
+session and her attendance head starts `OFF_WORK`, so a freshly seeded installation can exercise
+Clock in, Start break, Resume, and Clock out against the trusted current server time.
+
 ## Deterministic scenario anchor
 
 The canonical calculation anchor is Monday `2026-02-02` in `Europe/Athens`. Stable opaque UUIDs,

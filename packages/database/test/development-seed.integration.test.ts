@@ -53,7 +53,23 @@ integrationTest(
         employees: '9',
         locked_periods: '2',
         pending_absences: '1',
-        punch_events: '26',
+        punch_events: '25',
+      });
+
+      const emmaAttendance = await firstFixture.client.query<{
+        latest_occurrence: string;
+        state: string;
+      }>(
+        `select head.state, max(event.occurred_at)::text as latest_occurrence
+         from attendance_heads head
+         join employees employee on employee.id = head.employee_id
+         left join punch_events event on event.employee_id = employee.id
+         where employee.display_name = 'Emma Reed'
+         group by head.state`,
+      );
+      expect(emmaAttendance.rows[0]).toEqual({
+        latest_occurrence: '2026-02-19 08:00:00+00',
+        state: 'OFF_WORK',
       });
 
       const leonEntitlement = await firstFixture.client.query<{

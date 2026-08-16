@@ -403,7 +403,6 @@ async function insertAttendanceAndCorrections(transaction: SeedTransaction): Pro
     number,
     { revision: number; state: 'OFF_WORK' | 'ON_BREAK' | 'WORKING' }
   >([
-    [10, { revision: 8, state: 'WORKING' }],
     [40, { revision: 1, state: 'WORKING' }],
     [50, { revision: 2, state: 'ON_BREAK' }],
   ]);
@@ -1013,16 +1012,6 @@ function createPunchEvents(): Array<typeof punchEvents.$inferInsert> {
   addSession(0, 9, '2026-02-05T20:00:00.000Z', '2026-02-06T04:00:00.000Z');
   addSession(0, 11, '2026-02-16T06:00:00.000Z', '2026-02-16T10:00:00.000Z');
   addSession(0, 13, '2026-02-19T06:00:00.000Z', '2026-02-19T08:00:00.000Z');
-  rows.push(
-    punch(
-      seedId(6190),
-      employeeId(personaDefinitions[0]),
-      15,
-      'CLOCK_IN',
-      '2026-11-02T06:00:00.000Z',
-      seedId(6090),
-    ),
-  );
   addSession(1, 1, '2026-02-02T06:00:00.000Z', '2026-02-02T11:00:00.000Z');
   addSession(1, 3, '2026-03-29T00:30:00.000Z', '2026-03-29T01:30:00.000Z');
   addSession(1, 5, '2026-10-25T00:30:00.000Z', '2026-10-25T01:30:00.000Z');

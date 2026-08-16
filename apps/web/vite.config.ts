@@ -4,6 +4,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      '/api/auth': 'http://127.0.0.1:3000',
+      '/v1': 'http://127.0.0.1:3000',
+    },
+  },
   build: {
     outDir: 'dist/browser',
     rollupOptions: {

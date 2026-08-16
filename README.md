@@ -77,16 +77,26 @@ development defaults when no `.env` exists. It runs the PostgreSQL integration t
 `WORKLEDGER_TEST_DATABASE_URL` is set; use the next section to exercise that lifecycle.
 The tracked `.env.example` contains local defaults only and is not a deployment template.
 
-To view the development-only web application surface:
+To run the development application, start the API in one terminal:
 
 ```sh
-pnpm with 11.20.0 --filter @workledger/web dev
+pnpm run test:build
+WORKLEDGER_ENVIRONMENT=development \
+  WORKLEDGER_ORIGIN=http://127.0.0.1:5173 \
+  WORKLEDGER_DATABASE_URL=postgres://workledger_app:workledger_dev_password@127.0.0.1:54329/workledger_dev \
+  WORKLEDGER_AUTH_SECRET=<local-secret-with-at-least-32-bytes> \
+  pnpm --filter @workledger/api start
 ```
 
-Vite serves the web application at `http://127.0.0.1:5173` by default. A separately composed
-same-origin API listener is not shipped yet, so local browser routes that need the API show their
-service-unavailable boundary. The Today read model and all four protected attendance commands are
-implemented and covered through mocked browser transport plus PostgreSQL-backed API integration.
+Then start the web application in another terminal:
+
+```sh
+pnpm --filter @workledger/web dev
+```
+
+Vite serves the web application at `http://127.0.0.1:5173` and proxies `/v1` and `/api/auth` to the
+Fastify listener at `http://127.0.0.1:3000`. The local secret is development-only and must not be
+reused in a deployed installation.
 
 ## Local PostgreSQL
 
