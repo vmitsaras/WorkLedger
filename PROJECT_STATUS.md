@@ -1,17 +1,16 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 9 — Administration
-**Project readiness:** Stage 3 of 5 — Core engine and platform in progress
-**Phase progress:** 6 of 8 Phase 9 tasks complete
-**Current milestone:** Authorized audit explorer
-**Active task:** `WL-906`
+**Current phase:** Phase 10 — Production hardening and self-hosting
+**Project readiness:** Stage 5 of 5 — Production and release in progress
+**Phase progress:** 0 of 9 Phase 10 tasks complete
+**Current milestone:** Threat-model and permission/privacy remediation
+**Active task:** `WL-1000`
 **Status:** Ready
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Build the authorized audit explorer with bounded filters, redaction, pagination, and accessible
-detail for `WL-906`.
+Remediate the threat model and complete the permission/privacy regression suite for `WL-1000`.
 
 ## Verified decisions
 
@@ -379,6 +378,26 @@ detail for `WL-906`.
   assessment in `docs/87-phase-8-gate-review.md`.
 
 ## Latest completed task
+
+### `WL-907` — Pass the Phase 9 administration exit gate
+
+- Changed: reviewed `WL-900`–`WL-906` against all six Phase 9 criteria, fixed the isolated administration integration fixture to apply migration `0019`, documented the gate decision, synchronized roadmap memory, and advanced all private workspace manifests to `0.10.0`.
+- Verified: before the bump, the pinned toolchain and full gates passed: reproducible OpenAPI, formatting, lint and 245-file/1,278-import boundaries, strict TypeScript, 24 tooling tests, 297 unit/component tests across 43 files, all 41 PostgreSQL integration tests across 21 files, 20 Chromium scenarios, and the production/workspace build. After the bump, direct installed-graph checks reconfirm ten-gate phase/version and workspace contracts, formatting, lint/boundaries, TypeScript, OpenAPI, tooling/unit/component tests, and builds; the managed wrapper aborted before state change because registry metadata was unavailable, and the host Node had independently advanced beyond the exact `24.18.x` guard.
+- Accessibility: the gate confirms complex-form summaries, labelled keyboard-complete administration, textual states, table/history semantics, narrow containment, pagination, recovery/focus behavior, axe, and Chromium evidence; full manual WCAG and assistive-technology verification remains `WL-1002`.
+- Security/data: HR/system authority remains separate, privileged self-actions fail closed, current effective scope is authoritative, changes preserve historical versions/effects, audit audiences remain separate, and purpose DTOs omit credentials, unrestricted reasons, sickness content, and unrelated fields.
+- Documentation: added `docs/95-phase-9-gate-review.md`; synchronized README, roadmap gate criteria, TODO, task board, and status. The `0.10.0` bump is internal only and authorizes no tag, publication, release, container, or deployment.
+- Remaining risk: the known main-chunk advisory and `pg` concurrent-query deprecation warning move into Phase 10. `D-502` and the production-blocking `D-504` remain open; Phase 10 owns the complete security, performance, accessibility, deployment, backup, upgrade, observability, and retention gates.
+- Next task: `WL-1000`.
+
+### `WL-906` — Build authorized audit explorer with filters and safe detail
+
+- Changed: added strict domain-audit query/page contracts and generated OpenAPI, a dedicated organization-HR authorization action, organization-local date/action/outcome/target filters with scope-before-total pagination, a redacted purpose DTO, and the accessible URL-owned `/audit` explorer.
+- Verified: workspace/toolchain/version checks, reproducible OpenAPI, formatting, lint and 245-file/1,278-import boundaries, strict TypeScript, 24 tooling tests, 297 unit/component tests across 43 files, 20 Chromium scenarios, and the production/workspace build pass. Integration reports 8 passed and 33 PostgreSQL-dependent skipped because the database is unavailable. The build retains the known large-chunk advisory.
+- Accessibility: filters use visible native controls and URL state; results use a captioned table, keyboard-focusable narrow-screen overflow, textual outcomes/privilege, native disclosure detail, count/loading/empty states, named pagination, route focus/boundary behavior, and component axe coverage.
+- Security/data: the API derives organization scope from active account context and permits only organization HR; technical/system capability alone is denied. The DTO omits actor account, employee, organization, request, and restricted-reason identifiers plus all free text and technical facts; responses are private/no-store.
+- Documentation: added `docs/94-domain-audit-explorer.md`, regenerated OpenAPI, and synchronized TODO, task board, and project status. No migration or version bump is required because the append-only audit schema and indexes already cover the slice and this is not the Phase 9 gate.
+- Remaining risk: database availability still determines whether PostgreSQL integration executes. Exact action filtering avoids an information-rich catalog; employee-name filtering, audit export, technical audit, retention execution, and production-scale security/performance remain later work.
+- Next task: `WL-907`.
 
 ### `WL-905` — Build holiday calendar management
 
@@ -1149,12 +1168,12 @@ detail for `WL-906`.
 
 ## Current blockers
 
-No `WL-906` blocker is known. `D-504` remains a production blocker for locked absence-cancellation
-recovery, and `D-502` remains open before the production browser gate.
+No `WL-1000` start blocker is known. `D-504` is a production blocker explicitly owned by this task,
+and `D-502` remains open before the production browser gate.
 
 ## Next task
 
-`WL-906 — Build authorized audit explorer with filters and safe detail.`
+`WL-1000 — Remediate the threat model and complete security/privacy/permission tests.`
 
 ## Update rules
 

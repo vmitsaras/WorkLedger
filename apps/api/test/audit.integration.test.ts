@@ -309,6 +309,36 @@ integrationTest(
         scope: 'TECHNICAL',
       });
 
+      const organizationDomain = await audit.listDomain(
+        { accountId: hr.accountId },
+        {
+          action: 'EMPLOYEE_STATUS_CHANGED',
+          from: '2026-08-10',
+          limit: 1,
+          outcome: 'SUCCESS',
+          page: 1,
+          targetKind: 'EMPLOYEE',
+          to: '2026-08-10',
+        },
+        OCCURRED_AT,
+      );
+      expect(organizationDomain).toMatchObject({
+        items: [
+          {
+            action: 'EMPLOYEE_STATUS_CHANGED',
+            actor: { kind: 'ACCOUNT', role: 'HR_ADMINISTRATOR' },
+            outcome: 'SUCCESS',
+            targetKind: 'EMPLOYEE',
+          },
+        ],
+        pagination: { limit: 1, page: 1, total: 2, totalPages: 2 },
+      });
+      expect(JSON.stringify(organizationDomain)).not.toContain(hr.accountId);
+      expect(JSON.stringify(organizationDomain)).not.toContain('requestId');
+      await expect(
+        audit.listDomain({ accountId: systemAccountId }, { limit: 20, page: 1 }, OCCURRED_AT),
+      ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
+
       const persistedCounts = await fixture.client.query<{
         domain_count: string;
         punch_count: string;

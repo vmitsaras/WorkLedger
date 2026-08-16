@@ -5,6 +5,17 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  DOMAIN_AUDIT_TARGET_KINDS,
+  domainAuditFactSchema,
+  domainAuditListItemSchema,
+  domainAuditPageEnvelopeSchema,
+  domainAuditPageSchema,
+  domainAuditQuerySchema,
+  type DomainAuditPage,
+  type DomainAuditQuery,
+} from './audit.js';
+
+export {
   absenceAdministrationActionEnvelopeSchema,
   absenceCoverageUnitAdminSchema,
   absenceSettingsAdminDetailEnvelopeSchema,

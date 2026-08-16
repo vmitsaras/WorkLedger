@@ -4,6 +4,7 @@ import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } 
 
 import {
   approvalInboxQuerySchema,
+  domainAuditQuerySchema,
   reportKeySchema,
   reportQuerySchema,
   teamCalendarQuerySchema,
@@ -38,6 +39,7 @@ import {
   teamAdminPageQuery,
   timeSettingsAdminDetailQuery,
   absenceSettingsAdminDetailQuery,
+  domainAuditPageQuery,
   holidaySettingsAdminDetailQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
@@ -80,6 +82,7 @@ import {
 import { SystemAccountAdministrationPage } from '../routes/system-account-administration-page.js';
 import { TimeSettingsPage } from '../routes/time-settings-page.js';
 import { AbsenceSettingsPage } from '../routes/absence-settings-page.js';
+import { AuditPage } from '../routes/audit-page.js';
 import { HolidaySettingsPage } from '../routes/holiday-settings-page.js';
 
 type PlaceholderRoute = Readonly<{
@@ -98,13 +101,6 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
     milestone: 'WL-602 and later Phase 6',
     path: 'requests',
     title: 'Requests',
-  },
-  {
-    area: 'HR',
-    description: 'Authorized, minimized domain audit history.',
-    milestone: 'WL-906',
-    path: 'audit',
-    title: 'Audit',
   },
   {
     area: 'SYSTEM',
@@ -326,6 +322,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <HolidaySettingsPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Holiday calendars' },
+            },
+            {
+              path: 'audit',
+              loader: createDomainAuditLoader(queryClient),
+              element: <AuditPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Domain audit' },
             },
             {
               path: 'system/accounts',
@@ -603,6 +606,18 @@ function createHolidaySettingsAdminLoader(queryClient: QueryClient): LoaderFunct
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
     void queryClient.prefetchQuery(holidaySettingsAdminDetailQuery());
+    return null;
+  };
+}
+
+function createDomainAuditLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
+    const url = new URL(request.url);
+    const parsed = domainAuditQuerySchema.safeParse(Object.fromEntries(url.searchParams));
+    if (!parsed.success) throw new Response(null, { status: 422 });
+    void queryClient.prefetchQuery(domainAuditPageQuery(parsed.data));
     return null;
   };
 }

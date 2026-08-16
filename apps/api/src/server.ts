@@ -25,6 +25,7 @@ import { registerAdministrationRoutes } from './administration/routes.js';
 import type { AccountInvitationSender } from './administration/service.js';
 import { registerTimeAdministrationRoutes } from './time-administration/routes.js';
 import { registerAbsenceAdministrationRoutes } from './absence-administration/routes.js';
+import { registerDomainAuditRoutes } from './audit/routes.js';
 import {
   disabledNotificationDeliveryAdapter,
   type NotificationDeliveryAdapter,
@@ -96,6 +97,7 @@ export function createApiServer(
       );
       registerTimeAdministrationRoutes(app, config, authentication, database, dependencies.now);
       registerAbsenceAdministrationRoutes(app, config, authentication, database, dependencies.now);
+      registerDomainAuditRoutes(app, authentication, database, dependencies.now);
       app.addHook('onClose', async () => {
         await Promise.all([authentication.close(), database.close()]);
       });

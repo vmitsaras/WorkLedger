@@ -1,6 +1,7 @@
 import {
   approvalDecisionEnvelopeSchema,
   absenceSettingsAdminDetailEnvelopeSchema,
+  domainAuditPageEnvelopeSchema,
   holidayImpactPreviewAdminEnvelopeSchema,
   holidaySettingsAdminDetailEnvelopeSchema,
   employeeEntitlementAdminDetailEnvelopeSchema,
@@ -36,6 +37,8 @@ import {
   type ApiErrorCode,
   type ApprovalInbox,
   type AbsenceSettingsAdminDetail,
+  type DomainAuditPage,
+  type DomainAuditQuery,
   type CreateHolidayAdminRequest,
   type HolidayImpactPreviewAdmin,
   type HolidayImpactPreviewAdminRequest,
@@ -785,6 +788,27 @@ export async function loadAbsenceSettingsAdminDetail(
 ): Promise<AbsenceSettingsAdminDetail> {
   const body = await requestJson('/v1/hr/absence-settings', signal === undefined ? {} : { signal });
   const parsed = absenceSettingsAdminDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadDomainAuditPage(
+  query: DomainAuditQuery,
+  signal?: AbortSignal,
+): Promise<DomainAuditPage> {
+  const search = new URLSearchParams();
+  if (query.action !== undefined) search.set('action', query.action);
+  if (query.from !== undefined) search.set('from', query.from);
+  search.set('limit', String(query.limit));
+  if (query.outcome !== undefined) search.set('outcome', query.outcome);
+  search.set('page', String(query.page));
+  if (query.targetKind !== undefined) search.set('targetKind', query.targetKind);
+  if (query.to !== undefined) search.set('to', query.to);
+  const body = await requestJson(
+    `/v1/hr/domain-audit?${search.toString()}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = domainAuditPageEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

@@ -4,10 +4,10 @@ WorkLedger is a planned self-hosted application for working time, flexible-time 
 requests, approvals, corrections, and auditable monthly records in small and medium-sized office,
 remote, and hybrid organizations.
 
-> **Project readiness: Stage 3 of 5 — Core engine and platform in progress**<br>
-> **Current phase progress: Phase 9 — 5 of 8 tasks complete**
+> **Project readiness: Stage 5 of 5 — Production and release in progress**<br>
+> **Current phase progress: Phase 10 — 0 of 9 tasks complete**
 
-Phases 0–8 have passed their exit gates. The repository now includes the attendance, correction,
+Phases 0–9 have passed their exit gates. The repository now includes the attendance, correction,
 absence, entitlement, manager-approval/team, and notification slices plus monthly employee review
 and submission. Monthly review derives ended-month readiness, complete-date totals, warnings,
 blockers, ledger reconciliation, and a source-fingerprinted schema version; self-only submission
@@ -23,7 +23,9 @@ effective-dated team/direct-manager history, with current manager scope changing
 past attribution preserved. HR can also create immutable weekly schedule and bounded time-policy
 versions, maintain gap-free current/future employee configuration history, manage effective-dated
 absence types, and append reasoned non-self entitlement-ledger adjustments without rewriting prior
-requests or entries. Holiday calendar management is next (`WL-905`).
+requests or entries. Date-only holiday management and the redacted HR domain-audit explorer are
+also complete. Production hardening begins with threat-model and permission/privacy remediation
+(`WL-1000`).
 
 WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
 supported release. The web development server renders the application routes and safe
@@ -215,7 +217,7 @@ versions and makes no response-time or production-support promise.
 | [docs/57-employee-attendance-accessibility-review.md](docs/57-employee-attendance-accessibility-review.md) | Phase-wide keyboard, announcement, reflow, touch, forced-colors, reduced-motion, and viewport evidence |
 | [docs/58-phase-4-gate-review.md](docs/58-phase-4-gate-review.md) | Phase 4 vertical-slice exit criteria, cross-cutting review, verification, versioning, and Phase 5 handoff |
 | [docs/59-my-time-and-flexible-balance.md](docs/59-my-time-and-flexible-balance.md) through [docs/87-phase-8-gate-review.md](docs/87-phase-8-gate-review.md) | Phase 5–8 employee time, absence, approvals, monthly closure, scoped-report, safe-portability, and gate evidence |
-| [docs/88-employee-account-administration.md](docs/88-employee-account-administration.md) through [docs/92-absence-entitlement-administration.md](docs/92-absence-entitlement-administration.md) | Phase 9 employee/account separation, team/manager, time-configuration, absence-type, and entitlement administration evidence |
+| [docs/88-employee-account-administration.md](docs/88-employee-account-administration.md) through [docs/95-phase-9-gate-review.md](docs/95-phase-9-gate-review.md) | Phase 9 employee/account separation, team/manager, effective configuration, entitlement, holiday, domain-audit, and gate evidence |
 
 ## License
 

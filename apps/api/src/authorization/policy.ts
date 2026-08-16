@@ -51,6 +51,7 @@ export type AccountTargetAction =
   | 'SYSTEM_ROLE_MANAGE';
 
 export type InstallationAction =
+  | 'DOMAIN_AUDIT_READ'
   | 'NOTIFICATION_DELIVERY_READ'
   | 'NOTIFICATION_SELF_READ'
   | 'ORGANIZATION_CONFIGURATION_MANAGE'
@@ -205,6 +206,7 @@ export function authorizeInstallationAction(
     return Object.freeze({ allowed: true, scope: 'SELF' });
   }
   if (
+    action === 'DOMAIN_AUDIT_READ' ||
     action === 'ORGANIZATION_CONFIGURATION_MANAGE' ||
     action === 'ORGANIZATION_TIMEZONE_CORRECT'
   ) {

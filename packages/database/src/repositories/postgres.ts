@@ -3701,6 +3701,33 @@ class PostgresAuditRepository implements AuditRepository {
     return Object.freeze(rows.map(mapDomainAuditEvent));
   }
 
+  async listDomain(input: Parameters<AuditRepository['listDomain']>[0]) {
+    validateAuditPage(input.limit, input.offset);
+    const localDate = sql`(${domainAuditEvents.occurredAt} at time zone ${input.timeZone})::date`;
+    const conditions = [eq(domainAuditEvents.organizationId, input.organizationId)];
+    if (input.action !== null) conditions.push(eq(domainAuditEvents.actionCode, input.action));
+    if (input.from !== null) conditions.push(sql`${localDate} >= ${input.from}::date`);
+    if (input.outcome !== null) conditions.push(eq(domainAuditEvents.outcome, input.outcome));
+    if (input.targetKind !== null)
+      conditions.push(eq(domainAuditEvents.targetKind, input.targetKind));
+    if (input.to !== null) conditions.push(sql`${localDate} <= ${input.to}::date`);
+    const where = and(...conditions);
+    const [rows, totals] = await Promise.all([
+      this.transaction
+        .select()
+        .from(domainAuditEvents)
+        .where(where)
+        .orderBy(desc(domainAuditEvents.occurredAt), desc(domainAuditEvents.id))
+        .limit(input.limit)
+        .offset(input.offset),
+      this.transaction.select({ value: count() }).from(domainAuditEvents).where(where),
+    ]);
+    return Object.freeze({
+      items: Object.freeze(rows.map(mapDomainAuditEvent)),
+      total: Number(totals[0]?.value ?? 0),
+    });
+  }
+
   async listSecurity(
     input: Parameters<AuditRepository['listSecurity']>[0],
   ): Promise<readonly SecurityAuditEventRecord[]> {

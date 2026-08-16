@@ -25,9 +25,9 @@ ready to release.
 | 4 of 5 | Product workflows | Phases 4–9 | Employee, manager, absence, closure, reporting, and administration workflows pass their gates |
 | 5 of 5 | Production and release | Phases 10–11 | Production hardening, self-hosting, accessibility, operations, public documentation, and release gates pass |
 
-The current label is **Stage 3 of 5 — Core engine and platform in progress**. Phase 1 passed its
-gate, and Phase 2 has **7 of 12 tasks complete**. The project is not release-ready; the shared
-workspace version is `0.2.0` under the phase-completion rule above.
+The current label is **Stage 5 of 5 — Production and release in progress**. Phases 0–9 have passed
+their gates and Phase 10 has **0 of 9 tasks complete**. The project is not release-ready; the shared
+workspace version is `0.10.0` under the phase-completion rule above.
 
 ---
 
@@ -335,12 +335,12 @@ Allow authorized HR users to manage employees and effective-dated configuration 
 
 ## Exit gate
 
-- [ ] Schedule/policy changes require effective dates.
-- [ ] Past approved results remain unchanged after future configuration changes.
-- [ ] Deactivation revokes access and preserves history.
-- [ ] Complex forms have error summaries and keyboard-complete workflows.
-- [ ] Privileged changes produce audit events.
-- [ ] Administrator routes remain usable at realistic data density.
+- [x] Schedule/policy changes require effective dates.
+- [x] Past approved results remain unchanged after future configuration changes.
+- [x] Deactivation revokes access and preserves history.
+- [x] Complex forms have error summaries and keyboard-complete workflows.
+- [x] Privileged changes produce audit events.
+- [x] Administrator routes remain usable at realistic data density.
 
 ---
 

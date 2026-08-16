@@ -201,6 +201,23 @@ export type ListDomainAuditEventsInput = Readonly<{
   subjectEmployeeId: DomainId<'Employee'>;
 }>;
 
+export type ListDomainAuditPageInput = Readonly<{
+  action: string | null;
+  from: LocalDate | null;
+  limit: number;
+  offset: number;
+  organizationId: DomainId<'Organization'>;
+  outcome: AuditOutcome | null;
+  targetKind: DomainAuditTargetKind | null;
+  timeZone: string;
+  to: LocalDate | null;
+}>;
+
+export type DomainAuditPageRecord = Readonly<{
+  items: readonly DomainAuditEventRecord[];
+  total: number;
+}>;
+
 export type ListSecurityAuditEventsInput = Readonly<{
   limit: number;
   offset: number;
@@ -1281,6 +1298,7 @@ export interface AuditRepository {
   listDomainForEmployee(
     input: ListDomainAuditEventsInput,
   ): Promise<readonly DomainAuditEventRecord[]>;
+  listDomain(input: ListDomainAuditPageInput): Promise<DomainAuditPageRecord>;
   listSecurity(input: ListSecurityAuditEventsInput): Promise<readonly SecurityAuditEventRecord[]>;
 }
 
