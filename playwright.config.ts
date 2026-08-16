@@ -30,5 +30,25 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'firefox-smoke',
+      grep: /@browser-matrix/,
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit-smoke',
+      grep: /@browser-matrix/,
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'mobile-chromium-smoke',
+      grep: /@browser-matrix/,
+      use: { ...devices['Pixel 7'] },
+    },
+    {
+      name: 'mobile-webkit-smoke',
+      grep: /@browser-matrix/,
+      use: { ...devices['iPhone 15'] },
+    },
   ],
 });

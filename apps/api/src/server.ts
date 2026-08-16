@@ -32,6 +32,7 @@ import {
 } from './notifications/delivery.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
+const READY_RESPONSE_SCHEMA = z.strictObject({ status: z.enum(['ready', 'not_ready']) });
 
 export function createApiServer(
   config: RuntimeConfig,
@@ -51,6 +52,7 @@ export function createApiServer(
   registerHttpFoundation(app);
 
   app.after(() => {
+    let readinessCheck: (() => Promise<boolean>) | undefined;
     if (config.databaseUrl !== undefined && config.authSecret !== undefined) {
       const authentication = createWorkLedgerAuthentication({
         ...config,
@@ -61,6 +63,7 @@ export function createApiServer(
         applicationName: 'workledger-api',
         connectionString: config.databaseUrl,
       });
+      readinessCheck = () => database.isReady();
       registerAuthenticationRoutes(app, config, authentication);
       registerAccountSelfServiceRoutes(app, config, authentication, database);
       registerAttendanceRoutes(app, config, authentication, database, dependencies.now);
@@ -121,6 +124,28 @@ export function createApiServer(
       async (_request, reply) => {
         reply.header('cache-control', 'no-store');
         return { status: 'ok' } as const;
+      },
+    );
+
+    app.withTypeProvider<ZodTypeProvider>().get(
+      '/ready',
+      {
+        schema: {
+          description: 'Checks that the database is reachable and the expected schema is present.',
+          operationId: 'getReadiness',
+          response: { 200: READY_RESPONSE_SCHEMA, 503: READY_RESPONSE_SCHEMA },
+          summary: 'Check API readiness',
+          tags: ['Operations'],
+        },
+      },
+      async (_request, reply) => {
+        reply.header('cache-control', 'no-store');
+        try {
+          if (readinessCheck && (await readinessCheck())) return { status: 'ready' } as const;
+        } catch {
+          // Keep dependency details out of the public readiness response.
+        }
+        return reply.code(503).send({ status: 'not_ready' } as const);
       },
     );
   });

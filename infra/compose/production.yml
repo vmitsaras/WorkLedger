@@ -2,72 +2,103 @@ name: workledger-production
 
 services:
   caddy:
-    build:
-      context: ../../
-      dockerfile: Dockerfile
-      target: production-caddy
-    container_name: workledger-caddy
+    build: { context: ../../, dockerfile: Dockerfile, target: production-caddy }
     restart: unless-stopped
+    init: true
     ports:
-      - '80:80'
-      - '443:443'
+      - '${WORKLEDGER_HTTP_PORT:-80}:80'
+      - '${WORKLEDGER_HTTPS_PORT:-443}:443'
     environment:
-      - WORKLEDGER_ORIGIN_HOST=${WORKLEDGER_ORIGIN_HOST:-localhost}
+      WORKLEDGER_ORIGIN_HOST: ${WORKLEDGER_ORIGIN_HOST:?Set the public host}
     depends_on:
-      api:
-        condition: service_healthy
+      api: { condition: service_healthy }
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - workledger-caddy-data:/data
+      - workledger-caddy-config:/config
     networks:
-      - workledger-net
+      edge: { ipv4_address: 172.30.40.10 }
 
   api:
-    build:
-      context: ../../
-      dockerfile: Dockerfile
-      target: production-api
-    container_name: workledger-api
+    build: { context: ../../, dockerfile: Dockerfile, target: production-api }
     restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs: [/tmp:size=16m, mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - WORKLEDGER_ENVIRONMENT=production
-      - WORKLEDGER_ORIGIN=${WORKLEDGER_ORIGIN:-https://localhost}
-      - WORKLEDGER_TRUSTED_PROXY_ADDRESSES=${WORKLEDGER_TRUSTED_PROXY_ADDRESSES:-127.0.0.1}
-      - WORKLEDGER_DATABASE_URL=${WORKLEDGER_DATABASE_URL:-postgres://workledger:workledger@postgres:5432/workledger}
-      - WORKLEDGER_AUTH_SECRET=${WORKLEDGER_AUTH_SECRET:-supersecret123456789012345678901234567890}
+      NODE_ENV: production
+      PORT: 3000
+      WORKLEDGER_ENVIRONMENT: production
+      WORKLEDGER_ORIGIN: ${WORKLEDGER_ORIGIN:?Set the public HTTPS origin}
+      WORKLEDGER_TRUSTED_PROXY_ADDRESSES: 172.30.40.10
+      WORKLEDGER_DATABASE_URL_FILE: /run/secrets/database_url
+      WORKLEDGER_AUTH_SECRET_FILE: /run/secrets/auth_secret
+    secrets: [database_url, auth_secret]
     healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/health']
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/ready']
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 20s
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate: { condition: service_completed_successfully }
     networks:
-      - workledger-net
+      edge: { ipv4_address: 172.30.40.20 }
+      data: {}
+
+  migrate:
+    build: { context: ../../, dockerfile: Dockerfile, target: production-api }
+    restart: 'no'
+    read_only: true
+    tmpfs: [/tmp:size=16m, mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      WORKLEDGER_DATABASE_URL_FILE: /run/secrets/database_url
+    secrets: [database_url]
+    command: ['node', '/app/packages/database/dist/migrate-cli.js']
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [data]
 
   postgres:
     image: postgres:18.4-trixie
-    container_name: workledger-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-workledger}
       POSTGRES_USER: ${POSTGRES_USER:-workledger}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workledger}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password]
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 10s
-    volumes:
-      - workledger-postgres-data:/var/lib/postgresql
-    networks:
-      - workledger-net
+    security_opt: [no-new-privileges:true]
+    volumes: [workledger-postgres-data:/var/lib/postgresql]
+    networks: [data]
 
 networks:
-  workledger-net:
+  edge:
     driver: bridge
+    ipam:
+      config: [{ subnet: 172.30.40.0/24 }]
+  data:
+    driver: bridge
+    internal: true
+
+secrets:
+  auth_secret:
+    file: ${WORKLEDGER_AUTH_SECRET_FILE:?Set a secret file}
+  database_url:
+    file: ${WORKLEDGER_DATABASE_URL_FILE:?Set a secret file}
+  postgres_password:
+    file: ${WORKLEDGER_POSTGRES_PASSWORD_FILE:?Set a secret file}
 
 volumes:
+  workledger-caddy-config:
+  workledger-caddy-data:
   workledger-postgres-data:

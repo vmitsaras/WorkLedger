@@ -67,6 +67,13 @@ export function createWorkLedgerDatabase(
       closed = true;
       await pool.end();
     },
+    async isReady(): Promise<boolean> {
+      if (closed) throw new DatabaseClosedError();
+      const result = await pool.query<{ schema_ready: boolean }>(
+        "select to_regclass('public.absence_cancellation_snapshot_links') is not null as schema_ready",
+      );
+      return result.rows[0]?.schema_ready === true;
+    },
     async transaction<T>(
       operation: (transaction: WorkLedgerTransaction) => Promise<T>,
       options?: TransactionOptions,

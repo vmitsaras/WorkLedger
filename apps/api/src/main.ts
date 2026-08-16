@@ -1,8 +1,10 @@
 import { createRuntimeConfig } from './config.js';
+import { loadRuntimeEnvironment } from './runtime-environment.js';
 import { createApiServer } from './server.js';
 
 async function main() {
-  const config = createRuntimeConfig(process.env);
+  const environment = await loadRuntimeEnvironment(process.env);
+  const config = createRuntimeConfig(environment);
   const server = createApiServer(config);
 
   const envPort = process.env['PORT'];

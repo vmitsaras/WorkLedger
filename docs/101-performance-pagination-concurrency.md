@@ -1,52 +1,48 @@
 # 101. Performance, pagination, indexing, and concurrency review
 
-## Performance Targets
+## Status and scope
 
-WorkLedger is designed for small and medium-sized organizations (up to 5,000 employees). 
-The data model scales linearly with time and employees.
+`WL-1001` remains in progress. WorkLedger's documented deployment target is 10–250 employees, not
+5,000. The earlier 5,000-employee estimates were unsupported, arithmetically inconsistent, and are
+withdrawn. A reproducible PostgreSQL expected-scale fixture, query-plan capture, latency results, and
+concurrent-mutation run are still required before this task is complete.
 
-### Expected scale dimensions:
-- **Employees**: Up to 5,000 per organization.
-- **Punch Events**: Up to 10-15 per employee per day (~15-20M rows/year).
-- **Time Account Entries**: ~10 per employee per day (~13M rows/year).
-- **Daily Projections**: 1 per employee per day (~1.8M rows/year).
-- **Audit Events**: ~50 per employee per day (~60M rows/year).
+At the upper supported bound, one daily projection per employee is about 91,250 rows per year.
+Attendance, ledger, and audit volume depends on actual workflows; no invented per-employee event rate
+is used as acceptance evidence.
 
-## Indexing Strategy
+## Enforced web budget
 
-Critical queries have covering or heavily filtering B-tree indexes defined in `packages/database/src/schema/index.ts`:
+`pnpm build` now fails when the production web output exceeds any of these ceilings:
 
-1. **Employee queries**: 
-   - `punch_events_employee_occurred_idx` supports ordered timeline retrieval.
-   - `time_account_entries_employee_date_idx` supports ledger balance projections.
-   - `daily_projections_employee_date_uidx` speeds up daily recalculations.
+| Measure | Ceiling | 2026-08-16 result |
+|---|---:|---:|
+| Largest JavaScript chunk | 500,000 bytes | 348,925 bytes |
+| Total JavaScript | 850,000 bytes | 825,452 bytes |
+| Total gzip JavaScript | 230,000 bytes | 221,519 bytes |
+| Total CSS | 50,000 bytes | 33,063 bytes |
 
-2. **Audit & Log queries**:
-   - `domain_audit_events_organization_time_idx` (organizationId, occurredAt, id) and `domain_audit_events_employee_time_idx` provide efficient ordering for the paginated audit explorer.
-   - `security_audit_events` follow the same structure.
+The check is implemented by `scripts/check-web-bundle-budget.mjs` and has a regression test. Chunk
+boundaries separate React, accessibility primitives, query infrastructure, and remaining vendors for
+cache stability. These are regression ceilings, not proof of acceptable user-perceived performance;
+route-level loading and field measurements remain possible later improvements.
 
-3. **Approval queues (Absence & Corrections)**:
-   - `absence_requests_employee_status_submitted_idx` supports employee view of their pending requests.
-   - `correction_requests_employee_date_status_idx` provides the same for correction requests.
+## Existing database design evidence
 
-## Pagination
+- Employee/date and organization/time B-tree indexes support bounded attendance, projection, ledger,
+  and audit queries.
+- Audit endpoints use capped offset pagination. Deep-offset behavior must be measured at the supported
+  dataset size before deciding whether cursor pagination is necessary.
+- User-facing timeline endpoints use bounded date ranges rather than unbounded history payloads.
+- Idempotency scope keys and transactional attendance heads protect duplicate clock mutations.
+- Locked records are preserved through explicit adjustments rather than rewritten.
 
-1. **API endpoints**:
-   - The Audit explorer uses offset-based pagination (`limit`/`offset`) capped at 100 items per page, secured by the `domain_audit_events_organization_time_idx`. Deep pagination offset penalties are mitigated by the B-tree index and organization-level scope, which is acceptable for back-office audit tools.
-   - User-facing timeline queries (My Time, Today) do not paginate, but rather filter by a bounded date range (e.g., current week or month). Bounded ranges guarantee predictable JSON payload sizes.
+## Evidence still required
 
-2. **UI & State**:
-   - React Router URL search params manage shareable pagination state.
-   - `dist/browser` chunk sizes are managed through Rollup/Rolldown `manualChunks` configuration, separating `vendor` dependencies into stable caching chunks and successfully resolving the Vite main-chunk-size advisory.
-
-## Concurrency and Mutations
-
-1. **PostgreSQL Transactions & driver warnings**:
-   - Resolved the `pg` concurrent-query deprecation warning by sequentializing database queries within a single transaction in `postgres.ts`. `Promise.all` over `this.transaction.select()` blocks was converting to synchronous parallel execution, violating the pg driver's single-query-per-connection rule.
-
-2. **Idempotency & Race Conditions**:
-   - High-throughput mutations like `punch_events` use an `idempotency_records` mechanism (with a `scope_key` unique index constraint) and database-level sequences.
-   - Double-clicks or duplicate requests from offline-retry sync are caught securely.
-
-3. **Snapshots and Locking**:
-   - Changes to absence configurations or past corrections apply atomic adjustments to future ledgers instead of rewriting locked historical snapshots. `post_lock_adjustments` captures exact delta linkages for audit trails.
+1. Generate a deterministic 250-employee dataset with documented attendance, ledger, request, and
+   audit volumes.
+2. Capture `EXPLAIN (ANALYZE, BUFFERS)` for the highest-risk list and calculation queries.
+3. Record repeatable p50/p95 timings on named hardware and PostgreSQL configuration.
+4. Exercise duplicate and conflicting mutations concurrently and record outcomes.
+5. Revisit sequential transaction queries where eliminating the driver warning may have added extra
+   round trips; combine queries only when measurements justify it.

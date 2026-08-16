@@ -9,9 +9,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('react-aria') || id.includes('@react-aria')) return 'accessibility';
+          if (id.includes('@tanstack')) return 'query';
+          if (id.includes('react') || id.includes('scheduler')) return 'react';
+          return 'vendor';
         },
       },
     },

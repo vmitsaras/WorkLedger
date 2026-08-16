@@ -22,6 +22,19 @@ test('returns only generic health data without enabling CORS', async () => {
   }
 });
 
+test('reports not ready without a configured database and exposes no dependency detail', async () => {
+  const app = createApiServer(createRuntimeConfig({ WORKLEDGER_ENVIRONMENT: 'test' }));
+
+  try {
+    const response = await app.inject({ method: 'GET', url: '/ready' });
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toEqual({ status: 'not_ready' });
+    expect(response.headers['cache-control']).toBe('no-store');
+  } finally {
+    await app.close();
+  }
+});
+
 test('uses forwarded protocol only when the immediate proxy address is configured', async () => {
   const app = createApiServer(
     createRuntimeConfig({

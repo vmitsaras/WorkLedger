@@ -128,9 +128,9 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 - [x] `WL-1000` Establish the threat evidence baseline and complete application security/privacy/permission remediation.
 - [x] `WL-1000A` Implement locked-period absence-cancellation adjustments.
-- [x] `WL-1001` Complete performance, pagination, and concurrency review.
-- [x] `WL-1002` Complete full accessibility audit and remediation.
-- [x] `WL-1003` Complete the Caddy-reference Docker production deployment.
+- [ ] `WL-1001` Complete performance, pagination, and concurrency review (bundle budgets added; expected-scale PostgreSQL measurements remain).
+- [ ] `WL-1002` Complete full accessibility audit and remediation (cross-engine automation added; manual assistive-technology evidence remains).
+- [ ] `WL-1003` Complete the Caddy-reference Docker production deployment (deployment hardened; clean-host adversarial evidence remains).
 - [ ] `WL-1004` Document and test encrypted backup and isolated clean restore.
 - [ ] `WL-1005` Document and test migrations and upgrades.
 - [ ] `WL-1006` Add structured logs, failure diagnostics, and safe technical operations/audit surfaces.

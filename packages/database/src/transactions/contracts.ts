@@ -56,6 +56,7 @@ export interface WorkLedgerTransaction {
 
 export interface WorkLedgerDatabase {
   close(): Promise<void>;
+  isReady(): Promise<boolean>;
   transaction<T>(
     operation: (transaction: WorkLedgerTransaction) => Promise<T>,
     options?: TransactionOptions,

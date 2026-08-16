@@ -459,7 +459,7 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-502 — Browser support matrix
 
-**Status:** Open; initial evidence owner `WL-103`, final production owner `WL-1002`. Record the executable development matrix in Phase 1 and revalidate exact supported versions, Temporal/polyfill behavior, and accessibility before the production gate.
+**Status:** Open; initial evidence owner `WL-103`, final production owner `WL-1002`. Playwright now exercises Chromium, Firefox, WebKit, mobile Chromium, and mobile WebKit smoke coverage, but exact released-browser versions, Temporal/polyfill behavior, and real assistive-technology evidence still require production-gate validation.
 
 - Proposed: current and previous stable Chrome, Edge, Firefox, Safari; current mobile Safari and Chrome Android.
 - Confirm against selected packages and Temporal polyfill.
