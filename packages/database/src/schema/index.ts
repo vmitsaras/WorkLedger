@@ -95,6 +95,17 @@ export const absenceCancellationStatus = pgEnum('absence_cancellation_status', [
   'REJECTED',
   'WITHDRAWN',
 ]);
+export const retentionClass = pgEnum('retention_class', [
+  'AUTH_TRANSIENT',
+  'ACCOUNT_SECURITY',
+  'OPERATIONAL_LOGS',
+  'NOTIFICATIONS',
+  'SENSITIVE_HR',
+  'DOMAIN_HISTORY',
+  'TECHNICAL_AUDIT',
+  'DATABASE_BACKUPS',
+]);
+export const retentionBehavior = pgEnum('retention_behavior', ['PURGE', 'MINIMIZE', 'RETAIN']);
 export const absenceCancellationDecisionAction = pgEnum('absence_cancellation_decision_action', [
   'APPROVE',
   'REJECT',
@@ -1607,5 +1618,103 @@ export const securityAuditEvents = pgTable(
     ),
     check('security_audit_events_facts_object', sql`jsonb_typeof(${table.facts}) = 'object'`),
     check('security_audit_events_facts_size', sql`octet_length(${table.facts}::text) <= 4096`),
+  ],
+);
+
+/** Retention job execution log; records minimization without copying removed content. */
+export const retentionJobExecutions = pgTable(
+  'retention_job_executions',
+  {
+    id: identifier('id').primaryKey(),
+    retentionClass: retentionClass('retention_class').notNull(),
+    behavior: retentionBehavior('behavior').notNull(),
+    executedAt: timestamp('executed_at', { mode: 'string', withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    cutoffDate: timestamp('cutoff_date', { mode: 'string', withTimezone: true }),
+    recordsAffected: integer('records_affected').default(0).notNull(),
+    durationMs: integer('duration_ms').notNull(),
+    errorSummary: text('error_summary'),
+  },
+  (table) => [
+    index('retention_job_executions_class_executed_idx').on(
+      table.retentionClass,
+      table.executedAt.desc(),
+    ),
+    check('retention_job_executions_records_non_negative', sql`${table.recordsAffected} >= 0`),
+    check('retention_job_executions_duration_non_negative', sql`${table.durationMs} >= 0`),
+    check(
+      'retention_job_executions_valid_cutoff',
+      sql`(${table.behavior} = 'RETAIN' and ${table.cutoffDate} is null) or (${table.behavior} in ('PURGE', 'MINIMIZE') and ${table.cutoffDate} is not null)`,
+    ),
+  ],
+);
+
+/** Minimization audit facts; record minimization actions without storing removed content. */
+export const minimizationAuditFacts = pgTable(
+  'minimization_audit_facts',
+  {
+    id: identifier('id').primaryKey(),
+    retentionJobExecutionId: uuid('retention_job_execution_id')
+      .notNull()
+      .references(() => retentionJobExecutions.id),
+    targetTable: text('target_table').notNull(),
+    recordsMinimized: integer('records_minimized').notNull(),
+    fieldsCleared: text('fields_cleared').array().notNull(),
+    executedAt: timestamp('executed_at', { mode: 'string', withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    retentionClass: retentionClass('retention_class').notNull(),
+  },
+  (table) => [
+    index('minimization_audit_facts_execution_idx').on(table.retentionJobExecutionId),
+    index('minimization_audit_facts_table_executed_idx').on(
+      table.targetTable,
+      table.executedAt.desc(),
+    ),
+    check('minimization_audit_facts_records_non_negative', sql`${table.recordsMinimized} >= 0`),
+    check(
+      'minimization_audit_facts_non_empty_fields',
+      sql`array_length(${table.fieldsCleared}, 1) > 0`,
+    ),
+  ],
+);
+
+/** User data export requests for employee self-service data portability. */
+export const userExportRequests = pgTable(
+  'user_export_requests',
+  {
+    id: identifier('id').primaryKey(),
+    employeeId: employeeId(),
+    organizationId: organizationId(),
+    requestedAt: timestamp('requested_at', { mode: 'string', withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    expiresAt: timestamp('expires_at', { mode: 'string', withTimezone: true }).notNull(),
+    includeAttendance: boolean('include_attendance').default(true).notNull(),
+    includeAbsence: boolean('include_absence').default(true).notNull(),
+    includeBalances: boolean('include_balances').default(true).notNull(),
+    includeRequests: boolean('include_requests').default(true).notNull(),
+    startDate: date('start_date', { mode: 'string' }),
+    endDate: date('end_date', { mode: 'string' }),
+    generatedAt: timestamp('generated_at', { mode: 'string', withTimezone: true }),
+    artifactPath: text('artifact_path'),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }),
+  },
+  (table) => [
+    index('user_export_requests_employee_requested_idx').on(
+      table.employeeId,
+      table.requestedAt.desc(),
+    ),
+    index('user_export_requests_expiry_idx').on(table.expiresAt),
+    check(
+      'user_export_requests_valid_date_range',
+      sql`(${table.startDate} is null and ${table.endDate} is null) or (${table.startDate} is not null and ${table.endDate} is not null and ${table.startDate} <= ${table.endDate})`,
+    ),
+    check(
+      'user_export_requests_generated_has_path',
+      sql`(${table.generatedAt} is null and ${table.artifactPath} is null and ${table.sizeBytes} is null) or (${table.generatedAt} is not null and ${table.artifactPath} is not null and ${table.sizeBytes} is not null)`,
+    ),
+    check('user_export_requests_size_non_negative', sql`${table.sizeBytes} is null or ${table.sizeBytes} >= 0`),
   ],
 );

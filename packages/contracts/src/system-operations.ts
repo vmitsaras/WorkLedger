@@ -30,6 +30,13 @@ export const systemDiagnosticsResponseSchema = z.strictObject({
       error: z.string().optional(),
     }),
   }),
+  retention: z
+    .strictObject({
+      profileConfigured: z.boolean(),
+      productionReady: z.boolean(),
+      issues: z.array(z.string()).optional(),
+    })
+    .optional(),
   health: z.enum(['healthy', 'degraded', 'critical']),
 });
 

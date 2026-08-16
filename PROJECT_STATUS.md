@@ -2,15 +2,17 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 7 of 10 Phase 10 tasks complete
+**Phase progress:** 7 of 10 Phase 10 tasks complete (WL-1007 in progress)
 **Current milestone:** Data retention and minimization controls
 **Active task:** `WL-1007`
-**Status:** Not started
+**Status:** In progress (contracts, configuration, documentation complete; repository integration pending)
 **Last verified:** 2026-08-16
 
 ## Current objective
 
 Complete `WL-1007` mandatory retention, minimization, user-export, and backup-expiry controls.
+
+Progress: Retention profile contracts, validation, database schema, and system diagnostics integration complete. Purge and minimization job logic requires repository methods to be added to WorkLedgerTransaction interface for execution.
 
 ## Verified decisions
 
@@ -1359,7 +1361,61 @@ Complete `WL-1007` mandatory retention, minimization, user-export, and backup-ex
 - Remaining risks: technical audit persistence and search interface is a placeholder pending
   WL-1007; structured logging redaction and correlation IDs were implemented in prior tasks
   (WL-1003, WL-906); full production logging evidence and retention controls remain WL-1007.
-- Next task: `WL-1007`.
+- Next task: Complete `WL-1007` repository integration.
+
+---
+
+**2026-08-16 — WL-1007 retention profile foundation (in progress)**
+
+- **What changed:**
+  - Created retention profile contracts with eight mandatory data classes (`RetentionClass`,
+    `RetentionBehavior`, `RetentionProfile`, `RetentionClassConfig`) in `@workledger/contracts`.
+  - Implemented retention configuration validation that rejects placeholder values in production.
+  - Added database migration `0021_retention_tracking.sql` defining `retentionJobExecutions`,
+    `minimizationAuditFacts`, and `userExportRequests` tables.
+  - Updated schema with retention enums and table definitions.
+  - Integrated retention status into `/v1/system/operations` diagnostics endpoint.
+  - Production diagnostics now report `health: "degraded"` when retention profile contains placeholders.
+  - Created retention job logic for purge (AUTH_TRANSIENT, OPERATIONAL_LOGS, NOTIFICATIONS,
+    TECHNICAL_AUDIT) and minimization (SENSITIVE_HR, DOMAIN_HISTORY) operations.
+  - Created user export service structure for employee self-service data portability.
+  - Documented retention, minimization, and user export in `docs/107-retention-and-minimization.md`.
+
+- **What remains:**
+  - Add retention repository to `WorkLedgerTransaction` interface per repository pattern.
+  - Implement repository methods for purge/minimization execution, user export generation.
+  - Register retention routes after repository integration.
+  - Complete integration tests after repository methods available.
+  - Verify production readiness gate enforcement after full implementation.
+
+- **Verification:**
+  - Type-checked contracts and configuration (strict mode).
+  - Database schema compiled (migration created, schema updated).
+  - System diagnostics include retention status (validated schema changes).
+  - Retention profile validation tests pass (placeholder detection).
+
+- **Technical notes:**
+  - WorkLedger uses repository pattern; retention jobs require dedicated repository methods rather
+    than direct SQL execution within transaction boundary.
+  - Purge/minimization job logic written according to D-500 invariants (preserve foreign keys,
+    ledger equations, snapshot totals, audit continuity).
+  - User export structure follows bounded authorized self-service pattern with 24-hour expiry.
+  - Added `archiver` dependency for ZIP export generation (`archiver@7.0.1`, `@types/archiver@6.0.4`).
+
+- **Remaining risk:**
+  - Repository integration required before retention jobs can execute.
+  - User export routes require repository query methods.
+  - Production gate blocks on unset retention classes remain untested until repository complete.
+
+- **Decision context:**
+  - D-500 resolved by WL-010 as deployment-owned retention profile; this task implements the
+    validation, tracking, and job framework.
+  - docs/06-security-operations.md section 19 specifies eight mandatory classes and behaviors.
+  - docs/03-domain-rules.md section 17 specifies minimization must preserve referential integrity.
+  - docs/104-backup-and-clean-restore.md requires retention reapplication before activation.
+
+- Next task: Complete `WL-1007` repository integration or proceed with `WL-1008` production gate
+  preparation while noting WL-1007 partial completion.
 
 ## Current blockers
 

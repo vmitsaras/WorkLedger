@@ -30,6 +30,7 @@ import type { WorkLedgerLogger } from '../logging/logger.js';
 import { authorizeInstallationAction } from '../authorization/policy.js';
 import { requestAuthenticationHeaders } from '../auth/request-session.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import { DEFAULT_RETENTION_PROFILE, validateRetentionProfile } from '../retention/config.js';
 
 const APP_VERSION = '0.10.0';
 
@@ -212,11 +213,17 @@ async function collectDiagnostics(
 
   const databaseStatus = await checkDatabaseHealth(database, logger);
   const authenticationStatus = { status: 'healthy' as const };
+  const retentionStatus = checkRetentionProfile(config);
 
   let overallHealth: 'healthy' | 'degraded' | 'critical' = 'healthy';
   if (databaseStatus.status === 'unavailable') {
     overallHealth = 'critical';
   } else if (databaseStatus.status === 'degraded') {
+    overallHealth = 'degraded';
+  }
+
+  // Production without proper retention profile is degraded
+  if (config.environment === 'production' && !retentionStatus.productionReady) {
     overallHealth = 'degraded';
   }
 
@@ -229,6 +236,7 @@ async function collectDiagnostics(
       database: databaseStatus,
       authentication: authenticationStatus,
     },
+    retention: retentionStatus,
     health: overallHealth,
   };
 }
@@ -279,4 +287,18 @@ async function checkDatabaseHealth(
       error: 'Connection failed',
     };
   }
+}
+
+function checkRetentionProfile(config: RuntimeConfig): {
+  profileConfigured: boolean;
+  productionReady: boolean;
+  issues?: string[];
+} {
+  const validation = validateRetentionProfile(DEFAULT_RETENTION_PROFILE, config.environment);
+
+  return {
+    profileConfigured: true,
+    productionReady: validation.productionReady,
+    issues: validation.issues.length > 0 ? Array.from(validation.issues) : undefined,
+  };
 }

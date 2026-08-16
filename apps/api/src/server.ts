@@ -27,6 +27,7 @@ import { registerTimeAdministrationRoutes } from './time-administration/routes.j
 import { registerAbsenceAdministrationRoutes } from './absence-administration/routes.js';
 import { registerDomainAuditRoutes } from './audit/routes.js';
 import { registerSystemOperationsRoutes } from './system/operations-routes.js';
+import { registerRetentionRoutes } from './retention/routes.js';
 import {
   disabledNotificationDeliveryAdapter,
   type NotificationDeliveryAdapter,
@@ -117,6 +118,7 @@ export function createApiServer(
       registerTimeAdministrationRoutes(app, config, authentication, database, dependencies.now);
       registerAbsenceAdministrationRoutes(app, config, authentication, database, dependencies.now);
       registerDomainAuditRoutes(app, authentication, database, dependencies.now);
+      registerRetentionRoutes(app, config, authentication, database, dependencies.now);
       registerSystemOperationsRoutes(
         app,
         config,

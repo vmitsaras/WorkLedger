@@ -10,7 +10,6 @@ import type {
   RetentionClass,
   RetentionClassConfig,
   RetentionProfile,
-  RetentionBehavior,
 } from '@workledger/contracts';
 
 /**
