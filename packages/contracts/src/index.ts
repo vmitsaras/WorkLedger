@@ -507,3 +507,24 @@ export {
   type ReadinessStatusResponse,
   type SystemDiagnosticsResponse,
 } from './system-operations.js';
+
+export {
+  minimizationAuditFactSchema,
+  retentionBehaviorSchema,
+  retentionClassConfigSchema,
+  retentionClassSchema,
+  retentionJobResultSchema,
+  retentionProfileSchema,
+  retentionStatusResponseSchema,
+  userExportMetadataResponseSchema,
+  userExportRequestSchema,
+  type MinimizationAuditFact,
+  type RetentionBehavior,
+  type RetentionClass,
+  type RetentionClassConfig,
+  type RetentionJobResult,
+  type RetentionProfile,
+  type RetentionStatusResponse,
+  type UserExportMetadataResponse,
+  type UserExportRequest,
+} from './retention.js';
