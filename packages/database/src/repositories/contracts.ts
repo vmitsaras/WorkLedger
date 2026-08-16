@@ -858,26 +858,70 @@ export type MonthlyAppliedCorrectionSourceRecord = Readonly<{
   version: number;
 }>;
 
-export type PostLockAdjustmentRecord = Readonly<{
+type PostLockAdjustmentCommon = Readonly<{
+  absenceCreditMinutesDelta: number;
   adjustmentVersion: number;
-  appliedCorrectionId: DomainId<'AppliedCorrection'>;
-  correctionDecisionId: DomainId<'CorrectionDecision'>;
-  correctionRequestId: DomainId<'CorrectionRequest'>;
   createdAt: Instant;
+  creditedMinutesDelta: number;
   employeeId: DomainId<'Employee'>;
+  expectedMinutesDelta: number;
   id: DomainId<'PostLockAdjustment'>;
   localDate: LocalDate;
   minutes: number;
   monthlySnapshotId: DomainId<'MonthlySnapshot'>;
   organizationId: DomainId<'Organization'>;
-  previousAdjustedWorkedMinutes: number;
-  proposedWorkedMinutes: number;
-  reason: string;
-  reversesAdjustmentId: DomainId<'PostLockAdjustment'> | null;
-  sourceId: DomainId<'AppliedCorrection'>;
+  sourceId: DomainId<'PostLockAdjustmentSource'>;
+  workedMinutesDelta: number;
 }>;
 
+export type CorrectionPostLockAdjustmentRecord = PostLockAdjustmentCommon &
+  Readonly<{
+    appliedCorrectionId: DomainId<'AppliedCorrection'>;
+    correctionDecisionId: DomainId<'CorrectionDecision'>;
+    correctionRequestId: DomainId<'CorrectionRequest'>;
+    kind: 'CORRECTION';
+    previousAdjustedWorkedMinutes: number;
+    proposedWorkedMinutes: number;
+    reason: string;
+    reversesAdjustmentId: DomainId<'PostLockAdjustment'> | null;
+  }>;
+
+export type AbsenceCancellationPostLockAdjustmentRecord = PostLockAdjustmentCommon &
+  Readonly<{
+    absenceCancellationDecisionId: DomainId<'AbsenceCancellationDecision'>;
+    absenceCancellationId: DomainId<'AbsenceCancellation'>;
+    absenceCancellationSnapshotLinkId: DomainId<'AbsenceCancellationSnapshotLink'>;
+    kind: 'ABSENCE_CANCELLATION';
+  }>;
+
+export type PostLockAdjustmentRecord =
+  CorrectionPostLockAdjustmentRecord | AbsenceCancellationPostLockAdjustmentRecord;
+
 export type AppendPostLockAdjustmentInput = PostLockAdjustmentRecord;
+
+export type LockedAbsenceCancellationEffectRecord = Readonly<{
+  absenceCreditMinutes: number;
+  effectId: DomainId<'AbsenceEffect'>;
+  effectVersion: number;
+  expectedReductionMinutes: number;
+  localDate: LocalDate;
+}>;
+
+export type LockedAbsenceCancellationSnapshotRecord = Readonly<{
+  effects: readonly LockedAbsenceCancellationEffectRecord[];
+  linkId: DomainId<'AbsenceCancellationSnapshotLink'>;
+  snapshot: ApprovedMonthlySnapshotRecord;
+  snapshotSourceFingerprint: string;
+}>;
+
+export type AbsenceCancellationSnapshotLinkRecord = Readonly<{
+  absenceCancellationId: DomainId<'AbsenceCancellation'>;
+  createdAt: Instant;
+  id: DomainId<'AbsenceCancellationSnapshotLink'>;
+  monthlySnapshotId: DomainId<'MonthlySnapshot'>;
+  organizationId: DomainId<'Organization'>;
+  snapshotSourceFingerprint: string;
+}>;
 
 export type MonthlyLedgerEntryRecord = TimeAccountLedgerEntry &
   Readonly<{ sourceFingerprint: string }>;
@@ -1078,6 +1122,8 @@ export type WithdrawAbsenceCancellationInput = Readonly<{
 
 export type AbsenceCancellationDecisionResult = AbsenceCancellationRecord &
   Readonly<{
+    decisionId: DomainId<'AbsenceCancellationDecision'>;
+    lockedSnapshots: readonly LockedAbsenceCancellationSnapshotRecord[];
     restoration: Readonly<{
       absenceTypeId: DomainId<'AbsenceTypeVersion'>;
       effectiveOn: LocalDate;

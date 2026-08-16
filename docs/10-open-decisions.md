@@ -475,13 +475,12 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-504 — Locked absence-cancellation adjustment contract
 
-**Status:** Contract resolved by `WL-1000`; implementation owner `WL-1000A`, and production release
-remains blocked until that task is complete before `WL-1008`.
+**Status:** Resolved by `WL-1000` and implemented by `WL-1000A`; retained as a release-gate
+regression contract for `WL-1008`.
 
-- Current behavior is fail-closed: cancellation of coverage touching a locked monthly period
-  returns `409 PERIOD_ADJUSTMENT_REQUIRED` before any cancellation decision, coverage/effect
-  version, entitlement restoration, time-account entry, success audit, or notification is written.
-  Direct integration evidence proves the no-partial-effect boundary.
+- Submission now captures immutable snapshot linkage for locked targets while submitted/approved
+  periods still fail closed with `PERIOD_REOPEN_REQUIRED`. Approval writes calculation-effect,
+  entitlement, component adjustment, time-account, audit, and notification evidence atomically.
 - Phase 8 does not silently reinterpret this as a correction. Its exact gate criterion and `WL-803`
   task are post-lock **correction** scoped, and their linked snapshot/adjustment contract is now
   complete. The Phase 8 gate therefore passes while retaining this separate release blocker.
@@ -505,8 +504,9 @@ remains blocked until that task is complete before `WL-1008`.
   transaction. Browser and generic report DTOs omit absence subtype, note/reason text, entitlement
   detail, internal source identifiers, and sickness context. Authorized monthly/report views show
   immutable original and reconciled adjusted totals separately.
-- `WL-1000A` owns the bounded schema/repository/service/contract/UI/test/documentation slice. The
-  existing fail-closed `409 PERIOD_ADJUSTMENT_REQUIRED` remains until that slice is complete.
+- `WL-1000A` completed the bounded schema/repository/service/contract/UI/test/documentation slice.
+  Migration `0020` and database-backed regressions enforce snapshot-link immutability,
+  organization consistency, component reconciliation, and stale-replay safety.
 
 ### D-505 — Phase 10 threat-evidence ownership
 

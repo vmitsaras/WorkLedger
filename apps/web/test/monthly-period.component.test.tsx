@@ -326,12 +326,49 @@ test('separates the immutable approved baseline from an accessible adjusted view
   const region = screen.getByRole('region', { name: 'Scrollable post-lock adjustment history' });
   expect(region).toHaveAttribute('tabindex', '0');
   const table = within(region).getByRole('table', {
-    name: 'Ordered post-lock corrections applied to the approved monthly baseline',
+    name: 'Ordered post-lock corrections and absence cancellations applied to the approved monthly baseline',
   });
   expect(within(table).getByText('Zero-delta evidence')).toBeVisible();
   expect(within(table).getByText('Reverses version 1')).toBeVisible();
   expect(screen.getByText(/closing posted balance \+10h 15m/u)).toBeVisible();
   expect(screen.getByLabelText('Monthly calculated totals')).toHaveTextContent('+0h 15m');
+  await expectNoAxeViolations(container);
+});
+
+test('explains a locked absence cancellation as component and balance deltas', async () => {
+  const baseline = adjustedLockedPeriod();
+  stubFetch({
+    ...baseline,
+    postLockView: {
+      adjustedClosingBalanceMinutes: 135,
+      adjustments: [
+        {
+          absenceCreditMinutesDelta: -480,
+          adjustmentVersion: 1,
+          createdAt: '2026-08-14T10:40:45Z',
+          creditedMinutesDelta: -480,
+          expectedMinutesDelta: 0,
+          id: '60000000-0000-7000-8000-000000000004',
+          kind: 'ABSENCE_CANCELLATION',
+          localDate: '2026-06-30',
+          minutes: -480,
+          sourceRequestId: '61000000-0000-7000-8000-000000000004',
+        },
+      ],
+      cumulativeDeltaMinutes: -480,
+      currentViewVersion: 1,
+      originalClosingBalanceMinutes: 615,
+      status: 'ADJUSTED_AFTER_LOCK',
+    },
+  });
+  const { container } = renderApplication();
+
+  const table = await screen.findByRole('table', {
+    name: 'Ordered post-lock corrections and absence cancellations applied to the approved monthly baseline',
+  });
+  expect(within(table).getByText('Absence cancellation')).toBeVisible();
+  expect(within(table).getByText('Absence credit −8h 00m; expected 0h 00m')).toBeVisible();
+  expect(within(table).getByText('Cancellation adjustment')).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -658,6 +695,7 @@ function adjustedLockedPeriod(): MonthlyPeriod {
           adjustmentVersion: 1,
           createdAt: '2026-08-14T10:40:45Z',
           id: '60000000-0000-7000-8000-000000000001',
+          kind: 'CORRECTION',
           localDate: '2026-06-30',
           minutes: 13,
           previousAdjustedWorkedMinutes: 495,
@@ -669,6 +707,7 @@ function adjustedLockedPeriod(): MonthlyPeriod {
           adjustmentVersion: 2,
           createdAt: '2026-08-14T10:41:45Z',
           id: '60000000-0000-7000-8000-000000000002',
+          kind: 'CORRECTION',
           localDate: '2026-06-30',
           minutes: 0,
           previousAdjustedWorkedMinutes: 508,
@@ -680,6 +719,7 @@ function adjustedLockedPeriod(): MonthlyPeriod {
           adjustmentVersion: 3,
           createdAt: '2026-08-14T10:42:45Z',
           id: '60000000-0000-7000-8000-000000000003',
+          kind: 'CORRECTION',
           localDate: '2026-06-30',
           minutes: -13,
           previousAdjustedWorkedMinutes: 508,

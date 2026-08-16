@@ -416,7 +416,7 @@ async function applyPostLockCorrection(
     approvedRow.workedMinutes +
     adjustments
       .filter(({ localDate }) => localDate === request.localDate)
-      .reduce((total, adjustment) => total + adjustment.minutes, 0);
+      .reduce((total, adjustment) => total + adjustment.workedMinutesDelta, 0);
   if (previousAdjustedWorkedMinutes < 0) {
     throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
   }
@@ -443,26 +443,34 @@ async function applyPostLockCorrection(
     throw new WorkLedgerApiError({ code: 'APPROVAL_STATE_CONFLICT', statusCode: 409 });
   }
   const adjustmentId = parseDomainId<'PostLockAdjustment'>(randomUUID());
-  if (!adjustmentId.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  const adjustmentSourceId = parseDomainId<'PostLockAdjustmentSource'>(applied.id);
+  if (!adjustmentId.ok || !adjustmentSourceId.ok) {
+    throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  }
   const latestDateAdjustment = adjustments
-    .filter(({ localDate, minutes }) => localDate === request.localDate && minutes !== 0)
+    .filter((adjustment) => adjustment.localDate === request.localDate && adjustment.minutes !== 0)
     .at(-1);
   const reversesAdjustmentId =
     latestDateAdjustment !== undefined &&
+    latestDateAdjustment.kind === 'CORRECTION' &&
     latestDateAdjustment.minutes !== 0 &&
     balanceDeltaMinutes === -latestDateAdjustment.minutes &&
     input.workedMinutes === latestDateAdjustment.previousAdjustedWorkedMinutes
       ? latestDateAdjustment.id
       : null;
   const adjustment = await transaction.correctionRequests.appendPostLockAdjustment({
+    absenceCreditMinutesDelta: 0,
     adjustmentVersion,
     appliedCorrectionId: applied.id,
     correctionDecisionId: decisionId,
     correctionRequestId: request.id,
     createdAt: at,
+    creditedMinutesDelta: balanceDeltaMinutes,
     employeeId: request.employeeId,
+    expectedMinutesDelta: 0,
     id: adjustmentId.value,
     localDate: request.localDate,
+    kind: 'CORRECTION',
     minutes: balanceDeltaMinutes,
     monthlySnapshotId: snapshot.id,
     organizationId: context.organization.id,
@@ -470,7 +478,8 @@ async function applyPostLockCorrection(
     proposedWorkedMinutes: input.workedMinutes,
     reason: request.reason,
     reversesAdjustmentId,
-    sourceId: applied.id,
+    sourceId: adjustmentSourceId.value,
+    workedMinutesDelta: balanceDeltaMinutes,
   });
   if (adjustment === null) {
     throw new WorkLedgerApiError({ code: 'APPROVAL_STATE_CONFLICT', statusCode: 409 });

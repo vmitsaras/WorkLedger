@@ -43,7 +43,7 @@ integrationTest(
         `select count(*) from information_schema.tables where table_schema = $1`,
         [schemaName],
       );
-      expect(Number(tableCount.rows[0]?.count)).toBe(43);
+      expect(Number(tableCount.rows[0]?.count)).toBe(45);
 
       const organization = await client.query<{ id: string }>(
         `insert into organizations (name, time_zone) values ($1, $2) returning id`,

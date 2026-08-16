@@ -53,6 +53,7 @@ import {
   absenceCancellations,
   absenceCancellationSegments,
   absenceCancellationDecisions,
+  absenceCancellationSnapshotLinks,
   absenceDecisions,
   absenceEffects,
   absenceRequests,
@@ -204,10 +205,7 @@ import {
   validateOriginalHttpStatus,
   validateRequestFingerprint,
 } from './idempotency-values.js';
-import {
-  AbsenceCancellationLockedPeriodError,
-  AbsenceCancellationReopenPeriodError,
-} from './absence-cancellation-errors.js';
+import { AbsenceCancellationReopenPeriodError } from './absence-cancellation-errors.js';
 
 import * as schema from '../schema/index.js';
 
@@ -5050,11 +5048,6 @@ class PostgresMonthlyPeriodRepository implements MonthlyPeriodRepository {
           eq(postLockAdjustments.employeeId, period.employeeId),
           eq(approvedMonthlySnapshots.monthlyPeriodId, period.id),
           isNotNull(postLockAdjustments.adjustmentVersion),
-          isNotNull(postLockAdjustments.appliedCorrectionId),
-          isNotNull(postLockAdjustments.correctionDecisionId),
-          isNotNull(postLockAdjustments.correctionRequestId),
-          isNotNull(postLockAdjustments.previousAdjustedWorkedMinutes),
-          isNotNull(postLockAdjustments.proposedWorkedMinutes),
         ),
       )
       .orderBy(asc(postLockAdjustments.adjustmentVersion), asc(postLockAdjustments.id));
@@ -5470,22 +5463,34 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
     const [row] = await this.transaction
       .insert(postLockAdjustments)
       .values({
+        absenceCancellationDecisionId:
+          input.kind === 'ABSENCE_CANCELLATION' ? input.absenceCancellationDecisionId : null,
+        absenceCancellationId:
+          input.kind === 'ABSENCE_CANCELLATION' ? input.absenceCancellationId : null,
+        absenceCancellationSnapshotLinkId:
+          input.kind === 'ABSENCE_CANCELLATION' ? input.absenceCancellationSnapshotLinkId : null,
+        absenceCreditMinutesDelta: input.absenceCreditMinutesDelta,
         adjustmentVersion: input.adjustmentVersion,
-        appliedCorrectionId: input.appliedCorrectionId,
-        correctionDecisionId: input.correctionDecisionId,
-        correctionRequestId: input.correctionRequestId,
+        appliedCorrectionId: input.kind === 'CORRECTION' ? input.appliedCorrectionId : null,
+        correctionDecisionId: input.kind === 'CORRECTION' ? input.correctionDecisionId : null,
+        correctionRequestId: input.kind === 'CORRECTION' ? input.correctionRequestId : null,
         createdAt: input.createdAt,
+        creditedMinutesDelta: input.creditedMinutesDelta,
         employeeId: input.employeeId,
+        expectedMinutesDelta: input.expectedMinutesDelta,
         id: input.id,
         localDate: input.localDate,
         minutes: input.minutes,
         monthlySnapshotId: input.monthlySnapshotId,
         organizationId: input.organizationId,
-        previousAdjustedWorkedMinutes: input.previousAdjustedWorkedMinutes,
-        proposedWorkedMinutes: input.proposedWorkedMinutes,
-        reason: input.reason,
-        reversesAdjustmentId: input.reversesAdjustmentId,
+        previousAdjustedWorkedMinutes:
+          input.kind === 'CORRECTION' ? input.previousAdjustedWorkedMinutes : null,
+        proposedWorkedMinutes: input.kind === 'CORRECTION' ? input.proposedWorkedMinutes : null,
+        reason:
+          input.kind === 'CORRECTION' ? input.reason : 'Approved absence cancellation adjustment',
+        reversesAdjustmentId: input.kind === 'CORRECTION' ? input.reversesAdjustmentId : null,
         sourceId: input.sourceId,
+        workedMinutesDelta: input.workedMinutesDelta,
       })
       .onConflictDoNothing()
       .returning();
@@ -5601,11 +5606,6 @@ class PostgresCorrectionRequestRepository implements CorrectionRequestRepository
           eq(postLockAdjustments.organizationId, organizationId),
           eq(postLockAdjustments.monthlySnapshotId, monthlySnapshotId),
           isNotNull(postLockAdjustments.adjustmentVersion),
-          isNotNull(postLockAdjustments.appliedCorrectionId),
-          isNotNull(postLockAdjustments.correctionDecisionId),
-          isNotNull(postLockAdjustments.correctionRequestId),
-          isNotNull(postLockAdjustments.previousAdjustedWorkedMinutes),
-          isNotNull(postLockAdjustments.proposedWorkedMinutes),
         ),
       )
       .orderBy(asc(postLockAdjustments.adjustmentVersion), asc(postLockAdjustments.id));
@@ -5965,8 +5965,12 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     if (existing.length > 0) return null;
 
     const monthStarts = [...new Set(coverageRows.map((row) => `${row.localDate.slice(0, 7)}-01`))];
-    const [protectedPeriod] = await this.transaction
-      .select({ status: monthlyPeriods.status })
+    const protectedPeriods = await this.transaction
+      .select({
+        id: monthlyPeriods.id,
+        monthStart: monthlyPeriods.monthStart,
+        status: monthlyPeriods.status,
+      })
       .from(monthlyPeriods)
       .where(
         and(
@@ -5976,13 +5980,9 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
           inArray(monthlyPeriods.monthStart, monthStarts),
         ),
       )
-      .orderBy(
-        sql`case ${monthlyPeriods.status} when 'LOCKED' then 1 when 'APPROVED' then 2 else 3 end`,
-      )
-      .for('share')
-      .limit(1);
-    if (protectedPeriod?.status === 'LOCKED') throw new AbsenceCancellationLockedPeriodError();
-    if (protectedPeriod?.status === 'SUBMITTED' || protectedPeriod?.status === 'APPROVED') {
+      .orderBy(asc(monthlyPeriods.monthStart))
+      .for('share');
+    if (protectedPeriods.some(({ status }) => status === 'SUBMITTED' || status === 'APPROVED')) {
       throw new AbsenceCancellationReopenPeriodError();
     }
 
@@ -6006,6 +6006,31 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
         organizationId: input.organizationId,
       })),
     );
+    for (const period of protectedPeriods.filter(({ status }) => status === 'LOCKED')) {
+      const [snapshot] = await this.transaction
+        .select({
+          id: approvedMonthlySnapshots.id,
+          sourceFingerprint: approvedMonthlySnapshots.sourceFingerprint,
+        })
+        .from(approvedMonthlySnapshots)
+        .where(
+          and(
+            eq(approvedMonthlySnapshots.organizationId, input.organizationId),
+            eq(approvedMonthlySnapshots.monthlyPeriodId, period.id),
+          ),
+        )
+        .orderBy(desc(approvedMonthlySnapshots.approvalCycle))
+        .limit(1);
+      if (snapshot === undefined) {
+        throw new DatabaseValueError('approved_monthly_snapshots', 'id');
+      }
+      await this.transaction.insert(absenceCancellationSnapshotLinks).values({
+        absenceCancellationId: cancellation.id,
+        monthlySnapshotId: snapshot.id,
+        organizationId: input.organizationId,
+        snapshotSourceFingerprint: snapshot.sourceFingerprint,
+      });
+    }
     return mapAbsenceCancellation(cancellation, request.absenceTypeId);
   }
 
@@ -6031,16 +6056,22 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
       )
       .returning();
     if (updated === undefined) return null;
-    await this.transaction.insert(absenceCancellationDecisions).values({
-      absenceCancellationId: updated.id,
-      action: input.action,
-      actorAccountId: input.actor.accountId,
-      actorAuthority: input.actor.authority,
-      actorEmployeeId: input.actor.employeeId,
-      decidedAt: input.decidedAt,
-      organizationId: input.organizationId,
-      reason: input.reason,
-    });
+    const [decision] = await this.transaction
+      .insert(absenceCancellationDecisions)
+      .values({
+        absenceCancellationId: updated.id,
+        action: input.action,
+        actorAccountId: input.actor.accountId,
+        actorAuthority: input.actor.authority,
+        actorEmployeeId: input.actor.employeeId,
+        decidedAt: input.decidedAt,
+        organizationId: input.organizationId,
+        reason: input.reason,
+      })
+      .returning({ id: absenceCancellationDecisions.id });
+    if (decision === undefined) {
+      throw new DatabaseValueError('absence_cancellation_decisions', 'id');
+    }
 
     const [request] = await this.transaction
       .select()
@@ -6049,6 +6080,7 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
       .limit(1);
     if (request === undefined) throw new DatabaseValueError('absence_requests', 'id');
     let restoration: AbsenceCancellationDecisionResult['restoration'] = null;
+    let lockedSnapshots: AbsenceCancellationDecisionResult['lockedSnapshots'] = Object.freeze([]);
     if (input.action === 'APPROVE') {
       const coverageRows = await this.transaction
         .select({
@@ -6070,6 +6102,7 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
         .select({
           absenceCoverageSegmentId: absenceEffects.absenceCoverageSegmentId,
           creditMinutes: absenceEffects.creditMinutes,
+          id: absenceEffects.id,
           effectVersion: absenceEffects.effectVersion,
           entitlementMinutes: absenceEffects.entitlementMinutes,
           expectedReductionMinutes: absenceEffects.expectedReductionMinutes,
@@ -6089,6 +6122,69 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
           latestEffects.set(effect.absenceCoverageSegmentId, effect);
         }
       }
+      const linkedSnapshotRows = await this.transaction
+        .select({ link: absenceCancellationSnapshotLinks, snapshot: approvedMonthlySnapshots })
+        .from(absenceCancellationSnapshotLinks)
+        .innerJoin(
+          approvedMonthlySnapshots,
+          and(
+            eq(approvedMonthlySnapshots.id, absenceCancellationSnapshotLinks.monthlySnapshotId),
+            eq(
+              approvedMonthlySnapshots.organizationId,
+              absenceCancellationSnapshotLinks.organizationId,
+            ),
+          ),
+        )
+        .where(
+          and(
+            eq(absenceCancellationSnapshotLinks.organizationId, input.organizationId),
+            eq(absenceCancellationSnapshotLinks.absenceCancellationId, updated.id),
+          ),
+        )
+        .orderBy(asc(approvedMonthlySnapshots.approvalCycle));
+      lockedSnapshots = Object.freeze(
+        linkedSnapshotRows.map(({ link, snapshot: snapshotRow }) => {
+          const snapshot = mapApprovedMonthlySnapshot(snapshotRow);
+          const monthStart = snapshot.snapshot['monthStart'];
+          if (typeof monthStart !== 'string') {
+            throw new DatabaseValueError('approved_monthly_snapshots', 'snapshot');
+          }
+          return Object.freeze({
+            effects: Object.freeze(
+              [...latestEffects.values()]
+                .filter(({ localDate }) => localDate.slice(0, 7) === monthStart.slice(0, 7))
+                .map((effect) =>
+                  Object.freeze({
+                    absenceCreditMinutes: mapNonNegativeMinutes(
+                      effect.creditMinutes,
+                      'absence_effects',
+                      'credit_minutes',
+                    ),
+                    effectId: mapDomainId<'AbsenceEffect'>(effect.id, 'absence_effects', 'id'),
+                    effectVersion: mapPositiveVersion(
+                      effect.effectVersion,
+                      'absence_effects',
+                      'effect_version',
+                    ),
+                    expectedReductionMinutes: mapNonNegativeMinutes(
+                      effect.expectedReductionMinutes,
+                      'absence_effects',
+                      'expected_reduction_minutes',
+                    ),
+                    localDate: mapLocalDate(effect.localDate, 'absence_effects', 'local_date'),
+                  }),
+                ),
+            ),
+            linkId: mapDomainId<'AbsenceCancellationSnapshotLink'>(
+              link.id,
+              'absence_cancellation_snapshot_links',
+              'id',
+            ),
+            snapshot,
+            snapshotSourceFingerprint: link.snapshotSourceFingerprint,
+          });
+        }),
+      );
       const effectMinutes = [...latestEffects.values()].reduce(
         (total, effect) => total + effect.entitlementMinutes,
         0,
@@ -6167,6 +6263,12 @@ class PostgresAbsenceRequestRepository implements AbsenceRequestRepository {
     }
     return Object.freeze({
       ...mapAbsenceCancellation(updated, request.absenceTypeId),
+      decisionId: mapDomainId<'AbsenceCancellationDecision'>(
+        decision.id,
+        'absence_cancellation_decisions',
+        'id',
+      ),
+      lockedSnapshots,
       restoration,
     });
   }
@@ -6938,39 +7040,32 @@ function mapCorrectionReview(
 function mapPostLockAdjustment(
   row: typeof postLockAdjustments.$inferSelect,
 ): PostLockAdjustmentRecord {
-  if (
-    row.adjustmentVersion === null ||
-    row.appliedCorrectionId === null ||
-    row.correctionDecisionId === null ||
-    row.correctionRequestId === null ||
-    row.previousAdjustedWorkedMinutes === null ||
-    row.proposedWorkedMinutes === null
-  ) {
+  if (row.adjustmentVersion === null) {
     throw new DatabaseValueError('post_lock_adjustments', 'linkage');
   }
-  return Object.freeze({
+  const common = {
+    absenceCreditMinutesDelta: mapSignedMinutes(
+      row.absenceCreditMinutesDelta,
+      'post_lock_adjustments',
+      'absence_credit_minutes_delta',
+    ),
     adjustmentVersion: mapPositiveVersion(
       row.adjustmentVersion,
       'post_lock_adjustments',
       'adjustment_version',
     ),
-    appliedCorrectionId: mapDomainId<'AppliedCorrection'>(
-      row.appliedCorrectionId,
-      'post_lock_adjustments',
-      'applied_correction_id',
-    ),
-    correctionDecisionId: mapDomainId<'CorrectionDecision'>(
-      row.correctionDecisionId,
-      'post_lock_adjustments',
-      'correction_decision_id',
-    ),
-    correctionRequestId: mapDomainId<'CorrectionRequest'>(
-      row.correctionRequestId,
-      'post_lock_adjustments',
-      'correction_request_id',
-    ),
     createdAt: mapInstant(row.createdAt, 'post_lock_adjustments', 'created_at'),
+    creditedMinutesDelta: mapSignedMinutes(
+      row.creditedMinutesDelta,
+      'post_lock_adjustments',
+      'credited_minutes_delta',
+    ),
     employeeId: mapDomainId<'Employee'>(row.employeeId, 'post_lock_adjustments', 'employee_id'),
+    expectedMinutesDelta: mapSignedMinutes(
+      row.expectedMinutesDelta,
+      'post_lock_adjustments',
+      'expected_minutes_delta',
+    ),
     id: mapDomainId<'PostLockAdjustment'>(row.id, 'post_lock_adjustments', 'id'),
     localDate: mapLocalDate(row.localDate, 'post_lock_adjustments', 'local_date'),
     minutes: mapSignedMinutes(row.minutes, 'post_lock_adjustments', 'minutes'),
@@ -6984,27 +7079,98 @@ function mapPostLockAdjustment(
       'post_lock_adjustments',
       'organization_id',
     ),
-    previousAdjustedWorkedMinutes: mapNonNegativeMinutes(
-      row.previousAdjustedWorkedMinutes,
+    sourceId: mapDomainId<'PostLockAdjustmentSource'>(
+      row.sourceId,
       'post_lock_adjustments',
-      'previous_adjusted_worked_minutes',
+      'source_id',
     ),
-    proposedWorkedMinutes: mapNonNegativeMinutes(
-      row.proposedWorkedMinutes,
+    workedMinutesDelta: mapSignedMinutes(
+      row.workedMinutesDelta,
       'post_lock_adjustments',
-      'proposed_worked_minutes',
+      'worked_minutes_delta',
     ),
-    reason: row.reason,
-    reversesAdjustmentId:
-      row.reversesAdjustmentId === null
-        ? null
-        : mapDomainId<'PostLockAdjustment'>(
-            row.reversesAdjustmentId,
-            'post_lock_adjustments',
-            'reverses_adjustment_id',
-          ),
-    sourceId: mapDomainId<'AppliedCorrection'>(row.sourceId, 'post_lock_adjustments', 'source_id'),
-  });
+  } as const;
+  if (
+    row.appliedCorrectionId !== null &&
+    row.correctionDecisionId !== null &&
+    row.correctionRequestId !== null &&
+    row.absenceCancellationId === null &&
+    row.absenceCancellationDecisionId === null &&
+    row.absenceCancellationSnapshotLinkId === null &&
+    row.previousAdjustedWorkedMinutes !== null &&
+    row.proposedWorkedMinutes !== null
+  ) {
+    return Object.freeze({
+      ...common,
+      appliedCorrectionId: mapDomainId<'AppliedCorrection'>(
+        row.appliedCorrectionId,
+        'post_lock_adjustments',
+        'applied_correction_id',
+      ),
+      correctionDecisionId: mapDomainId<'CorrectionDecision'>(
+        row.correctionDecisionId,
+        'post_lock_adjustments',
+        'correction_decision_id',
+      ),
+      correctionRequestId: mapDomainId<'CorrectionRequest'>(
+        row.correctionRequestId,
+        'post_lock_adjustments',
+        'correction_request_id',
+      ),
+      kind: 'CORRECTION' as const,
+      previousAdjustedWorkedMinutes: mapNonNegativeMinutes(
+        row.previousAdjustedWorkedMinutes,
+        'post_lock_adjustments',
+        'previous_adjusted_worked_minutes',
+      ),
+      proposedWorkedMinutes: mapNonNegativeMinutes(
+        row.proposedWorkedMinutes,
+        'post_lock_adjustments',
+        'proposed_worked_minutes',
+      ),
+      reason: row.reason,
+      reversesAdjustmentId:
+        row.reversesAdjustmentId === null
+          ? null
+          : mapDomainId<'PostLockAdjustment'>(
+              row.reversesAdjustmentId,
+              'post_lock_adjustments',
+              'reverses_adjustment_id',
+            ),
+    });
+  }
+  if (
+    row.appliedCorrectionId === null &&
+    row.correctionDecisionId === null &&
+    row.correctionRequestId === null &&
+    row.absenceCancellationId !== null &&
+    row.absenceCancellationDecisionId !== null &&
+    row.absenceCancellationSnapshotLinkId !== null &&
+    row.previousAdjustedWorkedMinutes === null &&
+    row.proposedWorkedMinutes === null &&
+    row.reversesAdjustmentId === null
+  ) {
+    return Object.freeze({
+      ...common,
+      absenceCancellationDecisionId: mapDomainId<'AbsenceCancellationDecision'>(
+        row.absenceCancellationDecisionId,
+        'post_lock_adjustments',
+        'absence_cancellation_decision_id',
+      ),
+      absenceCancellationId: mapDomainId<'AbsenceCancellation'>(
+        row.absenceCancellationId,
+        'post_lock_adjustments',
+        'absence_cancellation_id',
+      ),
+      absenceCancellationSnapshotLinkId: mapDomainId<'AbsenceCancellationSnapshotLink'>(
+        row.absenceCancellationSnapshotLinkId,
+        'post_lock_adjustments',
+        'absence_cancellation_snapshot_link_id',
+      ),
+      kind: 'ABSENCE_CANCELLATION' as const,
+    });
+  }
+  throw new DatabaseValueError('post_lock_adjustments', 'linkage');
 }
 
 function mapVacationRequest(row: typeof absenceRequests.$inferSelect): VacationRequestRecord {

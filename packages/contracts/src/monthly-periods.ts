@@ -106,17 +106,31 @@ export const monthlyPeriodApprovedRecordSchema = z.strictObject({
   totals: monthlyPeriodTotalsSchema,
 });
 
-export const monthlyPostLockAdjustmentSchema = z.strictObject({
+const monthlyPostLockAdjustmentCommonShape = {
   adjustmentVersion: z.number().int().positive(),
   createdAt: instantSchema,
   id: identifierSchema,
   localDate: dateSchema,
   minutes: signedMinuteSchema,
-  proposedWorkedMinutes: minuteSchema,
-  previousAdjustedWorkedMinutes: minuteSchema,
-  reversesAdjustmentId: identifierSchema.nullable(),
   sourceRequestId: identifierSchema,
-});
+};
+
+export const monthlyPostLockAdjustmentSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    ...monthlyPostLockAdjustmentCommonShape,
+    kind: z.literal('CORRECTION'),
+    proposedWorkedMinutes: minuteSchema,
+    previousAdjustedWorkedMinutes: minuteSchema,
+    reversesAdjustmentId: identifierSchema.nullable(),
+  }),
+  z.strictObject({
+    ...monthlyPostLockAdjustmentCommonShape,
+    absenceCreditMinutesDelta: signedMinuteSchema,
+    creditedMinutesDelta: signedMinuteSchema,
+    expectedMinutesDelta: signedMinuteSchema,
+    kind: z.literal('ABSENCE_CANCELLATION'),
+  }),
+]);
 
 export const monthlyPostLockViewSchema = z.strictObject({
   adjustedClosingBalanceMinutes: signedMinuteSchema,

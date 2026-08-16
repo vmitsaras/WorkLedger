@@ -1246,6 +1246,33 @@ export const monthlyPeriodDecisions = pgTable(
   ],
 );
 
+export const absenceCancellationSnapshotLinks = pgTable(
+  'absence_cancellation_snapshot_links',
+  {
+    id: identifier('id').primaryKey(),
+    organizationId: organizationId(),
+    absenceCancellationId: uuid('absence_cancellation_id')
+      .notNull()
+      .references(() => absenceCancellations.id),
+    monthlySnapshotId: uuid('monthly_snapshot_id')
+      .notNull()
+      .references(() => approvedMonthlySnapshots.id),
+    snapshotSourceFingerprint: varchar('snapshot_source_fingerprint', { length: 64 }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex('absence_cancellation_snapshot_links_cancellation_snapshot_uidx').on(
+      table.absenceCancellationId,
+      table.monthlySnapshotId,
+    ),
+    index('absence_cancellation_snapshot_links_snapshot_idx').on(table.monthlySnapshotId),
+    check(
+      'absence_cancellation_snapshot_links_source_fingerprint_hex',
+      sql`${table.snapshotSourceFingerprint} ~ '^[0-9a-f]{64}$'`,
+    ),
+  ],
+);
+
 export const postLockAdjustments = pgTable(
   'post_lock_adjustments',
   {
@@ -1259,10 +1286,23 @@ export const postLockAdjustments = pgTable(
     correctionRequestId: uuid('correction_request_id').references(() => correctionRequests.id),
     correctionDecisionId: uuid('correction_decision_id').references(() => correctionDecisions.id),
     appliedCorrectionId: uuid('applied_correction_id').references(() => appliedCorrections.id),
+    absenceCancellationId: uuid('absence_cancellation_id').references(
+      () => absenceCancellations.id,
+    ),
+    absenceCancellationDecisionId: uuid('absence_cancellation_decision_id').references(
+      () => absenceCancellationDecisions.id,
+    ),
+    absenceCancellationSnapshotLinkId: uuid('absence_cancellation_snapshot_link_id').references(
+      () => absenceCancellationSnapshotLinks.id,
+    ),
     localDate: date('local_date', { mode: 'string' }).notNull(),
     adjustmentVersion: integer('adjustment_version'),
     previousAdjustedWorkedMinutes: integer('previous_adjusted_worked_minutes'),
     proposedWorkedMinutes: integer('proposed_worked_minutes'),
+    workedMinutesDelta: integer('worked_minutes_delta').default(0).notNull(),
+    absenceCreditMinutesDelta: integer('absence_credit_minutes_delta').default(0).notNull(),
+    expectedMinutesDelta: integer('expected_minutes_delta').default(0).notNull(),
+    creditedMinutesDelta: integer('credited_minutes_delta').default(0).notNull(),
     reversesAdjustmentId: uuid('reverses_adjustment_id'),
     minutes: integer('minutes').notNull(),
     reason: text('reason').notNull(),
@@ -1274,6 +1314,10 @@ export const postLockAdjustments = pgTable(
       table.sourceId,
     ),
     uniqueIndex('post_lock_adjustments_applied_correction_uidx').on(table.appliedCorrectionId),
+    uniqueIndex('post_lock_adjustments_cancellation_link_date_uidx').on(
+      table.absenceCancellationSnapshotLinkId,
+      table.localDate,
+    ),
     uniqueIndex('post_lock_adjustments_snapshot_version_uidx').on(
       table.monthlySnapshotId,
       table.adjustmentVersion,
@@ -1281,11 +1325,23 @@ export const postLockAdjustments = pgTable(
     index('post_lock_adjustments_employee_date_idx').on(table.employeeId, table.localDate),
     check(
       'post_lock_adjustments_linkage_shape',
-      sql`(${table.correctionRequestId} is null and ${table.correctionDecisionId} is null and ${table.appliedCorrectionId} is null and ${table.adjustmentVersion} is null and ${table.previousAdjustedWorkedMinutes} is null and ${table.proposedWorkedMinutes} is null) or (${table.correctionRequestId} is not null and ${table.correctionDecisionId} is not null and ${table.appliedCorrectionId} is not null and ${table.adjustmentVersion} is not null and ${table.previousAdjustedWorkedMinutes} is not null and ${table.proposedWorkedMinutes} is not null)`,
+      sql`(${table.correctionRequestId} is null and ${table.correctionDecisionId} is null and ${table.appliedCorrectionId} is null and ${table.absenceCancellationId} is null and ${table.absenceCancellationDecisionId} is null and ${table.absenceCancellationSnapshotLinkId} is null and ${table.adjustmentVersion} is null and ${table.previousAdjustedWorkedMinutes} is null and ${table.proposedWorkedMinutes} is null) or (${table.correctionRequestId} is not null and ${table.correctionDecisionId} is not null and ${table.appliedCorrectionId} is not null and ${table.absenceCancellationId} is null and ${table.absenceCancellationDecisionId} is null and ${table.absenceCancellationSnapshotLinkId} is null and ${table.adjustmentVersion} is not null and ${table.previousAdjustedWorkedMinutes} is not null and ${table.proposedWorkedMinutes} is not null) or (${table.correctionRequestId} is null and ${table.correctionDecisionId} is null and ${table.appliedCorrectionId} is null and ${table.absenceCancellationId} is not null and ${table.absenceCancellationDecisionId} is not null and ${table.absenceCancellationSnapshotLinkId} is not null and ${table.adjustmentVersion} is not null and ${table.previousAdjustedWorkedMinutes} is null and ${table.proposedWorkedMinutes} is null and ${table.reversesAdjustmentId} is null)`,
     ),
     check(
       'post_lock_adjustments_worked_delta_reconciles',
-      sql`${table.previousAdjustedWorkedMinutes} is null or (${table.previousAdjustedWorkedMinutes} >= 0 and ${table.proposedWorkedMinutes} >= 0 and ${table.minutes} = ${table.proposedWorkedMinutes} - ${table.previousAdjustedWorkedMinutes})`,
+      sql`${table.previousAdjustedWorkedMinutes} is null or (${table.previousAdjustedWorkedMinutes} >= 0 and ${table.proposedWorkedMinutes} >= 0 and ${table.workedMinutesDelta} = ${table.proposedWorkedMinutes} - ${table.previousAdjustedWorkedMinutes})`,
+    ),
+    check(
+      'post_lock_adjustments_component_delta_reconciles',
+      sql`${table.minutes} = ${table.creditedMinutesDelta} - ${table.expectedMinutesDelta}`,
+    ),
+    check(
+      'post_lock_adjustments_correction_component_shape',
+      sql`${table.correctionRequestId} is null or (${table.workedMinutesDelta} = ${table.minutes} and ${table.creditedMinutesDelta} = ${table.minutes} and ${table.absenceCreditMinutesDelta} = 0 and ${table.expectedMinutesDelta} = 0)`,
+    ),
+    check(
+      'post_lock_adjustments_cancellation_component_shape',
+      sql`${table.absenceCancellationId} is null or (${table.workedMinutesDelta} = 0 and ${table.absenceCreditMinutesDelta} <= 0 and ${table.expectedMinutesDelta} >= 0 and ${table.creditedMinutesDelta} = ${table.absenceCreditMinutesDelta})`,
     ),
     check(
       'post_lock_adjustments_positive_version',

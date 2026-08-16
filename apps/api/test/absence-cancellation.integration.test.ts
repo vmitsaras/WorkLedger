@@ -38,6 +38,8 @@ const migrationFiles = [
   '0016_flimsy_oracle.sql',
   '0017_boring_aaron_stack.sql',
   '0018_bored_medusa.sql',
+  '0019_stale_loners.sql',
+  '0020_chemical_micromacro.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -91,7 +93,7 @@ integrationTest(
           reason: 'The requested coverage can be cancelled and restored.',
         },
       });
-      expect(approval.statusCode).toBe(200);
+      expect(approval.statusCode, approval.body).toBe(200);
       expect(approval.json()).toMatchObject({ data: { status: 'APPROVED', version: 2 } });
       expect(
         await scalar(fixture.client, 'select status from absence_requests where id = $1', [
@@ -146,7 +148,7 @@ integrationTest(
 );
 
 integrationTest(
-  `routes submitted and locked cancellation targets to the required recovery flow (${databaseHarness.safeLabel})`,
+  `applies locked cancellation through immutable snapshot-linked adjustments (${databaseHarness.safeLabel})`,
   async () => {
     const fixture = await createPostgresSchemaFixture({
       connectionString: databaseHarness.url,
@@ -165,9 +167,9 @@ integrationTest(
     try {
       const employee = await createEmployee(fixture.client);
       const source = await createEffectiveVacation(fixture.client, employee);
-      await fixture.client.query(
+      const period = await fixture.client.query<{ id: string }>(
         `insert into monthly_periods (organization_id, employee_id, month_start, status, submitted_at)
-         values ($1, $2, '2026-02-01', 'SUBMITTED', $3)`,
+         values ($1, $2, '2026-02-01', 'SUBMITTED', $3) returning id`,
         [employee.organizationId, employee.employeeId, NOW],
       );
       const cookie = await signIn(app);
@@ -184,17 +186,108 @@ integrationTest(
         `update monthly_periods set status = 'LOCKED', locked_at = $2 where employee_id = $1`,
         [employee.employeeId, NOW],
       );
+      const manager = await createManager(fixture.client, employee);
+      const snapshot = await createLockedSnapshot(fixture.client, {
+        employee,
+        manager,
+        periodId: requiredId(period.rows[0]?.id),
+        source,
+      });
       const lockedResponse = await app.inject({
         method: 'POST',
         url: `/v1/me/absence-requests/${source.requestId}/cancellations`,
         headers: requestHeaders(cookie, token),
         payload: { expectedRequestVersion: 1 },
       });
-      expect(lockedResponse.statusCode).toBe(409);
-      expect(lockedResponse.json()).toMatchObject({
-        error: { code: 'PERIOD_ADJUSTMENT_REQUIRED' },
+      expect(lockedResponse.statusCode).toBe(201);
+      const cancellationId = lockedResponse.json<{ data: { id: string } }>().data.id;
+      expect(
+        await scalar(fixture.client, 'select count(*) from absence_cancellation_snapshot_links'),
+      ).toBe('1');
+
+      const managerCookie = await signIn(app, MANAGER_EMAIL, MANAGER_PASSWORD);
+      const managerToken = await csrf(app, managerCookie);
+      const approval = await app.inject({
+        method: 'POST',
+        url: `/v1/approvals/${cancellationId}/decision`,
+        headers: requestHeaders(managerCookie, managerToken),
+        payload: {
+          action: 'APPROVE',
+          expectedVersion: 1,
+          reason: 'The locked absence coverage should be cancelled.',
+        },
       });
-      expect(await scalar(fixture.client, 'select count(*) from absence_cancellations')).toBe('0');
+      expect(approval.statusCode, approval.body).toBe(200);
+      expect(approval.json()).toMatchObject({ data: { kind: 'CANCELLATION', status: 'APPROVED' } });
+      const adjustments = await fixture.client.query<{
+        absence_credit_minutes_delta: number;
+        credited_minutes_delta: number;
+        expected_minutes_delta: number;
+        minutes: number;
+        worked_minutes_delta: number;
+      }>(
+        `select absence_credit_minutes_delta, credited_minutes_delta, expected_minutes_delta,
+                minutes, worked_minutes_delta
+         from post_lock_adjustments order by adjustment_version`,
+      );
+      expect(adjustments.rows).toEqual([
+        {
+          absence_credit_minutes_delta: -480,
+          credited_minutes_delta: -480,
+          expected_minutes_delta: 0,
+          minutes: -480,
+          worked_minutes_delta: 0,
+        },
+        {
+          absence_credit_minutes_delta: -480,
+          credited_minutes_delta: -480,
+          expected_minutes_delta: 0,
+          minutes: -480,
+          worked_minutes_delta: 0,
+        },
+      ]);
+      expect(
+        await scalar(
+          fixture.client,
+          "select count(*) from time_account_entries where entry_type = 'POST_LOCK_ADJUSTMENT' and minutes = -960",
+        ),
+      ).toBe('1');
+      expect(
+        await scalar(
+          fixture.client,
+          "select count(*) from leave_entitlement_entries where entry_type = 'CANCELLATION_RESTORATION' and minutes = 960",
+        ),
+      ).toBe('1');
+      expect(
+        await scalar(
+          fixture.client,
+          "select count(*) from domain_audit_events where action_code = 'POST_LOCK_ABSENCE_CANCELLATION_APPLIED'",
+        ),
+      ).toBe('1');
+      expect(await scalar(fixture.client, 'select count(*) from notifications')).toBe('1');
+      const preserved = await fixture.client.query<{
+        snapshot: Readonly<Record<string, unknown>>;
+        snapshot_fingerprint: string;
+      }>(`select snapshot, snapshot_fingerprint from approved_monthly_snapshots where id = $1`, [
+        snapshot.id,
+      ]);
+      expect(preserved.rows[0]).toEqual({
+        snapshot: snapshot.document,
+        snapshot_fingerprint: snapshot.fingerprint,
+      });
+
+      const stale = await app.inject({
+        method: 'POST',
+        url: `/v1/approvals/${cancellationId}/decision`,
+        headers: requestHeaders(managerCookie, managerToken),
+        payload: {
+          action: 'APPROVE',
+          expectedVersion: 1,
+          reason: 'A stale replay must not apply another adjustment.',
+        },
+      });
+      expect(stale.statusCode).toBe(409);
+      expect(await scalar(fixture.client, 'select count(*) from post_lock_adjustments')).toBe('2');
     } finally {
       await app.close();
       await fixture.cleanup();
@@ -289,12 +382,13 @@ async function createEffectiveVacation(
      returning id, local_date`,
     [employee.organizationId, requestId],
   );
-  await client.query(
+  const effects = await client.query<{ id: string; local_date: Date | string }>(
     `insert into absence_effects
       (organization_id, absence_request_id, absence_coverage_segment_id, employee_id, local_date,
        expected_reduction_minutes, credit_minutes, entitlement_minutes, effect_version)
-     values ($1, $2, $3, $4, '2026-02-03', 480, 480, 480, 1),
-            ($1, $2, $5, $4, '2026-02-04', 480, 480, 480, 1)`,
+     values ($1, $2, $3, $4, '2026-02-03', 0, 480, 480, 1),
+            ($1, $2, $5, $4, '2026-02-04', 0, 480, 480, 1)
+     returning id, local_date`,
     [
       employee.organizationId,
       requestId,
@@ -309,7 +403,17 @@ async function createEffectiveVacation(
      values ($1, $2, $3, 'APPROVED_DEDUCTION', -960, $4, '2026-02-03')`,
     [employee.organizationId, employee.employeeId, absenceTypeId, requestId],
   );
-  return Object.freeze({ firstSegmentId: requiredId(segments.rows[0]?.id), requestId });
+  return Object.freeze({
+    effects: effects.rows.map((effect) => ({
+      id: requiredId(effect.id),
+      localDate:
+        typeof effect.local_date === 'string'
+          ? effect.local_date
+          : localDateFromDatabaseDate(effect.local_date),
+    })),
+    firstSegmentId: requiredId(segments.rows[0]?.id),
+    requestId,
+  });
 }
 
 async function createManager(
@@ -355,6 +459,52 @@ async function createManager(
        values ($1, $2, $3, '2025-01-01')`,
     [employee.organizationId, employee.employeeId, managerId],
   );
+  return Object.freeze({ accountId, employeeId: managerId });
+}
+
+async function createLockedSnapshot(
+  client: pg.PoolClient,
+  input: Readonly<{
+    employee: Readonly<{ employeeId: string; organizationId: string }>;
+    manager: Readonly<{ accountId: string; employeeId: string }>;
+    periodId: string;
+    source: Awaited<ReturnType<typeof createEffectiveVacation>>;
+  }>,
+) {
+  const sourceFingerprint = 'a'.repeat(64);
+  const snapshotFingerprint = 'b'.repeat(64);
+  const document = {
+    monthStart: '2026-02-01',
+    rows: input.source.effects.map((effect) => ({
+      localDate: effect.localDate,
+      neutralAbsenceEffects: [{ effectId: effect.id, effectVersion: 1 }],
+    })),
+    snapshotFingerprint,
+    submittedSourceFingerprint: sourceFingerprint,
+  };
+  const result = await client.query<{ id: string }>(
+    `insert into approved_monthly_snapshots
+      (organization_id, monthly_period_id, period_version, schema_version, engine_version,
+       source_fingerprint, snapshot_fingerprint, approval_cycle, approved_by_account_id,
+       approved_by_employee_id, approved_by_authority, approved_at, snapshot)
+     values ($1, $2, 1, 1, '1', $3, $4, 1, $5, $6, 'CURRENT_MANAGER', $7, $8::jsonb)
+     returning id`,
+    [
+      input.employee.organizationId,
+      input.periodId,
+      sourceFingerprint,
+      snapshotFingerprint,
+      input.manager.accountId,
+      input.manager.employeeId,
+      NOW,
+      JSON.stringify(document),
+    ],
+  );
+  return Object.freeze({
+    document,
+    fingerprint: snapshotFingerprint,
+    id: requiredId(result.rows[0]?.id),
+  });
 }
 
 async function signIn(
@@ -395,4 +545,10 @@ async function scalar(client: pg.PoolClient, query: string, values?: readonly st
 function requiredId(value: string | undefined): string {
   if (value === undefined) throw new Error('Expected database identifier.');
   return value;
+}
+
+function localDateFromDatabaseDate(value: Date): string {
+  const month = (value.getMonth() + 1).toString().padStart(2, '0');
+  const day = value.getDate().toString().padStart(2, '0');
+  return `${value.getFullYear().toString()}-${month}-${day}`;
 }

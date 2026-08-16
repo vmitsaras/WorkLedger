@@ -870,6 +870,7 @@ async function insertPeriodsAndAudit(transaction: SeedTransaction): Promise<void
     appliedCorrectionId: seedId(5024),
     correctionDecisionId: seedId(5023),
     correctionRequestId: seedId(5022),
+    creditedMinutesDelta: 13,
     createdAt,
     employeeId: owenId,
     id: seedId(5020),
@@ -881,6 +882,7 @@ async function insertPeriodsAndAudit(transaction: SeedTransaction): Promise<void
     proposedWorkedMinutes: 493,
     reason: 'Approved correction to the recorded start time.',
     sourceId: seedId(5024),
+    workedMinutesDelta: 13,
   });
 
   await transaction.insert(domainAuditEvents).values([

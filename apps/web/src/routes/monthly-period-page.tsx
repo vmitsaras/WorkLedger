@@ -714,7 +714,7 @@ function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
           The approved record above remains immutable. This view adds the ordered post-lock
-          correction chain to that baseline.
+          correction and absence-cancellation chain to that baseline.
         </p>
       </div>
       <dl
@@ -746,17 +746,16 @@ function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod
         >
           <table className="w-full min-w-[52rem] border-collapse text-left">
             <caption className="sr-only">
-              Ordered post-lock corrections applied to the approved monthly baseline
+              Ordered post-lock corrections and absence cancellations applied to the approved
+              monthly baseline
             </caption>
             <thead>
               <tr className="border-b border-[var(--wl-border)] text-sm">
-                {['Version', 'Date', 'Worked before', 'Worked after', 'Balance delta', 'Link'].map(
-                  (label) => (
-                    <th className="p-3" key={label} scope="col">
-                      {label}
-                    </th>
-                  ),
-                )}
+                {['Version', 'Date', 'Source', 'Effect', 'Balance delta', 'Link'].map((label) => (
+                  <th className="p-3" key={label} scope="col">
+                    {label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -769,19 +768,25 @@ function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod
                     {adjustment.adjustmentVersion.toString()}
                   </th>
                   <td className="p-3">{formatLocalDate(adjustment.localDate)}</td>
-                  <td className="p-3 tabular-nums">
-                    {formatDuration(adjustment.previousAdjustedWorkedMinutes)}
+                  <td className="p-3">
+                    {adjustment.kind === 'CORRECTION' ? 'Time correction' : 'Absence cancellation'}
                   </td>
                   <td className="p-3 tabular-nums">
-                    {formatDuration(adjustment.proposedWorkedMinutes)}
+                    {adjustment.kind === 'CORRECTION'
+                      ? `${formatDuration(adjustment.previousAdjustedWorkedMinutes)} → ${formatDuration(adjustment.proposedWorkedMinutes)} worked`
+                      : `Absence credit ${formatDuration(adjustment.absenceCreditMinutesDelta, true)}; expected ${formatDuration(adjustment.expectedMinutesDelta, true)}`}
                   </td>
                   <td className="p-3 tabular-nums">{formatDuration(adjustment.minutes, true)}</td>
                   <td className="p-3">
-                    {adjustment.reversesAdjustmentId === null
+                    {adjustment.kind === 'ABSENCE_CANCELLATION'
                       ? adjustment.minutes === 0
-                        ? 'Zero-delta evidence'
-                        : 'Correction adjustment'
-                      : `Reverses version ${reversedVersion(view, adjustment.reversesAdjustmentId)}`}
+                        ? 'Zero-delta cancellation evidence'
+                        : 'Cancellation adjustment'
+                      : adjustment.reversesAdjustmentId === null
+                        ? adjustment.minutes === 0
+                          ? 'Zero-delta evidence'
+                          : 'Correction adjustment'
+                        : `Reverses version ${reversedVersion(view, adjustment.reversesAdjustmentId)}`}
                   </td>
                 </tr>
               ))}

@@ -272,6 +272,7 @@ test('keeps post-lock reconciliation ordered, explicit, and free of decision rea
             adjustmentVersion: 1,
             createdAt: '2026-08-03T09:00:00Z',
             id: randomUUID(),
+            kind: 'CORRECTION',
             localDate: '2026-07-31',
             minutes: 13,
             previousAdjustedWorkedMinutes: 480,

@@ -34,6 +34,7 @@ import {
   applyApprovedCorrectionInTransaction,
   toCorrectionReviewItem,
 } from '../corrections/correction-review-service.js';
+import { applyLockedCancellationAdjustments } from '../absence/cancellation-service.js';
 import {
   deliverCommittedNotification,
   disabledNotificationDeliveryAdapter,
@@ -383,6 +384,13 @@ async function decideCancellation(
       },
     });
   }
+  await applyLockedCancellationAdjustments({
+    at,
+    authorizationScope: state.authorization.scope,
+    context: state.context,
+    result: updated,
+    transaction,
+  });
   await appendDecisionAudit(transaction, state.context, actor, {
     action: input.action,
     at,

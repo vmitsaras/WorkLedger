@@ -45,8 +45,8 @@ employee action. Ordinary correction, vacation, sickness, and cancellation entry
 monthly protection under row locking and their transactional mutation boundaries:
 `SUBMITTED`/`APPROVED` coverage
 returns `PERIOD_REOPEN_REQUIRED`, while `LOCKED` coverage stays routed to
-`PERIOD_ADJUSTMENT_REQUIRED`. Pending cancellation coverage is also a monthly readiness blocker so
-it cannot race through review invisibly.
+the source-specific immutable-snapshot adjustment workflow. Pending cancellation coverage is also
+a monthly readiness blocker so it cannot race through review invisibly.
 
 ## Accessible interaction
 

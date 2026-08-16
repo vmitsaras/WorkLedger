@@ -38,6 +38,8 @@ const migrationFiles = [
   '0016_flimsy_oracle.sql',
   '0017_boring_aaron_stack.sql',
   '0018_bored_medusa.sql',
+  '0019_stale_loners.sql',
+  '0020_chemical_micromacro.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -336,7 +338,7 @@ integrationTest(
         managerToken,
         positiveId,
       );
-      expect(positiveDecision.statusCode).toBe(200);
+      expect(positiveDecision.statusCode, positiveDecision.body).toBe(200);
 
       const positiveEvidence = await fixture.client.query<{
         adjustment_version: number;

@@ -176,7 +176,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
 | WL-1000 | Establish the `T-001`–`T-020` evidence register, remediate confirmed application-layer Critical/High findings, complete central permission/privacy regressions, and resolve `D-504` ownership | WL-907 | Evidence baseline and exhaustive central policy matrix; no confirmed application-layer Critical/High issue remains; downstream evidence owners are explicit | Done |
-| WL-1000A | Implement the resolved `D-504` locked-period absence-cancellation adjustment contract | WL-1000 | Immutable snapshot linkage, exact entitlement/time adjustments, scoped non-self decision, concurrency/idempotency, audit/notification, minimized DTO, and original-versus-adjusted evidence pass | Ready |
+| WL-1000A | Implement the resolved `D-504` locked-period absence-cancellation adjustment contract | WL-1000 | Immutable snapshot linkage, exact entitlement/time adjustments, scoped non-self decision, concurrency/idempotency, audit/notification, minimized DTO, and original-versus-adjusted evidence pass | Done |
 | WL-1001 | Test expected-scale performance, indexing, pagination, and concurrent mutations | WL-907 | Defined targets and measured results | Not started |
 | WL-1002 | Complete full WCAG 2.2 AA audit and remediate core-flow blockers | WL-907 | Automated plus manual report | Not started |
 | WL-1003 | Build production Docker Compose with the Caddy reference proxy, private API/database network, trusted-header/origin controls, health/readiness, and safe config | WL-907 | Clean production-style HTTPS deployment passes direct-port, forged-header, secret, and diagnostic-shape checks | Not started |

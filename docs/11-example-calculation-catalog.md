@@ -400,8 +400,9 @@ Must-test blockers are every P0 row above. Property-oriented follow-up should ge
 ### EX-068 — Locked-date cancellation
 
 - Approved absence coverage belongs to a locked monthly period.
-- Ordinary cancellation decision returns `PERIOD_ADJUSTMENT_REQUIRED`; request, approved snapshot, deduction, and daily ledger remain unchanged.
-- A later linked post-lock workflow may append a restoration/time adjustment under `WL-008`; it cannot rewrite the locked baseline.
+- Submission captures the exact immutable monthly snapshot and source fingerprint while leaving the approved baseline unchanged.
+- Approval appends the zero successor absence effect, exact eligible entitlement restoration, per-date component adjustment, one nonzero aggregate time-account adjustment per snapshot, minimized audit, and generic notification in one transaction.
+- A stale decision or snapshot/effect mismatch rolls back every effect; the original snapshot and prior ledger rows remain unchanged.
 
 ### EX-069 — Disjoint odd-minute halves with different types
 
@@ -510,7 +511,7 @@ Property-oriented follow-up should generate even/odd expectations, disjoint/inte
   authority requires employee evidence, while an HR-only account may record null employee evidence.
 - A later explicit lock by a currently eligible non-self reviewer rechecks the exact
   snapshot/source and changes state to `LOCKED` without creating another snapshot. Ordinary changes
-  then return `PERIOD_LOCKED` or `PERIOD_ADJUSTMENT_REQUIRED`.
+  then return `PERIOD_LOCKED` or select the explicit source-specific post-lock adjustment path.
 
 ### EX-041 — Self-approval attempt
 

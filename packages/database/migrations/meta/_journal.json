@@ -141,6 +141,13 @@
       "when": 1786737736950,
       "tag": "0019_stale_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1786871140765,
+      "tag": "0020_chemical_micromacro",
+      "breakpoints": true
     }
   ]
 }

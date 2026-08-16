@@ -7,6 +7,7 @@ import {
   accountEmployeeLinks,
   accountRoleAssignments,
   absenceCancellationDecisions,
+  absenceCancellationSnapshotLinks,
   absenceDecisions,
   absenceTypes,
   approvedMonthlySnapshots,
@@ -190,6 +191,45 @@ describe('initial PostgreSQL schema', () => {
     expect(migration).toContain('post_lock_adjustments_reversal_organization_fk');
   });
 
+  it('links absence cancellations to immutable snapshots with reconciled component deltas', () => {
+    const links = getTableConfig(absenceCancellationSnapshotLinks);
+    expect(links.columns.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'absence_cancellation_id',
+        'monthly_snapshot_id',
+        'snapshot_source_fingerprint',
+      ]),
+    );
+    expect(links.indexes.map(({ config }) => config.name)).toContain(
+      'absence_cancellation_snapshot_links_cancellation_snapshot_uidx',
+    );
+
+    const adjustments = getTableConfig(postLockAdjustments);
+    expect(adjustments.columns.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'absence_cancellation_id',
+        'absence_cancellation_decision_id',
+        'absence_cancellation_snapshot_link_id',
+        'absence_credit_minutes_delta',
+        'expected_minutes_delta',
+        'credited_minutes_delta',
+        'worked_minutes_delta',
+      ]),
+    );
+    expect(adjustments.checks.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'post_lock_adjustments_cancellation_component_shape',
+        'post_lock_adjustments_component_delta_reconciles',
+      ]),
+    );
+    const migration = readFileSync(
+      `${packageDirectory}/migrations/0020_chemical_micromacro.sql`,
+      'utf8',
+    );
+    expect(migration).toContain('absence_cancellation_snapshot_links_immutable');
+    expect(migration).toContain('post_lock_adjustments_cancellation_link_organization_fk');
+  });
+
   it('keeps generic notification history separate from append-only delivery attempts', () => {
     const notificationConfiguration = getTableConfig(notifications);
     const attemptConfiguration = getTableConfig(notificationDeliveryAttempts);
@@ -244,6 +284,7 @@ describe('initial PostgreSQL schema', () => {
       '0017_boring_aaron_stack',
       '0018_bored_medusa',
       '0019_stale_loners',
+      '0020_chemical_micromacro',
     ]);
   });
 });

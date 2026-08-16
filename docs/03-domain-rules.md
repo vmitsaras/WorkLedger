@@ -498,7 +498,7 @@ Cancellation is a separate workflow with states `PENDING_DECISION`, `CHANGES_REQ
 3. Approval records the cancellation decision, subtracts exactly the targeted effective coverage, appends any linked entitlement restoration, replaces the absence calculation input, initiates unlocked-date recalculation, and appends audit/notification evidence atomically.
 4. Remaining effective coverage yields `PARTIALLY_CANCELLED`; no remaining coverage yields `CANCELLED`. Additional cancellation may target only the remaining coverage.
 5. A retry or concurrent cancellation cannot restore or remove the same coverage twice. `ABSENCE_CANNOT_CANCEL` returns safe remaining-coverage context to an authorized actor.
-6. An ordinary cancellation containing a locked date fails with `PERIOD_ADJUSTMENT_REQUIRED`; locked and unlocked coverage must be submitted separately, and the locked portion follows the `WL-008` post-lock contract without changing the approved snapshot.
+6. A cancellation may atomically target mixed unlocked and locked coverage. Submission links every affected locked month to its exact immutable snapshot and captured source fingerprint; approval uses ordinary recalculation for unlocked dates and append-only post-lock adjustments for locked dates without changing any approved snapshot.
 
 ### 12.7 Sickness privacy and data minimization
 
@@ -685,7 +685,7 @@ These IDs are stable references for domain errors, tests, reviews, and later per
 | `INV-ABS-016` | Partial cancellation preserves untargeted effective coverage and yields a current projection linked to the complete original and cancellation history. |
 | `INV-ABS-017` | Sickness reports contain no request note or attachment, and sickness classification never enters team DTOs, URLs, generic exports/notifications, technical audit, or operational logs. |
 | `INV-ABS-018` | Absence decisions use current actor scope, prohibit self-decision, validate an expected version, and commit workflow, entitlement, calculation-source, audit, and notification effects atomically. |
-| `INV-ABS-019` | Ordinary cancellation cannot alter locked-date absence effects; it must use a linked post-lock adjustment path that preserves the approved snapshot. |
+| `INV-ABS-019` | Cancellation cannot alter a locked baseline: submission captures its exact snapshot/source fingerprint and approval appends uniquely linked per-date component adjustments and any nonzero aggregate time-account delta while preserving the approved snapshot. |
 | `INV-ABS-020` | Full-day coverage conflicts with all same-date absence coverage; equal half portions and intersecting minute ranges conflict; minute and full/half units cannot mix on one date. |
 | `INV-ABS-021` | A report-and-acknowledge request cannot be rejected as an approval request; coverage removal uses the recorded cancellation workflow. |
 | `INV-ABS-022` | Holiday and zero-hour coverage remains visible but contributes zero default entitlement consumption, absence credit, or expected reduction. |

@@ -12,10 +12,10 @@ snapshot instead of reopening the period or mutating its source projection. An e
 manager or organization HR reviewer decides the request through the existing non-self correction
 authority.
 
-Locked absence cancellation remains outside this task's correction-specific dependency and
-acceptance boundary. The ordinary cancellation endpoint continues to return
-`PERIOD_ADJUSTMENT_REQUIRED` for locked coverage; the broader locked-cancellation domain contract
-must be implemented before the relevant phase/release gate can claim it.
+Locked absence cancellation remained outside this task's correction-specific dependency and
+acceptance boundary. It is now implemented separately by `WL-1000A`; see
+`docs/97-locked-absence-cancellation-adjustments.md`. The two workflows share immutable snapshot
+and append-only ledger principles but retain distinct requests, decisions, effects, and DTOs.
 
 ## Atomic approval and persistence
 

@@ -2,16 +2,16 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 1 of 10 Phase 10 tasks complete
-**Current milestone:** Locked-period absence-cancellation adjustments
-**Active task:** `WL-1000A`
-**Status:** Ready
+**Phase progress:** 2 of 10 Phase 10 tasks complete
+**Current milestone:** Performance, pagination, and concurrency review
+**Active task:** `WL-1001`
+**Status:** Not started
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Implement the resolved snapshot-linked locked-period absence-cancellation adjustment contract for
-`WL-1000A`.
+Measure and harden expected-scale performance, pagination, indexing, and concurrent mutations for
+`WL-1001`.
 
 ## Verified decisions
 
@@ -159,11 +159,10 @@ Implement the resolved snapshot-linked locked-period absence-cancellation adjust
   ordered adjustment, nonzero time-account delta, audit, and generic notification without changing
   raw punches, the daily projection, or approved snapshot. The monthly DTO and UI separate the
   immutable approved record from its reconciled adjusted view.
-- Locked-period absence cancellation remains fail-closed until `WL-1000A`; its resolved contract
-  preserves employee cancellation intent, links every affected immutable snapshot/source
-  fingerprint, applies exact append-only absence/entitlement/time adjustments under current
-  non-self reviewer authority, and exposes original versus reconciled results without sensitive
-  absence detail (`D-504`).
+- Locked-period absence cancellation preserves employee intent, links every affected immutable
+  snapshot/source fingerprint, applies exact append-only absence/entitlement/time adjustments under
+  current non-self reviewer authority, and exposes original versus reconciled results without
+  sensitive absence detail (`D-504`, implemented by `WL-1000A`).
 - Phase 10 threat evidence is cumulative: `WL-1000` owns the application baseline and central
   permission matrix, while load, deployment, restore, upgrade, diagnostics, and retention tasks add
   their required operational evidence before `WL-1008` can close `T-001`–`T-020` (`D-505`).
@@ -376,21 +375,43 @@ Implement the resolved snapshot-linked locked-period absence-cancellation adjust
 
 ### `D-504` — Locked absence-cancellation adjustment contract
 
-- Open production blocker: locked-period absence cancellation remains a safe no-effect
-  `PERIOD_ADJUSTMENT_REQUIRED` denial; it has no completed replacement-effect, entitlement,
-  time-ledger, audit, or notification adjustment workflow.
-- Phase 8 conclusion: the exact exit criterion and `WL-803` scope are post-lock correction, which
-  now has complete linked adjustment evidence. The gate does not reinterpret absence cancellation
-  as correction or treat safe denial as a finished recovery path.
-- Ownership: `WL-1000` must resolve employee/reviewer authority, snapshot/effect linkage,
-  entitlement/time-account compensation, concurrency, audit/notification, privacy, and reporting,
-  then own or schedule a bounded implementation before `WL-1008`.
-- Evidence: the Phase 6 cancellation integration proves no partial effect on locked dates; the
-  Phase 8 gate proves corrections use their distinct immutable-snapshot adjustment contract.
-- Documentation: recorded the decision in `docs/10-open-decisions.md` and the explicit gate
-  assessment in `docs/87-phase-8-gate-review.md`.
+- Resolved by `WL-1000` and implemented by `WL-1000A` as a distinct absence-cancellation workflow.
+- Submission atomically captures the exact immutable snapshot and source fingerprint for locked
+  targets; submitted/approved months still require reopening.
+- Approval under current non-self manager/HR authority appends exact effect, entitlement,
+  component-adjustment, time-ledger, audit, and notification evidence without changing the locked
+  snapshot. Expected-version and source-evidence conflicts roll back the entire decision.
+- Monthly contracts and UI keep the immutable approved record separate from the reconciled adjusted
+  view and omit sensitive absence and internal linkage detail.
+- Evidence is documented in `docs/97-locked-absence-cancellation-adjustments.md`.
 
 ## Latest completed task
+
+### `WL-1000A` — Implement locked-period absence-cancellation adjustments
+
+- Changed: added immutable cancellation-to-snapshot links; component-aware post-lock adjustments;
+  atomic mixed unlocked/locked submission and approval behavior; exact entitlement restoration and
+  aggregate time-ledger posting; and a discriminated monthly adjustment contract/UI.
+- Verified: reproducible OpenAPI, formatting, lint/boundaries, strict TypeScript, 24 tooling tests,
+  301 unit/component tests across 43 files, all 41 PostgreSQL integration tests across 21 files,
+  all 20 Chromium scenarios, and the production/workspace build pass. The locked-cancellation
+  integration proves the snapshot stays byte-equivalent, dated component deltas reconcile, one
+  aggregate ledger entry is posted, audit/notification evidence is written, and a stale retry
+  creates no duplicate. The host Node `24.19.0` cannot use the pinned `24.18.x` pnpm wrapper, so the
+  installed local binaries ran the equivalent gates; the known `pg` warning and 825 kB chunk
+  advisory remain.
+- Accessibility: the adjusted-view table retains a hidden caption, scoped row/column headers,
+  keyboard-scrollable containment, textual source/effect/delta/link states, and axe coverage for an
+  absence-cancellation adjustment.
+- Security/data: current non-self reviewer scope and request version are rechecked; immutable source
+  fingerprints and effect IDs/versions are validated; organization-consistent foreign keys and one
+  serializable transaction prevent partial/cross-organization effects; purpose DTOs omit absence
+  subtype, decision reason, entitlement detail, sickness context, and internal linkage IDs.
+- Documentation: synchronized `D-504`, domain invariants, cancellation behavior, the Phase 10
+  evidence register, roadmap memory, and `docs/97-locked-absence-cancellation-adjustments.md`.
+- Remaining risk: expected-scale contention and query behavior remain `WL-1001`; full WCAG audit,
+  production deployment, restore/upgrade, diagnostics, and retention remain `WL-1002`–`WL-1007`.
+- Next task: `WL-1001`.
 
 ### `WL-1000` — Establish the threat, permission, and privacy baseline
 
@@ -1210,14 +1231,13 @@ Implement the resolved snapshot-linked locked-period absence-cancellation adjust
 
 ## Current blockers
 
-`WL-1000A` must implement the resolved `D-504` contract before the production gate. The current
-denial path remains safe and atomic, but users cannot yet cancel coverage touching a locked period.
-`D-502` remains open before the production browser gate. Deployment, restore, upgrade, diagnostic,
-load, and retention evidence remains explicitly owned by later Phase 10 tasks under `D-505`.
+`D-504` is implemented and no longer blocks the production gate. `D-502` remains open before the
+production browser gate. Performance, deployment, restore, upgrade, diagnostic, accessibility,
+and retention evidence remains explicitly owned by later Phase 10 tasks under `D-505`.
 
 ## Next task
 
-`WL-1000A — Implement locked-period absence-cancellation adjustments.`
+`WL-1001 — Complete performance, pagination, and concurrency review.`
 
 ## Update rules
 

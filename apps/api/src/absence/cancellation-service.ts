@@ -2,14 +2,17 @@ import {
   parseSignedMinutes,
   localDateAtInstant,
   parseDomainId,
+  parseLocalDate,
   parseTimeZoneId,
   type DomainId,
   type Instant,
 } from '@workledger/domain';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   AbsenceCancellationLockedPeriodError,
   AbsenceCancellationReopenPeriodError,
   type AccountSelfContextRecord,
+  type AbsenceCancellationDecisionResult,
   type WorkLedgerDatabase,
   type WorkLedgerTransaction,
 } from '@workledger/database';
@@ -19,7 +22,7 @@ import type {
   WithdrawAbsenceCancellation,
 } from '@workledger/contracts';
 
-import { authorizeEmployeeTarget } from '../authorization/policy.js';
+import { authorizeEmployeeTarget, type AuthorizationGrantScope } from '../authorization/policy.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 
 export type AbsenceCancellationIdentity = Readonly<{
@@ -173,6 +176,13 @@ export function createAbsenceCancellationService(database: WorkLedgerDatabase) {
               },
             });
           }
+          await applyLockedCancellationAdjustments({
+            at,
+            authorizationScope: decision.scope,
+            context,
+            result,
+            transaction,
+          });
           await appendAudit(
             transaction,
             context,
@@ -245,8 +255,231 @@ export function createAbsenceCancellationService(database: WorkLedgerDatabase) {
   });
 }
 
+export async function applyLockedCancellationAdjustments(
+  input: Readonly<{
+    at: Instant;
+    authorizationScope: AuthorizationGrantScope;
+    context: AccountSelfContextRecord;
+    result: AbsenceCancellationDecisionResult;
+    transaction: WorkLedgerTransaction;
+  }>,
+): Promise<void> {
+  for (const locked of input.result.lockedSnapshots) {
+    if (
+      locked.snapshot.sourceFingerprint !== locked.snapshotSourceFingerprint ||
+      locked.snapshot.snapshot['submittedSourceFingerprint'] !== locked.snapshotSourceFingerprint
+    ) {
+      throw conflict();
+    }
+    assertSnapshotContainsEffects(locked.snapshot.snapshot, locked.effects);
+    const adjustments = await input.transaction.correctionRequests.listPostLockAdjustments(
+      input.context.organization.id,
+      locked.snapshot.id,
+    );
+    let adjustmentVersion = adjustments.at(-1)?.adjustmentVersion ?? 0;
+    let snapshotBalanceDelta = 0;
+    const effectsByDate = new Map<
+      string,
+      { absenceCreditMinutes: number; expectedReductionMinutes: number }
+    >();
+    for (const effect of locked.effects) {
+      const current = effectsByDate.get(effect.localDate) ?? {
+        absenceCreditMinutes: 0,
+        expectedReductionMinutes: 0,
+      };
+      effectsByDate.set(effect.localDate, {
+        absenceCreditMinutes: current.absenceCreditMinutes + effect.absenceCreditMinutes,
+        expectedReductionMinutes:
+          current.expectedReductionMinutes + effect.expectedReductionMinutes,
+      });
+    }
+    const orderedDates = [...effectsByDate].sort(([left], [right]) => left.localeCompare(right));
+    for (const [localDateValue, effect] of orderedDates) {
+      const localDate = requireLocalDate(localDateValue);
+      const absenceCreditMinutesDelta = -effect.absenceCreditMinutes;
+      const expectedMinutesDelta = effect.expectedReductionMinutes;
+      const creditedMinutesDelta = absenceCreditMinutesDelta;
+      const balanceMinutesDelta = creditedMinutesDelta - expectedMinutesDelta;
+      adjustmentVersion += 1;
+      const adjustmentId = requireId<'PostLockAdjustment'>(randomUUID());
+      const sourceId = requireId<'PostLockAdjustmentSource'>(adjustmentId);
+      const adjustment = await input.transaction.correctionRequests.appendPostLockAdjustment({
+        absenceCancellationDecisionId: input.result.decisionId,
+        absenceCancellationId: input.result.id,
+        absenceCancellationSnapshotLinkId: locked.linkId,
+        absenceCreditMinutesDelta,
+        adjustmentVersion,
+        createdAt: input.at,
+        creditedMinutesDelta,
+        employeeId: input.result.employeeId,
+        expectedMinutesDelta,
+        id: adjustmentId,
+        kind: 'ABSENCE_CANCELLATION',
+        localDate,
+        minutes: balanceMinutesDelta,
+        monthlySnapshotId: locked.snapshot.id,
+        organizationId: input.context.organization.id,
+        sourceId,
+        workedMinutesDelta: 0,
+      });
+      if (adjustment === null) throw conflict();
+      snapshotBalanceDelta += balanceMinutesDelta;
+    }
+    if (snapshotBalanceDelta !== 0) {
+      const effectiveDate = orderedDates[0]?.[0];
+      if (effectiveDate === undefined) throw internalError();
+      await appendSnapshotTimeAdjustment({
+        amountMinutes: snapshotBalanceDelta,
+        at: input.at,
+        context: input.context,
+        effectiveDate: requireLocalDate(effectiveDate),
+        employeeId: input.result.employeeId,
+        snapshotFingerprint: locked.snapshot.snapshotFingerprint,
+        sourceId: locked.linkId,
+        transaction: input.transaction,
+      });
+    }
+    await appendCancellationAdjustmentAudit({
+      at: input.at,
+      authorizationScope: input.authorizationScope,
+      context: input.context,
+      employeeId: input.result.employeeId,
+      localDate: requireLocalDate(orderedDates[0]?.[0]),
+      minutes: snapshotBalanceDelta,
+      targetId: input.result.id,
+      transaction: input.transaction,
+      version: adjustmentVersion,
+    });
+  }
+}
+
 export function parseAbsenceCancellationIdentity(accountIdValue: string, sessionFresh: boolean) {
   return Object.freeze({ accountId: requireId<'Account'>(accountIdValue), sessionFresh });
+}
+
+function assertSnapshotContainsEffects(
+  snapshot: Readonly<Record<string, unknown>>,
+  effects: AbsenceCancellationDecisionResult['lockedSnapshots'][number]['effects'],
+): void {
+  const rows = snapshot['rows'];
+  if (!Array.isArray(rows)) throw internalError();
+  const capturedEffects = rows.flatMap((row) => {
+    const neutralEffects = isRecord(row) ? row['neutralAbsenceEffects'] : null;
+    return Array.isArray(neutralEffects) ? neutralEffects : [];
+  });
+  for (const effect of effects) {
+    if (
+      !capturedEffects.some(
+        (candidate) =>
+          isRecord(candidate) &&
+          candidate['effectId'] === effect.effectId &&
+          candidate['effectVersion'] === effect.effectVersion,
+      )
+    ) {
+      throw conflict();
+    }
+  }
+}
+
+async function appendSnapshotTimeAdjustment(
+  input: Readonly<{
+    amountMinutes: number;
+    at: Instant;
+    context: AccountSelfContextRecord;
+    effectiveDate: ReturnType<typeof requireLocalDate>;
+    employeeId: DomainId<'Employee'>;
+    snapshotFingerprint: string;
+    sourceId: DomainId<'AbsenceCancellationSnapshotLink'>;
+    transaction: WorkLedgerTransaction;
+  }>,
+): Promise<void> {
+  const amount = parseSignedMinutes(input.amountMinutes);
+  if (!amount.ok) throw internalError();
+  const entryId = requireId<'TimeAccountLedgerEntry'>(randomUUID());
+  const explanationCode = requireId<'TimeAccountExplanationCode'>(randomUUID());
+  const sourceKey = requireId<'TimeAccountLedgerSource'>(input.sourceId);
+  await input.transaction.timeAccount.append({
+    entry: {
+      actor: { accountId: input.context.accountId, kind: 'ACCOUNT' },
+      amountMinutes: amount.value,
+      effectiveDate: input.effectiveDate,
+      entryId,
+      entryType: 'POST_LOCK_ADJUSTMENT',
+      explanationCode,
+      organizationId: input.context.organization.id,
+      recordedAt: input.at,
+      sourceKey,
+      subjectEmployeeId: input.employeeId,
+    },
+    sourceFingerprint: createHash('sha256')
+      .update(
+        `${input.sourceId}:${input.snapshotFingerprint}:${input.amountMinutes.toString()}`,
+        'utf8',
+      )
+      .digest('hex'),
+  });
+}
+
+async function appendCancellationAdjustmentAudit(
+  input: Readonly<{
+    at: Instant;
+    authorizationScope: AuthorizationGrantScope;
+    context: AccountSelfContextRecord;
+    employeeId: DomainId<'Employee'>;
+    localDate: ReturnType<typeof requireLocalDate>;
+    minutes: number;
+    targetId: DomainId<'AbsenceCancellation'>;
+    transaction: WorkLedgerTransaction;
+    version: number;
+  }>,
+): Promise<void> {
+  if (
+    input.authorizationScope !== 'REPORTS_LIMITED' &&
+    input.authorizationScope !== 'ORGANIZATION_HR'
+  ) {
+    throw denied();
+  }
+  await input.transaction.audit.appendDomain({
+    actionCode: 'POST_LOCK_ABSENCE_CANCELLATION_APPLIED',
+    actor: {
+      accountId: input.context.accountId,
+      kind: 'ACCOUNT',
+      role: input.authorizationScope === 'ORGANIZATION_HR' ? 'HR_ADMINISTRATOR' : 'MANAGER',
+    },
+    facts: {
+      effectiveDate: input.localDate,
+      minutes: input.minutes,
+      version: input.version,
+    },
+    occurredAt: input.at,
+    organizationId: input.context.organization.id,
+    outcome: 'SUCCESS',
+    privileged: input.authorizationScope === 'ORGANIZATION_HR',
+    reasonCode: 'APPROVED_ABSENCE_CANCELLATION',
+    requestId: null,
+    restrictedReasonId: null,
+    subjectEmployeeId: input.employeeId,
+    targetId: input.targetId,
+    targetKind: 'ABSENCE_REQUEST',
+  });
+}
+
+function requireLocalDate(value: unknown) {
+  const parsed = parseLocalDate(value);
+  if (!parsed.ok) throw internalError();
+  return parsed.value;
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function conflict() {
+  return new WorkLedgerApiError({ code: 'APPROVAL_STATE_CONFLICT', statusCode: 409 });
+}
+
+function internalError() {
+  return new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
 }
 
 function requireActiveEmployeeContext(

@@ -295,7 +295,7 @@ Every absence request, decision, resubmission, and cancellation mutation carries
 - `ABSENCE_INSUFFICIENT_BALANCE` returns requested, available, reserved, and projected integer minutes only to the owner, an eligible reviewer whose decision requires them, or HR. Team DTOs never receive the error or amounts.
 - `ABSENCE_OVERRIDE_REASON_REQUIRED` and `APPROVAL_REASON_REQUIRED` do not echo an invalid submitted reason.
 - A report-and-acknowledge request rejects an attempted rejection with `ABSENCE_REPORT_CANNOT_REJECT`; coverage removal uses cancellation.
-- An ordinary cancellation touching a locked date returns `PERIOD_ADJUSTMENT_REQUIRED` with safe affected dates and no partial effect.
+- A cancellation touching a `SUBMITTED` or `APPROVED` month returns `PERIOD_REOPEN_REQUIRED` with no partial effect. A `LOCKED` target is accepted only through its captured immutable-snapshot adjustment path; fingerprint, version, or semantic-source conflicts fail atomically.
 - Absence type, sickness classification, request/decision text, entitlement, and person-identifying search values are not accepted as URL state. Opaque record IDs and non-sensitive pagination/sort/generic status/date-range filters may appear in URLs.
 
 ## 10. Daily calculation result union

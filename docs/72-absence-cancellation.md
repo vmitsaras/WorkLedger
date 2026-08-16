@@ -30,8 +30,11 @@ no approved deduction, including ordinary reported sickness, creates no artifici
 movement.
 
 Approval, state update, calculation-input replacement, entitlement restoration, and audit record
-run in one serializable transaction. A target in a locked monthly period is rejected with
-`PERIOD_ADJUSTMENT_REQUIRED`; it must use the later post-lock adjustment workflow.
+run in one serializable transaction. Submission may atomically include unlocked and locked dates.
+For every affected locked month it captures the exact approved snapshot and source fingerprint;
+approval preserves that baseline, appends per-date absence-credit/expected/credited/balance
+component deltas, and posts one nonzero aggregate `POST_LOCK_ADJUSTMENT` time-account entry per
+snapshot. A stale decision or evidence mismatch rolls back the entire request.
 
 ## API and interface
 
@@ -48,5 +51,7 @@ message for a failed request. It neither requests nor displays medical informati
 ## Evidence
 
 `apps/api/test/absence-cancellation.integration.test.ts` verifies a partial cancellation,
-immutable initial effect/deduction, exact restoration, duplicate-decision safety, and locked-period
-routing.
+immutable initial effect/deduction, exact restoration, duplicate-decision safety, immutable locked
+snapshot linkage, component and aggregate ledger reconciliation, minimized audit/notification
+evidence, and stale-replay rollback. The monthly contract and component tests verify that the
+original approved record and adjusted view remain distinct and textual.

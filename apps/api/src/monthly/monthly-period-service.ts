@@ -593,20 +593,46 @@ function projectMonthlyPeriod(
   const dailyResults = source.dailyProjections
     .filter((projection) => coveredDates.includes(projection.localDate))
     .map((projection) => {
-      const postLockDelta = source.postLockAdjustments
-        .filter(({ localDate }) => localDate === projection.localDate)
-        .reduce((total, adjustment) => total + adjustment.minutes, 0);
-      return toDailyInput(
-        postLockDelta === 0
-          ? projection
-          : {
-              ...projection,
-              balanceMinutes: projection.balanceMinutes + postLockDelta,
-              creditedMinutes: projection.creditedMinutes + postLockDelta,
-              workedMinutes: projection.workedMinutes + postLockDelta,
-            },
-        source,
+      const dateAdjustments = source.postLockAdjustments.filter(
+        ({ localDate }) => localDate === projection.localDate,
       );
+      const postLockDelta = dateAdjustments.reduce(
+        (total, adjustment) => total + adjustment.minutes,
+        0,
+      );
+      const workedMinutesDelta = dateAdjustments.reduce(
+        (total, adjustment) => total + adjustment.workedMinutesDelta,
+        0,
+      );
+      const creditedMinutesDelta = dateAdjustments.reduce(
+        (total, adjustment) => total + adjustment.creditedMinutesDelta,
+        0,
+      );
+      const expectedMinutesDelta = dateAdjustments.reduce(
+        (total, adjustment) => total + adjustment.expectedMinutesDelta,
+        0,
+      );
+      const absenceCreditMinutesDelta = dateAdjustments.reduce(
+        (total, adjustment) => total + adjustment.absenceCreditMinutesDelta,
+        0,
+      );
+      const adjustedProjection = {
+        ...projection,
+        absenceCreditMinutes: projection.absenceCreditMinutes + absenceCreditMinutesDelta,
+        balanceMinutes: projection.balanceMinutes + postLockDelta,
+        creditedMinutes: projection.creditedMinutes + creditedMinutesDelta,
+        expectedMinutes: projection.expectedMinutes + expectedMinutesDelta,
+        workedMinutes: projection.workedMinutes + workedMinutesDelta,
+      };
+      if (
+        adjustedProjection.absenceCreditMinutes < 0 ||
+        adjustedProjection.creditedMinutes < 0 ||
+        adjustedProjection.expectedMinutes < 0 ||
+        adjustedProjection.workedMinutes < 0
+      ) {
+        throw internalError();
+      }
+      return toDailyInput(dateAdjustments.length === 0 ? projection : adjustedProjection, source);
     });
   const sourceFingerprint = fingerprintSource({
     absenceEffects: source.absenceEffects,
@@ -660,17 +686,31 @@ function projectMonthlyPeriod(
             adjustedClosingBalanceMinutes:
               approved.totals.ledgerClosingBalanceMinutes + cumulativePostLockDelta,
             adjustments: source.postLockAdjustments.map((adjustment) =>
-              Object.freeze({
-                adjustmentVersion: adjustment.adjustmentVersion,
-                createdAt: adjustment.createdAt,
-                id: adjustment.id,
-                localDate: adjustment.localDate,
-                minutes: adjustment.minutes,
-                previousAdjustedWorkedMinutes: adjustment.previousAdjustedWorkedMinutes,
-                proposedWorkedMinutes: adjustment.proposedWorkedMinutes,
-                reversesAdjustmentId: adjustment.reversesAdjustmentId,
-                sourceRequestId: adjustment.correctionRequestId,
-              }),
+              adjustment.kind === 'CORRECTION'
+                ? Object.freeze({
+                    adjustmentVersion: adjustment.adjustmentVersion,
+                    createdAt: adjustment.createdAt,
+                    id: adjustment.id,
+                    kind: adjustment.kind,
+                    localDate: adjustment.localDate,
+                    minutes: adjustment.minutes,
+                    previousAdjustedWorkedMinutes: adjustment.previousAdjustedWorkedMinutes,
+                    proposedWorkedMinutes: adjustment.proposedWorkedMinutes,
+                    reversesAdjustmentId: adjustment.reversesAdjustmentId,
+                    sourceRequestId: adjustment.correctionRequestId,
+                  })
+                : Object.freeze({
+                    absenceCreditMinutesDelta: adjustment.absenceCreditMinutesDelta,
+                    adjustmentVersion: adjustment.adjustmentVersion,
+                    createdAt: adjustment.createdAt,
+                    creditedMinutesDelta: adjustment.creditedMinutesDelta,
+                    expectedMinutesDelta: adjustment.expectedMinutesDelta,
+                    id: adjustment.id,
+                    kind: adjustment.kind,
+                    localDate: adjustment.localDate,
+                    minutes: adjustment.minutes,
+                    sourceRequestId: adjustment.absenceCancellationId,
+                  }),
             ),
             cumulativeDeltaMinutes: cumulativePostLockDelta,
             currentViewVersion: source.postLockAdjustments.at(-1)?.adjustmentVersion ?? 0,

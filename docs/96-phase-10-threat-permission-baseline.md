@@ -20,8 +20,8 @@ the only final threat-control gate.
 | `T-004` | Same-origin, Fetch Metadata, session-bound CSRF, missing/bad token, and unsafe-method integration coverage | Application verified | `WL-1003` verifies through the reference proxy |
 | `T-005` | Fixed-origin and exact-proxy configuration tests plus forged-forwarded-header health tests | Partial; no direct production-port/isolation evidence yet | `WL-1003` |
 | `T-006` | Deny-by-default policy, organization/target checks, purpose DTO tests, explicit `403`, and scoped collection tests; `authorization-policy.unit.test.ts` now enumerates every central action | Application verified | Downstream tasks retain the same policy checks |
-| `T-007` | Current/former manager, role removal, session invalidation, technical/HR separation, fresh-session, and combined-role self-prohibition tests | Application verified | `WL-1000A` applies the same rules to locked cancellation |
-| `T-008` | Attendance idempotency/concurrency, approval versioning, unique ledger sources, cancellation stale replay, and post-lock adjustment transaction tests | Application verified for implemented mutations | `WL-1000A`, `WL-1001` add locked-cancellation and scale races |
+| `T-007` | Current/former manager, role removal, session invalidation, technical/HR separation, fresh-session, combined-role self-prohibition tests, and locked-cancellation current non-self manager/HR authorization | Application verified | Downstream tasks retain the same policy checks |
+| `T-008` | Attendance idempotency/concurrency, approval versioning, unique ledger sources, locked-cancellation stale replay, immutable snapshot links, and atomic post-lock entitlement/time adjustments | Application verified for implemented mutations | `WL-1001` adds expected-scale races |
 | `T-009` | Immutable-history database triggers, append-only repository contracts, snapshot reconciliation, and migration integration tests | Application/database verified; restore/upgrade proof open | `WL-1004`, `WL-1005` |
 | `T-010` | Strict bounded text contracts, React text rendering, safe error serialization, and hostile-text audit/export fixtures; no arbitrary HTML/Markdown API exists | Partial; deployed CSP is not yet evidenced | `WL-1003`, `WL-1006` |
 | `T-011` | Type-neutral URLs, memory-only server state, no browser persistence, no-store responses, minimized team/report/notification/print/clipboard contracts, and field-absence tests | Application verified; deployed logs/cache inspection open | `WL-1003`, `WL-1006`, `WL-1007` |
@@ -71,13 +71,12 @@ logging task is complete.
 
 ## `D-504` resolution and release blockers
 
-Locked-period cancellation remains fail-closed with no partial effect. `D-504` now defines the
-required snapshot-linked, non-self-authorized, append-only adjustment behavior, and `WL-1000A` is a
-required dependency of the production gate. This is a product-completeness blocker, not a known
-confidentiality or integrity vulnerability in the current denial path.
+Locked-period cancellation now implements the `D-504` snapshot-linked, non-self-authorized,
+append-only adjustment behavior. `WL-1000A` supplies database-backed evidence for immutable source
+linkage, exact entitlement/time effects, purpose-minimized output, and stale-replay rollback.
 
-Release remains blocked by `WL-1000A` and the evidence owners named above. In particular, this
-baseline does not claim deployed CSP/network isolation, encrypted restore, upgrade safety,
+Release remains blocked by the other evidence owners named above. In particular, this baseline
+does not claim deployed CSP/network isolation, encrypted restore, upgrade safety,
 structured log redaction, expected-scale resilience, or retention execution.
 
 ## Manual verification carried forward
