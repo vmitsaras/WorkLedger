@@ -1715,6 +1715,9 @@ export const userExportRequests = pgTable(
       'user_export_requests_generated_has_path',
       sql`(${table.generatedAt} is null and ${table.artifactPath} is null and ${table.sizeBytes} is null) or (${table.generatedAt} is not null and ${table.artifactPath} is not null and ${table.sizeBytes} is not null)`,
     ),
-    check('user_export_requests_size_non_negative', sql`${table.sizeBytes} is null or ${table.sizeBytes} >= 0`),
+    check(
+      'user_export_requests_size_non_negative',
+      sql`${table.sizeBytes} is null or ${table.sizeBytes} >= 0`,
+    ),
   ],
 );

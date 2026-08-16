@@ -6,11 +6,7 @@
  * unset placeholders fail the production-readiness check.
  */
 
-import type {
-  RetentionClass,
-  RetentionClassConfig,
-  RetentionProfile,
-} from '@workledger/contracts';
+import type { RetentionClass, RetentionClassConfig, RetentionProfile } from '@workledger/contracts';
 
 /**
  * Default retention profile placeholders (INVALID FOR PRODUCTION).
@@ -65,8 +61,7 @@ export const DEFAULT_RETENTION_PROFILE: RetentionProfile = {
       applyToBackups: true,
       operator: 'PLACEHOLDER',
       jurisdictionOwner: 'PLACEHOLDER',
-      notes:
-        'Sickness classification, absence notes, decision reasons, entitlement details',
+      notes: 'Sickness classification, absence notes, decision reasons, entitlement details',
     },
     {
       retentionClass: 'DOMAIN_HISTORY',
@@ -75,8 +70,7 @@ export const DEFAULT_RETENTION_PROFILE: RetentionProfile = {
       applyToBackups: true,
       operator: 'PLACEHOLDER',
       jurisdictionOwner: 'PLACEHOLDER',
-      notes:
-        'Punches, decisions, ledgers, approved snapshots, adjustments, domain audit history',
+      notes: 'Punches, decisions, ledgers, approved snapshots, adjustments, domain audit history',
     },
     {
       retentionClass: 'TECHNICAL_AUDIT',
@@ -122,9 +116,7 @@ export function validateRetentionProfile(
   }
 
   if (profile.classes.length !== 8) {
-    issues.push(
-      `Retention profile must define all 8 classes, got ${profile.classes.length}`,
-    );
+    issues.push(`Retention profile must define all 8 classes, got ${profile.classes.length}`);
     return { valid: false, productionReady: false, issues: Object.freeze(issues) };
   }
 
@@ -156,10 +148,7 @@ export function validateRetentionProfile(
       hasPlaceholders = true;
     }
 
-    if (
-      classConfig.operator === 'PLACEHOLDER' ||
-      classConfig.jurisdictionOwner === 'PLACEHOLDER'
-    ) {
+    if (classConfig.operator === 'PLACEHOLDER' || classConfig.jurisdictionOwner === 'PLACEHOLDER') {
       issues.push(
         `Retention class ${classConfig.retentionClass} has placeholder operator or jurisdiction owner`,
       );
@@ -167,9 +156,7 @@ export function validateRetentionProfile(
     }
 
     if (classConfig.durationDays !== null && classConfig.durationDays < 0) {
-      issues.push(
-        `Retention class ${classConfig.retentionClass} has negative durationDays`,
-      );
+      issues.push(`Retention class ${classConfig.retentionClass} has negative durationDays`);
     }
   }
 
@@ -202,10 +189,7 @@ export function getRetentionConfig(
  * Calculate the cutoff date for a retention class.
  * Records older than this date are eligible for purge/minimization.
  */
-export function calculateRetentionCutoff(
-  config: RetentionClassConfig,
-  now: Date,
-): Date | null {
+export function calculateRetentionCutoff(config: RetentionClassConfig, now: Date): Date | null {
   if (config.durationDays === null || config.behavior === 'RETAIN') {
     return null;
   }

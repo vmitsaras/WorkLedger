@@ -74,7 +74,9 @@ export function SystemOperationsPage() {
                   {diagnostics.dependencies.database.latencyMs !== undefined && (
                     <div>
                       <dt className="text-secondary text-sm">Latency</dt>
-                      <dd className="font-medium">{diagnostics.dependencies.database.latencyMs} ms</dd>
+                      <dd className="font-medium">
+                        {diagnostics.dependencies.database.latencyMs} ms
+                      </dd>
                     </div>
                   )}
                   {diagnostics.dependencies.database.error !== undefined && (
@@ -130,7 +132,10 @@ function HealthBadge({ status }: Readonly<{ status: 'healthy' | 'degraded' | 'cr
   if (status === 'healthy') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-200">
-        <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" aria-hidden="true" />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400"
+          aria-hidden="true"
+        />
         Healthy
       </span>
     );
@@ -138,7 +143,10 @@ function HealthBadge({ status }: Readonly<{ status: 'healthy' | 'degraded' | 'cr
   if (status === 'degraded') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
-        <span className="h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400" aria-hidden="true" />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400"
+          aria-hidden="true"
+        />
         Degraded
       </span>
     );
@@ -151,13 +159,14 @@ function HealthBadge({ status }: Readonly<{ status: 'healthy' | 'degraded' | 'cr
   );
 }
 
-function DependencyBadge({
-  status,
-}: Readonly<{ status: 'healthy' | 'degraded' | 'unavailable' }>) {
+function DependencyBadge({ status }: Readonly<{ status: 'healthy' | 'degraded' | 'unavailable' }>) {
   if (status === 'healthy') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-200">
-        <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" aria-hidden="true" />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400"
+          aria-hidden="true"
+        />
         Healthy
       </span>
     );
@@ -165,7 +174,10 @@ function DependencyBadge({
   if (status === 'degraded') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
-        <span className="h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400" aria-hidden="true" />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400"
+          aria-hidden="true"
+        />
         Degraded
       </span>
     );

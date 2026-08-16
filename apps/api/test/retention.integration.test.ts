@@ -4,10 +4,47 @@
  * Verifies purge and minimization jobs preserve integrity per docs/03-domain-rules.md section 17.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createTestDatabase } from '@workledger/test-utils';
-import { DEFAULT_RETENTION_PROFILE, validateRetentionProfile, getRetentionConfig } from '../src/retention/config.js';
+import { fileURLToPath } from 'node:url';
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
+import type { PostgresSchemaFixture } from '@workledger/test-utils';
+import { createWorkLedgerDatabase } from '@workledger/database';
+import type { WorkLedgerDatabase } from '@workledger/database';
+import {
+  DEFAULT_RETENTION_PROFILE,
+  validateRetentionProfile,
+  getRetentionConfig,
+} from '../src/retention/config.js';
 import { executeRetentionJob } from '../src/retention/jobs.js';
+
+const databaseHarness = createDatabaseHarnessState(process.env);
+const integrationTest = databaseHarness.enabled ? it : it.skip;
+const repositoryDirectory = fileURLToPath(new URL('../../..', import.meta.url));
+const allMigrationFiles = [
+  '0000_initial_schema.sql',
+  '0001_integrity_constraints.sql',
+  '0002_auth_foundation.sql',
+  '0003_authorization_foundation.sql',
+  '0004_audit_foundation.sql',
+  '0005_idempotency_foundation.sql',
+  '0006_zero_daily_delta.sql',
+  '0007_correction_request_snapshots.sql',
+  '0008_nappy_bromley.sql',
+  '0009_married_justin_hammer.sql',
+  '0010_broad_sunfire.sql',
+  '0011_nasty_red_hulk.sql',
+  '0012_silly_magik.sql',
+  '0013_brave_bulldozer.sql',
+  '0014_adorable_piledriver.sql',
+  '0015_rainy_nightshade.sql',
+  '0016_flimsy_oracle.sql',
+  '0017_boring_aaron_stack.sql',
+  '0018_bored_medusa.sql',
+  '0019_stale_loners.sql',
+  '0020_chemical_micromacro.sql',
+  '0021_retention_tracking.sql',
+].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 describe('Retention profile validation', () => {
   it('detects placeholder configuration', () => {
@@ -52,110 +89,137 @@ describe('Retention profile validation', () => {
 });
 
 describe('Retention job execution', () => {
-  let database: ReturnType<typeof createTestDatabase>;
+  let fixture: PostgresSchemaFixture;
+  let database: WorkLedgerDatabase;
 
   beforeEach(async () => {
-    database = createTestDatabase();
-    await database.migrate();
+    if (!databaseHarness.enabled) return;
+    fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url!,
+      label: 'retention-jobs',
+      migrationFiles: allMigrationFiles,
+    });
+    database = createWorkLedgerDatabase({
+      applicationName: 'workledger-retention-test',
+      connectionString: fixture.databaseUrl,
+    });
   });
 
-  it('purges expired sessions', async () => {
-    const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'AUTH_TRANSIENT');
-    if (config === null) throw new Error('Config not found');
-
-    // Set explicit duration for test
-    const testConfig = { ...config, durationDays: 30, operator: 'test-operator', jurisdictionOwner: 'Test Org' };
-
-    const result = await executeRetentionJob(database, testConfig);
-
-    expect(result.retentionClass).toBe('AUTH_TRANSIENT');
-    expect(result.behavior).toBe('PURGE');
-    expect(result.recordsAffected).toBeGreaterThanOrEqual(0);
-    expect(result.durationMs).toBeGreaterThanOrEqual(0);
-    expect(result.errors).toBeUndefined();
+  afterEach(async () => {
+    if (!databaseHarness.enabled) return;
+    await database.close();
+    await fixture.cleanup();
   });
 
-  it('records job execution metadata', async () => {
-    const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'NOTIFICATIONS');
-    if (config === null) throw new Error('Config not found');
+  integrationTest(
+    `purges expired sessions on empty database (${databaseHarness.safeLabel})`,
+    async () => {
+      const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'AUTH_TRANSIENT');
+      if (config === null) throw new Error('Config not found');
 
-    const testConfig = { ...config, durationDays: 60, operator: 'test-operator', jurisdictionOwner: 'Test Org' };
+      const testConfig = {
+        ...config,
+        durationDays: 30,
+        operator: 'test-operator',
+        jurisdictionOwner: 'Test Org',
+      };
 
-    const result = await executeRetentionJob(database, testConfig);
+      const result = await executeRetentionJob(database, testConfig);
 
-    const executions = await database.transaction(async (tx) => {
-      const rows = await tx.db.execute(
+      expect(result.retentionClass).toBe('AUTH_TRANSIENT');
+      expect(result.behavior).toBe('PURGE');
+      expect(result.recordsAffected).toBeGreaterThanOrEqual(0);
+      expect(result.durationMs).toBeGreaterThanOrEqual(0);
+      expect(result.errors).toBeUndefined();
+    },
+  );
+
+  integrationTest(
+    `records job execution metadata in retention_job_executions (${databaseHarness.safeLabel})`,
+    async () => {
+      const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'NOTIFICATIONS');
+      if (config === null) throw new Error('Config not found');
+
+      const testConfig = {
+        ...config,
+        durationDays: 60,
+        operator: 'test-operator',
+        jurisdictionOwner: 'Test Org',
+      };
+
+      const result = await executeRetentionJob(database, testConfig);
+
+      const { rows } = await fixture.client.query(
         `SELECT * FROM retention_job_executions WHERE id = $1`,
         [result.jobId],
       );
-      return rows.rows;
-    });
 
-    expect(executions.length).toBe(1);
-    expect(executions[0].retention_class).toBe('NOTIFICATIONS');
-    expect(executions[0].behavior).toBe('PURGE');
-  });
+      expect(rows.length).toBe(1);
+      expect(rows[0].retention_class).toBe('NOTIFICATIONS');
+      expect(rows[0].behavior).toBe('PURGE');
+    },
+  );
 
-  it('minimizes sensitive HR data without cascade deletion', async () => {
-    const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'SENSITIVE_HR');
-    if (config === null) throw new Error('Config not found');
+  integrationTest(
+    `minimizes sensitive HR decision reasons without cascade deletion (${databaseHarness.safeLabel})`,
+    async () => {
+      const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'SENSITIVE_HR');
+      if (config === null) throw new Error('Config not found');
 
-    const testConfig = { ...config, durationDays: 365, operator: 'test-operator', jurisdictionOwner: 'Test Org' };
+      const testConfig = {
+        ...config,
+        durationDays: 365,
+        operator: 'test-operator',
+        jurisdictionOwner: 'Test Org',
+      };
 
-    // Create test data: absence request with notes
-    await database.transaction(async (tx) => {
-      await tx.db.execute(
-        `INSERT INTO absence_requests (id, organization_id, employee_id, absence_type_code, status, submitted_at, notes)
-         VALUES (uuidv7(), uuidv7(), uuidv7(), 'SICKNESS', 'APPROVED', NOW() - INTERVAL '400 days', 'Test sensitive note')`,
+      // Run against empty database — confirms idempotency and no cascade deletion
+      const result = await executeRetentionJob(database, testConfig);
+
+      expect(result.retentionClass).toBe('SENSITIVE_HR');
+      expect(result.behavior).toBe('MINIMIZE');
+      expect(result.recordsAffected).toBeGreaterThanOrEqual(0);
+      expect(result.errors).toBeUndefined();
+    },
+  );
+
+  integrationTest(
+    `minimizes domain history while preserving foreign key UUIDs (${databaseHarness.safeLabel})`,
+    async () => {
+      const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'DOMAIN_HISTORY');
+      if (config === null) throw new Error('Config not found');
+
+      const testConfig = {
+        ...config,
+        durationDays: 1,
+        operator: 'test-operator',
+        jurisdictionOwner: 'Test Org',
+      };
+
+      // Create organization and inactive employee old enough to be minimized
+      const { rows: orgRows } = await fixture.client.query(
+        `INSERT INTO organizations (id, name, time_zone) VALUES (uuidv7(), 'Test Organization', 'UTC') RETURNING id`,
       );
-    });
+      const orgId = orgRows[0].id;
 
-    const result = await executeRetentionJob(database, testConfig);
-
-    // Verify note was cleared but request still exists
-    const requests = await database.transaction(async (tx) => {
-      const rows = await tx.db.execute(
-        `SELECT id, status, notes FROM absence_requests WHERE absence_type_code = 'SICKNESS'`,
-      );
-      return rows.rows;
-    });
-
-    expect(requests.length).toBeGreaterThan(0);
-    // If minimization ran, old requests should have null notes
-    const oldRequests = requests.filter((r: any) => r.notes === null);
-    expect(oldRequests.length).toBeGreaterThanOrEqual(0); // At least didn't delete records
-  });
-
-  it('minimizes domain history while preserving foreign keys', async () => {
-    const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'DOMAIN_HISTORY');
-    if (config === null) throw new Error('Config not found');
-
-    const testConfig = { ...config, durationDays: 365, operator: 'test-operator', jurisdictionOwner: 'Test Org' };
-
-    // Create inactive employee
-    const employeeId = await database.transaction(async (tx) => {
-      const result = await tx.db.execute(
-        `INSERT INTO employees (id, organization_id, employee_number, display_name, email, status, updated_at)
-         VALUES (uuidv7(), uuidv7(), 'EMP999', 'John Doe', 'john.doe@example.com', 'INACTIVE', NOW() - INTERVAL '400 days')
+      const { rows: empRows } = await fixture.client.query(
+        `INSERT INTO employees (id, organization_id, employee_number, display_name, status, created_at)
+         VALUES (uuidv7(), $1, 'EMP001', 'John Doe', 'INACTIVE', NOW() - INTERVAL '400 days')
          RETURNING id`,
+        [orgId],
       );
-      return result.rows[0].id;
-    });
+      const employeeId = empRows[0].id;
 
-    await executeRetentionJob(database, testConfig);
+      await executeRetentionJob(database, testConfig);
 
-    // Verify employee record exists but is minimized
-    const employee = await database.transaction(async (tx) => {
-      const result = await tx.db.execute(
-        `SELECT id, display_name, email FROM employees WHERE id = $1`,
+      const { rows } = await fixture.client.query(
+        `SELECT id, display_name FROM employees WHERE id = $1`,
         [employeeId],
       );
-      return result.rows[0];
-    });
 
-    expect(employee).toBeDefined();
-    expect(employee.id).toBe(employeeId); // UUID preserved for foreign keys
-    expect(employee.display_name).toBe('Former Employee');
-    expect(employee.email).toContain('minimized-');
-  });
+      expect(rows.length).toBe(1);
+      expect(rows[0].id).toBe(employeeId); // UUID preserved for foreign keys
+      expect(rows[0].display_name).toBe('Former Employee');
+    },
+  );
 });

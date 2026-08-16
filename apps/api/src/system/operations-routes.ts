@@ -32,7 +32,7 @@ import { requestAuthenticationHeaders } from '../auth/request-session.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import { DEFAULT_RETENTION_PROFILE, validateRetentionProfile } from '../retention/config.js';
 
-const APP_VERSION = '0.10.0';
+const APP_VERSION = '0.11.0';
 
 export function registerSystemOperationsRoutes(
   app: FastifyInstance,

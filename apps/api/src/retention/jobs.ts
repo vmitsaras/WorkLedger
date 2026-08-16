@@ -9,7 +9,11 @@
  */
 
 import type { WorkLedgerDatabase } from '@workledger/database';
-import type { RetentionClass, RetentionClassConfig, RetentionJobResult } from '@workledger/contracts';
+import type {
+  RetentionClass,
+  RetentionClassConfig,
+  RetentionJobResult,
+} from '@workledger/contracts';
 import { calculateRetentionCutoff } from './config.js';
 import { randomUUID } from 'node:crypto';
 
@@ -111,7 +115,10 @@ export async function executeRetentionJob(
 /**
  * Purge expired sessions, reset/invitation grants.
  */
-async function purgeAuthTransient(database: WorkLedgerDatabase, cutoffIso: string): Promise<number> {
+async function purgeAuthTransient(
+  database: WorkLedgerDatabase,
+  cutoffIso: string,
+): Promise<number> {
   let totalPurged = 0;
 
   await database.transaction(async (tx) => {
@@ -125,14 +132,20 @@ async function purgeAuthTransient(database: WorkLedgerDatabase, cutoffIso: strin
 /**
  * Purge old notification delivery attempts.
  */
-async function purgeNotifications(database: WorkLedgerDatabase, cutoffIso: string): Promise<number> {
+async function purgeNotifications(
+  database: WorkLedgerDatabase,
+  cutoffIso: string,
+): Promise<number> {
   return database.transaction((tx) => tx.retention.purgeOldNotificationDeliveries(cutoffIso));
 }
 
 /**
  * Purge old security audit events.
  */
-async function purgeTechnicalAudit(database: WorkLedgerDatabase, cutoffIso: string): Promise<number> {
+async function purgeTechnicalAudit(
+  database: WorkLedgerDatabase,
+  cutoffIso: string,
+): Promise<number> {
   return database.transaction((tx) => tx.retention.purgeOldSecurityAuditEvents(cutoffIso));
 }
 
@@ -203,9 +216,7 @@ async function minimizeDomainHistory(
 /**
  * Get the most recent execution for each retention class.
  */
-export async function getRetentionJobStatus(
-  database: WorkLedgerDatabase,
-): Promise<
+export async function getRetentionJobStatus(database: WorkLedgerDatabase): Promise<
   Array<{
     retentionClass: RetentionClass;
     lastExecutedAt: string | null;

@@ -1061,7 +1061,9 @@ export async function revokeSelfSession(sessionId: string) {
   return parsed.data.data;
 }
 
-export async function loadSystemDiagnostics(signal?: AbortSignal): Promise<SystemDiagnosticsResponse> {
+export async function loadSystemDiagnostics(
+  signal?: AbortSignal,
+): Promise<SystemDiagnosticsResponse> {
   const body = await requestJson('/v1/system/operations', signal === undefined ? {} : { signal });
   const parsed = systemDiagnosticsResponseSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);

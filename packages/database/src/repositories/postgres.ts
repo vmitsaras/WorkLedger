@@ -7966,7 +7966,8 @@ class PostgresRetentionRepository implements RetentionRepository {
     endDate?: string,
   ): Promise<LeaveEntitlementExportRecord[]> {
     const conditions = [eq(leaveEntitlementEntries.employeeId, employeeId)];
-    if (startDate !== undefined) conditions.push(gte(leaveEntitlementEntries.effectiveOn, startDate));
+    if (startDate !== undefined)
+      conditions.push(gte(leaveEntitlementEntries.effectiveOn, startDate));
     if (endDate !== undefined) conditions.push(lte(leaveEntitlementEntries.effectiveOn, endDate));
 
     const rows = await this.transaction

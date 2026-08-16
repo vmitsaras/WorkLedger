@@ -5,6 +5,7 @@
  * Authorization: Employee role for own exports.
  */
 
+import { z } from 'zod';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import {
@@ -99,13 +100,9 @@ export function registerRetentionRoutes(
         description:
           'Download a previously requested data export. Requires the same authenticated employee who requested it. Expires after 24 hours.',
         operationId: 'downloadUserExport',
-        params: {
-          type: 'object',
-          properties: {
-            exportId: { type: 'string', format: 'uuid' },
-          },
-          required: ['exportId'],
-        },
+        params: z.object({
+          exportId: z.string().uuid(),
+        }),
         summary: 'Download user data export',
         tags: ['Account'],
       },
@@ -161,7 +158,10 @@ export function registerRetentionRoutes(
         const stream = createReadStream(exportRecord.artifactPath);
 
         reply.header('content-type', 'application/zip');
-        reply.header('content-disposition', `attachment; filename="workledger-export-${exportId}.zip"`);
+        reply.header(
+          'content-disposition',
+          `attachment; filename="workledger-export-${exportId}.zip"`,
+        );
         reply.header('content-length', stats.size);
 
         return reply.send(stream);

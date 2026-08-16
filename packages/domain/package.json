@@ -1,6 +1,6 @@
 {
   "name": "@workledger/domain",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "description": "Private WorkLedger framework-independent domain boundary.",
   "license": "MIT",

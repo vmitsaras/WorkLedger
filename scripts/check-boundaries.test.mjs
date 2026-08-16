@@ -29,7 +29,7 @@ test('accepts every current workspace source import', async () => {
   assert.deepEqual(await checkWorkspaceBoundaries(repositoryRoot), {
     errors: [],
     fileCount: 266,
-    importCount: 1371,
+    importCount: 1380,
   });
 });
 

@@ -1,11 +1,11 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 10 — Production hardening and self-hosting
-**Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 8 of 10 Phase 10 tasks complete (WL-1007 complete)
-**Current milestone:** Data retention and minimization controls complete
-**Active task:** `WL-1008` (next)
-**Status:** WL-1007 complete — all retention, minimization, user-export, and backup-expiry controls implemented
+**Current phase:** Phase 11 — Portfolio presentation
+**Project readiness:** Stage 5 of 5 — Production complete, portfolio in progress
+**Phase progress:** Phase 10 complete — 0 of 6 Phase 11 tasks started
+**Current milestone:** Production hardening and self-hosting complete — version 0.11.0
+**Active task:** `WL-1100` (next)
+**Status:** WL-1008 complete — production release gate passed; all T-001–T-020 rows release-ready
 **Last verified:** 2026-08-16
 
 ## Current objective
