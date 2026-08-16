@@ -131,7 +131,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1001` Complete performance, pagination, and concurrency review.
 - [ ] `WL-1002` Complete full accessibility audit and remediation (cross-engine automation added; manual assistive-technology evidence remains).
 - [x] `WL-1003` Complete the Caddy-reference Docker production deployment.
-- [ ] `WL-1004` Document and test encrypted backup and isolated clean restore.
+- [x] `WL-1004` Document and test encrypted backup and isolated clean restore.
 - [ ] `WL-1005` Document and test migrations and upgrades.
 - [ ] `WL-1006` Add structured logs, failure diagnostics, and safe technical operations/audit surfaces.
 - [ ] `WL-1007` Complete mandatory retention, minimization, user-export, and backup-expiry controls.

@@ -522,3 +522,18 @@ regression contract for `WL-1008`.
   task allowed to declare every threat control release-ready and no known Critical/High issue open.
 - This resolves the prior contradiction between the original `WL-1000` wording and the evidence
   that can only be produced by its later Phase 10 peer tasks.
+
+### D-506 — Portable backup encryption and restore quarantine
+
+**Status:** Resolved by `WL-1004`.
+
+- WorkLedger backup artifacts use authenticated AES-256-GCM encryption with a scrypt-derived key.
+  The host-only encryption key is supplied through a separate file containing at least 32 bytes;
+  it is not stored with the artifact or manifest.
+- The content-free `0600` manifest records application/schema version, creation and explicit expiry,
+  retention class, operator identifier, encryption profile, artifact size/checksum, and access mode.
+- Clean restore uses a PostgreSQL-only Compose model on an internal network with a fresh restore
+  password and no published port, API, proxy, SMTP, or webhook configuration. It deletes all
+  restored sessions and verification grants before access and then runs integrity reconciliation.
+- `WL-1007` still owns deployment-specific expiry enforcement and restored-data retention jobs;
+  `WL-1004` records and rejects expiry but does not choose a universal legal duration.

@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 4 of 10 Phase 10 tasks complete
-**Current milestone:** Backup and isolated restore evidence
-**Active task:** `WL-1004`
+**Phase progress:** 5 of 10 Phase 10 tasks complete
+**Current milestone:** Migration and upgrade evidence
+**Active task:** `WL-1005`
 **Status:** Not started
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Complete `WL-1004` encrypted backup and isolated clean restore evidence.
+Complete `WL-1005` migration and upgrade evidence from a prior supported release fixture.
 
 ## Verified decisions
 
@@ -1267,15 +1267,39 @@ Complete `WL-1004` encrypted backup and isolated clean restore evidence.
   actions. D-502 and the bounded-history scale remain release-level work.
 - Next task: `WL-501`.
 
+### `WL-1004` — Document and test encrypted backup and isolated clean restore
+
+- Changed: added authenticated AES-256-GCM/scrypt backup encryption, a content-free version/checksum/
+  access/expiry manifest, a PostgreSQL-only internal restore Compose model, and fail-closed restore
+  orchestration with fresh restore credentials and no API, proxy, published port, SMTP, or webhook.
+- Verified: a real `0.10.0` / `0020_chemical_micromacro` seeded PostgreSQL custom dump was encrypted
+  to a `0600` 238,367-byte artifact and restored into a clean disposable volume. The source included
+  one live session and one unconsumed grant; restore deleted both, then reconciled 1 organization,
+  9 employees, 26 immutable punches, 9 time-ledger entries, 8 leave-ledger entries, 2 monthly
+  snapshots, 1 post-lock adjustment, 7 domain audits, and 1 security audit without recording rows.
+- Tests: authenticated encryption round-trip/tamper rejection, minimum-key enforcement, quarantine
+  topology, credential revocation, and required integrity-query coverage pass. The real clean restore,
+  strengthened snapshot metadata/totals reconciliation, and Compose configuration also pass.
+- Accessibility: no application UI was added. Backup/restore remains a documented host-operator CLI
+  workflow and therefore creates no keyboard, focus, announcement, or responsive-interface change.
+- Security/data: artifacts and manifests require protected directories/files; keys remain separate;
+  expired/checksum-invalid/tag-invalid inputs fail before restore; restored credentials are revoked
+  transactionally before access; verification output is restricted to content-free counts/results.
+- Documentation: added `docs/104-backup-and-clean-restore.md`, `.env.restore.example`, decision
+  `D-506`, and synchronized task status. `WL-1007` still owns deployment retention enforcement.
+- Remaining risk: recovery objectives and storage access/monitoring are deployment-owned; activating
+  restored data requires entirely new production secrets and any pending retention/minimization job.
+- Next task: `WL-1005`.
+
 ## Current blockers
 
 `D-504` is implemented and no longer blocks the production gate. `D-502` remains open before the
-production browser gate. Performance, deployment, restore, upgrade, diagnostic, accessibility,
-and retention evidence remains explicitly owned by later Phase 10 tasks under `D-505`.
+production browser gate. Upgrade, diagnostic, accessibility, and retention evidence remains
+explicitly owned by later Phase 10 tasks under `D-505`.
 
 ## Next task
 
-`WL-1004 — Document and test encrypted backup and isolated clean restore.`
+`WL-1005 — Document and test migrations and upgrades.`
 
 ## Update rules
 

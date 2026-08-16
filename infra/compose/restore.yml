@@ -1,0 +1,30 @@
+name: workledger-restore
+
+services:
+  postgres-restore:
+    image: postgres:18.4-trixie
+    restart: 'no'
+    environment:
+      POSTGRES_DB: ${WORKLEDGER_RESTORE_DATABASE:-workledger_restore}
+      POSTGRES_USER: ${WORKLEDGER_RESTORE_USER:-workledger_restore}
+      POSTGRES_PASSWORD_FILE: /run/secrets/restore_postgres_password
+    secrets: [restore_postgres_password]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    security_opt: [no-new-privileges:true]
+    volumes: [workledger-restore-data:/var/lib/postgresql]
+    networks: [restore-quarantine]
+
+networks:
+  restore-quarantine:
+    internal: true
+
+secrets:
+  restore_postgres_password:
+    file: ${WORKLEDGER_RESTORE_POSTGRES_PASSWORD_FILE:?Set a fresh restore-only password file}
+
+volumes:
+  workledger-restore-data:
