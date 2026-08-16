@@ -1,9 +1,35 @@
 {
 	admin off
+	log {
+		output discard
+	}
 }
 
 {$WORKLEDGER_ORIGIN_HOST} {
 	root * /srv/web
+
+	@http_to_https {
+		protocol http
+	}
+	redir @http_to_https https://{host}{uri} 308
+
+	@api_paths path /v1/* /api/* /health
+
+	handle @api_paths {
+		reverse_proxy api:3000 {
+			header_up -Forwarded
+			header_up -X-Forwarded-For
+			header_up -X-Forwarded-Proto
+			header_up -X-Forwarded-Host
+			header_up -X-Forwarded-Port
+			header_up Host {host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			header_up X-Forwarded-Port {server_port}
+		}
+	}
 
 	header {
 		Content-Security-Policy "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
@@ -13,15 +39,6 @@
 		X-Content-Type-Options "nosniff"
 	}
 
-	handle /v1/* {
-		reverse_proxy api:3000
-	}
-	handle /api/* {
-		reverse_proxy api:3000
-	}
-	handle /health {
-		reverse_proxy api:3000
-	}
 	handle {
 		try_files {path} {path}/ /index.html
 		file_server

@@ -34,8 +34,9 @@ details are never returned.
 
 The API runs as the unprivileged Node user with a read-only filesystem, dropped capabilities, a
 bounded temporary filesystem, and `no-new-privileges`. Caddy adds CSP, HSTS, referrer, permissions,
-framing, and MIME-sniffing defenses. Proxy access logging is disabled because reset and invitation
-grants currently use query parameters; allowlisted redacted logging belongs to `WL-1006`.
+framing, and MIME-sniffing defenses, normalizes forwarded headers, redirects HTTP to HTTPS, and
+disables access logs because reset and invitation grants currently use query parameters; allowlisted
+redacted logging belongs to `WL-1006`.
 
 ## Required completion evidence
 

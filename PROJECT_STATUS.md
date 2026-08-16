@@ -4,14 +4,13 @@
 **Project readiness:** Stage 5 of 5 — Production and release in progress
 **Phase progress:** 3 of 10 Phase 10 tasks complete
 **Current milestone:** Corrective accessibility and production-deployment evidence
-**Active task:** `WL-1002`
+**Active task:** `WL-1003`
 **Status:** In progress
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Complete the manual assistive-technology evidence for `WL-1002` and clean-host deployment evidence
-for `WL-1003` before starting dependent `WL-1004` work.
+Complete `WL-1003` hardening and clean-host adversarial checks, then start `WL-1004` restore.
 
 ## Verified decisions
 
