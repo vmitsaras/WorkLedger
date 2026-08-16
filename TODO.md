@@ -134,7 +134,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1004` Document and test encrypted backup and isolated clean restore.
 - [x] `WL-1005` Document and test migrations and upgrades.
 - [x] `WL-1006` Add structured logs, failure diagnostics, and safe technical operations/audit surfaces.
-- [ ] `WL-1007` Complete mandatory retention, minimization, user-export, and backup-expiry controls.
+- [x] `WL-1007` Complete mandatory retention, minimization, user-export, and backup-expiry controls.
 - [ ] `WL-1008` Pass the production release gate.
 
 ## Phase 11 — Portfolio presentation

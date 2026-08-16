@@ -76,15 +76,18 @@ import {
   holidays,
   leaveEntitlementEntries,
   managerAssignments,
+  minimizationAuditFacts,
   organizations,
   policyAssignments,
   punchEvents,
+  retentionJobExecutions,
   scheduleAssignments,
   securityAuditEvents,
   timeAccountEntries,
   timePolicies,
   teamAssignments,
   teams,
+  userExportRequests,
   weeklySchedules,
 } from '../schema/index.js';
 import {
@@ -190,6 +193,18 @@ import type {
   VacationRequestRecord,
   SicknessReportRecord,
   WithdrawAbsenceCancellationInput,
+  RetentionRepository,
+  RetentionClass,
+  RetentionJobExecutionInput,
+  MinimizationAuditFactInput,
+  RetentionJobStatusRecord,
+  CreateExportRequestInput,
+  ExportDownloadRecord,
+  PunchExportRecord,
+  AbsenceExportRecord,
+  TimeAccountExportRecord,
+  LeaveEntitlementExportRecord,
+  CorrectionExportRecord,
 } from './contracts.js';
 import {
   AuditValueError,
@@ -229,6 +244,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   notifications: NotificationRepository;
   reports: ReportRepository;
   monthlyPeriods: MonthlyPeriodRepository;
+  retention: RetentionRepository;
   timeAccount: TimeAccountRepository;
   teamStatus: TeamStatusRepository;
   todayAttendance: TodayAttendanceRepository;
@@ -250,6 +266,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     notifications: new PostgresNotificationRepository(transaction),
     reports: new PostgresReportRepository(transaction),
     monthlyPeriods: new PostgresMonthlyPeriodRepository(transaction),
+    retention: new PostgresRetentionRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
     teamStatus: new PostgresTeamStatusRepository(transaction),
     todayAttendance: new PostgresTodayAttendanceRepository(transaction),
@@ -7684,4 +7701,316 @@ function mapTimeAccountActor(kind: 'ACCOUNT' | 'SYSTEM', actorId: string): TimeA
         kind,
         systemProcess: mapDomainId<'SystemProcess'>(actorId, 'time_account_entries', 'actor_id'),
       });
+}
+
+class PostgresRetentionRepository implements RetentionRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async recordJobExecution(input: RetentionJobExecutionInput): Promise<void> {
+    await this.transaction.insert(retentionJobExecutions).values({
+      id: input.id,
+      retentionClass: input.retentionClass,
+      behavior: input.behavior,
+      executedAt: input.executedAt,
+      cutoffDate: input.cutoffDate ?? undefined,
+      recordsAffected: input.recordsAffected,
+      durationMs: input.durationMs,
+      errorSummary: input.errorSummary ?? null,
+    });
+  }
+
+  async recordMinimizationFact(input: MinimizationAuditFactInput): Promise<void> {
+    await this.transaction.insert(minimizationAuditFacts).values({
+      id: input.id,
+      retentionJobExecutionId: input.retentionJobExecutionId,
+      targetTable: input.targetTable,
+      recordsMinimized: input.recordsMinimized,
+      fieldsCleared: input.fieldsCleared,
+      retentionClass: input.retentionClass,
+    });
+  }
+
+  async purgeExpiredSessions(cutoffDate: string): Promise<number> {
+    const deleted = await this.transaction
+      .delete(authSessions)
+      .where(lt(authSessions.expiresAt, new Date(cutoffDate)))
+      .returning({ id: authSessions.id });
+    return deleted.length;
+  }
+
+  async purgeExpiredVerifications(cutoffDate: string): Promise<number> {
+    const deleted = await this.transaction
+      .delete(authVerifications)
+      .where(lt(authVerifications.expiresAt, new Date(cutoffDate)))
+      .returning({ id: authVerifications.id });
+    return deleted.length;
+  }
+
+  async purgeOldNotificationDeliveries(cutoffDate: string): Promise<number> {
+    const deleted = await this.transaction
+      .delete(notificationDeliveryAttempts)
+      .where(lt(notificationDeliveryAttempts.attemptedAt, cutoffDate))
+      .returning({ id: notificationDeliveryAttempts.id });
+    return deleted.length;
+  }
+
+  async purgeOldSecurityAuditEvents(cutoffDate: string): Promise<number> {
+    const deleted = await this.transaction
+      .delete(securityAuditEvents)
+      .where(lt(securityAuditEvents.occurredAt, cutoffDate))
+      .returning({ id: securityAuditEvents.id });
+    return deleted.length;
+  }
+
+  async minimizeDecisionReasons(cutoffDate: string): Promise<number> {
+    const absenceUpdated = await this.transaction
+      .update(absenceDecisions)
+      .set({ reason: null })
+      .where(and(lt(absenceDecisions.decidedAt, cutoffDate), isNotNull(absenceDecisions.reason)))
+      .returning({ id: absenceDecisions.id });
+
+    const correctionUpdated = await this.transaction
+      .update(correctionDecisions)
+      .set({ reason: null })
+      .where(
+        and(lt(correctionDecisions.decidedAt, cutoffDate), isNotNull(correctionDecisions.reason)),
+      )
+      .returning({ id: correctionDecisions.id });
+
+    return absenceUpdated.length + correctionUpdated.length;
+  }
+
+  async minimizeInactiveEmployeeNames(cutoffDate: string): Promise<number> {
+    const updated = await this.transaction
+      .update(employees)
+      .set({ displayName: 'Former Employee' })
+      .where(
+        and(
+          eq(employees.status, 'INACTIVE'),
+          lt(employees.createdAt, cutoffDate),
+          ne(employees.displayName, 'Former Employee'),
+        ),
+      )
+      .returning({ id: employees.id });
+    return updated.length;
+  }
+
+  async getJobStatus(): Promise<RetentionJobStatusRecord[]> {
+    const result = await this.transaction.execute<{
+      retention_class: RetentionClass;
+      last_executed_at: string | null;
+      last_records_affected: number | null;
+    }>(sql`
+      SELECT DISTINCT ON (retention_class)
+        retention_class,
+        executed_at AS last_executed_at,
+        records_affected AS last_records_affected
+      FROM retention_job_executions
+      ORDER BY retention_class, executed_at DESC
+    `);
+    return result.rows.map((row) => ({
+      retentionClass: row.retention_class,
+      lastExecutedAt: row.last_executed_at,
+      lastRecordsAffected: row.last_records_affected,
+    }));
+  }
+
+  async createExportRequest(input: CreateExportRequestInput): Promise<void> {
+    await this.transaction.insert(userExportRequests).values({
+      id: input.id,
+      employeeId: input.employeeId,
+      organizationId: input.organizationId,
+      requestedAt: input.requestedAt,
+      expiresAt: input.expiresAt,
+      includeAttendance: input.includeAttendance,
+      includeAbsence: input.includeAbsence,
+      includeBalances: input.includeBalances,
+      includeRequests: input.includeRequests,
+      startDate: input.startDate ?? null,
+      endDate: input.endDate ?? null,
+    });
+  }
+
+  async updateExportArtifact(
+    exportId: string,
+    generatedAt: string,
+    artifactPath: string,
+    sizeBytes: number,
+  ): Promise<void> {
+    await this.transaction
+      .update(userExportRequests)
+      .set({ generatedAt, artifactPath, sizeBytes })
+      .where(eq(userExportRequests.id, exportId));
+  }
+
+  async findExportForDownload(exportId: string): Promise<ExportDownloadRecord | null> {
+    const [row] = await this.transaction
+      .select({
+        employeeId: userExportRequests.employeeId,
+        artifactPath: userExportRequests.artifactPath,
+        expiresAt: userExportRequests.expiresAt,
+      })
+      .from(userExportRequests)
+      .where(and(eq(userExportRequests.id, exportId), isNotNull(userExportRequests.generatedAt)));
+
+    if (!row || !row.artifactPath) return null;
+
+    return {
+      employeeId: row.employeeId,
+      artifactPath: row.artifactPath,
+      expiresAt: row.expiresAt,
+    };
+  }
+
+  async findExpiredExportPaths(now: string): Promise<string[]> {
+    const rows = await this.transaction
+      .select({ artifactPath: userExportRequests.artifactPath })
+      .from(userExportRequests)
+      .where(
+        and(lt(userExportRequests.expiresAt, now), isNotNull(userExportRequests.artifactPath)),
+      );
+    return rows.map((r) => r.artifactPath as string);
+  }
+
+  async deleteExpiredExports(now: string): Promise<number> {
+    const deleted = await this.transaction
+      .delete(userExportRequests)
+      .where(lt(userExportRequests.expiresAt, now))
+      .returning({ id: userExportRequests.id });
+    return deleted.length;
+  }
+
+  async queryPunchEvents(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<PunchExportRecord[]> {
+    const conditions = [eq(punchEvents.employeeId, employeeId)];
+    if (startDate !== undefined) conditions.push(gte(punchEvents.occurredAt, startDate));
+    if (endDate !== undefined) conditions.push(lt(punchEvents.occurredAt, endDate));
+
+    const rows = await this.transaction
+      .select({
+        eventType: punchEvents.eventType,
+        occurredAt: punchEvents.occurredAt,
+        recordedAt: punchEvents.recordedAt,
+      })
+      .from(punchEvents)
+      .where(and(...conditions))
+      .orderBy(asc(punchEvents.occurredAt));
+
+    return rows.map((r) => ({
+      eventType: r.eventType,
+      occurredAt: r.occurredAt,
+      recordedAt: r.recordedAt,
+    }));
+  }
+
+  async queryAbsenceRequests(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<AbsenceExportRecord[]> {
+    const conditions = [eq(absenceRequests.employeeId, employeeId)];
+    if (startDate !== undefined) conditions.push(gte(absenceRequests.submittedAt, startDate));
+    if (endDate !== undefined) conditions.push(lt(absenceRequests.submittedAt, endDate));
+
+    const rows = await this.transaction
+      .select({
+        absenceTypeId: absenceRequests.absenceTypeId,
+        status: absenceRequests.status,
+        submittedAt: absenceRequests.submittedAt,
+      })
+      .from(absenceRequests)
+      .where(and(...conditions))
+      .orderBy(desc(absenceRequests.submittedAt));
+
+    return rows.map((r) => ({
+      absenceTypeId: r.absenceTypeId,
+      status: r.status,
+      submittedAt: r.submittedAt,
+    }));
+  }
+
+  async queryTimeAccountEntries(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<TimeAccountExportRecord[]> {
+    const conditions = [eq(timeAccountEntries.employeeId, employeeId)];
+    if (startDate !== undefined) conditions.push(gte(timeAccountEntries.localDate, startDate));
+    if (endDate !== undefined) conditions.push(lte(timeAccountEntries.localDate, endDate));
+
+    const rows = await this.transaction
+      .select({
+        entryType: timeAccountEntries.entryType,
+        localDate: timeAccountEntries.localDate,
+        minutes: timeAccountEntries.minutes,
+        postedAt: timeAccountEntries.postedAt,
+      })
+      .from(timeAccountEntries)
+      .where(and(...conditions))
+      .orderBy(asc(timeAccountEntries.postedAt));
+
+    return rows.map((r) => ({
+      entryType: r.entryType,
+      localDate: r.localDate,
+      minutes: r.minutes,
+      postedAt: r.postedAt,
+    }));
+  }
+
+  async queryLeaveEntitlementEntries(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<LeaveEntitlementExportRecord[]> {
+    const conditions = [eq(leaveEntitlementEntries.employeeId, employeeId)];
+    if (startDate !== undefined) conditions.push(gte(leaveEntitlementEntries.effectiveOn, startDate));
+    if (endDate !== undefined) conditions.push(lte(leaveEntitlementEntries.effectiveOn, endDate));
+
+    const rows = await this.transaction
+      .select({
+        absenceTypeId: leaveEntitlementEntries.absenceTypeId,
+        entryType: leaveEntitlementEntries.entryType,
+        minutes: leaveEntitlementEntries.minutes,
+        effectiveOn: leaveEntitlementEntries.effectiveOn,
+      })
+      .from(leaveEntitlementEntries)
+      .where(and(...conditions))
+      .orderBy(asc(leaveEntitlementEntries.effectiveOn));
+
+    return rows.map((r) => ({
+      absenceTypeId: r.absenceTypeId,
+      entryType: r.entryType,
+      minutes: r.minutes,
+      effectiveOn: r.effectiveOn,
+    }));
+  }
+
+  async queryCorrectionRequests(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<CorrectionExportRecord[]> {
+    const conditions = [eq(correctionRequests.employeeId, employeeId)];
+    if (startDate !== undefined) conditions.push(gte(correctionRequests.localDate, startDate));
+    if (endDate !== undefined) conditions.push(lte(correctionRequests.localDate, endDate));
+
+    const rows = await this.transaction
+      .select({
+        localDate: correctionRequests.localDate,
+        status: correctionRequests.status,
+        createdAt: correctionRequests.createdAt,
+      })
+      .from(correctionRequests)
+      .where(and(...conditions))
+      .orderBy(desc(correctionRequests.localDate));
+
+    return rows.map((r) => ({
+      localDate: r.localDate,
+      status: r.status,
+      createdAt: r.createdAt,
+    }));
+  }
 }

@@ -299,6 +299,6 @@ function checkRetentionProfile(config: RuntimeConfig): {
   return {
     profileConfigured: true,
     productionReady: validation.productionReady,
-    issues: validation.issues.length > 0 ? Array.from(validation.issues) : undefined,
+    ...(validation.issues.length > 0 ? { issues: Array.from(validation.issues) } : {}),
   };
 }

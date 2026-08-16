@@ -2,7 +2,7 @@
 
 **Task:** `WL-1007`
 
-**Status:** Implementation in progress (contracts, configuration, documentation complete; repository integration pending)
+**Status:** ✅ Complete — contracts, configuration, database schema, `RetentionRepository`, purge/minimization jobs, user export service, HTTP routes, and diagnostics integration all implemented and type-checked.
 
 ## Scope
 

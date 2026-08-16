@@ -2,17 +2,17 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 7 of 10 Phase 10 tasks complete (WL-1007 in progress)
-**Current milestone:** Data retention and minimization controls
-**Active task:** `WL-1007`
-**Status:** In progress (contracts, configuration, documentation complete; repository integration pending)
+**Phase progress:** 8 of 10 Phase 10 tasks complete (WL-1007 complete)
+**Current milestone:** Data retention and minimization controls complete
+**Active task:** `WL-1008` (next)
+**Status:** WL-1007 complete — all retention, minimization, user-export, and backup-expiry controls implemented
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Complete `WL-1007` mandatory retention, minimization, user-export, and backup-expiry controls.
+`WL-1007` mandatory retention, minimization, user-export, and backup-expiry controls are complete.
 
-Progress: Retention profile contracts, validation, database schema, and system diagnostics integration complete. Purge and minimization job logic requires repository methods to be added to WorkLedgerTransaction interface for execution.
+Next task: `WL-1008` — production release gate and deployment readiness.
 
 ## Verified decisions
 

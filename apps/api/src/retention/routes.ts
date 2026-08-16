@@ -11,9 +11,8 @@ import {
   userExportRequestSchema,
   userExportMetadataResponseSchema,
   type UserExportRequest,
-  type UserExportMetadataResponse,
 } from '@workledger/contracts';
-import { parseDomainId, parseInstant, localDateAtInstant, parseTimeZoneId } from '@workledger/domain';
+import { parseDomainId, parseInstant } from '@workledger/domain';
 
 import type { RuntimeConfig } from '../config.js';
 import type { WorkLedgerAuthentication } from '../auth/authentication.js';
@@ -26,7 +25,7 @@ import { stat } from 'node:fs/promises';
 
 export function registerRetentionRoutes(
   app: FastifyInstance,
-  config: RuntimeConfig,
+  _config: RuntimeConfig,
   authentication: WorkLedgerAuthentication,
   database: WorkLedgerDatabase,
   now: () => string = () => new Date().toISOString(),
@@ -140,42 +139,26 @@ export function registerRetentionRoutes(
           throw new WorkLedgerApiError({ statusCode: 401, code: 'AUTH_SESSION_EXPIRED' });
         }
 
-        const result = await tx.db.execute<{
-          employee_id: string;
-          artifact_path: string;
-          expires_at: string;
-        }>(
-          `SELECT employee_id, artifact_path, expires_at 
-           FROM user_export_requests 
-           WHERE id = $1 AND generated_at IS NOT NULL`,
-          [exportId],
-        );
+        const record = await tx.retention.findExportForDownload(exportId);
 
-        if (result.rows.length === 0) {
-          throw new WorkLedgerApiError({ statusCode: 404, code: 'NOT_FOUND' });
+        if (record === null) {
+          throw new WorkLedgerApiError({ statusCode: 404, code: 'EXPORT_NOT_FOUND' });
         }
 
-        const record = result.rows[0];
-
-        // Verify the export belongs to the current employee
-        if (record.employee_id !== context.employee.id) {
+        if (record.employeeId !== context.employee.id) {
           throw new WorkLedgerApiError({ statusCode: 403, code: 'ACCESS_DENIED' });
         }
 
-        // Check expiry
-        if (new Date(record.expires_at) < new Date()) {
-          throw new WorkLedgerApiError({
-            statusCode: 410,
-            code: 'RESOURCE_EXPIRED',
-          });
+        if (new Date(record.expiresAt) < new Date()) {
+          throw new WorkLedgerApiError({ statusCode: 404, code: 'EXPORT_EXPIRED' });
         }
 
         return record;
       });
 
       try {
-        const stats = await stat(exportRecord.artifact_path);
-        const stream = createReadStream(exportRecord.artifact_path);
+        const stats = await stat(exportRecord.artifactPath);
+        const stream = createReadStream(exportRecord.artifactPath);
 
         reply.header('content-type', 'application/zip');
         reply.header('content-disposition', `attachment; filename="workledger-export-${exportId}.zip"`);
@@ -183,7 +166,7 @@ export function registerRetentionRoutes(
 
         return reply.send(stream);
       } catch (error) {
-        throw new WorkLedgerApiError({ statusCode: 500, code: 'INTERNAL_ERROR' });
+        throw new WorkLedgerApiError({ statusCode: 503, code: 'INTERNAL_ERROR' });
       }
     },
   );

@@ -1753,3 +1753,159 @@ export interface AbsenceRequestRepository {
     input: WithdrawAbsenceCancellationInput,
   ): Promise<AbsenceCancellationRecord | null>;
 }
+
+// ─── Retention Repository ────────────────────────────────────────────────────
+
+export type RetentionClass =
+  | 'AUTH_TRANSIENT'
+  | 'ACCOUNT_SECURITY'
+  | 'OPERATIONAL_LOGS'
+  | 'NOTIFICATIONS'
+  | 'SENSITIVE_HR'
+  | 'DOMAIN_HISTORY'
+  | 'TECHNICAL_AUDIT'
+  | 'DATABASE_BACKUPS';
+
+export type RetentionBehavior = 'PURGE' | 'MINIMIZE' | 'RETAIN';
+
+export type RetentionJobExecutionInput = Readonly<{
+  id: string;
+  retentionClass: RetentionClass;
+  behavior: RetentionBehavior;
+  executedAt: string;
+  cutoffDate: string | null;
+  recordsAffected: number;
+  durationMs: number;
+  errorSummary?: string;
+}>;
+
+export type MinimizationAuditFactInput = Readonly<{
+  id: string;
+  retentionJobExecutionId: string;
+  targetTable: string;
+  recordsMinimized: number;
+  fieldsCleared: string[];
+  retentionClass: RetentionClass;
+}>;
+
+export type RetentionJobStatusRecord = Readonly<{
+  retentionClass: RetentionClass;
+  lastExecutedAt: string | null;
+  lastRecordsAffected: number | null;
+}>;
+
+export type CreateExportRequestInput = Readonly<{
+  id: string;
+  employeeId: string;
+  organizationId: string;
+  requestedAt: string;
+  expiresAt: string;
+  includeAttendance: boolean;
+  includeAbsence: boolean;
+  includeBalances: boolean;
+  includeRequests: boolean;
+  startDate?: string;
+  endDate?: string;
+}>;
+
+export type ExportDownloadRecord = Readonly<{
+  employeeId: string;
+  artifactPath: string;
+  expiresAt: string;
+}>;
+
+export type PunchExportRecord = Readonly<{
+  eventType: string;
+  occurredAt: string;
+  recordedAt: string;
+}>;
+
+export type AbsenceExportRecord = Readonly<{
+  absenceTypeId: string;
+  status: string;
+  submittedAt: string;
+}>;
+
+export type TimeAccountExportRecord = Readonly<{
+  entryType: string;
+  localDate: string;
+  minutes: number;
+  postedAt: string;
+}>;
+
+export type LeaveEntitlementExportRecord = Readonly<{
+  absenceTypeId: string;
+  entryType: string;
+  minutes: number;
+  effectiveOn: string;
+}>;
+
+export type CorrectionExportRecord = Readonly<{
+  localDate: string;
+  status: string;
+  createdAt: string;
+}>;
+
+export interface RetentionRepository {
+  recordJobExecution(input: RetentionJobExecutionInput): Promise<void>;
+  recordMinimizationFact(input: MinimizationAuditFactInput): Promise<void>;
+
+  /** Purge expired Better Auth sessions. */
+  purgeExpiredSessions(cutoffDate: string): Promise<number>;
+  /** Purge expired Better Auth verification grants. */
+  purgeExpiredVerifications(cutoffDate: string): Promise<number>;
+  /** Purge old notification delivery attempts. */
+  purgeOldNotificationDeliveries(cutoffDate: string): Promise<number>;
+  /** Purge old security audit events. */
+  purgeOldSecurityAuditEvents(cutoffDate: string): Promise<number>;
+
+  /**
+   * Minimize sensitive decision reasons on absence and correction decisions.
+   * Returns total count across both tables.
+   */
+  minimizeDecisionReasons(cutoffDate: string): Promise<number>;
+  /**
+   * Minimize inactive employee display names while preserving referential integrity.
+   * Never removes UUIDs or foreign key targets.
+   */
+  minimizeInactiveEmployeeNames(cutoffDate: string): Promise<number>;
+
+  getJobStatus(): Promise<RetentionJobStatusRecord[]>;
+
+  createExportRequest(input: CreateExportRequestInput): Promise<void>;
+  updateExportArtifact(
+    exportId: string,
+    generatedAt: string,
+    artifactPath: string,
+    sizeBytes: number,
+  ): Promise<void>;
+  findExportForDownload(exportId: string): Promise<ExportDownloadRecord | null>;
+  findExpiredExportPaths(now: string): Promise<string[]>;
+  deleteExpiredExports(now: string): Promise<number>;
+
+  queryPunchEvents(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<PunchExportRecord[]>;
+  queryAbsenceRequests(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<AbsenceExportRecord[]>;
+  queryTimeAccountEntries(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<TimeAccountExportRecord[]>;
+  queryLeaveEntitlementEntries(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<LeaveEntitlementExportRecord[]>;
+  queryCorrectionRequests(
+    employeeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<CorrectionExportRecord[]>;
+}

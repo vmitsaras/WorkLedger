@@ -63,6 +63,10 @@ export function safeApiErrorMessage(code: ApiErrorCode): string {
       return 'The service is temporarily unavailable. Try again later.';
     case 'EMPLOYEE_NOT_FOUND':
       return 'The requested employee was not found.';
+    case 'EXPORT_EXPIRED':
+      return 'The data export has expired. Request a new export.';
+    case 'EXPORT_NOT_FOUND':
+      return 'The requested data export was not found.';
     case 'EMPLOYEE_NUMBER_ALREADY_EXISTS':
       return 'An employee already uses that employee number.';
     case 'EMPLOYEE_STATE_CONFLICT':
