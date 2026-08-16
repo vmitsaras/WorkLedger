@@ -13,7 +13,7 @@
 	}
 	redir @http_to_https https://{host}{uri} 308
 
-	@api_paths path /v1/* /api/* /health
+	@api_paths path /v1/* /api/* /health /ready
 
 	handle @api_paths {
 		reverse_proxy api:3000 {

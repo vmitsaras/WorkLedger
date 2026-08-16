@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 3 of 10 Phase 10 tasks complete
-**Current milestone:** Corrective accessibility and production-deployment evidence
-**Active task:** `WL-1003`
-**Status:** In progress
+**Phase progress:** 4 of 10 Phase 10 tasks complete
+**Current milestone:** Backup and isolated restore evidence
+**Active task:** `WL-1004`
+**Status:** Not started
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Complete `WL-1003` hardening and clean-host adversarial checks, then start `WL-1004` restore.
+Complete `WL-1004` encrypted backup and isolated clean restore evidence.
 
 ## Verified decisions
 
@@ -395,9 +395,9 @@ Complete `WL-1003` hardening and clean-host adversarial checks, then start `WL-1
   evidence.
 - `WL-1002`: added Firefox, WebKit, mobile Chromium, and mobile WebKit axe smoke coverage and removed
   the unsupported WCAG conformance claim; released-browser and assistive-technology evidence remains.
-- `WL-1003`: added fail-closed secret/origin configuration, migration-before-start, database-backed
-  readiness, private data networking, container hardening, security headers, and log minimization;
-  clean-host HTTPS and adversarial deployment evidence remains.
+- `WL-1003`: complete. A clean-volume local HTTPS deployment passed migration/readiness, direct
+  API/PostgreSQL host-port isolation, forged-forwarded-header, secret-disclosure, restart/migration
+  idempotency, database-outage generic-readiness, CSP/security-header, and token-query log checks.
 
 ## Historical task records
 

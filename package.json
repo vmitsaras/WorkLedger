@@ -24,6 +24,7 @@
     "phase:check": "node scripts/check-phase-version.mjs",
     "config:check": "pnpm run test:build && node --env-file-if-exists=.env scripts/check-api-runtime-config.mjs",
     "production:config:check": "docker compose --env-file .env.production.example -f infra/compose/production.yml config --quiet",
+    "production:verify": "node scripts/check-production-deployment.mjs",
     "db:up": "docker compose -f infra/compose/postgres.dev.yml up -d --wait",
     "db:down": "docker compose -f infra/compose/postgres.dev.yml down",
     "db:reset": "docker compose -f infra/compose/postgres.dev.yml down --volumes --remove-orphans",

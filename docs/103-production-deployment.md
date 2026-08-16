@@ -2,9 +2,8 @@
 
 ## Status
 
-`WL-1003` remains in progress until the clean-host HTTPS and adversarial deployment checks are
-executed. The reference Compose model now fails closed on missing public origin and secret paths,
-applies migrations before API startup, and uses database-backed readiness.
+`WL-1003` is complete. The reference Compose model fails closed on missing public origin and secret
+paths, applies migrations before API startup, and uses database-backed readiness.
 
 ## Operator configuration
 
@@ -20,6 +19,20 @@ Never commit those files. Validate the model with:
 ```sh
 docker compose --env-file /path/to/workledger.env -f infra/compose/production.yml config --quiet
 ```
+
+You can also run the WL-1003 evidence checks with:
+
+```sh
+pnpm run production:verify --compose-config-only
+```
+
+For a running deployment, include runtime probes:
+
+```sh
+pnpm run production:verify --runtime --base-url https://ledger.example.org
+```
+
+Runtime checks expect a reachable public endpoint and will fail if the deployment is not currently running.
 
 Then build and start the deployment with the same arguments and `up --build --wait`. Only Caddy ports
 are published. PostgreSQL is confined to an internal data network; the API spans the data and edge
@@ -47,3 +60,14 @@ redacted logging belongs to `WL-1006`.
 - missing/incorrect schema and unavailable PostgreSQL make readiness fail generically;
 - restart preserves data and reapplies migrations idempotently;
 - CSP/security-header and token-query logging checks pass.
+
+## Verified clean-host evidence (2026-08-16)
+
+An isolated clean-volume deployment used fresh temporary Docker secrets and non-default public ports.
+It built successfully, applied migrations, became healthy, and served the SPA, `/health`, and `/ready`
+over local HTTPS. The reusable `production:verify` harness confirmed the exact health/readiness JSON
+shapes, security headers, forged-forwarded-header resistance, and absence of published API/PostgreSQL
+ports. A manual non-disclosure check confirmed the fresh secrets were absent from resolved Compose
+output, image inspection/history, and service logs. Restarting the API and rerunning Compose left the
+database healthy and applied migrations idempotently. Stopping PostgreSQL returned only
+`{"status":"not_ready"}` with HTTP 503; restoring it returned readiness to `200`.
