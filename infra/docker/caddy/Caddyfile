@@ -1,0 +1,31 @@
+{
+	admin off
+	# Log requests in a structured format
+	log {
+		output stdout
+		format json
+	}
+}
+
+# The origin is expected to match the host
+{$WORKLEDGER_ORIGIN_HOST} {
+	# Serve static files from /srv/web
+	root * /srv/web
+	
+	# Reverse proxy API requests to the Fastify server
+	handle /v1/* {
+		reverse_proxy api:3000
+	}
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+	handle /health {
+		reverse_proxy api:3000
+	}
+
+	# Try serving the file, otherwise fallback to index.html for SPA routing
+	handle {
+		try_files {path} {path}/ /index.html
+		file_server
+	}
+}

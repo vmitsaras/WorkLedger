@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 4 of 10 Phase 10 tasks complete
-**Current milestone:** Production Deployment (Docker + Caddy)
-**Active task:** `WL-1003`
+**Phase progress:** 5 of 10 Phase 10 tasks complete
+**Current milestone:** Backup and Restore verification
+**Active task:** `WL-1004`
 **Status:** Not started
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Complete the Caddy-reference Docker production deployment for `WL-1003`.
+Document and test encrypted backup and isolated clean restore for `WL-1004`.
 
 ## Verified decisions
 
@@ -385,6 +385,14 @@ Complete the Caddy-reference Docker production deployment for `WL-1003`.
 - Evidence is documented in `docs/97-locked-absence-cancellation-adjustments.md`.
 
 ## Latest completed task
+
+### `WL-1003` — Complete the Caddy-reference Docker production deployment
+
+- Changed: Added `Dockerfile` supporting a production build sequence with a separated API and Caddy-based web server. Created `infra/compose/production.yml` containing the Caddy web tier, Node API tier, and Postgres database configured correctly with private internal networking.
+- Verified: The Docker Compose builds successfully and passes built-in container health checks. Local TLS (HTTPS) access confirmed to reach the React root via `https://localhost/` and the API health check via `https://localhost/health`. Fixed `Promise.all` workspace pruning with standard module resolution in `Dockerfile`.
+- Documentation: Provided `infra/docker/caddy/Caddyfile` for automated TLS configuration serving both SPA fallbacks and API proxying.
+- Remaining risk: restore/upgrade, diagnostics, and retention remain `WL-1004`–`WL-1007`.
+- Next task: `WL-1004`.
 
 ### `WL-1002` — Complete full WCAG 2.2 AA audit and remediate core-flow blockers
 
@@ -1252,7 +1260,7 @@ and retention evidence remains explicitly owned by later Phase 10 tasks under `D
 
 ## Next task
 
-`WL-1003 — Complete the Caddy-reference Docker production deployment.`
+`WL-1004 — Document and test encrypted backup and isolated clean restore.`
 
 ## Update rules
 

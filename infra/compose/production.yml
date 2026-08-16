@@ -1,0 +1,73 @@
+name: workledger-production
+
+services:
+  caddy:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+      target: production-caddy
+    container_name: workledger-caddy
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      - WORKLEDGER_ORIGIN_HOST=${WORKLEDGER_ORIGIN_HOST:-localhost}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - workledger-net
+
+  api:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+      target: production-api
+    container_name: workledger-api
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - WORKLEDGER_ENVIRONMENT=production
+      - WORKLEDGER_ORIGIN=${WORKLEDGER_ORIGIN:-https://localhost}
+      - WORKLEDGER_TRUSTED_PROXY_ADDRESSES=${WORKLEDGER_TRUSTED_PROXY_ADDRESSES:-127.0.0.1}
+      - WORKLEDGER_DATABASE_URL=${WORKLEDGER_DATABASE_URL:-postgres://workledger:workledger@postgres:5432/workledger}
+      - WORKLEDGER_AUTH_SECRET=${WORKLEDGER_AUTH_SECRET:-supersecret123456789012345678901234567890}
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - workledger-net
+
+  postgres:
+    image: postgres:18.4-trixie
+    container_name: workledger-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-workledger}
+      POSTGRES_USER: ${POSTGRES_USER:-workledger}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workledger}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - workledger-postgres-data:/var/lib/postgresql
+    networks:
+      - workledger-net
+
+networks:
+  workledger-net:
+    driver: bridge
+
+volumes:
+  workledger-postgres-data:

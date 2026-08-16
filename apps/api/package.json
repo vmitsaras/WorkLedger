@@ -8,6 +8,7 @@
   "exports": {},
   "scripts": {
     "build": "tsc --build tsconfig.json --pretty false",
+    "start": "node dist/main.js",
     "typecheck": "tsc --build tsconfig.json --pretty false"
   },
   "dependencies": {
@@ -16,14 +17,14 @@
     "@workledger/database": "workspace:*",
     "@workledger/domain": "workspace:*",
     "better-auth": "1.6.26",
+    "fastify": "5.10.0",
     "fastify-type-provider-zod": "7.0.0",
+    "pg": "8.22.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/pg": "8.20.0",
     "@workledger/config": "workspace:*",
-    "@workledger/test-utils": "workspace:*",
-    "fastify": "5.10.0",
-    "pg": "8.22.0"
+    "@workledger/test-utils": "workspace:*"
   }
 }
