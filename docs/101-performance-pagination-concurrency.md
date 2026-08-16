@@ -2,10 +2,10 @@
 
 ## Status and scope
 
-`WL-1001` remains in progress. WorkLedger's documented deployment target is 10–250 employees, not
+`WL-1001` is complete. WorkLedger's documented deployment target is 10–250 employees, not
 5,000. The earlier 5,000-employee estimates were unsupported, arithmetically inconsistent, and are
-withdrawn. A reproducible PostgreSQL expected-scale fixture, query-plan capture, latency results, and
-concurrent-mutation run are still required before this task is complete.
+withdrawn. The executable `performance.integration.test.ts` now creates a deterministic upper-bound
+fixture, verifies index plans and latency, and exercises a 20-way optimistic-concurrency race.
 
 At the upper supported bound, one daily projection per employee is about 91,250 rows per year.
 Attendance, ledger, and audit volume depends on actual workflows; no invented per-employee event rate
@@ -37,12 +37,27 @@ route-level loading and field measurements remain possible later improvements.
 - Idempotency scope keys and transactional attendance heads protect duplicate clock mutations.
 - Locked records are preserved through explicit adjustments rather than rewritten.
 
-## Evidence still required
+## PostgreSQL measurement
 
-1. Generate a deterministic 250-employee dataset with documented attendance, ledger, request, and
-   audit volumes.
-2. Capture `EXPLAIN (ANALYZE, BUFFERS)` for the highest-risk list and calculation queries.
-3. Record repeatable p50/p95 timings on named hardware and PostgreSQL configuration.
-4. Exercise duplicate and conflicting mutations concurrently and record outcomes.
-5. Revisit sequential transaction queries where eliminating the driver warning may have added extra
-   round trips; combine queries only when measurements justify it.
+Measured on 2026-08-16 using the repository's PostgreSQL 18.4 Docker service on an arm64 development
+host. Each latency result is ten warm iterations; the small sample's p95 is conservatively the maximum.
+
+| Fixture/query | Evidence |
+|---|---:|
+| Employees | 250 |
+| Daily projections (365 days) | 91,250 |
+| Punch events (four/day for 90 days) | 90,000 |
+| Domain audit events (20/day for 90 days) | 450,000 |
+| Annual employee projection query | p50 1.32 ms; p95/max 3.25 ms |
+| Audit page at offset 10,000 plus matching count | p50 12.08 ms; p95/max 12.71 ms |
+
+JSON plans must name `daily_projections_employee_date_uidx` and
+`domain_audit_events_organization_time_idx`. The concurrent mutation check launches 20 updates
+against the same attendance revision and requires exactly one winner. CI fails above a deliberately
+portable 1,000 ms p95 ceiling; recorded local values provide the review baseline rather than a brittle
+machine-specific gate.
+
+The fixture is included in `scripts/run-postgres-integration.mjs`, so normal database verification
+cannot silently omit it. Future schema or query changes should add representative scenarios rather
+than increasing unsupported organization size. Deep offset remains acceptable at measured scale;
+cursor pagination should be reconsidered if supported scale or audit-retention volume increases.

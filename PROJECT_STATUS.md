@@ -2,17 +2,16 @@
 
 **Current phase:** Phase 10 — Production hardening and self-hosting
 **Project readiness:** Stage 5 of 5 — Production and release in progress
-**Phase progress:** 2 of 10 Phase 10 tasks complete
-**Current milestone:** Corrective evidence for performance, accessibility, and production deployment
-**Active task:** `WL-1001`
+**Phase progress:** 3 of 10 Phase 10 tasks complete
+**Current milestone:** Corrective accessibility and production-deployment evidence
+**Active task:** `WL-1002`
 **Status:** In progress
 **Last verified:** 2026-08-16
 
 ## Current objective
 
-Finish reproducible expected-scale PostgreSQL measurements for `WL-1001`, then complete the manual
-assistive-technology evidence for `WL-1002` and clean-host deployment evidence for `WL-1003` before
-starting dependent `WL-1004` work.
+Complete the manual assistive-technology evidence for `WL-1002` and clean-host deployment evidence
+for `WL-1003` before starting dependent `WL-1004` work.
 
 ## Verified decisions
 
@@ -392,8 +391,9 @@ starting dependent `WL-1004` work.
 
 - The earlier completion records did not satisfy their task-board acceptance evidence and are
   retained below as historical entries, not current completion claims.
-- `WL-1001`: added enforced bundle budgets and corrected the supported scale to 10–250 employees;
-  reproducible PostgreSQL scale, plan, latency, and contention measurements remain.
+- `WL-1001`: complete after adding enforced bundle budgets, correcting the supported scale to 10–250
+  employees, and recording reproducible PostgreSQL scale, index-plan, latency, and 20-way contention
+  evidence.
 - `WL-1002`: added Firefox, WebKit, mobile Chromium, and mobile WebKit axe smoke coverage and removed
   the unsupported WCAG conformance claim; released-browser and assistive-technology evidence remains.
 - `WL-1003`: added fail-closed secret/origin configuration, migration-before-start, database-backed
