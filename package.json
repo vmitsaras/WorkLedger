@@ -27,6 +27,7 @@
     "production:verify": "node scripts/check-production-deployment.mjs",
     "backup:create": "node scripts/workledger-backup.mjs",
     "backup:restore": "node scripts/workledger-restore.mjs",
+    "upgrade:test": "node scripts/workledger-upgrade-test.mjs",
     "db:up": "docker compose -f infra/compose/postgres.dev.yml up -d --wait",
     "db:down": "docker compose -f infra/compose/postgres.dev.yml down",
     "db:reset": "docker compose -f infra/compose/postgres.dev.yml down --volumes --remove-orphans",

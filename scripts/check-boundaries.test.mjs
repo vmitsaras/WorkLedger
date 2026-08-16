@@ -28,8 +28,8 @@ const negativeFixtures = [
 test('accepts every current workspace source import', async () => {
   assert.deepEqual(await checkWorkspaceBoundaries(repositoryRoot), {
     errors: [],
-    fileCount: 250,
-    importCount: 1295,
+    fileCount: 251,
+    importCount: 1299,
   });
 });
 
