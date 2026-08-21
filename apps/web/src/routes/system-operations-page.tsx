@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { StatusBadge } from '@workledger/ui';
 
 import { systemDiagnosticsQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
@@ -53,7 +54,7 @@ export function SystemOperationsPage() {
               <div>
                 <dt className="text-sm text-[var(--wl-text-muted)]">Overall health</dt>
                 <dd className="m-0">
-                  <StatusBadge status={diagnostics.health} />
+                  <OperationsStatusBadge status={diagnostics.health} />
                 </dd>
               </div>
             </dl>
@@ -70,7 +71,7 @@ export function SystemOperationsPage() {
                   <div>
                     <dt className="text-sm text-[var(--wl-text-muted)]">Status</dt>
                     <dd className="m-0">
-                      <StatusBadge status={diagnostics.dependencies.database.status} />
+                      <OperationsStatusBadge status={diagnostics.dependencies.database.status} />
                     </dd>
                   </div>
                   {diagnostics.dependencies.database.latencyMs !== undefined && (
@@ -100,7 +101,9 @@ export function SystemOperationsPage() {
                   <div>
                     <dt className="text-sm text-[var(--wl-text-muted)]">Status</dt>
                     <dd className="m-0">
-                      <StatusBadge status={diagnostics.dependencies.authentication.status} />
+                      <OperationsStatusBadge
+                        status={diagnostics.dependencies.authentication.status}
+                      />
                     </dd>
                   </div>
                   {diagnostics.dependencies.authentication.error !== undefined && (
@@ -135,20 +138,15 @@ export function SystemOperationsPage() {
 type OperationsStatus = 'healthy' | 'degraded' | 'critical' | 'unavailable';
 
 const STATUS_PRESENTATION: Readonly<
-  Record<OperationsStatus, Readonly<{ className: string; label: string }>>
+  Record<OperationsStatus, Readonly<{ label: string; tone: 'danger' | 'success' | 'warning' }>>
 > = {
-  healthy: { className: 'wl-status wl-status-success', label: 'Healthy' },
-  degraded: { className: 'wl-status wl-status-warning', label: 'Degraded' },
-  critical: { className: 'wl-status wl-status-danger', label: 'Critical' },
-  unavailable: { className: 'wl-status wl-status-danger', label: 'Unavailable' },
+  healthy: { label: 'Healthy', tone: 'success' },
+  degraded: { label: 'Degraded', tone: 'warning' },
+  critical: { label: 'Critical', tone: 'danger' },
+  unavailable: { label: 'Unavailable', tone: 'danger' },
 };
 
-function StatusBadge({ status }: Readonly<{ status: OperationsStatus }>) {
+function OperationsStatusBadge({ status }: Readonly<{ status: OperationsStatus }>) {
   const presentation = STATUS_PRESENTATION[status];
-  return (
-    <span className={presentation.className}>
-      <span className="wl-status-marker" aria-hidden="true" />
-      {presentation.label}
-    </span>
-  );
+  return <StatusBadge tone={presentation.tone}>{presentation.label}</StatusBadge>;
 }

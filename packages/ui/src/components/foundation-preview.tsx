@@ -1,6 +1,13 @@
 import { Button } from './button.js';
 import { Dialog } from './dialog.js';
+import { Alert } from './alert.js';
+import { DataTable } from './data-table.js';
+import { FilterBar } from './filter-bar.js';
 import { Link } from './link.js';
+import { Pagination } from './pagination.js';
+import { Panel } from './panel.js';
+import { RouteState } from './route-state.js';
+import { StatusBadge } from './status-badge.js';
 import { TextField } from './text-field.js';
 
 export function FoundationPreview() {
@@ -40,6 +47,40 @@ export function FoundationPreview() {
           />
         </div>
       </div>
+
+      <Panel heading="Shared operational patterns">
+        <StatusBadge tone="warning">Needs review</StatusBadge>
+        <Alert title="A record needs attention" tone="warning">
+          Resolve the listed issue before submitting the monthly record.
+        </Alert>
+        <FilterBar
+          title="Filter records"
+          description="Applied filters are always visible and reversible."
+        >
+          <Button variant="secondary" type="submit">
+            Apply filters
+          </Button>
+          <Button variant="quiet" type="reset">
+            Clear filters
+          </Button>
+        </FilterBar>
+        <DataTable caption="Example weekly records">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Monday</td>
+              <td>Complete</td>
+            </tr>
+          </tbody>
+        </DataTable>
+        <Pagination currentPage={1} onPageChange={() => undefined} pageCount={2} />
+        <RouteState kind="empty">Choose a period to review its records.</RouteState>
+      </Panel>
     </section>
   );
 }

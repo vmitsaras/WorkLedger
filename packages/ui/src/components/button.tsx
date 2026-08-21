@@ -22,6 +22,8 @@ export const buttonVariants = cva(
           'border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] text-[var(--wl-text)] data-[hovered]:border-[var(--wl-action-primary)] data-[hovered]:bg-[var(--wl-surface-subtle)]',
         quiet:
           'border-transparent bg-transparent text-[var(--wl-text)] data-[hovered]:bg-[var(--wl-surface-subtle)]',
+        danger:
+          'border-[var(--wl-state-danger-border)] bg-[var(--wl-state-danger-surface)] text-[var(--wl-state-danger-text)] data-[hovered]:border-[var(--wl-state-danger-text)] data-[hovered]:bg-[var(--wl-surface-raised)]',
       },
     },
     defaultVariants: {

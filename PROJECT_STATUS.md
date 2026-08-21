@@ -2,21 +2,20 @@
 
 **Current phase:** Phase 11 — UI/UX direction, design system, and adaptable company identity
 **Project readiness:** Stage 5 of 5 — Production gate complete, UI foundation in progress
-**Phase progress:** Phase 10 complete — 4 of 7 Phase 11 tasks complete
+**Phase progress:** Phase 10 complete — 5 of 7 Phase 11 tasks complete
 **Current milestone:** Production hardening and self-hosting complete — version 0.11.0
-**Active task:** `WL-1104` (next)
-**Status:** WL-1103 complete — validated runtime company identity and accessible asset fallbacks implemented
+**Active task:** `WL-1105` (next)
+**Status:** WL-1104 complete — shared accessible UI patterns implemented
 **Last verified:** 2026-08-21
 
 ## Current objective
 
-`WL-1103` implements one validated startup identity contract for the organization display name,
-optional same-origin logo/favicon, and a contrast-bounded decorative accent. Public authentication
-and authenticated shell/profile surfaces share the normalized identity, WorkLedger attribution and
-text fallbacks remain available, and production can mount media read-only without source changes.
+`WL-1104` establishes product-neutral accessible UI contracts for recurring actions, forms,
+panels, statuses, alerts, filters, pagination, native tables, and route states. The UI package owns
+the reusable behavior and styles while Phase 12 will adopt the patterns across workflow routes.
 
-Next task: `WL-1104` — expand the local React Aria UI system for recurring actions, forms, panels,
-statuses, alerts, tables, filters, pagination, and route states.
+Next task: `WL-1105` — redesign the application shell, navigation, authentication surfaces, and
+route boundaries across responsive, zoom, forced-colors, and reduced-motion contexts.
 
 ## Verified decisions
 
@@ -1552,6 +1551,29 @@ statuses, alerts, tables, filters, pagination, and route states.
 - No database schema, domain invariant, permission, mutation, sensitive DTO, or phase version
   changed. The `0.12.0` milestone remains owned by the incomplete `WL-1106` gate.
 
+**2026-08-21 — WL-1104 shared accessible UI patterns**
+
+- Expanded `@workledger/ui` with a React Aria action family (including a distinct destructive
+  variant), existing labelled/error-connected text fields, semantic panels, textual status badges,
+  urgency-appropriate alerts, filter forms, pagination navigation, captioned native data tables,
+  and explicit loading/empty/error/not-found/permission-denied route states.
+- Kept native tables until a real interactive-grid need exists, avoiding an invented keyboard model;
+  the overflow wrapper stays keyboard-focusable and every table requires a caption.
+- Made status and alert states textual, bordered, and forced-colors resilient. Warnings/danger use
+  `role=alert`; low-urgency information uses `role=status`; the loading route state alone announces
+  politely.
+- Adopted the shared status badge on the safe System Operations diagnostics route without changing
+  its technical-only DTO, data fetch, authorization, or diagnostic values.
+- Added component/axe evidence for shared statuses, alerts, forms, tables, pagination, recovery
+  links, and existing dialog/drawer keyboard behavior. `docs/114-shared-ui-patterns.md` records
+  the reusable contracts and Phase 12 adoption boundary.
+- Direct verification passed Prettier; UI and web strict TypeScript; CSS ownership contract; the
+  focused five-test component suite; full TypeScript build; full unit/component suite; production
+  web build and bundle budget; and `git diff --check`. Canonical wrappers remain blocked before
+  their checks by the untouched ignored `apps/site/dist/index.html` artifact.
+- No database schema, domain invariant, API contract, permission, mutation, sensitive DTO, or
+  version changed. The `0.12.0` milestone remains owned by `WL-1106`.
+
 ## Current blockers
 
 No decision blocks `WL-1104`. Repository-wide commands that begin with `workspace:check` remain
@@ -1562,8 +1584,8 @@ and `UI-002` are high-priority workflow gaps and must close before that gate.
 
 ## Next task
 
-`WL-1104 — Expand the local React Aria UI system for actions, forms, panels, statuses, alerts,
-tables, filters, pagination, and route states.`
+`WL-1105 — Redesign the application shell, navigation, authentication surfaces, and route
+boundaries across responsive, zoom, forced-colors, and reduced-motion contexts.`
 
 ## Update rules
 

@@ -3,7 +3,17 @@ import userEvent from '@testing-library/user-event';
 
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
-import { buttonVariants, Drawer, FoundationPreview } from '../src/index.js';
+import {
+  Alert,
+  buttonVariants,
+  DataTable,
+  Drawer,
+  FilterBar,
+  FoundationPreview,
+  Pagination,
+  RouteState,
+  StatusBadge,
+} from '../src/index.js';
 
 test('keeps button styling focus-visible on native buttons and links', () => {
   expect(buttonVariants()).toContain('focus-visible:outline-solid');
@@ -60,4 +70,42 @@ test('moves focus into the navigation drawer and restores it to the trigger', as
 
   await user.keyboard('{Escape}');
   await waitFor(() => expect(trigger).toHaveFocus());
+});
+
+test('renders shared operational patterns with textual state and native semantics', async () => {
+  const { container } = render(
+    <>
+      <StatusBadge tone="warning">Needs review</StatusBadge>
+      <Alert title="Submission blocked" tone="danger">
+        Correct the listed time record before submitting.
+      </Alert>
+      <FilterBar title="Filter records" description="Filters can be cleared.">
+        <button type="submit">Apply</button>
+      </FilterBar>
+      <DataTable caption="Daily records">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Monday</td>
+          </tr>
+        </tbody>
+      </DataTable>
+      <Pagination currentPage={2} onPageChange={() => undefined} pageCount={3} />
+      <RouteState actionHref="/today" actionLabel="Return to Today" kind="permission-denied">
+        Your current role does not grant access to this record.
+      </RouteState>
+    </>,
+  );
+
+  expect(screen.getByText('Needs review')).toBeVisible();
+  expect(screen.getByRole('alert', { name: 'Submission blocked' })).toBeVisible();
+  expect(screen.getByRole('form', { name: 'Filter records' })).toBeVisible();
+  expect(screen.getByRole('table', { name: 'Daily records' })).toBeVisible();
+  expect(screen.getByRole('navigation', { name: 'Pagination' })).toHaveTextContent('Page 2 of 3');
+  expect(screen.getByRole('link', { name: 'Return to Today' })).toHaveAttribute('href', '/today');
+  await expectNoAxeViolations(container);
 });
