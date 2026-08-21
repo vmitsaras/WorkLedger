@@ -11,6 +11,7 @@ import {
   apiErrorEnvelopeSchema,
   clockInEnvelopeSchema,
   clockOutEnvelopeSchema,
+  companyIdentityEnvelopeSchema,
   csrfBootstrapEnvelopeSchema,
   dailyTimeRecordEnvelopeSchema,
   correctionDecisionEnvelopeSchema,
@@ -52,6 +53,7 @@ import {
   type ApprovalDetail,
   type ApiFieldErrors,
   type ApiRecoveryContext,
+  type CompanyIdentity,
   type AttendanceCommand,
   type AttendanceCommandResult,
   type DailyTimeRecord,
@@ -139,6 +141,13 @@ export class ApiClientError extends Error {
 }
 
 let csrfToken: string | null = null;
+
+export async function loadCompanyIdentity(signal?: AbortSignal): Promise<CompanyIdentity> {
+  const body = await requestJson('/v1/identity', signal === undefined ? {} : { signal });
+  const parsed = companyIdentityEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
 
 export async function loadSelfContext(): Promise<SelfContext> {
   const body = await requestJson('/v1/me/context');

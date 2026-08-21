@@ -2,26 +2,33 @@
 
 **Current phase:** Phase 11 — UI/UX direction, design system, and adaptable company identity
 **Project readiness:** Stage 5 of 5 — Production gate complete, UI foundation in progress
-**Phase progress:** Phase 10 complete — 3 of 7 Phase 11 tasks complete
+**Phase progress:** Phase 10 complete — 4 of 7 Phase 11 tasks complete
 **Current milestone:** Production hardening and self-hosting complete — version 0.11.0
-**Active task:** `WL-1103` (next)
-**Status:** WL-1102 complete — semantic tokens, CSS ownership, and executable styling boundaries implemented
+**Active task:** `WL-1104` (next)
+**Status:** WL-1103 complete — validated runtime company identity and accessible asset fallbacks implemented
 **Last verified:** 2026-08-21
 
 ## Current objective
 
-`WL-1102` implements Quiet Ledger's primitive, semantic, component, state, motion, and density
-token tiers under one UI-package owner. Flat cascade layers now interleave correctly with Tailwind,
-routes cannot introduce undefined WorkLedger classes or one-off color contracts, and the repaired
-Operations surface provides valid definition-list relationships and textual semantic states.
+`WL-1103` implements one validated startup identity contract for the organization display name,
+optional same-origin logo/favicon, and a contrast-bounded decorative accent. Public authentication
+and authenticated shell/profile surfaces share the normalized identity, WorkLedger attribution and
+text fallbacks remain available, and production can mount media read-only without source changes.
 
-Next task: `WL-1103` — implement validated runtime company identity for organization name, logo,
-favicon, and safe brand accent with accessible fallbacks and no source-code editing.
+Next task: `WL-1104` — expand the local React Aria UI system for recurring actions, forms, panels,
+statuses, alerts, tables, filters, pagination, and route states.
 
 ## Verified decisions
 
 - Product name: WorkLedger.
 - One organization per self-hosted installation for the initial release.
+- Runtime company identity is immutable presentation configuration; PostgreSQL organization data
+  remains authoritative for scope, relationships, history, and audit.
+- `GET /v1/identity` exposes only the validated display name, same-origin identity asset paths,
+  decorative accent, and request ID; it exposes no organization ID, domain setting, account field,
+  filesystem path, or secret.
+- Organization accent affects only the non-semantic identity mark. Product-owned action, link,
+  focus, and status color families never derive from deployment branding.
 - React web application with a separate Fastify API.
 - PostgreSQL source of truth.
 - React Aria plus shadcn React Aria source components and Tailwind.
@@ -1510,9 +1517,44 @@ favicon, and safe brand accent with accessible fallbacks and no source-code edit
 - No domain rule, API contract, database schema, authorization, storage, or sensitive-data scope
   changed.
 
+**2026-08-21 — WL-1103 validated runtime company identity**
+
+- Added immutable startup parsing for the production-required organization display name, optional
+  `/identity/` logo/favicon paths, and a six-digit accent that must maintain 3:1 boundary contrast
+  against WorkLedger's raised and page reference surfaces.
+- Rejected remote/protocol-relative assets, traversal, queries/fragments, executable/unsupported
+  formats, control/bidirectional name characters, and low-contrast accents without echoing operator
+  values in configuration errors or the redacted configuration summary.
+- Added the strict public `GET /v1/identity` contract and synchronized authenticated self-context
+  presentation while leaving PostgreSQL organization scope/relationships authoritative.
+- Added authentication and shell identity components with visible organization and WorkLedger text,
+  fixed logo dimensions, decorative empty-alt images, failed-logo initial fallback, favicon probe
+  and shipped fallback, and runtime `--wl-identity-accent` application.
+- Kept action, link, focus, information, success, warning, and danger token families product-owned;
+  forced-colors mode maps the identity boundary to `CanvasText`.
+- Added a read-only production Compose identity-asset override and a dedicated Caddy `/identity/*`
+  static route without SPA fallback. The base deployment remains valid when optional assets are
+  absent.
+- Applied current Modern Web Guidance `html` and `performance` constraints for native image/icon
+  delivery, accessible identity text, intrinsic dimensions, same-origin resources, and CSS custom
+  properties. Baseline 2024 remains the target.
+- Verification passed Prettier; ESLint; source boundaries (269 files/1,395 imports); CSS contract
+  (60 sources/85 tokens/55 classes/568 uses); strict TypeScript; 36 tooling tests; 328
+  unit/component tests; 13 integration tests with 45 database-dependent skips; all 26 Playwright
+  scenarios; reproducible OpenAPI; runtime/production configuration checks; production browser
+  build; bundle budget; and workspace public-root import checks.
+- Browser evidence covers broken logo/favicon recovery, long organization identity, 320 CSS px
+  reflow (the 400%-zoom equivalent at 1280 CSS px), forced colors, print, intrinsic dimensions, and
+  axe. No horizontal page overflow or color-only identity remains.
+- Canonical commands beginning with `workspace:check` remain blocked by the pre-existing ignored
+  `apps/site/dist/index.html` directory. WL-1103 preserved that out-of-phase user artifact and ran
+  direct equivalents.
+- No database schema, domain invariant, permission, mutation, sensitive DTO, or phase version
+  changed. The `0.12.0` milestone remains owned by the incomplete `WL-1106` gate.
+
 ## Current blockers
 
-No decision blocks `WL-1103`. Repository-wide commands that begin with `workspace:check` remain
+No decision blocks `WL-1104`. Repository-wide commands that begin with `workspace:check` remain
 blocked by the pre-existing ignored `apps/site/dist` artifact described above; it must be removed or
 explicitly brought into the workspace only under the owning portfolio task. `D-502` manual
 assistive-technology evidence remains open for the Phase 12 UI release gate (`WL-1206`). `UI-001`
@@ -1520,8 +1562,8 @@ and `UI-002` are high-priority workflow gaps and must close before that gate.
 
 ## Next task
 
-`WL-1103 — Implement validated company-identity configuration for organization name, logo,
-favicon, and brand accent with accessible fallbacks and no source-code editing.`
+`WL-1104 — Expand the local React Aria UI system for actions, forms, panels, statuses, alerts,
+tables, filters, pagination, and route states.`
 
 ## Update rules
 

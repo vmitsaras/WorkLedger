@@ -13,6 +13,16 @@ post-MVP product-polish addition limited to validated organization name, optiona
 bounded accent configuration. It does not authorize arbitrary themes, white-labelling, custom CSS,
 new organization hierarchy, or a change to authorization/domain scope.
 
+### 2026-08-21 — Runtime company identity is presentation configuration
+
+`WL-1103` treats the configured organization name, logo, favicon, and accent as immutable startup
+presentation configuration. It does not mutate the PostgreSQL organization record or create a
+second source of truth for domain scope: database organization identity still owns relationships,
+authorization, history, and audit. The normalized presentation DTO is intentionally public so the
+sign-in and recovery routes can identify the installation before authentication. It contains no
+organization ID or domain settings, accepts same-origin `/identity/` media only, and keeps
+WorkLedger attribution and product-owned interaction/state colors.
+
 ### 2026-08-21 — Phase 11/portfolio roadmap insertion
 
 `TODO.md` was intentionally revised after the Phase 10 gate to insert a UI foundation phase and a

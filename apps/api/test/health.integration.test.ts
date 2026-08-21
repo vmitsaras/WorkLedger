@@ -22,6 +22,44 @@ test('returns only generic health data without enabling CORS', async () => {
   }
 });
 
+test('serves only validated non-sensitive company identity without authentication', async () => {
+  const secret = 'identity-route-secret-that-must-never-be-returned';
+  const app = createApiServer(
+    createRuntimeConfig({
+      WORKLEDGER_AUTH_SECRET: secret,
+      WORKLEDGER_ENVIRONMENT: 'test',
+      WORKLEDGER_ORGANIZATION_ACCENT_COLOR: '#14532d',
+      WORKLEDGER_ORGANIZATION_FAVICON_PATH: '/identity/northstar.svg',
+      WORKLEDGER_ORGANIZATION_LOGO_PATH: '/identity/northstar.webp',
+      WORKLEDGER_ORGANIZATION_NAME: 'Northstar Studio',
+    }),
+  );
+
+  try {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/v1/identity',
+      headers: { origin: 'https://untrusted.example.test' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['cache-control']).toBe('public, max-age=300');
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+    expect(response.json()).toMatchObject({
+      data: {
+        accentColor: '#14532d',
+        faviconPath: '/identity/northstar.svg',
+        logoPath: '/identity/northstar.webp',
+        organizationName: 'Northstar Studio',
+      },
+      meta: { requestId: expect.any(String) },
+    });
+    expect(response.payload).not.toContain(secret);
+  } finally {
+    await app.close();
+  }
+});
+
 test('reports not ready without a configured database and exposes no dependency detail', async () => {
   const app = createApiServer(createRuntimeConfig({ WORKLEDGER_ENVIRONMENT: 'test' }));
 

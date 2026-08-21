@@ -189,6 +189,69 @@ const TODAY_ATTENDANCE = {
   timelineTruncated: false,
 };
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/v1/identity', async (route) => {
+    await route.fulfill({
+      json: success({
+        accentColor: '#075985',
+        faviconPath: null,
+        logoPath: null,
+        organizationName: 'Northstar Studio',
+      }),
+      status: 200,
+    });
+  });
+});
+
+test('keeps runtime company identity accessible across broken assets, reflow, forced colors, and print', async ({
+  page,
+}) => {
+  const organizationName =
+    'Northstar International Workplace Operations and Employee Services Cooperative';
+  await mockContext(page, () => false);
+  await page.route('**/v1/identity', async (route) => {
+    await route.fulfill({
+      json: success({
+        accentColor: '#14532d',
+        faviconPath: '/identity/configured-favicon.svg',
+        logoPath: '/identity/configured-logo.webp',
+        organizationName,
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/identity/configured-logo.webp', async (route) => {
+    await route.fulfill({ body: 'missing', contentType: 'text/plain', status: 404 });
+  });
+  await page.route('**/identity/configured-favicon.svg', async (route) => {
+    await route.fulfill({ body: 'missing', contentType: 'text/plain', status: 404 });
+  });
+  await page.setViewportSize({ width: 320, height: 720 });
+
+  await page.goto('/sign-in');
+  await expect(page.getByText(organizationName)).toBeVisible();
+  await expect(page.locator('.wl-company-fallback-mark')).toHaveText('N');
+  await expect(page.locator('#workledger-favicon')).toHaveAttribute(
+    'href',
+    '/workledger-favicon.svg',
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.emulateMedia({ forcedColors: 'active' });
+  const forcedMark = await page.locator('.wl-company-fallback-mark').evaluate((mark) => {
+    const styles = getComputedStyle(mark);
+    return { background: styles.backgroundColor, border: styles.borderColor };
+  });
+  expect(forcedMark.border).not.toBe('transparent');
+  expect(forcedMark.border).not.toBe(forcedMark.background);
+
+  await page.emulateMedia({ forcedColors: 'none', media: 'print' });
+  await expect(page.getByText(organizationName)).toBeVisible();
+});
+
 test('signs in through the accessible form and focuses the destination route', async ({ page }) => {
   let authenticated = false;
   await mockContext(page, () => authenticated);

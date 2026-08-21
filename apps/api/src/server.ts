@@ -33,6 +33,7 @@ import {
   type NotificationDeliveryAdapter,
 } from './notifications/delivery.js';
 import { createWorkLedgerLogger, type WorkLedgerLogger } from './logging/logger.js';
+import { registerCompanyIdentityRoutes } from './identity/routes.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
 const READY_RESPONSE_SCHEMA = z.strictObject({ status: z.enum(['ready', 'not_ready']) });
@@ -70,6 +71,7 @@ export function createApiServer(
 
   app.after(() => {
     let readinessCheck: (() => Promise<boolean>) | undefined;
+    registerCompanyIdentityRoutes(app, config);
     if (config.databaseUrl !== undefined && config.authSecret !== undefined) {
       const authentication = createWorkLedgerAuthentication({
         ...config,

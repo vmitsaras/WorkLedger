@@ -57,6 +57,7 @@
     --wl-link: var(--wl-color-action-600);
     --wl-link-hover: var(--wl-color-action-700);
     --wl-focus-ring: var(--wl-color-focus);
+    --wl-identity-accent: var(--wl-color-action-600);
 
     /* Tier 3: semantic state families. */
     --wl-state-neutral-text: var(--wl-text);
@@ -130,6 +131,7 @@
       --wl-link: LinkText;
       --wl-link-hover: LinkText;
       --wl-focus-ring: Highlight;
+      --wl-identity-accent: CanvasText !important;
       --wl-state-neutral-text: CanvasText;
       --wl-state-neutral-border: CanvasText;
       --wl-state-neutral-surface: Canvas;

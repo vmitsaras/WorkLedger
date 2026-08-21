@@ -12,6 +12,7 @@ import {
   clockInRequestSchema,
   clockOutEnvelopeSchema,
   clockOutRequestSchema,
+  companyIdentityEnvelopeSchema,
   createSuccessEnvelopeSchema,
   resumeAttendanceEnvelopeSchema,
   notificationHistoryEnvelopeSchema,
@@ -32,6 +33,33 @@ import {
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
+
+test('bounds public company identity to same-origin approved assets', () => {
+  const identity = {
+    data: {
+      accentColor: '#14532d',
+      faviconPath: '/identity/northstar.svg',
+      logoPath: '/identity/marks/northstar.webp',
+      organizationName: 'Northstar Studio',
+    },
+    meta: { requestId: randomUUID() },
+  };
+
+  expect(companyIdentityEnvelopeSchema.parse(identity)).toEqual(identity);
+  for (const logoPath of [
+    'https://tracking.example.test/logo.svg',
+    '/identity/../private.svg',
+    '/identity/logo.html',
+    '/identity/logo.svg?cache=1',
+  ]) {
+    expect(() =>
+      companyIdentityEnvelopeSchema.parse({
+        ...identity,
+        data: { ...identity.data, logoPath },
+      }),
+    ).toThrow();
+  }
+});
 
 test('bounds report URLs to strict, inclusive calendar ranges', () => {
   const employeeId = randomUUID();

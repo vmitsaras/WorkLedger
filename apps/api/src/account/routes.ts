@@ -39,7 +39,7 @@ export function registerAccountSelfServiceRoutes(
   database: WorkLedgerDatabase,
 ): void {
   const api = app.withTypeProvider<ZodTypeProvider>();
-  const selfService = createAccountSelfService(database);
+  const selfService = createAccountSelfService(database, config.companyIdentity);
 
   api.get(
     '/v1/me/context',

@@ -17,6 +17,7 @@ import {
 
 import {
   loadDailyTimeRecord,
+  loadCompanyIdentity,
   loadDomainAuditPage,
   loadAbsenceSettingsAdminDetail,
   loadHolidaySettingsAdminDetail,
@@ -63,6 +64,13 @@ export function createWorkLedgerQueryClient(): QueryClient {
     },
   });
 }
+
+export const companyIdentityQuery = () =>
+  queryOptions({
+    queryFn: ({ signal }) => loadCompanyIdentity(signal),
+    queryKey: ['company', 'identity'] as const,
+    staleTime: 5 * 60 * 1_000,
+  });
 
 export const selfContextQuery = () =>
   queryOptions({ queryFn: loadSelfContext, queryKey: ['self', 'context'] as const });

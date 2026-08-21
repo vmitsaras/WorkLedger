@@ -155,6 +155,7 @@ const REQUIRED_CONFIGURATION_FILES = [
   '.env.production.example',
   'Dockerfile',
   'infra/compose/production.yml',
+  'infra/compose/identity-assets.yml',
   'infra/docker/caddy/Caddyfile',
   'infra/compose/postgres.dev.yml',
   'infra/docker/postgres/init/001-workledger-local.sql',

@@ -82,6 +82,9 @@ host operator ── explicit backup/restore/migrate ──► protected backup 
 ```
 
 - The browser, URL, forwarded headers, client clocks, IDs, role claims, and mutation versions are untrusted input.
+- `GET /v1/identity` is the only anonymous organization-presentation DTO. It contains a validated
+  display name, bounded same-origin asset paths, and decorative accent only; it contains no
+  organization identifier, domain settings, account data, credential, filesystem path, or secret.
 - Production serves web and API under one canonical HTTPS origin. Cross-origin authenticated browser deployment is outside the MVP default and requires an ADR/security review.
 - The API port and PostgreSQL are not publicly reachable. Only the configured reverse proxy reaches the application; only the application/authorized operator reaches PostgreSQL.
 - The canonical public origin is validated configuration, not inferred from an arbitrary `Host` or forwarded header. Proxy headers are trusted only from exact configured proxy addresses, and the proxy overwrites client-supplied forwarded values.
@@ -266,6 +269,11 @@ Caddy reference proxy
 - Apply request/body/header limits, timeouts, HSTS and security headers consistently. Do not disable upstream TLS verification when TLS is used between proxy and application.
 - Production containers run as non-root where supported, use minimal pinned images, avoid host Docker socket/mutable source mounts, use health/readiness checks and resource limits, and persist only documented database/backup volumes.
 - Optional SMTP is configured separately. Redis, workers, S3, attachment storage, and analytics are not part of the MVP reference deployment.
+- Optional company media is mounted read-only at `/srv/web/identity` through the explicit identity
+  Compose override. Runtime configuration accepts only `/identity/` image paths and approved file
+  extensions; remote origins, traversal, query/fragment content, custom CSS, and executable HTML
+  are rejected. Caddy serves that prefix without SPA fallback under the existing CSP and `nosniff`
+  policy.
 
 ## 16. Health, readiness, and incident diagnostics
 

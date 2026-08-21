@@ -222,6 +222,7 @@ function checkTextFiles({ composeFile, caddyFile, envFile }) {
         'postgres_password',
         'database_url',
         'auth_secret',
+        'WORKLEDGER_ORGANIZATION_NAME',
         'edge:',
         'data:',
       ],
@@ -248,6 +249,7 @@ function checkTextFiles({ composeFile, caddyFile, envFile }) {
         'header_up X-Forwarded-Proto {scheme}',
         'header_up X-Forwarded-Host {host}',
         'header_up X-Forwarded-Port {server_port}',
+        '@identity_assets path /identity/*',
       ],
     },
     {
@@ -256,6 +258,7 @@ function checkTextFiles({ composeFile, caddyFile, envFile }) {
       required: [
         'WORKLEDGER_ORIGIN_HOST=',
         'WORKLEDGER_ORIGIN=',
+        'WORKLEDGER_ORGANIZATION_NAME=',
         'WORKLEDGER_AUTH_SECRET_FILE=',
         'WORKLEDGER_DATABASE_URL_FILE=',
         'WORKLEDGER_POSTGRES_PASSWORD_FILE=',

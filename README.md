@@ -117,6 +117,11 @@ contents; use it only when a destructive local reset is intended. See
 [docs/24-postgres-docker-dev.md](docs/24-postgres-docker-dev.md) for port overrides and the exact
 database-test boundary.
 
+Self-hosted installations can set a validated organization display name, same-origin logo,
+favicon, and bounded decorative accent without editing application source. See
+[docs/113-company-identity-runtime-configuration.md](docs/113-company-identity-runtime-configuration.md)
+for variables, approved asset formats, fallbacks, and the optional read-only Compose mount.
+
 ## Root scripts
 
 The table uses compact `pnpm run ...` forms. Execute them through `pnpm with 11.20.0 run ...`

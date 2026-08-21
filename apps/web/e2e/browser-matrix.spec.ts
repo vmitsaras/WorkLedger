@@ -2,6 +2,23 @@ import { expect, test } from '@playwright/test';
 
 import { expectPageToHaveNoAxeViolations } from '@workledger/test-utils';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/v1/identity', async (route) => {
+    await route.fulfill({
+      json: {
+        data: {
+          accentColor: '#075985',
+          faviconPath: null,
+          logoPath: null,
+          organizationName: 'Northstar Studio',
+        },
+        meta: { requestId: '123e4567-e89b-42d3-a456-426614174000' },
+      },
+      status: 200,
+    });
+  });
+});
+
 test('@browser-matrix sign-in route has semantic, responsive baseline', async ({ page }) => {
   await page.route('**/v1/me/context', async (route) => {
     await route.fulfill({

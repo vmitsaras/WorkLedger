@@ -142,7 +142,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1100` Audit every canonical route, role, workflow, and required state; capture responsive baselines and create a prioritized UI/UX issue register.
 - [x] `WL-1101` Define and approve the WorkLedger visual direction, content hierarchy, density rules, page archetypes, and interaction principles.
 - [x] `WL-1102` Consolidate semantic design tokens and CSS ownership; remove undefined and one-off style contracts and establish enforceable styling boundaries.
-- [ ] `WL-1103` Implement validated company-identity configuration for organization name, logo, favicon, and brand accent with accessible fallbacks and no source-code editing.
+- [x] `WL-1103` Implement validated company-identity configuration for organization name, logo, favicon, and brand accent with accessible fallbacks and no source-code editing.
 - [ ] `WL-1104` Expand the local React Aria UI system for actions, forms, panels, statuses, alerts, tables, filters, pagination, and route states.
 - [ ] `WL-1105` Redesign the application shell, navigation, authentication surfaces, and route boundaries across responsive, zoom, forced-colors, and reduced-motion contexts.
 - [ ] `WL-1106` Pass the UI-foundation phase gate and bump all workspace manifests to `0.12.0`.

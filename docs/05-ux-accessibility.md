@@ -20,6 +20,17 @@ contracts rather than introducing literal color or unowned project classes.
 - No gamification of long workdays.
 - Every important total has an explanation path.
 
+### Company identity
+
+Organization identity is validated runtime presentation data. Authentication and shell surfaces
+keep the organization display name and WorkLedger product attribution as text even when a logo is
+configured. Logos are decorative beside that text, reserve their rendered dimensions, and fall
+back to a text-independent initial mark when missing or undecodable. The optional accent is limited
+to a non-semantic identity boundary; focus, links, actions, and status families remain
+product-owned. Forced-colors mode replaces the accent with a system color, and long names must reflow at
+320 CSS pixels without horizontal page scrolling. See
+`docs/113-company-identity-runtime-configuration.md`.
+
 ## 2. Main navigation
 
 ### Employee

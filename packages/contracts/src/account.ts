@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 import { createSuccessEnvelopeSchema } from './api.js';
+import {
+  companyIdentityAccentSchema,
+  companyIdentityFaviconPathSchema,
+  companyIdentityLogoPathSchema,
+} from './company-identity.js';
 
 export const APPLICATION_ROLES = [
   'EMPLOYEE',
@@ -34,6 +39,9 @@ export const employeeSelfSummarySchema = z.strictObject({
 });
 
 export const organizationSummarySchema = z.strictObject({
+  accentColor: companyIdentityAccentSchema.optional(),
+  faviconPath: companyIdentityFaviconPathSchema.nullable().optional(),
+  logoPath: companyIdentityLogoPathSchema.nullable().optional(),
   name: displayTextSchema,
 });
 

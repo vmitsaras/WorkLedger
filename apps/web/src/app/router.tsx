@@ -11,6 +11,7 @@ import {
   notificationQuerySchema,
   type NavigationArea,
   type SelfContext,
+  DEFAULT_COMPANY_IDENTITY,
   employeeAdminQuerySchema,
   systemAccountQuerySchema,
 } from '@workledger/contracts';
@@ -18,6 +19,7 @@ import {
 import { ApiClientError, clearSessionMemory } from './api-client.js';
 import {
   personalCalendarQuery,
+  companyIdentityQuery,
   approvalDetailQuery,
   approvalInboxQuery,
   selfContextQuery,
@@ -410,10 +412,22 @@ function createPublicOnlyLoader(queryClient: QueryClient): LoaderFunction {
       const context = await queryClient.ensureQueryData(selfContextQuery());
       return redirect(context.defaultPath);
     } catch (error) {
-      if (isAuthenticationError(error)) return null;
+      if (isAuthenticationError(error)) {
+        await ensureCompanyIdentity(queryClient);
+        return null;
+      }
       throw error;
     }
   };
+}
+
+async function ensureCompanyIdentity(queryClient: QueryClient) {
+  try {
+    return await queryClient.ensureQueryData(companyIdentityQuery());
+  } catch {
+    queryClient.setQueryData(companyIdentityQuery().queryKey, DEFAULT_COMPANY_IDENTITY);
+    return DEFAULT_COMPANY_IDENTITY;
+  }
 }
 
 function createProtectedLoader(queryClient: QueryClient): LoaderFunction {

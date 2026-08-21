@@ -10,6 +10,11 @@
 
 The parser lives in `apps/api/src/config.ts`. It consumes an already-resolved process environment and returns an immutable server-only configuration object. It never reads from browser build variables, `localStorage`, request Host headers, or forwarded headers. `config:check` uses Node's native `--env-file-if-exists=.env` option for an optional local ignored file; no dotenv package is installed.
 
+`WL-1103` extends this startup parser with a bounded, non-secret company identity contract. See
+`docs/113-company-identity-runtime-configuration.md` for the organization name, same-origin
+logo/favicon, accent validation, public DTO, and read-only deployment mount. The secret and
+canonical-origin rules below are unchanged.
+
 | Variable | Development/test behavior | Production requirement |
 |---|---|---|
 | `WORKLEDGER_ENVIRONMENT` | Optional; defaults to `development` | Exactly `production` when deployed |

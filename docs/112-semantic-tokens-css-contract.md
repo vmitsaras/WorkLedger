@@ -144,7 +144,9 @@ Completed on 2026-08-21:
 
 ## 8. Deferred work
 
-- WL-1103 owns runtime organization name/logo/favicon/accent configuration and validation.
+- WL-1103 consumes the reserved identity boundary through `--wl-identity-accent`; its runtime
+  organization name/logo/favicon validation and safe fallbacks are documented in
+  `docs/113-company-identity-runtime-configuration.md`.
 - WL-1104 owns shared React Aria patterns and migration away from the bounded native-control
   compatibility classes.
 - WL-1105 owns shell/authentication/route-boundary redesign.

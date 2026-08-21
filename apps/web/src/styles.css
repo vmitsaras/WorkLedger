@@ -48,6 +48,88 @@
     inset-block-start: 0;
   }
 
+  .wl-brand-link {
+    display: block;
+    max-inline-size: calc(100vw - 7rem);
+  }
+
+  .wl-company-identity {
+    display: inline-grid;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--wl-space-3);
+    color: var(--wl-text);
+  }
+
+  .wl-company-mark {
+    display: grid;
+    min-inline-size: 0;
+    align-items: center;
+    justify-items: start;
+  }
+
+  .wl-company-identity-shell .wl-company-mark-logo {
+    inline-size: clamp(3rem, 15vw, 7rem);
+    block-size: 2.25rem;
+  }
+
+  .wl-company-identity-authentication .wl-company-mark-logo {
+    inline-size: min(12rem, 32vw);
+    block-size: 3.5rem;
+  }
+
+  .wl-company-mark-fallback {
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+  }
+
+  .wl-company-logo {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
+    object-position: center left;
+  }
+
+  .wl-company-fallback-mark {
+    display: grid;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    place-items: center;
+    border: 2px solid var(--wl-identity-accent);
+    border-radius: var(--wl-radius-control);
+    color: var(--wl-text);
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .wl-company-names {
+    display: grid;
+    min-inline-size: 0;
+    line-height: 1.2;
+  }
+
+  .wl-company-name {
+    overflow-wrap: anywhere;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .wl-company-identity-authentication .wl-company-name {
+    font-size: clamp(1.05rem, 3vw, 1.35rem);
+  }
+
+  .wl-product-name {
+    color: var(--wl-text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
   .wl-shell-grid {
     display: grid;
     min-block-size: calc(100dvh - 4.25rem);
@@ -420,6 +502,11 @@
     .wl-timeline-marker {
       border-color: Highlight;
       background: Canvas;
+    }
+
+    .wl-company-fallback-mark {
+      border-color: CanvasText;
+      color: CanvasText;
     }
   }
 

@@ -1,0 +1,7 @@
+services:
+  caddy:
+    volumes:
+      - type: bind
+        source: ${WORKLEDGER_IDENTITY_ASSETS_DIRECTORY:?Set the host identity asset directory}
+        target: /srv/web/identity
+        read_only: true

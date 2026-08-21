@@ -365,6 +365,16 @@ export {
 } from './corrections.js';
 
 export {
+  DEFAULT_COMPANY_IDENTITY,
+  companyIdentityAccentSchema,
+  companyIdentityEnvelopeSchema,
+  companyIdentityFaviconPathSchema,
+  companyIdentityLogoPathSchema,
+  companyIdentitySchema,
+  type CompanyIdentity,
+} from './company-identity.js';
+
+export {
   APPLICATION_ROLES,
   NAVIGATION_AREAS,
   PASSWORD_MAXIMUM_LENGTH,

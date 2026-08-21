@@ -292,7 +292,47 @@ test('shows accessible sign-in validation without attempting authentication', as
   const summary = screen.getByRole('alert');
   await waitFor(() => expect(summary).toHaveFocus());
   expect(screen.getByRole('link', { name: 'Enter your email address.' })).toBeVisible();
-  expect(fetchMock).toHaveBeenCalledTimes(1);
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  await expectNoAxeViolations(container);
+});
+
+test('applies validated public identity and preserves text and favicon fallbacks', async () => {
+  const identity = {
+    accentColor: '#14532d',
+    faviconPath: '/identity/northstar.svg',
+    logoPath: '/identity/northstar.webp',
+    organizationName: 'Northstar Studio International Operations',
+  } as const;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return authenticationErrorResponse('AUTH_REQUIRED');
+      if (path === '/v1/identity') return successResponse(identity);
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+
+  const { container } = renderApplication('/sign-in');
+  expect(await screen.findByText(identity.organizationName)).toBeVisible();
+  expect(screen.getByText('WorkLedger', { selector: '.wl-product-name' })).toBeVisible();
+  expect(document.documentElement.style.getPropertyValue('--wl-identity-accent')).toBe(
+    identity.accentColor,
+  );
+
+  const logo = container.querySelector<HTMLImageElement>('.wl-company-logo');
+  expect(logo).not.toBeNull();
+  expect(logo).toHaveAttribute('alt', '');
+  expect(logo).toHaveAttribute('width', '192');
+  if (logo !== null) fireEvent.error(logo);
+  await waitFor(() => expect(container.querySelector('.wl-company-logo')).toBeNull());
+  expect(screen.getByText('N', { selector: '.wl-company-fallback-mark' })).toBeVisible();
+  expect(screen.getByText(identity.organizationName)).toBeVisible();
+
+  const favicon = document.querySelector<HTMLLinkElement>('#workledger-favicon');
+  expect(favicon?.getAttribute('href')).toBe(identity.faviconPath);
+  favicon?.dispatchEvent(new Event('error'));
+  expect(favicon?.getAttribute('href')).toBe('/workledger-favicon.svg');
   await expectNoAxeViolations(container);
 });
 

@@ -1,4 +1,10 @@
-import type { NavigationArea, SelfContext, SelfProfile } from '@workledger/contracts';
+import {
+  DEFAULT_COMPANY_IDENTITY,
+  type CompanyIdentity,
+  type NavigationArea,
+  type SelfContext,
+  type SelfProfile,
+} from '@workledger/contracts';
 import { parseDomainId, parseInstant, type DomainId, type Instant } from '@workledger/domain';
 import type {
   AccountSelfContextRecord,
@@ -28,12 +34,15 @@ export interface AccountSelfService {
   ): Promise<Readonly<{ revokedCurrentSession: boolean; revokedSessionId: string }>>;
 }
 
-export function createAccountSelfService(database: WorkLedgerDatabase): AccountSelfService {
+export function createAccountSelfService(
+  database: WorkLedgerDatabase,
+  companyIdentity: CompanyIdentity = DEFAULT_COMPANY_IDENTITY,
+): AccountSelfService {
   const service: AccountSelfService = {
     async getContext(identity, at) {
       return database.transaction(async (transaction) => {
         const context = await transaction.accountSelfService.findContext(identity.accountId, at);
-        return mapSelfContext(requireActiveContext(context));
+        return mapSelfContext(requireActiveContext(context), companyIdentity);
       });
     },
 
@@ -47,7 +56,7 @@ export function createAccountSelfService(database: WorkLedgerDatabase): AccountS
           at,
         );
         return Object.freeze({
-          ...mapSelfContext(context),
+          ...mapSelfContext(context, companyIdentity),
           sessions: sessions.map((session) => mapSession(session, identity.currentSessionId)),
         });
       });
@@ -126,7 +135,10 @@ function requireActiveContext(context: AccountSelfContextRecord | null): Account
   return context;
 }
 
-function mapSelfContext(context: AccountSelfContextRecord): SelfContext {
+function mapSelfContext(
+  context: AccountSelfContextRecord,
+  companyIdentity: CompanyIdentity,
+): SelfContext {
   const navigationAreas = navigationAreasFor(context);
   return Object.freeze({
     account: Object.freeze({ email: context.email, name: context.name }),
@@ -140,7 +152,12 @@ function mapSelfContext(context: AccountSelfContextRecord): SelfContext {
             status: context.employee.status,
           }),
     navigationAreas,
-    organization: Object.freeze({ name: context.organization.name }),
+    organization: Object.freeze({
+      accentColor: companyIdentity.accentColor,
+      faviconPath: companyIdentity.faviconPath,
+      logoPath: companyIdentity.logoPath,
+      name: companyIdentity.organizationName,
+    }),
     roles: [...context.roles],
   });
 }

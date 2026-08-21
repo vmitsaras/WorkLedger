@@ -40,6 +40,10 @@ integrationTest(
         WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
         WORKLEDGER_ENVIRONMENT: 'test',
         WORKLEDGER_ORIGIN: ORIGIN,
+        WORKLEDGER_ORGANIZATION_NAME: 'Profile Organization',
+        WORKLEDGER_ORGANIZATION_LOGO_PATH: '/identity/profile.svg',
+        WORKLEDGER_ORGANIZATION_FAVICON_PATH: '/identity/profile-icon.png',
+        WORKLEDGER_ORGANIZATION_ACCENT_COLOR: '#14532d',
       }),
     );
 
@@ -65,7 +69,12 @@ integrationTest(
             status: 'ACTIVE',
           },
           navigationAreas: ['EMPLOYEE'],
-          organization: { name: 'Profile Organization' },
+          organization: {
+            accentColor: '#14532d',
+            faviconPath: '/identity/profile-icon.png',
+            logoPath: '/identity/profile.svg',
+            name: 'Profile Organization',
+          },
           roles: ['EMPLOYEE'],
         },
       });

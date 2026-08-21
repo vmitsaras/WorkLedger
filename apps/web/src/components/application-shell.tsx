@@ -7,6 +7,11 @@ import { Button, Drawer } from '@workledger/ui';
 
 import { clearSessionMemory, signOut } from '../app/api-client.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
+import {
+  CompanyIdentity,
+  CompanyIdentityEffects,
+  companyIdentityFromOrganization,
+} from './company-identity.js';
 
 type NavigationItem = Readonly<{
   area: NavigationArea;
@@ -57,24 +62,24 @@ const AREA_LABELS: Readonly<Record<NavigationArea, string>> = {
 
 export function ApplicationShell() {
   const context = useLoaderData<SelfContext>();
+  const identity = companyIdentityFromOrganization(context.organization);
 
   return (
     <div className="wl-app-shell min-h-dvh">
+      <CompanyIdentityEffects identity={identity} />
       <a className="wl-skip-link" href="#main-content">
         Skip to content
       </a>
       <header className="wl-app-header flex items-center justify-between gap-4 border-b border-[var(--wl-border)] bg-[var(--wl-surface-raised)] px-4 py-3 sm:px-6">
         <Link
           to="/"
-          className="wl-brand-link rounded-md text-lg font-bold tracking-[-0.02em] text-[var(--wl-text)] no-underline outline-none"
+          aria-label={`${identity.organizationName} home`}
+          className="wl-brand-link min-w-0 rounded-md text-[var(--wl-text)] no-underline outline-none"
           data-route-focus-key="brand"
         >
-          WorkLedger
+          <CompanyIdentity identity={identity} presentation="shell" />
         </Link>
-        <div className="flex items-center gap-3">
-          <p className="m-0 hidden text-sm text-[var(--wl-text-muted)] sm:block">
-            {context.organization.name}
-          </p>
+        <div className="flex shrink-0 items-center gap-3">
           <div className="wl-mobile-navigation">
             <Drawer title="Navigation" triggerLabel="Menu">
               {(close) => <NavigationLists context={context} mode="mobile" onNavigate={close} />}
