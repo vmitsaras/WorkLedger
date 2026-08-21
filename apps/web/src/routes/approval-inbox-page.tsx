@@ -187,7 +187,7 @@ function ApprovalFilters({
         <summary className="wl-approval-filter-summary">
           {!wideLayout && mobileOpen ? 'Hide approval filters' : 'Show approval filters'}
         </summary>
-        <form className="wl-approval-filter-panel grid gap-4 p-4" onSubmit={onSubmit}>
+        <form className="grid gap-4 p-4" onSubmit={onSubmit}>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <SelectFilter
               id="approval-status"

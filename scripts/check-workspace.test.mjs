@@ -106,6 +106,7 @@ function createState() {
         'toolchain:check': 'node scripts/check-toolchain.mjs',
         'workspace:check': 'node scripts/check-workspace.mjs',
         'phase:check': 'test command',
+        'css:check': 'test command',
         'config:check': 'test command',
         'db:up': 'test command',
         'db:down': 'test command',

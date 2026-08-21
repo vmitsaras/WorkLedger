@@ -41,7 +41,7 @@ export function AuthenticationLayout() {
         tabIndex={-1}
         className="mx-auto grid min-h-dvh w-full max-w-6xl content-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(25rem,0.7fr)] lg:items-center lg:gap-16"
       >
-        <section className="wl-auth-intro grid max-w-xl gap-5" aria-label="WorkLedger introduction">
+        <section className="grid max-w-xl gap-5" aria-label="WorkLedger introduction">
           <p className="m-0 text-sm font-bold uppercase tracking-[0.16em] text-[var(--wl-action-primary)]">
             WorkLedger
           </p>

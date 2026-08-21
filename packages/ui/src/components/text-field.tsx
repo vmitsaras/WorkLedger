@@ -34,9 +34,9 @@ export function TextField({
       ) : null}
       <Input
         {...(placeholder === undefined ? {} : { placeholder })}
-        className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3 py-2 text-base text-[var(--wl-text)] outline-none placeholder:text-[var(--wl-text-muted)] data-[focus-visible]:outline-3 data-[focus-visible]:outline-solid data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-[var(--wl-focus-ring)] data-[invalid]:border-[var(--wl-danger)]"
+        className="min-h-[var(--wl-control-min-block-size)] rounded-[var(--wl-radius-control)] border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3 py-[var(--wl-control-padding-block)] text-base text-[var(--wl-text)] outline-none placeholder:text-[var(--wl-text-muted)] data-[focus-visible]:outline-3 data-[focus-visible]:outline-solid data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-[var(--wl-focus-ring)] data-[invalid]:border-[var(--wl-state-danger-border)]"
       />
-      <FieldError className="text-sm font-semibold text-[var(--wl-danger)]">
+      <FieldError className="text-sm font-semibold text-[var(--wl-state-danger-text)]">
         {errorMessage}
       </FieldError>
     </ReactAriaTextField>

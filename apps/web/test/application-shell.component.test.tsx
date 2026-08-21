@@ -11,6 +11,7 @@ import type {
   PersonalCalendar,
   SelfContext,
   SelfProfile,
+  SystemDiagnosticsResponse,
   TodayAttendance,
 } from '@workledger/contracts';
 import { expectNoAxeViolations } from '@workledger/test-utils';
@@ -28,6 +29,29 @@ const EMPLOYEE_CONTEXT: SelfContext = {
   navigationAreas: ['EMPLOYEE'],
   organization: { name: 'Northstar Studio' },
   roles: ['EMPLOYEE'],
+};
+const SYSTEM_CONTEXT: SelfContext = {
+  account: { email: 'system@northstar.test', name: 'System Administrator' },
+  defaultPath: '/system/operations',
+  employee: null,
+  navigationAreas: ['SYSTEM'],
+  organization: { name: 'Northstar Studio' },
+  roles: ['SYSTEM_ADMINISTRATOR'],
+};
+const SYSTEM_DIAGNOSTICS: SystemDiagnosticsResponse = {
+  dependencies: {
+    authentication: { status: 'healthy' },
+    database: {
+      error: 'Database connection timed out after the bounded readiness check.',
+      latencyMs: 750,
+      status: 'unavailable',
+    },
+  },
+  environment: 'production',
+  health: 'degraded',
+  service: 'workledger-api',
+  timestamp: '2026-08-21T10:30:00Z',
+  version: '0.11.0',
 };
 const TODAY_ATTENDANCE: TodayAttendance = {
   asOf: '2026-08-11T09:30:00Z',
@@ -1094,6 +1118,34 @@ test('renders a non-leaking permission-denied route state', async () => {
   await waitFor(() => expect(heading).toHaveFocus());
   expect(screen.getByText(/No restricted record details were disclosed/u)).toBeVisible();
   expect(document.title).toBe('Permission denied | WorkLedger');
+  await expectNoAxeViolations(container);
+});
+
+test('renders semantic system diagnostics with textual, token-owned states', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(SYSTEM_CONTEXT);
+      if (path === '/v1/system/operations') return Response.json(SYSTEM_DIAGNOSTICS);
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const { container } = renderApplication('/system/operations');
+
+  const heading = await screen.findByRole('heading', { name: 'Operations' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(screen.getByText('Degraded')).toBeVisible();
+  expect(screen.getByText('Unavailable')).toBeVisible();
+  expect(screen.getByText('Healthy')).toBeVisible();
+  expect(screen.getByText(/Database connection timed out/u)).toHaveClass('wl-technical-error');
+
+  const terms = container.querySelectorAll('dt');
+  expect(terms).toHaveLength(9);
+  for (const term of terms) expect(term.closest('dl')).not.toBeNull();
+  for (const definition of container.querySelectorAll('dd')) {
+    expect(definition.closest('dl')).not.toBeNull();
+  }
   await expectNoAxeViolations(container);
 });
 

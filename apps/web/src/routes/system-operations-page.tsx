@@ -25,100 +25,104 @@ export function SystemOperationsPage() {
 
       {diagnostics === undefined ? (
         <div role="status" aria-label="Loading diagnostics">
-          <p className="text-secondary">Loading system diagnostics...</p>
+          <p className="text-[var(--wl-text-muted)]">Loading system diagnostics...</p>
         </div>
       ) : (
         <div className="grid gap-6">
-          <section className="wl-card rounded-xl border p-6">
+          <section className="wl-panel">
             <h2 className="mb-4 text-lg font-semibold">Service status</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <dl className="grid gap-4 sm:grid-cols-2">
               <div>
-                <dt className="text-secondary text-sm">Service</dt>
-                <dd className="font-medium">{diagnostics.service}</dd>
+                <dt className="text-sm text-[var(--wl-text-muted)]">Service</dt>
+                <dd className="m-0 font-medium">{diagnostics.service}</dd>
               </div>
               <div>
-                <dt className="text-secondary text-sm">Version</dt>
-                <dd className="font-medium">{diagnostics.version}</dd>
+                <dt className="text-sm text-[var(--wl-text-muted)]">Version</dt>
+                <dd className="m-0 font-medium">{diagnostics.version}</dd>
               </div>
               <div>
-                <dt className="text-secondary text-sm">Environment</dt>
-                <dd className="font-medium">{diagnostics.environment}</dd>
+                <dt className="text-sm text-[var(--wl-text-muted)]">Environment</dt>
+                <dd className="m-0 font-medium">{diagnostics.environment}</dd>
               </div>
               <div>
-                <dt className="text-secondary text-sm">Timestamp</dt>
-                <dd className="font-medium">
+                <dt className="text-sm text-[var(--wl-text-muted)]">Timestamp</dt>
+                <dd className="m-0 font-medium">
                   {DATE_TIME_FORMATTER.format(new Date(diagnostics.timestamp))}
                 </dd>
               </div>
               <div>
-                <dt className="text-secondary text-sm">Overall health</dt>
-                <dd>
-                  <HealthBadge status={diagnostics.health} />
+                <dt className="text-sm text-[var(--wl-text-muted)]">Overall health</dt>
+                <dd className="m-0">
+                  <StatusBadge status={diagnostics.health} />
                 </dd>
               </div>
-            </div>
+            </dl>
           </section>
 
-          <section className="wl-card rounded-xl border p-6">
+          <section className="wl-panel">
             <h2 className="mb-4 text-lg font-semibold">Dependencies</h2>
             <div className="grid gap-6">
-              <div>
-                <h3 className="mb-3 font-medium">Database</h3>
-                <div className="grid gap-3 sm:grid-cols-3">
+              <section aria-labelledby="database-diagnostics-heading">
+                <h3 id="database-diagnostics-heading" className="mb-3 font-medium">
+                  Database
+                </h3>
+                <dl className="grid gap-3 sm:grid-cols-3">
                   <div>
-                    <dt className="text-secondary text-sm">Status</dt>
-                    <dd>
-                      <DependencyBadge status={diagnostics.dependencies.database.status} />
+                    <dt className="text-sm text-[var(--wl-text-muted)]">Status</dt>
+                    <dd className="m-0">
+                      <StatusBadge status={diagnostics.dependencies.database.status} />
                     </dd>
                   </div>
                   {diagnostics.dependencies.database.latencyMs !== undefined && (
                     <div>
-                      <dt className="text-secondary text-sm">Latency</dt>
-                      <dd className="font-medium">
+                      <dt className="text-sm text-[var(--wl-text-muted)]">Latency</dt>
+                      <dd className="m-0 font-medium">
                         {diagnostics.dependencies.database.latencyMs} ms
                       </dd>
                     </div>
                   )}
                   {diagnostics.dependencies.database.error !== undefined && (
                     <div className="sm:col-span-3">
-                      <dt className="text-secondary text-sm">Error</dt>
-                      <dd className="font-mono text-sm text-red-700 dark:text-red-400">
+                      <dt className="text-sm text-[var(--wl-text-muted)]">Error</dt>
+                      <dd className="wl-technical-error m-0 mt-1">
                         {diagnostics.dependencies.database.error}
                       </dd>
                     </div>
                   )}
-                </div>
-              </div>
+                </dl>
+              </section>
 
-              <div>
-                <h3 className="mb-3 font-medium">Authentication</h3>
-                <div className="grid gap-3 sm:grid-cols-3">
+              <section aria-labelledby="authentication-diagnostics-heading">
+                <h3 id="authentication-diagnostics-heading" className="mb-3 font-medium">
+                  Authentication
+                </h3>
+                <dl className="grid gap-3 sm:grid-cols-3">
                   <div>
-                    <dt className="text-secondary text-sm">Status</dt>
-                    <dd>
-                      <DependencyBadge status={diagnostics.dependencies.authentication.status} />
+                    <dt className="text-sm text-[var(--wl-text-muted)]">Status</dt>
+                    <dd className="m-0">
+                      <StatusBadge status={diagnostics.dependencies.authentication.status} />
                     </dd>
                   </div>
                   {diagnostics.dependencies.authentication.error !== undefined && (
                     <div className="sm:col-span-3">
-                      <dt className="text-secondary text-sm">Error</dt>
-                      <dd className="font-mono text-sm text-red-700 dark:text-red-400">
+                      <dt className="text-sm text-[var(--wl-text-muted)]">Error</dt>
+                      <dd className="wl-technical-error m-0 mt-1">
                         {diagnostics.dependencies.authentication.error}
                       </dd>
                     </div>
                   )}
-                </div>
-              </div>
+                </dl>
+              </section>
             </div>
           </section>
 
-          <section className="wl-card rounded-xl border p-6">
+          <section className="wl-panel">
             <h2 className="mb-4 text-lg font-semibold">Deployment procedures</h2>
-            <p className="text-secondary mb-4">
+            <p className="mb-4 text-[var(--wl-text-muted)]">
               Backup, restore, migration, and upgrade workflows are host-operator procedures and are
               not exposed in this interface.
             </p>
-            <p className="text-secondary text-sm">
+            <p className="text-sm text-[var(--wl-text-muted)]">
               See the deployment and operations documentation for validated procedures.
             </p>
           </section>
@@ -128,64 +132,23 @@ export function SystemOperationsPage() {
   );
 }
 
-function HealthBadge({ status }: Readonly<{ status: 'healthy' | 'degraded' | 'critical' }>) {
-  if (status === 'healthy') {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-200">
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400"
-          aria-hidden="true"
-        />
-        Healthy
-      </span>
-    );
-  }
-  if (status === 'degraded') {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400"
-          aria-hidden="true"
-        />
-        Degraded
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-800 dark:bg-red-950 dark:text-red-200">
-      <span className="h-1.5 w-1.5 rounded-full bg-red-600 dark:bg-red-400" aria-hidden="true" />
-      Critical
-    </span>
-  );
-}
+type OperationsStatus = 'healthy' | 'degraded' | 'critical' | 'unavailable';
 
-function DependencyBadge({ status }: Readonly<{ status: 'healthy' | 'degraded' | 'unavailable' }>) {
-  if (status === 'healthy') {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-200">
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400"
-          aria-hidden="true"
-        />
-        Healthy
-      </span>
-    );
-  }
-  if (status === 'degraded') {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400"
-          aria-hidden="true"
-        />
-        Degraded
-      </span>
-    );
-  }
+const STATUS_PRESENTATION: Readonly<
+  Record<OperationsStatus, Readonly<{ className: string; label: string }>>
+> = {
+  healthy: { className: 'wl-status wl-status-success', label: 'Healthy' },
+  degraded: { className: 'wl-status wl-status-warning', label: 'Degraded' },
+  critical: { className: 'wl-status wl-status-danger', label: 'Critical' },
+  unavailable: { className: 'wl-status wl-status-danger', label: 'Unavailable' },
+};
+
+function StatusBadge({ status }: Readonly<{ status: OperationsStatus }>) {
+  const presentation = STATUS_PRESENTATION[status];
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-800 dark:bg-red-950 dark:text-red-200">
-      <span className="h-1.5 w-1.5 rounded-full bg-red-600 dark:bg-red-400" aria-hidden="true" />
-      Unavailable
+    <span className={presentation.className}>
+      <span className="wl-status-marker" aria-hidden="true" />
+      {presentation.label}
     </span>
   );
 }

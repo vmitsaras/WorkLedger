@@ -21,7 +21,7 @@ export function Drawer({ children, title, triggerLabel }: DrawerProps) {
       <Button variant="secondary">{triggerLabel}</Button>
       <ModalOverlay
         isDismissable
-        className="wl-dialog-overlay fixed inset-0 z-50 flex min-h-dvh bg-[color-mix(in_oklab,var(--wl-text)_35%,transparent)] data-[entering]:animate-[wl-overlay-in_var(--wl-motion-duration-base)_var(--wl-motion-ease-standard)] data-[exiting]:animate-[wl-overlay-out_var(--wl-motion-duration-fast)_var(--wl-motion-ease-standard)]"
+        className="wl-dialog-overlay fixed inset-0 z-50 flex min-h-dvh bg-[var(--wl-overlay-scrim)] data-[entering]:animate-[wl-overlay-in_var(--wl-motion-duration-base)_var(--wl-motion-ease-standard)] data-[exiting]:animate-[wl-overlay-out_var(--wl-motion-duration-fast)_var(--wl-motion-ease-standard)]"
       >
         <Modal className="wl-dialog-modal min-h-dvh w-[min(22rem,calc(100%-2rem))] overflow-y-auto border-r border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-5 text-[var(--wl-text)] shadow-[var(--wl-shadow-dialog)] outline-none data-[entering]:animate-[wl-drawer-in_var(--wl-motion-duration-base)_var(--wl-motion-ease-standard)] data-[exiting]:animate-[wl-drawer-out_var(--wl-motion-duration-fast)_var(--wl-motion-ease-standard)]">
           <ReactAriaDialog className="grid min-h-full content-start gap-5 outline-none">

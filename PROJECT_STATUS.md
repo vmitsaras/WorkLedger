@@ -2,20 +2,21 @@
 
 **Current phase:** Phase 11 — UI/UX direction, design system, and adaptable company identity
 **Project readiness:** Stage 5 of 5 — Production gate complete, UI foundation in progress
-**Phase progress:** Phase 10 complete — 1 of 7 Phase 11 tasks complete
+**Phase progress:** Phase 10 complete — 3 of 7 Phase 11 tasks complete
 **Current milestone:** Production hardening and self-hosting complete — version 0.11.0
-**Active task:** `WL-1101` (next)
-**Status:** WL-1100 complete — canonical UI/UX inventory, responsive baselines, and prioritized issue register recorded
+**Active task:** `WL-1103` (next)
+**Status:** WL-1102 complete — semantic tokens, CSS ownership, and executable styling boundaries implemented
 **Last verified:** 2026-08-21
 
 ## Current objective
 
-`WL-1100` audited the canonical route/state contract and representative role/responsive surfaces.
-The audit found strong accessibility foundations plus two high-priority workflow gaps: the incomplete
-type-neutral Requests surface and the stale technical Audit placeholder.
+`WL-1102` implements Quiet Ledger's primitive, semantic, component, state, motion, and density
+token tiers under one UI-package owner. Flat cascade layers now interleave correctly with Tailwind,
+routes cannot introduce undefined WorkLedger classes or one-off color contracts, and the repaired
+Operations surface provides valid definition-list relationships and textual semantic states.
 
-Next task: `WL-1101` — define and approve the visual direction, content hierarchy, density rules,
-page archetypes, and interaction principles.
+Next task: `WL-1103` — implement validated runtime company identity for organization name, logo,
+favicon, and safe brand accent with accessible fallbacks and no source-code editing.
 
 ## Verified decisions
 
@@ -230,6 +231,11 @@ page archetypes, and interaction principles.
 - Fastify receives only the validated exact proxy-address list, never a broad proxy setting, CIDR, or hop count. Untrusted forwarded headers do not affect request protocol handling, and API health stays generic/no-store with CORS disabled by default.
 - `.env.example` contains only safe local PostgreSQL defaults and blank production-secret fields. `config:check` uses Node's native optional `.env` loading and outputs a redacted configuration summary.
 - The UI foundation pins React Aria Components `1.20.0`, Tailwind CSS `4.3.3`, Class Variance Authority `0.7.1`, and current shadcn React Aria metadata through `style: "aria-nova"`.
+- Quiet Ledger is the approved Phase 11 visual and interaction direction: one state → action →
+  effect → evidence rhythm; comfortable employee and compact operational density without smaller
+  interactive targets; system/local typography; light-only color scheme; border/rule separation
+  before shadow/card proliferation; organization accent subordinate to focus, contrast, and semantic
+  state (`WL-1101`; see `docs/111-ui-design-direction.md`).
 - `packages/ui` owns local semantic button, link, text-field, dialog, and drawer wrappers plus one
   explicit token stylesheet export; `apps/web` composes the authenticated Data Mode application
   shell and route surfaces without importing authoritative domain or database code.
@@ -255,6 +261,10 @@ page archetypes, and interaction principles.
 
 ## Work completed
 
+- [x] Quiet Ledger design problem frame, visual foundations, content hierarchy, page archetypes,
+  density system, shell/responsive rules, component/state expression, motion, accessibility,
+  microcopy, implementation ownership, and validation matrix approved (`WL-1101`; see
+  `docs/111-ui-design-direction.md`).
 - [x] Canonical route/role/workflow/state inventory, representative desktop/mobile/reflow and
   accessibility baselines, roadmap reconciliation, and prioritized `UI-001`–`UI-016` remediation
   register completed (`WL-1100`; see `docs/110-ui-ux-baseline-audit.md`).
@@ -1448,9 +1458,61 @@ page archetypes, and interaction principles.
   WL-1100 neither deletes nor adopts that out-of-phase artifact.
 - No application behavior, domain rule, API, database, or permission contract changed.
 
+**2026-08-21 — WL-1101 Quiet Ledger UI design direction**
+
+- Framed the product problem around fast state/action comprehension with complete downstream
+  explainability for employees, managers, HR administrators, and system administrators.
+- Approved Quiet Ledger as the single implementation direction and defined typography, color,
+  spacing/density, shape/elevation, iconography, hierarchy, eight page archetypes, application shell,
+  responsive behavior, components, states, motion, accessibility, and microcopy rules.
+- Classified employee routes as comfortable, personal/review routes as balanced, and manager/admin/
+  technical routes as compact operational surfaces while keeping controls preferably 44 CSS px.
+- Adopted system/local typography with no runtime font fetch and a deliberate light-only scheme;
+  dark mode, arbitrary theming, chart-first dashboards, and new font dependencies remain outside
+  the phase unless explicitly approved.
+- Incorporated current Modern Web Guidance for intrinsic CSS layout, container queries, overflow
+  stability, progressive scroll cues, semantic focus, reduced motion, and testing. Scroll-state
+  queries remain optional because Firefox/Safari support is absent in the retrieved guidance.
+- Recorded that company identity is a bounded post-MVP addition, not a reopening of the MVP scope.
+- Updated the Today hierarchy so blockers/warnings precede detailed calculation/history while the
+  complete explanation path remains available.
+- Verified Prettier on all WL-1101 documents, five phase-version regression tests, the actual
+  11-gate/`0.11.0` workspace-manifest state, and `git diff --check`.
+- No application code, API, database, permission, or runtime configuration changed.
+
+**2026-08-21 — WL-1102 semantic tokens and CSS ownership**
+
+- Consolidated all 84 unique `--wl-*` contracts in `packages/ui/src/styles.css` across primitive,
+  semantic, state, component, motion, and comfortable/balanced/compact density tiers; removed the
+  unbundled Inter name and retained an explicit light-only local/system typography contract.
+- Replaced dotted cascade layer names with flat ordered zones so WorkLedger base, application,
+  utility, forced-colors, and reduced-motion declarations interleave predictably with Tailwind.
+- Removed ambient page/auth gradients, app-owned root tokens, inert `dark:` utilities, one-off
+  Tailwind state colors, and undefined `wl-card`/`text-secondary` usage.
+- Added owned native-control adapters plus semantic alert, status, technical-error, panel, focus,
+  forced-colors, and reduced-motion presentation while retaining 44 CSS px control minimums.
+- Repaired Operations so every `dt`/`dd` is grouped by `dl`, health/dependency state is visible text
+  plus a marker/boundary, and long purpose-minimized technical errors wrap without disclosure.
+- Added `pnpm css:check`, its positive/negative tests, lint/test integration, and workspace-presence
+  enforcement. The current scan validates 59 sources, 84 tokens, 44 owned classes, and 563 token
+  uses while rejecting unknown classes/tokens, owner drift, raw colors, palette utilities, dark
+  branches, ambient gradients, and removed legacy contracts.
+- Real-browser review caught and corrected nested-layer border loss, then verified desktop and 320
+  px Operations, zero page overflow at 320 px, one-pixel authored/forced-color boundaries, 44 px
+  controls, `CanvasText`/`Highlight` token mappings, and 1 ms reduced-motion durations.
+- Direct verification passed Prettier; ESLint, source boundaries, and CSS contract; strict
+  TypeScript; 36 tooling tests; 324 unit/component tests; 12 integration tests with 45
+  database-dependent skips; all 25 Playwright scenarios across the configured browser matrix; web
+  production build and bundle budget; and `git diff --check`.
+- The canonical `pnpm format:check` still stops in `workspace:check` because the pre-existing ignored
+  `apps/site/dist/index.html` leaves an unexpected `apps/site` directory without a package
+  manifest. WL-1102 preserved that out-of-phase user artifact and used direct equivalents.
+- No domain rule, API contract, database schema, authorization, storage, or sensitive-data scope
+  changed.
+
 ## Current blockers
 
-No decision blocks `WL-1101`. Repository-wide commands that begin with `workspace:check` remain
+No decision blocks `WL-1103`. Repository-wide commands that begin with `workspace:check` remain
 blocked by the pre-existing ignored `apps/site/dist` artifact described above; it must be removed or
 explicitly brought into the workspace only under the owning portfolio task. `D-502` manual
 assistive-technology evidence remains open for the Phase 12 UI release gate (`WL-1206`). `UI-001`
@@ -1458,8 +1520,8 @@ and `UI-002` are high-priority workflow gaps and must close before that gate.
 
 ## Next task
 
-`WL-1101 — Define and approve the WorkLedger visual direction, content hierarchy, density rules,
-page archetypes, and interaction principles.`
+`WL-1103 — Implement validated company-identity configuration for organization name, logo,
+favicon, and brand accent with accessible fallbacks and no source-code editing.`
 
 ## Update rules
 

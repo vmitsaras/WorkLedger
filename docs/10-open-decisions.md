@@ -4,6 +4,15 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-21 — Company identity remains post-MVP bounded scope
+
+`docs/01-scope-and-non-goals.md` lists organization branding as a nice-to-have after MVP, while the
+new Phase 11 catalog assigns adaptable company identity to `WL-1103`. There is no MVP contradiction:
+the Phase 10 production gate completed the MVP before this UI-foundation phase. `WL-1103` is a
+post-MVP product-polish addition limited to validated organization name, optional logo/favicon, and
+bounded accent configuration. It does not authorize arbitrary themes, white-labelling, custom CSS,
+new organization hierarchy, or a change to authorization/domain scope.
+
 ### 2026-08-21 — Phase 11/portfolio roadmap insertion
 
 `TODO.md` was intentionally revised after the Phase 10 gate to insert a UI foundation phase and a

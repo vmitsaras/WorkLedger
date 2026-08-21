@@ -16,11 +16,11 @@ export function SystemAuditPage() {
         description="Security and technical audit evidence, separated from domain history. Full search implementation coming in WL-1007."
       />
 
-      <div className="wl-card rounded-xl border p-6">
-        <p className="text-secondary">
+      <div className="wl-panel">
+        <p className="text-[var(--wl-text-muted)]">
           Technical audit persistence and search interface is planned for WL-1007.
         </p>
-        <p className="text-secondary mt-4">
+        <p className="mt-4 text-[var(--wl-text-muted)]">
           This audit stream will record security, authentication, session, and technical operations
           events without domain payloads or HR data.
         </p>

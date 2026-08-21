@@ -9,7 +9,7 @@ export interface PageHeaderProps {
 
 export function PageHeader({ children, description, eyebrow, title }: PageHeaderProps) {
   return (
-    <header className="wl-page-header grid gap-3">
+    <header className="grid gap-3">
       {eyebrow === undefined ? null : (
         <p className="m-0 text-sm font-bold uppercase tracking-[0.12em] text-[var(--wl-text-muted)]">
           {eyebrow}

@@ -44,9 +44,9 @@ export function Dialog({
       </Button>
       <ModalOverlay
         isDismissable={isDismissable}
-        className="wl-dialog-overlay fixed inset-0 z-50 grid min-h-dvh place-items-center overflow-y-auto bg-[color-mix(in_oklab,var(--wl-text)_35%,transparent)] p-4 data-[entering]:animate-[wl-overlay-in_var(--wl-motion-duration-base)_var(--wl-motion-ease-standard)] data-[exiting]:animate-[wl-overlay-out_var(--wl-motion-duration-fast)_var(--wl-motion-ease-standard)]"
+        className="wl-dialog-overlay fixed inset-0 z-50 grid min-h-dvh place-items-center overflow-y-auto bg-[var(--wl-overlay-scrim)] p-4 data-[entering]:animate-[wl-overlay-in_var(--wl-motion-duration-base)_var(--wl-motion-ease-standard)] data-[exiting]:animate-[wl-overlay-out_var(--wl-motion-duration-fast)_var(--wl-motion-ease-standard)]"
       >
-        <Modal className="wl-dialog-modal w-full max-w-lg rounded-2xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-6 text-[var(--wl-text)] shadow-[var(--wl-shadow-dialog)] outline-none data-[entering]:animate-[wl-dialog-in_var(--wl-motion-duration-base)_var(--wl-motion-ease-standard)] data-[exiting]:animate-[wl-dialog-out_var(--wl-motion-duration-fast)_var(--wl-motion-ease-standard)]">
+        <Modal className="wl-dialog-modal w-full max-w-lg rounded-[var(--wl-radius-dialog)] border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-6 text-[var(--wl-text)] shadow-[var(--wl-shadow-dialog)] outline-none data-[entering]:animate-[wl-dialog-in_var(--wl-motion-duration-base)_var(--wl-motion-ease-standard)] data-[exiting]:animate-[wl-dialog-out_var(--wl-motion-duration-fast)_var(--wl-motion-ease-standard)]">
           <ReactAriaDialog className="grid gap-5 outline-none">
             {({ close }) => (
               <>

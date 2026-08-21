@@ -1,34 +1,158 @@
-@layer workledger.tokens, workledger.base, workledger.motion;
+@layer workledger-tokens, workledger-base, workledger-components, workledger-preferences;
 
-@layer workledger.tokens {
+@layer workledger-tokens {
   :root {
     color-scheme: light;
 
+    /* Tier 1: literal primitives. */
+    --wl-color-neutral-0: oklch(1 0 0);
+    --wl-color-neutral-25: oklch(0.975 0.006 248);
+    --wl-color-neutral-50: oklch(0.945 0.01 248);
+    --wl-color-neutral-300: oklch(0.82 0.018 248);
+    --wl-color-neutral-500: oklch(0.6 0.025 248);
+    --wl-color-neutral-650: oklch(0.44 0.025 248);
+    --wl-color-neutral-850: oklch(0.24 0.025 248);
+    --wl-color-action-600: oklch(0.36 0.12 225);
+    --wl-color-action-700: oklch(0.3 0.1 225);
+    --wl-color-focus: oklch(0.51 0.2 265);
+    --wl-color-success-50: oklch(0.96 0.03 155);
+    --wl-color-success-500: oklch(0.47 0.12 155);
+    --wl-color-success-700: oklch(0.38 0.1 155);
+    --wl-color-warning-50: oklch(0.965 0.035 85);
+    --wl-color-warning-500: oklch(0.55 0.12 75);
+    --wl-color-warning-800: oklch(0.36 0.08 70);
+    --wl-color-danger-50: oklch(0.97 0.025 27);
+    --wl-color-danger-500: oklch(0.54 0.18 27);
+    --wl-color-danger-700: oklch(0.44 0.16 27);
+    --wl-space-1: 0.25rem;
+    --wl-space-2: 0.5rem;
+    --wl-space-3: 0.75rem;
+    --wl-space-4: 1rem;
+    --wl-space-5: 1.25rem;
+    --wl-space-6: 1.5rem;
+    --wl-space-8: 2rem;
+    --wl-space-10: 2.5rem;
+    --wl-space-12: 3rem;
+    --wl-space-16: 4rem;
+    --wl-radius-control: 0.5rem;
+    --wl-radius-panel: 0.75rem;
+    --wl-radius-dialog: 0.875rem;
+    --wl-radius-status: 0.375rem;
+
+    /* Tier 2: product semantics. */
     --wl-font-sans:
-      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --wl-surface: oklch(0.975 0.006 248);
-    --wl-surface-raised: oklch(1 0 0);
-    --wl-surface-subtle: oklch(0.945 0.01 248);
-    --wl-text: oklch(0.24 0.025 248);
-    --wl-text-muted: oklch(0.44 0.025 248);
-    --wl-border: oklch(0.82 0.018 248);
-    --wl-border-strong: oklch(0.6 0.025 248);
-    --wl-action-primary: oklch(0.36 0.12 225);
-    --wl-action-primary-hover: oklch(0.3 0.1 225);
-    --wl-action-primary-text: oklch(0.99 0 0);
-    --wl-link: oklch(0.4 0.14 225);
-    --wl-link-hover: oklch(0.32 0.12 225);
-    --wl-danger: oklch(0.48 0.18 27);
-    --wl-focus-ring: oklch(0.51 0.2 265);
-    --wl-shadow-card: 0 0.75rem 2.5rem oklch(0.24 0.03 248 / 0.08);
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --wl-font-mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+    --wl-surface: var(--wl-color-neutral-25);
+    --wl-surface-raised: var(--wl-color-neutral-0);
+    --wl-surface-subtle: var(--wl-color-neutral-50);
+    --wl-text: var(--wl-color-neutral-850);
+    --wl-text-muted: var(--wl-color-neutral-650);
+    --wl-border: var(--wl-color-neutral-300);
+    --wl-border-strong: var(--wl-color-neutral-500);
+    --wl-action-primary: var(--wl-color-action-600);
+    --wl-action-primary-hover: var(--wl-color-action-700);
+    --wl-action-primary-active: var(--wl-color-action-700);
+    --wl-action-primary-text: var(--wl-color-neutral-0);
+    --wl-link: var(--wl-color-action-600);
+    --wl-link-hover: var(--wl-color-action-700);
+    --wl-focus-ring: var(--wl-color-focus);
+
+    /* Tier 3: semantic state families. */
+    --wl-state-neutral-text: var(--wl-text);
+    --wl-state-neutral-border: var(--wl-border-strong);
+    --wl-state-neutral-surface: var(--wl-surface-subtle);
+    --wl-state-info-text: var(--wl-color-action-700);
+    --wl-state-info-border: var(--wl-color-action-600);
+    --wl-state-info-surface: color-mix(
+      in oklab,
+      var(--wl-color-action-600) 8%,
+      var(--wl-surface-raised)
+    );
+    --wl-state-success-text: var(--wl-color-success-700);
+    --wl-state-success-border: var(--wl-color-success-500);
+    --wl-state-success-surface: var(--wl-color-success-50);
+    --wl-state-warning-text: var(--wl-color-warning-800);
+    --wl-state-warning-border: var(--wl-color-warning-500);
+    --wl-state-warning-surface: var(--wl-color-warning-50);
+    --wl-state-danger-text: var(--wl-color-danger-700);
+    --wl-state-danger-border: var(--wl-color-danger-500);
+    --wl-state-danger-surface: var(--wl-color-danger-50);
+    --wl-danger: var(--wl-state-danger-text);
+
+    /* Tier 4: component contracts. */
+    --wl-control-min-block-size: 2.75rem;
+    --wl-control-min-inline-size: 2.75rem;
+    --wl-control-padding-block: var(--wl-space-2);
+    --wl-control-padding-inline: var(--wl-space-4);
+    --wl-control-disabled-opacity: 0.55;
+    --wl-panel-padding: clamp(var(--wl-space-4), 3vw, var(--wl-space-6));
+    --wl-overlay-scrim: color-mix(in oklab, var(--wl-text) 35%, transparent);
+    --wl-shadow-card: 0 0.5rem 1.5rem oklch(0.24 0.03 248 / 0.08);
     --wl-shadow-dialog: 0 1.5rem 5rem oklch(0.16 0.03 248 / 0.24);
+
+    /* Tier 5: motion. */
     --wl-motion-duration-fast: 120ms;
+    --wl-motion-duration-disclosure: 160ms;
     --wl-motion-duration-base: 180ms;
     --wl-motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Tier 6: route-density decisions. Interactive targets do not shrink. */
+    --wl-density-comfortable-section-gap: var(--wl-space-10);
+    --wl-density-comfortable-container-padding: var(--wl-space-6);
+    --wl-density-balanced-section-gap: var(--wl-space-8);
+    --wl-density-balanced-container-padding: var(--wl-space-5);
+    --wl-density-compact-section-gap: var(--wl-space-6);
+    --wl-density-compact-container-padding: var(--wl-space-4);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --wl-motion-duration-fast: 1ms;
+      --wl-motion-duration-disclosure: 1ms;
+      --wl-motion-duration-base: 1ms;
+    }
+  }
+
+  @media (forced-colors: active) {
+    :root {
+      --wl-surface: Canvas;
+      --wl-surface-raised: Canvas;
+      --wl-surface-subtle: Canvas;
+      --wl-text: CanvasText;
+      --wl-text-muted: CanvasText;
+      --wl-border: CanvasText;
+      --wl-border-strong: CanvasText;
+      --wl-action-primary: Highlight;
+      --wl-action-primary-hover: Highlight;
+      --wl-action-primary-active: Highlight;
+      --wl-action-primary-text: HighlightText;
+      --wl-link: LinkText;
+      --wl-link-hover: LinkText;
+      --wl-focus-ring: Highlight;
+      --wl-state-neutral-text: CanvasText;
+      --wl-state-neutral-border: CanvasText;
+      --wl-state-neutral-surface: Canvas;
+      --wl-state-info-text: CanvasText;
+      --wl-state-info-border: CanvasText;
+      --wl-state-info-surface: Canvas;
+      --wl-state-success-text: CanvasText;
+      --wl-state-success-border: CanvasText;
+      --wl-state-success-surface: Canvas;
+      --wl-state-warning-text: CanvasText;
+      --wl-state-warning-border: CanvasText;
+      --wl-state-warning-surface: Canvas;
+      --wl-state-danger-text: CanvasText;
+      --wl-state-danger-border: CanvasText;
+      --wl-state-danger-surface: Canvas;
+      --wl-danger: CanvasText;
+      --wl-shadow-card: none;
+      --wl-shadow-dialog: none;
+    }
   }
 }
 
-@layer workledger.base {
+@layer workledger-base {
   html {
     background: var(--wl-surface);
     color: var(--wl-text);
@@ -42,24 +166,22 @@
   }
 
   button,
-  input {
+  input,
+  select,
+  textarea {
     font: inherit;
   }
 
-  .wl-control,
-  .wl-link,
-  .wl-field input {
+  :where(.wl-control, .wl-link, .wl-field input) {
     -webkit-tap-highlight-color: transparent;
   }
 
-  .wl-control[data-focus-visible],
-  .wl-link[data-focus-visible],
-  .wl-field input[data-focus-visible] {
+  :where(.wl-control, .wl-link, .wl-field input)[data-focus-visible] {
     outline-style: solid;
   }
 }
 
-@layer workledger.motion {
+@layer workledger-preferences {
   @keyframes wl-overlay-in {
     from {
       opacity: 0;
@@ -101,15 +223,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    :root {
-      --wl-motion-duration-fast: 1ms;
-      --wl-motion-duration-base: 1ms;
-    }
-
-    .wl-control,
-    .wl-link,
-    .wl-dialog-overlay,
-    .wl-dialog-modal {
+    :where(.wl-control, .wl-link, .wl-dialog-overlay, .wl-dialog-modal) {
       animation: none !important;
       transition-duration: 1ms !important;
       transform: none !important;
@@ -117,17 +231,12 @@
   }
 
   @media (forced-colors: active) {
-    :root {
-      --wl-border: CanvasText;
-      --wl-border-strong: CanvasText;
-      --wl-focus-ring: Highlight;
+    :where(.wl-control, .wl-field input, .wl-dialog-modal) {
+      border-color: ButtonText;
     }
 
-    .wl-control,
-    .wl-link,
-    .wl-field input,
-    .wl-dialog-modal {
-      forced-color-adjust: auto;
+    .wl-link {
+      color: LinkText;
     }
   }
 }

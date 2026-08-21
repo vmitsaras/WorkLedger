@@ -5,7 +5,7 @@ import { TextField } from './text-field.js';
 
 export function FoundationPreview() {
   return (
-    <section aria-labelledby="foundation-preview-title" className="wl-preview grid gap-8">
+    <section aria-labelledby="foundation-preview-title" className="grid gap-8">
       <header className="grid max-w-2xl gap-3">
         <p className="m-0 text-sm font-bold uppercase tracking-[0.12em] text-[var(--wl-text-muted)]">
           UI foundation

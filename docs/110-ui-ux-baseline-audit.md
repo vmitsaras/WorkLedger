@@ -121,7 +121,7 @@ exist elsewhere.
 | `/settings/holidays` | HR | Calendar configuration | Complete; component coverage | WL-1204 |
 | `/audit` | HR | Filtered audit explorer | Complete; Source + component coverage | UI-004 / WL-1204 |
 | `/system/accounts` | System administrator | Technical account administration | Complete; component/e2e workflow coverage | WL-1204 |
-| `/system/operations` | System administrator | Technical diagnostics | Functionally present; Runtime; visual/semantic drift | UI-003 / WL-1102, WL-1204 |
+| `/system/operations` | System administrator | Technical diagnostics | Functionally present; Automated; WL-1102 semantic/CSS repair complete | WL-1204 visual adoption |
 | `/system/audit` | System administrator | Technical audit explorer | **Gap: stale `WL-1007` placeholder** | UI-002 / WL-1204 |
 | Root/not-found/route error | Public/authenticated | Route boundary | Complete; Source + component coverage | WL-1105 |
 
@@ -142,7 +142,7 @@ explicit rule that sickness and other sensitive absence types never appear in a 
 | Reports | Catalog, filters, pagination, empty, CSV pending/success/error, print/copy | Authorized catalog, URL state, narrow table containment, E2E | Shared dense-table and route-state patterns (UI-004, UI-015) |
 | HR administration/settings | Loading, empty, filtered, create/invite, validation, effective-dated versions, constrained deactivate | Realistic complex forms and E2E | Employee/team task collision and unexplained disabled action (UI-009, UI-010) |
 | Domain audit | Filters, empty/results, safe detail, pagination | Purpose-minimized source/component evidence | Shared dense table/filter states under WL-1204 |
-| System operations/audit | Diagnostics loading/healthy/degraded/error; account/session actions | Runtime diagnostics and account administration | Undefined styles/semantics on Operations; technical Audit is placeholder (UI-002, UI-003) |
+| System operations/audit | Diagnostics loading/healthy/degraded/error; account/session actions | Runtime diagnostics, valid Operations definition lists/statuses, CSS-contract and component/axe evidence | Technical Audit remains a placeholder (UI-002) |
 | Shared shell/boundaries | Role navigation, drawer, route focus/title, permission denied, not found, session expiry | Focus-managed drawer, reduced motion, skip link, route boundaries | Navigation scale and visual treatment (UI-006, UI-007) |
 
 ## 6. Prioritized issue register
@@ -156,11 +156,11 @@ requires broader route verification during its owning task.
 |---|---|---|---|---|
 | UI-001 | High | Requests route contract is incomplete and exposes sickness in a subtype-bearing path | Confirmed / high | WL-1202 |
 | UI-002 | High | Technical Audit is still a milestone placeholder after its delivery/release gate | Confirmed / high | WL-1204 |
-| UI-003 | Medium | System technical routes use undefined styles and invalid definition-list grouping | Confirmed / high | WL-1102, WL-1104, WL-1204 |
+| UI-003 | Medium | System technical routes use undefined styles and invalid definition-list grouping | **Resolved by WL-1102** / high | WL-1204 visual adoption |
 | UI-004 | Medium | Dense table actions and later columns are not visually discoverable at narrow width | Confirmed / high | WL-1104, WL-1203, WL-1204 |
 | UI-005 | Medium | Horizontal-record and calendar responsive contracts are inconsistent | Confirmed / high | WL-1104, WL-1201 |
 | UI-006 | Medium | The shell navigation does not scale cleanly for combined-role or long HR inventories | Confirmed / medium | WL-1105 |
-| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | Confirmed / high | WL-1102, WL-1104 |
+| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | CSS ownership resolved; component adoption pending / high | WL-1104 |
 | UI-008 | Medium | Today repeats the same calculation meaning across labels, values, and narrative formulas | Confirmed / high | WL-1200 |
 | UI-009 | Medium | Employee directory and team management compete in one long administration route | Confirmed / medium | WL-1204 |
 | UI-010 | Medium | Disabled team deactivation has no adjacent explanation or recovery path | Confirmed / medium | WL-1204 |
@@ -221,7 +221,7 @@ requires broader route verification during its owning task.
 ### UI-003 — System routes bypass the styling and semantic contracts
 
 - **Severity:** Medium
-- **Status/confidence:** Confirmed / high
+- **Status/confidence:** Resolved by `WL-1102` / high
 - **Evidence:** `/system/operations` and `/system/audit` use `wl-card` and `text-secondary`, neither
   of which is defined in the app or UI stylesheet. Operations renders `dt`/`dd` pairs inside plain
   `div` elements without a containing `dl`; runtime inspection confirmed all nine `dt` elements
@@ -238,7 +238,11 @@ requires broader route verification during its owning task.
 - **Validation:** CSS-contract check rejects unknown WorkLedger classes; DOM/axe semantics;
   healthy/degraded/critical/error screenshots in normal and forced colors; 320 px/text-spacing
   checks.
-- **Owner:** `WL-1102`, `WL-1104`, then route adoption in `WL-1204`.
+- **Resolution evidence:** `docs/112-semantic-tokens-css-contract.md` owns the token/CSS boundary;
+  Operations now groups every term/definition in `dl`, uses text-labelled semantic status families,
+  wraps safe technical errors, and has focused component/axe regression evidence. WL-1204 may
+  improve the route's compact visual hierarchy without reopening the resolved semantic contract.
+- **Owner:** Resolved in `WL-1102`; later visual adoption in `WL-1204`.
 
 ### UI-004 — Narrow dense tables hide task-critical context and actions
 
@@ -297,7 +301,7 @@ requires broader route verification during its owning task.
 ### UI-007 — Recurring UI patterns have no enforceable shared owner
 
 - **Severity:** Medium
-- **Status/confidence:** Confirmed / high
+- **Status/confidence:** CSS ownership resolved; component adoption pending / high
 - **Evidence:** The local UI package currently owns a small foundation while routes repeatedly
   hand-build panels, alerts, statuses, filters, pagination, dense tables, loading states, and error
   presentation. App CSS adds a second token subset, and undefined route classes reached production

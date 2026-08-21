@@ -4,10 +4,19 @@
 
 WorkLedger should feel calm, precise, transparent, and operational. It must not resemble surveillance software.
 
+`docs/111-ui-design-direction.md` is the approved implementation direction. Its **Quiet Ledger**
+language uses clear task order, aligned time/balance values, restrained action color, neutral
+surfaces, explicit state, thin rules, and selective elevation.
+`docs/112-semantic-tokens-css-contract.md` is the enforceable token and stylesheet ownership layer
+for that direction; routes must consume its state, focus, forced-colors, motion, and density
+contracts rather than introducing literal color or unowned project classes.
+
 - Employee views: spacious and focused.
 - Manager/admin views: balanced density with clear hierarchy.
 - Strong typography and tabular numerals for time values.
 - Neutral surfaces with restrained semantic accents.
+- Density comes from structure and shorter copy, not smaller targets or hidden context.
+- Borders, rules, and whitespace precede card/shadow treatment.
 - No gamification of long workdays.
 - Every important total has an explanation path.
 
@@ -128,9 +137,10 @@ Browser routes do not create an authorization path for host operations. Destruct
 2. Current state: off work, working, or on break.
 3. Primary clock control plus only the attendance actions valid for the authoritative state.
 4. Current session start and today’s elapsed/credited summary.
-5. Calculation breakdown.
-6. Unresolved warning or correction requirement.
-7. Upcoming approved absence.
+5. Unresolved blocker, warning, or correction requirement.
+6. Concise calculation result with a complete explanation path.
+7. Today’s event history.
+8. Upcoming approved absence.
 
 Do not render organization-wide statistics on the employee’s primary screen.
 
