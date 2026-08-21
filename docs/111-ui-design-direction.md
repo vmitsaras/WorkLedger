@@ -1,6 +1,6 @@
 # WL-1101 UI Design Direction — Quiet Ledger
 
-**Status:** Approved for implementation  
+**Status:** Phase 11 foundation complete; Phase 12 workflow adoption approved
 **Completed:** 2026-08-21  
 **Applies to:** `apps/web`, `packages/ui`, company-identity configuration, and the Phase 12 workflow polish tasks  
 **Evidence:** Product charter, role/permission model, UX/accessibility contract, current UI source, and `docs/110-ui-ux-baseline-audit.md`  
@@ -25,11 +25,11 @@ around every section.
 
 ## 2. Evidence labels
 
-| Label | Meaning |
-|---|---|
+| Label        | Meaning                                                                                                          |
+| ------------ | ---------------------------------------------------------------------------------------------------------------- |
 | **Existing** | A product, domain, accessibility, architecture, or implementation constraint already accepted by the repository. |
-| **Derived** | A design requirement inferred directly from the product and WL-1100 evidence. |
-| **Approved** | The implementation direction selected by WL-1101. |
+| **Derived**  | A design requirement inferred directly from the product and WL-1100 evidence.                                    |
+| **Approved** | The implementation direction selected by WL-1101.                                                                |
 
 ## 3. Design problem frame
 
@@ -62,12 +62,12 @@ privacy assurances into the primary task copy.
 
 ### Audience by situation
 
-| Audience | Situation | Primary need | Friction to remove |
-|---|---|---|---|
-| Employee | Starts or ends work, checks a warning, requests a change, or reviews a month | Confidence about current state, valid action, and balance effect | Repetition, long explanations before action, uncertainty about provisional versus final values |
-| Manager | Processes a queue between other work | Rapid prioritization, sufficient decision context, clear outcome | Off-canvas actions, dense filters, repeated scanning, privacy language competing with task language |
-| HR administrator | Maintains records and effective-dated configuration | High information density with explicit scope, effect, and history | Long mixed-purpose pages, inconsistent states and controls, weak recovery cues |
-| System administrator | Diagnoses service/account state | Clear severity, affected dependency, and valid recovery path without HR data | Styling/semantic drift, raw technical presentation, missing audit workflow |
+| Audience             | Situation                                                                    | Primary need                                                                 | Friction to remove                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Employee             | Starts or ends work, checks a warning, requests a change, or reviews a month | Confidence about current state, valid action, and balance effect             | Repetition, long explanations before action, uncertainty about provisional versus final values      |
+| Manager              | Processes a queue between other work                                         | Rapid prioritization, sufficient decision context, clear outcome             | Off-canvas actions, dense filters, repeated scanning, privacy language competing with task language |
+| HR administrator     | Maintains records and effective-dated configuration                          | High information density with explicit scope, effect, and history            | Long mixed-purpose pages, inconsistent states and controls, weak recovery cues                      |
+| System administrator | Diagnoses service/account state                                              | Clear severity, affected dependency, and valid recovery path without HR data | Styling/semantic drift, raw technical presentation, missing audit workflow                          |
 
 ### Primary message
 
@@ -84,13 +84,13 @@ privacy assurances into the primary task copy.
 
 ### Desired perception
 
-| Attribute | Experiential meaning |
-|---|---|
-| **Trustworthy** | States, totals, and actions are explicit; nothing important depends on decoration or optimistic inference. |
-| **Calm** | The interface has one clear focal task, stable layouts, restrained color, and no constant motion. |
-| **Precise** | Time, dates, balances, status, and versioned history align and scan consistently. |
-| **Respectful** | The product never celebrates overwork, surveils activity, exposes sensitive context, or treats warnings as blame. |
-| **Operational** | Dense work remains efficient, sortable, filterable, recoverable, and suited to repeated real use. |
+| Attribute       | Experiential meaning                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Trustworthy** | States, totals, and actions are explicit; nothing important depends on decoration or optimistic inference.        |
+| **Calm**        | The interface has one clear focal task, stable layouts, restrained color, and no constant motion.                 |
+| **Precise**     | Time, dates, balances, status, and versioned history align and scan consistently.                                 |
+| **Respectful**  | The product never celebrates overwork, surveils activity, exposes sensitive context, or treats warnings as blame. |
+| **Operational** | Dense work remains efficient, sortable, filterable, recoverable, and suited to repeated real use.                 |
 
 ### Anti-attributes
 
@@ -156,17 +156,17 @@ The current `Inter` token may remain only if Inter is actually bundled; otherwis
 the phantom family name and relies on the system stack. A new font dependency requires its own
 documented need.
 
-| Role | Approved treatment |
-|---|---|
-| Route `h1` | `clamp(1.875rem, 1.6rem + 1vw, 2.5rem)`, 700 weight, tight but readable leading; no display-scale hero type in the application |
-| Section `h2` | `1.5rem` wide and `1.375rem` narrow, 700 weight |
-| Subsection `h3` | `1.125rem`–`1.25rem`, 650/700 weight |
-| Body | `1rem/1.5`; primary instructions never smaller |
-| Dense table/form body | `0.875rem/1.35rem`; interactive labels remain at least this size |
-| Metadata/orientation | `0.75rem`–`0.8125rem`; short phrases only, 600/700 weight |
-| Primary numeric result | `clamp(1.75rem, 1.5rem + 1vw, 2.5rem)`, 700 weight, tabular lining numerals |
-| Ledger/table number | Tabular lining numerals, end-aligned when comparison benefits |
-| Technical code/error | Local monospace stack, `0.875rem`, wrapping allowed; never raw red text without a labelled state container |
+| Role                   | Approved treatment                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Route `h1`             | `clamp(1.875rem, 1.6rem + 1vw, 2.5rem)`, 700 weight, tight but readable leading; no display-scale hero type in the application |
+| Section `h2`           | `1.5rem` wide and `1.375rem` narrow, 700 weight                                                                                |
+| Subsection `h3`        | `1.125rem`–`1.25rem`, 650/700 weight                                                                                           |
+| Body                   | `1rem/1.5`; primary instructions never smaller                                                                                 |
+| Dense table/form body  | `0.875rem/1.35rem`; interactive labels remain at least this size                                                               |
+| Metadata/orientation   | `0.75rem`–`0.8125rem`; short phrases only, 600/700 weight                                                                      |
+| Primary numeric result | `clamp(1.75rem, 1.5rem + 1vw, 2.5rem)`, 700 weight, tabular lining numerals                                                    |
+| Ledger/table number    | Tabular lining numerals, end-aligned when comparison benefits                                                                  |
+| Technical code/error   | Local monospace stack, `0.875rem`, wrapping allowed; never raw red text without a labelled state container                     |
 
 Rules:
 
@@ -178,17 +178,17 @@ Rules:
 
 ### 5.2 Color and identity
 
-| Token role | Direction |
-|---|---|
-| Canvas | Cool, low-chroma light surface that separates the application from raised content without a decorative gradient |
-| Raised surface | White or near-white; reserved for controls, primary task regions, and bounded records |
-| Subtle surface | Low-chroma blue/gray for active navigation, grouped rows, and neutral status—not every section |
-| Ink | Near-neutral dark navy/charcoal; stable across product and organization identities |
-| Muted ink | Still meets text contrast; used for supporting context, never for critical state/action text |
-| Action | Deep blue/teal with defined default, hover, active, and disabled relationships |
-| Focus | Product-owned high-contrast focus color independent of organization accent and semantic states |
-| Success/warning/danger/info | Separate semantic families with text, icon/shape, border, and surface roles |
-| Organization accent | Validated identity accent; never the only status signal and never allowed to reduce contrast |
+| Token role                  | Direction                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Canvas                      | Cool, low-chroma light surface that separates the application from raised content without a decorative gradient |
+| Raised surface              | White or near-white; reserved for controls, primary task regions, and bounded records                           |
+| Subtle surface              | Low-chroma blue/gray for active navigation, grouped rows, and neutral status—not every section                  |
+| Ink                         | Near-neutral dark navy/charcoal; stable across product and organization identities                              |
+| Muted ink                   | Still meets text contrast; used for supporting context, never for critical state/action text                    |
+| Action                      | Deep blue/teal with defined default, hover, active, and disabled relationships                                  |
+| Focus                       | Product-owned high-contrast focus color independent of organization accent and semantic states                  |
+| Success/warning/danger/info | Separate semantic families with text, icon/shape, border, and surface roles                                     |
+| Organization accent         | Validated identity accent; never the only status signal and never allowed to reduce contrast                    |
 
 **Color-mode decision:** Phase 11 supports a deliberate light color scheme only. Remove inert
 `dark:` utilities and retain `color-scheme: light`. Dark mode is not added as ornamental scope; it
@@ -206,11 +206,11 @@ organization accent.
 Use a four-pixel base with named steps: `4`, `8`, `12`, `16`, `20`, `24`, `32`, `40`, `48`, and
 `64` CSS px equivalents. WL-1102 may refine names, not introduce an unrelated scale.
 
-| Density | Routes | Section rhythm | Container padding | Interactive target |
-|---|---|---|---|---|
-| Comfortable | Today, profile, request forms, authentication, recovery | `32`–`40` | `20` mobile, `24` wide | Prefer `44` minimum |
-| Balanced | Personal records, balances, calendars, approval detail, monthly review | `24`–`32` | `16`–`24` | Prefer `44` minimum |
-| Compact operational | Approval queue, reports, employee/settings/audit/operations | `20`–`24` | `12`–`20` | Keep actions/controls at `44`; static rows may be tighter |
+| Density             | Routes                                                                 | Section rhythm | Container padding      | Interactive target                                        |
+| ------------------- | ---------------------------------------------------------------------- | -------------- | ---------------------- | --------------------------------------------------------- |
+| Comfortable         | Today, profile, request forms, authentication, recovery                | `32`–`40`      | `20` mobile, `24` wide | Prefer `44` minimum                                       |
+| Balanced            | Personal records, balances, calendars, approval detail, monthly review | `24`–`32`      | `16`–`24`              | Prefer `44` minimum                                       |
+| Compact operational | Approval queue, reports, employee/settings/audit/operations            | `20`–`24`      | `12`–`20`              | Keep actions/controls at `44`; static rows may be tighter |
 
 Density comes from shorter copy, stronger grouping, aligned columns, and less empty space between
 related records—not from smaller body text, clipped labels, icon-only actions, or reduced targets.
@@ -397,24 +397,24 @@ language as authenticated routes; they are not blank technical exception pages.
 
 ## 10. Component expression
 
-| Family | Direction | Required states/behavior |
-|---|---|---|
-| Primary action | Filled deep action color, concise verb, one per task region | Hover, focus, pressed, pending, disabled with reason where consequential |
-| Secondary action | Bordered or subtle surface; same target size | Hover, focus, pressed, pending, disabled |
-| Quiet/link action | Text/link treatment for low-emphasis navigation or reset | Underline or another non-color affordance; visible focus |
-| Danger action | Not the default primary; explicit text and confirmation proportional to consequence | Focus, pending, domain conflict, cancel/restore focus |
-| Panel/section | Border/whitespace first; raised surface only for bounded task or record | Default, selected/current, disabled/read-only, stale where applicable |
-| Status badge | Short text plus optional icon/dot; semantic color is supplemental | Neutral, info, success, warning, danger, locked, provisional |
-| Alert/status message | Persistent title, concise effect, recovery action | Info, warning, blocking error, success; live behavior based on urgency |
-| Form field | Visible label, optional hint, stable control boundary | Focus, filled, invalid, disabled, read-only, pending dependency |
-| Error summary | Precedes complex form; links to invalid fields | Focused on failed submission, retains safe input |
-| Filter set | Applied-filter summary remains visible; controls can disclose at narrow sizes | Default, dirty, applying, applied, zero results, clear |
-| Table | Caption/name, strong header, stable row identity, tabular numbers | Sort, focusable overflow, selected/detail where applicable, empty, partial, loading |
-| Record list | Label/value pairs and explicit row action; not a misleading card table | Default, actionable, waiting, completed, disabled/read-only |
-| Pagination | Adjacent to result count and state | First/last disabled, pending page, URL/back-forward focus retention |
-| Dialog/drawer | Clear title, bounded actions, selective elevation | Opening focus, Escape/cancel, pending, error, closing focus restore |
-| Loading | Stable region geometry or concise status; no indefinite shimmer | Initial, background refresh, partial, retry |
-| Empty state | Names what is empty and whether that is expected; one valid next action | Unfiltered, filtered-zero, permission-limited |
+| Family               | Direction                                                                           | Required states/behavior                                                            |
+| -------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Primary action       | Filled deep action color, concise verb, one per task region                         | Hover, focus, pressed, pending, disabled with reason where consequential            |
+| Secondary action     | Bordered or subtle surface; same target size                                        | Hover, focus, pressed, pending, disabled                                            |
+| Quiet/link action    | Text/link treatment for low-emphasis navigation or reset                            | Underline or another non-color affordance; visible focus                            |
+| Danger action        | Not the default primary; explicit text and confirmation proportional to consequence | Focus, pending, domain conflict, cancel/restore focus                               |
+| Panel/section        | Border/whitespace first; raised surface only for bounded task or record             | Default, selected/current, disabled/read-only, stale where applicable               |
+| Status badge         | Short text plus optional icon/dot; semantic color is supplemental                   | Neutral, info, success, warning, danger, locked, provisional                        |
+| Alert/status message | Persistent title, concise effect, recovery action                                   | Info, warning, blocking error, success; live behavior based on urgency              |
+| Form field           | Visible label, optional hint, stable control boundary                               | Focus, filled, invalid, disabled, read-only, pending dependency                     |
+| Error summary        | Precedes complex form; links to invalid fields                                      | Focused on failed submission, retains safe input                                    |
+| Filter set           | Applied-filter summary remains visible; controls can disclose at narrow sizes       | Default, dirty, applying, applied, zero results, clear                              |
+| Table                | Caption/name, strong header, stable row identity, tabular numbers                   | Sort, focusable overflow, selected/detail where applicable, empty, partial, loading |
+| Record list          | Label/value pairs and explicit row action; not a misleading card table              | Default, actionable, waiting, completed, disabled/read-only                         |
+| Pagination           | Adjacent to result count and state                                                  | First/last disabled, pending page, URL/back-forward focus retention                 |
+| Dialog/drawer        | Clear title, bounded actions, selective elevation                                   | Opening focus, Escape/cancel, pending, error, closing focus restore                 |
+| Loading              | Stable region geometry or concise status; no indefinite shimmer                     | Initial, background refresh, partial, retry                                         |
+| Empty state          | Names what is empty and whether that is expected; one valid next action             | Unfiltered, filtered-zero, permission-limited                                       |
 
 ## 11. Interaction and motion
 
@@ -537,11 +537,16 @@ authoritative inventory, ownership rules, route exceptions, and executable valid
 
 ### WL-1103 — Company identity
 
+**Implementation status:** Complete. See `docs/113-company-identity-runtime-configuration.md`.
+
 1. Validate organization display name, optional logo/favicon, and accent.
 2. Map the accent only to permitted identity/action roles with a safe WorkLedger fallback.
 3. Verify missing/broken assets, long names, narrow headers, contrast, forced colors, and print.
 
 ### WL-1104 — Local UI system
+
+**Implementation status:** Foundation complete. See `docs/114-shared-ui-patterns.md`; route-level
+adoption remains assigned to Phase 12.
 
 Build from proven repeated call sites: actions, fields/errors, sections/panels, statuses, alerts,
 definition lists, filter sets, table/scroll regions, record lists, pagination, loading, empty, and
@@ -549,11 +554,16 @@ route-state presentation. Document state matrices and responsive contracts for e
 
 ### WL-1105 — Shell, authentication, and boundaries
 
+**Implementation status:** Complete. See `docs/115-shell-authentication-route-boundaries.md` for
+the work-area, account-utility, authentication-result, boundary-state, and responsive evidence.
+
 Apply the work-area navigation model, organization/product identity, Quiet Ledger header, stable
 account utilities, route-heading focus treatment, authentication hierarchy, and shared boundary
 states.
 
 ### WL-1106 — UI foundation gate
+
+**Implementation status:** Complete. See `docs/116-phase-11-gate-review.md`.
 
 Validate Today, Approvals, Employees, Operations, Sign-in, and route boundaries as reference
 archetypes across roles, supported widths, zoom, forced colors, reduced motion, keyboard, and
@@ -571,15 +581,15 @@ automated accessibility before version `0.12.0`.
 
 ## 16. Validation matrix
 
-| Reference surface | Direction question | Required evidence |
-|---|---|---|
-| Today | Is state/action first, with complete but progressive explanation? | All attendance states; desktop/mobile/320; warnings; forced colors; reduced motion; keyboard/touch |
-| Approvals | Can a manager prioritize and review without hidden action/context? | Action-required/waiting/empty; filters; wide table; narrow list/scroll strategy; text spacing; keyboard |
-| Employees/settings | Does compact density remain legible and recoverable? | Long names/roles; empty/filter-zero; disabled reason; complex-form errors; zoom/reflow |
-| Operations/technical audit | Are status, dependency, recovery, and semantics coherent without HR data? | Healthy/degraded/critical/error; valid `dl`/table; hostile wrapping; forced colors; permission denial |
-| Sign-in/recovery | Are organization identity and the task clear without decoration? | Missing/long identity; invalid/pending/success/session-expiry; keyboard; autofill; mobile |
-| Shell | Do single and combined roles retain orientation and every destination? | All role combinations; short/tall desktop; drawer; zoom; active route; sign-out error |
-| Shared states | Do routes look and behave like one product? | Loading, empty, partial, stale, success, warning, error, permission denied, not found, offline, locked |
+| Reference surface          | Direction question                                                        | Required evidence                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Today                      | Is state/action first, with complete but progressive explanation?         | All attendance states; desktop/mobile/320; warnings; forced colors; reduced motion; keyboard/touch      |
+| Approvals                  | Can a manager prioritize and review without hidden action/context?        | Action-required/waiting/empty; filters; wide table; narrow list/scroll strategy; text spacing; keyboard |
+| Employees/settings         | Does compact density remain legible and recoverable?                      | Long names/roles; empty/filter-zero; disabled reason; complex-form errors; zoom/reflow                  |
+| Operations/technical audit | Are status, dependency, recovery, and semantics coherent without HR data? | Healthy/degraded/critical/error; valid `dl`/table; hostile wrapping; forced colors; permission denial   |
+| Sign-in/recovery           | Are organization identity and the task clear without decoration?          | Missing/long identity; invalid/pending/success/session-expiry; keyboard; autofill; mobile               |
+| Shell                      | Do single and combined roles retain orientation and every destination?    | All role combinations; short/tall desktop; drawer; zoom; active route; sign-out error                   |
+| Shared states              | Do routes look and behave like one product?                               | Loading, empty, partial, stale, success, warning, error, permission denied, not found, offline, locked  |
 
 ## 17. Approval and change control
 

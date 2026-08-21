@@ -11,6 +11,7 @@ import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workle
 import { createRuntimeConfig } from '../src/config.js';
 import { createApiServer } from '../src/server.js';
 import { createWorkLedgerLogger } from '../src/logging/logger.js';
+import { WORKLEDGER_VERSION } from '../src/version.js';
 
 const databaseHarness = createDatabaseHarnessState(process.env);
 const integrationTest = databaseHarness.enabled ? test : test.skip;
@@ -39,7 +40,7 @@ integrationTest(
     const logger = createWorkLedgerLogger({
       environment: 'test',
       service: 'workledger-api-test',
-      version: '0.10.0',
+      version: WORKLEDGER_VERSION,
       level: 'warn',
     });
 
@@ -104,7 +105,7 @@ integrationTest(
       const diagnosticsData = systemDiagnostics.json();
       expect(diagnosticsData).toMatchObject({
         service: 'workledger-api',
-        version: '0.10.0',
+        version: WORKLEDGER_VERSION,
         environment: 'test',
         dependencies: {
           database: {
@@ -182,7 +183,7 @@ integrationTest(
     const logger = createWorkLedgerLogger({
       environment: 'test',
       service: 'workledger-api-test',
-      version: '0.10.0',
+      version: WORKLEDGER_VERSION,
       level: 'warn',
     });
 

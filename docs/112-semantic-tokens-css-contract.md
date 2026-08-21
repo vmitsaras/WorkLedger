@@ -43,7 +43,8 @@ rename in this foundation slice.
 |---|---|---|
 | Tokens and mode overrides | `packages/ui/src/styles.css` | Every `--wl-*` declaration; light-only scheme; forced-colors mappings; reduced-motion durations. |
 | UI primitive base/motion hooks | `packages/ui/src/styles.css` | React Aria control, link, field, dialog, and drawer hooks; package keyframes. |
-| Application composition | `apps/web/src/styles.css` | Shell, navigation, panels, alerts, status badges, legacy native-control adapters, application layout helpers, and print. |
+| Shared component roots | `packages/ui/src/styles.css` | Package-owned base selectors for controls, fields, panels, alerts, status badges, filters, pagination, tables, dialogs, and route states. |
+| Application composition | `apps/web/src/styles.css` | Shell, navigation, route composition, scoped legacy adaptations, descendants of shared patterns, application layout helpers, and print. It may not redefine a bare shared component root. |
 | Routes/components | `apps/web/src/**/*.tsx`, `packages/ui/src/**/*.tsx` | Semantic HTML, Tailwind layout/typography utilities, and consumption of defined `var(--wl-*)` values. |
 
 The declared cascade order is:
@@ -83,6 +84,8 @@ Routes may not:
 - add `dark:` utilities while the product remains deliberately light-only;
 - add ambient `linear-gradient()` or `radial-gradient()` backgrounds;
 - invent an unowned `wl-*` class or reuse the removed `wl-card`/`text-secondary` contracts.
+- redefine a bare shared root such as `.wl-panel` or `.wl-alert`; deliberate descendants,
+  modifiers, and explicitly scoped legacy adaptations remain allowed.
 
 A future exception requires an accepted direction/ownership update and a corresponding checker
 change. A route-local exception is not established merely by making the checker ignore it.
@@ -120,6 +123,7 @@ pnpm css:check
 - missing representative contracts from any required token tier;
 - raw colors outside the token owner;
 - one-off palette utilities, inert dark branches, ambient gradients, and removed legacy classes.
+- a bare application-stylesheet redefinition of a package-owned shared component root.
 
 The check runs in `pnpm lint`. Its focused negative/positive tests run in the root `pnpm test`
 tooling suite, and the workspace contract requires both the script and command to remain present.
@@ -128,9 +132,10 @@ tooling suite, and the workspace contract requires both the script and command t
 
 Completed on 2026-08-21:
 
-- The CSS checker passes across 59 source files, 84 owned tokens, 44 defined WorkLedger classes,
-  and 563 token uses; four focused tooling tests cover current, positive, negative, and missing-tier
-  cases.
+- At the Phase 11 gate, the CSS checker passes across 67 source files, 85 owned tokens, 88 defined
+  WorkLedger classes, and 659 token uses. Five focused tooling tests cover the current contract,
+  valid scoped/descendant use, unknown ownership drift, missing tiers, and rejection of bare shared
+  root redefinitions.
 - Operations component/axe evidence verifies the safe diagnostics DTO, all term/definition
   relationships, textual states, and wrapped error treatment.
 - Real-browser desktop and 320 CSS px inspection verified zero page overflow, 44 CSS px controls,
@@ -147,9 +152,10 @@ Completed on 2026-08-21:
 - WL-1103 consumes the reserved identity boundary through `--wl-identity-accent`; its runtime
   organization name/logo/favicon validation and safe fallbacks are documented in
   `docs/113-company-identity-runtime-configuration.md`.
-- WL-1104 owns shared React Aria patterns and migration away from the bounded native-control
-  compatibility classes.
-- WL-1105 owns shell/authentication/route-boundary redesign.
+- WL-1104 completed the shared React Aria pattern foundation. Phase 12 owns workflow-by-workflow
+  adoption away from bounded native-control compatibility classes.
+- WL-1105 completed the shell/authentication/route-boundary redesign; its work-area, state, and
+  responsive contracts are documented in `docs/115-shell-authentication-route-boundaries.md`.
 - `UI-002` remains open: `/system/audit` is still a stale placeholder and is owned by WL-1204.
-- Cross-route workflow adoption and final visual/manual assistive-technology evidence remain in
-  Phase 12.
+- Cross-route workflow adoption, systematic visual regression, and final manual
+  assistive-technology evidence remain in Phase 12.

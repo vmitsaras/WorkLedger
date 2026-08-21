@@ -1,21 +1,18 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 11 — UI/UX direction, design system, and adaptable company identity
-**Project readiness:** Stage 5 of 5 — Production gate complete, UI foundation in progress
-**Phase progress:** Phase 10 complete — 5 of 7 Phase 11 tasks complete
-**Current milestone:** Production hardening and self-hosting complete — version 0.11.0
-**Active task:** `WL-1105` (next)
-**Status:** WL-1104 complete — shared accessible UI patterns implemented
+**Current phase:** Phase 12 — Workflow UX remediation and product polish
+**Project readiness:** Stage 5 of 5 — Production and UI-foundation gates complete
+**Phase progress:** Phase 11 complete — 0 of 7 Phase 12 tasks complete
+**Current milestone:** UI foundation complete — version 0.12.0
+**Active task:** `WL-1200` (next)
+**Status:** WL-1106 complete — UI-foundation gate passed
 **Last verified:** 2026-08-21
 
 ## Current objective
 
-`WL-1104` establishes product-neutral accessible UI contracts for recurring actions, forms,
-panels, statuses, alerts, filters, pagination, native tables, and route states. The UI package owns
-the reusable behavior and styles while Phase 12 will adopt the patterns across workflow routes.
-
-Next task: `WL-1105` — redesign the application shell, navigation, authentication surfaces, and
-route boundaries across responsive, zoom, forced-colors, and reduced-motion contexts.
+Phase 11 is complete at `0.12.0`. The next bounded slice is `WL-1200`: apply the established Quiet
+Ledger foundation to Today attendance, calculation hierarchy, warnings, recovery, and primary
+clock-action feedback without changing attendance domain rules or server authorization.
 
 ## Verified decisions
 
@@ -40,6 +37,16 @@ route boundaries across responsive, zoom, forced-colors, and reduced-motion cont
 - React Router `8.3.0` Data Mode owns route loaders, redirects, boundaries, permission gates, URL
   restoration, titles, and route focus; TanStack Query `5.101.4` owns in-memory remote state and
   mutations without browser persistence.
+- Combined-role navigation expands one current work area at a time—My work, Team, People and
+  policy, or System—while ordinary router links expose every authorized area landing and Reports
+  appears once in the active non-system area. Current-area presentation remains memory-only and is
+  never authorization evidence.
+- Desktop account navigation, actor identity, and sign-out remain outside the independently
+  scrolling destination inventory. The narrow shell preserves the same group order in the
+  focus-managed React Aria drawer.
+- Initial loading, permission denial, not found, and unexpected loader failures compose the shared
+  route-state contract with a focused `h1`, safe recovery links, and a real retry button only for
+  unexpected failures.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -1574,18 +1581,81 @@ route boundaries across responsive, zoom, forced-colors, and reduced-motion cont
 - No database schema, domain invariant, API contract, permission, mutation, sensitive DTO, or
   version changed. The `0.12.0` milestone remains owned by `WL-1106`.
 
+**2026-08-21 — WL-1105 shell, authentication, and route boundaries**
+
+- Replaced the all-role sidebar inventory with the approved My work, Team, People and policy, and
+  System work-area model. Combined-role accounts see one expanded current area plus labelled links
+  to every other authorized area, while Reports appears once in the active non-system area.
+- Kept the current work area as transient route-derived component state only; it is not persisted,
+  sent to the API, or treated as permission evidence.
+- Made the destination inventory the only independently scrolling desktop sidebar region and kept
+  Account navigation, actor identity, and sign-out stable outside it. A short-viewport browser test
+  caught and fixed the definite-height requirement needed for the child scroll track.
+- Preserved the React Aria modal drawer's focus entry/restoration, route-heading focus, skip link,
+  real navigation links, visible current state, 44 px targets, forced-colors boundaries, and
+  motion-independent behavior.
+- Refined authentication hierarchy with a ledger rule, shared titled session/result alerts, and
+  `aria-busy` pending forms without changing password, recovery, grant, session, or neutral-copy
+  security behavior.
+- Extended shared route states with optional route-level headings and composed actions, then adopted
+  them for initial loading, permission denial, not found, and unexpected route errors. Permission
+  states remain non-disclosing; unexpected failures expose a safe home link and deliberate retry.
+- Current Modern Web Guidance `accessibility` and `css-layout` constraints led to AT-hidden visible
+  Current text paired with `aria-current`, native actions, explicit landmarks, logical/dynamic
+  sizing, and `overflow: clip` around the deliberate destination scroller. Baseline 2024 remains
+  the project target; light-only presentation remains the accepted project exception.
+- Added `docs/115-shell-authentication-route-boundaries.md` with shell, authentication, boundary,
+  responsive, security, and likely assistive-technology state matrices. Exact screen-reader output
+  remains a manual `D-502`/`WL-1206` obligation.
+- Direct verification passed Prettier, ESLint, source boundaries (276 files/1,421 imports), CSS
+  ownership (67 sources/85 tokens/88 classes/663 uses), strict TypeScript, all 36 tooling tests, all
+  332 unit/component tests, 13 integration tests with 45 database-dependent skips, all 27
+  Playwright scenarios, production build and bundle budget (49,953 CSS bytes), and all eight public
+  workspace import roots.
+- The canonical workspace and phase-version wrappers still stop at the preserved ignored
+  `apps/site/dist/index.html` artifact. No database schema, domain invariant, API/DTO, permission,
+  sensitive-data scope, dependency, or version changed; `WL-1106` owns version `0.12.0`.
+
+**2026-08-21 — WL-1106 UI-foundation gate**
+
+- Verified `apps/site` contained no tracked file and moved the complete ignored pre-Phase-13 tree
+  intact to `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`; the temporary
+  backup exists, `apps/site` is absent, and the intended root plus eight-project workspace passes.
+- Lifted current work-area presentation state into `ApplicationShell`, preserved it across shared
+  Reports/Profile/Notifications routes and drawer unmounts, shared it between desktop/mobile
+  navigation, and retained safe fallback when authorized areas change.
+- Removed the redundant app-owned `.wl-panel`, scoped the legacy neutral alert adaptation away from
+  shared semantic tone modifiers, and strengthened `css:check` to reject bare app redefinitions of
+  package-owned shared roots while allowing descendants, modifiers, and scoped legacy adapters.
+- A long identity/logo plus enhanced text spacing at `1024×420` reproduced a `0.796875px`
+  header/sidebar overlap. The shell now uses a ResizeObserver-measured app-local header size with
+  the prior `4.25rem` CSS fallback; the corrected browser regression passes without overlap,
+  clipping, inaccessible account utilities, or page overflow.
+- Added one root-manifest-derived/validated API version source for startup/default logs and system
+  diagnostics; the unchanged diagnostics schema reports the `0.12.0` gate version.
+- Regenerated 22 purpose-minimized ignored captures for Sign-in, Today, Approvals, Employees,
+  Operations, shell, and route boundaries and recorded the manifest/results in
+  `docs/116-phase-11-gate-review.md`.
+- Pre-transition `pnpm verify` passed at eleven gates/`0.11.0`: 37 tooling tests, 334
+  unit/component tests, 13 integration tests with 45 PostgreSQL-dependent skips, all 31 Playwright
+  scenarios, reproducible OpenAPI, and the production/workspace build within the 49,982-byte CSS
+  budget. The post-transition gate confirms twelve sequential gates and all nine manifests at
+  `0.12.0`.
+- No database schema, domain invariant, authorization, mutation, sensitive DTO, package
+  publication, tag, release, container publication, or deployment changed.
+
 ## Current blockers
 
-No decision blocks `WL-1104`. Repository-wide commands that begin with `workspace:check` remain
-blocked by the pre-existing ignored `apps/site/dist` artifact described above; it must be removed or
-explicitly brought into the workspace only under the owning portfolio task. `D-502` manual
-assistive-technology evidence remains open for the Phase 12 UI release gate (`WL-1206`). `UI-001`
-and `UI-002` are high-priority workflow gaps and must close before that gate.
+No decision blocks `WL-1200`. `D-502` manual assistive-technology evidence remains open for the
+Phase 12 UI release gate (`WL-1206`). `UI-001` and `UI-002` are high-priority workflow gaps owned by
+`WL-1202` and `WL-1204`; systematic visual regression remains `UI-014`/`WL-1206`. The temporary
+Astro backup is recoverable at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`,
+but the public site remains deferred to `WL-1300`.
 
 ## Next task
 
-`WL-1105 — Redesign the application shell, navigation, authentication surfaces, and route
-boundaries across responsive, zoom, forced-colors, and reduced-motion contexts.`
+`WL-1200 — Redesign Today attendance, calculation hierarchy, warnings, recovery, and primary
+clock-action feedback.`
 
 ## Update rules
 

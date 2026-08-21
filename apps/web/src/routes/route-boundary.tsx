@@ -1,9 +1,8 @@
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router';
 
-import { linkVariants } from '@workledger/ui';
+import { Button, buttonVariants, RouteState } from '@workledger/ui';
 
 import { useBoundaryPresentation } from '../app/route-presentation.js';
-import { PageHeader } from '../components/page-header.js';
 
 export function RouteBoundary() {
   const error = useRouteError();
@@ -28,21 +27,34 @@ export function RouteBoundary() {
 
   useBoundaryPresentation(content.title);
 
-  return (
-    <section className="grid max-w-2xl gap-6" role={status >= 500 ? 'alert' : undefined}>
-      <PageHeader title={content.title} description={content.description} eyebrow="Route status" />
-      <div className="flex flex-wrap gap-3">
-        <Link className={linkVariants({ prominence: 'default' })} to="/">
-          Go to my home
-        </Link>
-        {status >= 500 ? (
-          <button type="button" className="wl-text-button" onClick={() => window.location.reload()}>
-            Try again
-          </button>
-        ) : null}
-      </div>
-    </section>
+  const state = (
+    <RouteState
+      actions={
+        <>
+          <Link className={buttonVariants()} to="/">
+            Go to my home
+          </Link>
+          {status >= 500 ? (
+            <Button variant="secondary" onPress={() => window.location.reload()}>
+              Try again
+            </Button>
+          ) : null}
+        </>
+      }
+      headingLevel="h1"
+      headingProps={{
+        'data-route-focus-key': 'route-heading',
+        'data-route-heading': true,
+        tabIndex: -1,
+      }}
+      kind={status === 403 ? 'permission-denied' : status === 404 ? 'not-found' : 'error'}
+      title={content.title}
+    >
+      <p className="m-0">{content.description}</p>
+    </RouteState>
   );
+
+  return status >= 500 ? <div role="alert">{state}</div> : state;
 }
 
 export function RootNotFoundPage() {
@@ -53,16 +65,23 @@ export function RootNotFoundPage() {
       tabIndex={-1}
       className="mx-auto grid min-h-dvh w-full max-w-3xl content-center px-5 py-12 sm:px-8"
     >
-      <section className="grid gap-6">
-        <PageHeader
-          eyebrow="Route status"
-          title="Page not found"
-          description="The page could not be found. Return to WorkLedger to continue."
-        />
-        <Link className={linkVariants({ prominence: 'default' })} to="/">
-          Return to WorkLedger
-        </Link>
-      </section>
+      <RouteState
+        actions={
+          <Link className={buttonVariants()} to="/">
+            Return to WorkLedger
+          </Link>
+        }
+        headingLevel="h1"
+        headingProps={{
+          'data-route-focus-key': 'route-heading',
+          'data-route-heading': true,
+          tabIndex: -1,
+        }}
+        kind="not-found"
+        title="Page not found"
+      >
+        <p className="m-0">The page could not be found. Return to WorkLedger to continue.</p>
+      </RouteState>
     </main>
   );
 }

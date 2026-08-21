@@ -1,3 +1,5 @@
+import { mkdir } from 'node:fs/promises';
+
 import { expect, test, type Page } from '@playwright/test';
 
 import { expectPageToHaveNoAxeViolations } from '@workledger/test-utils';
@@ -26,6 +28,14 @@ const HR_CONTEXT = {
   navigationAreas: ['EMPLOYEE', 'HR'],
   organization: { name: 'Northstar Studio' },
   roles: ['EMPLOYEE', 'HR_ADMINISTRATOR'],
+};
+const COMBINED_CONTEXT = {
+  account: { email: 'alex@northstar.test', name: 'Alex Morgan' },
+  defaultPath: '/today',
+  employee: { displayName: 'Alex Morgan', employeeNumber: 'NS-099', status: 'ACTIVE' },
+  navigationAreas: ['EMPLOYEE', 'MANAGER', 'HR', 'SYSTEM'],
+  organization: { name: 'Northstar Studio' },
+  roles: ['EMPLOYEE', 'MANAGER', 'HR_ADMINISTRATOR', 'SYSTEM_ADMINISTRATOR'],
 };
 const APPROVAL_TEAM_ID = '123e4567-e89b-42d3-a456-426614174500';
 const CORRECTION_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174501';
@@ -203,6 +213,56 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test('preserves shared alert tone colors through the application stylesheet cascade', async ({
+  page,
+}) => {
+  await mockContext(page, () => false);
+  await page.goto('/sign-in');
+
+  await page.evaluate(() => {
+    for (const tone of ['info', 'success', 'warning', 'danger']) {
+      const alert = document.createElement('section');
+      alert.className = `wl-alert wl-alert--${tone}`;
+      alert.dataset['alertTone'] = tone;
+      alert.textContent = `${tone} alert`;
+      document.body.append(alert);
+    }
+  });
+
+  for (const tone of ['info', 'success', 'warning', 'danger'] as const) {
+    const resolvedColors = await page
+      .locator(`[data-alert-tone="${tone}"]`)
+      .evaluate((element, currentTone) => {
+        const probe = document.createElement('div');
+        probe.style.position = 'absolute';
+        probe.style.inset = '-9999px auto auto -9999px';
+        probe.style.backgroundColor = `var(--wl-state-${currentTone}-surface)`;
+        probe.style.borderColor = `var(--wl-state-${currentTone}-border)`;
+        probe.style.color = `var(--wl-state-${currentTone}-text)`;
+        document.body.append(probe);
+
+        const actual = getComputedStyle(element);
+        const expected = getComputedStyle(probe);
+        const result = {
+          actual: {
+            background: actual.backgroundColor,
+            border: actual.borderLeftColor,
+            text: actual.color,
+          },
+          expected: {
+            background: expected.backgroundColor,
+            border: expected.borderLeftColor,
+            text: expected.color,
+          },
+        };
+        probe.remove();
+        return result;
+      }, tone);
+
+    expect(resolvedColors.actual).toEqual(resolvedColors.expected);
+  }
+});
+
 test('keeps runtime company identity accessible across broken assets, reflow, forced colors, and print', async ({
   page,
 }) => {
@@ -265,6 +325,13 @@ test('signs in through the accessible form and focuses the destination route', a
 
   await page.goto('/sign-in');
   await expect(page).toHaveTitle('Sign in | WorkLedger');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await capturePhase11Surface(page, 'sign-in-desktop-1440x900');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await capturePhase11Surface(page, 'sign-in-mobile-390x844');
+  await page.setViewportSize({ width: 320, height: 900 });
+  await capturePhase11Surface(page, 'sign-in-reflow-320x900');
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('alert')).toBeFocused();
   await page.getByRole('textbox', { name: 'Email address' }).fill('emma@northstar.test');
@@ -323,6 +390,11 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   const table = page.getByRole('table', { name: /Unified approval inbox/u });
   const scrollRegion = page.getByRole('region', { name: 'Scrollable approval inbox results' });
   await expect(table).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await capturePhase11Surface(page, 'approvals-desktop-1440x900');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await capturePhase11Surface(page, 'approvals-mobile-390x844');
+  await page.setViewportSize({ width: 1280, height: 720 });
   await expect(table.locator('caption')).toContainText(
     'Monthly periods link to their dedicated review page; absence subtypes remain hidden.',
   );
@@ -407,6 +479,7 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
     scrollWidth: region.scrollWidth,
   }));
   expect(tableOverflow.scrollWidth).toBeGreaterThan(tableOverflow.clientWidth);
+  await capturePhase11Surface(page, 'approvals-reflow-320x900');
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -1155,6 +1228,9 @@ test('preserves the Today task order, target sizes, and reflow across supported 
         expect(bounds?.width).toBeGreaterThanOrEqual(24);
         expect(bounds?.height).toBeGreaterThanOrEqual(24);
       }
+      if (width === 320) await capturePhase11Surface(page, 'today-reflow-320x900');
+      if (width === 390) await capturePhase11Surface(page, 'today-mobile-390x900');
+      if (width === 1440) await capturePhase11Surface(page, 'today-desktop-1440x900');
     });
   }
 
@@ -1329,6 +1405,24 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
   await page.route('**/v1/team/status', async (route) => {
     await route.fulfill({ json: success(TEAM_STATUS), status: 200 });
   });
+  await page.route('**/v1/reports', async (route) => {
+    await route.fulfill({
+      json: success({
+        defaultRange: { from: '2026-08-01', to: '2026-08-31' },
+        reports: [
+          {
+            availableSorts: ['EMPLOYEE'],
+            defaultSort: 'EMPLOYEE',
+            description: 'Monthly time records in the current permission scope.',
+            key: 'monthly-time',
+            title: 'Monthly time',
+          },
+        ],
+        timeZone: 'Europe/Berlin',
+      }),
+      status: 200,
+    });
+  });
 
   await page.goto('/today');
   await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
@@ -1338,6 +1432,7 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
   await page.getByRole('button', { name: 'Menu' }).click();
   const dialog = page.getByRole('dialog', { name: 'Navigation' });
   await expect(dialog).toBeFocused();
+  await capturePhase11Surface(page, 'shell-drawer-mobile-390x844');
   await expect(page.locator('.wl-dialog-modal')).toHaveCSS('animation-name', 'none');
   await expect(page.locator('.wl-dialog-modal')).toHaveCSS('transform', 'none');
   await expect(dialog.getByRole('button', { name: 'Close' })).toHaveCSS(
@@ -1368,6 +1463,352 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
     true,
   );
   await expect(page.getByText(/sickness|vacation/iu)).toHaveCount(0);
+
+  const menuButton = page.getByRole('button', { name: 'Menu' });
+  await menuButton.click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('link', { name: 'Reports' }).click();
+  await expect(page.getByRole('heading', { name: 'Reports', exact: true })).toBeFocused();
+
+  await menuButton.click();
+  await expect(dialog).toBeVisible();
+  const mobileWorkAreas = dialog.getByRole('navigation', { name: 'Mobile work areas' });
+  await expect(mobileWorkAreas.getByRole('link', { name: 'Team' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+  await expect(dialog.getByRole('navigation', { name: 'Mobile Team navigation' })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(menuButton).toBeFocused();
+
+  await page.setViewportSize({ width: 1024, height: 720 });
+  const desktopWorkAreas = page.getByRole('navigation', { name: 'Work areas' });
+  await expect(desktopWorkAreas.getByRole('link', { name: 'Team' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+  await expect(page.getByRole('navigation', { name: 'Team navigation' })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await menuButton.click();
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog
+      .getByRole('navigation', { name: 'Mobile work areas' })
+      .getByRole('link', { name: 'Team' }),
+  ).toHaveAttribute('aria-current', 'true');
+  await dialog.getByRole('button', { name: 'Close' }).click();
+
+  await page.setViewportSize({ width: 320, height: 900 });
+  await menuButton.click();
+  await expect(dialog).toBeVisible();
+  await capturePhase11Surface(page, 'shell-drawer-reflow-320x900');
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('keeps combined-role work areas and account utilities reachable in a short desktop shell', async ({
+  page,
+}) => {
+  const organizationName =
+    'Northstar International Workplace Operations and Employee Services Cooperative';
+  await page.setViewportSize({ width: 1024, height: 420 });
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({
+      json: success({
+        ...COMBINED_CONTEXT,
+        organization: { logoPath: '/identity/gate-logo.svg', name: organizationName },
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/identity/gate-logo.svg', async (route) => {
+    await route.fulfill({
+      body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48"><rect width="160" height="48" rx="8" fill="#075985"/><text x="80" y="31" fill="white" font-size="20" text-anchor="middle">Northstar</text></svg>',
+      contentType: 'image/svg+xml',
+      status: 200,
+    });
+  });
+  await mockToday(page);
+  await page.route('**/v1/team/status', async (route) => {
+    await route.fulfill({
+      json: success({
+        asOf: '2026-08-14T10:30:45Z',
+        localDate: '2026-08-14',
+        members: [],
+        summary: {
+          offWork: 0,
+          onBreak: 0,
+          total: 0,
+          unavailable: 0,
+          unresolved: 0,
+          working: 0,
+        },
+        timeZone: 'Europe/Berlin',
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/hr/employees*', async (route) => {
+    await route.fulfill({
+      json: success({
+        items: [],
+        pagination: { limit: 20, page: 1, total: 0, totalPages: 0 },
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/hr/teams*', async (route) => {
+    await route.fulfill({
+      json: success({
+        items: [],
+        pagination: { limit: 50, page: 1, total: 0, totalPages: 0 },
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/system/operations', async (route) => {
+    await route.fulfill({
+      json: {
+        dependencies: {
+          authentication: { status: 'healthy' },
+          database: { latencyMs: 12, status: 'healthy' },
+        },
+        environment: 'production',
+        health: 'healthy',
+        service: 'workledger-api',
+        timestamp: '2026-08-21T10:30:00Z',
+        version: '0.12.0',
+      },
+      status: 200,
+    });
+  });
+
+  await page.goto('/today');
+  await page.addStyleTag({
+    content:
+      '* { letter-spacing: 0.12em !important; line-height: 1.5 !important; word-spacing: 0.16em !important; }',
+  });
+  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeFocused();
+  await expect(page.getByText(organizationName)).toBeVisible();
+  await expect(page.locator('.wl-company-logo')).toBeVisible();
+  await expect(page.getByRole('link', { name: `${organizationName} home` })).toBeVisible();
+  const workAreas = page.getByRole('navigation', { name: 'Work areas' });
+  await expect(workAreas.getByRole('link', { name: 'My work' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+  await expect(workAreas.getByRole('link', { name: 'Team' })).toHaveAttribute('href', '/team');
+  await expect(workAreas.getByRole('link', { name: 'People and policy' })).toHaveAttribute(
+    'href',
+    '/employees',
+  );
+  await expect(workAreas.getByRole('link', { name: 'System' })).toHaveAttribute(
+    'href',
+    '/system/operations',
+  );
+  await expect(page.getByRole('link', { name: 'Reports' })).toHaveCount(1);
+  await expect(page.getByRole('navigation', { name: 'Account' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
+  await capturePhase11Surface(page, 'shell-short-desktop-1024x420');
+  expect(
+    await page
+      .locator('.wl-navigation-destinations')
+      .evaluate((element) => element.scrollHeight > element.clientHeight),
+  ).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.evaluate(() => window.scrollTo({ behavior: 'instant', top: 600 }));
+  await expect
+    .poll(async () => {
+      const header = await page.locator('.wl-app-header').boundingBox();
+      const sidebar = await page.locator('.wl-desktop-navigation').boundingBox();
+      return header !== null && sidebar !== null ? sidebar.y - (header.y + header.height) : -1;
+    })
+    .toBeGreaterThanOrEqual(0);
+  await expect(page.getByRole('navigation', { name: 'Account' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
+
+  await page.emulateMedia({ forcedColors: 'active' });
+  const currentArea = workAreas.getByRole('link', { name: 'My work' });
+  const forcedAreaColors = await currentArea.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    return { background: styles.backgroundColor, border: styles.borderColor };
+  });
+  expect(forcedAreaColors.border).not.toBe('transparent');
+  expect(forcedAreaColors.border).not.toBe(forcedAreaColors.background);
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.emulateMedia({ forcedColors: 'none' });
+  await workAreas.getByRole('link', { name: 'Team' }).click();
+  await expect(page.getByRole('heading', { name: 'Team status', exact: true })).toBeFocused();
+  const teamNavigation = page.getByRole('navigation', { name: 'Team navigation' });
+  for (const [name, href] of [
+    ['Team', '/team'],
+    ['Approvals', '/approvals'],
+    ['Team calendar', '/team-calendar'],
+    ['Reports', '/reports'],
+  ]) {
+    await expect(teamNavigation.getByRole('link', { name, exact: true })).toHaveAttribute(
+      'href',
+      href,
+    );
+  }
+
+  await workAreas.getByRole('link', { name: 'People and policy' }).click();
+  await expect(page.getByRole('heading', { name: 'Employees', exact: true })).toBeVisible();
+  const peopleNavigation = page.getByRole('navigation', { name: 'People and policy navigation' });
+  for (const [name, href] of [
+    ['Employees', '/employees'],
+    ['Time settings', '/settings/time'],
+    ['Absence settings', '/settings/absence'],
+    ['Holiday calendars', '/settings/holidays'],
+    ['Audit', '/audit'],
+    ['Reports', '/reports'],
+  ]) {
+    await expect(peopleNavigation.getByRole('link', { name, exact: true })).toHaveAttribute(
+      'href',
+      href,
+    );
+  }
+
+  await workAreas.getByRole('link', { name: 'System' }).click();
+  await expect(page.getByRole('heading', { name: 'Operations' })).toBeFocused();
+  const systemNavigation = page.getByRole('navigation', { name: 'System navigation' });
+  for (const [name, href] of [
+    ['Accounts and sessions', '/system/accounts'],
+    ['Operations', '/system/operations'],
+    ['Technical audit', '/system/audit'],
+  ]) {
+    await expect(systemNavigation.getByRole('link', { name, exact: true })).toHaveAttribute(
+      'href',
+      href,
+    );
+  }
+  await expect(systemNavigation.getByRole('link', { name: 'Reports' })).toHaveCount(0);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('keeps system operations semantic and contained across desktop, mobile, and reflow', async ({
+  page,
+}) => {
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({
+      json: success({
+        account: { email: 'system@northstar.test', name: 'System Administrator' },
+        defaultPath: '/system/operations',
+        employee: null,
+        navigationAreas: ['SYSTEM'],
+        organization: { name: 'Northstar Studio' },
+        roles: ['SYSTEM_ADMINISTRATOR'],
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/system/operations', async (route) => {
+    await route.fulfill({
+      json: {
+        dependencies: {
+          authentication: { status: 'healthy' },
+          database: {
+            error: 'Database connection timed out after the bounded readiness check.',
+            latencyMs: 750,
+            status: 'unavailable',
+          },
+        },
+        environment: 'production',
+        health: 'degraded',
+        service: 'workledger-api',
+        timestamp: '2026-08-21T10:30:00Z',
+        version: '0.12.0',
+      },
+      status: 200,
+    });
+  });
+
+  await page.goto('/system/operations');
+  await expect(page.getByRole('heading', { name: 'Operations' })).toBeFocused();
+  await expect(page.getByText('Degraded')).toBeVisible();
+  await expect(page.getByText('Unavailable')).toBeVisible();
+  await expect(page.getByText('Healthy')).toBeVisible();
+  await expect(page.getByText(/Database connection timed out/u)).toBeVisible();
+
+  for (const viewport of [
+    { height: 900, name: 'desktop-1440x900', width: 1440 },
+    { height: 844, name: 'mobile-390x844', width: 390 },
+    { height: 900, name: 'reflow-320x900', width: 320 },
+  ]) {
+    await page.setViewportSize({ height: viewport.height, width: viewport.width });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    await capturePhase11Surface(page, `operations-${viewport.name}`);
+  }
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('keeps route boundaries focused, recoverable, and purpose-minimized', async ({ page }) => {
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/profile', async (route) => {
+    await route.fulfill({
+      json: {
+        error: {
+          code: 'DATABASE_UNAVAILABLE',
+          message: 'The requested operation is unavailable.',
+          requestId: REQUEST_ID,
+        },
+      },
+      status: 503,
+    });
+  });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/system/operations');
+  await expect(page.getByRole('heading', { name: 'Permission denied' })).toBeFocused();
+  await expect(page.getByText(/No restricted record details were disclosed/u)).toBeVisible();
+  await capturePhase11Surface(page, 'route-boundary-permission-desktop-1440x900');
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/not-a-workledger-route');
+  await expect(page.getByRole('heading', { name: 'Page not found' })).toBeFocused();
+  await expect(page.getByRole('link', { name: 'Return to WorkLedger' })).toBeVisible();
+  await capturePhase11Surface(page, 'route-boundary-not-found-mobile-390x844');
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto('/profile');
+  await expect(page.getByRole('heading', { name: 'Page unavailable' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page.getByText(/Database connection|requested operation/iu)).toHaveCount(0);
+  await capturePhase11Surface(page, 'route-boundary-error-reflow-320x900');
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('presents the initial session check as one polite loading state', async ({ page }) => {
+  let releaseContext: (() => void) | undefined;
+  const contextGate = new Promise<void>((resolve) => {
+    releaseContext = resolve;
+  });
+  await page.route('**/v1/me/context', async (route) => {
+    await contextGate;
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await mockToday(page);
+
+  const navigation = page.goto('/today');
+  const loadingHeading = page.getByRole('heading', { name: 'Loading WorkLedger' });
+  await expect(loadingHeading).toBeVisible();
+  await expect(page.getByRole('main')).toHaveAttribute('aria-busy', 'true');
+  await capturePhase11Surface(page, 'route-boundary-loading-desktop-1280x720');
+  releaseContext?.();
+  await navigation;
+  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeFocused();
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -1633,6 +2074,13 @@ test('creates, invites, and assigns an employee through the keyboard-complete HR
 
   await page.goto('/employees/new');
   await expect(page.getByRole('heading', { name: 'Add employee' })).toBeFocused();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await capturePhase11Surface(page, 'employees-desktop-1440x900');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await capturePhase11Surface(page, 'employees-mobile-390x844');
+  await page.setViewportSize({ width: 320, height: 900 });
+  await capturePhase11Surface(page, 'employees-reflow-320x900');
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.getByRole('button', { name: 'Create and invite employee' }).click();
   await expect(page.getByRole('alert')).toBeFocused();
   await page.getByLabel('Display name').fill('Jordan Lee');
@@ -1801,4 +2249,15 @@ async function mockToday(page: Page): Promise<void> {
 
 function success(data: unknown) {
   return { data, meta: { requestId: REQUEST_ID } };
+}
+
+async function capturePhase11Surface(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_CAPTURE_PHASE_11'] !== '1') return;
+  const directory = 'output/playwright/wl1106';
+  await mkdir(directory, { recursive: true });
+  await page.screenshot({
+    animations: 'disabled',
+    fullPage: true,
+    path: `${directory}/${name}.png`,
+  });
 }

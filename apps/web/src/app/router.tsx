@@ -15,6 +15,7 @@ import {
   employeeAdminQuerySchema,
   systemAccountQuerySchema,
 } from '@workledger/contracts';
+import { RouteState } from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory } from './api-client.js';
 import {
@@ -374,7 +375,18 @@ function InitialRouteFallback() {
       aria-busy="true"
       className="mx-auto grid min-h-dvh w-full max-w-3xl content-center px-5 py-12 sm:px-8"
     >
-      <p className="m-0 text-lg font-semibold text-[var(--wl-text-muted)]">Loading WorkLedger…</p>
+      <RouteState
+        headingLevel="h1"
+        headingProps={{
+          'data-route-focus-key': 'route-heading',
+          'data-route-heading': true,
+          tabIndex: -1,
+        }}
+        kind="loading"
+        title="Loading WorkLedger"
+      >
+        <p className="m-0">Checking your current session and available work areas…</p>
+      </RouteState>
     </main>
   );
 }

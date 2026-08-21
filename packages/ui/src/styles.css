@@ -361,7 +361,22 @@
   }
 
   .wl-route-state {
+    inline-size: 100%;
+    max-inline-size: 48rem;
     justify-items: start;
+  }
+  .wl-route-state__title--route {
+    max-width: 48rem;
+    font-size: clamp(1.875rem, 1.6rem + 1vw, 2.5rem);
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    outline: none;
+  }
+  .wl-route-state__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--wl-space-3);
   }
   .wl-route-state--loading {
     min-block-size: 10rem;

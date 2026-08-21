@@ -197,8 +197,8 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-1102 | Consolidate semantic design tokens and CSS ownership; remove undefined and one-off style contracts | WL-1101 | Token inventory, ownership rules, and executable rejection of undefined contracts | Done |
 | WL-1103 | Implement validated company-identity configuration for organization name, logo, favicon, and brand accent | WL-1101, WL-1102 | Runtime configuration, validation, safe fallbacks, forced-colors/zoom evidence, and no source editing | Done |
 | WL-1104 | Expand the local React Aria UI system for recurring application patterns | WL-1101, WL-1102 | Actions, forms, panels, statuses, alerts, tables, filters, pagination, and route states use shared accessible contracts | Done |
-| WL-1105 | Redesign the application shell, navigation, authentication surfaces, and route boundaries | WL-1102–WL-1104 | Responsive, keyboard, zoom/reflow, forced-colors, and reduced-motion evidence across all roles | Not started |
-| WL-1106 | Execute the UI-foundation phase gate | WL-1100–WL-1105 | UI foundation checklist complete; every workspace manifest is `0.12.0` | Not started |
+| WL-1105 | Redesign the application shell, navigation, authentication surfaces, and route boundaries | WL-1102–WL-1104 | Responsive, keyboard, zoom/reflow, forced-colors, and reduced-motion evidence across all roles | Done |
+| WL-1106 | Execute the UI-foundation phase gate | WL-1100–WL-1105 | UI foundation checklist complete; every workspace manifest is `0.12.0` | Done |
 
 ---
 

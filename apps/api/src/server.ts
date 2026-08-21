@@ -34,6 +34,7 @@ import {
 } from './notifications/delivery.js';
 import { createWorkLedgerLogger, type WorkLedgerLogger } from './logging/logger.js';
 import { registerCompanyIdentityRoutes } from './identity/routes.js';
+import { WORKLEDGER_VERSION } from './version.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
 const READY_RESPONSE_SCHEMA = z.strictObject({ status: z.enum(['ready', 'not_ready']) });
@@ -52,7 +53,7 @@ export function createApiServer(
     createWorkLedgerLogger({
       environment: config.environment,
       service: 'workledger-api',
-      version: '0.10.0',
+      version: WORKLEDGER_VERSION,
     });
 
   const app = Fastify({

@@ -6,7 +6,9 @@
 
 ## Version compatibility and release support
 
-WorkLedger uses zero-indexed phase-gate versioning: `0.<completed phase-gate count>.0`. Version `0.10.0` marks Phase 9 completion; `0.11.0` will mark Phase 10 completion.
+WorkLedger uses zero-indexed phase-gate versioning: `0.<completed phase-gate count>.0`. Version
+`0.10.0` marks Phase 9 completion, `0.11.0` marks Phase 10 completion, and `0.12.0` marks Phase 11
+UI-foundation completion.
 
 - **Schema migrations are cumulative and forward-only.** Each version includes all prior migrations.
 - **Backward compatibility within Phase 10 is not guaranteed.** The MVP remains pre-1.0 development.
@@ -281,4 +283,3 @@ These are not part of the MVP `0.x` series but are noted for future operational 
 - [docs/104-backup-and-clean-restore.md](./104-backup-and-clean-restore.md) — Encrypted backup and isolated restore procedures
 - [packages/database/src/migrate-cli.ts](../packages/database/src/migrate-cli.ts) — Migration CLI source
 - [packages/database/migrations/](../packages/database/migrations/) — Committed SQL migration files
-

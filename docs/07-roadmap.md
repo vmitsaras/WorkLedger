@@ -395,12 +395,12 @@ Establish one evidence-led visual, interaction, and company-identity foundation 
 
 ## UI foundation release gate
 
-- [ ] Every canonical route and required state has an owner, implementation status, and evidence level.
-- [ ] The approved visual direction covers calm employee surfaces and denser manager/admin surfaces without becoming a generic dashboard template.
-- [ ] Semantic tokens and shared components replace undefined and recurring one-off style contracts.
-- [ ] Company identity is configurable without source editing and remains legible under absent/invalid assets, forced colors, and zoom.
-- [ ] Shell, authentication, navigation, and route boundaries pass supported responsive, keyboard, zoom/reflow, forced-colors, and reduced-motion checks.
-- [ ] The gate advances every workspace manifest to `0.12.0`.
+- [x] Every canonical route and required state has an owner, implementation status, and evidence level.
+- [x] The approved visual direction covers calm employee surfaces and denser manager/admin surfaces without becoming a generic dashboard template.
+- [x] Semantic tokens and shared components replace undefined and recurring one-off style contracts.
+- [x] Company identity is configurable without source editing and remains legible under absent/invalid assets, forced colors, and zoom.
+- [x] Shell, authentication, navigation, and route boundaries pass supported responsive, keyboard, zoom/reflow, forced-colors, and reduced-motion checks.
+- [x] The gate advances every workspace manifest to `0.12.0`.
 
 ---
 

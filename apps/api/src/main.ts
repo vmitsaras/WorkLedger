@@ -2,6 +2,7 @@ import { createRuntimeConfig } from './config.js';
 import { loadRuntimeEnvironment } from './runtime-environment.js';
 import { createApiServer } from './server.js';
 import { createWorkLedgerLogger } from './logging/logger.js';
+import { WORKLEDGER_VERSION } from './version.js';
 
 async function main() {
   const environment = await loadRuntimeEnvironment(process.env);
@@ -10,7 +11,7 @@ async function main() {
   const logger = createWorkLedgerLogger({
     environment: config.environment,
     service: 'workledger-api',
-    version: '0.10.0',
+    version: WORKLEDGER_VERSION,
   });
 
   const server = createApiServer(config, { logger });

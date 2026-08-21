@@ -18,6 +18,21 @@ const REQUIRED_TOKENS = [
   '--wl-density-comfortable-section-gap',
   '--wl-density-compact-section-gap',
 ];
+const SHARED_COMPONENT_ROOT_CLASSES = [
+  'wl-alert',
+  'wl-control',
+  'wl-data-table',
+  'wl-dialog-modal',
+  'wl-dialog-overlay',
+  'wl-field',
+  'wl-filter-bar',
+  'wl-link',
+  'wl-pagination',
+  'wl-panel',
+  'wl-route-state',
+  'wl-status-badge',
+  'wl-table-scroll',
+];
 const PALETTE_NAMES =
   'red|green|yellow|blue|orange|emerald|amber|lime|teal|cyan|sky|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone';
 
@@ -139,6 +154,10 @@ export function validateCssContractSources(sources, tokenOwnerFile = TOKEN_OWNER
     `\\b(?:bg|text|border|outline|ring|fill|stroke)-(?:${PALETTE_NAMES})-[0-9]+(?:/[0-9]+)?\\b`,
     'giu',
   );
+  const sharedComponentRootPattern = new RegExp(
+    `^\\s*\\.(${SHARED_COMPONENT_ROOT_CLASSES.join('|')})\\s*\\{`,
+    'gmu',
+  );
   const checks = [
     {
       code: 'inert-dark-branch',
@@ -198,6 +217,18 @@ export function validateCssContractSources(sources, tokenOwnerFile = TOKEN_OWNER
     }
 
     if (file !== tokenOwnerFile) {
+      for (const match of findMatches(source, sharedComponentRootPattern)) {
+        errors.push(
+          createError(
+            'shared-component-owner-violation',
+            file,
+            source,
+            match,
+            `${match[1]} is a shared component root and may only be defined by ${tokenOwnerFile}; use a modifier, descendant, or explicitly scoped adaptation instead.`,
+          ),
+        );
+      }
+
       for (const match of findMatches(
         source,
         /(#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|lab|lch|oklab|oklch)\s*\()/giu,

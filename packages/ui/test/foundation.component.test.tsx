@@ -95,7 +95,14 @@ test('renders shared operational patterns with textual state and native semantic
         </tbody>
       </DataTable>
       <Pagination currentPage={2} onPageChange={() => undefined} pageCount={3} />
-      <RouteState actionHref="/today" actionLabel="Return to Today" kind="permission-denied">
+      <RouteState
+        actionHref="/today"
+        actionLabel="Return to Today"
+        actions={<button type="button">Try again</button>}
+        headingLevel="h1"
+        headingProps={{ tabIndex: -1 }}
+        kind="permission-denied"
+      >
         Your current role does not grant access to this record.
       </RouteState>
     </>,
@@ -106,6 +113,34 @@ test('renders shared operational patterns with textual state and native semantic
   expect(screen.getByRole('form', { name: 'Filter records' })).toBeVisible();
   expect(screen.getByRole('table', { name: 'Daily records' })).toBeVisible();
   expect(screen.getByRole('navigation', { name: 'Pagination' })).toHaveTextContent('Page 2 of 3');
+  expect(screen.getByRole('heading', { level: 1, name: /do not have access/u })).toHaveClass(
+    'wl-route-state__title--route',
+  );
   expect(screen.getByRole('link', { name: 'Return to Today' })).toHaveAttribute('href', '/today');
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
   await expectNoAxeViolations(container);
+});
+
+test('maps every shared alert tone to its semantic root modifier', () => {
+  render(
+    <>
+      <Alert title="Information" tone="info">
+        Informational state.
+      </Alert>
+      <Alert title="Success" tone="success">
+        Successful state.
+      </Alert>
+      <Alert title="Warning" tone="warning">
+        Warning state.
+      </Alert>
+      <Alert title="Danger" tone="danger">
+        Danger state.
+      </Alert>
+    </>,
+  );
+
+  expect(screen.getByRole('status', { name: 'Information' })).toHaveClass('wl-alert--info');
+  expect(screen.getByRole('status', { name: 'Success' })).toHaveClass('wl-alert--success');
+  expect(screen.getByRole('alert', { name: 'Warning' })).toHaveClass('wl-alert--warning');
+  expect(screen.getByRole('alert', { name: 'Danger' })).toHaveClass('wl-alert--danger');
 });

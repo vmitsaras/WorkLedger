@@ -29,10 +29,11 @@ deep package imports were introduced.
 
 `WL-1102` extends this initial foundation with the authoritative semantic token and CSS ownership
 contract in `docs/112-semantic-tokens-css-contract.md`. `packages/ui/src/styles.css` remains the
-only `--wl-*` declaration owner; `apps/web/src/styles.css` owns application composition and consumes
-those tokens. The executable `pnpm css:check` boundary rejects undefined classes/tokens and
-one-off color-mode drift. Where this earlier foundation describes the initial token subset, the
-WL-1102 inventory is now authoritative.
+only `--wl-*` declaration owner and owns the shared component roots added by `WL-1104`;
+`apps/web/src/styles.css` owns application composition, deliberate descendants, and scoped legacy
+adaptations. The executable `pnpm css:check` boundary rejects undefined classes/tokens, one-off
+color-mode drift, and bare app redefinitions of shared roots. Where this earlier foundation
+describes the initial token subset, the WL-1102/WL-1104 inventory is authoritative.
 
 The repository boundary scanner now uses pinned `@babel/parser@8.0.4` for TypeScript/TSX module
 syntax. The existing `es-module-lexer` cannot parse JSX, and the pinned native TypeScript 7 package

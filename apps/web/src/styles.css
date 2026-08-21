@@ -48,6 +48,10 @@
     inset-block-start: 0;
   }
 
+  .wl-app-shell {
+    --shell-header-size: 4.25rem;
+  }
+
   .wl-brand-link {
     display: block;
     max-inline-size: calc(100vw - 7rem);
@@ -132,7 +136,7 @@
 
   .wl-shell-grid {
     display: grid;
-    min-block-size: calc(100dvh - 4.25rem);
+    min-block-size: calc(100dvh - var(--shell-header-size));
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -142,6 +146,77 @@
 
   .wl-mobile-navigation {
     display: block;
+  }
+
+  .wl-navigation-panel,
+  .wl-navigation-destinations,
+  .wl-navigation-utilities {
+    display: grid;
+    min-inline-size: 0;
+    align-content: start;
+  }
+
+  .wl-navigation-panel {
+    gap: var(--wl-space-6);
+  }
+
+  .wl-navigation-destinations,
+  .wl-navigation-utilities {
+    gap: var(--wl-space-6);
+  }
+
+  .wl-navigation-label {
+    margin: 0;
+    padding-inline: var(--wl-space-3);
+    color: var(--wl-text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .wl-work-area-list {
+    display: grid;
+    gap: var(--wl-space-1);
+    margin: var(--wl-space-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .wl-work-area-link {
+    display: flex;
+    min-block-size: var(--wl-control-min-block-size);
+    min-inline-size: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--wl-space-2);
+    border: 1px solid transparent;
+    border-radius: var(--wl-radius-control);
+    padding: 0.55rem var(--wl-space-3);
+    color: var(--wl-text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    outline: none;
+  }
+
+  .wl-work-area-link:hover {
+    border-color: var(--wl-border);
+    background: var(--wl-surface-subtle);
+  }
+
+  .wl-work-area-link-active {
+    border-color: var(--wl-border-strong);
+    background: var(--wl-surface-subtle);
+  }
+
+  .wl-work-area-current {
+    flex: none;
+    color: var(--wl-text-muted);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
   }
 
   .wl-nav-link {
@@ -161,7 +236,7 @@
     background: var(--wl-surface-subtle);
   }
 
-  :where(.wl-nav-link, .wl-brand-link, .wl-text-button):focus-visible {
+  :where(.wl-nav-link, .wl-work-area-link, .wl-brand-link, .wl-text-button):focus-visible {
     outline: 3px solid var(--wl-focus-ring);
     outline-offset: 3px;
   }
@@ -172,14 +247,12 @@
     padding-inline-start: 0.6rem;
   }
 
-  .wl-panel {
-    border: 1px solid var(--wl-border);
-    border-radius: var(--wl-radius-panel);
-    background: var(--wl-surface-raised);
-    padding: var(--wl-panel-padding);
-  }
-
-  .wl-alert {
+  :where(.wl-alert):not(
+    .wl-alert--info,
+    .wl-alert--success,
+    .wl-alert--warning,
+    .wl-alert--danger
+  ) {
     border-color: var(--wl-state-neutral-border);
     background: var(--wl-state-neutral-surface);
     color: var(--wl-state-neutral-text);
@@ -370,6 +443,11 @@
     background: var(--wl-surface);
   }
 
+  .wl-auth-introduction {
+    border-block-end: 1px solid var(--wl-border);
+    padding-block-end: var(--wl-space-8);
+  }
+
   .wl-auth-card {
     min-inline-size: 0;
   }
@@ -453,18 +531,40 @@
 
     .wl-desktop-navigation {
       position: sticky;
-      inset-block-start: 4.25rem;
+      inset-block-start: var(--shell-header-size);
       display: block;
       align-self: start;
-      min-block-size: calc(100dvh - 4.25rem);
-      max-block-size: calc(100dvh - 4.25rem);
+      block-size: calc(100dvh - var(--shell-header-size));
+      overflow: clip;
+      padding: var(--wl-space-5);
+    }
+
+    .wl-desktop-navigation .wl-navigation-panel {
+      block-size: 100%;
+      grid-template-rows: minmax(0, 1fr) auto;
+    }
+
+    .wl-desktop-navigation .wl-navigation-destinations {
+      min-block-size: 0;
       overflow-y: auto;
+      padding: var(--wl-space-1);
       scrollbar-gutter: stable;
       overscroll-behavior: contain;
     }
 
+    .wl-desktop-navigation .wl-navigation-utilities {
+      padding: var(--wl-space-1);
+    }
+
     .wl-mobile-navigation {
       display: none;
+    }
+
+    .wl-auth-introduction {
+      border-block-end: 0;
+      border-inline-end: 1px solid var(--wl-border);
+      padding-block-end: 0;
+      padding-inline-end: var(--wl-space-12);
     }
   }
 
@@ -476,6 +576,12 @@
 
   @media (forced-colors: active) {
     .wl-nav-link-active {
+      border-color: Highlight;
+      background: Canvas;
+      color: CanvasText;
+    }
+
+    .wl-work-area-link-active {
       border-color: Highlight;
       background: Canvas;
       color: CanvasText;

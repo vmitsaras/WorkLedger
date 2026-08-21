@@ -20,9 +20,10 @@ route states. Feature-by-feature adoption remains owned by Phase 12.
 
 `apps/web/src/routes/system-operations-page.tsx` is the first feature adoption: its technical
 diagnostic statuses now use the shared textual badge contract. The package preview and component
-tests exercise all new patterns, including keyboard/axe coverage. The UI package remains the owner
-of every `wl-*` selector and token; application routes compose these contracts rather than
-declaring new style rules.
+tests exercise all new patterns, including keyboard/axe coverage. The UI package owns every
+`--wl-*` token and every shared component root selector. The application stylesheet owns shell and
+route composition, deliberate descendants, and scoped legacy adaptations; it may not redefine a
+bare shared root such as `.wl-panel` or `.wl-alert`.
 
 ## Deliberate boundaries
 
@@ -39,6 +40,7 @@ declaring new style rules.
 
 Completed direct checks: package/web strict TypeScript, CSS ownership contract, focused component
 tests with axe and keyboard coverage, Prettier, the full TypeScript build, full unit/component
-suite, production web build, bundle budget, and `git diff --check`. The canonical wrappers that
-start with `workspace:check` remain blocked by the pre-existing ignored `apps/site/dist/index.html`
-artifact; this UI task neither deletes nor adopts it.
+suite, production web build, bundle budget, and `git diff --check`. `WL-1106` subsequently moved
+the ignored out-of-phase `apps/site` tree to the recoverable temporary backup recorded in
+`docs/116-phase-11-gate-review.md`, so canonical workspace wrappers now pass without adopting the
+Astro project early.

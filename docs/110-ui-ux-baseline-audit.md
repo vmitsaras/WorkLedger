@@ -159,13 +159,13 @@ requires broader route verification during its owning task.
 | UI-003 | Medium | System technical routes use undefined styles and invalid definition-list grouping | **Resolved by WL-1102** / high | WL-1204 visual adoption |
 | UI-004 | Medium | Dense table actions and later columns are not visually discoverable at narrow width | Confirmed / high | WL-1104, WL-1203, WL-1204 |
 | UI-005 | Medium | Horizontal-record and calendar responsive contracts are inconsistent | Confirmed / high | WL-1104, WL-1201 |
-| UI-006 | Medium | The shell navigation does not scale cleanly for combined-role or long HR inventories | Confirmed / medium | WL-1105 |
-| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | CSS ownership resolved; component adoption pending / high | WL-1104 |
+| UI-006 | Medium | The shell navigation does not scale cleanly for combined-role or long HR inventories | **Resolved by WL-1105** / high | WL-1105 |
+| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | **Foundation complete; route adoption pending** / high | WL-1200–WL-1205 |
 | UI-008 | Medium | Today repeats the same calculation meaning across labels, values, and narrative formulas | Confirmed / high | WL-1200 |
 | UI-009 | Medium | Employee directory and team management compete in one long administration route | Confirmed / medium | WL-1204 |
 | UI-010 | Medium | Disabled team deactivation has no adjacent explanation or recovery path | Confirmed / medium | WL-1204 |
-| UI-011 | Medium | Organization identity is hard-coded rather than validated runtime configuration | Confirmed / high | WL-1103 |
-| UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | Confirmed / high | WL-1104, WL-1205 |
+| UI-011 | Medium | Organization identity is hard-coded rather than validated runtime configuration | **Resolved by WL-1103** / high | Closed |
+| UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | **Foundation complete; route adoption pending** / high | WL-1205 |
 | UI-013 | Medium | Task pages often surface implementation/privacy guarantees as primary explanatory copy | Confirmed / medium | WL-1101, WL-1205 |
 | UI-014 | Medium | Visual regression and route-state baseline coverage is representative, not systematic | Confirmed / high | WL-1206 |
 | UI-015 | Medium | Existing test coverage did not prevent completed-phase placeholders and route-contract drift | Confirmed / high | WL-1202, WL-1204, WL-1206 |
@@ -285,7 +285,7 @@ requires broader route verification during its owning task.
 ### UI-006 — Shell navigation scale depends on an internal scroll inventory
 
 - **Severity:** Medium
-- **Status/confidence:** Confirmed / medium
+- **Status/confidence:** Resolved by WL-1105 / high
 - **Evidence:** The maximum-role desktop baseline requires independent sidebar scrolling and places
   lower system destinations outside the initial viewport. HR also has a long navigation set; the
   mobile drawer remains focus-managed and usable.
@@ -296,24 +296,30 @@ requires broader route verification during its owning task.
   by role. Do not hide access behind hover or create permission ambiguity.
 - **Validation:** Every realistic single/combined role set, short/tall viewports, keyboard traversal,
   active-route orientation, drawer focus restoration, zoom, and session-expiry flows.
+- **Resolution:** The shell now exposes one expanded current work area plus a compact labelled list
+  of every other authorized area, renders Reports once, and keeps Account utilities outside the
+  desktop destination scroller. Component/axe coverage and real-browser evidence cover combined
+  roles, a 1024 × 420 short desktop viewport, 390 px drawer navigation, route-heading focus, forced
+  colors, reduced motion, and page-overflow containment.
 - **Owner:** `WL-1105`.
 
 ### UI-007 — Recurring UI patterns have no enforceable shared owner
 
 - **Severity:** Medium
-- **Status/confidence:** CSS ownership resolved; component adoption pending / high
-- **Evidence:** The local UI package currently owns a small foundation while routes repeatedly
-  hand-build panels, alerts, statuses, filters, pagination, dense tables, loading states, and error
-  presentation. App CSS adds a second token subset, and undefined route classes reached production
-  gate code.
+- **Status/confidence:** Foundation complete; route adoption pending / high
+- **Evidence:** `WL-1102` established one token owner and an executable CSS boundary. `WL-1104`
+  added shared panels, alerts, statuses, filters, pagination, data tables, and route states, and
+  `WL-1106` strengthened the checker so an app stylesheet cannot redefine a shared component root.
+  Representative shell, authentication, route-boundary, and Operations call sites now use those
+  contracts; the remaining route-by-route migration is intentionally assigned to Phase 12.
 - **Risk:** Visual and accessibility corrections must be repeated route by route, making drift and
   regression likely.
-- **Remediation direction:** In `WL-1102`, define token tiers and CSS ownership. In `WL-1104`, add
-  shared patterns only where two or more real call sites justify them; preserve route-specific
-  business composition outside the UI package.
+- **Remediation direction:** Adopt the completed shared contracts by workflow family during
+  `WL-1200`–`WL-1205`; preserve route-specific business composition outside the UI package and do
+  not recreate shared roots in the app stylesheet.
 - **Validation:** Executable unknown-class/token checks, component state matrices, forced-colors and
   reduced-motion tests, and migration of representative employee/manager/admin call sites.
-- **Owner:** `WL-1102`, `WL-1104`.
+- **Owner:** Foundation closed by `WL-1102`/`WL-1104`/`WL-1106`; adoption by `WL-1200`–`WL-1205`.
 
 ### UI-008 — Today explanation becomes repetitive on small screens
 

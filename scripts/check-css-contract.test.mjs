@@ -25,6 +25,8 @@ const COMPLETE_TOKEN_OWNER = `
       --wl-density-compact-section-gap: 1.5rem;
     }
   }
+  .wl-alert { color: var(--wl-surface); }
+  .wl-panel { color: var(--wl-surface); }
 `;
 
 test('accepts the current WorkLedger CSS contract', async () => {
@@ -40,7 +42,11 @@ test('accepts owned tokens and defined WorkLedger classes', () => {
     { file: TOKEN_OWNER_FILE, source: COMPLETE_TOKEN_OWNER },
     {
       file: 'apps/web/src/styles.css',
-      source: '.wl-panel { color: var(--wl-surface); }',
+      source: `
+        :where(.wl-alert):not(.wl-alert--success) { color: var(--wl-surface); }
+        .wl-alert a { color: currentColor; }
+        .wl-panel > header { color: inherit; }
+      `,
     },
     {
       file: 'apps/web/src/example.tsx',
@@ -49,6 +55,27 @@ test('accepts owned tokens and defined WorkLedger classes', () => {
   ]);
 
   assert.deepEqual(result.errors, []);
+});
+
+test('rejects bare app redefinitions of shared component roots', () => {
+  const result = validateCssContractSources([
+    { file: TOKEN_OWNER_FILE, source: COMPLETE_TOKEN_OWNER },
+    {
+      file: 'apps/web/src/styles.css',
+      source: `
+        .wl-alert { color: var(--wl-surface); }
+        .wl-panel { color: var(--wl-surface); }
+      `,
+    },
+  ]);
+
+  assert.deepEqual(
+    result.errors.map(({ code, value }) => ({ code, value })),
+    [
+      { code: 'shared-component-owner-violation', value: 'wl-alert' },
+      { code: 'shared-component-owner-violation', value: 'wl-panel' },
+    ],
+  );
 });
 
 test('rejects unknown classes and tokens plus styling-owner drift', () => {

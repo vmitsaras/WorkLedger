@@ -31,8 +31,7 @@ import { authorizeInstallationAction } from '../authorization/policy.js';
 import { requestAuthenticationHeaders } from '../auth/request-session.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import { DEFAULT_RETENTION_PROFILE, validateRetentionProfile } from '../retention/config.js';
-
-const APP_VERSION = '0.11.0';
+import { WORKLEDGER_VERSION } from '../version.js';
 
 export function registerSystemOperationsRoutes(
   app: FastifyInstance,
@@ -229,7 +228,7 @@ async function collectDiagnostics(
 
   return {
     service: 'workledger-api',
-    version: APP_VERSION,
+    version: WORKLEDGER_VERSION,
     environment: config.environment,
     timestamp,
     dependencies: {

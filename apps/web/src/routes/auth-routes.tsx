@@ -8,7 +8,7 @@ import {
   PASSWORD_MAXIMUM_LENGTH,
   PASSWORD_MINIMUM_LENGTH,
 } from '@workledger/contracts';
-import { Button, linkVariants, TextField } from '@workledger/ui';
+import { Alert, Button, linkVariants, TextField } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -50,7 +50,7 @@ export function AuthenticationLayout() {
         className="mx-auto grid min-h-dvh w-full max-w-6xl content-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(25rem,0.7fr)] lg:items-center lg:gap-16"
       >
         <section
-          className="grid max-w-xl gap-5"
+          className="wl-auth-introduction grid max-w-xl gap-5"
           aria-label={`${identity.organizationName} WorkLedger introduction`}
         >
           <CompanyIdentity identity={identity} presentation="authentication" />
@@ -118,15 +118,12 @@ export function SignInPage() {
         description="Use the email address from your WorkLedger invitation. There is no public registration."
       />
       {notice === null ? null : (
-        <div
-          role={notice === 'SESSION_EXPIRED' ? 'alert' : 'status'}
-          className="wl-alert rounded-xl border p-4 text-sm"
-        >
-          {noticeMessage(notice)}
-        </div>
+        <Alert title={noticeTitle(notice)} tone={noticeTone(notice)}>
+          <p>{noticeMessage(notice)}</p>
+        </Alert>
       )}
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
-      <form className="grid gap-5" noValidate onSubmit={handleSubmit}>
+      <form aria-busy={pending} className="grid gap-5" noValidate onSubmit={handleSubmit}>
         <TextField
           id="email"
           name="email"
@@ -222,7 +219,7 @@ export function ForgotPasswordPage() {
         description="Enter your account email. The completion message is the same whether or not an eligible account exists."
       />
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
-      <form className="grid gap-5" noValidate onSubmit={handleSubmit}>
+      <form aria-busy={pending} className="grid gap-5" noValidate onSubmit={handleSubmit}>
         <TextField
           id="email"
           name="email"
@@ -305,7 +302,7 @@ export function ResetPasswordPage() {
         description={`Use ${PASSWORD_MINIMUM_LENGTH} to ${PASSWORD_MAXIMUM_LENGTH} characters. Spaces, Unicode, paste, and password managers are supported.`}
       />
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
-      <form className="grid gap-5" noValidate onSubmit={handleSubmit}>
+      <form aria-busy={pending} className="grid gap-5" noValidate onSubmit={handleSubmit}>
         <TextField
           id="new-password"
           name="newPassword"
@@ -394,7 +391,7 @@ export function ActivateAccountPage() {
         description={`Choose a password with ${PASSWORD_MINIMUM_LENGTH} to ${PASSWORD_MAXIMUM_LENGTH} characters. Activation does not sign you in automatically.`}
       />
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
-      <form className="grid gap-5" noValidate onSubmit={handleSubmit}>
+      <form aria-busy={pending} className="grid gap-5" noValidate onSubmit={handleSubmit}>
         <TextField
           id="new-password"
           name="newPassword"
@@ -495,4 +492,19 @@ function noticeMessage(notice: ReturnType<typeof readPendingSignInNotice>): stri
   if (notice === 'PASSWORD_RESET')
     return 'Your password was updated. Sign in with the new password.';
   return 'You have signed out.';
+}
+
+function noticeTitle(notice: NonNullable<ReturnType<typeof readPendingSignInNotice>>): string {
+  if (notice === 'SESSION_EXPIRED') return 'Session expired';
+  if (notice === 'ACCOUNT_ACTIVATED') return 'Account activated';
+  if (notice === 'PASSWORD_RESET') return 'Password updated';
+  return 'Signed out';
+}
+
+function noticeTone(
+  notice: NonNullable<ReturnType<typeof readPendingSignInNotice>>,
+): 'info' | 'success' | 'warning' {
+  if (notice === 'SESSION_EXPIRED') return 'warning';
+  if (notice === 'ACCOUNT_ACTIVATED' || notice === 'PASSWORD_RESET') return 'success';
+  return 'info';
 }

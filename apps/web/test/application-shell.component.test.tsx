@@ -38,6 +38,14 @@ const SYSTEM_CONTEXT: SelfContext = {
   organization: { name: 'Northstar Studio' },
   roles: ['SYSTEM_ADMINISTRATOR'],
 };
+const COMBINED_CONTEXT: SelfContext = {
+  account: { email: 'alex@northstar.test', name: 'Alex Morgan' },
+  defaultPath: '/today',
+  employee: { displayName: 'Alex Morgan', employeeNumber: 'NS-099', status: 'ACTIVE' },
+  navigationAreas: ['EMPLOYEE', 'MANAGER', 'HR', 'SYSTEM'],
+  organization: { name: 'Northstar Studio' },
+  roles: ['EMPLOYEE', 'MANAGER', 'HR_ADMINISTRATOR', 'SYSTEM_ADMINISTRATOR'],
+};
 const SYSTEM_DIAGNOSTICS: SystemDiagnosticsResponse = {
   dependencies: {
     authentication: { status: 'healthy' },
@@ -51,7 +59,7 @@ const SYSTEM_DIAGNOSTICS: SystemDiagnosticsResponse = {
   health: 'degraded',
   service: 'workledger-api',
   timestamp: '2026-08-21T10:30:00Z',
-  version: '0.11.0',
+  version: '0.12.0',
 };
 const TODAY_ATTENDANCE: TodayAttendance = {
   asOf: '2026-08-11T09:30:00Z',
@@ -348,7 +356,7 @@ test('renders the role-aware shell and focuses each completed route navigation',
     'href',
     '#main-content',
   );
-  expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
+  expect(screen.getByRole('navigation', { name: 'My work navigation' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Today' })).toHaveAttribute('aria-current', 'page');
   expect(screen.queryByRole('link', { name: 'Operations' })).not.toBeInTheDocument();
   expect(await screen.findByRole('heading', { name: 'Working' })).toBeVisible();
@@ -363,6 +371,109 @@ test('renders the role-aware shell and focuses each completed route navigation',
   const timeHeading = await screen.findByRole('heading', { name: 'My time' });
   await waitFor(() => expect(timeHeading).toHaveFocus());
   expect(document.title).toBe('My time | WorkLedger');
+  await expectNoAxeViolations(container);
+});
+
+test('keeps combined-role work areas distinct and account utilities outside destination inventory', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(COMBINED_CONTEXT);
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const { container } = renderApplication('/requests');
+
+  await screen.findByRole('heading', { name: 'Requests' });
+  const workAreas = screen.getByRole('navigation', { name: 'Work areas' });
+  expect(within(workAreas).getByRole('link', { name: 'My work' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+  expect(within(workAreas).getByRole('link', { name: 'Team' })).toHaveAttribute('href', '/team');
+  expect(within(workAreas).getByRole('link', { name: 'People and policy' })).toHaveAttribute(
+    'href',
+    '/employees',
+  );
+  expect(within(workAreas).getByRole('link', { name: 'System' })).toHaveAttribute(
+    'href',
+    '/system/operations',
+  );
+  expect(screen.getAllByRole('link', { name: 'Reports' })).toHaveLength(1);
+  expect(screen.getByRole('navigation', { name: 'My work navigation' })).toBeInTheDocument();
+  expect(screen.getByRole('navigation', { name: 'Account' })).toBeInTheDocument();
+  expect(workAreas.closest('.wl-navigation-destinations')).not.toBeNull();
+  expect(
+    screen.getByRole('navigation', { name: 'Account' }).closest('.wl-navigation-utilities'),
+  ).not.toBeNull();
+  await expectNoAxeViolations(container);
+});
+
+test('preserves the selected work area when the mobile drawer remounts on a shared route', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(COMBINED_CONTEXT);
+      if (path === '/v1/team/status') {
+        return successResponse({
+          asOf: '2026-08-14T10:30:45Z',
+          localDate: '2026-08-14',
+          members: [],
+          summary: {
+            offWork: 0,
+            onBreak: 0,
+            total: 0,
+            unavailable: 0,
+            unresolved: 0,
+            working: 0,
+          },
+          timeZone: 'Europe/Berlin',
+        });
+      }
+      if (path === '/v1/reports') {
+        return successResponse({
+          defaultRange: { from: '2026-08-01', to: '2026-08-31' },
+          reports: [
+            {
+              availableSorts: ['EMPLOYEE'],
+              defaultSort: 'EMPLOYEE',
+              description: 'Monthly time records in the current permission scope.',
+              key: 'monthly-time',
+              title: 'Monthly time',
+            },
+          ],
+          timeZone: 'Europe/Berlin',
+        });
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/requests');
+
+  await screen.findByRole('heading', { name: 'Requests' });
+  await user.click(screen.getByRole('button', { name: 'Menu' }));
+  let drawer = screen.getByRole('dialog', { name: 'Navigation' });
+  await user.click(within(drawer).getByRole('link', { name: 'Team', exact: true }));
+  await screen.findByRole('heading', { name: 'Team status' });
+
+  await user.click(screen.getByRole('button', { name: 'Menu' }));
+  drawer = screen.getByRole('dialog', { name: 'Navigation' });
+  await user.click(within(drawer).getByRole('link', { name: 'Reports' }));
+  await screen.findByRole('heading', { name: 'Reports', exact: true });
+
+  await user.click(screen.getByRole('button', { name: 'Menu' }));
+  drawer = screen.getByRole('dialog', { name: 'Navigation' });
+  const mobileWorkAreas = within(drawer).getByRole('navigation', { name: 'Mobile work areas' });
+  expect(within(mobileWorkAreas).getByRole('link', { name: 'Team' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+  expect(
+    within(drawer).getByRole('navigation', { name: 'Mobile Team navigation' }),
+  ).toBeInTheDocument();
   await expectNoAxeViolations(container);
 });
 
@@ -1156,8 +1267,44 @@ test('renders a non-leaking permission-denied route state', async () => {
 
   const heading = await screen.findByRole('heading', { name: 'Permission denied' });
   await waitFor(() => expect(heading).toHaveFocus());
+  expect(heading).toHaveClass('wl-route-state__title--route');
   expect(screen.getByText(/No restricted record details were disclosed/u)).toBeVisible();
   expect(document.title).toBe('Permission denied | WorkLedger');
+  await expectNoAxeViolations(container);
+});
+
+test('renders a shared focused not-found boundary with a safe recovery destination', async () => {
+  const { container } = renderApplication('/not-a-workledger-route');
+
+  const heading = await screen.findByRole('heading', { name: 'Page not found' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(heading).toHaveClass('wl-route-state__title--route');
+  expect(screen.getByRole('link', { name: 'Return to WorkLedger' })).toHaveAttribute('href', '/');
+  expect(document.title).toBe('Page not found | WorkLedger');
+  await expectNoAxeViolations(container);
+});
+
+test('renders an unexpected route failure as one focused alert with retry and home recovery', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/profile') {
+        return apiErrorResponse('DATABASE_UNAVAILABLE', 503);
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const { container } = renderApplication('/profile');
+
+  const heading = await screen.findByRole('heading', { name: 'Page unavailable' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'WorkLedger could not load this page. Check the service and try again',
+  );
+  expect(screen.getByRole('link', { name: 'Go to my home' })).toHaveAttribute('href', '/');
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
