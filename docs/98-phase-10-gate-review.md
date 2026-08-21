@@ -59,7 +59,7 @@ WL-1002 is marked complete at this gate with the following evidence and residual
 
 - **Automated (cross-engine):** 25 Playwright/axe scenarios pass covering authenticated employee, manager, HR, and system administration flows, keyboard completion, reflow at 320 px, touch targets, forced-colors mode, focus visibility, and screen-reader live-region behavior.
 - **WCAG 2.2 A/AA evidence collected:** Semantic HTML, React Aria interaction primitives, accessible names and descriptions, visible focus, no color-only state communication, error summaries on complex forms, route-change focus, dialog/announcement behavior, reduced motion support.
-- **Residual `D-502`:** The five-pairing manual AT matrix (macOS/Safari/VoiceOver, iOS/Safari/VoiceOver, Windows/Firefox/NVDA, Windows/Chrome/NVDA, Android/Chrome/TalkBack) was not completed in Phase 10. This residual is carried forward as a known open item for the portfolio phase (WL-1102) and operator documentation. No regression was introduced; no existing automated axe finding is unresolved.
+- **Residual `D-502`:** The five-pairing manual AT matrix (macOS/Safari/VoiceOver, iOS/Safari/VoiceOver, Windows/Firefox/NVDA, Windows/Chrome/NVDA, Android/Chrome/TalkBack) was not completed in Phase 10. Following the roadmap insertion recorded on 2026-08-21, this residual is carried to the Phase 12 UI release gate (`WL-1206`) and operator documentation. No regression was introduced; no existing automated axe finding is unresolved.
 
 ---
 
@@ -123,9 +123,11 @@ This is an internal milestone only. It creates no Git tag, npm publication, cont
 
 ## Handoff
 
-The next task is `WL-1100`: scaffold the Astro project site and case-study information architecture. This begins Phase 11 — Portfolio presentation.
+The original handoff assigned `WL-1100` to the Astro portfolio site. The roadmap insertion recorded
+on 2026-08-21 supersedes that sequencing: `WL-1100` is now the canonical UI/UX baseline audit, and
+the preserved portfolio-site task is `WL-1300` after the Phase 12 gate.
 
-Open items carried into Phase 11:
-- `D-502` — Manual AT pairing evidence (macOS/Safari/VoiceOver, iOS/VoiceOver, Windows NVDA, Android TalkBack) to be completed in WL-1102.
+Open items carried beyond Phase 10:
+- `D-502` — Manual AT pairing evidence (macOS/Safari/VoiceOver, iOS/VoiceOver, Windows NVDA, Android TalkBack) to be completed or explicitly dispositioned by `WL-1206`.
 - `D-505` — Image, secret, and dependency scan remain operator responsibility per deployment guide.
 - Production transport review for notification delivery (T-019) remains operational.

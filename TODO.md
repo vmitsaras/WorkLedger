@@ -24,7 +24,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 ## Phase 1 — Repository foundation
 
 - [x] `WL-100` Initialize the private pnpm workspace, single lockfile, cycle rejection, and root tooling.
-- [x] `WL-101` Scaffold web, API, explicit internal package exports, and shared boundaries; defer the Astro site to Phase 11.
+- [x] `WL-101` Scaffold web, API, explicit internal package exports, and shared boundaries; defer the Astro site to the portfolio phase.
 - [x] `WL-102` Configure strict TypeScript, linting, formatting, shared config, and executable import-boundary checks.
 - [x] `WL-103` Configure test projects and baseline CI.
 - [x] `WL-104` Configure local PostgreSQL and Docker development environment.
@@ -139,7 +139,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 11 — UI/UX direction, design system, and adaptable company identity
 
-- [ ] `WL-1100` Audit every canonical route, role, workflow, and required state; capture responsive baselines and create a prioritized UI/UX issue register.
+- [x] `WL-1100` Audit every canonical route, role, workflow, and required state; capture responsive baselines and create a prioritized UI/UX issue register.
 - [ ] `WL-1101` Define and approve the WorkLedger visual direction, content hierarchy, density rules, page archetypes, and interaction principles.
 - [ ] `WL-1102` Consolidate semantic design tokens and CSS ownership; remove undefined and one-off style contracts and establish enforceable styling boundaries.
 - [ ] `WL-1103` Implement validated company-identity configuration for organization name, logo, favicon, and brand accent with accessible fallbacks and no source-code editing.
@@ -156,3 +156,12 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [ ] `WL-1204` Improve employee administration, time/absence/holiday settings, reports, audit, and system-administration surfaces using appropriate dense layouts.
 - [ ] `WL-1205` Complete the cross-route microcopy, responsive, state-consistency, motion, and recovery pass.
 - [ ] `WL-1206` Pass visual-regression, usability, accessibility, and UI release gates and bump all workspace manifests to `0.13.0`.
+
+## Phase 13 — Portfolio presentation
+
+- [ ] `WL-1300` Scaffold the Astro project site and case-study information architecture.
+- [ ] `WL-1301` Add safe demo mode, demo accounts, reset, and a clear data disclaimer.
+- [ ] `WL-1302` Publish architecture, domain, accessibility, security, and tradeoff documentation.
+- [ ] `WL-1303` Add screenshots, workflow media, and example calculations.
+- [ ] `WL-1304` Finalize the public README, setup, scripts, limitations, and roadmap.
+- [ ] `WL-1305` Pass the portfolio release gate and bump all workspace manifests to `0.14.0`.

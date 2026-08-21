@@ -18,6 +18,14 @@ function createState({ completedTaskIds, rootVersion, projectVersions = [] }) {
   };
 }
 
+test('uses the reconciled UI, workflow-polish, and portfolio gate sequence', () => {
+  assert.deepEqual(PHASE_GATES.slice(-3), [
+    { phase: 11, taskId: 'WL-1106' },
+    { phase: 12, taskId: 'WL-1206' },
+    { phase: 13, taskId: 'WL-1305' },
+  ]);
+});
+
 test('accepts the version assigned to sequentially completed phase gates', () => {
   assert.deepEqual(
     validatePhaseVersion(

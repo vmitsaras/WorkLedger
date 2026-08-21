@@ -12,7 +12,7 @@ The project is planning-only today. Phase 1 must create the smallest enforceable
 
 Use a pnpm workspace with one root `pnpm-lock.yaml` and no Turborepo initially.
 
-- Workspace projects are `apps/web`, `apps/api`, `packages/domain`, `packages/contracts`, `packages/database`, `packages/ui`, `packages/config`, and `packages/test-utils`. `apps/site` is added only in Phase 11.
+- Workspace projects are `apps/web`, `apps/api`, `packages/domain`, `packages/contracts`, `packages/database`, `packages/ui`, `packages/config`, and `packages/test-utils`. `apps/site` is added only in the portfolio phase (now Phase 13).
 - The root and every app/package manifest use `"private": true`. Internal package names use `@workledger/*`; cross-workspace dependencies use `workspace:*`.
 - The exact allowed WorkLedger dependency matrix is canonical in `docs/04-architecture.md` section 11. No app is imported, no package cycle is allowed, and production source cannot import `packages/config` or `packages/test-utils`.
 - Each package exposes an explicit public surface through package exports. Cross-project relative traversal, undeclared path aliases, and imports from another project's `src`, tests, migrations, generated internals, or build output are prohibited.

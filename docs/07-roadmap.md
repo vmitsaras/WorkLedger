@@ -378,7 +378,59 @@ Make WorkLedger safe and operable outside the developer laptop.
 
 ---
 
-# Phase 11 — Portfolio Presentation
+# Phase 11 — UI/UX Direction, Design System, and Adaptable Company Identity
+
+## Objective
+
+Establish one evidence-led visual, interaction, and company-identity foundation before changing individual workflows.
+
+## Deliverables
+
+- Canonical route, role, workflow, and state inventory with responsive baselines.
+- Approved visual direction, content hierarchy, density rules, page archetypes, and interaction principles.
+- Consolidated semantic tokens and enforceable CSS ownership boundaries.
+- Validated organization name, logo, favicon, and accent configuration with accessible fallbacks.
+- Expanded local React Aria component system for recurring application patterns.
+- Redesigned application shell, authentication surfaces, navigation, and route boundaries.
+
+## UI foundation release gate
+
+- [ ] Every canonical route and required state has an owner, implementation status, and evidence level.
+- [ ] The approved visual direction covers calm employee surfaces and denser manager/admin surfaces without becoming a generic dashboard template.
+- [ ] Semantic tokens and shared components replace undefined and recurring one-off style contracts.
+- [ ] Company identity is configurable without source editing and remains legible under absent/invalid assets, forced colors, and zoom.
+- [ ] Shell, authentication, navigation, and route boundaries pass supported responsive, keyboard, zoom/reflow, forced-colors, and reduced-motion checks.
+- [ ] The gate advances every workspace manifest to `0.12.0`.
+
+---
+
+# Phase 12 — Workflow UX Remediation and Product Polish
+
+## Objective
+
+Apply the Phase 11 foundation to complete, understandable, recoverable workflows for every role.
+
+## Deliverables
+
+- Refined Today task hierarchy, calculation explanation, warnings, recovery, and clock feedback.
+- Improved personal time, balance, request, calendar, notification, profile, and monthly-review flows.
+- Improved manager Team, Approvals, decision, filtering, and narrow-screen flows.
+- Improved HR/system administration, reports, audit, settings, and dense-data surfaces.
+- Consistent route states, microcopy, responsive behavior, motion, and recovery patterns.
+- Maintained visual-regression baselines for representative route and state archetypes.
+
+## Workflow UX release gate
+
+- [ ] Canonical routes contain no stale milestone placeholder, sensitive subtype URL, or missing required workflow state.
+- [ ] Representative employee, manager, HR, and system-administrator workflows are keyboard complete and understandable at desktop, mobile, and 320 CSS px reflow.
+- [ ] Dense tables retain task-critical context and actions with an explicit narrow-screen strategy.
+- [ ] Loading, empty, stale, success, warning, permission-denied, and error behavior use consistent shared patterns.
+- [ ] Automated accessibility, visual-regression, and usability checks pass; manual assistive-technology evidence or an explicit residual is recorded.
+- [ ] The gate advances every workspace manifest to `0.13.0`.
+
+---
+
+# Phase 13 — Portfolio Presentation
 
 ## Objective
 
@@ -403,3 +455,4 @@ Present the product decisions and engineering quality clearly to recruiters, col
 - [ ] Accessibility is demonstrated rather than merely claimed.
 - [ ] Installation and local setup are reproducible.
 - [ ] Known limitations are direct and credible.
+- [ ] The gate advances every workspace manifest to `0.14.0`.

@@ -183,18 +183,46 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-1004 | Document and execute encrypted PostgreSQL backup and isolated clean restore | WL-1003 | Manifest/access/expiry evidence; restore uses new secrets, revokes sessions/grants, disables outbound mail, and reconciles ledgers/snapshots/audit | Done |
 | WL-1005 | Document and test migration/upgrade from prior release fixture | WL-1003 | Backup, readiness/maintenance, auth-profile, upgrade/rollback, and integrity checks pass | Done |
 | WL-1006 | Add allowlisted structured logging, redaction, correlation IDs, failure diagnostics, and safe system-operations/technical-audit surfaces | WL-1003 | Secret/HR/query/body/hostile-text redaction, role-separated DTOs, and healthy/degraded/dependency-failure scenarios pass | Done |
-| WL-1007 | Implement/document the mandatory retention profile, class-specific purge/minimization, user export, deactivation/anonymization, and backup-expiry controls | WL-1000 | Production rejects unset classes; purge/minimization/restore tests preserve ledger/snapshot/audit integrity | Not started |
+| WL-1007 | Implement/document the mandatory retention profile, class-specific purge/minimization, user export, deactivation/anonymization, and backup-expiry controls | WL-1000 | Production rejects unset classes; purge/minimization/restore tests preserve ledger/snapshot/audit integrity | Done |
 | WL-1008 | Execute production release gate | WL-1000A, WL-1000–WL-1007 | Release checklist signed off and every `T-001`–`T-020` row is release-ready | Done |
 
 ---
 
-## Phase 11 — Portfolio presentation
+## Phase 11 — UI/UX direction, design system, and adaptable company identity
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-1100 | Scaffold Astro project site and case-study information architecture | WL-1008 | Accessible public shell and project narrative | Not started |
-| WL-1101 | Add safe demo mode, demo accounts, reset, and clear data disclaimer | WL-1008 | Demo cannot expose production-style secrets; deterministic reset | Not started |
-| WL-1102 | Publish architecture, domain, accessibility, security, and tradeoff documentation | WL-1100 | Diagrams/text match implementation | Not started |
-| WL-1103 | Add screenshots, workflow media, and example calculations | WL-1100, WL-1101 | Media has alternatives/captions and reflects real states | Not started |
-| WL-1104 | Finalize public README, setup, scripts, limitations, and roadmap | WL-1100–WL-1103 | Fresh-user documentation review | Not started |
-| WL-1105 | Execute portfolio release gate | WL-1100–WL-1104 | Public quality checklist complete | Not started |
+| WL-1100 | Audit every canonical route, role, workflow, and required state; capture responsive baselines and create a prioritized UI/UX issue register | WL-1008 | Route/state inventory, representative role baselines, and evidence-linked issue register | Done |
+| WL-1101 | Define and approve the WorkLedger visual direction, content hierarchy, density rules, page archetypes, and interaction principles | WL-1100 | Direction specification resolves the registered hierarchy, density, and interaction issues | Not started |
+| WL-1102 | Consolidate semantic design tokens and CSS ownership; remove undefined and one-off style contracts | WL-1101 | Token inventory, ownership rules, and executable rejection of undefined contracts | Not started |
+| WL-1103 | Implement validated company-identity configuration for organization name, logo, favicon, and brand accent | WL-1101, WL-1102 | Runtime configuration, validation, safe fallbacks, forced-colors/zoom evidence, and no source editing | Not started |
+| WL-1104 | Expand the local React Aria UI system for recurring application patterns | WL-1101, WL-1102 | Actions, forms, panels, statuses, alerts, tables, filters, pagination, and route states use shared accessible contracts | Not started |
+| WL-1105 | Redesign the application shell, navigation, authentication surfaces, and route boundaries | WL-1102–WL-1104 | Responsive, keyboard, zoom/reflow, forced-colors, and reduced-motion evidence across all roles | Not started |
+| WL-1106 | Execute the UI-foundation phase gate | WL-1100–WL-1105 | UI foundation checklist complete; every workspace manifest is `0.12.0` | Not started |
+
+---
+
+## Phase 12 — Workflow UX remediation and product polish
+
+| ID | Task | Depends on | Acceptance evidence | Status |
+|---|---|---|---|---|
+| WL-1200 | Redesign Today attendance, calculation hierarchy, warnings, recovery, and primary clock-action feedback | WL-1106 | Representative attendance states pass task-order, comprehension, responsive, and accessibility checks | Not started |
+| WL-1201 | Improve personal time records, balances, calendars, notifications, profile, loading, empty, and error experiences | WL-1106 | Employee collection/detail states use consistent, recoverable patterns | Not started |
+| WL-1202 | Improve correction, absence, cancellation, approval-history, and monthly-review workflows | WL-1106 | Type-neutral request history/detail and end-to-end workflow-state evidence | Not started |
+| WL-1203 | Improve manager Team, Approvals, team-calendar, filtering, decision, and narrow-screen workflows | WL-1106 | Task-critical table context/actions remain understandable and operable at supported widths | Not started |
+| WL-1204 | Improve employee administration, settings, reports, audit, and system-administration surfaces | WL-1106 | Dense role surfaces use consistent hierarchy, semantics, states, and responsive strategies | Not started |
+| WL-1205 | Complete the cross-route microcopy, responsive, state-consistency, motion, and recovery pass | WL-1200–WL-1204 | Cross-route review closes registered consistency issues without weakening domain/privacy language | Not started |
+| WL-1206 | Execute visual-regression, usability, accessibility, and UI release gates | WL-1200–WL-1205 | UI release checklist complete; every workspace manifest is `0.13.0` | Not started |
+
+---
+
+## Phase 13 — Portfolio presentation
+
+| ID | Task | Depends on | Acceptance evidence | Status |
+|---|---|---|---|---|
+| WL-1300 | Scaffold Astro project site and case-study information architecture | WL-1206 | Accessible public shell and project narrative | Not started |
+| WL-1301 | Add safe demo mode, demo accounts, reset, and clear data disclaimer | WL-1206 | Demo cannot expose production-style secrets; deterministic reset | Not started |
+| WL-1302 | Publish architecture, domain, accessibility, security, and tradeoff documentation | WL-1300 | Diagrams/text match implementation | Not started |
+| WL-1303 | Add screenshots, workflow media, and example calculations | WL-1300, WL-1301 | Media has alternatives/captions and reflects real states | Not started |
+| WL-1304 | Finalize public README, setup, scripts, limitations, and roadmap | WL-1300–WL-1303 | Fresh-user documentation review | Not started |
+| WL-1305 | Execute portfolio release gate | WL-1300–WL-1304 | Public quality checklist complete; every workspace manifest is `0.14.0` | Not started |

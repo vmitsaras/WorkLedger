@@ -25,7 +25,7 @@ supplied through `WORKLEDGER_MIGRATION_DATABASE_URL`; do not use the normal appl
 for migrations.
 
 The explicit destructive local reset remains `pnpm run db:reset`. No automatic demo reset is added;
-the safe portfolio demo-reset workflow remains owned by `WL-1101`.
+the safe portfolio demo-reset workflow remains owned by `WL-1301`.
 
 ## Development credentials
 

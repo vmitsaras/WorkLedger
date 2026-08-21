@@ -287,7 +287,7 @@ packages/test-utils   ──> packages/domain, packages/contracts (tests only)
 
 apps/web              ──> packages/ui, packages/contracts
 apps/api              ──> packages/domain, packages/contracts, packages/database
-apps/site             ──> packages/ui (Phase 11 only)
+apps/site             ──> packages/ui (Phase 13 only)
 ```
 
 Development-only edges from the seven consuming apps/packages to `packages/config` are allowed and now explicit. Test files outside `packages/domain` may use `packages/test-utils`; production source may not. External dependencies are declared by the workspace project that imports them.

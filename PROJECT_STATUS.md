@@ -1,18 +1,21 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 11 — Portfolio presentation
-**Project readiness:** Stage 5 of 5 — Production complete, portfolio in progress
-**Phase progress:** Phase 10 complete — 0 of 6 Phase 11 tasks started
+**Current phase:** Phase 11 — UI/UX direction, design system, and adaptable company identity
+**Project readiness:** Stage 5 of 5 — Production gate complete, UI foundation in progress
+**Phase progress:** Phase 10 complete — 1 of 7 Phase 11 tasks complete
 **Current milestone:** Production hardening and self-hosting complete — version 0.11.0
-**Active task:** `WL-1100` (next)
-**Status:** WL-1008 complete — production release gate passed; all T-001–T-020 rows release-ready
-**Last verified:** 2026-08-16
+**Active task:** `WL-1101` (next)
+**Status:** WL-1100 complete — canonical UI/UX inventory, responsive baselines, and prioritized issue register recorded
+**Last verified:** 2026-08-21
 
 ## Current objective
 
-`WL-1007` mandatory retention, minimization, user-export, and backup-expiry controls are complete.
+`WL-1100` audited the canonical route/state contract and representative role/responsive surfaces.
+The audit found strong accessibility foundations plus two high-priority workflow gaps: the incomplete
+type-neutral Requests surface and the stale technical Audit placeholder.
 
-Next task: `WL-1008` — production release gate and deployment readiness.
+Next task: `WL-1101` — define and approve the visual direction, content hierarchy, density rules,
+page archetypes, and interaction principles.
 
 ## Verified decisions
 
@@ -203,7 +206,7 @@ Next task: `WL-1008` — production release gate and deployment readiness.
 - Cross-project deep/sibling-source imports, app imports, undeclared path-alias edges, workspace cycles, production test/config imports, and browser imports of authoritative domain/database/server code are prohibited and fail executable checks.
 - pnpm with one root lockfile and no Turborepo is sufficient for the initial workspace; new production projects, dependency edges, orchestration, or package publication require an ADR.
 - The root toolchain is pinned to Node `24.18.0` LTS and pnpm `11.20.0` stable; the generated lockfile records the Node runtime integrity variants.
-- The exact workspace is two non-importable application shells plus six packages with explicit exports; five expose only their typed root and config also exposes its accepted tooling surfaces. `apps/site` remains deferred to Phase 11.
+- The exact workspace is two non-importable application shells plus six packages with explicit exports; five expose only their typed root and config also exposes its accepted tooling surfaces. `apps/site` remains deferred to the portfolio phase (now Phase 13).
 - The eight accepted internal edges resolve through `@workledger/*` package roots and emit typed ESM entries; no sibling-source or deep import exists in the scaffold.
 - TypeScript `7.0.2` is governed by a shared strict composite configuration; the root solution and per-project references exactly mirror the eight runtime edges and cannot use path aliases.
 - Seven explicit development-only `@workledger/config` edges provide shared TypeScript configuration without making config production runtime code.
@@ -252,6 +255,9 @@ Next task: `WL-1008` — production release gate and deployment readiness.
 
 ## Work completed
 
+- [x] Canonical route/role/workflow/state inventory, representative desktop/mobile/reflow and
+  accessibility baselines, roadmap reconciliation, and prioritized `UI-001`–`UI-016` remediation
+  register completed (`WL-1100`; see `docs/110-ui-ux-baseline-audit.md`).
 - [x] `T-001`–`T-020` application evidence baseline, executable 36 employee/five account/seven
   installation action catalogs, exhaustive central permission-policy regressions, Phase 10
   evidence ownership, and the locked-cancellation implementation contract completed (`WL-1000`;
@@ -1417,15 +1423,43 @@ Next task: `WL-1008` — production release gate and deployment readiness.
 - Next task: Complete `WL-1007` repository integration or proceed with `WL-1008` production gate
   preparation while noting WL-1007 partial completion.
 
+**2026-08-21 — WL-1100 UI/UX baseline audit**
+
+- Audited the canonical route map against the implemented React Router tree and grouped required
+  states across authentication, attendance, personal records, requests, approvals, calendars,
+  monthly closure, reports, administration, audit, and system operations.
+- Captured purpose-minimized desktop/mobile role baselines plus 320 px reflow, text-spacing,
+  forced-colors, reduced-motion, and focus-managed drawer evidence.
+- Confirmed `UI-001`: `/requests` is a stale placeholder, `/requests/:requestId` is absent,
+  `/requests/new` is vacation-specific, and `/requests/sickness` contradicts the accepted
+  type-neutral privacy contract.
+- Confirmed `UI-002`: `/system/audit` remains a stale `WL-1007` placeholder after the Phase 10
+  production gate.
+- Recorded 14 additional medium/low foundation, responsive, hierarchy, state-consistency, and test
+  coverage findings with exact owners through `WL-1206`.
+- Reconciled the intentional UI/UX roadmap insertion: UI foundation is Phase 11, workflow polish is
+  Phase 12, and the preserved portfolio scope is Phase 13.
+- Verification passed through direct equivalents: Prettier; ESLint and source boundaries; strict
+  TypeScript build; 32 tooling tests; 323 unit/component tests; 12 integration tests with 45
+  database-dependent skips; all 25 Playwright scenarios across the configured browser matrix; web
+  production build and bundle budget; and the actual 11-gate/`0.11.0` phase-version state.
+- The canonical `pnpm format:check` stops in `workspace:check` because a pre-existing ignored
+  `apps/site/dist/index.html` leaves an unexpected `apps/site` directory without a package manifest.
+  WL-1100 neither deletes nor adopts that out-of-phase artifact.
+- No application behavior, domain rule, API, database, or permission contract changed.
+
 ## Current blockers
 
-`D-504` is implemented and no longer blocks the production gate. `D-502` remains open before the
-production browser gate. Diagnostic, accessibility, and retention evidence remains explicitly owned
-by later Phase 10 tasks under `D-505`.
+No decision blocks `WL-1101`. Repository-wide commands that begin with `workspace:check` remain
+blocked by the pre-existing ignored `apps/site/dist` artifact described above; it must be removed or
+explicitly brought into the workspace only under the owning portfolio task. `D-502` manual
+assistive-technology evidence remains open for the Phase 12 UI release gate (`WL-1206`). `UI-001`
+and `UI-002` are high-priority workflow gaps and must close before that gate.
 
 ## Next task
 
-`WL-1007 — Complete mandatory retention, minimization, user-export, and backup-expiry controls.`
+`WL-1101 — Define and approve the WorkLedger visual direction, content hierarchy, density rules,
+page archetypes, and interaction principles.`
 
 ## Update rules
 

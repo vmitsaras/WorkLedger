@@ -64,7 +64,7 @@ test-utils  ──> domain, contracts (test-only)
 
 web         ──> ui, contracts
 api         ──> domain, contracts, database
-site        ──> ui (Phase 11 only)
+site        ──> ui (Phase 13 only)
 ```
 
 `docs/04-architecture.md` section 11 is canonical if this summary ever diverges. API application services map between independent domain, persistence, and wire shapes. The browser receives purpose-specific DTOs and does not import/recalculate authoritative domain behavior.

@@ -90,7 +90,7 @@ WorkLedger/
 │   │   │   └── server.ts
 │   │   └── test/
 │   │
-│   └── site/                      # Added in Phase 11
+│   └── site/                      # Added in Phase 13
 │
 ├── packages/
 │   ├── domain/
@@ -241,7 +241,7 @@ Do not create a feature-level “utils” dumping ground. Name modules by respon
 - `packages/test-utils` may import domain/contracts through public exports but is test-only. `packages/domain` keeps its own factories local and never imports `packages/test-utils`.
 - `apps/web` may import contracts/UI only; it cannot import domain calculations, database, API/server auth, environment, or another app.
 - `apps/api` may import domain/contracts/database only; it cannot import UI/web or delegate server authorization to contracts.
-- `apps/site`, when added in Phase 11, may import UI only unless a later ADR justifies another edge.
+- `apps/site`, when added in the portfolio phase (now Phase 13), may import UI only unless a later ADR justifies another edge.
 - Cross-project imports use declared `@workledger/*` `workspace:*` dependencies and explicit package exports; do not traverse into sibling `src`, tests, migrations, generated files, or build output.
 - Root/apps/packages are private and internal-only for the MVP. Workspace cycles fail; they are not ignored.
 - Shared configuration is a development dependency, not production runtime code. External dependencies are declared by their direct importer.

@@ -4,6 +4,22 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-21 — Phase 11/portfolio roadmap insertion
+
+`TODO.md` was intentionally revised after the Phase 10 gate to insert a UI foundation phase and a
+workflow UX remediation phase before portfolio work. The older roadmap, task board, architecture
+phase labels, Phase 10 handoff, and project status still assigned portfolio work to Phase 11. The
+newer task catalog is treated as the requested roadmap direction, while the accepted portfolio
+scope is preserved rather than discarded.
+
+- Phase 11 is now UI/UX direction, design system, and adaptable company identity (`WL-1100`–`WL-1106`), with gate version `0.12.0`.
+- Phase 12 is workflow UX remediation and product polish (`WL-1200`–`WL-1206`), with gate version `0.13.0`.
+- The existing portfolio scope moves intact to Phase 13 (`WL-1300`–`WL-1305`), with gate version `0.14.0`.
+- `apps/site` and the safe portfolio demo remain deferred to Phase 13. The manual assistive-technology residual `D-502` moves to the Phase 12 UI release gate (`WL-1206`) rather than being assigned to a token task.
+
+This reconciliation changes sequence and task identifiers only. It does not authorize early
+portfolio implementation, alter the MVP boundary, or mark either new phase gate complete.
+
 ### 2026-08-13 — Phase wording reconciliation
 
 The request to “continue with phase 4” conflicts with the canonical roadmap: `WL-400` through
@@ -459,7 +475,7 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-502 — Browser support matrix
 
-**Status:** Open; initial evidence owner `WL-103`, final production owner `WL-1002`. Playwright now exercises Chromium, Firefox, WebKit, mobile Chromium, and mobile WebKit smoke coverage, but exact released-browser versions, Temporal/polyfill behavior, and real assistive-technology evidence still require production-gate validation.
+**Status:** Open; initial evidence owner `WL-103`, production automation owner `WL-1002`, and final manual assistive-technology disposition owner `WL-1206`. Playwright now exercises Chromium, Firefox, WebKit, mobile Chromium, and mobile WebKit smoke coverage, but exact released-browser versions, Temporal/polyfill behavior, and real assistive-technology evidence still require UI-release validation.
 
 - Proposed: current and previous stable Chrome, Edge, Firefox, Safari; current mobile Safari and Chrome Android.
 - Confirm against selected packages and Temporal polyfill.
