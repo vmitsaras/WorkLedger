@@ -137,11 +137,22 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1007` Complete mandatory retention, minimization, user-export, and backup-expiry controls.
 - [x] `WL-1008` Pass the production release gate.
 
-## Phase 11 — Portfolio presentation
+## Phase 11 — UI/UX direction, design system, and adaptable company identity
 
-- [ ] `WL-1100` Build Astro project site and case-study structure.
-- [ ] `WL-1101` Add seeded demo accounts and safe demo reset.
-- [ ] `WL-1102` Document architecture, accessibility, threat model, and tradeoffs.
-- [ ] `WL-1103` Add screenshots, workflow media, and calculation examples.
-- [ ] `WL-1104` Complete public README, known limitations, and future roadmap.
-- [ ] `WL-1105` Pass the portfolio release gate.
+- [ ] `WL-1100` Audit every canonical route, role, workflow, and required state; capture responsive baselines and create a prioritized UI/UX issue register.
+- [ ] `WL-1101` Define and approve the WorkLedger visual direction, content hierarchy, density rules, page archetypes, and interaction principles.
+- [ ] `WL-1102` Consolidate semantic design tokens and CSS ownership; remove undefined and one-off style contracts and establish enforceable styling boundaries.
+- [ ] `WL-1103` Implement validated company-identity configuration for organization name, logo, favicon, and brand accent with accessible fallbacks and no source-code editing.
+- [ ] `WL-1104` Expand the local React Aria UI system for actions, forms, panels, statuses, alerts, tables, filters, pagination, and route states.
+- [ ] `WL-1105` Redesign the application shell, navigation, authentication surfaces, and route boundaries across responsive, zoom, forced-colors, and reduced-motion contexts.
+- [ ] `WL-1106` Pass the UI-foundation phase gate and bump all workspace manifests to `0.12.0`.
+
+## Phase 12 — Workflow UX remediation and product polish
+
+- [ ] `WL-1200` Redesign Today attendance, calculation hierarchy, warnings, recovery, and primary clock-action feedback.
+- [ ] `WL-1201` Improve personal time records, balances, calendars, notifications, profile, loading, empty, and error experiences.
+- [ ] `WL-1202` Improve correction, absence, cancellation, approval-history, and monthly-review workflows.
+- [ ] `WL-1203` Improve manager Team, Approvals, team-calendar, filtering, decision, and narrow-screen workflows.
+- [ ] `WL-1204` Improve employee administration, time/absence/holiday settings, reports, audit, and system-administration surfaces using appropriate dense layouts.
+- [ ] `WL-1205` Complete the cross-route microcopy, responsive, state-consistency, motion, and recovery pass.
+- [ ] `WL-1206` Pass visual-regression, usability, accessibility, and UI release gates and bump all workspace manifests to `0.13.0`.
