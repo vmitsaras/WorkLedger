@@ -95,7 +95,7 @@ function TeamStatusContent({
           >
             {refreshing
               ? 'Refreshing status…'
-              : `Status current for ${data.summary.total.toString()} authorized team member${data.summary.total === 1 ? '' : 's'}.`}
+              : `Status current for ${data.summary.total.toString()} team member${data.summary.total === 1 ? '' : 's'}.`}
           </p>
         </div>
         <dl className="wl-team-summary m-0 grid gap-3" aria-label="Team status totals">
@@ -113,7 +113,7 @@ function TeamStatusContent({
               Current direct reports
             </h2>
             <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-              {data.summary.total} authorized team member{data.summary.total === 1 ? '' : 's'}.
+              {data.summary.total} team member{data.summary.total === 1 ? '' : 's'}.
             </p>
           </div>
           {data.summary.unresolved > 0 ? (
@@ -181,7 +181,7 @@ function TeamMembers({ members }: Readonly<{ members: TeamStatus['members'] }>) 
 
   return (
     <DataTable
-      caption="Privacy-safe current status for authorized direct reports."
+      caption="Current availability and unresolved records for direct reports."
       className="min-w-[42rem]"
       scrollHint="Scroll horizontally if the full team status does not fit."
       scrollLabel="Team status table"
@@ -219,7 +219,7 @@ function TeamMembers({ members }: Readonly<{ members: TeamStatus['members'] }>) 
 function TeamStatusLoading() {
   return (
     <RouteState kind="loading" title="Loading team status">
-      <p>Checking current authorized availability.</p>
+      <p>Preparing current availability and unresolved record counts.</p>
     </RouteState>
   );
 }
@@ -227,9 +227,7 @@ function TeamStatusLoading() {
 function TeamStatusError({ retry }: Readonly<{ retry: () => void }>) {
   return (
     <Alert title="Team status is unavailable" tone="danger">
-      <p>
-        No restricted team details were displayed. Try loading the current authorized view again.
-      </p>
+      <p>Team status could not be loaded. Check your connection and try again.</p>
       <Button className="w-fit" type="button" variant="secondary" onPress={retry}>
         Try again
       </Button>

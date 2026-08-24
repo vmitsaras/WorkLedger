@@ -76,8 +76,8 @@ export function ReportPortabilityActions({
           Export and copy
         </h3>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          CSV includes all matching authorized rows and these fields: {includedFields(data.key)}. It
-          omits internal identifiers, absence subtype, sickness classification, notes, reasons,
+          CSV includes all rows matching this report and these fields: {includedFields(data.key)}.
+          It omits internal identifiers, absence subtype, sickness classification, notes, reasons,
           reviewer comments, and hidden columns.
         </p>
         <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
@@ -207,7 +207,7 @@ function portabilityErrorMessage(error: unknown, action: 'CSV' | 'summary copy')
       return `Your report scope changed. The ${action} was not completed.`;
     }
     if (error.code === 'REPORT_EXPORT_TOO_LARGE') {
-      return 'The CSV is too large. Narrow the date range or select one authorized employee.';
+      return 'The CSV is too large. Narrow the date range or select one employee.';
     }
     if (error.code === 'AUTH_REQUIRED' || error.code === 'AUTH_SESSION_EXPIRED') {
       return `Your session ended. The ${action} was not completed.`;

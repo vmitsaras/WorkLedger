@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router';
 
+import { Alert, Button, RouteState, buttonVariants } from '@workledger/ui';
+
 import { ApiClientError, submitCorrectionRequest } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
 import { dailyTimeRecordQuery } from '../app/query.js';
@@ -29,8 +31,8 @@ const UTC_OFFSET_PATTERN = /^[+-](?:0\d|1\d|2[0-3]):[0-5]\d$/;
 export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const [search] = useSearchParams();
   const recordId = search.get('recordId');
-  const summaryRef = useRef<HTMLDivElement>(null);
-  const successRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLElement>(null);
+  const successRef = useRef<HTMLElement>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
   const [fieldErrors, setFieldErrors] = useState<Readonly<Record<string, string>>>({});
   const [formError, setFormError] = useState<string>();
@@ -139,7 +141,7 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
           Current recorded facts
         </h2>
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          Recorded events are immutable. This request preserves them alongside your proposal.
+          These original events stay available alongside your proposed correction.
         </p>
         {record.events.length === 0 ? (
           <p className="m-0">No event was recorded on this date.</p>
@@ -205,9 +207,7 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
               onChange={(value) => updateValue('endsAtUtcOffset', value)}
             />
             {fieldErrors['interval'] === undefined ? null : (
-              <p className="m-0 text-sm text-[var(--wl-danger)]" role="alert">
-                {fieldErrors['interval']}
-              </p>
+              <p className="m-0 text-sm text-[var(--wl-danger)]">{fieldErrors['interval']}</p>
             )}
           </fieldset>
           <div className="grid gap-2">
@@ -236,11 +236,11 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
             )}
           </div>
           <div className="flex flex-wrap gap-3">
-            <button className="wl-button-primary" type="submit" disabled={isSubmitting}>
+            <Button type="submit" isDisabled={isSubmitting}>
               {isSubmitting ? 'Submitting request…' : 'Submit correction request'}
-            </button>
+            </Button>
             <Link
-              className="wl-button-secondary"
+              className={buttonVariants({ variant: 'secondary' })}
               to={`/time-records/${encodeURIComponent(recordId)}`}
             >
               Cancel
@@ -248,13 +248,13 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
           </div>
         </form>
       ) : (
-        <div
+        <Alert
+          className="outline-none"
           ref={successRef}
           tabIndex={-1}
-          role="status"
-          className="wl-alert m-0 grid gap-3 rounded-xl border p-4 outline-none"
+          title="Correction request submitted"
+          tone="success"
         >
-          <h2 className="m-0 text-lg font-bold">Correction request submitted</h2>
           <p className="m-0">
             Your proposed {formatDuration(success.minutes)} interval for{' '}
             {formatLocalDate(success.localDate)} is awaiting review. Your recorded events and
@@ -263,10 +263,13 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
               ? 'Because this month is locked, approval will append an adjustment while preserving the approved monthly record.'
               : 'If approved and applied, the unlocked daily calculation will be replaced.'}
           </p>
-          <Link className="wl-button-secondary w-fit" to={`/requests/${success.id}`}>
+          <Link
+            className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
+            to={`/requests/${success.id}`}
+          >
             View request details
           </Link>
-        </div>
+        </Alert>
       )}
     </section>
   );
@@ -362,7 +365,7 @@ function mapServerFieldErrors(fields: ApiClientError['fields']): Readonly<Record
 }
 function LoadingCorrectionRequest({ embedded }: Readonly<{ embedded: boolean }>) {
   return (
-    <section className="grid max-w-4xl gap-6" aria-busy="true">
+    <section className="grid max-w-4xl gap-6">
       {embedded ? (
         <h2 className="m-0 text-xl font-bold">Loading the daily record…</h2>
       ) : (
@@ -372,34 +375,30 @@ function LoadingCorrectionRequest({ embedded }: Readonly<{ embedded: boolean }>)
           description="Loading the daily record…"
         />
       )}
-      <div
-        aria-label="Loading daily record"
-        role="progressbar"
-        className="h-2 rounded-full bg-[var(--wl-surface-subtle)]"
-      />
+      <RouteState kind="loading" title="Loading the daily record">
+        <p>Preparing the current record and correction form.</p>
+      </RouteState>
     </section>
   );
 }
 function MissingRecordTarget({ embedded }: Readonly<{ embedded: boolean }>) {
   return (
     <section className="grid max-w-4xl gap-6">
-      {embedded ? (
-        <div className="grid gap-2">
-          <h2 className="m-0 text-xl font-bold">Choose a daily record</h2>
-          <p className="m-0">
-            Open the daily record you want to correct, then choose Request a correction.
-          </p>
-        </div>
-      ) : (
+      {embedded ? null : (
         <PageHeader
           eyebrow="Requests"
           title="Choose a daily record"
           description="Open the daily record you want to correct, then choose Request a correction."
         />
       )}
-      <Link className="wl-button-secondary w-fit" to="/my-time">
-        Go to My time
-      </Link>
+      <RouteState
+        actionHref="/my-time"
+        actionLabel="Go to My time"
+        kind="empty"
+        title="Choose a daily record"
+      >
+        <p>Open the daily record you want to correct, then choose Request a correction.</p>
+      </RouteState>
     </section>
   );
 }
@@ -407,18 +406,7 @@ function UnavailableRecord({ embedded, error }: Readonly<{ embedded: boolean; er
   const denied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
   return (
     <section className="grid max-w-4xl gap-6">
-      {embedded ? (
-        <div className="grid gap-2">
-          <h2 className="m-0 text-xl font-bold">
-            {denied ? 'Permission denied' : 'Daily record unavailable'}
-          </h2>
-          <p className="m-0">
-            {denied
-              ? 'You do not have access to this daily record.'
-              : 'WorkLedger could not load the daily record for this correction request.'}
-          </p>
-        </div>
-      ) : (
+      {embedded ? null : (
         <PageHeader
           eyebrow="Requests"
           title={denied ? 'Permission denied' : 'Daily record unavailable'}
@@ -429,9 +417,18 @@ function UnavailableRecord({ embedded, error }: Readonly<{ embedded: boolean; er
           }
         />
       )}
-      <Link className="wl-button-secondary w-fit" to="/my-time">
-        Back to My time
-      </Link>
+      <RouteState
+        actionHref="/my-time"
+        actionLabel="Back to My time"
+        kind={denied ? 'permission-denied' : 'error'}
+        title={denied ? 'Permission denied' : 'Daily record unavailable'}
+      >
+        <p>
+          {denied
+            ? 'You do not have access to this daily record.'
+            : 'WorkLedger could not load the daily record for this correction request.'}
+        </p>
+      </RouteState>
     </section>
   );
 }

@@ -8,7 +8,7 @@ import type {
   AttendanceState,
   TodayAttendance,
 } from '@workledger/contracts';
-import { Button } from '@workledger/ui';
+import { Alert, Button, RouteState } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -262,32 +262,27 @@ function renderTodayOffline() {
         title="Today"
         description="Reconnect to load your current attendance state. No clock action can be sent or queued while you are offline."
       />
-      <div className="wl-alert wl-alert--danger grid gap-1" role="alert">
-        <h2 className="m-0 text-lg font-bold">You’re offline</h2>
+      <Alert title="You’re offline" tone="danger">
         <p className="m-0 text-sm leading-6">
           WorkLedger will refresh your status after the connection returns before enabling any
           attendance action.
         </p>
-      </div>
+      </Alert>
     </section>
   );
 }
 
 function renderTodayLoading() {
   return (
-    <section className="grid max-w-3xl gap-6" aria-busy="true">
+    <section className="grid max-w-3xl gap-6">
       <PageHeader
         eyebrow="Attendance"
         title="Today"
         description="Loading your current attendance state and calculation…"
       />
-      <div
-        aria-label="Loading today’s attendance"
-        role="progressbar"
-        className="h-2 overflow-hidden rounded-full bg-[var(--wl-surface-subtle)]"
-      >
-        <span className="block h-full w-1/3 rounded-full bg-[var(--wl-action-primary)]" />
-      </div>
+      <RouteState kind="loading" title="Loading today’s attendance">
+        <p>Preparing your current status, valid actions, and calculation.</p>
+      </RouteState>
     </section>
   );
 }
@@ -301,9 +296,8 @@ function renderTodayLoadError({ error, retry }: Readonly<{ error: unknown; retry
         title="Today"
         description="Your attendance information could not be loaded. No clock action was submitted."
       />
-      <div className="wl-alert wl-alert--danger grid gap-3" role="alert">
+      <Alert title="Today is temporarily unavailable" tone="danger">
         <div className="grid gap-1">
-          <h2 className="m-0 text-lg font-bold">Today is temporarily unavailable</h2>
           <p className="m-0 text-sm leading-6">
             Try again. If the problem continues, share the request reference with your
             administrator.
@@ -317,7 +311,7 @@ function renderTodayLoadError({ error, retry }: Readonly<{ error: unknown; retry
             Try again
           </Button>
         </div>
-      </div>
+      </Alert>
     </section>
   );
 }

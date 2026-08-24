@@ -1,7 +1,7 @@
 import type { RefObject } from 'react';
 
 import type { AttendanceCommand, AttendanceState, TodayAttendance } from '@workledger/contracts';
-import { Panel, StatusBadge } from '@workledger/ui';
+import { Alert, Panel, StatusBadge, type AlertProps } from '@workledger/ui';
 
 import { formatDuration, formatTime } from '../app/date-time-format.js';
 import type { AttendanceCommandIntent } from '../app/api-client.js';
@@ -105,15 +105,17 @@ export function TodayAttendanceOverview({
             />
             <AttendanceRecovery error={dependencyError} mode={recoveryMode} retry={retryToday} />
             {feedback === null ? null : (
-              <div
-                className={`wl-alert ${feedbackToneClass(feedback.kind)} grid gap-1`}
-                role={feedback.kind === 'ERROR' && recoveryMode === null ? 'alert' : 'status'}
+              <Alert
+                announce={feedback.kind !== 'ERROR' || recoveryMode === null}
+                headingLevel="h3"
+                title={feedbackTitle(feedback.kind)}
+                tone={feedbackTone(feedback.kind)}
               >
                 <p className="m-0 text-sm font-semibold">{feedback.message}</p>
                 {feedback.requestId === undefined ? null : (
                   <p className="m-0 break-all text-xs">Request reference: {feedback.requestId}</p>
                 )}
-              </div>
+              </Alert>
             )}
           </div>
         </div>
@@ -153,13 +155,19 @@ export function TodayAttendanceOverview({
   );
 }
 
-function feedbackToneClass(kind: TodayAttendanceFeedback['kind']): string {
+function feedbackTone(kind: TodayAttendanceFeedback['kind']): NonNullable<AlertProps['tone']> {
   switch (kind) {
     case 'ERROR':
-      return 'wl-alert--danger';
+      return 'danger';
     case 'INFO':
-      return 'wl-alert--info';
+      return 'info';
     case 'SUCCESS':
-      return 'wl-alert--success';
+      return 'success';
   }
+}
+
+function feedbackTitle(kind: TodayAttendanceFeedback['kind']): string {
+  if (kind === 'ERROR') return 'Attendance not changed';
+  if (kind === 'INFO') return 'Attendance refreshed';
+  return 'Attendance updated';
 }

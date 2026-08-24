@@ -43,7 +43,7 @@ export function RequestNewPage() {
       <PageHeader
         eyebrow="Requests"
         title="New request"
-        description="Choose the workflow that matches what happened. This choice stays on this page and is not added to the address."
+        description="Choose the workflow that matches what happened, then review its effect before submitting."
       />
       {workflow === null ? (
         <section aria-labelledby="request-workflow-heading" className="grid gap-4">

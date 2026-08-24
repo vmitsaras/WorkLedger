@@ -56,11 +56,9 @@ test('renders a ready monthly review with captioned totals and keyboard-scrollab
     'href',
     `/time-records/${FIRST_RECORD_ID}`,
   );
-  expect(
-    screen.getByText(/source fingerprint changes whenever the reviewed source set changes/u),
-  ).toBeVisible();
-  expect(screen.getByText(/Printing refreshes current authorization first/u)).toHaveTextContent(
-    'omits internal identifiers, sickness classification, notes, decision reasons, and reviewer comments',
+  expect(screen.getByText(/If a source record changes, review the updated month/u)).toBeVisible();
+  expect(screen.getByText(/The print uses the latest monthly status/u)).toHaveTextContent(
+    'Private absence details and decision reasons are omitted',
   );
   expect(screen.queryByText('Private reason', { exact: true })).not.toBeInTheDocument();
   await expectNoAxeViolations(container);
@@ -408,14 +406,14 @@ test('reauthorizes before opening a purpose-minimized monthly print view', async
   const { container } = renderApplication();
 
   const printButton = await screen.findByRole('button', { name: 'Print monthly record' });
-  expect(screen.getByText(/Printing refreshes current authorization first/u)).toBeVisible();
+  expect(screen.getByText(/The print uses the latest monthly status/u)).toBeVisible();
   await user.click(printButton);
 
   await waitFor(() => expect(print).toHaveBeenCalledOnce());
   expect(monthlyLoads).toBeGreaterThanOrEqual(2);
   expect(printedText).toContain('Refreshed Employee');
   expect(screen.getByRole('status', { name: 'Monthly print status' })).toHaveTextContent(
-    'refreshed purpose-minimized monthly record',
+    'latest monthly record',
   );
   const printView = container.querySelector<HTMLElement>('[data-print-monthly-record]');
   expect(printView).not.toBeNull();
@@ -456,9 +454,9 @@ test('keeps the print dialog closed when monthly scope is lost during refresh', 
 
   await user.click(await screen.findByRole('button', { name: 'Print monthly record' }));
 
-  expect(await screen.findByRole('alert')).toHaveTextContent(
-    'Your current role or reporting scope cannot view this monthly period.',
-  );
+  const heading = await screen.findByRole('heading', { name: 'Permission denied' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(screen.getByText(/outside your current review scope/u)).toBeVisible();
   expect(monthlyLoads).toBe(2);
   expect(print).not.toHaveBeenCalled();
 });
@@ -483,9 +481,13 @@ test('shows a purpose-safe permission denial without retrying or rendering month
   );
   renderApplication();
 
-  expect(await screen.findByRole('alert')).toHaveTextContent(
-    'Your current role or reporting scope cannot view this monthly period.',
-  );
+  const heading = await screen.findByRole('heading', { name: 'Permission denied' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(document.title).toBe('Permission denied | WorkLedger');
+  expect(
+    screen.getByText('Your current role or reporting scope cannot view this monthly period.'),
+  ).toBeVisible();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
   expect(screen.queryByText('Monthly Employee ·')).not.toBeInTheDocument();
 });

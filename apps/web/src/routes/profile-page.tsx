@@ -119,8 +119,8 @@ export function ProfilePage() {
             ]}
           />
           <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-            Account, role, and employee facts are managed through authorized administration
-            workflows and cannot be edited from Profile.
+            Account, role, and employee details cannot be edited from Profile. Contact the relevant
+            administrator if something needs to change.
           </p>
         </Panel>
 

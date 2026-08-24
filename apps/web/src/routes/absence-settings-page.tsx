@@ -33,7 +33,7 @@ export function AbsenceSettingsPage() {
   const [active, setActive] = useState(true);
   const [policy, setPolicy] = useState<AbsenceTypePolicyAdmin>(DEFAULT_POLICY);
   const [message, setMessage] = useState<Readonly<{ kind: 'error' | 'success'; text: string }>>();
-  const messageRef = useRef<HTMLDivElement>(null);
+  const messageRef = useRef<HTMLElement>(null);
   const mutation = useMutation({ mutationFn: createAbsenceTypeVersionForAdministration });
   if (query.isError) throw query.error;
 
@@ -74,7 +74,7 @@ export function AbsenceSettingsPage() {
       setEffectiveFrom('');
       setMessage({
         kind: 'success',
-        text: 'The immutable absence-type version was created. Existing requests retain their captured version.',
+        text: 'The absence type version was created. Existing requests keep the version they already use.',
       });
     } catch (error) {
       setMessage({ kind: 'error', text: mutationError(error) });
@@ -90,18 +90,16 @@ export function AbsenceSettingsPage() {
         description="Create bounded, effective-dated absence-type versions without reinterpreting existing requests or exposing sickness records."
       />
       {message === undefined ? null : (
-        <div ref={messageRef} tabIndex={message.kind === 'error' ? -1 : undefined}>
-          <Alert
-            title={
-              message.kind === 'error'
-                ? 'Absence type update failed'
-                : 'Absence type version created'
-            }
-            tone={message.kind === 'error' ? 'danger' : 'success'}
-          >
-            <p>{message.text}</p>
-          </Alert>
-        </div>
+        <Alert
+          {...(message.kind === 'error' ? { className: 'outline-none', tabIndex: -1 } : {})}
+          ref={messageRef}
+          title={
+            message.kind === 'error' ? 'Absence type update failed' : 'Absence type version created'
+          }
+          tone={message.kind === 'error' ? 'danger' : 'success'}
+        >
+          <p>{message.text}</p>
+        </Alert>
       )}
       <form className="wl-panel grid gap-5" onSubmit={submit} noValidate>
         <div>

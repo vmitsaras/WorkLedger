@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
 
-import { Alert, Button, Panel, RouteState, StatusBadge } from '@workledger/ui';
+import { Alert, Button, Panel, RouteState, StatusBadge, buttonVariants } from '@workledger/ui';
 
 import { ApiClientError } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
@@ -27,7 +27,7 @@ export function DailyTimeRecordPage() {
         <PageHeader
           eyebrow="Time records"
           title="Daily record"
-          description="Calculation, attendance intervals, and immutable event history."
+          description="Review the day’s calculation, work sessions, issues, and recorded event history."
         />
         <RouteState kind="loading" title="Loading the daily record">
           <p>Checking the calculation and its source events.</p>
@@ -63,11 +63,11 @@ export function DailyTimeRecordPage() {
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
           {incomplete
             ? 'This calculation is not a final posted result.'
-            : 'The calculation is supported by immutable events and exact elapsed intervals.'}
+            : 'The calculation uses recorded events and exact elapsed intervals.'}
         </p>
       </Panel>
       {incomplete ? (
-        <Alert title="This record is incomplete" tone="warning">
+        <Alert announce={false} title="This record is incomplete" tone="warning">
           <p className="m-0">
             Review the attention items and recorded events before relying on its balance.
           </p>
@@ -80,7 +80,7 @@ export function DailyTimeRecordPage() {
         eventHref="#events-heading"
       />
       {record.calculation === null ? (
-        <Alert title="Calculation unavailable" tone="danger">
+        <Alert announce={false} title="Calculation unavailable" tone="danger">
           <p className="m-0">
             This record’s attendance events cannot be reconstructed, so no calculated total is
             shown. Review the events below and request a correction if needed.
@@ -104,7 +104,7 @@ export function DailyTimeRecordPage() {
         </section>
       )}
       <Link
-        className="wl-button-secondary w-fit"
+        className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
         to={`/requests/new?recordId=${encodeURIComponent(recordId)}`}
       >
         Request a correction
@@ -178,7 +178,7 @@ export function DailyTimeRecordPage() {
           Times include the UTC offset so repeated local times remain distinguishable.
         </p>
       </section>
-      <Link className="wl-button-secondary w-fit" to="/my-time">
+      <Link className={buttonVariants({ variant: 'secondary', className: 'w-fit' })} to="/my-time">
         Back to My time
       </Link>
     </section>

@@ -393,7 +393,7 @@ test('presents a permission loss as a focused route state without approval detai
   const heading = await screen.findByRole('heading', { name: 'Permission denied' });
   await waitFor(() => expect(heading).toHaveFocus());
   expect(document.title).toBe('Permission denied | WorkLedger');
-  expect(screen.getByText(/No restricted approval details were disclosed/u)).toBeVisible();
+  expect(screen.getByText(/Your current account cannot view the approval inbox/u)).toBeVisible();
   expect(screen.queryByRole('heading', { name: 'Filter and sort' })).not.toBeInTheDocument();
   expect(screen.queryByText(REQUEST_ID)).not.toBeInTheDocument();
   expect(approvalUrls).toHaveLength(2);

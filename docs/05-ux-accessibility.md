@@ -209,6 +209,9 @@ Product-specific components display domain results; they do not calculate them.
 - Tables use captions and proper column/row headers.
 - Lists use actual list markup.
 - Status messages use appropriate live-region semantics only when dynamic announcement is needed.
+- Persistent warnings and explanatory states remain semantic content but do not create a live
+  announcement merely because the route first rendered. Mutation results, newly surfaced errors,
+  and material asynchronous state changes use the shared alert/status contract.
 
 ## 8. Keyboard behavior
 
@@ -231,6 +234,16 @@ Product-specific components display domain results; they do not calculate them.
 - Session expiry clears sensitive in-memory data, moves the actor to `/sign-in`, focuses its `h1`, and announces once that the session expired. Signing in returns only to a validated, currently authorized destination.
 - Opening mobile navigation moves focus into its labelled dialog/drawer; closing it restores focus to the menu trigger. Selecting a destination closes the navigation and follows the normal destination-focus rule.
 - One route contains one assertive error announcement at a time. Inline status updates use a polite status region, and repeated query refreshes, idempotent replays, or identical errors do not create duplicate announcements.
+
+### Task-first copy contract
+
+- Lead with the actor's current task, the observable state, and the next valid action or recovery.
+- State the direct record or balance effect before implementation detail. Preservation, privacy,
+  authorization, idempotency, and version guarantees remain visible where they change a decision,
+  explain a disabled action, or establish trust, but they do not replace the task description.
+- Loading text names what the actor will be able to review or do. Empty and error text distinguishes
+  a valid absence of work from a failed load and offers only an action that is currently valid.
+- Permission copy describes the unavailable capability without confirming a sensitive target.
 
 ## 9. Clock-action feedback
 

@@ -32,11 +32,11 @@ export function SystemAuditPage() {
       <PageHeader
         eyebrow="System administration"
         title="Technical audit"
-        description="Review redacted authentication, authorization, session, and operational evidence. Employee and HR domain history remains in the separate domain audit."
+        description="Review sign-in, access, session, and operational events."
       />
       <AuditEventExplorer
         caption="Redacted security and technical audit events, newest first"
-        filterDescription="This view contains allowlisted technical metadata only. It excludes domain payloads, notification content, and account identifiers."
+        filterDescription="Results contain limited technical facts. Employee records, notification content, and account identifiers are not included."
         filterTitle="Filter technical audit events"
         page={result.data}
         query={query}

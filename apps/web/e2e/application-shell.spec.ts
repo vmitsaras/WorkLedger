@@ -798,7 +798,7 @@ test('records an approval decision with field-linked errors and keyboard-scrolla
 
   const status = page.getByRole('status');
   await expect(status).toBeFocused();
-  await expect(status).toHaveText('Approve recorded. The approval is now approved.');
+  await expect(status).toContainText('Approve recorded. The approval is now approved.');
   expect(submittedDecision).toEqual({
     action: 'APPROVE',
     expectedVersion: 3,
@@ -1572,7 +1572,7 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
 
   await page.setViewportSize({ width: 1024, height: 720 });
   const teamTable = page.getByRole('table', {
-    name: 'Privacy-safe current status for authorized direct reports.',
+    name: 'Current availability and unresolved records for direct reports.',
   });
   await expect(
     teamTable.getByRole('row', {
@@ -2524,7 +2524,7 @@ test('creates an immutable weekly schedule version with keyboard-recoverable val
   await page.getByLabel('Friday minutes').fill('360');
   await page.getByRole('button', { name: 'Create schedule version' }).click();
 
-  await expect(page.getByRole('status')).toContainText('Employee assignments are unchanged');
+  await expect(page.getByRole('status')).toContainText('Employee assignments remain unchanged');
   expect(submittedBody).toEqual({
     name: 'Reduced Friday',
     scheduledMinutes: {

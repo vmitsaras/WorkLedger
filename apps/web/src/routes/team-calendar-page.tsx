@@ -165,7 +165,7 @@ function TeamCalendarContent({
         </Button>
       </div>
       {missingTeamCount > 0 ? (
-        <Alert title="Current team assignment unavailable" tone="warning">
+        <Alert announce={false} title="Current team assignment unavailable" tone="warning">
           <p>
             {missingTeamCount} availability {missingTeamCount === 1 ? 'entry has' : 'entries have'}{' '}
             no current team assignment. The{' '}
@@ -435,7 +435,7 @@ function AvailabilityEntry({
 function TeamCalendarLoading() {
   return (
     <RouteState kind="loading" title="Loading team calendar">
-      <p>Checking authorized availability.</p>
+      <p>Preparing team availability for the selected month.</p>
     </RouteState>
   );
 }
@@ -443,7 +443,7 @@ function TeamCalendarLoading() {
 function TeamCalendarError({ retry }: Readonly<{ retry: () => void }>) {
   return (
     <Alert title="Team calendar is unavailable" tone="danger">
-      <p>No restricted employee details were displayed. Try loading the authorized month again.</p>
+      <p>The selected month could not be loaded. Check your connection and try again.</p>
       <Button className="w-fit" type="button" variant="secondary" onPress={retry}>
         Try again
       </Button>

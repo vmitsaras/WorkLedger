@@ -93,8 +93,12 @@ export function EmployeeScheduleAdministration({
               Current and scheduled employment is covered.
             </p>
           ) : (
-            <section className="wl-alert wl-alert--danger grid gap-2 rounded-xl border p-4">
-              <h4 className="m-0 text-base font-bold">Schedule coverage needs attention</h4>
+            <Alert
+              announce={false}
+              headingLevel="h3"
+              title="Schedule coverage needs attention"
+              tone="danger"
+            >
               <ul className="m-0 grid gap-1 pl-5 text-sm">
                 {schedule.coverageGaps.map((gap) => (
                   <li key={`${gap.startsOn}:${gap.endsOn ?? 'ongoing'}`}>
@@ -103,7 +107,7 @@ export function EmployeeScheduleAdministration({
                   </li>
                 ))}
               </ul>
-            </section>
+            </Alert>
           )}
         </Panel>
 

@@ -185,7 +185,7 @@ test('labels locked correction approval as an immediate post-lock adjustment', a
 
   expect(
     await screen.findByText(
-      /Locked-period adjustment. Approval appends an adjustment immediately/u,
+      /Approval adds an adjustment to the locked month while the approved monthly record stays unchanged/u,
     ),
   ).toBeVisible();
   await waitFor(() =>

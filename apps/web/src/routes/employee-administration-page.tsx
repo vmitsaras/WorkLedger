@@ -86,7 +86,7 @@ export function EmployeeAdministrationPage() {
       </PageHeader>
 
       <FilterBar
-        description="The selected employment state is stored in the URL so this directory view can be shared."
+        description="Show active employees, inactive employees, or the complete directory."
         title="Filter employee directory"
         onSubmit={(event) => {
           event.preventDefault();
@@ -699,7 +699,7 @@ function EmployeeDetail({
       <EmployeeEntitlementAdministration employeeId={employee.id} entitlement={entitlement} />
 
       {!employee.privilegedActionsAllowed ? (
-        <Alert title="Review only" tone="info">
+        <Alert announce={false} title="Review only" tone="info">
           <p>
             You may review your own employee record here, but privileged self-edit controls are
             unavailable. Ask another HR administrator to make a required change.

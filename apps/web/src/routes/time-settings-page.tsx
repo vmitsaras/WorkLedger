@@ -73,7 +73,7 @@ export function TimeSettingsPage() {
       await queryClient.invalidateQueries({ queryKey: ['administration', 'time-settings'] });
       setName('');
       setStatus(
-        'The immutable schedule version was created. Employee assignments are unchanged until you assign it.',
+        'The weekly schedule version was created. Employee assignments remain unchanged until you assign it.',
       );
     } catch (error) {
       setFormError(scheduleMutationError(error));
@@ -91,7 +91,7 @@ export function TimeSettingsPage() {
       <PageHeader
         eyebrow="HR administration"
         title="Time settings"
-        description="Create immutable weekly schedule and bounded time-policy versions. Assignments change only from an employee record."
+        description="Create weekly schedule and time policy versions for future employee assignments."
       />
 
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
@@ -107,8 +107,8 @@ export function TimeSettingsPage() {
             Create schedule version
           </h2>
           <p className="m-0 max-w-3xl text-sm leading-6 text-[var(--wl-text-muted)]">
-            Reusing a schedule name creates its next version. Versions are immutable and do not
-            affect anyone until assigned from an employee record. Enter integer minutes; zero is a
+            Reusing a schedule name creates its next version. Earlier versions stay available, and
+            no employee is affected until the version is assigned. Enter integer minutes; zero is a
             deliberate non-working day.
           </p>
         </div>
@@ -166,7 +166,7 @@ export function TimeSettingsPage() {
           <RouteState kind="loading">Schedule versions are being retrieved.</RouteState>
         ) : query.data.scheduleVersions.length === 0 ? (
           <RouteState kind="empty" title="No schedule versions have been created">
-            Create the first immutable weekly schedule above.
+            Create the first weekly schedule above.
           </RouteState>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
@@ -233,7 +233,7 @@ function TimePolicyVersionAdministration({
       setName('');
       setMessage({
         kind: 'success',
-        text: 'The immutable time-policy version was created. Employee assignments are unchanged.',
+        text: 'The time policy version was created. Employee assignments remain unchanged.',
       });
     } catch (error) {
       setMessage({ kind: 'error', text: policyMutationError(error) });

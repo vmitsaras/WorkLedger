@@ -87,13 +87,13 @@ test('renders an accessible, privacy-safe current direct-report table', async ()
   expect(document.title).toBe('Team | WorkLedger');
   expect(screen.getByText(/As of 12:30 PM on Friday, August 14, 2026/u)).toBeVisible();
   expect(screen.getByRole('status', { name: 'Team refresh status' })).toHaveTextContent(
-    'Status current for 4 authorized team members.',
+    'Status current for 4 team members.',
   );
   const summary = screen.getByLabelText('Team status totals');
   expect(summary).toHaveAccessibleName('Team status totals');
 
   const table = screen.getByRole('table', {
-    name: 'Privacy-safe current status for authorized direct reports.',
+    name: 'Current availability and unresolved records for direct reports.',
   });
   expect(
     within(table).getByRole('row', { name: /Ari Working Delivery Working Unresolved record/u }),

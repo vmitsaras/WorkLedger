@@ -258,93 +258,9 @@
     color: var(--wl-state-neutral-text);
   }
 
-  .wl-alert-error {
-    border-color: var(--wl-state-danger-border);
-    background: var(--wl-state-danger-surface);
-    color: var(--wl-state-danger-text);
-  }
-
-  .wl-alert-success {
-    border-color: var(--wl-state-success-border);
-    background: var(--wl-state-success-surface);
-    color: var(--wl-state-success-text);
-  }
-
-  .wl-alert-warning {
-    border-color: var(--wl-state-warning-border);
-    background: var(--wl-state-warning-surface);
-    color: var(--wl-state-warning-text);
-  }
-
   .wl-alert a {
     color: currentColor;
     font-weight: 700;
-  }
-
-  :where(.wl-button-primary, .wl-button-secondary) {
-    display: inline-flex;
-    min-block-size: var(--wl-control-min-block-size);
-    min-inline-size: var(--wl-control-min-inline-size);
-    align-items: center;
-    justify-content: center;
-    gap: var(--wl-space-2);
-    border: 1px solid;
-    border-radius: var(--wl-radius-control);
-    padding: var(--wl-control-padding-block) var(--wl-control-padding-inline);
-    font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.25rem;
-    text-decoration: none;
-    cursor: pointer;
-    transition:
-      background-color var(--wl-motion-duration-fast) var(--wl-motion-ease-standard),
-      border-color var(--wl-motion-duration-fast) var(--wl-motion-ease-standard),
-      color var(--wl-motion-duration-fast) var(--wl-motion-ease-standard),
-      translate var(--wl-motion-duration-fast) var(--wl-motion-ease-standard);
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .wl-button-primary {
-    border-color: var(--wl-action-primary);
-    background: var(--wl-action-primary);
-    color: var(--wl-action-primary-text);
-  }
-
-  .wl-button-primary:hover:not(:disabled, [aria-disabled='true']) {
-    border-color: var(--wl-action-primary-hover);
-    background: var(--wl-action-primary-hover);
-  }
-
-  .wl-button-primary:active:not(:disabled, [aria-disabled='true']) {
-    border-color: var(--wl-action-primary-active);
-    background: var(--wl-action-primary-active);
-    translate: 0 1px;
-  }
-
-  .wl-button-secondary {
-    border-color: var(--wl-border-strong);
-    background: var(--wl-surface-raised);
-    color: var(--wl-text);
-  }
-
-  .wl-button-secondary:hover:not(:disabled, [aria-disabled='true']),
-  .wl-button-secondary[aria-pressed='true'] {
-    border-color: var(--wl-action-primary);
-    background: var(--wl-surface-subtle);
-  }
-
-  .wl-button-secondary:active:not(:disabled, [aria-disabled='true']) {
-    translate: 0 1px;
-  }
-
-  :where(.wl-button-primary, .wl-button-secondary):focus-visible {
-    outline: 3px solid var(--wl-focus-ring);
-    outline-offset: 3px;
-  }
-
-  :where(.wl-button-primary, .wl-button-secondary):is(:disabled, [aria-disabled='true']) {
-    cursor: not-allowed;
-    opacity: var(--wl-control-disabled-opacity);
   }
 
   :where(.wl-text-field, .wl-field-control) {
@@ -590,8 +506,6 @@
     :where(
       .wl-alert,
       .wl-approval-filter-disclosure,
-      .wl-button-primary,
-      .wl-button-secondary,
       .wl-panel,
       .wl-skip-link,
       .wl-status,
@@ -619,11 +533,6 @@
   @media (prefers-reduced-motion: reduce) {
     .wl-skip-link {
       transition: none;
-    }
-
-    :where(.wl-button-primary, .wl-button-secondary) {
-      transition: none;
-      translate: none;
     }
   }
 }

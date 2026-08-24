@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Link, NavLink, Outlet, useLoaderData, useLocation, useNavigate } from 'react-router';
 
 import type { NavigationArea, SelfContext } from '@workledger/contracts';
-import { Button, Drawer } from '@workledger/ui';
+import { Alert, Button, Drawer } from '@workledger/ui';
 
 import { clearSessionMemory, signOut } from '../app/api-client.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
@@ -368,9 +368,9 @@ function ShellSignOutButton() {
   return (
     <div className="grid gap-2">
       {error === undefined ? null : (
-        <p role="alert" className="m-0 text-sm font-semibold text-[var(--wl-danger)]">
-          {error}
-        </p>
+        <Alert headingLevel="h3" title="Sign out failed" tone="danger">
+          <p>{error}</p>
+        </Alert>
       )}
       <Button
         variant="secondary"

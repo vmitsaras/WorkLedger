@@ -55,8 +55,8 @@ export function EmployeePolicyAdministration({
           Time policy
         </h2>
         <p className="m-0 mt-2 text-sm leading-6 text-[var(--wl-text-muted)]">
-          Current state is resolved for {formatLocalDate(policy.asOfLocalDate)}. Policy versions are
-          immutable and changes may begin today or later.
+          Current state is resolved for {formatLocalDate(policy.asOfLocalDate)}. Earlier versions
+          stay available, and changes may begin today or later.
         </p>
       </div>
       {message === undefined ? null : (
@@ -82,8 +82,12 @@ export function EmployeePolicyAdministration({
               Current and scheduled employment is covered.
             </p>
           ) : (
-            <section className="wl-alert wl-alert--danger rounded-xl border p-4">
-              <h4 className="m-0 text-base font-bold">Policy coverage needs attention</h4>
+            <Alert
+              announce={false}
+              headingLevel="h3"
+              title="Policy coverage needs attention"
+              tone="danger"
+            >
               <ul>
                 {policy.coverageGaps.map((gap) => (
                   <li key={`${gap.startsOn}:${gap.endsOn ?? 'ongoing'}`}>
@@ -92,7 +96,7 @@ export function EmployeePolicyAdministration({
                   </li>
                 ))}
               </ul>
-            </section>
+            </Alert>
           )}
         </Panel>
         <Panel className="grid content-start gap-3" aria-labelledby="policy-history-heading">

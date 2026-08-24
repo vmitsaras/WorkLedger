@@ -8,6 +8,7 @@ import type {
   ApprovalDetail,
 } from '@workledger/contracts';
 import {
+  Alert,
   Button,
   DataTable,
   Panel,
@@ -44,7 +45,7 @@ export function ApprovalDetailPage() {
   const [negativeBalanceOverride, setNegativeBalanceOverride] = useState(false);
   const [feedback, setFeedback] = useState<string>();
   const [feedbackIsError, setFeedbackIsError] = useState(false);
-  const feedbackRef = useRef<HTMLDivElement>(null);
+  const feedbackRef = useRef<HTMLElement>(null);
   const presentedApprovalIdRef = useRef<string | undefined>(undefined);
 
   const decision = useMutation({
@@ -197,14 +198,17 @@ export function ApprovalDetailPage() {
         Back to approval inbox
       </Link>
       {feedback === undefined ? null : (
-        <div
+        <Alert
+          className="outline-none"
           ref={feedbackRef}
-          role={feedbackIsError ? 'alert' : 'status'}
           tabIndex={-1}
-          className={`wl-alert ${feedbackIsError ? 'wl-alert--danger' : 'wl-alert--success'} rounded-xl border p-4 outline-none focus-visible:ring-2`}
+          title={feedbackIsError ? 'Decision not recorded' : 'Decision recorded'}
+          tone={feedbackIsError ? 'danger' : 'success'}
         >
-          {feedback}
-        </div>
+          <p id={reasonError === undefined ? undefined : 'approval-decision-reason-error'}>
+            {feedback}
+          </p>
+        </Alert>
       )}
       <ApprovalSummary detail={detail} />
       {detail.availableActions.includes('APPLY_CORRECTION') && detail.kind === 'CORRECTION' ? (
@@ -214,8 +218,8 @@ export function ApprovalDetailPage() {
           </h2>
           <p className="m-0">
             {detail.applicationMode === 'POST_LOCK_ADJUSTMENT'
-              ? 'Applying appends a post-lock adjustment and preserves the immutable approved monthly record.'
-              : 'Applying updates the unlocked daily record and records an explainable balance delta.'}
+              ? 'Applying adds the approved change after the locked month. The approved monthly record remains unchanged.'
+              : 'Applying updates the unlocked daily record and adds the resulting balance change.'}
           </p>
           <Button
             className="w-fit"
@@ -272,14 +276,6 @@ export function ApprovalDetailPage() {
             >
               The reason is stored with the decision and is not shown in the minimized inbox.
             </p>
-            {reasonError === undefined ? null : (
-              <p
-                id="approval-decision-reason-error"
-                className="wl-alert wl-alert-error m-0 rounded-xl border p-3"
-              >
-                {reasonError}
-              </p>
-            )}
             {detail.kind === 'ABSENCE' &&
             detail.projectedRemainingMinutes !== null &&
             detail.projectedRemainingMinutes < 0 &&
@@ -374,10 +370,10 @@ function ApprovalSummary({ detail }: Readonly<{ detail: ApprovalDetail }>) {
             <strong>Employee reason:</strong> {detail.requestReason}
           </p>
           <p className="m-0 rounded-lg border border-[var(--wl-border)] p-3">
-            <strong>Application path:</strong>{' '}
+            <strong>How this change takes effect:</strong>{' '}
             {detail.applicationMode === 'POST_LOCK_ADJUSTMENT'
-              ? 'Locked-period adjustment. Approval appends an adjustment immediately; the approved monthly record is preserved.'
-              : 'Ordinary correction. Approval is followed by a separate application step to the unlocked daily record.'}
+              ? 'Approval adds an adjustment to the locked month while the approved monthly record stays unchanged.'
+              : 'After approval, the correction can be applied to the unlocked daily record.'}
           </p>
         </div>
       ) : (
@@ -437,9 +433,12 @@ function ApprovalEvidence({ detail }: Readonly<{ detail: ApprovalDetail }>) {
       <div>
         <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Evidence</p>
         <h2 id="approval-evidence-heading" className="m-0 mt-1 text-xl font-bold">
-          Immutable punch events
+          Recorded punch events
         </h2>
       </div>
+      <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+        These original events remain unchanged when a correction is approved.
+      </p>
       {detail.events.length === 0 ? (
         <p className="m-0">No source punch events are attached to this correction.</p>
       ) : (
@@ -461,7 +460,7 @@ function ApprovalDetailLoading() {
       <PageHeader
         eyebrow="Approvals"
         title="Loading approval"
-        description="Preparing the current authorized record."
+        description="Preparing the current record, its effect, and available decisions."
       />
       <RouteState kind="loading" title="Loading review details">
         <p>Checking the current record and available actions.</p>
@@ -480,21 +479,27 @@ function ApprovalDetailError({ error }: Readonly<{ error: unknown }>) {
         title={denied ? 'Permission denied' : 'Approval unavailable'}
         description={
           denied
-            ? 'Your account cannot access this approval. No restricted details were disclosed.'
-            : 'WorkLedger could not load this approval record.'
+            ? 'Your account cannot access this approval.'
+            : 'WorkLedger could not load this approval record. You can return to the inbox and try again.'
         }
       />
-      <Link
-        className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
-        to="/approvals"
+      <RouteState
+        actionHref="/approvals"
+        actionLabel="Back to approval inbox"
+        kind={denied ? 'permission-denied' : 'error'}
+        title={denied ? 'Approval access is limited' : 'Approval unavailable'}
       >
-        Back to approval inbox
-      </Link>
+        <p>
+          {denied
+            ? 'Only an eligible reviewer in the current reporting scope can open this record.'
+            : 'No decision was recorded.'}
+        </p>
+      </RouteState>
     </section>
   );
 }
 
-function focusFeedback(ref: RefObject<HTMLDivElement | null>) {
+function focusFeedback(ref: RefObject<HTMLElement | null>) {
   globalThis.setTimeout(() => ref.current?.focus(), 0);
 }
 
@@ -526,8 +531,7 @@ function errorMessage(error: unknown): string {
     return 'This request exceeds the available entitlement. Approval requires an explicit HR override.';
   if (error.code === 'PERIOD_ADJUSTMENT_REQUIRED')
     return 'This correction affects a locked month and requires the post-lock adjustment workflow.';
-  if (error.code === 'ACCESS_DENIED')
-    return 'Your current account is not authorized to perform this action.';
+  if (error.code === 'ACCESS_DENIED') return 'You do not have permission to perform this action.';
   return 'WorkLedger could not record this action. No decision was saved.';
 }
 

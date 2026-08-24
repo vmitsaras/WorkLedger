@@ -50,7 +50,7 @@ export function EmployeeEntitlementAdministration({
       setReason('');
       setMessage({
         kind: 'success',
-        text: 'The entitlement adjustment was appended to the ledger. Prior entries remain unchanged.',
+        text: 'The entitlement adjustment was added. Prior entries remain unchanged.',
       });
     } catch (error) {
       setMessage({ kind: 'error', text: adjustmentError(error) });
@@ -63,8 +63,8 @@ export function EmployeeEntitlementAdministration({
           Leave entitlement
         </h2>
         <p className="mb-0 text-sm text-[var(--wl-text-muted)]">
-          Balances are derived from immutable minute ledger entries. Positive minutes add
-          entitlement; negative minutes reduce it.
+          Each adjustment records whole minutes. Positive minutes add entitlement, while negative
+          minutes reduce it.
         </p>
       </div>
       {message === undefined ? null : (
@@ -118,8 +118,8 @@ export function EmployeeEntitlementAdministration({
           <div>
             <h3 className="m-0 text-xl font-bold">Append entitlement adjustment</h3>
             <p className="mb-0 text-sm text-[var(--wl-text-muted)]">
-              Adjustments may take effect today or later. A required reason is retained in
-              restricted HR detail and referenced by minimized audit evidence.
+              Adjustments may take effect today or later. The employee can see the reason in their
+              entitlement history, and it is included in the audit record.
             </p>
           </div>
           <label className="grid gap-2 text-sm font-semibold" htmlFor="entitlement-account">

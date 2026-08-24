@@ -98,7 +98,9 @@ test('explains the ledger and submits a reasoned non-zero adjustment', async () 
   await user.type(screen.getByLabelText('Effective on'), '2026-08-15');
   await user.type(screen.getByLabelText('Reason'), 'Correct duplicate allocation.');
   await user.click(screen.getByRole('button', { name: 'Append entitlement adjustment' }));
-  expect(await screen.findByRole('status')).toHaveTextContent(/appended to the ledger/iu);
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    /The entitlement adjustment was added/iu,
+  );
   expect(bodies).toEqual([
     {
       absenceTypeId: 'vacation-v1',

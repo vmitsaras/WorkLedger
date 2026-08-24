@@ -20,7 +20,7 @@ export function HolidaySettingsPage() {
   const [holidayDate, setHolidayDate] = useState('');
   const [preview, setPreview] = useState<HolidayImpactPreviewAdmin>();
   const [message, setMessage] = useState<Readonly<{ kind: 'error' | 'success'; text: string }>>();
-  const messageRef = useRef<HTMLDivElement>(null);
+  const messageRef = useRef<HTMLElement>(null);
   const previewMutation = useMutation({ mutationFn: previewHolidayImpactForAdministration });
   const createMutation = useMutation({ mutationFn: createHolidayForAdministration });
   if (query.isError) throw query.error;
@@ -79,14 +79,14 @@ export function HolidaySettingsPage() {
         description="Add organization-wide date-only holidays after reviewing their calculation impact. Submitted, approved, and locked months remain protected."
       />
       {message === undefined ? null : (
-        <div ref={messageRef} tabIndex={message.kind === 'error' ? -1 : undefined}>
-          <Alert
-            title={message.kind === 'error' ? 'Holiday update failed' : 'Holiday created'}
-            tone={message.kind === 'error' ? 'danger' : 'success'}
-          >
-            <p>{message.text}</p>
-          </Alert>
-        </div>
+        <Alert
+          {...(message.kind === 'error' ? { className: 'outline-none', tabIndex: -1 } : {})}
+          ref={messageRef}
+          title={message.kind === 'error' ? 'Holiday update failed' : 'Holiday created'}
+          tone={message.kind === 'error' ? 'danger' : 'success'}
+        >
+          <p>{message.text}</p>
+        </Alert>
       )}
       <form className="wl-panel grid gap-5" onSubmit={submit} noValidate>
         <div>

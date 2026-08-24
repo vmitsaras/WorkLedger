@@ -73,7 +73,7 @@ test('shows immutable versions and creates a sickness-safe bounded version', asy
   expect(screen.getByLabelText('Request note')).toBeDisabled();
   await user.click(screen.getByRole('button', { name: 'Create absence-type version' }));
   expect(await screen.findByRole('status')).toHaveTextContent(
-    /Existing requests retain their captured version/iu,
+    /Existing requests keep the version they already use/iu,
   );
   expect(bodies).toContainEqual(
     expect.objectContaining({

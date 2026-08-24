@@ -32,7 +32,7 @@ export function AuditPage() {
       <PageHeader
         eyebrow="HR administration"
         title="Domain audit"
-        description="Review organization domain events through redacted, purpose-specific evidence. Technical authentication and session audit data is kept separate."
+        description="Review recorded organizational changes and decisions."
       />
       <AuditEventExplorer
         caption="Redacted organization domain audit events, newest first"

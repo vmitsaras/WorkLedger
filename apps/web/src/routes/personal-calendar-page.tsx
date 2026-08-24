@@ -73,7 +73,7 @@ export function PersonalCalendarPage() {
         </div>
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
           Public holidays and your own absence coverage. The agenda and month grid contain the same
-          authorized information.
+          dates and details.
         </p>
       </Panel>
       <div className="flex flex-wrap gap-2" aria-label="Calendar view">

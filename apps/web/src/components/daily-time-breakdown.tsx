@@ -1,4 +1,5 @@
 import type { TodayAttendance, TodayAttendanceEstimate } from '@workledger/contracts';
+import { Panel } from '@workledger/ui';
 
 import { formatDuration } from '../app/date-time-format.js';
 
@@ -105,7 +106,7 @@ function CalculationGroup({
   title: string;
 }>) {
   return (
-    <article className="wl-panel grid min-w-0 content-start gap-4">
+    <Panel as="article" className="grid min-w-0 content-start gap-4">
       <div className="grid gap-1">
         <h3 className="m-0 text-lg font-bold">{title}</h3>
         <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">{description}</p>
@@ -123,6 +124,6 @@ function CalculationGroup({
           </div>
         ))}
       </dl>
-    </article>
+    </Panel>
   );
 }

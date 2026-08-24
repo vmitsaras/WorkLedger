@@ -1,4 +1,5 @@
 import type { TodayTimelineEvent } from '@workledger/contracts';
+import { Alert, Panel } from '@workledger/ui';
 
 import { formatLocalDate, formatTime } from '../app/date-time-format.js';
 
@@ -30,16 +31,16 @@ export function TodayAttendanceTimeline({
         </h2>
         <p className="m-0 max-w-3xl text-sm leading-6 text-[var(--wl-text-muted)]">
           {events.length === 0
-            ? 'No immutable attendance events are recorded for this organization-local day.'
-            : `${events.length.toString()} immutable attendance ${events.length === 1 ? 'event' : 'events'} in recorded order.`}{' '}
+            ? 'No attendance events are recorded for this organization-local day.'
+            : `${events.length.toString()} attendance ${events.length === 1 ? 'event' : 'events'} in recorded order.`}{' '}
           Times are shown in {timeZone} for {formatLocalDate(localDate)}. Events sharing one time
-          keep their recorded order.
+          keep their recorded order. Original events stay available when a correction is approved.
         </p>
       </div>
       {events.length === 0 ? (
-        <div className="wl-panel">
+        <Panel>
           <p className="m-0">No attendance events have been recorded today.</p>
-        </div>
+        </Panel>
       ) : (
         <ol className="wl-panel wl-timeline-list m-0 grid list-none gap-0 p-0">
           {events.map((event) => {
@@ -67,9 +68,9 @@ export function TodayAttendanceTimeline({
         </ol>
       )}
       {truncated ? (
-        <p className="wl-alert wl-alert-error m-0 rounded-xl border p-4 text-sm">
-          The timeline is too long to show completely. The calculation is marked incomplete.
-        </p>
+        <Alert announce={false} headingLevel="h3" title="Timeline incomplete" tone="danger">
+          <p>The timeline is too long to show completely. The calculation is marked incomplete.</p>
+        </Alert>
       ) : null}
     </section>
   );

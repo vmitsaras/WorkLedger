@@ -571,7 +571,9 @@ test('presents an accessible correction-request form with a focused validation s
   );
 
   expect(await screen.findByRole('heading', { name: 'Current recorded facts' })).toBeVisible();
-  expect(screen.getByText(/Recorded events are immutable/u)).toBeVisible();
+  expect(
+    screen.getByText(/These original events stay available alongside your proposed correction/u),
+  ).toBeVisible();
   await userEvent.setup().click(screen.getByRole('button', { name: 'Submit correction request' }));
   expect(await screen.findByRole('heading', { name: 'There is a problem' })).toBeVisible();
   expect(screen.getByRole('link', { name: /Enter a start time/u })).toHaveAttribute(

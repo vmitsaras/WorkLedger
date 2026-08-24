@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import type { SubmitVacationRequest } from '@workledger/contracts';
+import { Alert, Button, buttonVariants } from '@workledger/ui';
 
 import { ApiClientError, submitVacationRequest } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
@@ -28,8 +29,8 @@ const EMPTY_VALUES: FormValues = Object.freeze({
 });
 
 export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
-  const summaryRef = useRef<HTMLDivElement>(null);
-  const successRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLElement>(null);
+  const successRef = useRef<HTMLElement>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
   const [fieldErrors, setFieldErrors] = useState<Readonly<Record<string, string>>>({});
   const [formError, setFormError] = useState<string>();
@@ -178,22 +179,22 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
             does not change your daily time calculation yet.
           </p>
           <div className="flex flex-wrap gap-3">
-            <button className="wl-button-primary" type="submit" disabled={isSubmitting}>
+            <Button type="submit" isDisabled={isSubmitting}>
               {isSubmitting ? 'Submitting request…' : 'Submit vacation request'}
-            </button>
-            <Link className="wl-button-secondary" to="/requests">
+            </Button>
+            <Link className={buttonVariants({ variant: 'secondary' })} to="/requests">
               Cancel
             </Link>
           </div>
         </form>
       ) : (
-        <div
+        <Alert
+          className="outline-none"
           ref={successRef}
           tabIndex={-1}
-          role="status"
-          className="wl-alert m-0 grid gap-4 rounded-xl border p-4 outline-none"
+          title="Vacation request submitted"
+          tone="success"
         >
-          <h2 className="m-0 text-lg font-bold">Vacation request submitted</h2>
           <p className="m-0">
             Your request covers {success.coverage.length.toString()} segment
             {success.coverage.length === 1 ? '' : 's'} and reserves{' '}
@@ -214,10 +215,13 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
               </li>
             ))}
           </ul>
-          <Link className="wl-button-secondary w-fit" to={`/requests/${success.id}`}>
+          <Link
+            className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
+            to={`/requests/${success.id}`}
+          >
             View request details
           </Link>
-        </div>
+        </Alert>
       )}
     </section>
   );

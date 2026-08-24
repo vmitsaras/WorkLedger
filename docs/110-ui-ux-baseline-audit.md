@@ -143,7 +143,7 @@ stays in local UI state under `/requests/new`; only opaque record identifiers en
 | HR administration/settings | Loading, empty, filtered, create/invite, validation, effective-dated versions, constrained deactivate | Responsive employee records, separated team task, disabled-action recovery, component/browser evidence | Release-level visual regression remains WL-1206 |
 | Domain audit | Filters, empty/results, safe detail, pagination | Shared filter/table/pagination states and purpose-minimized component evidence | Release-level visual regression remains WL-1206 |
 | System operations/audit | Diagnostics loading/healthy/degraded/error; account/session actions; technical audit filters/results/detail | Valid diagnostics, shared states, separated technical projection, component/browser/axe evidence | Release-level visual regression remains WL-1206 |
-| Shared shell/boundaries | Role navigation, drawer, route focus/title, permission denied, not found, session expiry | Focus-managed drawer, reduced motion, skip link, route boundaries | Navigation scale and visual treatment (UI-006, UI-007) |
+| Shared shell/boundaries | Role navigation, drawer, route focus/title, permission denied, not found, session expiry | Focus-managed drawer, reduced motion, skip link, route boundaries, shared alert and route-state adoption | Release-level visual regression remains UI-014 / WL-1206 |
 
 ## 6. Prioritized issue register
 
@@ -160,13 +160,13 @@ requires broader route verification during its owning task.
 | UI-004 | Medium | Dense table actions and later columns are not visually discoverable at narrow width | **Resolved by WL-1203 and WL-1204** / high | Closed |
 | UI-005 | Medium | Horizontal-record and calendar responsive contracts are inconsistent | **Resolved by WL-1201** / high | Closed |
 | UI-006 | Medium | The shell navigation does not scale cleanly for combined-role or long HR inventories | **Resolved by WL-1105** / high | WL-1105 |
-| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | **Foundation and workflow-family adoption complete through WL-1204** / high | WL-1205 consistency pass |
+| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | **Resolved by WL-1205** / high | Closed |
 | UI-008 | Medium | Today repeats the same calculation meaning across labels, values, and narrative formulas | **Resolved by WL-1200** / high | Closed |
 | UI-009 | Medium | Employee directory and team management compete in one long administration route | **Resolved by WL-1204** / high | Closed |
 | UI-010 | Medium | Disabled team deactivation has no adjacent explanation or recovery path | **Resolved by WL-1204** / high | Closed |
 | UI-011 | Medium | Organization identity is hard-coded rather than validated runtime configuration | **Resolved by WL-1103** / high | Closed |
-| UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | **Foundation and workflow-family adoption complete through WL-1204** / high | WL-1205 consistency pass |
-| UI-013 | Medium | Task pages often surface implementation/privacy guarantees as primary explanatory copy | Confirmed / medium | WL-1101, WL-1205 |
+| UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | **Resolved by WL-1205** / high | Closed |
+| UI-013 | Medium | Task pages often surface implementation/privacy guarantees as primary explanatory copy | **Resolved by WL-1205** / high | Closed |
 | UI-014 | Medium | Visual regression and route-state baseline coverage is representative, not systematic | Confirmed / high | WL-1206 |
 | UI-015 | Medium | Existing test coverage did not prevent completed-phase placeholders and route-contract drift | Confirmed / high | WL-1202, WL-1204, WL-1206 |
 | UI-016 | Low | Approvals presents “Clear approval filters” as a persistent peer action even at defaults | **Resolved by WL-1203** / high | Closed |
@@ -333,22 +333,25 @@ requires broader route verification during its owning task.
 ### UI-007 — Recurring UI patterns have no enforceable shared owner
 
 - **Severity:** Medium
-- **Status/confidence:** Foundation complete; route adoption pending / high
+- **Status/confidence:** Resolved by `WL-1205` / high
 - **Evidence:** `WL-1102` established one token owner and an executable CSS boundary. `WL-1104`
   added shared panels, alerts, statuses, filters, pagination, data tables, and route states, and
   `WL-1106` strengthened the checker so an app stylesheet cannot redefine a shared component root.
-  Representative shell, authentication, route-boundary, and Operations call sites now use those
-  contracts. `WL-1200` adopted them on Today, and `WL-1201` adopted them across personal records,
-  daily detail, balances, Calendar, Notifications, and Profile. Remaining workflow families stay
-  assigned to `WL-1202` through `WL-1205`.
-- **Risk:** Visual and accessibility corrections must be repeated route by route, making drift and
-  regression likely.
+  Representative shell, authentication, route-boundary, and Operations call sites use those
+  contracts. `WL-1200` through `WL-1204` adopted them by workflow family. `WL-1205` completed the
+  cross-route sweep, removed the remaining registered legacy alert/action roots and unused route
+  implementations, and made the shared alert contract own dynamic versus persistent announcement,
+  heading level, and programmatic focus.
+- **Resolution:** Feature routes now compose shared `Alert`, `Button`, `Panel`, `DataTable`, and
+  `RouteState` contracts instead of redefining their roots. Static warnings stay in reading order
+  without initial live announcements; mutation failures and results remain focused and announced.
+  Source and CSS boundary checks enforce the ownership split.
 - **Remediation direction:** Adopt the completed shared contracts by workflow family during
   `WL-1200`–`WL-1205`; preserve route-specific business composition outside the UI package and do
   not recreate shared roots in the app stylesheet.
 - **Validation:** Executable unknown-class/token checks, component state matrices, forced-colors and
   reduced-motion tests, and migration of representative employee/manager/admin call sites.
-- **Owner:** Foundation closed by `WL-1102`/`WL-1104`/`WL-1106`; adoption by `WL-1200`–`WL-1205`.
+- **Owner:** Closed by `WL-1102`/`WL-1104`/`WL-1106` and `WL-1200`–`WL-1205`.
 
 ### UI-008 — Today explanation becomes repetitive on small screens
 

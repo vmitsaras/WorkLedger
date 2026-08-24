@@ -109,7 +109,7 @@ export function ApprovalInboxPage() {
       <PageHeader
         eyebrow="Approvals"
         title="Approval inbox"
-        description="Prioritize and review authorized corrections, absence work, cancellations, and monthly periods in one queue."
+        description="Prioritize corrections, absence work, cancellations, and monthly periods that need review."
       />
       <ApprovalFilters
         draft={draft}
@@ -144,7 +144,7 @@ function ApprovalInboxPermissionDenied() {
       <PageHeader
         eyebrow="Route status"
         title="Permission denied"
-        description="Your current account cannot view the approval inbox. No restricted approval details were disclosed."
+        description="Your current account cannot view the approval inbox."
       />
       <Link className={buttonVariants({ variant: 'secondary' })} to="/">
         Go to my home
@@ -238,7 +238,7 @@ function ApprovalFilters({
                   value={draft.team}
                   onChange={(event) => onChange({ ...draft, team: event.target.value })}
                 >
-                  <option value="">All authorized teams</option>
+                  <option value="">All available teams</option>
                   {draft.team !== '' && !teams.some((team) => team.id === draft.team) ? (
                     <option value={draft.team}>Selected current team</option>
                   ) : null}
@@ -300,13 +300,14 @@ function ApprovalFilters({
               </label>
             </div>
             {error === undefined ? null : (
-              <p
+              <Alert
+                headingLevel="h3"
                 id="approval-date-range-error"
-                className="wl-alert wl-alert-error m-0 rounded-xl border p-3"
-                role="alert"
+                title="Check the date range"
+                tone="danger"
               >
-                {error}
-              </p>
+                <p>{error}</p>
+              </Alert>
             )}
             <Button type="submit" className="w-fit" data-route-focus-key="approval-apply-filters">
               Apply filters
@@ -437,7 +438,7 @@ function ApprovalResults({
         onPageChange={onPage}
         pageCount={pageCount}
         previousFocusKey="approval-previous-page"
-        summary={`Page ${pagination.page} of ${pageCount}. ${pagination.total} authorized approval${pagination.total === 1 ? '' : 's'}.`}
+        summary={`Page ${pagination.page} of ${pageCount}. ${pagination.total} approval${pagination.total === 1 ? '' : 's'}.`}
       />
     </section>
   );
@@ -582,7 +583,7 @@ function SortHeader({
 function ApprovalInboxLoading() {
   return (
     <RouteState kind="loading" title="Loading approval inbox">
-      <p>Checking your current authorized queue.</p>
+      <p>Preparing the requests and monthly periods available for review.</p>
     </RouteState>
   );
 }
@@ -672,7 +673,7 @@ function approvalResultSummary(total: number, status: ApprovalInboxStatus): stri
   if (status === 'ACTION_REQUIRED') {
     return `${total.toString()} approval${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} action.`;
   }
-  return `${total.toString()} authorized approval${total === 1 ? '' : 's'} match this view.`;
+  return `${total.toString()} approval${total === 1 ? '' : 's'} match this view.`;
 }
 
 function formatAffectedDates(item: ApprovalInbox['items'][number]): string {

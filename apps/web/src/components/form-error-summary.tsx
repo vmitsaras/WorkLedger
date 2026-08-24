@@ -1,9 +1,11 @@
 import type { RefObject } from 'react';
 
+import { Alert } from '@workledger/ui';
+
 export interface FormErrorSummaryProps {
   fieldErrors: Readonly<Record<string, string>>;
   formError: string | undefined;
-  summaryRef: RefObject<HTMLDivElement | null>;
+  summaryRef: RefObject<HTMLElement | null>;
 }
 
 export function FormErrorSummary({ fieldErrors, formError, summaryRef }: FormErrorSummaryProps) {
@@ -11,13 +13,13 @@ export function FormErrorSummary({ fieldErrors, formError, summaryRef }: FormErr
   if (entries.length === 0 && formError === undefined) return null;
 
   return (
-    <div
+    <Alert
+      className="outline-none"
       ref={summaryRef}
-      role="alert"
       tabIndex={-1}
-      className="wl-alert wl-alert-error grid gap-2 rounded-xl border p-4 outline-none"
+      title="There is a problem"
+      tone="danger"
     >
-      <h2 className="m-0 text-base font-bold">There is a problem</h2>
       {formError === undefined ? null : <p className="m-0 text-sm">{formError}</p>}
       {entries.length === 0 ? null : (
         <ul className="m-0 grid gap-1 pl-5 text-sm">
@@ -36,6 +38,6 @@ export function FormErrorSummary({ fieldErrors, formError, summaryRef }: FormErr
           ))}
         </ul>
       )}
-    </div>
+    </Alert>
   );
 }

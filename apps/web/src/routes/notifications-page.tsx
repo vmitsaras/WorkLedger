@@ -217,16 +217,16 @@ function NotificationCard({
             ? 'Open monthly period'
             : 'Open requests'}
         </Link>
-        <button
+        <Button
           type="button"
-          className="wl-button-secondary"
           aria-disabled={unavailable}
-          onClick={() => {
+          variant="secondary"
+          onPress={() => {
             if (!unavailable) onDismiss();
           }}
         >
           {pending ? 'Dismissing…' : dismissed ? 'Dismissed' : 'Dismiss notification'}
-        </button>
+        </Button>
       </div>
     </>
   );

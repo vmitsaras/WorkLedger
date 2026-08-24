@@ -109,7 +109,7 @@ test('creates a new version without changing assignments', async () => {
   await user.click(screen.getByRole('button', { name: 'Create schedule version' }));
 
   expect(await screen.findByRole('status')).toHaveTextContent(
-    /Employee assignments are unchanged/iu,
+    /Employee assignments remain unchanged/iu,
   );
   expect(requestBodies).toEqual([
     {
@@ -141,7 +141,7 @@ test('previews and creates a bounded immutable time-policy version', async () =>
   await user.click(screen.getByRole('button', { name: 'Create time-policy version' }));
 
   expect(await screen.findByRole('status')).toHaveTextContent(
-    /Employee assignments are unchanged/iu,
+    /Employee assignments remain unchanged/iu,
   );
   expect(requestBodies).toContainEqual({
     name: 'Standard policy',

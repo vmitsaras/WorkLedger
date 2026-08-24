@@ -82,7 +82,7 @@ export function RequestHistoryPage() {
       </PageHeader>
       <FilterBar
         title="Filter request history"
-        description="Filters are stored in the address so this view can be bookmarked."
+        description="Narrow your request history by workflow or current status."
         onSubmit={applyFilters}
       >
         <label className="grid gap-2 text-sm font-semibold" htmlFor="request-status-filter">

@@ -66,7 +66,7 @@ export function RequestDetailPage() {
         <PageHeader
           eyebrow="Requests"
           title="Request details"
-          description="Loading the request record and its preserved history."
+          description="Loading the current status, request details, and decision history."
         />
         <RouteState kind="loading" title="Loading request record">
           <p>WorkLedger is loading the current state and evidence.</p>
@@ -86,7 +86,7 @@ export function RequestDetailPage() {
           }
           description={
             denied
-              ? 'You cannot view this request. No restricted details were disclosed.'
+              ? 'You cannot view this request.'
               : missing
                 ? 'This request does not exist or is no longer available.'
                 : 'WorkLedger could not load this request. Your record was not changed.'
@@ -246,7 +246,8 @@ function AbsenceEvidence({
           Coverage and effect
         </h2>
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          Exact absence details are shown only on this owner authorized record.
+          These absence details are available here so you can review your own request and its
+          current effect.
         </p>
       </div>
       <Panel className="grid gap-3" density="balanced">
@@ -519,7 +520,7 @@ function historyActionLabel(action: PersonalRequestHistory['action']): string {
 
 function actorLabel(actor: PersonalRequestHistory['actor']): string {
   if (actor === 'SELF') return 'you';
-  if (actor === 'REVIEWER') return 'an authorized reviewer';
+  if (actor === 'REVIEWER') return 'a reviewer';
   return 'WorkLedger';
 }
 

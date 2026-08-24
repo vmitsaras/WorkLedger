@@ -266,6 +266,10 @@
     color: var(--wl-state-info-text);
     padding: var(--wl-space-4);
   }
+  .wl-alert:focus-visible {
+    outline: 3px solid var(--wl-focus-ring);
+    outline-offset: 3px;
+  }
   .wl-alert--success {
     border-color: var(--wl-state-success-border);
     background: var(--wl-state-success-surface);

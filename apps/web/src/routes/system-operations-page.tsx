@@ -21,7 +21,7 @@ export function SystemOperationsPage() {
       <PageHeader
         eyebrow="System administration"
         title="Operations"
-        description="Service health and technical diagnostics. Contains no HR or domain data."
+        description="Check service health, affected dependencies, and the next operator action."
       />
 
       {diagnostics === undefined ? (
@@ -30,6 +30,7 @@ export function SystemOperationsPage() {
         <div className="grid gap-6">
           {diagnostics.health === 'healthy' ? null : (
             <Alert
+              announce={false}
               title={
                 diagnostics.health === 'degraded'
                   ? 'Service is degraded'

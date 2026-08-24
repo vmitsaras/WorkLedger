@@ -2,19 +2,20 @@
 
 **Current phase:** Phase 12 — Workflow UX remediation and product polish
 **Project readiness:** Stage 5 of 5 — Production and UI-foundation gates complete
-**Phase progress:** Phase 11 complete — 5 of 7 Phase 12 tasks complete
+**Phase progress:** Phase 11 complete — 6 of 7 Phase 12 tasks complete
 **Current milestone:** UI foundation complete — version 0.12.0
-**Active task:** `WL-1205` (next)
-**Status:** WL-1204 complete — administration, report, audit, and system workflow UX remediated
-**Last verified:** 2026-08-24
+**Active task:** `WL-1206` (next)
+**Status:** WL-1205 complete — cross-route copy, state, recovery, responsive, and motion consistency complete
+**Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 11 is complete at `0.12.0`. `WL-1200` through `WL-1204` have applied Quiet Ledger to Today,
+Phase 11 is complete at `0.12.0`. `WL-1200` through `WL-1205` have applied Quiet Ledger to Today,
 personal records, request/monthly workflows, manager decisions, administration, settings, reports,
-and both audit audiences. The technical audit placeholder is closed through a separate minimized
-system-admin projection. The next bounded slice is `WL-1205`: complete the cross-route microcopy,
-responsive, state-consistency, motion, and recovery pass.
+both audit audiences, and shared cross-route states and copy. The technical audit placeholder is
+closed through a separate minimized system-admin projection. The next bounded slice is `WL-1206`:
+execute the visual-regression, usability, accessibility, and UI release gate and bump every
+workspace manifest to `0.13.0` only when that phase gate passes.
 
 ## Verified decisions
 
@@ -283,6 +284,10 @@ responsive, state-consistency, motion, and recovery pass.
 - `packages/ui` owns local semantic button, link, text-field, dialog, and drawer wrappers plus one
   explicit token stylesheet export; `apps/web` composes the authenticated Data Mode application
   shell and route surfaces without importing authoritative domain or database code.
+- Shared alerts own their heading, urgency role, optional static presentation, and programmatic
+  focus. Persistent route warnings do not announce on initial render; newly surfaced failures and
+  mutation outcomes produce one focused or polite result. Canonical loading, empty, permission,
+  not-found, and dependency outcomes compose the shared route-state contract.
 - Visible focus uses React Aria focus-visible state with outline/forced-colors support. Reduced motion removes dialog spatial animation and preserves immediate state feedback without a global animation-duration reset.
 - React Aria owns modal containment, Escape dismissal, initial dialog focus, and trigger focus restoration; component and Chromium tests cover semantics, keyboard behavior, axe, and reduced-motion computed styles.
 - shadcn's current `info` command requires source aliases that conflict with ADR `0011`; WorkLedger retains alias-free relative UI imports and explicitly requests/adapts React Aria registry source instead (`D-007`).
@@ -1844,19 +1849,45 @@ responsive, state-consistency, motion, and recovery pass.
   unauthenticated self-context request returned the expected structured `401`. No API contract,
   migration SQL, domain, permission, dependency, or workspace version changed.
 
+**2026-08-25 — WL-1205 cross-route consistency and recovery pass**
+
+- Extended the shared alert with a forwarded focus ref, nested heading choice, and explicit static
+  presentation. Complex validation and mutation results retain one live owner, while persistent
+  warnings remain normal semantic content without an initial announcement.
+- Migrated the remaining canonical alert, action, content, loading, permission, not-found, and
+  dependency states across employee, manager, HR, report, audit, and system routes. Removed the
+  app-owned legacy alert/action roots and two unregistered route modules after import checks.
+- Rewrote primary explanatory text to name the current task, record effect, and valid recovery
+  before supporting privacy, authorization, version, or history guarantees. Those guarantees stay
+  visible where they affect a decision; no purpose-limited field was added or exposed.
+- Monthly access/dependency outcomes now update the document title, focus the route heading, hide
+  invalid retry actions, and restore the normal monthly presentation after successful recovery.
+  Approval validation links its field to the single focused summary instead of duplicating text.
+- Chromium verifies 320 px approval containment, keyboard-scrollable evidence, field recovery,
+  forced colors, reduced-motion controls, 390 px drawer focus, narrow team records, and axe.
+- Verification passed formatting, ESLint, source and CSS boundaries, strict TypeScript, all 37
+  tooling tests, all 343 unit/component tests, 13 available integration tests with 45 expected
+  PostgreSQL-dependent skips, all 34 Playwright scenarios, and the production build/public imports.
+  Bundle budgets pass at 359,302 largest JavaScript bytes, 886,485 total JavaScript bytes, 239,296
+  gzip JavaScript bytes, and 46,859 CSS bytes. See
+  `docs/122-cross-route-consistency-recovery-pass.md` for the evidence boundary.
+- `UI-007`, `UI-012`, and `UI-013` are closed. No API contract, database, migration, domain rule,
+  authorization, authentication, session, CSRF, export, audit, browser persistence, dependency,
+  publication, deployment, or workspace version changed.
+
 ## Current blockers
 
-No decision blocks `WL-1205`. `UI-001`, `UI-002`, `UI-004`, `UI-009`, `UI-010`, and `UI-016` are
-closed by the completed Phase 12 workflow passes. `D-502` manual assistive-technology evidence and
-systematic visual regression `UI-014` remain open for the Phase 12 UI release gate (`WL-1206`). The
-temporary
+No decision blocks `WL-1206`. `UI-001`, `UI-002`, `UI-004`, `UI-007`, `UI-009`, `UI-010`,
+`UI-012`, `UI-013`, and `UI-016` are closed by the completed Phase 12 workflow passes. `D-502`
+manual assistive-technology evidence and systematic visual regression `UI-014` remain open for the
+Phase 12 UI release gate (`WL-1206`). The temporary
 Astro backup is recoverable at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`,
 but the public site remains deferred to `WL-1300`.
 
 ## Next task
 
-`WL-1205 — Complete the cross-route microcopy, responsive, state-consistency, motion, and recovery
-pass.`
+`WL-1206 — Pass visual-regression, usability, accessibility, and UI release gates and bump all
+workspace manifests to 0.13.0.`
 
 ## Update rules
 

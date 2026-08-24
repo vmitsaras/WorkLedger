@@ -14,6 +14,7 @@ import {
   type ReportSort,
 } from '@workledger/contracts';
 import {
+  Alert,
   Button,
   buttonVariants,
   DataTable,
@@ -177,7 +178,7 @@ function ReportFilters({
         <>
           Applied: {formatLocalDate(query.from)} through {formatLocalDate(query.to)};{' '}
           {sortLabel(query.sort).toLocaleLowerCase()}, {query.direction.toLocaleLowerCase()}.
-          {query.employeeId === undefined ? '' : ' One authorized employee target is applied.'}
+          {query.employeeId === undefined ? '' : ' One employee filter is applied.'}
         </>
       }
       onSubmit={onSubmit}
@@ -304,13 +305,12 @@ function ReportResults({
         </p>
       </div>
       {data.partial ? (
-        <section className="wl-alert wl-alert--warning rounded-xl border p-4">
-          <h3 className="m-0 text-base font-bold">Partial report</h3>
+        <Alert announce={false} headingLevel="h3" title="Partial report" tone="warning">
           <p>
             This report is partial because one or more daily records are incomplete. Totals may
             change after those records are resolved.
           </p>
-        </section>
+        </Alert>
       ) : null}
       <ReportSummary data={data} />
       {data.rows.length === 0 ? (

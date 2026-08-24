@@ -3,6 +3,7 @@ import type {
   CalculationWarningCode,
   DailyTimeAttention,
 } from '@workledger/contracts';
+import { Alert } from '@workledger/ui';
 
 type AttentionItem = Readonly<{
   action: string;
@@ -27,13 +28,13 @@ const BLOCKER_ATTENTION: Readonly<Record<CalculationBlockerCode, AttentionItem>>
   },
   ATTENDANCE_INVALID_EVENT_ORDER: {
     action: 'Review the recorded events. This historical record cannot be changed from this page.',
-    description: 'The immutable attendance events cannot be reconstructed in a valid order.',
+    description: 'The recorded attendance events cannot be reconstructed in a valid order.',
     href: 'EVENTS',
     title: 'Attendance event order needs review',
   },
   ATTENDANCE_INVALID_EVENT_PRECISION: {
     action: 'Review the recorded events. This historical record cannot be changed from this page.',
-    description: 'An immutable attendance event is not aligned to a whole minute.',
+    description: 'A recorded attendance event is not aligned to a whole minute.',
     href: 'EVENTS',
     title: 'Attendance event time needs review',
   },
@@ -181,8 +182,12 @@ function AttentionGroup({
   title: string;
 }>) {
   return (
-    <div className={`wl-alert ${kind === 'blocker' ? 'wl-alert--danger' : 'wl-alert--warning'}`}>
-      <h3 className="m-0 text-lg font-bold">{title}</h3>
+    <Alert
+      announce={false}
+      headingLevel="h3"
+      title={title}
+      tone={kind === 'blocker' ? 'danger' : 'warning'}
+    >
       <ul className="mb-0 mt-3 grid gap-3 pl-5">
         {items.map((item) => (
           <li key={item.title} className="grid gap-1">
@@ -201,7 +206,7 @@ function AttentionGroup({
           </li>
         ))}
       </ul>
-    </div>
+    </Alert>
   );
 }
 

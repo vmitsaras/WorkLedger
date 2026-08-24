@@ -576,7 +576,8 @@ automated accessibility before version `0.12.0`.
 - `WL-1202`: type-neutral request hub/detail and record-decision archetypes.
 - `WL-1203`: decision queue, team status/calendar, filters, and responsive row action.
 - `WL-1204`: compact operational administration, reports, domain/technical audit, and Operations.
-- `WL-1205`: cross-route copy, responsive, state, motion, and recovery consistency.
+- `WL-1205`: cross-route copy, responsive, state, motion, and recovery consistency. **Complete;**
+  see `docs/122-cross-route-consistency-recovery-pass.md`.
 - `WL-1206`: visual, usability, accessibility, and manual-AT release evidence.
 
 ## 16. Validation matrix

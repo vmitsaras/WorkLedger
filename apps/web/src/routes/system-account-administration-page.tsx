@@ -92,7 +92,7 @@ export function SystemAccountAdministrationPage() {
       <PageHeader
         eyebrow="System administration"
         title="Accounts and sessions"
-        description="Manage technical account access, system-administrator authority, and sessions without opening employee or HR domain records."
+        description="Manage technical sign-in access, system administrator roles, and active sessions."
       />
 
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />

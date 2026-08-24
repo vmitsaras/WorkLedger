@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom';
 import { Link, useParams } from 'react-router';
 
 import type { MonthlyPeriod } from '@workledger/contracts';
-import { Button, DataTable, Dialog, Panel, StatusBadge } from '@workledger/ui';
+import { Alert, Button, DataTable, Dialog, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -14,16 +14,18 @@ import {
 } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { monthlyPeriodQuery } from '../app/query.js';
+import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { MonthlyPeriodPrintView } from '../components/monthly-period-print.js';
 import { PageHeader } from '../components/page-header.js';
 
 export function MonthlyPeriodPage() {
   const periodId = useParams()['periodId'];
   const query = useQuery(monthlyPeriodQuery(periodId ?? ''));
+  useBoundaryPresentation(query.isError ? monthlyErrorTitle(query.error) : 'Monthly period');
   const queryClient = useQueryClient();
   const statusHeadingRef = useRef<HTMLHeadingElement>(null);
-  const submissionErrorRef = useRef<HTMLDivElement>(null);
-  const reviewErrorRef = useRef<HTMLDivElement>(null);
+  const submissionErrorRef = useRef<HTMLElement>(null);
+  const reviewErrorRef = useRef<HTMLElement>(null);
   const [warningAcknowledged, setWarningAcknowledged] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [reviewReason, setReviewReason] = useState('');
@@ -89,7 +91,7 @@ export function MonthlyPeriodPage() {
       setReviewReasonError(null);
       setReviewSuccessMessage(
         variables.action === 'APPROVE'
-          ? 'Monthly period approved. The immutable approved record is ready for a separate lock.'
+          ? 'Monthly period approved. The approved baseline is ready for a separate lock.'
           : 'Changes requested. The employee can now correct and resubmit the month.',
       );
     },
@@ -156,11 +158,7 @@ export function MonthlyPeriodPage() {
       </MonthlyPeriodFrame>
     );
   if (query.isError || query.data === undefined) {
-    return (
-      <MonthlyPeriodFrame>
-        <MonthlyError error={query.error} retry={() => void query.refetch()} />
-      </MonthlyPeriodFrame>
-    );
+    return <MonthlyError error={query.error} retry={() => void query.refetch()} />;
   }
 
   const period = query.data;
@@ -179,9 +177,7 @@ export function MonthlyPeriodPage() {
             }
             flushSync(() => setPrintPeriod(refreshed.data));
             window.print();
-            setPrintStatus(
-              'Print dialog opened with the refreshed purpose-minimized monthly record.',
-            );
+            setPrintStatus('Print dialog opened with the latest monthly record.');
           } catch (error) {
             setPrintStatus(printErrorMessage(error));
           } finally {
@@ -204,8 +200,7 @@ export function MonthlyPeriodPage() {
                 {workflowLabel(period.workflow.status)}
               </h2>
               <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-                Workflow version {period.workflow.periodVersion.toString()} · snapshot schema{' '}
-                {period.snapshotVersion.schemaVersion.toString()}
+                Review version {period.workflow.periodVersion.toString()}
               </p>
             </div>
             <StatusBadge
@@ -218,8 +213,8 @@ export function MonthlyPeriodPage() {
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
             {period.readiness.completeDateCount.toString()} of{' '}
             {period.readiness.coveredDateCount.toString()} covered employment dates have complete
-            daily calculations. The source fingerprint changes whenever the reviewed source set
-            changes.
+            daily calculations. If a source record changes, review the updated month before taking
+            the next action.
           </p>
         </Panel>
 
@@ -301,7 +296,7 @@ function MonthlyPeriodFrame({
           title="Monthly period"
           description={
             period === undefined
-              ? 'Review monthly calculations, blockers, warnings, and ledger reconciliation.'
+              ? 'Review the month’s status, totals, issues, and available decisions.'
               : `${period.employeeDisplayName} · ${formatLocalDate(period.monthStart)} to ${formatLocalDate(period.monthEnd)} · ${period.timeZone}`
           }
         >
@@ -316,10 +311,8 @@ function MonthlyPeriodFrame({
                 {printAction.isPending ? 'Preparing print…' : 'Print monthly record'}
               </Button>
               <p className="m-0 max-w-2xl text-sm text-[var(--wl-text-muted)]">
-                Printing refreshes current authorization first. The print contains monthly status,
-                totals, daily values, the approved baseline, and post-lock deltas where present; it
-                omits internal identifiers, sickness classification, notes, decision reasons, and
-                reviewer comments.
+                The print uses the latest monthly status, totals, daily values, approved baseline,
+                and later adjustments. Private absence details and decision reasons are omitted.
               </p>
               {printAction.status === null ? null : (
                 <p
@@ -355,14 +348,16 @@ function AttentionSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
         </p>
       </div>
       {blockers.length === 0 ? (
-        <p className="wl-alert wl-alert-success m-0 rounded-xl border p-4">
-          No calculation or ledger blocker is present in this review version.
-        </p>
+        <Alert announce={false} headingLevel="h3" title="No blockers" tone="success">
+          <p>This review version has no issue that prevents submission.</p>
+        </Alert>
       ) : (
-        <div className="wl-alert wl-alert-error rounded-xl border p-4">
-          <h3 className="m-0 text-lg font-bold">
-            {blockers.length.toString()} blocker{blockers.length === 1 ? '' : 's'}
-          </h3>
+        <Alert
+          announce={false}
+          headingLevel="h3"
+          title={`${blockers.length.toString()} blocker${blockers.length === 1 ? '' : 's'}`}
+          tone="danger"
+        >
           <ul className="mb-0 mt-3 grid gap-2 pl-5">
             {blockers.map((blocker, index) => (
               <li key={`${blocker.localDate ?? 'period'}-${blocker.code}-${index.toString()}`}>
@@ -384,17 +379,19 @@ function AttentionSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
               </li>
             ))}
           </ul>
-        </div>
+        </Alert>
       )}
       {warnings.length === 0 ? (
         <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
           No non-blocking warning is present in this review version.
         </p>
       ) : (
-        <div className="wl-alert wl-alert-warning rounded-xl border p-4">
-          <h3 className="m-0 text-lg font-bold">
-            {warnings.length.toString()} warning{warnings.length === 1 ? '' : 's'}
-          </h3>
+        <Alert
+          announce={false}
+          headingLevel="h3"
+          title={`${warnings.length.toString()} warning${warnings.length === 1 ? '' : 's'}`}
+          tone="warning"
+        >
           <ul className="mb-0 mt-3 grid gap-2 pl-5">
             {warnings.map((warning) => (
               <li key={`${warning.localDate}-${warning.code}-${warning.recordId}`}>
@@ -406,7 +403,7 @@ function AttentionSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
               </li>
             ))}
           </ul>
-        </div>
+        </Alert>
       )}
     </section>
   );
@@ -423,7 +420,7 @@ function SubmissionSection({
   warningAcknowledged,
 }: Readonly<{
   error: unknown;
-  errorRef: RefObject<HTMLDivElement | null>;
+  errorRef: RefObject<HTMLElement | null>;
   isPending: boolean;
   onAcknowledgementChange: (checked: boolean) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -445,20 +442,21 @@ function SubmissionSection({
       </div>
 
       {successMessage === null ? null : (
-        <p className="wl-alert wl-alert-success m-0 rounded-xl border p-4" role="status">
-          {successMessage}
-        </p>
+        <Alert headingLevel="h3" title="Month submitted" tone="success">
+          <p>{successMessage}</p>
+        </Alert>
       )}
       {error === null ? null : (
-        <div
-          className="wl-alert wl-alert-error grid gap-2 rounded-xl border p-4"
+        <Alert
+          className="outline-none"
+          headingLevel="h3"
           ref={errorRef}
-          role="alert"
           tabIndex={-1}
+          title="The month was not submitted"
+          tone="danger"
         >
-          <h3 className="m-0 text-lg font-bold">The month was not submitted</h3>
           <p className="m-0">{submissionErrorMessage(error)}</p>
-        </div>
+        </Alert>
       )}
 
       {canSubmit ? (
@@ -483,13 +481,13 @@ function SubmissionSection({
           ) : (
             <p className="m-0">No warning acknowledgement is required for this source version.</p>
           )}
-          <button
-            className="wl-button-primary w-fit"
-            disabled={isPending || (hasWarnings && !warningAcknowledged)}
+          <Button
+            className="w-fit"
+            isDisabled={isPending || (hasWarnings && !warningAcknowledged)}
             type="submit"
           >
             {isPending ? 'Submitting…' : 'Submit month'}
-          </button>
+          </Button>
           {hasWarnings && !warningAcknowledged ? (
             <p className="m-0 text-sm text-[var(--wl-text-muted)]">
               Review and acknowledge the current warnings to enable submission.
@@ -521,7 +519,7 @@ function ReviewerSection({
   successMessage,
 }: Readonly<{
   error: unknown;
-  errorRef: RefObject<HTMLDivElement | null>;
+  errorRef: RefObject<HTMLElement | null>;
   isPending: boolean;
   lockConfirmationOpen: boolean;
   onApprove: () => void;
@@ -545,22 +543,23 @@ function ReviewerSection({
           Reviewer decision
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Approval creates an immutable record. Lock month is a separate permanent action.
+          Approve when the month is ready. Lock month is a separate permanent action.
         </p>
       </div>
       {successMessage === null ? null : (
-        <p className="wl-alert wl-alert-success m-0 rounded-xl border p-4" role="status">
-          {successMessage}
-        </p>
+        <Alert headingLevel="h3" title="Monthly record updated" tone="success">
+          <p>{successMessage}</p>
+        </Alert>
       )}
       {error === null && reasonError === null ? null : (
-        <div
-          className="wl-alert wl-alert-error grid gap-2 rounded-xl border p-4"
+        <Alert
+          className="outline-none"
+          headingLevel="h3"
           ref={errorRef}
-          role="alert"
           tabIndex={-1}
+          title="No reviewer action was recorded"
+          tone="danger"
         >
-          <h3 className="m-0 text-lg font-bold">No reviewer action was recorded</h3>
           <p className="m-0">
             {reasonError ?? reviewErrorMessage(error)}
             {reasonError === null ? null : (
@@ -570,7 +569,7 @@ function ReviewerSection({
               </>
             )}
           </p>
-        </div>
+        </Alert>
       )}
       {hasReviewerAction ? (
         <div className="grid gap-5 rounded-xl border border-[var(--wl-border)] p-4">
@@ -593,8 +592,8 @@ function ReviewerSection({
                 className="m-0 text-sm text-[var(--wl-text-muted)]"
                 id="monthly-review-reason-help"
               >
-                At least 10 characters. The employee can read this reason on the restricted monthly
-                detail; it is omitted from notifications and the approval inbox.
+                At least 10 characters. The employee can read this reason on their monthly detail;
+                it is omitted from notifications and the approval inbox.
               </p>
               <Button
                 className="w-fit"
@@ -662,7 +661,7 @@ function ApprovedRecordSection({ period }: Readonly<{ period: MonthlyPeriod }>) 
           Approved record
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Immutable approval evidence is preserved even when changes are later requested.
+          This approved baseline stays available if changes are requested later.
         </p>
       </div>
       {record === null ? (
@@ -712,8 +711,8 @@ function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod
           Current adjusted view
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          The approved record above remains immutable. This view adds the ordered post-lock
-          correction and absence-cancellation chain to that baseline.
+          The approved baseline above stays unchanged. This view adds the accepted corrections and
+          absence cancellations in order.
         </p>
       </div>
       <Panel density="balanced">
@@ -933,34 +932,75 @@ function MinuteCell({
 
 function MonthlyLoading() {
   return (
-    <div
-      role="progressbar"
-      aria-busy="true"
-      aria-label="Loading monthly period"
-      className="h-2 rounded-full bg-[var(--wl-surface-subtle)]"
-    />
+    <RouteState kind="loading" title="Loading monthly period">
+      <p>Preparing the current status, totals, issues, and available actions.</p>
+    </RouteState>
   );
 }
 
 function MonthlyError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
   const code = error instanceof ApiClientError ? error.code : null;
+  const title = monthlyErrorTitle(error);
   const message =
     code === 'ACCESS_DENIED'
       ? 'Your current role or reporting scope cannot view this monthly period.'
       : code === 'ROUTE_NOT_FOUND'
         ? 'This monthly period is unavailable.'
         : 'The monthly period could not be loaded. Check your connection and try again.';
-  return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
+  const state = (
+    <RouteState
+      actions={
+        code !== 'ACCESS_DENIED' && code !== 'ROUTE_NOT_FOUND' ? (
+          <Button type="button" onPress={retry} variant="secondary">
+            Try again
+          </Button>
+        ) : undefined
+      }
+      actionHref="/my-time"
+      actionLabel="Return to My time"
+      kind={
+        code === 'ACCESS_DENIED'
+          ? 'permission-denied'
+          : code === 'ROUTE_NOT_FOUND'
+            ? 'not-found'
+            : 'error'
+      }
+      title={
+        code === 'ACCESS_DENIED'
+          ? 'This monthly record is outside your review scope'
+          : code === 'ROUTE_NOT_FOUND'
+            ? 'This monthly record is not available'
+            : 'The monthly record could not be loaded'
+      }
+    >
       <p className="m-0">{message}</p>
-      {code !== 'ACCESS_DENIED' && code !== 'ROUTE_NOT_FOUND' ? (
-        <button className="wl-button-secondary w-fit" type="button" onClick={retry}>
-          Try again
-        </button>
-      ) : null}
-      <Link to="/my-time">Return to My time</Link>
-    </div>
+    </RouteState>
   );
+  return (
+    <section className="grid max-w-2xl gap-6">
+      <PageHeader
+        eyebrow="Route status"
+        title={title}
+        description={
+          code === 'ACCESS_DENIED'
+            ? 'This monthly record is outside your current review scope.'
+            : 'Choose a recovery action to continue your monthly work.'
+        }
+      />
+      {code === 'ACCESS_DENIED' || code === 'ROUTE_NOT_FOUND' ? (
+        state
+      ) : (
+        <div role="alert">{state}</div>
+      )}
+    </section>
+  );
+}
+
+function monthlyErrorTitle(error: unknown): string {
+  const code = error instanceof ApiClientError ? error.code : null;
+  if (code === 'ACCESS_DENIED') return 'Permission denied';
+  if (code === 'ROUTE_NOT_FOUND') return 'Monthly period not found';
+  return 'Monthly period unavailable';
 }
 
 function printErrorMessage(error: unknown): string {

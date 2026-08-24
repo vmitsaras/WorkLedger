@@ -12,6 +12,7 @@ import {
   Panel,
   RouteState,
   StatusBadge,
+  buttonVariants,
 } from '@workledger/ui';
 
 import { ApiClientError } from '../app/api-client.js';
@@ -80,7 +81,7 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
           </div>
           {period.view === 'MONTH' && period.monthlyPeriodId !== null && !balancesOnly ? (
             <Link
-              className="wl-button-secondary inline-flex"
+              className={buttonVariants({ variant: 'secondary', className: 'inline-flex' })}
               to={`/monthly-periods/${encodeURIComponent(period.monthlyPeriodId)}`}
             >
               Review monthly period
@@ -111,7 +112,7 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
       <FilterBar
         onSubmit={(event) => event.preventDefault()}
         title="Choose time period"
-        description="The selected period and ledger page are kept in the URL."
+        description="Choose a weekly or monthly view and the date you want to review."
       >
         <div className="grid gap-2">
           <span className="text-sm font-semibold">View</span>
@@ -141,7 +142,11 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
       </FilterBar>
 
       {balance.excludedIncompleteDates.length > 0 ? (
-        <Alert title="Projected balance excludes incomplete records" tone="warning">
+        <Alert
+          announce={false}
+          title="Projected balance excludes incomplete records"
+          tone="warning"
+        >
           <p className="m-0">
             Review {balance.excludedIncompleteDates.map(formatLocalDate).join(', ')} before relying
             on the projected total.

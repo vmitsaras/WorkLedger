@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import type { SubmitSicknessReport } from '@workledger/contracts';
+import { Alert, Button, buttonVariants } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -31,8 +32,8 @@ const EMPTY_VALUES: FormValues = Object.freeze({
 });
 
 export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
-  const summaryRef = useRef<HTMLDivElement>(null);
-  const successRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLElement>(null);
+  const successRef = useRef<HTMLElement>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
   const [fieldErrors, setFieldErrors] = useState<Readonly<Record<string, string>>>({});
   const [formError, setFormError] = useState<string>();
@@ -197,22 +198,22 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
             acknowledgement does not change the report’s effect.
           </p>
           <div className="flex flex-wrap gap-3">
-            <button className="wl-button-primary" type="submit" disabled={submitting}>
+            <Button type="submit" isDisabled={submitting}>
               {submitting ? 'Reporting sickness…' : 'Report sickness'}
-            </button>
-            <Link className="wl-button-secondary" to="/requests/new">
+            </Button>
+            <Link className={buttonVariants({ variant: 'secondary' })} to="/requests/new">
               Cancel
             </Link>
           </div>
         </form>
       ) : (
-        <div
+        <Alert
+          className="outline-none"
           ref={successRef}
           tabIndex={-1}
-          role="status"
-          className="wl-alert m-0 grid gap-4 rounded-xl border p-4 outline-none"
+          title="Sickness reported"
+          tone="success"
         >
-          <h2 className="m-0 text-lg font-bold">Sickness reported</h2>
           <p className="m-0">Your sickness report is effective and awaiting acknowledgement.</p>
           <ul className="m-0 grid gap-1 pl-5 text-sm" aria-label="Reported sickness coverage">
             {success.coverage.map((coverage) => (
@@ -231,14 +232,15 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
             </p>
           ) : (
             <div className="grid gap-2">
-              <button
-                className="wl-button-secondary w-fit"
+              <Button
+                className="w-fit"
                 type="button"
-                disabled={cancellationPending}
-                onClick={() => void requestCancellation()}
+                isDisabled={cancellationPending}
+                onPress={() => void requestCancellation()}
+                variant="secondary"
               >
                 {cancellationPending ? 'Requesting cancellation…' : 'Request cancellation'}
-              </button>
+              </Button>
               <p className="m-0 text-sm text-[var(--wl-text-muted)]">
                 A cancellation does not remove your report until it is approved.
               </p>
@@ -249,10 +251,13 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
               )}
             </div>
           )}
-          <Link className="wl-button-secondary w-fit" to={`/requests/${success.id}`}>
+          <Link
+            className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
+            to={`/requests/${success.id}`}
+          >
             View request details
           </Link>
-        </div>
+        </Alert>
       )}
     </section>
   );

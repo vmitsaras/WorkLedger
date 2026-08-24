@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -160,4 +161,25 @@ test('maps every shared alert tone to its semantic root modifier', () => {
   expect(screen.getByRole('status', { name: 'Success' })).toHaveClass('wl-alert--success');
   expect(screen.getByRole('alert', { name: 'Warning' })).toHaveClass('wl-alert--warning');
   expect(screen.getByRole('alert', { name: 'Danger' })).toHaveClass('wl-alert--danger');
+});
+
+test('supports static and focus managed alert presentation without duplicate announcements', () => {
+  const alertRef = createRef<HTMLElement>();
+  render(
+    <>
+      <Alert announce={false} headingLevel="h3" title="Current warning" tone="warning">
+        Review this warning before continuing.
+      </Alert>
+      <Alert ref={alertRef} tabIndex={-1} title="Update failed" tone="danger">
+        Nothing was changed. Try again.
+      </Alert>
+    </>,
+  );
+
+  expect(screen.getByRole('heading', { level: 3, name: 'Current warning' })).toBeVisible();
+  expect(screen.queryByRole('alert', { name: 'Current warning' })).not.toBeInTheDocument();
+  const updateFailure = screen.getByRole('alert', { name: 'Update failed' });
+  expect(updateFailure).toBe(alertRef.current);
+  updateFailure.focus();
+  expect(updateFailure).toHaveFocus();
 });

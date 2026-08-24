@@ -1,7 +1,7 @@
 import type { RefObject } from 'react';
 
 import type { AttendanceCommand, TodayAttendance } from '@workledger/contracts';
-import { Button, Dialog } from '@workledger/ui';
+import { Alert, Button, Dialog } from '@workledger/ui';
 
 import { ApiClientError, type AttendanceCommandIntent } from '../app/api-client.js';
 
@@ -129,27 +129,26 @@ export function AttendanceRecovery({
   if (mode === null) return null;
   if (mode === 'RECONNECTING') {
     return (
-      <div className="wl-alert wl-alert--info" role="status">
+      <Alert headingLevel="h3" title="Connection restored" tone="info">
         <p className="m-0 text-sm font-semibold">
-          Connection restored. Refreshing current attendance before enabling actions…
+          Refreshing current attendance before enabling actions…
         </p>
-      </div>
+      </Alert>
     );
   }
   if (mode === 'OFFLINE') {
     return (
-      <div className="wl-alert wl-alert--danger grid gap-1" role="alert">
-        <p className="m-0 text-sm font-semibold">You’re offline.</p>
+      <Alert headingLevel="h3" title="You’re offline" tone="danger">
         <p className="m-0 text-sm leading-6">
           Attendance actions are disabled and will not be queued. Reconnect to refresh your current
           status.
         </p>
-      </div>
+      </Alert>
     );
   }
   const requestId = error instanceof ApiClientError ? error.requestId : undefined;
   return (
-    <div className="wl-alert wl-alert--danger grid gap-2" role="alert">
+    <Alert headingLevel="h3" title="Attendance is unavailable" tone="danger">
       <p className="m-0 text-sm font-semibold">
         WorkLedger could not refresh your current attendance. Actions remain disabled.
       </p>
@@ -161,7 +160,7 @@ export function AttendanceRecovery({
           Try again
         </Button>
       </div>
-    </div>
+    </Alert>
   );
 }
 
