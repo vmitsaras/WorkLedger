@@ -116,6 +116,29 @@ test('renders an accessible, privacy-safe current direct-report table', async ()
   await expectNoAxeViolations(container);
 });
 
+test('uses complete team records instead of a horizontally panned table at narrow width', async () => {
+  stubNarrowLayout();
+  stubFetch(MANAGER_CONTEXT, () => successResponse(TEAM_STATUS));
+  const { container } = renderApplication('/team');
+
+  const list = await screen.findByRole('list', { name: 'Current direct reports' });
+  expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  const ariHeading = within(list).getByRole('heading', { name: 'Ari Working' });
+  const ariRecord = ariHeading.closest('article');
+  expect(ariRecord).not.toBeNull();
+  if (ariRecord === null) throw new Error('Expected Ari Working team record.');
+  expect(within(ariRecord).getByText('Delivery')).toBeVisible();
+  expect(within(ariRecord).getByText('Working')).toBeVisible();
+  expect(within(ariRecord).getByText('Unresolved record')).toBeVisible();
+  const cleoHeading = within(list).getByRole('heading', { name: 'Cleo Away' });
+  const cleoRecord = cleoHeading.closest('article');
+  expect(cleoRecord).not.toBeNull();
+  if (cleoRecord === null) throw new Error('Expected Cleo Away team record.');
+  expect(within(cleoRecord).getByText('No current team')).toBeVisible();
+  expect(within(cleoRecord).getByText('Unavailable today')).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
 test('shows a clear empty state without inventing team records', async () => {
   stubFetch(MANAGER_CONTEXT, () =>
     successResponse({
@@ -228,4 +251,20 @@ function requestUrl(input: RequestInfo | URL): URL {
   if (typeof input === 'string') return new URL(input, 'https://workledger.test');
   if (input instanceof URL) return input;
   return new URL(input.url);
+}
+
+function stubNarrowLayout() {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(() => true),
+      matches: query.includes('max-width'),
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  );
 }

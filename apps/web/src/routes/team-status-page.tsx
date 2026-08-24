@@ -1,9 +1,18 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import type { TeamAvailabilityState, TeamStatus } from '@workledger/contracts';
-import { Button, buttonVariants } from '@workledger/ui';
+import {
+  Alert,
+  Button,
+  DataTable,
+  Panel,
+  RouteState,
+  StatusBadge,
+  buttonVariants,
+  type StatusBadgeProps,
+} from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatLocalDate, formatTime } from '../app/date-time-format.js';
@@ -47,7 +56,7 @@ export function TeamStatusPage() {
       <PageHeader
         eyebrow="Manager workspace"
         title="Team status"
-        description="See current attendance and neutral availability for your current direct reports. Absence types and private context are never shown here."
+        description="See who is working now, who is unavailable, and which current direct reports have records that need attention."
       />
       {query.isPending ? (
         <TeamStatusLoading />
@@ -66,7 +75,7 @@ function TeamStatusContent({
 }: Readonly<{ data: TeamStatus; refreshing: boolean }>) {
   return (
     <>
-      <section aria-labelledby="team-summary-heading" className="grid gap-4">
+      <Panel aria-labelledby="team-summary-heading" className="grid gap-4" density="compact">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 id="team-summary-heading" className="m-0 text-xl font-bold">
@@ -96,7 +105,7 @@ function TeamStatusContent({
           <SummaryItem label="Not working" value={data.summary.offWork} />
           <SummaryItem label="Unresolved records" value={data.summary.unresolved} />
         </dl>
-      </section>
+      </Panel>
       <section aria-labelledby="team-members-heading" className="grid gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -114,9 +123,9 @@ function TeamStatusContent({
           ) : null}
         </div>
         {data.members.length === 0 ? (
-          <p className="wl-alert m-0 rounded-xl border p-4">
-            You have no current direct reports to show.
-          </p>
+          <RouteState kind="empty" title="No current direct reports">
+            <p>You have no current direct reports to show.</p>
+          </RouteState>
         ) : (
           <TeamMembers members={data.members} />
         )}
@@ -127,80 +136,104 @@ function TeamStatusContent({
 
 function SummaryItem({ label, value }: Readonly<{ label: string; value: number }>) {
   return (
-    <div className="rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-4">
+    <div className="grid gap-1 border-l border-[var(--wl-border-strong)] pl-3">
       <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">{label}</dt>
-      <dd className="m-0 mt-1 text-2xl font-bold">{value}</dd>
+      <dd className="m-0 text-2xl font-bold tabular-nums">{value}</dd>
     </div>
   );
 }
 
 function TeamMembers({ members }: Readonly<{ members: TeamStatus['members'] }>) {
+  const wideLayout = useWideTeamLayout();
+
+  if (!wideLayout) {
+    return (
+      <ol className="m-0 grid list-none gap-3 p-0" aria-label="Current direct reports">
+        {members.map((member, index) => (
+          <li key={memberKey(member, index)}>
+            <Panel as="article" className="grid gap-3" density="compact">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h3 className="m-0 text-lg font-bold">{member.displayName}</h3>
+                <StatusBadge tone={availabilityTone(member.availability)}>
+                  {STATUS_LABELS[member.availability]}
+                </StatusBadge>
+              </div>
+              <dl className="m-0 grid gap-2 text-sm">
+                <div className="grid gap-1">
+                  <dt className="font-semibold text-[var(--wl-text-muted)]">Current team</dt>
+                  <dd className="m-0">{member.teamName ?? 'No current team'}</dd>
+                </div>
+                <div className="grid gap-1">
+                  <dt className="font-semibold text-[var(--wl-text-muted)]">Records</dt>
+                  <dd className="m-0">
+                    <StatusBadge tone={member.hasUnresolvedRecords ? 'warning' : 'neutral'}>
+                      {member.hasUnresolvedRecords ? 'Unresolved record' : 'No unresolved records'}
+                    </StatusBadge>
+                  </dd>
+                </div>
+              </dl>
+            </Panel>
+          </li>
+        ))}
+      </ol>
+    );
+  }
+
   return (
-    <div
-      className="overflow-x-auto rounded-xl border border-[var(--wl-border)]"
-      role="region"
-      aria-label="Scrollable team status"
-      tabIndex={0}
+    <DataTable
+      caption="Privacy-safe current status for authorized direct reports."
+      className="min-w-[42rem]"
+      scrollHint="Scroll horizontally if the full team status does not fit."
+      scrollLabel="Team status table"
     >
-      <table className="w-full min-w-[42rem] border-collapse text-left">
-        <caption className="p-3 text-left text-sm text-[var(--wl-text-muted)]">
-          Privacy-safe current status for authorized direct reports.
-        </caption>
-        <thead>
-          <tr className="border-y border-[var(--wl-border)] text-sm">
-            <th scope="col" className="p-3">
-              Employee
-            </th>
-            <th scope="col" className="p-3">
-              Current team
-            </th>
-            <th scope="col" className="p-3">
-              Availability
-            </th>
-            <th scope="col" className="p-3">
-              Records
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map((member, index) => (
-            <tr key={memberKey(member, index)} className="border-b border-[var(--wl-border)]">
-              <th scope="row" className="p-3 font-semibold">
-                {member.displayName}
-              </th>
-              <td className="p-3">{member.teamName ?? 'No current team'}</td>
-              <td className="p-3 font-semibold">{STATUS_LABELS[member.availability]}</td>
-              <td className="p-3">
+      <thead>
+        <tr>
+          <th scope="col">Employee</th>
+          <th scope="col">Current team</th>
+          <th scope="col">Availability</th>
+          <th scope="col">Records</th>
+        </tr>
+      </thead>
+      <tbody>
+        {members.map((member, index) => (
+          <tr key={memberKey(member, index)}>
+            <th scope="row">{member.displayName}</th>
+            <td>{member.teamName ?? 'No current team'}</td>
+            <td>
+              <StatusBadge tone={availabilityTone(member.availability)}>
+                {STATUS_LABELS[member.availability]}
+              </StatusBadge>
+            </td>
+            <td>
+              <StatusBadge tone={member.hasUnresolvedRecords ? 'warning' : 'neutral'}>
                 {member.hasUnresolvedRecords ? 'Unresolved record' : 'No unresolved records'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              </StatusBadge>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </DataTable>
   );
 }
 
 function TeamStatusLoading() {
   return (
-    <div className="wl-panel grid gap-2" aria-busy="true">
-      <h2 className="m-0 text-xl font-bold">Loading team status</h2>
-      <p className="m-0 text-[var(--wl-text-muted)]">Checking current authorized availability…</p>
-    </div>
+    <RouteState kind="loading" title="Loading team status">
+      <p>Checking current authorized availability.</p>
+    </RouteState>
   );
 }
 
 function TeamStatusError({ retry }: Readonly<{ retry: () => void }>) {
   return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
-      <h2 className="m-0 text-xl font-bold">Team status is unavailable</h2>
-      <p className="m-0">
+    <Alert title="Team status is unavailable" tone="danger">
+      <p>
         No restricted team details were displayed. Try loading the current authorized view again.
       </p>
       <Button className="w-fit" type="button" variant="secondary" onPress={retry}>
         Try again
       </Button>
-    </div>
+    </Alert>
   );
 }
 
@@ -222,6 +255,32 @@ function TeamPermissionDenied() {
 
 function memberKey(member: TeamStatus['members'][number], index: number): string {
   return `${member.displayName}-${member.teamName ?? 'none'}-${index.toString()}`;
+}
+
+function availabilityTone(state: TeamAvailabilityState): NonNullable<StatusBadgeProps['tone']> {
+  if (state === 'WORKING') return 'success';
+  if (state === 'ON_BREAK') return 'info';
+  if (state === 'UNAVAILABLE') return 'warning';
+  return 'neutral';
+}
+
+function useWideTeamLayout(): boolean {
+  const [wide, setWide] = useState(readWideTeamLayout);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(min-width: 48rem)');
+    const update = () => setWide(media.matches);
+    media.addEventListener('change', update);
+    update();
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  return wide;
+}
+
+function readWideTeamLayout(): boolean {
+  return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 48rem)').matches;
 }
 
 function isAuthenticationError(error: unknown): error is ApiClientError {

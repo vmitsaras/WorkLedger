@@ -11,7 +11,18 @@ import {
   type ApprovalInboxStatus,
   type ApprovalInboxType,
 } from '@workledger/contracts';
-import { Button, buttonVariants } from '@workledger/ui';
+import {
+  Alert,
+  Button,
+  DataTable,
+  FilterBar,
+  Pagination,
+  Panel,
+  RouteState,
+  StatusBadge,
+  buttonVariants,
+  type StatusBadgeProps,
+} from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatLocalDate } from '../app/date-time-format.js';
@@ -98,7 +109,7 @@ export function ApprovalInboxPage() {
       <PageHeader
         eyebrow="Approvals"
         title="Approval inbox"
-        description="Review current, authorized work across corrections, absence requests, absence cancellations, and monthly periods. Filters never expose absence subtypes or employee search text."
+        description="Prioritize and review authorized corrections, absence work, cancellations, and monthly periods in one queue."
       />
       <ApprovalFilters
         draft={draft}
@@ -159,8 +170,9 @@ function ApprovalFilters({
   query: ApprovalInboxQuery;
   teams: ApprovalInbox['filterOptions']['teams'];
 }>) {
-  const wideLayout = useWideApprovalFilterLayout();
+  const wideLayout = useWideApprovalLayout();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const filtered = hasNonDefaultFilters(query);
 
   return (
     <section aria-labelledby="approval-filters-heading" className="grid gap-3">
@@ -173,9 +185,11 @@ function ApprovalFilters({
             Applied: {appliedFilterSummary(query)}
           </p>
         </div>
-        <Button type="button" variant="quiet" className="w-fit" onPress={onClear}>
-          Clear approval filters
-        </Button>
+        {filtered ? (
+          <Button type="button" variant="quiet" className="w-fit" onPress={onClear}>
+            Clear approval filters
+          </Button>
+        ) : null}
       </div>
       <details
         className="wl-approval-filter-disclosure rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)]"
@@ -187,123 +201,125 @@ function ApprovalFilters({
         <summary className="wl-approval-filter-summary">
           {!wideLayout && mobileOpen ? 'Hide approval filters' : 'Show approval filters'}
         </summary>
-        <form className="grid gap-4 p-4" onSubmit={onSubmit}>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <SelectFilter
-              id="approval-status"
-              label="Queue status"
-              value={draft.status}
-              onChange={(status) => onChange({ ...draft, status: status as ApprovalInboxStatus })}
-              options={[
-                ['ACTION_REQUIRED', 'Action required'],
-                ['WAITING_ON_EMPLOYEE', 'Waiting on employee'],
-                ['COMPLETED', 'Completed'],
-                ['ALL', 'All statuses'],
-              ]}
-            />
-            <SelectFilter
-              id="approval-type"
-              label="Workflow category"
-              value={draft.type}
-              onChange={(type) => onChange({ ...draft, type: type as ApprovalInboxType })}
-              options={[
-                ['ALL', 'All categories'],
-                ['CORRECTION', 'Correction'],
-                ['ABSENCE', 'Absence request'],
-                ['CANCELLATION', 'Absence cancellation'],
-                ['MONTHLY_PERIOD', 'Monthly period'],
-              ]}
-            />
-            <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-team">
-              Current team
-              <select
-                id="approval-team"
-                data-route-focus-key="approval-filter-team"
-                className={inputClassName}
-                value={draft.team}
-                onChange={(event) => onChange({ ...draft, team: event.target.value })}
+        <FilterBar aria-label="Approval filters" className="border-0 p-4" onSubmit={onSubmit}>
+          <div className="grid w-full gap-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <SelectFilter
+                id="approval-status"
+                label="Queue status"
+                value={draft.status}
+                onChange={(status) => onChange({ ...draft, status: status as ApprovalInboxStatus })}
+                options={[
+                  ['ACTION_REQUIRED', 'Action required'],
+                  ['WAITING_ON_EMPLOYEE', 'Waiting on employee'],
+                  ['COMPLETED', 'Completed'],
+                  ['ALL', 'All statuses'],
+                ]}
+              />
+              <SelectFilter
+                id="approval-type"
+                label="Workflow category"
+                value={draft.type}
+                onChange={(type) => onChange({ ...draft, type: type as ApprovalInboxType })}
+                options={[
+                  ['ALL', 'All categories'],
+                  ['CORRECTION', 'Correction'],
+                  ['ABSENCE', 'Absence request'],
+                  ['CANCELLATION', 'Absence cancellation'],
+                  ['MONTHLY_PERIOD', 'Monthly period'],
+                ]}
+              />
+              <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-team">
+                Current team
+                <select
+                  id="approval-team"
+                  data-route-focus-key="approval-filter-team"
+                  className={inputClassName}
+                  value={draft.team}
+                  onChange={(event) => onChange({ ...draft, team: event.target.value })}
+                >
+                  <option value="">All authorized teams</option>
+                  {draft.team !== '' && !teams.some((team) => team.id === draft.team) ? (
+                    <option value={draft.team}>Selected current team</option>
+                  ) : null}
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <SelectFilter
+                id="approval-sort"
+                label="Sort by"
+                value={draft.sort}
+                onChange={(sort) => onChange({ ...draft, sort: sort as ApprovalInboxSort })}
+                options={[
+                  ['SUBMITTED_AT', 'Submitted time'],
+                  ['AFFECTED_DATE', 'Affected date'],
+                  ['EMPLOYEE', 'Employee name'],
+                ]}
+              />
+              <SelectFilter
+                id="approval-direction"
+                label="Sort direction"
+                value={draft.direction}
+                onChange={(direction) =>
+                  onChange({ ...draft, direction: direction as ApprovalInboxDirection })
+                }
+                options={[
+                  ['DESC', 'Descending'],
+                  ['ASC', 'Ascending'],
+                ]}
+              />
+              <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-from">
+                Affected from
+                <input
+                  id="approval-from"
+                  data-route-focus-key="approval-filter-from"
+                  aria-describedby={error === undefined ? undefined : 'approval-date-range-error'}
+                  aria-invalid={error === undefined ? undefined : true}
+                  className={inputClassName}
+                  type="date"
+                  value={draft.from}
+                  onChange={(event) => onChange({ ...draft, from: event.target.value })}
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-to">
+                Affected through
+                <input
+                  id="approval-to"
+                  data-route-focus-key="approval-filter-to"
+                  aria-describedby={error === undefined ? undefined : 'approval-date-range-error'}
+                  aria-invalid={error === undefined ? undefined : true}
+                  className={inputClassName}
+                  type="date"
+                  value={draft.to}
+                  onChange={(event) => onChange({ ...draft, to: event.target.value })}
+                />
+              </label>
+            </div>
+            {error === undefined ? null : (
+              <p
+                id="approval-date-range-error"
+                className="wl-alert wl-alert-error m-0 rounded-xl border p-3"
+                role="alert"
               >
-                <option value="">All authorized teams</option>
-                {draft.team !== '' && !teams.some((team) => team.id === draft.team) ? (
-                  <option value={draft.team}>Selected current team</option>
-                ) : null}
-                {teams.map((team) => (
-                  <option key={team.id} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <SelectFilter
-              id="approval-sort"
-              label="Sort by"
-              value={draft.sort}
-              onChange={(sort) => onChange({ ...draft, sort: sort as ApprovalInboxSort })}
-              options={[
-                ['SUBMITTED_AT', 'Submitted time'],
-                ['AFFECTED_DATE', 'Affected date'],
-                ['EMPLOYEE', 'Employee name'],
-              ]}
-            />
-            <SelectFilter
-              id="approval-direction"
-              label="Sort direction"
-              value={draft.direction}
-              onChange={(direction) =>
-                onChange({ ...draft, direction: direction as ApprovalInboxDirection })
-              }
-              options={[
-                ['DESC', 'Descending'],
-                ['ASC', 'Ascending'],
-              ]}
-            />
-            <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-from">
-              Affected from
-              <input
-                id="approval-from"
-                data-route-focus-key="approval-filter-from"
-                aria-describedby={error === undefined ? undefined : 'approval-date-range-error'}
-                aria-invalid={error === undefined ? undefined : true}
-                className={inputClassName}
-                type="date"
-                value={draft.from}
-                onChange={(event) => onChange({ ...draft, from: event.target.value })}
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-to">
-              Affected through
-              <input
-                id="approval-to"
-                data-route-focus-key="approval-filter-to"
-                aria-describedby={error === undefined ? undefined : 'approval-date-range-error'}
-                aria-invalid={error === undefined ? undefined : true}
-                className={inputClassName}
-                type="date"
-                value={draft.to}
-                onChange={(event) => onChange({ ...draft, to: event.target.value })}
-              />
-            </label>
+                {error}
+              </p>
+            )}
+            <Button type="submit" className="w-fit" data-route-focus-key="approval-apply-filters">
+              Apply filters
+            </Button>
           </div>
-          {error === undefined ? null : (
-            <p
-              id="approval-date-range-error"
-              className="wl-alert wl-alert-error m-0 rounded-xl border p-3"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
-          <Button type="submit" className="w-fit" data-route-focus-key="approval-apply-filters">
-            Apply filters
-          </Button>
-        </form>
+        </FilterBar>
       </details>
     </section>
   );
 }
 
-function useWideApprovalFilterLayout(): boolean {
-  const [wide, setWide] = useState(readWideApprovalFilterLayout);
+function useWideApprovalLayout(): boolean {
+  const [wide, setWide] = useState(readWideApprovalLayout);
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
@@ -317,7 +333,7 @@ function useWideApprovalFilterLayout(): boolean {
   return wide;
 }
 
-function readWideApprovalFilterLayout(): boolean {
+function readWideApprovalLayout(): boolean {
   return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 48rem)').matches;
 }
 
@@ -369,12 +385,14 @@ function ApprovalResults({
 }>) {
   const { pagination } = data;
   const filtered = hasNonDefaultFilters(query);
+  const wideLayout = useWideApprovalLayout();
+  const pageCount = Math.max(1, pagination.totalPages);
   return (
     <section aria-labelledby="approval-results-heading" className="grid gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="approval-results-heading" className="m-0 text-xl font-bold">
-            Results
+            {query.status === 'ACTION_REQUIRED' ? 'Needs action' : 'Approval records'}
           </h2>
           <p
             className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]"
@@ -385,122 +403,159 @@ function ApprovalResults({
           >
             {isFetching
               ? 'Updating results…'
-              : `${pagination.total.toString()} authorized item${pagination.total === 1 ? '' : 's'} after scope and filters.`}
+              : approvalResultSummary(pagination.total, query.status)}
           </p>
         </div>
       </div>
       {data.items.length === 0 ? (
-        <div className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4">
+        <RouteState
+          actions={
+            filtered ? (
+              <Button type="button" variant="secondary" className="w-fit" onPress={onClear}>
+                Clear filters
+              </Button>
+            ) : undefined
+          }
+          kind="empty"
+          title={filtered ? 'No approvals match these filters' : 'No approvals need action'}
+        >
           <p className="m-0">
             {filtered
               ? 'No approvals match the applied filters.'
               : 'No approvals currently require your action.'}
           </p>
-          {filtered ? (
-            <Button type="button" variant="secondary" className="w-fit" onPress={onClear}>
-              Clear filters
-            </Button>
-          ) : null}
-        </div>
+        </RouteState>
+      ) : wideLayout ? (
+        <ApprovalResultsTable data={data} isFetching={isFetching} query={query} />
       ) : (
-        <div
-          className="overflow-x-auto rounded-xl border border-[var(--wl-border)]"
-          role="region"
-          aria-label="Scrollable approval inbox results"
-          tabIndex={0}
-        >
-          <table className="w-full min-w-[58rem] border-collapse text-left">
-            <caption className="p-3 text-left text-sm text-[var(--wl-text-muted)]">
-              Unified approval inbox. Monthly periods link to their dedicated review page; absence
-              subtypes remain hidden.
-            </caption>
-            <thead>
-              <tr className="border-y border-[var(--wl-border)] text-sm">
-                <SortHeader active={query.sort === 'EMPLOYEE'} direction={query.direction}>
-                  Employee
-                </SortHeader>
-                <th scope="col" className="p-3">
-                  Workflow
-                </th>
-                <th scope="col" className="p-3">
-                  Status
-                </th>
-                <SortHeader active={query.sort === 'AFFECTED_DATE'} direction={query.direction}>
-                  Affected dates
-                </SortHeader>
-                <SortHeader active={query.sort === 'SUBMITTED_AT'} direction={query.direction}>
-                  Submitted
-                </SortHeader>
-                <th scope="col" className="p-3">
-                  Current team
-                </th>
-                <th scope="col" className="p-3">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((item) => (
-                <tr key={`${item.kind}-${item.id}`} className="border-b border-[var(--wl-border)]">
-                  <th scope="row" className="p-3 font-semibold">
-                    {item.employeeDisplayName}
-                  </th>
-                  <td className="p-3">{workflowLabel(item.kind)}</td>
-                  <td className="p-3">{statusLabel(item.status)}</td>
-                  <td className="p-3">
-                    {item.affectedStartDate === item.affectedEndDate
-                      ? formatLocalDate(item.affectedStartDate)
-                      : `${formatLocalDate(item.affectedStartDate)} to ${formatLocalDate(item.affectedEndDate)}`}
-                  </td>
-                  <td className="p-3">{formatSubmittedAt(item.submittedAt, data.timeZone)}</td>
-                  <td className="p-3">{item.team?.name ?? 'No current team'}</td>
-                  <td className="p-3">
-                    {!isFetching ? (
-                      <Link
-                        aria-label={`Review ${workflowLabel(item.kind).toLowerCase()} for ${item.employeeDisplayName}`}
-                        className={buttonVariants({ variant: 'secondary' })}
-                        to={
-                          item.kind === 'MONTHLY_PERIOD'
-                            ? `/monthly-periods/${encodeURIComponent(item.id)}`
-                            : `/approvals/${encodeURIComponent(item.id)}`
-                        }
-                      >
-                        Review
-                      </Link>
-                    ) : (
-                      <span className="text-sm text-[var(--wl-text-muted)]">No list action</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ApprovalResultsList data={data} isFetching={isFetching} />
       )}
-      <nav aria-label="Approval inbox pages" className="flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          isDisabled={pagination.page <= 1}
-          data-route-focus-key="approval-previous-page"
-          onPress={() => onPage(pagination.page - 1)}
-        >
-          Previous page
-        </Button>
-        <span className="text-sm text-[var(--wl-text-muted)]">
-          Page {pagination.page} of {Math.max(1, pagination.totalPages)}
-        </span>
-        <Button
-          type="button"
-          variant="secondary"
-          isDisabled={pagination.page >= Math.max(1, pagination.totalPages)}
-          data-route-focus-key="approval-next-page"
-          onPress={() => onPage(pagination.page + 1)}
-        >
-          Next page
-        </Button>
-      </nav>
+      <Pagination
+        ariaLabel="Approval inbox pages"
+        currentPage={pagination.page}
+        nextFocusKey="approval-next-page"
+        onPageChange={onPage}
+        pageCount={pageCount}
+        previousFocusKey="approval-previous-page"
+        summary={`Page ${pagination.page} of ${pageCount}. ${pagination.total} authorized approval${pagination.total === 1 ? '' : 's'}.`}
+      />
     </section>
+  );
+}
+
+function ApprovalResultsTable({
+  data,
+  isFetching,
+  query,
+}: Readonly<{ data: ApprovalInbox; isFetching: boolean; query: ApprovalInboxQuery }>) {
+  return (
+    <DataTable
+      caption="Unified approval inbox. Monthly periods link to their dedicated review page; absence subtypes remain hidden."
+      className="min-w-[58rem]"
+      scrollHint="Scroll horizontally if every comparison column does not fit."
+      scrollLabel="Approval inbox results table"
+    >
+      <thead>
+        <tr>
+          <SortHeader active={query.sort === 'EMPLOYEE'} direction={query.direction}>
+            Employee
+          </SortHeader>
+          <th scope="col">Workflow</th>
+          <th scope="col">Status</th>
+          <SortHeader active={query.sort === 'AFFECTED_DATE'} direction={query.direction}>
+            Affected dates
+          </SortHeader>
+          <SortHeader active={query.sort === 'SUBMITTED_AT'} direction={query.direction}>
+            Submitted
+          </SortHeader>
+          <th scope="col">Current team</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.items.map((item) => (
+          <tr key={`${item.kind}-${item.id}`}>
+            <th scope="row">{item.employeeDisplayName}</th>
+            <td>{workflowLabel(item.kind)}</td>
+            <td>
+              <StatusBadge tone={approvalStatusTone(item.status)}>
+                {statusLabel(item.status)}
+              </StatusBadge>
+            </td>
+            <td>{formatAffectedDates(item)}</td>
+            <td>{formatSubmittedAt(item.submittedAt, data.timeZone)}</td>
+            <td>{item.team?.name ?? 'No current team'}</td>
+            <td>{approvalAction(item, isFetching)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </DataTable>
+  );
+}
+
+function ApprovalResultsList({
+  data,
+  isFetching,
+}: Readonly<{ data: ApprovalInbox; isFetching: boolean }>) {
+  return (
+    <ol className="m-0 grid list-none gap-3 p-0" aria-label="Approval inbox results">
+      {data.items.map((item) => (
+        <li key={`${item.kind}-${item.id}`}>
+          <Panel as="article" className="grid gap-3" density="compact">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="grid gap-1">
+                <h3 className="m-0 text-lg font-bold">{item.employeeDisplayName}</h3>
+                <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                  {workflowLabel(item.kind)}
+                </p>
+              </div>
+              <StatusBadge tone={approvalStatusTone(item.status)}>
+                {statusLabel(item.status)}
+              </StatusBadge>
+            </div>
+            <dl className="m-0 grid gap-2 text-sm">
+              <ApprovalFact label="Affected dates" value={formatAffectedDates(item)} />
+              <ApprovalFact
+                label="Submitted"
+                value={formatSubmittedAt(item.submittedAt, data.timeZone)}
+              />
+              <ApprovalFact label="Current team" value={item.team?.name ?? 'No current team'} />
+            </dl>
+            {approvalAction(item, isFetching)}
+          </Panel>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function ApprovalFact({ label, value }: Readonly<{ label: string; value: string }>) {
+  return (
+    <div className="grid gap-1">
+      <dt className="font-semibold text-[var(--wl-text-muted)]">{label}</dt>
+      <dd className="m-0">{value}</dd>
+    </div>
+  );
+}
+
+function approvalAction(item: ApprovalInbox['items'][number], isFetching: boolean): ReactNode {
+  if (isFetching) {
+    return (
+      <span className="text-sm text-[var(--wl-text-muted)]">Review after update finishes</span>
+    );
+  }
+  return (
+    <Link
+      aria-label={`Review ${workflowLabel(item.kind).toLowerCase()} for ${item.employeeDisplayName}`}
+      className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
+      to={
+        item.kind === 'MONTHLY_PERIOD'
+          ? `/monthly-periods/${encodeURIComponent(item.id)}`
+          : `/approvals/${encodeURIComponent(item.id)}`
+      }
+    >
+      Review
+    </Link>
   );
 }
 
@@ -526,22 +581,20 @@ function SortHeader({
 
 function ApprovalInboxLoading() {
   return (
-    <div className="grid gap-3" aria-busy="true">
-      <p className="m-0">Loading authorized approvals…</p>
-      <div
-        role="progressbar"
-        aria-label="Loading approval inbox"
-        className="h-2 rounded-full bg-[var(--wl-surface-subtle)]"
-      />
-    </div>
+    <RouteState kind="loading" title="Loading approval inbox">
+      <p>Checking your current authorized queue.</p>
+    </RouteState>
   );
 }
 
 function ApprovalInboxError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
   const denied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
   return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
-      <p className="m-0">
+    <Alert
+      title={denied ? 'Approval inbox unavailable' : 'Approval inbox could not be loaded'}
+      tone="danger"
+    >
+      <p>
         {denied
           ? 'Your current account cannot view the approval inbox.'
           : 'WorkLedger could not load the approval inbox. No approval information is available.'}
@@ -556,7 +609,7 @@ function ApprovalInboxError({ error, retry }: Readonly<{ error: unknown; retry: 
           </Button>
         </>
       ) : null}
-    </div>
+    </Alert>
   );
 }
 
@@ -613,6 +666,26 @@ function hasNonDefaultFilters(query: ApprovalInboxQuery): boolean {
     query.sort !== 'SUBMITTED_AT' ||
     query.direction !== 'DESC'
   );
+}
+
+function approvalResultSummary(total: number, status: ApprovalInboxStatus): string {
+  if (status === 'ACTION_REQUIRED') {
+    return `${total.toString()} approval${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} action.`;
+  }
+  return `${total.toString()} authorized approval${total === 1 ? '' : 's'} match this view.`;
+}
+
+function formatAffectedDates(item: ApprovalInbox['items'][number]): string {
+  return item.affectedStartDate === item.affectedEndDate
+    ? formatLocalDate(item.affectedStartDate)
+    : `${formatLocalDate(item.affectedStartDate)} to ${formatLocalDate(item.affectedEndDate)}`;
+}
+
+function approvalStatusTone(status: ApprovalInboxStatus): NonNullable<StatusBadgeProps['tone']> {
+  if (status === 'ACTION_REQUIRED') return 'warning';
+  if (status === 'WAITING_ON_EMPLOYEE') return 'info';
+  if (status === 'COMPLETED') return 'success';
+  return 'neutral';
 }
 
 function workflowLabel(kind: ApprovalInbox['items'][number]['kind']): string {

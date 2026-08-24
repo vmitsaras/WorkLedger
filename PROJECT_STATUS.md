@@ -2,19 +2,19 @@
 
 **Current phase:** Phase 12 — Workflow UX remediation and product polish
 **Project readiness:** Stage 5 of 5 — Production and UI-foundation gates complete
-**Phase progress:** Phase 11 complete — 3 of 7 Phase 12 tasks complete
+**Phase progress:** Phase 11 complete — 4 of 7 Phase 12 tasks complete
 **Current milestone:** UI foundation complete — version 0.12.0
-**Active task:** `WL-1203` (next)
-**Status:** WL-1202 complete — request and monthly workflow UX remediated
+**Active task:** `WL-1204` (next)
+**Status:** WL-1203 complete — manager workflow UX remediated
 **Last verified:** 2026-08-24
 
 ## Current objective
 
-Phase 11 is complete at `0.12.0`. `WL-1200` through `WL-1202` have applied Quiet Ledger to Today,
-personal records, and request/monthly workflows. The request area now has a type-neutral chooser,
-history, owner-authorized detail, exact workflow evidence, and state-valid cancellation actions.
-The next bounded slice is `WL-1203`: improve manager Team, Approvals, team-calendar, filtering,
-decision, and narrow-screen workflows.
+Phase 11 is complete at `0.12.0`. `WL-1200` through `WL-1203` have applied Quiet Ledger to Today,
+personal records, request/monthly workflows, and manager decisions. Team and approval collections
+now retain complete record context and actions through deliberate narrow lists and wider semantic
+tables. The next bounded slice is `WL-1204`: improve employee administration, settings, reports,
+audit, and system administration surfaces.
 
 ## Verified decisions
 
@@ -59,6 +59,12 @@ decision, and narrow-screen workflows.
   cancellations, and monthly periods. It exposes only generic workflow category and status,
   current-team and affected-date metadata; absence subtype, including sickness, is never a list or
   URL value.
+- `/approvals` uses a complete record list below 48 rem and a semantic comparison table at wider
+  widths. The primary review action remains visible with employee, workflow, status, dates,
+  submitted time, and current-team context; default filters do not expose a redundant clear action.
+- Approval detail follows record state, current effect, available decision, and trailing evidence
+  order. Decision validation, focus, negative-balance override, optimistic version, correction
+  application, and authoritative refetch behavior remain unchanged.
 - `/requests` is an employee-self, purpose-minimized history for correction, absence, and
   cancellation records. The list exposes broad workflow category, state, affected dates, submitted
   time, and opaque ID only. Exact absence subtype, correction reason, coverage, source events, and
@@ -119,10 +125,16 @@ decision, and narrow-screen workflows.
   only display name, current team name, textual availability, and a generic unresolved-record flag.
   It never exposes employee/request IDs, absence subtype, sickness context, notes, reasons,
   entitlement, or reviewer history.
+- `/team` uses a complete direct-report list below 48 rem and a semantic table at wider widths, so
+  availability, current-team context, unresolved-record state, and the approval-inbox action do not
+  depend on horizontal panning.
 - `/team-calendar` exposes effective, uncancelled coverage for the manager's current direct reports
   or HR's organization scope as neutral `UNAVAILABLE` entries. Its month grid and agenda share one
   selectable-date model; narrow screens start with the agenda, and missing current-team assignments
   remain explicit rather than guessed.
+- Team calendar places selected month and selected-date context before the equivalent agenda or
+  month grid. The grid retains a named, instructed local overflow region; the agenda is the narrow
+  default until a user deliberately selects a view.
 - Explicit unauthorized targets return `403`; scoped collections apply authorization before counts and pagination.
 - Self-approval and privileged self-adjustment are prohibited even for combined roles.
 - System-administrator capability grants technical access only, not HR/domain data.
@@ -1739,6 +1751,37 @@ decision, and narrow-screen workflows.
 - No migration, domain transition, approval rule, monthly source calculation, authentication,
   session, CSRF, audit, logging, browser persistence, dependency, or workspace version changed.
 
+**2026-08-24 — WL-1203 manager workflow UX remediation**
+
+- Reworked Team and Approval collections into complete narrow record lists below 48 rem while
+  retaining shared captioned semantic tables at wider widths. Employee identity, current team,
+  textual availability or approval state, task context, and review actions stay together without
+  page-level horizontal overflow.
+- Reorganized approval filters around a persistent applied summary, narrow disclosure, and a clear
+  action shown only for a non-default filter state. Shared pagination now accepts route-specific
+  labels and focus keys so same-path and browser-history transitions preserve keyboard context.
+- Reordered approval detail around current record state, exact effect, valid decision, and trailing
+  immutable evidence. Existing reason validation, negative-balance override, correction apply,
+  state/version conflict, CSRF, and authoritative refetch behavior is unchanged.
+- Reworked Team Calendar around selected month, explicit missing-team warning, selected date, and
+  the equivalent availability view. The agenda remains the automatic narrow default until a user
+  chooses a view; the month grid retains a labelled keyboard-focusable local scroll region with
+  visible guidance.
+- Added component and axe coverage for narrow Team and Approval record lists plus shared pagination
+  focus metadata. Expanded browser coverage for 320 and 390 px record completeness, 44 px review
+  target, filter and pagination focus, decision validation, forced colors, reduced motion, calendar
+  equivalence, private copy, local overflow, and page containment. Eight ignored review captures
+  are available under `output/playwright/wl1203`.
+- Verification passed formatting, ESLint, source and CSS boundaries, strict TypeScript, all 37
+  tooling tests, all 341 unit/component tests, 13 available integration tests with 45 expected
+  PostgreSQL-dependent skips, all 33 Playwright scenarios, production build/public imports, and
+  bundle budgets at 354,316 largest JavaScript bytes, 882,135 total JavaScript bytes, 237,602 gzip
+  JavaScript bytes, and 49,898 CSS bytes. See
+  `docs/120-manager-workflow-ux-remediation.md` for the complete evidence boundary.
+- No database, migration, domain rule, API contract, authorization, authentication, session, CSRF,
+  protected cache, URL privacy, audit, logging, browser persistence, dependency, or workspace
+  version changed.
+
 **2026-08-24 — Root startup recovery regression fix**
 
 - Added a standalone top-level route boundary for self-context failures before any application or
@@ -1762,8 +1805,9 @@ decision, and narrow-screen workflows.
 
 ## Current blockers
 
-No decision blocks `WL-1203`. `D-502` manual assistive-technology evidence remains open for the
-Phase 12 UI release gate (`WL-1206`). `UI-001` is closed by `WL-1202`; `UI-002` remains a
+No decision blocks `WL-1204`. `D-502` manual assistive-technology evidence remains open for the
+Phase 12 UI release gate (`WL-1206`). The manager portion of `UI-004` and all of `UI-016` are closed
+by `WL-1203`; dense administration, report, and audit adoption remains `WL-1204`. `UI-002` remains a
 high-priority workflow gap owned by `WL-1204`, and systematic visual regression remains
 `UI-014`/`WL-1206`. The temporary
 Astro backup is recoverable at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`,
@@ -1771,8 +1815,8 @@ but the public site remains deferred to `WL-1300`.
 
 ## Next task
 
-`WL-1203 — Improve manager Team, Approvals, team-calendar, filtering, decision, and narrow-screen
-workflows.`
+`WL-1204 — Improve employee administration, time and absence settings, reports, audit, and system
+administration surfaces using appropriate dense layouts.`
 
 ## Update rules
 

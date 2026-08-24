@@ -269,7 +269,7 @@ test('keeps pagination focus on same-path navigation and restores it after brows
     expect(new URLSearchParams(router.state.location.search).get('page')).toBe('2'),
   );
   await waitFor(() => expect(approvalUrls).toHaveLength(2));
-  expect(screen.getByText('Page 1 of 3')).toBeVisible();
+  expect(screen.getByText(/Page 1 of 3/u)).toBeVisible();
   expect(screen.getByRole('status')).toHaveTextContent('Updating results…');
   expect(screen.getByRole('button', { name: 'Next page' })).toHaveFocus();
 
@@ -285,7 +285,7 @@ test('keeps pagination focus on same-path navigation and restores it after brows
       ),
     );
   });
-  expect(await screen.findByText('Page 2 of 3')).toBeVisible();
+  expect(await screen.findByText(/Page 2 of 3/u)).toBeVisible();
   expect(screen.getByRole('button', { name: 'Next page' })).toHaveFocus();
 
   await act(async () => {
@@ -295,7 +295,7 @@ test('keeps pagination focus on same-path navigation and restores it after brows
   await waitFor(() =>
     expect(new URLSearchParams(router.state.location.search).get('page')).toBe('1'),
   );
-  expect(screen.getByText('Page 1 of 3')).toBeVisible();
+  expect(screen.getByText(/Page 1 of 3/u)).toBeVisible();
   await waitFor(() => expect(screen.getByRole('button', { name: 'Next page' })).toHaveFocus());
 });
 
@@ -312,15 +312,17 @@ test('shows loading, default-empty, and filtered-empty states with a working cle
   const user = userEvent.setup();
 
   await screen.findByRole('heading', { name: 'Approval inbox' });
-  expect(screen.getByRole('progressbar', { name: 'Loading approval inbox' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Loading approval inbox' })).toBeVisible();
   firstResponse.resolve(successResponse(inbox({ items: [], limit: 20, page: 1, total: 0 })));
   expect(await screen.findByText('No approvals currently require your action.')).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Clear approval filters' })).not.toBeInTheDocument();
 
   await user.selectOptions(screen.getByRole('combobox', { name: 'Workflow category' }), [
     'ABSENCE',
   ]);
   await user.click(screen.getByRole('button', { name: 'Apply filters' }));
   const filteredMessage = await screen.findByText('No approvals match the applied filters.');
+  expect(screen.getByRole('button', { name: 'Clear approval filters' })).toBeVisible();
   const results = filteredMessage.closest('section');
   expect(results).not.toBeNull();
   if (results === null) throw new Error('Expected the filtered result section.');
@@ -331,6 +333,31 @@ test('shows loading, default-empty, and filtered-empty states with a working cle
   );
   expect(await screen.findByText('No approvals currently require your action.')).toBeVisible();
   expect(approvalUrls.length).toBeGreaterThanOrEqual(2);
+});
+
+test('presents complete approval records and review actions without horizontal panning at narrow width', async () => {
+  stubNarrowLayout();
+  stubInboxFetch({
+    context: MANAGER_CONTEXT,
+    onInbox: () =>
+      successResponse(inbox({ items: INBOX_ITEMS, limit: 20, page: 1, total: INBOX_ITEMS.length })),
+  });
+  const { container } = renderApplication('/approvals?status=ALL');
+
+  const list = await screen.findByRole('list', { name: 'Approval inbox results' });
+  expect(screen.queryByRole('table', { name: /Unified approval inbox/u })).not.toBeInTheDocument();
+  const mariaHeading = within(list).getByRole('heading', { name: 'Maria Chen' });
+  const mariaRecord = mariaHeading.closest('article');
+  expect(mariaRecord).not.toBeNull();
+  if (mariaRecord === null) throw new Error('Expected Maria Chen approval record.');
+  expect(within(mariaRecord).getByText('Correction')).toBeVisible();
+  expect(within(mariaRecord).getByText('Action required')).toBeVisible();
+  expect(within(mariaRecord).getByText('Wednesday, August 12, 2026')).toBeVisible();
+  expect(within(mariaRecord).getByText('Client Services')).toBeVisible();
+  expect(
+    within(mariaRecord).getByRole('link', { name: 'Review correction for Maria Chen' }),
+  ).toHaveAttribute('href', `/approvals/${CORRECTION_ID}`);
+  await expectNoAxeViolations(container);
 });
 
 test('keeps load failures recoverable and exposes only the safe request reference', async () => {
@@ -521,6 +548,22 @@ function requestUrl(input: RequestInfo | URL): URL {
   if (typeof input === 'string') return new URL(input, 'https://workledger.test');
   if (input instanceof URL) return input;
   return new URL(input.url);
+}
+
+function stubNarrowLayout() {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(() => true),
+      matches: query.includes('max-width'),
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  );
 }
 
 function deferred<T>() {

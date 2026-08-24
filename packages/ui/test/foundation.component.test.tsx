@@ -94,7 +94,14 @@ test('renders shared operational patterns with textual state and native semantic
           </tr>
         </tbody>
       </DataTable>
-      <Pagination currentPage={2} onPageChange={() => undefined} pageCount={3} />
+      <Pagination
+        ariaLabel="Approval pages"
+        currentPage={2}
+        nextFocusKey="approval-next"
+        onPageChange={() => undefined}
+        pageCount={3}
+        previousFocusKey="approval-previous"
+      />
       <RouteState
         actionHref="/today"
         actionLabel="Return to Today"
@@ -112,7 +119,17 @@ test('renders shared operational patterns with textual state and native semantic
   expect(screen.getByRole('alert', { name: 'Submission blocked' })).toBeVisible();
   expect(screen.getByRole('form', { name: 'Filter records' })).toBeVisible();
   expect(screen.getByRole('table', { name: 'Daily records' })).toBeVisible();
-  expect(screen.getByRole('navigation', { name: 'Pagination' })).toHaveTextContent('Page 2 of 3');
+  expect(screen.getByRole('navigation', { name: 'Approval pages' })).toHaveTextContent(
+    'Page 2 of 3',
+  );
+  expect(screen.getByRole('button', { name: 'Previous page' })).toHaveAttribute(
+    'data-route-focus-key',
+    'approval-previous',
+  );
+  expect(screen.getByRole('button', { name: 'Next page' })).toHaveAttribute(
+    'data-route-focus-key',
+    'approval-next',
+  );
   expect(screen.getByRole('heading', { level: 1, name: /do not have access/u })).toHaveClass(
     'wl-route-state__title--route',
   );

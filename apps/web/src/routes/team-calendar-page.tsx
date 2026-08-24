@@ -1,9 +1,17 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import type { TeamCalendar, TeamCalendarEntry } from '@workledger/contracts';
-import { Button, buttonVariants } from '@workledger/ui';
+import {
+  Alert,
+  Button,
+  DataTable,
+  Panel,
+  RouteState,
+  StatusBadge,
+  buttonVariants,
+} from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatLocalDate } from '../app/date-time-format.js';
@@ -22,6 +30,7 @@ export function TeamCalendarPage() {
   );
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const viewWasChosen = useRef(false);
   const [view, setView] = useState<CalendarView>(initialView);
   const [selectedDate, setSelectedDate] = useState<string>();
 
@@ -45,6 +54,17 @@ export function TeamCalendarPage() {
     );
   }, [query.data?.month]);
 
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(max-width: 47.999rem)');
+    const selectResponsiveDefault = () => {
+      if (!viewWasChosen.current) setView(media.matches ? 'AGENDA' : 'MONTH');
+    };
+    selectResponsiveDefault();
+    media.addEventListener('change', selectResponsiveDefault);
+    return () => media.removeEventListener('change', selectResponsiveDefault);
+  }, []);
+
   if (
     query.isError &&
     query.error instanceof ApiClientError &&
@@ -58,7 +78,7 @@ export function TeamCalendarPage() {
       <PageHeader
         eyebrow="Team availability"
         title="Team calendar"
-        description="Review neutral unavailability coverage for employees in your current authorized scope. Absence types and private context are never shown."
+        description="Plan around neutral team availability while keeping the selected date and month in view."
       />
       {query.isPending ? (
         <TeamCalendarLoading />
@@ -69,7 +89,10 @@ export function TeamCalendarPage() {
           calendar={query.data}
           selectedDate={selectedDate ?? query.data.days[0] ?? query.data.scopeAsOfLocalDate}
           setSelectedDate={setSelectedDate}
-          setView={setView}
+          setView={(nextView) => {
+            viewWasChosen.current = true;
+            setView(nextView);
+          }}
           view={view}
           changeMonth={(direction) => {
             setSearchParams({ month: shiftMonth(query.data.month, direction) });
@@ -100,93 +123,106 @@ function TeamCalendarContent({
 
   return (
     <>
-      <section className="grid gap-4" aria-labelledby="team-calendar-month-heading">
-        <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface)] p-4">
-          <div className="grid gap-2">
+      <Panel aria-labelledby="team-calendar-month-heading" className="grid gap-4" density="compact">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Selected month</p>
             <h2
               id="team-calendar-month-heading"
-              className="m-0 text-xl font-bold"
+              className="m-0 mt-1 text-2xl font-bold"
               aria-live="polite"
               aria-atomic="true"
             >
               {formatMonth(calendar.month)}
             </h2>
-            <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-              Current employee scope evaluated on {formatLocalDate(calendar.scopeAsOfLocalDate)} (
-              {calendar.timeZone}).
-            </p>
           </div>
-          <div className="flex flex-wrap gap-2" aria-label="Team calendar month">
-            <button
-              type="button"
-              className="wl-button-secondary"
-              data-route-focus-key="team-calendar-previous-month"
-              onClick={() => changeMonth(-1)}
-            >
-              Previous month
-            </button>
-            <button
-              type="button"
-              className="wl-button-secondary"
-              data-route-focus-key="team-calendar-next-month"
-              onClick={() => changeMonth(1)}
-            >
-              Next month
-            </button>
-          </div>
+          <StatusBadge tone="info">
+            {calendar.entries.length} unavailable{' '}
+            {calendar.entries.length === 1 ? 'entry' : 'entries'}
+          </StatusBadge>
         </div>
-        <div className="flex flex-wrap gap-2" aria-label="Team calendar view">
-          <button
-            type="button"
-            className="wl-button-secondary"
-            aria-pressed={view === 'MONTH'}
-            onClick={() => setView('MONTH')}
-          >
-            Month grid
-          </button>
-          <button
-            type="button"
-            className="wl-button-secondary"
-            aria-pressed={view === 'AGENDA'}
-            onClick={() => setView('AGENDA')}
-          >
-            Agenda list
-          </button>
-        </div>
-        {calendar.entries.length === 0 ? (
-          <p className="wl-alert m-0 rounded-xl border p-4" role="status">
-            No team unavailability is recorded for this month.
-          </p>
-        ) : null}
-        {missingTeamCount > 0 ? (
-          <p className="wl-alert m-0 rounded-xl border p-4">
+        <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+          Current employee scope evaluated on {formatLocalDate(calendar.scopeAsOfLocalDate)} (
+          {calendar.timeZone}). Both views contain the same neutral availability.
+        </p>
+      </Panel>
+      <div className="flex flex-wrap gap-2" aria-label="Team calendar view">
+        <Button
+          type="button"
+          variant="secondary"
+          aria-pressed={view === 'MONTH'}
+          onPress={() => setView('MONTH')}
+        >
+          Month grid
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          aria-pressed={view === 'AGENDA'}
+          onPress={() => setView('AGENDA')}
+        >
+          Agenda list
+        </Button>
+      </div>
+      {missingTeamCount > 0 ? (
+        <Alert title="Current team assignment unavailable" tone="warning">
+          <p>
             {missingTeamCount} availability {missingTeamCount === 1 ? 'entry has' : 'entries have'}{' '}
             no current team assignment. The{' '}
-            {missingTeamCount === 1 ? 'entry remains' : 'entries remain'}
-            visible without guessing a team.
+            {missingTeamCount === 1 ? 'entry remains' : 'entries remain'} visible without guessing a
+            team.
           </p>
-        ) : null}
-        {view === 'MONTH' ? (
-          <MonthGrid
-            calendar={calendar}
-            entries={entries}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-        ) : (
-          <Agenda
-            calendar={calendar}
-            entries={entries}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-        )}
-      </section>
+        </Alert>
+      ) : null}
       <SelectedDate
         date={selectedDate}
         entries={entries.get(selectedDate) ?? []}
         isToday={selectedDate === calendar.scopeAsOfLocalDate}
       />
+      {calendar.entries.length === 0 ? (
+        <RouteState kind="empty" title="No unavailability this month">
+          <p>No team unavailability is recorded for this month.</p>
+        </RouteState>
+      ) : (
+        <section aria-labelledby="team-availability-view-heading" className="grid gap-4">
+          <h2 id="team-availability-view-heading" className="m-0 text-xl font-bold">
+            Availability by date
+          </h2>
+          {view === 'MONTH' ? (
+            <MonthGrid
+              calendar={calendar}
+              entries={entries}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+          ) : (
+            <Agenda
+              calendar={calendar}
+              entries={entries}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+          )}
+        </section>
+      )}
+      <nav className="flex flex-wrap gap-2" aria-label="Team calendar month">
+        <Button
+          type="button"
+          variant="secondary"
+          data-route-focus-key="team-calendar-previous-month"
+          onPress={() => changeMonth(-1)}
+        >
+          Previous month
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          data-route-focus-key="team-calendar-next-month"
+          onPress={() => changeMonth(1)}
+        >
+          Next month
+        </Button>
+      </nav>
     </>
   );
 }
@@ -213,65 +249,60 @@ function MonthGrid({
     [calendar.days, calendar.leadingEmptyDays],
   );
   return (
-    <div
-      className="overflow-x-auto rounded-xl border border-[var(--wl-border)]"
-      role="region"
-      aria-label="Scrollable team availability month"
-      tabIndex={0}
+    <DataTable
+      caption={`Neutral team unavailability for ${formatMonth(calendar.month)}. Select a date for a focused list.`}
+      className="min-w-[52rem]"
+      scrollHint="Scroll horizontally to review all seven days."
+      scrollLabel="Team availability month grid"
     >
-      <table className="w-full min-w-[52rem] border-collapse text-left">
-        <caption className="p-3 text-left text-sm text-[var(--wl-text-muted)]">
-          Neutral team unavailability for {formatMonth(calendar.month)}. Select a date for a focused
-          list.
-        </caption>
-        <thead>
-          <tr className="border-y border-[var(--wl-border)] text-sm">
-            {WEEKDAYS.map((day) => (
-              <th key={day} scope="col" className="p-3">
-                {day}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {weeks(dates).map((week, weekIndex) => (
-            <tr key={weekIndex} className="align-top">
-              {week.map((date, dayIndex) => {
-                const dateEntries = date === null ? [] : (entries.get(date) ?? []);
-                return (
-                  <td
-                    key={date ?? `${weekIndex.toString()}-${dayIndex.toString()}-blank`}
-                    className="h-36 w-[14.28%] border-b border-r border-[var(--wl-border)] p-2 last:border-r-0"
-                  >
-                    {date === null ? null : (
-                      <div className="grid gap-2">
-                        <button
-                          type="button"
-                          className="w-fit rounded-md px-2 py-1 font-semibold"
-                          aria-label={`Select ${formatLocalDate(date)}`}
-                          aria-pressed={selectedDate === date}
-                          onClick={() => setSelectedDate(date)}
-                        >
-                          {Number(date.slice(-2))}
-                        </button>
-                        <DateMarkers
-                          entries={dateEntries}
-                          isSelected={selectedDate === date}
-                          isToday={calendar.scopeAsOfLocalDate === date}
-                        />
-                        {dateEntries.map((entry, index) => (
-                          <AvailabilityEntry compact entry={entry} key={entryKey(entry, index)} />
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                );
-              })}
-            </tr>
+      <thead>
+        <tr>
+          {WEEKDAYS.map((day) => (
+            <th key={day} scope="col">
+              {day}
+            </th>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+      </thead>
+      <tbody>
+        {weeks(dates).map((week, weekIndex) => (
+          <tr key={weekIndex} className="align-top">
+            {week.map((date, dayIndex) => {
+              const dateEntries = date === null ? [] : (entries.get(date) ?? []);
+              return (
+                <td
+                  key={date ?? `${weekIndex.toString()}-${dayIndex.toString()}-blank`}
+                  className="h-36 w-[14.28%]"
+                >
+                  {date === null ? null : (
+                    <div className="grid gap-2">
+                      <Button
+                        type="button"
+                        className="w-fit px-2 py-1"
+                        variant="quiet"
+                        aria-label={`Select ${formatLocalDate(date)}`}
+                        aria-pressed={selectedDate === date}
+                        onPress={() => setSelectedDate(date)}
+                      >
+                        {Number(date.slice(-2))}
+                      </Button>
+                      <DateMarkers
+                        entries={dateEntries}
+                        isSelected={selectedDate === date}
+                        isToday={calendar.scopeAsOfLocalDate === date}
+                      />
+                      {dateEntries.map((entry, index) => (
+                        <AvailabilityEntry compact entry={entry} key={entryKey(entry, index)} />
+                      ))}
+                    </div>
+                  )}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </DataTable>
   );
 }
 
@@ -294,33 +325,32 @@ function Agenda({
       aria-label={`Team availability agenda for ${formatMonth(calendar.month)}`}
     >
       {dates.map((date) => (
-        <li
-          key={date}
-          className="grid list-none gap-3 rounded-xl border border-[var(--wl-border)] p-4"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="m-0 text-lg font-bold">{formatLocalDate(date)}</h3>
-            <button
-              type="button"
-              className="wl-button-secondary"
-              aria-pressed={selectedDate === date}
-              onClick={() => setSelectedDate(date)}
-            >
-              Select date
-            </button>
-          </div>
-          <DateMarkers
-            entries={entries.get(date) ?? []}
-            isSelected={selectedDate === date}
-            isToday={calendar.scopeAsOfLocalDate === date}
-          />
-          <ul className="m-0 grid gap-2 p-0" role="list">
-            {(entries.get(date) ?? []).map((entry, index) => (
-              <li key={entryKey(entry, index)} className="list-none">
-                <AvailabilityEntry entry={entry} />
-              </li>
-            ))}
-          </ul>
+        <li key={date} className="list-none">
+          <Panel as="article" className="grid gap-3" density="compact">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="m-0 text-lg font-bold">{formatLocalDate(date)}</h3>
+              <Button
+                type="button"
+                variant="secondary"
+                aria-pressed={selectedDate === date}
+                onPress={() => setSelectedDate(date)}
+              >
+                Select date
+              </Button>
+            </div>
+            <DateMarkers
+              entries={entries.get(date) ?? []}
+              isSelected={selectedDate === date}
+              isToday={calendar.scopeAsOfLocalDate === date}
+            />
+            <ul className="m-0 grid gap-2 p-0" role="list">
+              {(entries.get(date) ?? []).map((entry, index) => (
+                <li key={entryKey(entry, index)} className="list-none">
+                  <AvailabilityEntry entry={entry} />
+                </li>
+              ))}
+            </ul>
+          </Panel>
         </li>
       ))}
     </ol>
@@ -333,10 +363,7 @@ function SelectedDate({
   isToday,
 }: Readonly<{ date: string; entries: readonly TeamCalendarEntry[]; isToday: boolean }>) {
   return (
-    <section
-      className="grid gap-3 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-4"
-      aria-labelledby="selected-team-date-heading"
-    >
+    <Panel className="grid gap-3" aria-labelledby="selected-team-date-heading" density="balanced">
       <div>
         <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Selected date</p>
         <h2
@@ -360,7 +387,7 @@ function SelectedDate({
           ))}
         </ul>
       )}
-    </section>
+    </Panel>
   );
 }
 
@@ -407,24 +434,20 @@ function AvailabilityEntry({
 
 function TeamCalendarLoading() {
   return (
-    <div className="wl-panel grid gap-2" aria-busy="true">
-      <h2 className="m-0 text-xl font-bold">Loading team calendar</h2>
-      <p className="m-0 text-[var(--wl-text-muted)]">Checking authorized availability…</p>
-    </div>
+    <RouteState kind="loading" title="Loading team calendar">
+      <p>Checking authorized availability.</p>
+    </RouteState>
   );
 }
 
 function TeamCalendarError({ retry }: Readonly<{ retry: () => void }>) {
   return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
-      <h2 className="m-0 text-xl font-bold">Team calendar is unavailable</h2>
-      <p className="m-0">
-        No restricted employee details were displayed. Try loading the authorized month again.
-      </p>
+    <Alert title="Team calendar is unavailable" tone="danger">
+      <p>No restricted employee details were displayed. Try loading the authorized month again.</p>
       <Button className="w-fit" type="button" variant="secondary" onPress={retry}>
         Try again
       </Button>
-    </div>
+    </Alert>
   );
 }
 

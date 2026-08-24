@@ -464,13 +464,22 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   await expect(page.getByRole('heading', { name: 'Approval inbox' })).toBeFocused();
 
   const table = page.getByRole('table', { name: /Unified approval inbox/u });
-  const scrollRegion = page.getByRole('region', { name: 'Scrollable approval inbox results' });
+  const scrollRegion = page.getByRole('region', { name: 'Approval inbox results table' });
   await expect(table).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
-  await capturePhase11Surface(page, 'approvals-desktop-1440x900');
+  await capturePhase12Manager(page, 'approvals-desktop-1440x900');
   await page.setViewportSize({ width: 390, height: 844 });
-  await capturePhase11Surface(page, 'approvals-mobile-390x844');
+  const mobileResults = page.getByRole('list', { name: 'Approval inbox results' });
+  await expect(table).toHaveCount(0);
+  await expect(mobileResults).toBeVisible();
+  await expect(mobileResults.getByText('Maria Chen')).toBeVisible();
+  await expect(mobileResults.getByText('Client Services')).toHaveCount(2);
+  await expect(
+    mobileResults.getByRole('link', { name: 'Review correction for Maria Chen' }),
+  ).toBeVisible();
+  await capturePhase12Manager(page, 'approvals-mobile-390x844');
   await page.setViewportSize({ width: 1280, height: 720 });
+  await expect(table).toBeVisible();
   await expect(table.locator('caption')).toContainText(
     'Monthly periods link to their dedicated review page; absence subtypes remain hidden.',
   );
@@ -526,12 +535,12 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   await nextPage.focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/page=2/u);
-  await expect(page.getByText('Page 2 of 3')).toBeVisible();
+  await expect(page.getByText(/Page 2 of 3/u)).toBeVisible();
   await expect(nextPage).toBeFocused();
 
   await page.goBack();
   await expect(page).toHaveURL(/page=1/u);
-  await expect(page.getByText('Page 1 of 3')).toBeVisible();
+  await expect(page.getByText(/Page 1 of 3/u)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next page' })).toBeFocused();
   expect(approvalQueries.length).toBeGreaterThanOrEqual(3);
 
@@ -545,17 +554,21 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   await page.keyboard.press('Enter');
   await expect(page.getByText('Hide approval filters', { exact: true })).toBeFocused();
   await expect(status).toBeVisible();
+  await expect(table).toHaveCount(0);
+  await expect(mobileResults).toBeVisible();
+  const mobileReview = mobileResults.getByRole('link', {
+    name: 'Review correction for Maria Chen',
+  });
+  await expect(mobileReview).toBeVisible();
+  const mobileReviewTarget = await mobileReview.boundingBox();
+  expect(mobileReviewTarget?.height).toBeGreaterThanOrEqual(44);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
     ),
   ).toBe(true);
-  const tableOverflow = await scrollRegion.evaluate((region) => ({
-    clientWidth: region.clientWidth,
-    scrollWidth: region.scrollWidth,
-  }));
-  expect(tableOverflow.scrollWidth).toBeGreaterThan(tableOverflow.clientWidth);
-  await capturePhase11Surface(page, 'approvals-reflow-320x900');
+  await expect(scrollRegion).toHaveCount(0);
+  await capturePhase12Manager(page, 'approvals-reflow-320x900');
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -796,6 +809,7 @@ test('records an approval decision with field-linked errors and keyboard-scrolla
     page.getByText('This approval has no action available in its current state.'),
   ).toBeVisible();
   await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'reduce' });
+  await capturePhase12Manager(page, 'approval-detail-mobile-320x900');
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -1539,26 +1553,41 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Team status' })).toBeFocused();
   await expect(page).toHaveTitle('Team | WorkLedger');
-  const teamTable = page.getByRole('table', {
-    name: 'Privacy-safe current status for authorized direct reports.',
-  });
-  await expect(
-    teamTable.getByRole('row', { name: /Ari Working Delivery Working Unresolved record/u }),
-  ).toBeVisible();
-  await expect(
-    teamTable.getByRole('row', { name: /Cleo Away No current team Unavailable today/u }),
-  ).toBeVisible();
-  const teamScrollRegion = page.getByRole('region', { name: 'Scrollable team status' });
-  await teamScrollRegion.focus();
-  await expect(teamScrollRegion).toBeFocused();
-  expect(
-    await teamScrollRegion.evaluate((element) => element.scrollWidth > element.clientWidth),
-  ).toBe(true);
+  const teamList = page.getByRole('list', { name: 'Current direct reports' });
+  await expect(teamList).toBeVisible();
+  await expect(page.getByRole('table')).toHaveCount(0);
+  await expect(teamList.getByRole('heading', { name: 'Ari Working' })).toBeVisible();
+  await expect(teamList.getByText('Delivery')).toBeVisible();
+  await expect(teamList.getByText('Working', { exact: true })).toBeVisible();
+  await expect(teamList.getByText('Unresolved record', { exact: true })).toBeVisible();
+  await expect(teamList.getByRole('heading', { name: 'Cleo Away' })).toBeVisible();
+  await expect(teamList.getByText('No current team')).toBeVisible();
+  await expect(teamList.getByText('Unavailable today', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open approval inbox' })).toBeVisible();
+  await capturePhase12Manager(page, 'team-status-mobile-390x844');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await expect(page.getByText(/sickness|vacation/iu)).toHaveCount(0);
 
+  await page.setViewportSize({ width: 1024, height: 720 });
+  const teamTable = page.getByRole('table', {
+    name: 'Privacy-safe current status for authorized direct reports.',
+  });
+  await expect(
+    teamTable.getByRole('row', {
+      name: /Ari Working.*Delivery.*Working.*Unresolved record/u,
+    }),
+  ).toBeVisible();
+  await expect(
+    teamTable.getByRole('row', {
+      name: /Cleo Away.*No current team.*Unavailable today/u,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Team status table' })).toBeVisible();
+  await capturePhase12Manager(page, 'team-status-desktop-1024x720');
+
+  await page.setViewportSize({ width: 390, height: 844 });
   const menuButton = page.getByRole('button', { name: 'Menu' });
   await menuButton.click();
   await expect(dialog).toBeVisible();
@@ -2143,6 +2172,10 @@ test('defaults the team calendar to an equivalent agenda on narrow screens', asy
   await page.goto('/team-calendar?month=2026-08');
   await expect(page).toHaveTitle('Team calendar | WorkLedger');
   await expect(page.getByRole('heading', { name: 'Team calendar' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Agenda list' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   const agenda = page.getByRole('list', { name: 'Team availability agenda for August 2026' });
   await expect(agenda).toBeVisible();
   await expect(page.getByRole('table')).toHaveCount(0);
@@ -2155,21 +2188,33 @@ test('defaults the team calendar to an equivalent agenda on narrow screens', asy
     .getByRole('heading', { name: /Saturday, August 15, 2026/u })
     .locator('..');
   await augustFifteenth.getByRole('button', { name: 'Select date' }).click();
-  await expect(page.getByText('Selected date')).toBeVisible();
+  await expect(page.getByText('Selected date', { exact: true })).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Saturday, August 15, 2026' }).last(),
   ).toBeVisible();
+  await capturePhase12Manager(page, 'team-calendar-agenda-mobile-390x844');
 
   await page.getByRole('button', { name: 'Month grid' }).click();
+  await expect(page.getByRole('button', { name: 'Month grid' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   const table = page.getByRole('table', { name: /Neutral team unavailability for August 2026/u });
   await expect(table).toBeVisible();
   await expect(table.getByText('Maria Chen')).toBeVisible();
   await expect(table.getByText('Noah Williams')).toBeVisible();
+  const gridRegion = page.getByRole('region', { name: 'Team availability month grid' });
+  await expect(gridRegion).toBeVisible();
+  await expect(page.getByText('Scroll horizontally to review all seven days.')).toBeVisible();
+  expect(await gridRegion.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(
+    true,
+  );
   expect(requestedMonths).toContain('2026-08');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await expect(page.getByText(/sickness|vacation|medical/iu)).toHaveCount(0);
+  await capturePhase12Manager(page, 'team-calendar-grid-mobile-390x844');
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -2590,6 +2635,17 @@ async function capturePhase12Today(page: Page, name: string): Promise<void> {
 async function capturePhase12Personal(page: Page, name: string): Promise<void> {
   if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
   const directory = 'output/playwright/wl1201';
+  await mkdir(directory, { recursive: true });
+  await page.screenshot({
+    animations: 'disabled',
+    fullPage: true,
+    path: `${directory}/${name}.png`,
+  });
+}
+
+async function capturePhase12Manager(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
+  const directory = 'output/playwright/wl1203';
   await mkdir(directory, { recursive: true });
   await page.screenshot({
     animations: 'disabled',

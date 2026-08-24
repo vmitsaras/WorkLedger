@@ -317,7 +317,9 @@ Responsive changes follow available space and content fit, not user-agent or dev
 - Dialogs may become full-height sheets while retaining dialog semantics.
 - Tables use scroll or a deliberate list transformation.
 - Touch targets meet the project target size.
-- Filters may collapse into a labelled disclosure or dialog, but applied filters and a clear/reset action remain visible on the results surface.
+- Filters may collapse into a labelled disclosure or dialog, but the applied-filter summary remains
+  visible. A clear/reset action remains visible when the current state differs from the documented
+  default; the default state does not need a redundant clear action.
 - Actions do not depend on hover, a context menu, swipe, drag, or a precisely positioned pointer.
 
 ### Desktop
