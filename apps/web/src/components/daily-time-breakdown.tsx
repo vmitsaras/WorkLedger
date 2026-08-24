@@ -18,10 +18,6 @@ export function DailyTimeBreakdown({
   holidayName: string | null;
   status: TodayAttendance['calculation']['status'];
 }>) {
-  const expectedEquation = `Expected time equals ${formatDuration(estimate.scheduledMinutes)} scheduled, minus ${formatDuration(estimate.holidayExpectedReductionMinutes)} public-holiday reduction, minus ${formatDuration(estimate.absenceExpectedReductionMinutes)} absence reduction: ${formatDuration(estimate.expectedMinutes)}.`;
-  const creditedEquation = `Credited time equals ${formatDuration(estimate.workedMinutes)} worked, plus ${formatDuration(estimate.absenceCreditMinutes)} absence credit, ${formatAdjustment(estimate.adjustmentMinutes)}: ${formatDuration(estimate.creditedMinutes)}.`;
-  const balanceEquation = `Estimated balance equals ${formatDuration(estimate.creditedMinutes)} credited, minus ${formatDuration(estimate.expectedMinutes)} expected: ${formatDuration(estimate.balanceMinutes, true)}.`;
-
   return (
     <section className="grid gap-4" aria-labelledby="calculation-breakdown-title">
       <div className="grid gap-1">
@@ -51,7 +47,6 @@ export function DailyTimeBreakdown({
       <div className="wl-calculation-groups grid gap-4">
         <CalculationGroup
           description="Scheduled time minus holiday and absence reductions."
-          equation={expectedEquation}
           rows={[
             { label: 'Scheduled time', value: estimate.scheduledMinutes },
             {
@@ -68,7 +63,6 @@ export function DailyTimeBreakdown({
         />
         <CalculationGroup
           description="Worked time plus absence credit and approved adjustments. Break time is already excluded from worked time and is not subtracted again."
-          equation={creditedEquation}
           rows={[
             { label: 'Worked time', value: estimate.workedMinutes },
             { label: 'Break time', value: estimate.breakMinutes },
@@ -84,7 +78,6 @@ export function DailyTimeBreakdown({
         />
         <CalculationGroup
           description="Credited time minus expected time. The result may be positive, zero, or negative."
-          equation={balanceEquation}
           rows={[
             { label: 'Credited time', value: estimate.creditedMinutes },
             { label: 'Expected time', value: estimate.expectedMinutes },
@@ -104,12 +97,10 @@ export function DailyTimeBreakdown({
 
 function CalculationGroup({
   description,
-  equation,
   rows,
   title,
 }: Readonly<{
   description: string;
-  equation: string;
   rows: readonly CalculationRow[];
   title: string;
 }>) {
@@ -132,14 +123,6 @@ function CalculationGroup({
           </div>
         ))}
       </dl>
-      <p className="m-0 border-t border-[var(--wl-border-strong)] pt-3 text-sm font-semibold leading-6">
-        {equation}
-      </p>
     </article>
   );
-}
-
-function formatAdjustment(minutes: number): string {
-  if (minutes < 0) return `minus ${formatDuration(Math.abs(minutes))} approved adjustments`;
-  return `plus ${formatDuration(minutes)} approved adjustments`;
 }

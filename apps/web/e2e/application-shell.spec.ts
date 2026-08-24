@@ -1186,6 +1186,11 @@ test('keeps the calculation explanation and event history readable at 320px', as
   });
 
   await page.goto('/today');
+  const calculationDetails = page.locator('summary').filter({ hasText: 'Calculation details' });
+  await expect(calculationDetails).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Expected time', exact: true })).toBeHidden();
+  await calculationDetails.focus();
+  await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Why expected time is zero' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Expected time', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Credited time', exact: true })).toBeVisible();
@@ -1225,12 +1230,12 @@ test('preserves the Today task order, target sizes, and reflow across supported 
       for (const action of ['Start break', 'Clock out']) {
         const bounds = await page.getByRole('button', { name: action, exact: true }).boundingBox();
         expect(bounds).not.toBeNull();
-        expect(bounds?.width).toBeGreaterThanOrEqual(24);
-        expect(bounds?.height).toBeGreaterThanOrEqual(24);
+        expect(bounds?.width).toBeGreaterThanOrEqual(44);
+        expect(bounds?.height).toBeGreaterThanOrEqual(44);
       }
-      if (width === 320) await capturePhase11Surface(page, 'today-reflow-320x900');
-      if (width === 390) await capturePhase11Surface(page, 'today-mobile-390x900');
-      if (width === 1440) await capturePhase11Surface(page, 'today-desktop-1440x900');
+      if (width === 320) await capturePhase12Today(page, 'today-reflow-320x900');
+      if (width === 390) await capturePhase12Today(page, 'today-mobile-390x900');
+      if (width === 1440) await capturePhase12Today(page, 'today-desktop-1440x900');
     });
   }
 
@@ -1246,6 +1251,20 @@ test('preserves the Today task order, target sizes, and reflow across supported 
         Boolean(
           currentStatus.compareDocumentPosition(calculation) & Node.DOCUMENT_POSITION_FOLLOWING,
         )
+      );
+    }),
+  ).toBe(true);
+  expect(
+    await page.evaluate(() => {
+      const attention = document.querySelector('#calculation-attention-title')?.closest('section');
+      const details = document.querySelector('#calculation-details');
+      const timeline = document.querySelector('#today-timeline-title')?.closest('section');
+      return (
+        attention !== null &&
+        details !== null &&
+        timeline !== null &&
+        Boolean(attention.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+        Boolean(details.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING)
       );
     }),
   ).toBe(true);
@@ -1345,8 +1364,8 @@ test('completes the primary attendance action with touch input', async ({ browse
     const clockIn = page.getByRole('button', { name: 'Clock in' });
     const bounds = await clockIn.boundingBox();
     expect(bounds).not.toBeNull();
-    expect(bounds?.width).toBeGreaterThanOrEqual(24);
-    expect(bounds?.height).toBeGreaterThanOrEqual(24);
+    expect(bounds?.width).toBeGreaterThanOrEqual(44);
+    expect(bounds?.height).toBeGreaterThanOrEqual(44);
     await clockIn.tap();
 
     await expect(page.getByRole('heading', { name: 'Working' })).toBeFocused();
@@ -2254,6 +2273,17 @@ function success(data: unknown) {
 async function capturePhase11Surface(page: Page, name: string): Promise<void> {
   if (process.env['WORKLEDGER_CAPTURE_PHASE_11'] !== '1') return;
   const directory = 'output/playwright/wl1106';
+  await mkdir(directory, { recursive: true });
+  await page.screenshot({
+    animations: 'disabled',
+    fullPage: true,
+    path: `${directory}/${name}.png`,
+  });
+}
+
+async function capturePhase12Today(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
+  const directory = 'output/playwright/wl1200';
   await mkdir(directory, { recursive: true });
   await page.screenshot({
     animations: 'disabled',

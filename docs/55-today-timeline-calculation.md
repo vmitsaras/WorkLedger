@@ -1,5 +1,10 @@
 # Today Timeline and Calculation Breakdown
 
+> Phase 12 presentation note: `WL-1200` preserves every server-provided source row below but
+> replaces the repeated prose equation after each group with one concise credited-minus-expected
+> summary and a native full-calculation disclosure. See
+> `docs/117-today-workflow-ux-remediation.md`.
+
 **Task:** `WL-404`  
 **Completed:** 2026-08-11  
 **Outcome:** Complete locally. Today now explains the provisional daily arithmetic as three

@@ -161,7 +161,7 @@ requires broader route verification during its owning task.
 | UI-005 | Medium | Horizontal-record and calendar responsive contracts are inconsistent | Confirmed / high | WL-1104, WL-1201 |
 | UI-006 | Medium | The shell navigation does not scale cleanly for combined-role or long HR inventories | **Resolved by WL-1105** / high | WL-1105 |
 | UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | **Foundation complete; route adoption pending** / high | WL-1200–WL-1205 |
-| UI-008 | Medium | Today repeats the same calculation meaning across labels, values, and narrative formulas | Confirmed / high | WL-1200 |
+| UI-008 | Medium | Today repeats the same calculation meaning across labels, values, and narrative formulas | **Resolved by WL-1200** / high | Closed |
 | UI-009 | Medium | Employee directory and team management compete in one long administration route | Confirmed / medium | WL-1204 |
 | UI-010 | Medium | Disabled team deactivation has no adjacent explanation or recovery path | Confirmed / medium | WL-1204 |
 | UI-011 | Medium | Organization identity is hard-coded rather than validated runtime configuration | **Resolved by WL-1103** / high | Closed |
@@ -176,7 +176,7 @@ requires broader route verification during its owning task.
 ### UI-001 — Requests route contract is incomplete and privacy-inconsistent
 
 - **Severity:** High
-- **Status/confidence:** Confirmed / high
+- **Status/confidence:** Resolved by `WL-1200` / high
 - **Evidence:** `apps/web/src/app/router.tsx` maps `/requests` to `PlaceholderPage`, maps
   `/requests/new` directly to `VacationRequestPage`, exposes `/requests/sickness`, and defines no
   `/requests/:requestId`. `docs/05-ux-accessibility.md` requires a complete type-neutral hub,
@@ -335,7 +335,12 @@ requires broader route verification during its owning task.
   detail/history. Do not gamify positive balances or hide negative/incomplete states.
 - **Validation:** Clocked-out/in/break/complete/incomplete/warning/zero-expected states at supported
   widths, comprehension review, focus order, screen-reader reading order, and no information loss.
-- **Owner:** `WL-1200`.
+- **Resolution evidence:** `docs/117-today-workflow-ux-remediation.md` records the state/action/effect
+  panel, blocker-before-warning hierarchy, one concise credited-minus-expected summary, complete
+  native calculation disclosure, 320–1920 px reflow, keyboard/touch/focus/forced-colors/axe
+  evidence, and unchanged server value sources.
+- **Owner:** Resolved in `WL-1200`; release-level visual and manual AT regression remains
+  `WL-1206`.
 
 ## 8. Cross-cutting directions for the next tasks
 

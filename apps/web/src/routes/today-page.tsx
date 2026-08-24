@@ -17,18 +17,17 @@ import {
   executeAttendanceCommand,
   type AttendanceCommandIntent,
 } from '../app/api-client.js';
-import { formatDuration, formatLocalDate, formatTime } from '../app/date-time-format.js';
+import { formatLocalDate, formatTime } from '../app/date-time-format.js';
 import { todayAttendanceQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { DailyTimeBreakdown } from '../components/daily-time-breakdown.js';
 import { CalculationAttention } from '../components/calculation-attention.js';
 import { PageHeader } from '../components/page-header.js';
+import type { AttendanceRecoveryMode } from '../components/today-attendance-controls.js';
 import {
-  ATTENDANCE_ACTION_LABELS,
-  AttendanceRecovery,
-  TodayAttendanceControls,
-  type AttendanceRecoveryMode,
-} from '../components/today-attendance-controls.js';
+  TodayAttendanceOverview,
+  type TodayAttendanceFeedback,
+} from '../components/today-attendance-overview.js';
 import { TodayAttendanceTimeline } from '../components/today-attendance-timeline.js';
 
 const STATE_LABELS: Readonly<Record<AttendanceState, string>> = {
@@ -41,16 +40,6 @@ const ATTENDANCE_AUTOMATIC_RETRY_LIMIT = 2;
 const ATTENDANCE_RETRY_BASE_DELAY_MS = 250;
 const ATTENDANCE_RETRY_MAX_DELAY_MS = 1_000;
 
-type AttendanceFeedback = Readonly<{
-  command: AttendanceCommand;
-  intentKey: string;
-  kind: 'ERROR' | 'INFO' | 'SUCCESS';
-  message: string;
-  requestId?: string;
-  resultingRevision?: number;
-  shouldFocusStatus: boolean;
-}>;
-
 export function TodayPage() {
   const query = useQuery(todayAttendanceQuery());
   const queryClient = useQueryClient();
@@ -61,8 +50,11 @@ export function TodayPage() {
   const focusedActionRef = useRef<AttendanceCommand | null>(null);
   const focusedIntentRef = useRef<string | null>(null);
   const previousAttendanceRef = useRef<TodayAttendance['attendance'] | null>(null);
-  const [attendanceFeedback, setAttendanceFeedback] = useState<AttendanceFeedback | null>(null);
+  const [attendanceFeedback, setAttendanceFeedback] = useState<TodayAttendanceFeedback | null>(
+    null,
+  );
   const [clockOutConfirmationOpen, setClockOutConfirmationOpen] = useState(false);
+  const [calculationDetailsOpen, setCalculationDetailsOpen] = useState(false);
   const [requiresReconnectRefresh, setRequiresReconnectRefresh] = useState(false);
   const attendanceMutation = useMutation({
     mutationFn: executeAttendanceCommand,
@@ -225,6 +217,7 @@ export function TodayPage() {
     attendanceFeedback,
     attendanceControlsDisabled,
     attendanceControlsRef,
+    calculationDetailsOpen,
     clockOutConfirmationOpen,
     dependencyError: query.isError ? query.error : null,
     onActionFocus: (command) => {
@@ -253,6 +246,7 @@ export function TodayPage() {
     pendingIntent: attendanceMutation.isPending ? attendanceMutation.variables : null,
     recoveryMode,
     retryToday,
+    setCalculationDetailsOpen,
     setClockOutConfirmationOpen,
     statusHeadingRef,
     today: query.data,
@@ -268,7 +262,7 @@ function renderTodayOffline() {
         title="Today"
         description="Reconnect to load your current attendance state. No clock action can be sent or queued while you are offline."
       />
-      <div className="wl-alert wl-alert-error grid gap-1 rounded-xl border p-4" role="alert">
+      <div className="wl-alert wl-alert--danger grid gap-1" role="alert">
         <h2 className="m-0 text-lg font-bold">You’re offline</h2>
         <p className="m-0 text-sm leading-6">
           WorkLedger will refresh your status after the connection returns before enabling any
@@ -307,7 +301,7 @@ function renderTodayLoadError({ error, retry }: Readonly<{ error: unknown; retry
         title="Today"
         description="Your attendance information could not be loaded. No clock action was submitted."
       />
-      <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
+      <div className="wl-alert wl-alert--danger grid gap-3" role="alert">
         <div className="grid gap-1">
           <h2 className="m-0 text-lg font-bold">Today is temporarily unavailable</h2>
           <p className="m-0 text-sm leading-6">
@@ -332,6 +326,7 @@ function renderTodayReady({
   attendanceFeedback,
   attendanceControlsDisabled,
   attendanceControlsRef,
+  calculationDetailsOpen,
   clockOutConfirmationOpen,
   dependencyError,
   onActionFocus,
@@ -339,14 +334,16 @@ function renderTodayReady({
   pendingIntent,
   recoveryMode,
   retryToday,
+  setCalculationDetailsOpen,
   setClockOutConfirmationOpen,
   statusHeadingRef,
   today,
   updating,
 }: Readonly<{
-  attendanceFeedback: AttendanceFeedback | null;
+  attendanceFeedback: TodayAttendanceFeedback | null;
   attendanceControlsDisabled: boolean;
   attendanceControlsRef: RefObject<HTMLDivElement | null>;
+  calculationDetailsOpen: boolean;
   clockOutConfirmationOpen: boolean;
   dependencyError: unknown;
   onActionFocus: (command: AttendanceCommand) => void;
@@ -358,24 +355,20 @@ function renderTodayReady({
   pendingIntent: AttendanceCommandIntent | null;
   recoveryMode: AttendanceRecoveryMode;
   retryToday: () => void;
+  setCalculationDetailsOpen: (isOpen: boolean) => void;
   setClockOutConfirmationOpen: (isOpen: boolean) => void;
   statusHeadingRef: RefObject<HTMLHeadingElement | null>;
   today: TodayAttendance;
   updating: boolean;
 }>) {
-  const attendance = today.attendance;
   const calculation = today.calculation;
-  const activeDescription =
-    attendance.activeSince === null
-      ? 'No active attendance interval.'
-      : `${STATE_LABELS[attendance.state]} since ${formatTime(attendance.activeSince, today.timeZone)}.`;
 
   return (
     <section className="grid max-w-6xl gap-8">
       <PageHeader
         eyebrow={formatLocalDate(today.localDate)}
         title="Today"
-        description="Current attendance and an explainable estimate for your organization-local day."
+        description="Record your workday and review today’s time."
       >
         {updating ? (
           <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Updating…</p>
@@ -386,108 +379,51 @@ function renderTodayReady({
         )}
       </PageHeader>
 
-      <div className="wl-today-grid grid gap-6">
-        <section
-          className="wl-panel grid min-w-0 content-start gap-5"
-          aria-labelledby="current-status-title"
-        >
-          <div className="grid gap-1">
-            <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
-              Current status
-            </p>
-            <h2
-              ref={statusHeadingRef}
-              id="current-status-title"
-              className="m-0 text-3xl font-bold outline-none focus-visible:rounded-sm focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]"
-              tabIndex={-1}
-            >
-              {STATE_LABELS[attendance.state]}
-            </h2>
-            <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">{activeDescription}</p>
-          </div>
-          <div className="grid gap-1 border-t border-[var(--wl-border)] pt-4">
-            <h3 className="m-0 text-sm font-bold">Available next</h3>
-            <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-              {attendance.validActions
-                .map((action) => ATTENDANCE_ACTION_LABELS[action])
-                .join(' or ')}
-              .
-            </p>
-            <TodayAttendanceControls
-              attendance={attendance}
-              controlsDisabled={attendanceControlsDisabled}
-              controlsRef={attendanceControlsRef}
-              clockOutConfirmationOpen={clockOutConfirmationOpen}
-              onActionFocus={onActionFocus}
-              onAttendanceCommand={onAttendanceCommand}
-              pendingIntent={pendingIntent}
-              setClockOutConfirmationOpen={setClockOutConfirmationOpen}
-            />
-            <AttendanceRecovery error={dependencyError} mode={recoveryMode} retry={retryToday} />
-            {attendanceFeedback === null ? null : (
-              <div
-                className={
-                  attendanceFeedback.kind === 'ERROR'
-                    ? 'wl-alert wl-alert-error mt-3 grid gap-1 rounded-xl border p-3'
-                    : 'wl-alert mt-3 grid gap-1 rounded-xl border p-3'
-                }
-                role={
-                  attendanceFeedback.kind === 'ERROR' && recoveryMode === null ? 'alert' : 'status'
-                }
-              >
-                <p className="m-0 text-sm font-semibold">{attendanceFeedback.message}</p>
-                {attendanceFeedback.requestId === undefined ? null : (
-                  <p className="m-0 break-all text-xs">
-                    Request reference: {attendanceFeedback.requestId}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section
-          className="wl-panel grid min-w-0 content-start gap-5"
-          aria-labelledby="calculation-title"
-        >
-          <div className="grid gap-1">
-            <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
-              {calculation.status === 'PROVISIONAL'
-                ? 'Provisional estimate'
-                : 'Calculation incomplete'}
-            </p>
-            <h2 id="calculation-title" className="m-0 text-3xl font-bold">
-              {calculation.estimate === null
-                ? 'Not available'
-                : formatDuration(calculation.estimate.balanceMinutes, true)}
-            </h2>
-            <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-              {calculation.estimate === null
-                ? 'WorkLedger cannot produce a reliable estimate until the items below are resolved.'
-                : 'Estimated flexible-time balance for today. It is not a locked or final record.'}
-            </p>
-          </div>
-          {calculation.holidayName === null ? null : (
-            <p className="m-0 min-w-0 [overflow-wrap:anywhere] rounded-lg bg-[var(--wl-surface-subtle)] p-3 text-sm font-semibold">
-              Public holiday: {calculation.holidayName}
-            </p>
-          )}
-        </section>
-      </div>
+      <TodayAttendanceOverview
+        controlsDisabled={attendanceControlsDisabled}
+        controlsRef={attendanceControlsRef}
+        clockOutConfirmationOpen={clockOutConfirmationOpen}
+        dependencyError={dependencyError}
+        feedback={attendanceFeedback}
+        onActionFocus={onActionFocus}
+        onAttendanceCommand={onAttendanceCommand}
+        pendingIntent={pendingIntent}
+        recoveryMode={recoveryMode}
+        retryToday={retryToday}
+        setClockOutConfirmationOpen={setClockOutConfirmationOpen}
+        statusHeadingRef={statusHeadingRef}
+        today={today}
+      />
 
       <CalculationAttention
         attention={{ blockers: calculation.blockers, warnings: calculation.warnings }}
         balanceHref="/my-time#flexible-time-heading"
-        calculationHref="#calculation-breakdown-title"
+        calculationHref="#calculation-details"
         eventHref="#today-timeline-title"
+        onCalculationDetailsRequest={() => setCalculationDetailsOpen(true)}
       />
 
       {calculation.estimate === null ? null : (
-        <DailyTimeBreakdown
-          estimate={calculation.estimate}
-          holidayName={calculation.holidayName}
-          status={calculation.status}
-        />
+        <details
+          id="calculation-details"
+          className="wl-panel"
+          open={calculationDetailsOpen}
+          onToggle={(event) => setCalculationDetailsOpen(event.currentTarget.open)}
+        >
+          <summary className="min-h-[var(--wl-control-min-block-size)] cursor-pointer rounded-[var(--wl-radius-control)] outline-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]">
+            <span className="font-bold">Calculation details</span>
+            <span className="mt-1 block text-sm text-[var(--wl-text-muted)]">
+              Review every source amount used for today’s estimate.
+            </span>
+          </summary>
+          <div className="border-t border-[var(--wl-border)] pt-5">
+            <DailyTimeBreakdown
+              estimate={calculation.estimate}
+              holidayName={calculation.holidayName}
+              status={calculation.status}
+            />
+          </div>
+        </details>
       )}
 
       <TodayAttendanceTimeline
@@ -540,7 +476,7 @@ function attendanceSuccessMessage(result: AttendanceCommandResult, formattedTime
 function attendanceErrorFeedback(
   error: unknown,
   intent: AttendanceCommandIntent,
-): AttendanceFeedback {
+): TodayAttendanceFeedback {
   const base = {
     command: intent.command,
     intentKey: intent.idempotencyKey,

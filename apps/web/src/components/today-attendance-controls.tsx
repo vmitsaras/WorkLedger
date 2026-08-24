@@ -38,7 +38,12 @@ export function TodayAttendanceControls({
   setClockOutConfirmationOpen: (isOpen: boolean) => void;
 }>) {
   return (
-    <div ref={controlsRef} className="mt-3 flex flex-wrap gap-3">
+    <div
+      ref={controlsRef}
+      aria-label="Attendance actions"
+      className="grid max-w-md gap-3 sm:grid-cols-2"
+      role="group"
+    >
       {attendance.validActions.map((action, index) => {
         const isPendingAction = pendingIntent?.command === action;
         const label = isPendingAction
@@ -48,7 +53,7 @@ export function TodayAttendanceControls({
 
         if (action === 'CLOCK_OUT' && attendance.state === 'ON_BREAK') {
           return (
-            <div key={action} onFocusCapture={() => onActionFocus(action)}>
+            <div key={action} className="grid" onFocusCapture={() => onActionFocus(action)}>
               <Dialog
                 actions={({ close }) => (
                   <>
@@ -88,6 +93,7 @@ export function TodayAttendanceControls({
           <form
             key={action}
             aria-busy={isPendingAction}
+            className="grid"
             onFocusCapture={() => onActionFocus(action)}
             onSubmit={(event) => {
               event.preventDefault();
@@ -97,6 +103,7 @@ export function TodayAttendanceControls({
             }}
           >
             <Button
+              className="w-full"
               type="submit"
               variant={variant}
               isDisabled={pendingIntent !== null || controlsDisabled}
@@ -122,7 +129,7 @@ export function AttendanceRecovery({
   if (mode === null) return null;
   if (mode === 'RECONNECTING') {
     return (
-      <div className="wl-alert mt-3 rounded-xl border p-3" role="status">
+      <div className="wl-alert wl-alert--info" role="status">
         <p className="m-0 text-sm font-semibold">
           Connection restored. Refreshing current attendance before enabling actions…
         </p>
@@ -131,7 +138,7 @@ export function AttendanceRecovery({
   }
   if (mode === 'OFFLINE') {
     return (
-      <div className="wl-alert wl-alert-error mt-3 grid gap-1 rounded-xl border p-3" role="alert">
+      <div className="wl-alert wl-alert--danger grid gap-1" role="alert">
         <p className="m-0 text-sm font-semibold">You’re offline.</p>
         <p className="m-0 text-sm leading-6">
           Attendance actions are disabled and will not be queued. Reconnect to refresh your current
@@ -142,7 +149,7 @@ export function AttendanceRecovery({
   }
   const requestId = error instanceof ApiClientError ? error.requestId : undefined;
   return (
-    <div className="wl-alert wl-alert-error mt-3 grid gap-2 rounded-xl border p-3" role="alert">
+    <div className="wl-alert wl-alert--danger grid gap-2" role="alert">
       <p className="m-0 text-sm font-semibold">
         WorkLedger could not refresh your current attendance. Actions remain disabled.
       </p>

@@ -149,7 +149,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 12 — Workflow UX remediation and product polish
 
-- [ ] `WL-1200` Redesign Today attendance, calculation hierarchy, warnings, recovery, and primary clock-action feedback.
+- [x] `WL-1200` Redesign Today attendance, calculation hierarchy, warnings, recovery, and primary clock-action feedback.
 - [ ] `WL-1201` Improve personal time records, balances, calendars, notifications, profile, loading, empty, and error experiences.
 - [ ] `WL-1202` Improve correction, absence, cancellation, approval-history, and monthly-review workflows.
 - [ ] `WL-1203` Improve manager Team, Approvals, team-calendar, filtering, decision, and narrow-screen workflows.

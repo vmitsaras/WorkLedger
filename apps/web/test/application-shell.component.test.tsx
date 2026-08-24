@@ -360,7 +360,11 @@ test('renders the role-aware shell and focuses each completed route navigation',
   expect(screen.getByRole('link', { name: 'Today' })).toHaveAttribute('aria-current', 'page');
   expect(screen.queryByRole('link', { name: 'Operations' })).not.toBeInTheDocument();
   expect(await screen.findByRole('heading', { name: 'Working' })).toBeVisible();
-  expect(screen.getByRole('heading', { name: '−4h 45m' })).toBeVisible();
+  expect(
+    within(screen.getByRole('region', { name: 'Today’s balance estimate' })).getByText('−4h 45m'),
+  ).toBeVisible();
+  expect(screen.getByText('3h 15m credited − 8h 00m expected')).toBeVisible();
+  expect(screen.getByRole('group', { name: 'Attendance actions' })).toBeVisible();
   expect(
     screen.queryByText('The calculation source does not match its recorded ledger entry.'),
   ).not.toBeInTheDocument();
@@ -660,6 +664,7 @@ test('explains incomplete overnight record slices without presenting a final cal
 });
 
 test('explains the daily arithmetic and preserves attendance event order in semantic groups', async () => {
+  const user = userEvent.setup();
   const completedSequence: TodayAttendance = {
     ...TODAY_ATTENDANCE,
     attendance: {
@@ -693,19 +698,19 @@ test('explains the daily arithmetic and preserves attendance event order in sema
   const { container } = renderApplication('/today');
 
   await screen.findByRole('heading', { name: 'Off work' });
+  expect(
+    within(screen.getByRole('region', { name: 'Today’s balance estimate' })).getByText('−5h 15m'),
+  ).toBeVisible();
+  expect(screen.getByText('2h 45m credited − 8h 00m expected')).toBeVisible();
+  expect(screen.getByRole('region', { name: 'Calculation breakdown' })).not.toBeVisible();
+  await user.click(screen.getByText('Calculation details'));
   const breakdown = screen.getByRole('region', { name: 'Calculation breakdown' });
   expect(within(breakdown).getByRole('heading', { name: 'Expected time' })).toBeVisible();
   expect(within(breakdown).getByRole('heading', { name: 'Credited time' })).toBeVisible();
   expect(within(breakdown).getByRole('heading', { name: 'Estimated balance' })).toBeVisible();
-  expect(breakdown).toHaveTextContent(
-    'Expected time equals 8h 00m scheduled, minus 0h 00m public-holiday reduction, minus 0h 00m absence reduction: 8h 00m.',
-  );
-  expect(breakdown).toHaveTextContent(
-    'Credited time equals 3h 15m worked, plus 0h 00m absence credit, minus 0h 30m approved adjustments: 2h 45m.',
-  );
-  expect(breakdown).toHaveTextContent(
-    'Estimated balance equals 2h 45m credited, minus 8h 00m expected: −5h 15m.',
-  );
+  expect(breakdown).toHaveTextContent('Scheduled time8h 00m');
+  expect(breakdown).toHaveTextContent('Credited time2h 45m');
+  expect(breakdown).toHaveTextContent('Estimated balance−5h 15m');
   expect(breakdown).toHaveTextContent('Approved adjustments−0h 30m');
   expect(breakdown).toHaveTextContent(
     'Break time is already excluded from worked time and is not subtracted again.',
@@ -726,6 +731,7 @@ test('explains the daily arithmetic and preserves attendance event order in sema
 });
 
 test('explains zero expected time before presenting credited work', async () => {
+  const user = userEvent.setup();
   const holidayToday: TodayAttendance = {
     ...TODAY_ATTENDANCE,
     calculation: {
@@ -750,7 +756,12 @@ test('explains zero expected time before presenting credited work', async () => 
   vi.stubGlobal('fetch', authenticatedFetch(holidayToday));
   const { container } = renderApplication('/today');
 
-  expect(await screen.findByRole('heading', { name: '+1h 00m' })).toBeVisible();
+  expect(
+    within(await screen.findByRole('region', { name: 'Today’s balance estimate' })).getByText(
+      '+1h 00m',
+    ),
+  ).toBeVisible();
+  await user.click(screen.getByText('Calculation details'));
   expect(screen.getByRole('heading', { name: 'Why expected time is zero' })).toBeVisible();
   expect(
     screen.getByText(/German Unity Day reduces today’s scheduled expectation to zero/u),
@@ -781,7 +792,7 @@ test('shows an incomplete calculation without inventing an estimate', async () =
   const { container } = renderApplication('/today');
 
   expect(await screen.findByRole('heading', { name: 'Off work' })).toBeVisible();
-  expect(screen.getByRole('heading', { name: 'Not available' })).toBeVisible();
+  expect(screen.getByText('Not available')).toBeVisible();
   expect(screen.getByText('Work schedule missing')).toBeVisible();
   expect(
     screen.getByText(/Ask your organization administrator to assign a work schedule/u),

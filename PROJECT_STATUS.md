@@ -2,17 +2,18 @@
 
 **Current phase:** Phase 12 — Workflow UX remediation and product polish
 **Project readiness:** Stage 5 of 5 — Production and UI-foundation gates complete
-**Phase progress:** Phase 11 complete — 0 of 7 Phase 12 tasks complete
+**Phase progress:** Phase 11 complete — 1 of 7 Phase 12 tasks complete
 **Current milestone:** UI foundation complete — version 0.12.0
-**Active task:** `WL-1200` (next)
-**Status:** WL-1106 complete — UI-foundation gate passed
-**Last verified:** 2026-08-21
+**Active task:** `WL-1201` (next)
+**Status:** WL-1200 complete — Today workflow UX remediated
+**Last verified:** 2026-08-24
 
 ## Current objective
 
-Phase 11 is complete at `0.12.0`. The next bounded slice is `WL-1200`: apply the established Quiet
-Ledger foundation to Today attendance, calculation hierarchy, warnings, recovery, and primary
-clock-action feedback without changing attendance domain rules or server authorization.
+Phase 11 is complete at `0.12.0`, and `WL-1200` has applied the Quiet Ledger immediate-task
+hierarchy to Today without changing attendance domain rules or server authorization. The next
+bounded slice is `WL-1201`: improve personal time records, balances, calendars, notifications,
+profile, loading, empty, and error experiences.
 
 ## Verified decisions
 
@@ -1644,9 +1645,33 @@ clock-action feedback without changing attendance domain rules or server authori
 - No database schema, domain invariant, authorization, mutation, sensitive DTO, package
   publication, tag, release, container publication, or deployment changed.
 
+**2026-08-24 — WL-1200 Today workflow UX remediation**
+
+- Replaced the equal-weight Today summary with one comfortable immediate-task panel that keeps
+  current state and the next valid attendance action first, then shows the concise current-day
+  balance effect from the existing authoritative response.
+- Moved blockers and warnings ahead of calculation detail and history, adopted the shared semantic
+  warning/danger/success/info families, and kept persistent mutation/recovery feedback beside the
+  action controls.
+- Replaced three repeated narrative equations with one credited-minus-expected summary and a
+  keyboard-operable native disclosure containing every existing source row and calculation
+  explanation.
+- Preserved pending, active-break confirmation, idempotent retry, offline non-queueing,
+  reconnect-before-enable, stale-tab/device convergence, focus transfer, immutable timeline order,
+  and timezone-aware formatting without changing the API or domain engine.
+- Added a focused `TodayAttendanceOverview`, tightened component/browser hierarchy assertions,
+  strengthened attendance targets to 44 CSS pixels, and added ignored WL-1200 visual-review capture
+  support for desktop, mobile, and 320 px reflow.
+- Verification passed lint/source/CSS boundaries, 37 tooling tests, 334 unit/component tests, 13
+  available integration tests, all 31 configured Playwright scenarios, production build/public
+  imports, and the 49,941-byte CSS budget. See
+  `docs/117-today-workflow-ux-remediation.md` for the complete evidence boundary.
+- No database, API, authorization, authentication, CSRF, cache, URL, storage, audit, logging,
+  immutable attendance, calculation source, or workspace version contract changed.
+
 ## Current blockers
 
-No decision blocks `WL-1200`. `D-502` manual assistive-technology evidence remains open for the
+No decision blocks `WL-1201`. `D-502` manual assistive-technology evidence remains open for the
 Phase 12 UI release gate (`WL-1206`). `UI-001` and `UI-002` are high-priority workflow gaps owned by
 `WL-1202` and `WL-1204`; systematic visual regression remains `UI-014`/`WL-1206`. The temporary
 Astro backup is recoverable at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`,
@@ -1654,8 +1679,8 @@ but the public site remains deferred to `WL-1300`.
 
 ## Next task
 
-`WL-1200 — Redesign Today attendance, calculation hierarchy, warnings, recovery, and primary
-clock-action feedback.`
+`WL-1201 — Improve personal time records, balances, calendars, notifications, profile, loading,
+empty, and error experiences.`
 
 ## Update rules
 

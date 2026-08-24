@@ -131,11 +131,13 @@ export function CalculationAttention({
   balanceHref,
   calculationHref,
   eventHref,
+  onCalculationDetailsRequest,
 }: Readonly<{
   attention: DailyTimeAttention;
   balanceHref: string;
   calculationHref: string;
   eventHref: string;
+  onCalculationDetailsRequest?: () => void;
 }>) {
   if (attention.blockers.length === 0 && attention.warnings.length === 0) return null;
   return (
@@ -148,6 +150,7 @@ export function CalculationAttention({
           items={attention.blockers.map((code) => BLOCKER_ATTENTION[code])}
           kind="blocker"
           links={{ balanceHref, calculationHref, eventHref }}
+          {...(onCalculationDetailsRequest === undefined ? {} : { onCalculationDetailsRequest })}
           title="Calculation blockers"
         />
       )}
@@ -156,6 +159,7 @@ export function CalculationAttention({
           items={attention.warnings.map((code) => WARNING_ATTENTION[code])}
           kind="warning"
           links={{ balanceHref, calculationHref, eventHref }}
+          {...(onCalculationDetailsRequest === undefined ? {} : { onCalculationDetailsRequest })}
           title="Warnings"
         />
       )}
@@ -167,15 +171,17 @@ function AttentionGroup({
   items,
   kind,
   links,
+  onCalculationDetailsRequest,
   title,
 }: Readonly<{
   items: readonly AttentionItem[];
   kind: 'blocker' | 'warning';
   links: Readonly<{ balanceHref: string; calculationHref: string; eventHref: string }>;
+  onCalculationDetailsRequest?: () => void;
   title: string;
 }>) {
   return (
-    <div className={`wl-alert ${kind === 'blocker' ? 'wl-alert-error' : ''} rounded-xl border p-4`}>
+    <div className={`wl-alert ${kind === 'blocker' ? 'wl-alert--danger' : 'wl-alert--warning'}`}>
       <h3 className="m-0 text-lg font-bold">{title}</h3>
       <ul className="mb-0 mt-3 grid gap-3 pl-5">
         {items.map((item) => (
@@ -185,7 +191,12 @@ function AttentionGroup({
             {item.href === null ? (
               <span>{item.action}</span>
             ) : (
-              <a href={links[actionHrefKey(item.href)]}>{item.action}</a>
+              <a
+                href={links[actionHrefKey(item.href)]}
+                onClick={item.href === 'CALCULATION' ? onCalculationDetailsRequest : undefined}
+              >
+                {item.action}
+              </a>
             )}
           </li>
         ))}

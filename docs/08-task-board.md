@@ -206,7 +206,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-1200 | Redesign Today attendance, calculation hierarchy, warnings, recovery, and primary clock-action feedback | WL-1106 | Representative attendance states pass task-order, comprehension, responsive, and accessibility checks | Not started |
+| WL-1200 | Redesign Today attendance, calculation hierarchy, warnings, recovery, and primary clock-action feedback | WL-1106 | Representative attendance states pass task-order, comprehension, responsive, and accessibility checks | Done |
 | WL-1201 | Improve personal time records, balances, calendars, notifications, profile, loading, empty, and error experiences | WL-1106 | Employee collection/detail states use consistent, recoverable patterns | Not started |
 | WL-1202 | Improve correction, absence, cancellation, approval-history, and monthly-review workflows | WL-1106 | Type-neutral request history/detail and end-to-end workflow-state evidence | Not started |
 | WL-1203 | Improve manager Team, Approvals, team-calendar, filtering, decision, and narrow-screen workflows | WL-1106 | Task-critical table context/actions remain understandable and operable at supported widths | Not started |
