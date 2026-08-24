@@ -3,6 +3,16 @@ import { type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { myTimeQuerySchema, type MyTime, type MyTimeQuery } from '@workledger/contracts';
+import {
+  Alert,
+  Button,
+  DataTable,
+  FilterBar,
+  Pagination,
+  Panel,
+  RouteState,
+  StatusBadge,
+} from '@workledger/ui';
 
 import { ApiClientError } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
@@ -47,20 +57,75 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
   const { balance, leave, ledger, period, records, summary } = query.data;
   return (
     <MyTimeFrame balancesOnly={balancesOnly} title={title}>
-      <div className="grid gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface)] p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <Panel
+        aria-labelledby="personal-time-summary-heading"
+        className="grid gap-5"
+        density="balanced"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">
+              {period.view === 'WEEK' ? 'Selected week' : 'Selected month'}
+            </p>
+            <h2 id="personal-time-summary-heading" className="m-0 mt-1 text-2xl font-bold">
+              {formatLocalDate(period.startDate)} to {formatLocalDate(period.endDate)}
+            </h2>
+            {!balancesOnly ? (
+              <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
+                {summary.recordedDayCount} recorded day{summary.recordedDayCount === 1 ? '' : 's'} ·{' '}
+                {summary.incompleteRecordCount} incomplete · complete-record balance{' '}
+                {formatDuration(summary.completeBalanceMinutes, true)}
+              </p>
+            ) : null}
+          </div>
+          {period.view === 'MONTH' && period.monthlyPeriodId !== null && !balancesOnly ? (
+            <Link
+              className="wl-button-secondary inline-flex"
+              to={`/monthly-periods/${encodeURIComponent(period.monthlyPeriodId)}`}
+            >
+              Review monthly period
+            </Link>
+          ) : null}
+        </div>
+        <section aria-labelledby="flexible-time-heading" className="grid gap-3">
+          <div>
+            <h3 id="flexible-time-heading" className="m-0 text-lg font-bold">
+              Flexible-time balance
+            </h3>
+            <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+              Posted entries are final. Eligible complete records not yet posted remain separate.
+            </p>
+          </div>
+          <dl className="grid gap-4 sm:grid-cols-3">
+            <BalanceValue label="Posted balance" value={balance.postedBalanceMinutes} />
+            <BalanceValue
+              label="Eligible projection"
+              value={balance.eligibleProjectedMinutes}
+              signed
+            />
+            <BalanceValue label="Projected balance" value={balance.projectedBalanceMinutes} />
+          </dl>
+        </section>
+      </Panel>
+
+      <FilterBar
+        onSubmit={(event) => event.preventDefault()}
+        title="Choose time period"
+        description="The selected period and ledger page are kept in the URL."
+      >
         <div className="grid gap-2">
-          <span className="text-sm font-semibold">Time record view</span>
+          <span className="text-sm font-semibold">View</span>
           <div className="flex flex-wrap gap-2" aria-label="Time record view">
             {(['WEEK', 'MONTH'] as const).map((view) => (
-              <button
+              <Button
                 key={view}
                 type="button"
                 aria-pressed={queryInput.view === view}
-                className="wl-button-secondary"
-                onClick={() => setQuery({ page: 1, view })}
+                variant="secondary"
+                onPress={() => setQuery({ page: 1, view })}
               >
                 {view === 'WEEK' ? 'Week' : 'Month'}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -73,91 +138,47 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
             onChange={(event) => setQuery({ date: event.target.value, page: 1 })}
           />
         </label>
-      </div>
+      </FilterBar>
 
-      <section aria-labelledby="flexible-time-heading" className="grid gap-4">
-        <div>
-          <h2 id="flexible-time-heading" className="m-0 text-xl font-bold">
-            Flexible-time balance
-          </h2>
-          <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-            Posted entries are final ledger facts. Eligible complete records not yet posted are
-            shown separately as projections.
+      {balance.excludedIncompleteDates.length > 0 ? (
+        <Alert title="Projected balance excludes incomplete records" tone="warning">
+          <p className="m-0">
+            Review {balance.excludedIncompleteDates.map(formatLocalDate).join(', ')} before relying
+            on the projected total.
           </p>
-        </div>
-        <dl className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4 sm:grid-cols-3">
-          <BalanceValue label="Posted balance" value={balance.postedBalanceMinutes} />
-          <BalanceValue
-            label="Eligible projection"
-            value={balance.eligibleProjectedMinutes}
-            signed
-          />
-          <BalanceValue label="Projected balance" value={balance.projectedBalanceMinutes} />
-        </dl>
-        {balance.excludedIncompleteDates.length > 0 ? (
-          <p className="wl-alert wl-alert-warning m-0 rounded-xl border p-4" role="status">
-            Projected balance excludes incomplete records for:{' '}
-            {balance.excludedIncompleteDates.map(formatLocalDate).join(', ')}.
-          </p>
-        ) : null}
-      </section>
+        </Alert>
+      ) : null}
 
       {!balancesOnly ? (
         <section aria-labelledby="time-records-heading" className="grid gap-4">
           <div>
             <h2 id="time-records-heading" className="m-0 text-xl font-bold">
-              {period.view === 'WEEK' ? 'Week' : 'Month'} summary
+              Daily records
             </h2>
             <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-              {formatLocalDate(period.startDate)} to {formatLocalDate(period.endDate)}.{' '}
-              {summary.recordedDayCount} recorded day{summary.recordedDayCount === 1 ? '' : 's'};{' '}
-              {summary.incompleteRecordCount} incomplete.
+              Open a recorded date for its calculation, work sessions, events, and recovery
+              guidance.
             </p>
-            {period.view === 'MONTH' && period.monthlyPeriodId !== null ? (
-              <p className="m-0 mt-3">
-                <Link
-                  className="wl-button-secondary inline-flex"
-                  to={`/monthly-periods/${encodeURIComponent(period.monthlyPeriodId)}`}
-                >
-                  Review monthly period
-                </Link>
-              </p>
-            ) : null}
           </div>
-          <div className="overflow-x-auto rounded-xl border border-[var(--wl-border)]">
-            <table className="w-full border-collapse text-left">
-              <caption className="sr-only">
-                Daily time record summaries for the selected period
-              </caption>
+          <div className="hidden md:block">
+            <DataTable
+              caption="Daily time record summaries for the selected period"
+              scrollLabel="Daily time records table"
+            >
               <thead>
-                <tr className="border-b border-[var(--wl-border)] text-sm">
-                  <th scope="col" className="p-3">
-                    Date
-                  </th>
-                  <th scope="col" className="p-3">
-                    Status
-                  </th>
-                  <th scope="col" className="p-3">
-                    Expected
-                  </th>
-                  <th scope="col" className="p-3">
-                    Credited
-                  </th>
-                  <th scope="col" className="p-3">
-                    Balance
-                  </th>
-                  <th scope="col" className="p-3">
-                    Attention
-                  </th>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Expected</th>
+                  <th scope="col">Credited</th>
+                  <th scope="col">Balance</th>
+                  <th scope="col">Attention</th>
                 </tr>
               </thead>
               <tbody>
                 {records.map((record) => (
-                  <tr
-                    key={record.localDate}
-                    className="border-b border-[var(--wl-border)] last:border-0"
-                  >
-                    <th scope="row" className="p-3 font-medium">
+                  <tr key={record.localDate}>
+                    <th scope="row">
                       {record.recordId === null ? (
                         formatLocalDate(record.localDate)
                       ) : (
@@ -166,47 +187,61 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                         </Link>
                       )}
                     </th>
-                    <td className="p-3">{record.status.replace('_', ' ').toLowerCase()}</td>
-                    <td className="p-3">
+                    <td>
+                      <RecordStatus status={record.status} />
+                    </td>
+                    <td>
                       {record.expectedMinutes === null
                         ? '—'
                         : formatDuration(record.expectedMinutes)}
                     </td>
-                    <td className="p-3">
+                    <td>
                       {record.creditedMinutes === null
                         ? '—'
                         : formatDuration(record.creditedMinutes)}
                     </td>
-                    <td className="p-3">
+                    <td>
                       {record.balanceMinutes === null
                         ? '—'
                         : formatDuration(record.balanceMinutes, true)}
                     </td>
-                    <td className="p-3">
-                      {record.attention.warnings.length === 0 ? (
-                        record.status === 'INCOMPLETE' ? (
-                          'Review incomplete record'
-                        ) : (
-                          '—'
-                        )
-                      ) : record.recordId === null ? (
-                        `${record.attention.warnings.length.toString()} warning${record.attention.warnings.length === 1 ? '' : 's'}`
-                      ) : (
-                        <Link to={`/time-records/${encodeURIComponent(record.recordId)}`}>
-                          {record.attention.warnings.length.toString()} warning
-                          {record.attention.warnings.length === 1 ? '' : 's'} — review details
-                        </Link>
-                      )}
-                    </td>
+                    <td>{recordAttention(record)}</td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </DataTable>
           </div>
-          <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            Complete-record balance in this period:{' '}
-            {formatDuration(summary.completeBalanceMinutes, true)}.
-          </p>
+          <ol
+            className="m-0 grid list-none gap-3 p-0 md:hidden"
+            aria-label="Daily time record summaries for the selected period"
+          >
+            {records.map((record) => (
+              <li key={record.localDate}>
+                <Panel as="article" className="grid gap-4" density="balanced">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="m-0 text-lg font-bold">
+                      {record.recordId === null ? (
+                        formatLocalDate(record.localDate)
+                      ) : (
+                        <Link to={`/time-records/${encodeURIComponent(record.recordId)}`}>
+                          {formatLocalDate(record.localDate)}
+                        </Link>
+                      )}
+                    </h3>
+                    <RecordStatus status={record.status} />
+                  </div>
+                  <dl className="grid grid-cols-3 gap-3">
+                    <CompactRecordValue label="Expected" value={record.expectedMinutes} />
+                    <CompactRecordValue label="Credited" value={record.creditedMinutes} />
+                    <CompactRecordValue label="Balance" signed value={record.balanceMinutes} />
+                  </dl>
+                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                    {recordAttention(record)}
+                  </p>
+                </Panel>
+              </li>
+            ))}
+          </ol>
         </section>
       ) : null}
 
@@ -220,54 +255,42 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
           </p>
         </div>
         {ledger.entries.length === 0 ? (
-          <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-            No posted flexible-time entries exist through this period.
-          </p>
+          <RouteState kind="empty" title="No posted flexible-time entries">
+            <p>No final ledger entries exist through this period.</p>
+          </RouteState>
         ) : (
-          <ol className="grid gap-3">
+          <ol className="m-0 grid list-none gap-3 p-0">
             {ledger.entries.map((entry) => (
-              <li
-                key={`${entry.postedAt}-${entry.explanationCode}`}
-                className="grid gap-1 rounded-xl border border-[var(--wl-border)] p-4 sm:grid-cols-[1fr_auto] sm:items-center"
-              >
-                <div>
-                  <strong>{entry.entryType.replaceAll('_', ' ').toLowerCase()}</strong>
-                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                    Effective {formatLocalDate(entry.effectiveDate)} ·{' '}
-                    {entry.explanationCode.replaceAll('_', ' ').toLowerCase()}
-                  </p>
-                </div>
-                <div className="text-sm sm:text-right">
-                  <div>{formatDuration(entry.minutes, true)}</div>
-                  <div className="text-[var(--wl-text-muted)]">
-                    Balance after: {formatDuration(entry.balanceAfterMinutes, true)}
+              <li key={`${entry.postedAt}-${entry.explanationCode}`}>
+                <Panel
+                  as="article"
+                  className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center"
+                  density="balanced"
+                >
+                  <div>
+                    <strong>{entry.entryType.replaceAll('_', ' ').toLowerCase()}</strong>
+                    <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                      Effective {formatLocalDate(entry.effectiveDate)} ·{' '}
+                      {entry.explanationCode.replaceAll('_', ' ').toLowerCase()}
+                    </p>
                   </div>
-                </div>
+                  <div className="text-sm tabular-nums sm:text-right">
+                    <div>{formatDuration(entry.minutes, true)}</div>
+                    <div className="text-[var(--wl-text-muted)]">
+                      Balance after: {formatDuration(entry.balanceAfterMinutes, true)}
+                    </div>
+                  </div>
+                </Panel>
               </li>
             ))}
           </ol>
         )}
-        <div className="flex items-center justify-between gap-3">
-          <button
-            className="wl-button-secondary"
-            type="button"
-            disabled={ledger.page === 1}
-            onClick={() => setQuery({ page: ledger.page - 1 })}
-          >
-            Previous ledger page
-          </button>
-          <span className="text-sm text-[var(--wl-text-muted)]">
-            Page {ledger.page} of {Math.max(1, Math.ceil(ledger.total / ledger.limit))}
-          </span>
-          <button
-            className="wl-button-secondary"
-            type="button"
-            disabled={ledger.page * ledger.limit >= ledger.total}
-            onClick={() => setQuery({ page: ledger.page + 1 })}
-          >
-            Next ledger page
-          </button>
-        </div>
+        <Pagination
+          currentPage={ledger.page}
+          onPageChange={(page) => setQuery({ page })}
+          pageCount={Math.max(1, Math.ceil(ledger.total / ledger.limit))}
+          summary={`Flexible-time ledger page ${ledger.page} of ${Math.max(1, Math.ceil(ledger.total / ledger.limit))}`}
+        />
       </section>
 
       {balancesOnly ? (
@@ -292,24 +315,26 @@ function LeaveBalanceSection({
         </p>
       </div>
       {leave.accounts.length === 0 ? (
-        <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-          No leave entitlement accounts have been allocated yet.
-        </p>
+        <RouteState kind="empty" title="No leave entitlement accounts">
+          <p>No leave allocation has been posted yet.</p>
+        </RouteState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-3">
           {leave.accounts.map((account) => (
-            <dl
-              key={account.name}
-              className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4"
-            >
-              <div>
-                <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">Account</dt>
-                <dd className="m-0 text-lg font-bold">{account.name}</dd>
-              </div>
-              <BalanceValue label="Available" value={account.availableMinutes} />
-              <BalanceValue label="Pending reservation" value={account.reservedMinutes} />
-              <BalanceValue label="Projected remaining" value={account.projectedRemainingMinutes} />
-            </dl>
+            <Panel as="article" density="balanced" key={account.name}>
+              <dl className="grid gap-3">
+                <div>
+                  <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">Account</dt>
+                  <dd className="m-0 text-lg font-bold">{account.name}</dd>
+                </div>
+                <BalanceValue label="Available" value={account.availableMinutes} />
+                <BalanceValue label="Pending reservation" value={account.reservedMinutes} />
+                <BalanceValue
+                  label="Projected remaining"
+                  value={account.projectedRemainingMinutes}
+                />
+              </dl>
+            </Panel>
           ))}
         </div>
       )}
@@ -321,54 +346,37 @@ function LeaveBalanceSection({
         </p>
       </div>
       {leave.ledger.entries.length === 0 ? (
-        <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-          No leave entitlement source entries exist yet.
-        </p>
+        <RouteState kind="empty" title="No leave source entries">
+          <p>No entitlement, reservation, or adjustment entry exists yet.</p>
+        </RouteState>
       ) : (
-        <ol className="grid gap-3">
+        <ol className="m-0 grid list-none gap-3 p-0">
           {leave.ledger.entries.map((entry, index) => (
-            <li
-              key={`${entry.postedAt}-${entry.entryType}-${index.toString()}`}
-              className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4"
-            >
-              <div>
-                <strong>{entry.entryType.replaceAll('_', ' ').toLowerCase()}</strong>
-                <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                  {entry.absenceTypeName} · effective {formatLocalDate(entry.effectiveOn)}
-                </p>
-              </div>
-              <dl className="grid gap-2 text-sm sm:grid-cols-4">
-                <BalanceValue label="Entry" value={entry.minutes} signed />
-                <BalanceValue label="Available after" value={entry.availableAfterMinutes} />
-                <BalanceValue label="Reserved after" value={entry.reservedAfterMinutes} />
-                <BalanceValue label="Projected after" value={entry.projectedAfterMinutes} />
-              </dl>
+            <li key={`${entry.postedAt}-${entry.entryType}-${index.toString()}`}>
+              <Panel as="article" className="grid gap-3" density="balanced">
+                <div>
+                  <strong>{entry.entryType.replaceAll('_', ' ').toLowerCase()}</strong>
+                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                    {entry.absenceTypeName} · effective {formatLocalDate(entry.effectiveOn)}
+                  </p>
+                </div>
+                <dl className="grid gap-2 text-sm sm:grid-cols-4">
+                  <BalanceValue label="Entry" value={entry.minutes} signed />
+                  <BalanceValue label="Available after" value={entry.availableAfterMinutes} />
+                  <BalanceValue label="Reserved after" value={entry.reservedAfterMinutes} />
+                  <BalanceValue label="Projected after" value={entry.projectedAfterMinutes} />
+                </dl>
+              </Panel>
             </li>
           ))}
         </ol>
       )}
-      <div className="flex items-center justify-between gap-3">
-        <button
-          className="wl-button-secondary"
-          type="button"
-          disabled={leave.ledger.page === 1}
-          onClick={() => onPage(leave.ledger.page - 1)}
-        >
-          Previous leave ledger page
-        </button>
-        <span className="text-sm text-[var(--wl-text-muted)]">
-          Page {leave.ledger.page} of{' '}
-          {Math.max(1, Math.ceil(leave.ledger.total / leave.ledger.limit))}
-        </span>
-        <button
-          className="wl-button-secondary"
-          type="button"
-          disabled={leave.ledger.page * leave.ledger.limit >= leave.ledger.total}
-          onClick={() => onPage(leave.ledger.page + 1)}
-        >
-          Next leave ledger page
-        </button>
-      </div>
+      <Pagination
+        currentPage={leave.ledger.page}
+        onPageChange={onPage}
+        pageCount={Math.max(1, Math.ceil(leave.ledger.total / leave.ledger.limit))}
+        summary={`Leave ledger page ${leave.ledger.page} of ${Math.max(1, Math.ceil(leave.ledger.total / leave.ledger.limit))}`}
+      />
     </section>
   );
 }
@@ -407,32 +415,67 @@ function BalanceValue({
   );
 }
 
+function CompactRecordValue({
+  label,
+  signed = false,
+  value,
+}: Readonly<{ label: string; signed?: boolean; value: number | null }>) {
+  return (
+    <div className="grid gap-1">
+      <dt className="text-xs font-semibold text-[var(--wl-text-muted)]">{label}</dt>
+      <dd className="m-0 text-sm font-bold tabular-nums">
+        {value === null ? '—' : formatDuration(value, signed)}
+      </dd>
+    </div>
+  );
+}
+
+function RecordStatus({ status }: Readonly<{ status: MyTime['records'][number]['status'] }>) {
+  const tone = status === 'COMPLETE' ? 'success' : status === 'INCOMPLETE' ? 'warning' : 'info';
+  return <StatusBadge tone={tone}>{status.replaceAll('_', ' ').toLowerCase()}</StatusBadge>;
+}
+
+function recordAttention(record: MyTime['records'][number]): ReactNode {
+  if (record.attention.warnings.length === 0) {
+    return record.status === 'INCOMPLETE' ? 'Review incomplete record' : 'No attention needed';
+  }
+  const label = `${record.attention.warnings.length.toString()} warning${record.attention.warnings.length === 1 ? '' : 's'}`;
+  if (record.recordId === null) return label;
+  return (
+    <Link to={`/time-records/${encodeURIComponent(record.recordId)}`}>
+      {label} · review details
+    </Link>
+  );
+}
+
 function MyTimeLoading() {
   return (
-    <div
-      role="progressbar"
-      aria-busy="true"
-      aria-label="Loading time records"
-      className="h-2 rounded-full bg-[var(--wl-surface-subtle)]"
-    />
+    <RouteState kind="loading" title="Loading your records">
+      <p>Checking the selected period, balances, and source entries.</p>
+    </RouteState>
   );
 }
 
 function MyTimeError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
   const permissionDenied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
   return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
+    <RouteState
+      actions={
+        permissionDenied ? undefined : (
+          <Button variant="secondary" onPress={retry}>
+            Try again
+          </Button>
+        )
+      }
+      kind={permissionDenied ? 'permission-denied' : 'error'}
+      title={permissionDenied ? 'You cannot view these records' : 'Your records are unavailable'}
+    >
       <p className="m-0">
         {permissionDenied
-          ? 'Your current account cannot view this data.'
-          : 'Check your connection and try again.'}
+          ? 'Your current account does not have employee self-service access.'
+          : 'No time, balance, or ledger values were displayed. Check your connection and try again.'}
       </p>
-      {!permissionDenied ? (
-        <button className="wl-button-secondary w-fit" type="button" onClick={retry}>
-          Try again
-        </button>
-      ) : null}
-    </div>
+    </RouteState>
   );
 }
 

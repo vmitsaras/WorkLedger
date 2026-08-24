@@ -91,3 +91,11 @@ React Hook Form, or additional authentication library was added.
   509.16 kB minified entry-chunk warning and any justified route code splitting.
 - Phase 10 owns a coordinated production listener, same-origin Caddy composition, deployment
   headers, operations, and release hardening.
+
+## Phase 12 profile presentation update
+
+`WL-1201` keeps the read only profile DTO, session authorization, revocation, and protected cache
+cleanup unchanged. Account, employee, and session groups now use the shared panel and status
+contracts. Loading, dependency error, empty sessions, and mutation feedback use the shared route
+state and alert patterns. Approximate device labels and minimized session facts remain the only
+session information shown.

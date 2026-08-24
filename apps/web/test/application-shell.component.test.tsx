@@ -492,6 +492,13 @@ test('renders URL-owned time records and keeps posted and projected balance sepa
   expect(screen.getByText('10h 45m')).toBeVisible();
   expect(screen.getByText(/Projected balance excludes incomplete records/u)).toBeVisible();
   expect(screen.getByRole('table', { name: /Daily time record summaries/u })).toBeVisible();
+  expect(screen.getByRole('region', { name: 'Daily time records table' })).toHaveAttribute(
+    'tabindex',
+    '0',
+  );
+  expect(
+    screen.getByRole('list', { name: 'Daily time record summaries for the selected period' }),
+  ).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Posted ledger entries' })).toBeVisible();
   await expectNoAxeViolations(container);
 });
@@ -615,6 +622,11 @@ test('presents equivalent accessible personal calendar and agenda information', 
 
   expect(await screen.findByRole('heading', { name: 'Calendar' })).toBeVisible();
   expect(screen.getByRole('table')).toHaveAccessibleName(/Personal holidays and absence coverage/u);
+  expect(screen.getByRole('region', { name: 'Personal calendar month grid' })).toHaveAttribute(
+    'tabindex',
+    '0',
+  );
+  expect(screen.getByText('Scroll horizontally to review all seven days.')).toBeVisible();
   expect(screen.getByText('Vacation: Full day (submitted)')).toBeVisible();
   expect(screen.getByText('Public holiday: Summer holiday')).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Agenda list' }));
@@ -648,11 +660,8 @@ test('explains incomplete overnight record slices without presenting a final cal
   vi.stubGlobal('fetch', authenticatedFetch(TODAY_ATTENDANCE, overnightRecord));
   const { container } = renderApplication('/time-records/123e4567-e89b-42d3-a456-426614174302');
 
-  expect(
-    await screen.findByText(
-      'This record is incomplete. Its calculation is not a final posted result.',
-    ),
-  ).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'This record is incomplete' })).toBeVisible();
+  expect(screen.getByText('This calculation is not a final posted result.')).toBeVisible();
   expect(screen.getByText('Attendance entry incomplete')).toBeVisible();
   expect(screen.getByRole('link', { name: /Review the recorded events/u })).toHaveAttribute(
     'href',
@@ -1389,7 +1398,8 @@ test('keeps profile fields read-only and clears protected state after current-se
   await screen.findByRole('heading', { name: 'Profile' });
   expect(screen.getByText('NS-001')).toBeVisible();
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'Chrome on macOS — Current session' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Chrome on macOS' })).toBeVisible();
+  expect(screen.getByText('Current session')).toBeVisible();
 
   await user.click(screen.getByRole('button', { name: 'Sign out this session' }));
   const signInHeading = await screen.findByRole('heading', { name: 'Sign in' });

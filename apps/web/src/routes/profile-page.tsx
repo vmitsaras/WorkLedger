@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 
 import type { ApplicationRole, SelfSessionSummary } from '@workledger/contracts';
-import { Button } from '@workledger/ui';
+import { Alert, Button, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory, revokeSelfSession } from '../app/api-client.js';
 import { selfProfileQuery } from '../app/query.js';
@@ -32,11 +32,38 @@ export function ProfilePage() {
   if (profileQuery.isPending) {
     return (
       <section className="grid gap-6" aria-busy="true">
-        <PageHeader title="Profile" description="Loading your account and active sessions…" />
+        <PageHeader
+          title="Profile"
+          description="Review your account context and active sessions."
+        />
+        <RouteState kind="loading" title="Loading your profile">
+          <p>Checking account, employee, role, and session information.</p>
+        </RouteState>
       </section>
     );
   }
-  if (profileQuery.isError) throw profileQuery.error;
+  if (profileQuery.isError || profileQuery.data === undefined) {
+    if (isAuthenticationError(profileQuery.error)) throw profileQuery.error;
+    return (
+      <section className="grid gap-6">
+        <PageHeader
+          title="Profile"
+          description="Review your account context and active sessions."
+        />
+        <RouteState
+          actions={
+            <Button variant="secondary" onPress={() => void profileQuery.refetch()}>
+              Try again
+            </Button>
+          }
+          kind="error"
+          title="Your profile is unavailable"
+        >
+          <p>No account or session information was displayed. Try loading the profile again.</p>
+        </RouteState>
+      </section>
+    );
+  }
   const profile = profileQuery.data;
 
   async function handleRevoke(session: SelfSessionSummary) {
@@ -66,19 +93,16 @@ export function ProfilePage() {
       />
 
       {status === undefined ? null : (
-        <div
-          role={status.kind === 'error' ? 'alert' : 'status'}
-          className={`wl-alert ${status.kind === 'error' ? 'wl-alert-error' : 'wl-alert-success'} rounded-xl border p-4 text-sm`}
+        <Alert
+          title={status.kind === 'error' ? 'Session not revoked' : 'Session revoked'}
+          tone={status.kind === 'error' ? 'danger' : 'success'}
         >
-          {status.message}
-        </div>
+          <p className="m-0">{status.message}</p>
+        </Alert>
       )}
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <section
-          className="wl-panel grid content-start gap-5"
-          aria-labelledby="account-details-title"
-        >
+        <Panel className="grid content-start gap-5" aria-labelledby="account-details-title">
           <div>
             <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
               Account details
@@ -98,12 +122,9 @@ export function ProfilePage() {
             Account, role, and employee facts are managed through authorized administration
             workflows and cannot be edited from Profile.
           </p>
-        </section>
+        </Panel>
 
-        <section
-          className="wl-panel grid content-start gap-5"
-          aria-labelledby="employee-summary-title"
-        >
+        <Panel className="grid content-start gap-5" aria-labelledby="employee-summary-title">
           <div>
             <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
               Employee summary
@@ -124,7 +145,7 @@ export function ProfilePage() {
               ]}
             />
           )}
-        </section>
+        </Panel>
       </div>
 
       <section className="grid gap-5" aria-labelledby="active-sessions-title">
@@ -138,39 +159,43 @@ export function ProfilePage() {
           </p>
         </div>
         {profile.sessions.length === 0 ? (
-          <div className="wl-panel">
-            <p className="m-0">No active sessions are available.</p>
-          </div>
+          <RouteState kind="empty" title="No active sessions">
+            <p>No session record is available for this account.</p>
+          </RouteState>
         ) : (
           <ul className="m-0 grid list-none gap-4 p-0" role="list">
             {profile.sessions.map((session) => (
-              <li
-                key={session.id}
-                className="wl-panel flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="grid gap-1">
-                  <h3 className="m-0 text-lg font-bold">
-                    {session.deviceSummary}
-                    {session.current ? ' — Current session' : ''}
-                  </h3>
-                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                    Last active {formatDateTime(session.lastActiveAt)}
-                  </p>
-                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                    Expires {formatDateTime(session.expiresAt)}
-                  </p>
-                </div>
-                <Button
-                  variant={session.current ? 'secondary' : 'quiet'}
-                  isDisabled={revokeMutation.isPending}
-                  onPress={() => void handleRevoke(session)}
+              <li key={session.id}>
+                <Panel
+                  as="article"
+                  className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  {revokeMutation.isPending && revokeMutation.variables === session.id
-                    ? 'Signing out…'
-                    : session.current
-                      ? 'Sign out this session'
-                      : 'Revoke session'}
-                </Button>
+                  <div className="grid gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="m-0 text-lg font-bold">{session.deviceSummary}</h3>
+                      {session.current ? (
+                        <StatusBadge tone="info">Current session</StatusBadge>
+                      ) : null}
+                    </div>
+                    <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                      Last active {formatDateTime(session.lastActiveAt)}
+                    </p>
+                    <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                      Expires {formatDateTime(session.expiresAt)}
+                    </p>
+                  </div>
+                  <Button
+                    variant={session.current ? 'secondary' : 'quiet'}
+                    isDisabled={revokeMutation.isPending}
+                    onPress={() => void handleRevoke(session)}
+                  >
+                    {revokeMutation.isPending && revokeMutation.variables === session.id
+                      ? 'Signing out…'
+                      : session.current
+                        ? 'Sign out this session'
+                        : 'Revoke session'}
+                  </Button>
+                </Panel>
               </li>
             ))}
           </ul>
@@ -219,4 +244,11 @@ function revokeErrorMessage(error: unknown): string {
     return 'Your session expired. Sign in again to continue.';
   }
   return 'WorkLedger could not revoke that session. Refresh the profile and try again.';
+}
+
+function isAuthenticationError(error: unknown): error is ApiClientError {
+  return (
+    error instanceof ApiClientError &&
+    ['AUTH_REQUIRED', 'AUTH_SESSION_EXPIRED'].includes(error.code)
+  );
 }

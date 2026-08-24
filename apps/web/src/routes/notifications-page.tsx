@@ -8,7 +8,15 @@ import type {
   NotificationItem,
   NotificationQuery,
 } from '@workledger/contracts';
-import { Button, buttonVariants } from '@workledger/ui';
+import {
+  Alert,
+  Button,
+  Pagination,
+  Panel,
+  RouteState,
+  StatusBadge,
+  buttonVariants,
+} from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory, dismissNotification } from '../app/api-client.js';
 import { notificationHistoryQuery } from '../app/query.js';
@@ -63,7 +71,7 @@ export function NotificationsPage() {
       <PageHeader
         eyebrow="Account"
         title="Notifications"
-        description="Review generic outcome records for your account. Open a restricted destination for details; private request context is never repeated here."
+        description="Review account outcomes and open the related record when you need details."
       />
       <p
         className="sr-only"
@@ -75,9 +83,9 @@ export function NotificationsPage() {
         {statusMessage}
       </p>
       {dismissError === '' ? null : (
-        <p className="wl-alert wl-alert-error m-0 rounded-xl border p-4" role="alert">
-          {dismissError}
-        </p>
+        <Alert title="Notification not dismissed" tone="danger">
+          <p className="m-0">{dismissError}</p>
+        </Alert>
       )}
       {query.isPending ? (
         <NotificationLoading />
@@ -140,27 +148,31 @@ function NotificationHistoryView({
         </p>
       </div>
       {data.items.length === 0 ? (
-        <p className="wl-alert m-0 rounded-xl border p-4">
-          You have no notification history to show.
-        </p>
+        <RouteState kind="empty" title="No notification history">
+          <p>Account outcomes will appear here after a request or monthly-period decision.</p>
+        </RouteState>
       ) : (
         <ol className="m-0 grid gap-3 p-0" aria-label="Generic notification history">
           {data.items.map((item) => (
-            <li
-              key={item.id}
-              className="grid list-none gap-3 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-4"
-            >
-              <NotificationCard
-                item={item}
-                pending={dismissingId === item.id}
-                onDismiss={() => onDismiss(item.id)}
-                timeZone={data.timeZone}
-              />
+            <li key={item.id} className="list-none">
+              <Panel as="article" className="grid gap-3" density="balanced">
+                <NotificationCard
+                  item={item}
+                  pending={dismissingId === item.id}
+                  onDismiss={() => onDismiss(item.id)}
+                  timeZone={data.timeZone}
+                />
+              </Panel>
             </li>
           ))}
         </ol>
       )}
-      <NotificationPagination pagination={data.pagination} onPage={onPage} />
+      <Pagination
+        currentPage={data.pagination.page}
+        onPageChange={onPage}
+        pageCount={data.pagination.totalPages}
+        summary={`Notification history page ${data.pagination.page} of ${data.pagination.totalPages}`}
+      />
     </section>
   );
 }
@@ -185,7 +197,9 @@ function NotificationCard({
           <h3 className="m-0 text-lg font-bold">{item.title}</h3>
           <p className="m-0 mt-1">{item.body}</p>
         </div>
-        <p className="m-0 text-sm font-semibold">{dismissed ? 'Dismissed' : 'Active'}</p>
+        <StatusBadge tone={dismissed ? 'neutral' : 'info'}>
+          {dismissed ? 'Dismissed' : 'Active'}
+        </StatusBadge>
       </div>
       <dl className="m-0 grid gap-1 text-sm text-[var(--wl-text-muted)]">
         <div className="flex flex-wrap gap-2">
@@ -199,7 +213,9 @@ function NotificationCard({
       </dl>
       <div className="flex flex-wrap gap-2">
         <Link className={buttonVariants({ variant: 'secondary' })} to={item.destinationPath}>
-          Open requests
+          {item.destinationPath.startsWith('/monthly-periods/')
+            ? 'Open monthly period'
+            : 'Open requests'}
         </Link>
         <button
           type="button"
@@ -216,59 +232,27 @@ function NotificationCard({
   );
 }
 
-function NotificationPagination({
-  onPage,
-  pagination,
-}: Readonly<{
-  onPage: (page: number) => void;
-  pagination: NotificationHistory['pagination'];
-}>) {
-  if (pagination.totalPages <= 1) return null;
-  return (
-    <nav aria-label="Notification history pages" className="flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        className="wl-button-secondary"
-        data-route-focus-key="notifications-previous-page"
-        disabled={pagination.page <= 1}
-        onClick={() => onPage(pagination.page - 1)}
-      >
-        Previous page
-      </button>
-      <p className="m-0 text-sm font-semibold">
-        Page {pagination.page} of {pagination.totalPages}
-      </p>
-      <button
-        type="button"
-        className="wl-button-secondary"
-        data-route-focus-key="notifications-next-page"
-        disabled={pagination.page >= pagination.totalPages}
-        onClick={() => onPage(pagination.page + 1)}
-      >
-        Next page
-      </button>
-    </nav>
-  );
-}
-
 function NotificationLoading() {
   return (
-    <div className="wl-panel grid gap-2" aria-busy="true">
-      <h2 className="m-0 text-xl font-bold">Loading notification history</h2>
-      <p className="m-0 text-[var(--wl-text-muted)]">Checking your own generic records…</p>
-    </div>
+    <RouteState kind="loading" title="Loading notification history">
+      <p>Checking your account outcome records.</p>
+    </RouteState>
   );
 }
 
 function NotificationError({ retry }: Readonly<{ retry: () => void }>) {
   return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
-      <h2 className="m-0 text-xl font-bold">Notification history is unavailable</h2>
-      <p className="m-0">No notification content was displayed. Try loading your history again.</p>
-      <Button className="w-fit" type="button" variant="secondary" onPress={retry}>
-        Try again
-      </Button>
-    </div>
+    <RouteState
+      actions={
+        <Button variant="secondary" onPress={retry}>
+          Try again
+        </Button>
+      }
+      kind="error"
+      title="Notification history is unavailable"
+    >
+      <p>No notification content was displayed. Try loading your history again.</p>
+    </RouteState>
   );
 }
 

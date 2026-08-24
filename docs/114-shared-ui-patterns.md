@@ -15,7 +15,7 @@ route states. Feature-by-feature adoption remains owned by Phase 12.
 | Statuses | `StatusBadge` with a textual label and neutral/info/success/warning/danger tone | State does not rely on color; a visible marker and border survive forced colors. |
 | Alerts | `Alert` with labelled heading and role selected by urgency | Warning/danger are assertive alerts; informational/success updates use status semantics. |
 | Filters/pagination | `FilterBar` and `Pagination` | Clear form/navigation landmarks, visible/reversible controls, and one polite page summary. |
-| Tables | `DataTable` native table wrapper | Required caption, ordinary header semantics supplied by callers, and keyboard-focusable horizontal overflow container. |
+| Tables | `DataTable` native table wrapper | Required caption, ordinary header semantics supplied by callers, keyboard focusable horizontal overflow, an optional region name, and optional visible scroll guidance. |
 | Route states | `RouteState` for loading, empty, error, not-found, and permission-denied outcomes | Explicit title, optional valid recovery link, and a polite loading announcement only. |
 
 `apps/web/src/routes/system-operations-page.tsx` is the first feature adoption: its technical
@@ -24,6 +24,11 @@ tests exercise all new patterns, including keyboard/axe coverage. The UI package
 `--wl-*` token and every shared component root selector. The application stylesheet owns shell and
 route composition, deliberate descendants, and scoped legacy adaptations; it may not redefine a
 bare shared root such as `.wl-panel` or `.wl-alert`.
+
+`WL-1201` adds `scrollLabel` and `scrollHint` to `DataTable`. Use both when a narrow layout keeps a
+genuinely two dimensional table. The label names the focusable scroll region. The visible hint
+makes off canvas content discoverable without depending on hover, color, or unsupported scroll
+state queries.
 
 ## Deliberate boundaries
 

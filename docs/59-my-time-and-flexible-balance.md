@@ -71,3 +71,11 @@ flexible-time posting/projection contract.
   2026-08-13.
 - The OpenAPI 3.1 artifact is regenerated from the same Zod contract at
   `openapi/workledger.openapi.json`.
+
+## Phase 12 presentation update
+
+`WL-1201` keeps this read model and URL state unchanged. The selected period and posted versus
+projected summary now lead the route. Independent daily records transform into a labelled list at
+narrow widths, while the wide table uses the shared captioned and named scroll region contract.
+Shared route states, alerts, panels, filters, status badges, and pagination now present loading,
+permission, incomplete, empty, and ledger states consistently.

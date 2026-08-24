@@ -198,6 +198,80 @@ const TODAY_ATTENDANCE = {
   ],
   timelineTruncated: false,
 };
+const PERSONAL_TIME = {
+  balance: {
+    eligibleProjectedMinutes: 15,
+    excludedIncompleteDates: ['2026-08-13'],
+    postedBalanceMinutes: 630,
+    projectedBalanceMinutes: 645,
+  },
+  leave: {
+    accounts: [],
+    ledger: { entries: [], limit: 20, page: 1, total: 0 },
+  },
+  ledger: {
+    entries: [
+      {
+        balanceAfterMinutes: 630,
+        effectiveDate: '2026-08-11',
+        entryType: 'DAILY_DELTA',
+        explanationCode: 'DAILY_CALCULATION',
+        minutes: 30,
+        postedAt: '2026-08-11T17:00:00Z',
+      },
+    ],
+    limit: 20,
+    page: 1,
+    total: 1,
+  },
+  period: {
+    endDate: '2026-08-16',
+    monthlyPeriodId: null,
+    startDate: '2026-08-10',
+    view: 'WEEK',
+  },
+  records: [
+    {
+      attention: { blockers: [], warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'] },
+      balanceMinutes: 30,
+      creditedMinutes: 510,
+      expectedMinutes: 480,
+      localDate: '2026-08-11',
+      recordId: '123e4567-e89b-42d3-a456-426614174301',
+      status: 'COMPLETE',
+    },
+    {
+      attention: { blockers: [], warnings: [] },
+      balanceMinutes: null,
+      creditedMinutes: null,
+      expectedMinutes: null,
+      localDate: '2026-08-13',
+      recordId: '123e4567-e89b-42d3-a456-426614174302',
+      status: 'INCOMPLETE',
+    },
+  ],
+  summary: { completeBalanceMinutes: 30, incompleteRecordCount: 1, recordedDayCount: 2 },
+  timeZone: 'Europe/Berlin',
+};
+const PERSONAL_CALENDAR = {
+  absences: [
+    {
+      absenceTypeName: 'Vacation',
+      endsAtMinute: null,
+      kind: 'FULL_DAY',
+      localDate: '2026-08-12',
+      startsAtMinute: null,
+      status: 'SUBMITTED',
+    },
+  ],
+  days: Array.from(
+    { length: 31 },
+    (_, index) => `2026-08-${(index + 1).toString().padStart(2, '0')}`,
+  ),
+  holidays: [{ localDate: '2026-08-15', name: 'Summer holiday' }],
+  leadingEmptyDays: 5,
+  month: '2026-08',
+};
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/v1/identity', async (route) => {
@@ -1831,6 +1905,63 @@ test('presents the initial session check as one polite loading state', async ({ 
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('uses responsive personal records and an agenda-first personal calendar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/time?*', async (route) => {
+    const url = new URL(route.request().url());
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      date: '2026-08-11',
+      limit: '20',
+      page: '1',
+      view: 'WEEK',
+    });
+    await route.fulfill({ json: success(PERSONAL_TIME), status: 200 });
+  });
+  await page.route('**/v1/me/calendar*', async (route) => {
+    await route.fulfill({ json: success(PERSONAL_CALENDAR), status: 200 });
+  });
+
+  await page.goto('/my-time?date=2026-08-11&view=WEEK&page=1&limit=20');
+  await expect(page.getByRole('heading', { name: 'My time' })).toBeFocused();
+  await expect(
+    page.getByRole('list', { name: 'Daily time record summaries for the selected period' }),
+  ).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Daily time records table' })).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await capturePhase12Personal(page, 'my-time-mobile-390x900');
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.goto('/calendar?month=2026-08');
+  await expect(page.getByRole('heading', { name: 'Calendar' })).toBeFocused();
+  const agenda = page.getByRole('list', { name: 'Calendar agenda for August 2026' });
+  await expect(agenda).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Agenda list' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('table')).toHaveCount(0);
+  await capturePhase12Personal(page, 'calendar-agenda-mobile-390x900');
+
+  await page.getByRole('button', { name: 'Month grid' }).click();
+  const calendarRegion = page.getByRole('region', { name: 'Personal calendar month grid' });
+  await expect(calendarRegion).toBeVisible();
+  await expect(page.getByText('Scroll horizontally to review all seven days.')).toBeVisible();
+  expect(
+    await calendarRegion.evaluate((element) => element.scrollWidth > element.clientWidth),
+  ).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.setViewportSize({ width: 320, height: 900 });
+  await capturePhase12Personal(page, 'calendar-grid-reflow-320x900');
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('defaults the team calendar to an equivalent agenda on narrow screens', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const requestedMonths: string[] = [];
@@ -2284,6 +2415,17 @@ async function capturePhase11Surface(page: Page, name: string): Promise<void> {
 async function capturePhase12Today(page: Page, name: string): Promise<void> {
   if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
   const directory = 'output/playwright/wl1200';
+  await mkdir(directory, { recursive: true });
+  await page.screenshot({
+    animations: 'disabled',
+    fullPage: true,
+    path: `${directory}/${name}.png`,
+  });
+}
+
+async function capturePhase12Personal(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
+  const directory = 'output/playwright/wl1201';
   await mkdir(directory, { recursive: true });
   await page.screenshot({
     animations: 'disabled',

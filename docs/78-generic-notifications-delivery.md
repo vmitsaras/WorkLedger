@@ -73,3 +73,10 @@ two persisted failed-delivery attempts; decision success despite delivery failur
 and dismiss behavior; retained history; and generic serialized content. Component and Chromium
 coverage verifies keyboard dismissal, focus retention, live status, failure wording, empty history,
 320 px reflow, and axe.
+
+## Phase 12 presentation update
+
+`WL-1201` keeps generic content, destination authorization, dismissal, delivery, and cache behavior
+unchanged. Notification items now use the shared panel and textual status contracts. Loading,
+empty, dependency error, dismissal error, and pagination use the shared route state, alert, and
+pagination patterns while retained dismissal focus remains unchanged.

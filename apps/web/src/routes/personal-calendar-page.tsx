@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import type { PersonalCalendar } from '@workledger/contracts';
+import { Button, DataTable, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
 import { ApiClientError } from '../app/api-client.js';
 import { formatLocalDate } from '../app/date-time-format.js';
@@ -17,12 +18,26 @@ export function PersonalCalendarPage() {
   const query = useQuery(
     personalCalendarQuery({ ...(requestedMonth === undefined ? {} : { month: requestedMonth }) }),
   );
-  const [view, setView] = useState<CalendarView>('MONTH');
+  const viewWasChosen = useRef(false);
+  const [view, setView] = useState<CalendarView>(initialCalendarView);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const media = window.matchMedia('(max-width: 47.999rem)');
+    const selectResponsiveDefault = () => {
+      if (!viewWasChosen.current) setView(media.matches ? 'AGENDA' : 'MONTH');
+    };
+    selectResponsiveDefault();
+    media.addEventListener('change', selectResponsiveDefault);
+    return () => media.removeEventListener('change', selectResponsiveDefault);
+  }, []);
 
   if (query.isPending)
     return (
       <CalendarFrame>
-        <p role="status">Loading your calendar…</p>
+        <RouteState kind="loading" title="Loading your calendar">
+          <p>Checking public holidays and your own absence coverage.</p>
+        </RouteState>
       </CalendarFrame>
     );
   if (query.isError || query.data === undefined)
@@ -39,44 +54,61 @@ export function PersonalCalendarPage() {
 
   return (
     <CalendarFrame>
-      <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface)] p-4">
-        <div className="grid gap-2">
-          <h2 className="m-0 text-xl font-bold" aria-live="polite">
-            {formatMonth(calendar.month)}
-          </h2>
-          <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            Public holidays and your own absence coverage. Calendar and agenda contain the same
-            information.
-          </p>
+      <Panel aria-labelledby="personal-calendar-month" className="grid gap-4" density="balanced">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Selected month</p>
+            <h2
+              id="personal-calendar-month"
+              className="m-0 mt-1 text-2xl font-bold"
+              aria-live="polite"
+            >
+              {formatMonth(calendar.month)}
+            </h2>
+          </div>
+          <StatusBadge tone="info">
+            {calendar.holidays.length + calendar.absences.length} calendar{' '}
+            {calendar.holidays.length + calendar.absences.length === 1 ? 'entry' : 'entries'}
+          </StatusBadge>
         </div>
-        <div className="flex flex-wrap gap-2" aria-label="Calendar month">
-          <button type="button" className="wl-button-secondary" onClick={() => changeMonth(-1)}>
-            Previous month
-          </button>
-          <button type="button" className="wl-button-secondary" onClick={() => changeMonth(1)}>
-            Next month
-          </button>
-        </div>
-      </div>
+        <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+          Public holidays and your own absence coverage. The agenda and month grid contain the same
+          authorized information.
+        </p>
+      </Panel>
       <div className="flex flex-wrap gap-2" aria-label="Calendar view">
-        <button
+        <Button
           type="button"
-          className="wl-button-secondary"
           aria-pressed={view === 'MONTH'}
-          onClick={() => setView('MONTH')}
+          variant="secondary"
+          onPress={() => {
+            viewWasChosen.current = true;
+            setView('MONTH');
+          }}
         >
           Month grid
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="wl-button-secondary"
           aria-pressed={view === 'AGENDA'}
-          onClick={() => setView('AGENDA')}
+          variant="secondary"
+          onPress={() => {
+            viewWasChosen.current = true;
+            setView('AGENDA');
+          }}
         >
           Agenda list
-        </button>
+        </Button>
       </div>
       {view === 'MONTH' ? <MonthGrid calendar={calendar} /> : <Agenda calendar={calendar} />}
+      <nav className="flex flex-wrap gap-2" aria-label="Calendar month">
+        <Button type="button" variant="secondary" onPress={() => changeMonth(-1)}>
+          Previous month
+        </Button>
+        <Button type="button" variant="secondary" onPress={() => changeMonth(1)}>
+          Next month
+        </Button>
+      </nav>
     </CalendarFrame>
   );
 }
@@ -106,40 +138,37 @@ function MonthGrid({ calendar }: Readonly<{ calendar: PersonalCalendar }>) {
   );
   const details = useMemo(() => detailsByDate(calendar), [calendar]);
   return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--wl-border)]">
-      <table className="w-full min-w-[46rem] border-collapse text-left">
-        <caption className="sr-only">
-          Personal holidays and absence coverage for {formatMonth(calendar.month)}
-        </caption>
-        <thead>
-          <tr className="border-b border-[var(--wl-border)] text-sm">
-            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
-              (day) => (
-                <th key={day} scope="col" className="p-3">
-                  {day}
-                </th>
-              ),
-            )}
+    <DataTable
+      caption={`Personal holidays and absence coverage for ${formatMonth(calendar.month)}`}
+      className="min-w-[46rem]"
+      scrollHint="Scroll horizontally to review all seven days."
+      scrollLabel="Personal calendar month grid"
+    >
+      <thead>
+        <tr>
+          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
+            (day) => (
+              <th key={day} scope="col">
+                {day}
+              </th>
+            ),
+          )}
+        </tr>
+      </thead>
+      <tbody>
+        {weeks(dates).map((week, index) => (
+          <tr key={index} className="align-top">
+            {week.map((date, dayIndex) => (
+              <td key={date ?? `${index}-${dayIndex}-blank`} className="h-32 w-[14.28%] align-top">
+                {date === null ? null : (
+                  <DayContent date={date} details={details.get(date) ?? []} />
+                )}
+              </td>
+            ))}
           </tr>
-        </thead>
-        <tbody>
-          {weeks(dates).map((week, index) => (
-            <tr key={index} className="align-top">
-              {week.map((date) => (
-                <td
-                  key={date ?? `${index}-blank`}
-                  className="h-32 w-[14.28%] border-b border-r border-[var(--wl-border)] p-2 last:border-r-0"
-                >
-                  {date === null ? null : (
-                    <DayContent date={date} details={details.get(date) ?? []} />
-                  )}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </DataTable>
   );
 }
 
@@ -148,9 +177,9 @@ function Agenda({ calendar }: Readonly<{ calendar: PersonalCalendar }>) {
   const items = [...details.entries()].sort(([first], [second]) => first.localeCompare(second));
   if (items.length === 0)
     return (
-      <p className="wl-alert m-0 rounded-xl border p-4" role="status">
-        No public holidays or personal absence coverage this month.
-      </p>
+      <RouteState kind="empty" title="Nothing scheduled this month">
+        <p>No public holidays or personal absence coverage appears in this month.</p>
+      </RouteState>
     );
   return (
     <ol
@@ -158,16 +187,15 @@ function Agenda({ calendar }: Readonly<{ calendar: PersonalCalendar }>) {
       aria-label={`Calendar agenda for ${formatMonth(calendar.month)}`}
     >
       {items.map(([date, entries]) => (
-        <li
-          key={date}
-          className="grid list-none gap-2 rounded-xl border border-[var(--wl-border)] p-4"
-        >
-          <h2 className="m-0 text-lg font-bold">{formatLocalDate(date)}</h2>
-          <ul className="m-0 grid gap-1 pl-5">
-            {entries.map((entry) => (
-              <li key={entry.key}>{entry.label}</li>
-            ))}
-          </ul>
+        <li key={date} className="list-none">
+          <Panel as="article" className="grid gap-2" density="balanced">
+            <h2 className="m-0 text-lg font-bold">{formatLocalDate(date)}</h2>
+            <ul className="m-0 grid gap-1 pl-5">
+              {entries.map((entry) => (
+                <li key={entry.key}>{entry.label}</li>
+              ))}
+            </ul>
+          </Panel>
         </li>
       ))}
     </ol>
@@ -261,17 +289,29 @@ function formatClock(value: number | null): string {
 function statusLabel(status: PersonalCalendar['absences'][number]['status']): string {
   return status.replaceAll('_', ' ').toLowerCase();
 }
+function initialCalendarView(): CalendarView {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'MONTH';
+  return window.matchMedia('(max-width: 47.999rem)').matches ? 'AGENDA' : 'MONTH';
+}
 function CalendarError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
-  const message =
-    error instanceof ApiClientError && error.code === 'ACCESS_DENIED'
-      ? 'You do not have access to a personal calendar.'
-      : 'WorkLedger could not load your calendar.';
+  const denied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
   return (
-    <div className="wl-alert m-0 grid gap-3 rounded-xl border p-4" role="alert">
-      <p className="m-0">{message}</p>
-      <button type="button" className="wl-button-secondary w-fit" onClick={retry}>
-        Try again
-      </button>
-    </div>
+    <RouteState
+      actions={
+        denied ? undefined : (
+          <Button variant="secondary" onPress={retry}>
+            Try again
+          </Button>
+        )
+      }
+      kind={denied ? 'permission-denied' : 'error'}
+      title={denied ? 'You cannot view this calendar' : 'Your calendar is unavailable'}
+    >
+      <p>
+        {denied
+          ? 'Your current account does not have employee calendar access.'
+          : 'No holiday or absence information was displayed. Try again.'}
+      </p>
+    </RouteState>
   );
 }

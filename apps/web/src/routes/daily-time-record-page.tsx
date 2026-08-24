@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
 
+import { Alert, Button, Panel, RouteState, StatusBadge } from '@workledger/ui';
+
 import { ApiClientError } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
 import { dailyTimeRecordQuery } from '../app/query.js';
@@ -25,13 +27,11 @@ export function DailyTimeRecordPage() {
         <PageHeader
           eyebrow="Time records"
           title="Daily record"
-          description="Loading the daily record…"
+          description="Calculation, attendance intervals, and immutable event history."
         />
-        <div
-          aria-label="Loading daily record"
-          role="progressbar"
-          className="h-2 rounded-full bg-[var(--wl-surface-subtle)]"
-        />
+        <RouteState kind="loading" title="Loading the daily record">
+          <p>Checking the calculation and its source events.</p>
+        </RouteState>
       </section>
     );
   }
@@ -46,85 +46,102 @@ export function DailyTimeRecordPage() {
       <PageHeader
         eyebrow="Time records"
         title={formatLocalDate(record.localDate)}
-        description={`Daily record · ${record.status.replace('_', ' ').toLowerCase()} · ${record.timeZone}`}
+        description={`Daily attendance record in ${record.timeZone}.`}
       />
-      <p
-        className={
-          incomplete
-            ? 'wl-alert wl-alert-warning m-0 rounded-xl border p-4'
-            : 'm-0 text-sm text-[var(--wl-text-muted)]'
-        }
-        role={incomplete ? 'status' : undefined}
-      >
-        {incomplete
-          ? 'This record is incomplete. Its calculation is not a final posted result.'
-          : 'This completed record shows immutable events and exact elapsed intervals.'}
-      </p>
+      <Panel aria-labelledby="daily-record-summary-heading" className="grid gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Current state</p>
+            <h2 id="daily-record-summary-heading" className="m-0 mt-1 text-2xl font-bold">
+              {incomplete ? 'Needs review' : 'Complete record'}
+            </h2>
+          </div>
+          <StatusBadge tone={incomplete ? 'warning' : 'success'}>
+            {record.status.replaceAll('_', ' ').toLowerCase()}
+          </StatusBadge>
+        </div>
+        <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+          {incomplete
+            ? 'This calculation is not a final posted result.'
+            : 'The calculation is supported by immutable events and exact elapsed intervals.'}
+        </p>
+      </Panel>
+      {incomplete ? (
+        <Alert title="This record is incomplete" tone="warning">
+          <p className="m-0">
+            Review the attention items and recorded events before relying on its balance.
+          </p>
+        </Alert>
+      ) : null}
       <CalculationAttention
         attention={record.attention}
         balanceHref="/my-time#flexible-time-heading"
         calculationHref="#daily-calculation-heading"
         eventHref="#events-heading"
       />
+      {record.calculation === null ? (
+        <Alert title="Calculation unavailable" tone="danger">
+          <p className="m-0">
+            This record’s attendance events cannot be reconstructed, so no calculated total is
+            shown. Review the events below and request a correction if needed.
+          </p>
+        </Alert>
+      ) : (
+        <section aria-labelledby="daily-calculation-heading" className="grid gap-3">
+          <h2 id="daily-calculation-heading" className="m-0 text-xl font-bold">
+            Calculation
+          </h2>
+          <Panel density="balanced">
+            <dl className="grid gap-4 sm:grid-cols-2">
+              <Value label="Expected time" value={record.calculation.expectedMinutes} />
+              <Value label="Worked time" value={record.calculation.workedMinutes} />
+              <Value label="Break time" value={record.calculation.breakMinutes} />
+              <Value label="Absence credit" value={record.calculation.absenceCreditMinutes} />
+              <Value label="Credited time" value={record.calculation.creditedMinutes} />
+              <Value label="Balance" value={record.calculation.balanceMinutes} signed />
+            </dl>
+          </Panel>
+        </section>
+      )}
       <Link
         className="wl-button-secondary w-fit"
         to={`/time-records/${encodeURIComponent(recordId)}/correction?recordId=${encodeURIComponent(recordId)}`}
       >
         Request a correction
       </Link>
-      {record.calculation === null ? (
-        <p className="wl-alert wl-alert-error m-0 rounded-xl border p-4" role="alert">
-          This record’s attendance events cannot be reconstructed. No calculation detail is shown.
-        </p>
-      ) : (
-        <section aria-labelledby="daily-calculation-heading" className="grid gap-3">
-          <h2 id="daily-calculation-heading" className="m-0 text-xl font-bold">
-            Calculation
-          </h2>
-          <dl className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4 sm:grid-cols-2">
-            <Value label="Expected time" value={record.calculation.expectedMinutes} />
-            <Value label="Worked time" value={record.calculation.workedMinutes} />
-            <Value label="Break time" value={record.calculation.breakMinutes} />
-            <Value label="Absence credit" value={record.calculation.absenceCreditMinutes} />
-            <Value label="Credited time" value={record.calculation.creditedMinutes} />
-            <Value label="Balance" value={record.calculation.balanceMinutes} signed />
-          </dl>
-        </section>
-      )}
       <section aria-labelledby="sessions-heading" className="grid gap-3">
         <h2 id="sessions-heading" className="m-0 text-xl font-bold">
           Work sessions and breaks
         </h2>
         {record.sessions.length === 0 ? (
-          <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-            No completed work or break interval falls within this local date.
-          </p>
+          <RouteState kind="empty" title="No completed intervals">
+            <p>No completed work or break interval falls within this local date.</p>
+          </RouteState>
         ) : (
-          <ol className="grid gap-4">
+          <ol className="m-0 grid list-none gap-4 p-0">
             {record.sessions.map((session, index) => (
-              <li
-                key={index}
-                className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4"
-              >
-                <h3 className="m-0 text-base font-bold">Session {index + 1}</h3>
-                {session.continuesFromPreviousDate || session.continuesToNextDate ? (
-                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                    {session.continuesFromPreviousDate
-                      ? 'Continues from the previous local date. '
-                      : ''}
-                    {session.continuesToNextDate ? 'Continues into the next local date.' : ''}
-                  </p>
-                ) : null}
-                <IntervalList
-                  label="Work intervals"
-                  intervals={session.workIntervals}
-                  timeZone={record.timeZone}
-                />
-                <IntervalList
-                  label="Break intervals"
-                  intervals={session.breaks}
-                  timeZone={record.timeZone}
-                />
+              <li key={index}>
+                <Panel as="article" className="grid gap-4" density="balanced">
+                  <h3 className="m-0 text-base font-bold">Session {index + 1}</h3>
+                  {session.continuesFromPreviousDate || session.continuesToNextDate ? (
+                    <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                      {session.continuesFromPreviousDate
+                        ? 'Continues from the previous local date. '
+                        : ''}
+                      {session.continuesToNextDate ? 'Continues into the next local date.' : ''}
+                    </p>
+                  ) : null}
+                  <IntervalList
+                    label="Work intervals"
+                    intervals={session.workIntervals}
+                    timeZone={record.timeZone}
+                  />
+                  <IntervalList
+                    label="Break intervals"
+                    intervals={session.breaks}
+                    timeZone={record.timeZone}
+                  />
+                </Panel>
               </li>
             ))}
           </ol>
@@ -139,18 +156,20 @@ export function DailyTimeRecordPage() {
           Recorded events
         </h2>
         {record.events.length === 0 ? (
-          <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-            No attendance event was recorded on this local date.
-          </p>
+          <RouteState kind="empty" title="No attendance events">
+            <p>No attendance event was recorded on this local date.</p>
+          </RouteState>
         ) : (
-          <ol className="grid gap-3">
+          <ol className="m-0 grid list-none gap-3 p-0">
             {record.events.map((event) => (
-              <li key={event.sequence} className="rounded-xl border border-[var(--wl-border)] p-4">
-                <strong>{EVENT_LABELS[event.type]}</strong>
-                <div className="text-sm text-[var(--wl-text-muted)]">
-                  {formatTimeWithOffset(event.occurredAt, record.timeZone)} · Recorded order{' '}
-                  {event.sequence}
-                </div>
+              <li key={event.sequence}>
+                <Panel as="article" density="balanced">
+                  <strong>{EVENT_LABELS[event.type]}</strong>
+                  <div className="text-sm text-[var(--wl-text-muted)]">
+                    {formatTimeWithOffset(event.occurredAt, record.timeZone)} · Recorded order{' '}
+                    {event.sequence}
+                  </div>
+                </Panel>
               </li>
             ))}
           </ol>
@@ -229,11 +248,27 @@ function DailyTimeRecordError({
               : 'WorkLedger could not load this daily record.'
         }
       />
-      {retry === null ? null : (
-        <button className="wl-button-secondary w-fit" type="button" onClick={retry}>
-          Try again
-        </button>
-      )}
+      <RouteState
+        actions={
+          retry === null || notFound || denied ? undefined : (
+            <Button variant="secondary" onPress={retry}>
+              Try again
+            </Button>
+          )
+        }
+        kind={notFound ? 'not-found' : denied ? 'permission-denied' : 'error'}
+        title={
+          notFound ? 'Record not found' : denied ? 'Permission denied' : 'Daily record unavailable'
+        }
+      >
+        <p>
+          {notFound
+            ? 'This record may no longer be available in the current scope.'
+            : denied
+              ? 'Your current account cannot view this record.'
+              : 'No calculation or attendance history was displayed. Try again.'}
+        </p>
+      </RouteState>
     </section>
   );
 }

@@ -44,3 +44,11 @@ the agenda is the equivalent narrow-screen and screen-reader-friendly alternativ
   the same holiday/absence strings in both views.
 - PostgreSQL API integration verifies scoped holiday/coverage output, minute coverage details,
   no-store caching, and omission of employee/organization identifiers.
+
+## Phase 12 presentation update
+
+`WL-1201` keeps the self only calendar response and URL owned month unchanged. The agenda is now
+the default below 48 rem unless the user explicitly selects a view. The optional month table uses
+the shared captioned table wrapper with a named focusable scroll region and visible horizontal
+scroll guidance. The month summary, view controls, content, and month navigation follow the Quiet
+Ledger calendar order.

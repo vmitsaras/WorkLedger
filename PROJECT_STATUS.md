@@ -2,18 +2,18 @@
 
 **Current phase:** Phase 12 — Workflow UX remediation and product polish
 **Project readiness:** Stage 5 of 5 — Production and UI-foundation gates complete
-**Phase progress:** Phase 11 complete — 1 of 7 Phase 12 tasks complete
+**Phase progress:** Phase 11 complete — 2 of 7 Phase 12 tasks complete
 **Current milestone:** UI foundation complete — version 0.12.0
-**Active task:** `WL-1201` (next)
-**Status:** WL-1200 complete — Today workflow UX remediated
+**Active task:** `WL-1202` (next)
+**Status:** WL-1201 complete — personal workflow UX remediated
 **Last verified:** 2026-08-24
 
 ## Current objective
 
-Phase 11 is complete at `0.12.0`, and `WL-1200` has applied the Quiet Ledger immediate-task
-hierarchy to Today without changing attendance domain rules or server authorization. The next
-bounded slice is `WL-1201`: improve personal time records, balances, calendars, notifications,
-profile, loading, empty, and error experiences.
+Phase 11 is complete at `0.12.0`. `WL-1200` and `WL-1201` have applied Quiet Ledger to Today and
+the personal record, balance, calendar, notification, and profile surfaces without changing domain
+rules or server authorization. The next bounded slice is `WL-1202`: improve correction, absence,
+cancellation, approval history, and monthly review workflows.
 
 ## Verified decisions
 
@@ -1669,9 +1669,35 @@ profile, loading, empty, and error experiences.
 - No database, API, authorization, authentication, CSRF, cache, URL, storage, audit, logging,
   immutable attendance, calculation source, or workspace version contract changed.
 
+**2026-08-24 — WL-1201 personal workflow UX remediation**
+
+- Reordered My Time and My Balances around the selected period and authoritative balance summary,
+  then retained URL owned period controls, incomplete projection recovery, record results, and
+  source ledgers.
+- Replaced narrow daily record panning with a labelled record list while retaining the shared
+  captioned table at wider widths. Daily detail now follows state, blocker, calculation, valid
+  correction action, session, and immutable event order.
+- Made Personal Calendar agenda first below 48 rem unless the user chooses another view. The
+  equivalent month grid is a named focusable local scroll region with a persistent horizontal
+  scroll instruction.
+- Adopted shared panels, statuses, alerts, filters, pagination, tables, and route states across My
+  Time, My Balances, daily detail, Calendar, Notifications, and Profile. Notification dismissal
+  focus and current session revocation behavior remain unchanged.
+- Extended `DataTable` with optional scroll region naming and visible scroll guidance. Added
+  component/axe assertions plus a Chromium scenario for route focus, narrow record and agenda
+  defaults, view switching, internal overflow, 320 px reflow, and visual captures.
+- Verification passed formatting, lint/source/CSS boundaries, strict TypeScript, 37 tooling tests,
+  334 unit/component tests, 13 available integration tests with 45 expected PostgreSQL dependent
+  skips, all 32 configured Playwright scenarios, production build/public imports, and the 49,896
+  byte CSS budget. See `docs/118-personal-workflow-ux-remediation.md` for the complete evidence
+  boundary.
+- No database, API, authorization, authentication, CSRF, protected cache, URL ownership, storage,
+  audit, logging, notification privacy, profile minimization, calculation source, or workspace
+  version contract changed.
+
 ## Current blockers
 
-No decision blocks `WL-1201`. `D-502` manual assistive-technology evidence remains open for the
+No decision blocks `WL-1202`. `D-502` manual assistive-technology evidence remains open for the
 Phase 12 UI release gate (`WL-1206`). `UI-001` and `UI-002` are high-priority workflow gaps owned by
 `WL-1202` and `WL-1204`; systematic visual regression remains `UI-014`/`WL-1206`. The temporary
 Astro backup is recoverable at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`,
@@ -1679,8 +1705,8 @@ but the public site remains deferred to `WL-1300`.
 
 ## Next task
 
-`WL-1201 — Improve personal time records, balances, calendars, notifications, profile, loading,
-empty, and error experiences.`
+`WL-1202 — Improve correction, absence, cancellation, approval-history, and monthly-review
+workflows.`
 
 ## Update rules
 

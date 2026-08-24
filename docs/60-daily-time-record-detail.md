@@ -79,3 +79,11 @@ overnight views.
   invalid-record `404` behavior.
 - The Chromium suite passes all 12 scenarios, and the Vite production build plus public-workspace
   import check succeeds. The existing main-chunk-size advisory remains owned by `WL-1001`.
+
+## Phase 12 presentation update
+
+`WL-1201` keeps reconstruction, authorization, calculation, interval, and event values unchanged.
+The route now presents state and blockers before the calculation, keeps the correction link after
+the calculation effect, and places work sessions and immutable events after that valid action.
+Shared panels, alerts, status badges, and route states cover complete, incomplete, unavailable,
+permission denied, not found, and empty evidence outcomes.

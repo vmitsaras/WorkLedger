@@ -100,7 +100,8 @@ test('shows a clear empty notification history', async () => {
   });
   const { container } = renderApplication('/notifications');
 
-  expect(await screen.findByText('You have no notification history to show.')).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'No notification history' })).toBeVisible();
+  expect(screen.getByText(/Account outcomes will appear here/u)).toBeVisible();
   expect(screen.queryByRole('list', { name: 'Generic notification history' })).toBeNull();
   await expectNoAxeViolations(container);
 });

@@ -134,10 +134,10 @@ explicit rule that sickness and other sensitive absence types never appear in a 
 |---|---|---|---|
 | Authentication/recovery | Signed out, validation error, pending, generic failure, reset/activation grant cleanup, signed-in redirect | Route focus, field errors, memory-only grant cleanup, E2E sign-in/reset/activation | Cross-route visual/state consolidation under WL-1105 |
 | Attendance | Clocked out/in, on break, pending, success, stale, duplicate/retry, lost response, offline, multi-device refresh, warning/incomplete | Strongest automated coverage; keyboard, touch, forced colors, 320 px | Content hierarchy and repetition (UI-008) |
-| Personal records/balances | Week/month, complete/incomplete, warnings, detail, calculation and ledger summaries | Purpose-minimized explanations and component coverage | Bare versus panel loading/error patterns; two overflow wrappers lack shared scroll-region contract (UI-005, UI-015) |
+| Personal records/balances | Week/month, complete/incomplete, warnings, detail, calculation and ledger summaries | Purpose-minimized explanations, shared route states, narrow record list, and component/browser coverage | Release-level visual regression remains UI-014 / WL-1206 |
 | Requests/absence/corrections | Vacation, sickness, correction, validation, cancellation services and decision internals exist | Individual form/workflow components exist | No complete request hub/history/detail; subtype URL leaks workflow category (UI-001) |
 | Manager approvals | Filtered/unfiltered, empty, pending, decision validation, stale/version conflict, pagination, detail comparison | Keyboard and E2E evidence; type-neutral queue URLs | Narrow-screen table action/context discoverability; default clear-filter prominence (UI-004, UI-016) |
-| Calendars | Month navigation, grid, agenda, empty, loading, error | Team calendar narrow default is agenda; text alternative exists | Personal month grid defaults at narrow width and lacks the shared focusable scroll-region wrapper (UI-005) |
+| Calendars | Month navigation, grid, agenda, empty, loading, error | Personal and team calendars default to agenda at narrow widths; equivalent grid and list presentations remain available | Release-level visual regression remains UI-014 / WL-1206 |
 | Monthly closure | Draft, blocked, submitted, changes requested, approved, locked, post-lock adjustment, print/copy failure | Detailed state/component and domain evidence | Visual hierarchy and cross-route consistency under WL-1202 |
 | Reports | Catalog, filters, pagination, empty, CSV pending/success/error, print/copy | Authorized catalog, URL state, narrow table containment, E2E | Shared dense-table and route-state patterns (UI-004, UI-015) |
 | HR administration/settings | Loading, empty, filtered, create/invite, validation, effective-dated versions, constrained deactivate | Realistic complex forms and E2E | Employee/team task collision and unexplained disabled action (UI-009, UI-010) |
@@ -158,14 +158,14 @@ requires broader route verification during its owning task.
 | UI-002 | High | Technical Audit is still a milestone placeholder after its delivery/release gate | Confirmed / high | WL-1204 |
 | UI-003 | Medium | System technical routes use undefined styles and invalid definition-list grouping | **Resolved by WL-1102** / high | WL-1204 visual adoption |
 | UI-004 | Medium | Dense table actions and later columns are not visually discoverable at narrow width | Confirmed / high | WL-1104, WL-1203, WL-1204 |
-| UI-005 | Medium | Horizontal-record and calendar responsive contracts are inconsistent | Confirmed / high | WL-1104, WL-1201 |
+| UI-005 | Medium | Horizontal-record and calendar responsive contracts are inconsistent | **Resolved by WL-1201** / high | Closed |
 | UI-006 | Medium | The shell navigation does not scale cleanly for combined-role or long HR inventories | **Resolved by WL-1105** / high | WL-1105 |
-| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | **Foundation complete; route adoption pending** / high | WL-1200–WL-1205 |
+| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | **Foundation complete; Today and personal routes adopted** / high | WL-1202–WL-1205 |
 | UI-008 | Medium | Today repeats the same calculation meaning across labels, values, and narrative formulas | **Resolved by WL-1200** / high | Closed |
 | UI-009 | Medium | Employee directory and team management compete in one long administration route | Confirmed / medium | WL-1204 |
 | UI-010 | Medium | Disabled team deactivation has no adjacent explanation or recovery path | Confirmed / medium | WL-1204 |
 | UI-011 | Medium | Organization identity is hard-coded rather than validated runtime configuration | **Resolved by WL-1103** / high | Closed |
-| UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | **Foundation complete; route adoption pending** / high | WL-1205 |
+| UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | **Foundation complete; Today and personal routes adopted** / high | WL-1202–WL-1205 |
 | UI-013 | Medium | Task pages often surface implementation/privacy guarantees as primary explanatory copy | Confirmed / medium | WL-1101, WL-1205 |
 | UI-014 | Medium | Visual regression and route-state baseline coverage is representative, not systematic | Confirmed / high | WL-1206 |
 | UI-015 | Medium | Existing test coverage did not prevent completed-phase placeholders and route-contract drift | Confirmed / high | WL-1202, WL-1204, WL-1206 |
@@ -199,7 +199,7 @@ requires broader route verification during its owning task.
 ### UI-002 — Technical Audit remains a completed-milestone placeholder
 
 - **Severity:** High
-- **Status/confidence:** Confirmed / high
+- **Status/confidence:** Resolved by WL-1201 / high
 - **Evidence:** `apps/web/src/routes/system-audit-page.tsx` describes itself as a placeholder,
   promises implementation in `WL-1007`, and presents no search/results states. The task board and
   Phase 10 gate mark `WL-1006`, `WL-1007`, and the production gate complete; the canonical route
@@ -280,7 +280,13 @@ requires broader route verification during its owning task.
   justified.
 - **Validation:** Keyboard focus/scroll, announcement/name, narrow default, agenda equivalence,
   month changes, 320 px, text spacing, and forced colors.
-- **Owner:** `WL-1104`, `WL-1201`.
+- **Resolution evidence:** `docs/118-personal-workflow-ux-remediation.md` records a labelled daily
+  record list below the desktop table breakpoint, an agenda first personal calendar below 48 rem,
+  and a shared table region with caption, focus, accessible name, local overflow, and visible
+  horizontal scroll guidance. Component/axe coverage and Chromium evidence cover the equivalent
+  content, view switch, 320 px containment, and keyboard focus.
+- **Owner:** Resolved in `WL-1201`; release-level visual and manual AT regression remains
+  `WL-1206`.
 
 ### UI-006 — Shell navigation scale depends on an internal scroll inventory
 
@@ -311,7 +317,9 @@ requires broader route verification during its owning task.
   added shared panels, alerts, statuses, filters, pagination, data tables, and route states, and
   `WL-1106` strengthened the checker so an app stylesheet cannot redefine a shared component root.
   Representative shell, authentication, route-boundary, and Operations call sites now use those
-  contracts; the remaining route-by-route migration is intentionally assigned to Phase 12.
+  contracts. `WL-1200` adopted them on Today, and `WL-1201` adopted them across personal records,
+  daily detail, balances, Calendar, Notifications, and Profile. Remaining workflow families stay
+  assigned to `WL-1202` through `WL-1205`.
 - **Risk:** Visual and accessibility corrections must be repeated route by route, making drift and
   regression likely.
 - **Remediation direction:** Adopt the completed shared contracts by workflow family during
