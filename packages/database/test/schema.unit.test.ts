@@ -285,6 +285,7 @@ describe('initial PostgreSQL schema', () => {
       '0018_bored_medusa',
       '0019_stale_loners',
       '0020_chemical_micromacro',
+      '0021_retention_tracking',
     ]);
   });
 });

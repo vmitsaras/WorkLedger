@@ -1438,6 +1438,56 @@ test('does not replace newer Today attendance with an older server snapshot', as
   });
 });
 
+test('renders a focused standalone root recovery state after a network failure', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') throw new TypeError('fetch failed');
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const { container } = renderApplication('/');
+
+  const heading = await screen.findByRole('heading', {
+    name: 'WorkLedger is temporarily unavailable',
+  });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'WorkLedger could not complete the service check needed to start this page.',
+  );
+  expect(screen.queryByText(/DEPENDENCY_FAILURE|fetch failed/u)).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: /home/iu })).not.toBeInTheDocument();
+  expect(document.title).toBe('WorkLedger is temporarily unavailable | WorkLedger');
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('shows only safe root recovery details for a structured dependency failure', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return apiErrorResponse('DATABASE_UNAVAILABLE', 503);
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const { container } = renderApplication('/');
+
+  const heading = await screen.findByRole('heading', {
+    name: 'WorkLedger is temporarily unavailable',
+  });
+  await waitFor(() => expect(heading).toHaveFocus());
+  const alert = screen.getByRole('alert');
+  expect(alert).toHaveTextContent(`Request reference: ${REQUEST_ID}`);
+  expect(alert).not.toHaveTextContent('DATABASE_UNAVAILABLE');
+  expect(alert).not.toHaveTextContent('The request could not be completed.');
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
+  expect(screen.queryByRole('link', { name: /home/iu })).not.toBeInTheDocument();
+  await expectNoAxeViolations(container);
+});
+
 test('renders a non-leaking permission-denied route state', async () => {
   vi.stubGlobal(
     'fetch',

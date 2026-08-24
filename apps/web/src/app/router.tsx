@@ -60,7 +60,7 @@ import {
   ActivateAccountPage,
 } from '../routes/auth-routes.js';
 import { ProfilePage } from '../routes/profile-page.js';
-import { RootNotFoundPage, RouteBoundary } from '../routes/route-boundary.js';
+import { RootNotFoundPage, RootRouteBoundary, RouteBoundary } from '../routes/route-boundary.js';
 import { TodayPage } from '../routes/today-page.js';
 import { MyTimePage } from '../routes/my-time-page.js';
 import { DailyTimeRecordPage } from '../routes/daily-time-record-page.js';
@@ -101,6 +101,7 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
   return [
     {
       element: <RoutePresentation />,
+      errorElement: <RootRouteBoundary />,
       hydrateFallbackElement: <InitialRouteFallback />,
       children: [
         { index: true, loader: createHomeLoader(queryClient) },

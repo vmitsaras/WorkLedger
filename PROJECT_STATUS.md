@@ -48,7 +48,8 @@ decision, and narrow-screen workflows.
   focus-managed React Aria drawer.
 - Initial loading, permission denial, not found, and unexpected loader failures compose the shared
   route-state contract with a focused `h1`, safe recovery links, and a real retry button only for
-  unexpected failures.
+  unexpected failures. A standalone top-level boundary also covers self-context startup failures
+  before the application or authentication shell exists.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -1737,6 +1738,27 @@ decision, and narrow-screen workflows.
   bundle budgets, and eight public workspace import roots.
 - No migration, domain transition, approval rule, monthly source calculation, authentication,
   session, CSRF, audit, logging, browser persistence, dependency, or workspace version changed.
+
+**2026-08-24 — Root startup recovery regression fix**
+
+- Added a standalone top-level route boundary for self-context failures before any application or
+  authentication shell exists. It renders the required main landmark, focuses its route heading,
+  offers a deliberate full reload retry, and never links back into the failing root loader.
+- Network and structured dependency failures expose only generic recovery guidance plus an
+  available safe request reference. Raw dependency codes, response messages, and infrastructure
+  details remain absent from the browser presentation.
+- Restored local readiness by registering the existing `0021_retention_tracking` SQL in Drizzle's
+  migration journal and using its latest application table as the runtime schema marker. The
+  restricted application role still has no access to the migrator-owned Drizzle metadata schema.
+- Component coverage verifies network and structured `503` failures, focus, title, privacy, and
+  axe behavior. The Chromium route-boundary scenario verifies 320 px reflow, safe recovery, and a
+  successful retry after the context service becomes available.
+- Verification passed Prettier, ESLint, source and CSS boundaries, strict TypeScript, all 37
+  tooling tests, all 339 unit/component tests, the focused Playwright recovery scenario, and the
+  production build and bundle budgets. PostgreSQL verification passed 25 integration tests with one
+  intentional skip. Live local checks returned `200` from `/health` and `/ready`, while the proxied
+  unauthenticated self-context request returned the expected structured `401`. No API contract,
+  migration SQL, domain, permission, dependency, or workspace version changed.
 
 ## Current blockers
 

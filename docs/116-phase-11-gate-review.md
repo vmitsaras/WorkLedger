@@ -71,7 +71,7 @@ is unchanged and reports `0.12.0` at this gate.
 | Employees | Keyboard-complete create/invite/assignment flow with connected errors, purpose-minimized mocked employee data, desktop/mobile/320 captures of the Employees administration entry surface, and axe. |
 | Operations | Textual healthy/degraded/unavailable status, valid definitions, wrapped safe technical error, system-only context, no page overflow, axe, and desktop/mobile/320 captures. |
 | Shell | Combined-role destination presence, one Reports link, preserved Team state after Reports and drawer remount, desktop/mobile transitions, short-height internal scrolling, long identity/logo/text spacing, forced colors, reduced motion, and three captures. |
-| Route boundaries | Real initial-loading fallback, focused permission/not-found/unexpected-error headings, safe recovery actions, no restricted/raw dependency detail, axe, and four captures. |
+| Route boundaries | Real initial-loading fallback, standalone top-level startup recovery, focused permission/not-found/unexpected-error headings, safe recovery actions, no restricted/raw dependency detail, axe, and four captures. |
 
 ## Ignored capture manifest
 

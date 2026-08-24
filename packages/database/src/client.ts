@@ -70,25 +70,12 @@ export function createWorkLedgerDatabase(
     async isReady(): Promise<boolean> {
       if (closed) throw new DatabaseClosedError();
       try {
-        // Check that the latest expected table exists (from migration 0021)
+        // The latest expected application table is the migration-state marker. The restricted
+        // runtime role intentionally has no access to the migrator-owned Drizzle metadata schema.
         const schemaCheck = await pool.query<{ schema_ready: boolean }>(
           "select to_regclass('public.retention_job_executions') is not null as schema_ready",
         );
         if (schemaCheck.rows[0]?.schema_ready !== true) return false;
-
-        // Check that migrations table exists and has expected structure
-        const migrationTableCheck = await pool.query<{ table_exists: boolean }>(
-          "select to_regclass('public.drizzle.__drizzle_migrations') is not null as table_exists",
-        );
-        if (migrationTableCheck.rows[0]?.table_exists !== true) return false;
-
-        // Verify we have the minimum expected migrations applied
-        const migrationCountCheck = await pool.query<{ count: string }>(
-          'select count(*) from drizzle.__drizzle_migrations',
-        );
-        const migrationCount = Number(migrationCountCheck.rows[0]?.count ?? '0');
-        // We expect at least 22 migrations (0000 through 0021)
-        if (migrationCount < 22) return false;
 
         return true;
       } catch {

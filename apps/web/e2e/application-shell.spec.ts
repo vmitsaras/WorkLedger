@@ -1846,8 +1846,22 @@ test('keeps system operations semantic and contained across desktop, mobile, and
 });
 
 test('keeps route boundaries focused, recoverable, and purpose-minimized', async ({ page }) => {
+  let contextAvailable = false;
   await page.route('**/v1/me/context', async (route) => {
-    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+    await route.fulfill(
+      contextAvailable
+        ? { json: success(EMPLOYEE_CONTEXT), status: 200 }
+        : {
+            json: {
+              error: {
+                code: 'DATABASE_UNAVAILABLE',
+                message: 'Database connection failed with private infrastructure details.',
+                requestId: REQUEST_ID,
+              },
+            },
+            status: 503,
+          },
+    );
   });
   await page.route('**/v1/me/profile', async (route) => {
     await route.fulfill({
@@ -1861,6 +1875,23 @@ test('keeps route boundaries focused, recoverable, and purpose-minimized', async
       status: 503,
     });
   });
+  await mockToday(page);
+
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'WorkLedger is temporarily unavailable' }),
+  ).toBeFocused();
+  await expect(page.getByText(`Request reference: ${REQUEST_ID}`)).toBeVisible();
+  await expect(page.getByText(/DATABASE_UNAVAILABLE|private infrastructure/iu)).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /home/iu })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expectPageToHaveNoAxeViolations(page);
+
+  contextAvailable = true;
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page).toHaveURL(/\/today$/u);
+  await expect(page.getByRole('heading', { name: 'Today', level: 1 })).toBeVisible();
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/system/operations');
