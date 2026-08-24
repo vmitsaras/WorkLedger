@@ -1,21 +1,21 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 12 — Workflow UX remediation and product polish
-**Project readiness:** Stage 5 of 5 — Production and UI-foundation gates complete
-**Phase progress:** Phase 11 complete — 6 of 7 Phase 12 tasks complete
-**Current milestone:** UI foundation complete — version 0.12.0
-**Active task:** `WL-1206` (next)
-**Status:** WL-1205 complete — cross-route copy, state, recovery, responsive, and motion consistency complete
+**Current phase:** Phase 13 — Portfolio presentation
+**Project readiness:** Stage 5 of 5 — Production and UI release gates complete
+**Phase progress:** Phase 12 complete — 0 of 6 Phase 13 tasks complete
+**Current milestone:** Workflow UX and product polish complete — version 0.13.0
+**Active task:** `WL-1300` (next)
+**Status:** WL-1206 complete — visual regression, usability, accessibility, and UI release gates passed
 **Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 11 is complete at `0.12.0`. `WL-1200` through `WL-1205` have applied Quiet Ledger to Today,
-personal records, request/monthly workflows, manager decisions, administration, settings, reports,
-both audit audiences, and shared cross-route states and copy. The technical audit placeholder is
-closed through a separate minimized system-admin projection. The next bounded slice is `WL-1206`:
-execute the visual-regression, usability, accessibility, and UI release gate and bump every
-workspace manifest to `0.13.0` only when that phase gate passes.
+Phase 12 is complete at `0.13.0`. Quiet Ledger now governs Today, personal records,
+request/monthly workflows, manager decisions, administration, settings, reports, both audit
+audiences, and shared cross-route states and copy. The UI release gate adds 19 deterministic
+Chromium snapshots and dispositions the manual assistive technology boundary without making an
+unsupported conformance claim. The next bounded slice is `WL-1300`: scaffold the deferred Astro
+project site and case study information architecture.
 
 ## Verified decisions
 
@@ -1875,19 +1875,44 @@ workspace manifest to `0.13.0` only when that phase gate passes.
   authorization, authentication, session, CSRF, export, audit, browser persistence, dependency,
   publication, deployment, or workspace version changed.
 
+**2026-08-25 — WL-1206 Phase 12 UI release gate**
+
+- Added a release-only `pnpm run test:visual` command and 19 deterministic macOS Chromium
+  snapshots across Today, personal records, requests, calendars, Approvals, Team, employee
+  administration, and Technical Audit. Capture helpers normalize page scroll so sticky shell
+  behavior does not create stitched screenshot noise.
+- Compared the Phase 11 and Phase 12 Today and Approvals reference pairs and directly reviewed the
+  remaining Phase 12 surfaces. No blocking, major, minor, clipping, page-overflow, color-only, or
+  missing-action visual regression remains. `UI-014` and `UI-015` are closed.
+- Dispositioned `D-502` honestly: Playwright `1.61.1` covers Chromium, Firefox, WebKit, mobile
+  Chromium, and mobile WebKit automation, while exact retail browser support and real VoiceOver,
+  NVDA, and TalkBack pairing remain an explicit residual rather than a conformance claim.
+- Pre-transition `pnpm run verify` passed runtime configuration, reproducible OpenAPI, formatting,
+  ESLint, 284-file/1,497-import boundaries, CSS ownership, strict TypeScript, all 37 tooling tests,
+  all 343 unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips,
+  all 34 Playwright scenarios, and production/public-root builds. Bundle budgets pass at 359,302
+  largest JavaScript bytes, 886,485 total JavaScript bytes, 239,296 gzip JavaScript bytes, and
+  46,859 CSS bytes. The separate visual gate passed 29 flows and all 19 snapshots.
+- Advanced the root and eight workspace manifests to the internal `0.13.0` milestone. This does
+  not create a tag, publication, container release, deployment, browser support warranty, or WCAG
+  conformance statement. See `docs/123-phase-12-gate-review.md`.
+- After the transition, the managed `pnpm` wrapper attempted an unnecessary dependency refresh and
+  aborted before changing `node_modules` when registry metadata was unavailable. Direct local
+  equivalents passed the thirteen-gate/version contract, formatting, ESLint, source/CSS
+  boundaries, strict TypeScript, 32 focused tooling tests, runtime config, OpenAPI, production
+  build/budgets/public imports, all 29 visual flows and 19 snapshots, and `git diff --check`.
+
 ## Current blockers
 
-No decision blocks `WL-1206`. `UI-001`, `UI-002`, `UI-004`, `UI-007`, `UI-009`, `UI-010`,
-`UI-012`, `UI-013`, and `UI-016` are closed by the completed Phase 12 workflow passes. `D-502`
-manual assistive-technology evidence and systematic visual regression `UI-014` remain open for the
-Phase 12 UI release gate (`WL-1206`). The temporary
-Astro backup is recoverable at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`,
-but the public site remains deferred to `WL-1300`.
+No decision blocks `WL-1300`. `UI-014` and `UI-015` are closed by the Phase 12 visual and route
+regression gate. `D-502` is dispositioned with explicit real assistive technology and exact retail
+browser residuals. The temporary Astro backup is recoverable at
+`/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical;
+`WL-1300` owns the explicit site scaffold or adoption decision.
 
 ## Next task
 
-`WL-1206 — Pass visual-regression, usability, accessibility, and UI release gates and bump all
-workspace manifests to 0.13.0.`
+`WL-1300 — Scaffold the Astro project site and case-study information architecture.`
 
 ## Update rules
 

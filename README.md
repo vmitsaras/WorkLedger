@@ -1,36 +1,24 @@
 # WorkLedger
 
-WorkLedger is a planned self-hosted application for working time, flexible-time balances, absence
+WorkLedger is a self-hosted application for working time, flexible-time balances, absence
 requests, approvals, corrections, and auditable monthly records in small and medium-sized office,
 remote, and hybrid organizations.
 
-> **Project readiness: Stage 5 of 5 — Production and release in progress**<br>
-> **Current phase progress: Phase 10 — 0 of 9 tasks complete**
+> **Project readiness: Stage 5 of 5 — Production and UI release gates complete**<br>
+> **Current phase progress: Phase 13 — 0 of 6 tasks complete**<br>
+> **Internal milestone: `0.13.0`**
 
-Phases 0–9 have passed their exit gates. The repository now includes the attendance, correction,
-absence, entitlement, manager-approval/team, and notification slices plus monthly employee review
-and submission. Monthly review derives ended-month readiness, complete-date totals, warnings,
-blockers, ledger reconciliation, and a source-fingerprinted schema version; self-only submission
-binds warning acknowledgement to that exact source and freezes ordinary mutations. Current
-managers or organization HR can request changes, create numbered immutable approval snapshots, and
-separately lock an exact approved record. Locked-date corrections now append a source-linked delta
-without changing that approved record, and the monthly view separates the original from its ordered
-adjustments. Scoped operational reports now include reauthorized, formula-safe bounded CSV export,
-a minimized printable monthly record, and explicit safe summary copy. Phase 9 now includes
-accessible HR employee create/invite/activate/deactivate/history workflows and a purpose-separated
-technical account, system-role, and session surface. Organization HR can manage teams and
-effective-dated team/direct-manager history, with current manager scope changing immediately and
-past attribution preserved. HR can also create immutable weekly schedule and bounded time-policy
-versions, maintain gap-free current/future employee configuration history, manage effective-dated
-absence types, and append reasoned non-self entitlement-ledger adjustments without rewriting prior
-requests or entries. Date-only holiday management and the redacted HR domain-audit explorer are
-also complete. Production hardening begins with threat-model and permission/privacy remediation
-(`WL-1000`).
+Phases 0–12 have passed their exit gates. The repository includes attendance, flexible-time and
+leave ledgers, correction and absence workflows, manager approvals and team availability, monthly
+review and locking, post-lock adjustments, reports and safe CSV export, HR administration,
+separate technical administration, production deployment and operations, and the Quiet Ledger UI
+system across every canonical application route. Phase 13 now owns the deferred public project
+site, safe demo presentation, case study media, and final portfolio documentation.
 
-WorkLedger does not yet provide a coordinated local web/API process, production deployment, or
-supported release. The web development server renders the application routes and safe
-service-unavailable boundaries; authenticated attendance flows are exercised against mocked browser
-transport and a real PostgreSQL-backed API integration surface in the automated tests.
+The production reference deployment, backup/restore, migration/upgrade, retention, diagnostics,
+security, accessibility automation, and UI release gates are complete. `0.13.0` is an internal
+milestone, not a hosted service, package publication, container release, browser support warranty,
+or WCAG conformance statement.
 
 ## Current status
 
@@ -142,7 +130,8 @@ unless pnpm `11.20.0` is already the active package manager.
 | `pnpm run test:build` | Build typed package outputs required by direct test/config commands. |
 | `pnpm run test` | Run native repository-contract tests plus Vitest unit/component projects. |
 | `pnpm run test:integration` | Run API/database integration projects; the real PostgreSQL case is opt-in through its URL. |
-| `pnpm run test:e2e` | Run Chromium Playwright tests against the real Vite preview, including axe checks. |
+| `pnpm run test:e2e` | Run the Playwright application suite plus Firefox, WebKit, and mobile browser-matrix smoke coverage against the real Vite preview. |
+| `pnpm run test:visual` | Reproduce the reviewed macOS Chromium Phase 12 visual baseline; update snapshots only after deliberate manual verification. |
 | `pnpm run build` | Build all typed projects and the web preview, then verify emitted public entries. |
 | `pnpm run db:up` / `db:down` | Start or stop the local PostgreSQL service; stopping preserves its volume. |
 | `pnpm run db:check` / `db:test` / `db:verify` | Check local connectivity, run the isolated lifecycle test, or run both. |

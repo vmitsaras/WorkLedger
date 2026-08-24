@@ -2640,6 +2640,7 @@ test('keeps employee and technical audit administration usable from reflow to de
   await expect(page.getByText('AUTHORIZATION_SCOPE_DENIED')).toBeVisible();
   const auditRegion = page.getByRole('region', { name: 'Technical audit results' });
   await expect(auditRegion).toContainText(/scroll this results region horizontally/iu);
+  await capturePhase12Administration(page, 'technical-audit-reflow-320x900');
   await page.getByLabel('Target type').selectOption('AUTHORIZATION');
   await page.getByText('View redacted detail').click();
   await expect(page.getByText(/Http status: 403/u)).toBeVisible();
@@ -2647,7 +2648,10 @@ test('keeps employee and technical audit administration usable from reflow to de
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  await capturePhase12Administration(page, 'technical-audit-reflow-320x900');
+  await auditRegion.evaluate((element) => {
+    element.scrollLeft = element.scrollWidth;
+  });
+  await capturePhase12Administration(page, 'technical-audit-detail-reflow-320x900');
   await page.emulateMedia({ forcedColors: 'active' });
   await expectPageToHaveNoAxeViolations(page);
 });
@@ -2734,45 +2738,46 @@ async function capturePhase11Surface(page: Page, name: string): Promise<void> {
 }
 
 async function capturePhase12Today(page: Page, name: string): Promise<void> {
-  if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
-  const directory = 'output/playwright/wl1200';
-  await mkdir(directory, { recursive: true });
-  await page.screenshot({
-    animations: 'disabled',
-    fullPage: true,
-    path: `${directory}/${name}.png`,
-  });
+  await capturePhase12Surface(page, 'wl1200', name);
 }
 
 async function capturePhase12Personal(page: Page, name: string): Promise<void> {
-  if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
-  const directory = 'output/playwright/wl1201';
-  await mkdir(directory, { recursive: true });
-  await page.screenshot({
-    animations: 'disabled',
-    fullPage: true,
-    path: `${directory}/${name}.png`,
-  });
+  await capturePhase12Surface(page, 'wl1201', name);
 }
 
 async function capturePhase12Manager(page: Page, name: string): Promise<void> {
-  if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
-  const directory = 'output/playwright/wl1203';
-  await mkdir(directory, { recursive: true });
-  await page.screenshot({
-    animations: 'disabled',
-    fullPage: true,
-    path: `${directory}/${name}.png`,
-  });
+  await capturePhase12Surface(page, 'wl1203', name);
 }
 
 async function capturePhase12Administration(page: Page, name: string): Promise<void> {
-  if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
-  const directory = 'output/playwright/wl1204';
-  await mkdir(directory, { recursive: true });
-  await page.screenshot({
-    animations: 'disabled',
-    fullPage: true,
-    path: `${directory}/${name}.png`,
-  });
+  await capturePhase12Surface(page, 'wl1204', name);
+}
+
+async function capturePhase12Surface(
+  page: Page,
+  area: 'wl1200' | 'wl1201' | 'wl1203' | 'wl1204',
+  name: string,
+): Promise<void> {
+  const shouldCapture = process.env['WORKLEDGER_CAPTURE_PHASE_12'] === '1';
+  const shouldAssertVisuals = process.env['WORKLEDGER_ASSERT_PHASE_12_VISUALS'] === '1';
+  if (!shouldCapture && !shouldAssertVisuals) return;
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+
+  if (shouldCapture) {
+    const directory = `output/playwright/${area}`;
+    await mkdir(directory, { recursive: true });
+    await page.screenshot({
+      animations: 'disabled',
+      fullPage: true,
+      path: `${directory}/${name}.png`,
+    });
+  }
+
+  if (shouldAssertVisuals) {
+    await expect(page).toHaveScreenshot(['phase-12', area, `${name}.png`], {
+      animations: 'disabled',
+      fullPage: true,
+    });
+  }
 }

@@ -421,12 +421,12 @@ Apply the Phase 11 foundation to complete, understandable, recoverable workflows
 
 ## Workflow UX release gate
 
-- [ ] Canonical routes contain no stale milestone placeholder, sensitive subtype URL, or missing required workflow state.
-- [ ] Representative employee, manager, HR, and system-administrator workflows are keyboard complete and understandable at desktop, mobile, and 320 CSS px reflow.
-- [ ] Dense tables retain task-critical context and actions with an explicit narrow-screen strategy.
-- [ ] Loading, empty, stale, success, warning, permission-denied, and error behavior use consistent shared patterns.
-- [ ] Automated accessibility, visual-regression, and usability checks pass; manual assistive-technology evidence or an explicit residual is recorded.
-- [ ] The gate advances every workspace manifest to `0.13.0`.
+- [x] Canonical routes contain no stale milestone placeholder, sensitive subtype URL, or missing required workflow state.
+- [x] Representative employee, manager, HR, and system-administrator workflows are keyboard complete and understandable at desktop, mobile, and 320 CSS px reflow.
+- [x] Dense tables retain task-critical context and actions with an explicit narrow-screen strategy.
+- [x] Loading, empty, stale, success, warning, permission-denied, and error behavior use consistent shared patterns.
+- [x] Automated accessibility, visual-regression, and usability checks pass; manual assistive-technology evidence or an explicit residual is recorded.
+- [x] The gate advances every workspace manifest to `0.13.0`.
 
 ---
 

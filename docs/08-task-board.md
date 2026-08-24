@@ -212,7 +212,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-1203 | Improve manager Team, Approvals, team-calendar, filtering, decision, and narrow-screen workflows | WL-1106 | Task-critical table context/actions remain understandable and operable at supported widths | Done |
 | WL-1204 | Improve employee administration, settings, reports, audit, and system-administration surfaces | WL-1106 | Dense role surfaces use consistent hierarchy, semantics, states, and responsive strategies | Done |
 | WL-1205 | Complete the cross-route microcopy, responsive, state-consistency, motion, and recovery pass | WL-1200–WL-1204 | Cross-route review closes registered consistency issues without weakening domain/privacy language | Done |
-| WL-1206 | Execute visual-regression, usability, accessibility, and UI release gates | WL-1200–WL-1205 | UI release checklist complete; every workspace manifest is `0.13.0` | Not started |
+| WL-1206 | Execute visual-regression, usability, accessibility, and UI release gates | WL-1200–WL-1205 | UI release checklist complete; every workspace manifest is `0.13.0` | Done |
 
 ---
 

@@ -494,10 +494,19 @@ These were confirmed from repository evidence and the architecture ratification.
 
 ### D-502 — Browser support matrix
 
-**Status:** Open; initial evidence owner `WL-103`, production automation owner `WL-1002`, and final manual assistive-technology disposition owner `WL-1206`. Playwright now exercises Chromium, Firefox, WebKit, mobile Chromium, and mobile WebKit smoke coverage, but exact released-browser versions, Temporal/polyfill behavior, and real assistive-technology evidence still require UI-release validation.
+**Status:** Dispositioned by `WL-1206` with an explicit residual. Playwright `1.61.1` exercises
+Chromium, Firefox, WebKit, mobile Chromium, and mobile WebKit smoke coverage. The UI release gate
+also stores a deterministic macOS Chromium visual baseline for 19 representative route and state
+archetypes.
 
-- Proposed: current and previous stable Chrome, Edge, Firefox, Safari; current mobile Safari and Chrome Android.
-- Confirm against selected packages and Temporal polyfill.
+- WorkLedger does not claim an exact current and previous retail Chrome, Edge, Firefox, Safari,
+  mobile Safari, or Chrome Android support warranty from bundled engine automation.
+- Real VoiceOver, NVDA, and TalkBack pairing was unavailable for `WL-1206`. This is an accepted,
+  recorded residual rather than a screen reader or WCAG conformance claim.
+- Exact retail browser, Temporal polyfill, and real assistive technology evidence must be rerun
+  before publishing a public support matrix or conformance statement.
+- The complete disposition and automated evidence are recorded in
+  `docs/123-phase-12-gate-review.md`.
 
 ### D-503 — Production reverse proxy
 

@@ -3,7 +3,8 @@
 **Completed:** 2026-08-21  
 **Scope:** Canonical routes, four role contexts, end-to-end workflow families, required interface states, responsive baselines, and a prioritized remediation register.  
 **Evidence level:** Source inspection, existing automated tests, and representative Chromium runtime checks with purpose-minimized mocked responses.  
-**Conformance statement:** This is a planning audit, not a new WCAG conformance claim. Manual assistive-technology evidence remains open under `D-502`.
+**Conformance statement:** This is a planning audit, not a new WCAG conformance claim. Manual
+assistive technology evidence is dispositioned as an explicit residual under `D-502`.
 
 ---
 
@@ -134,16 +135,16 @@ stays in local UI state under `/requests/new`; only opaque record identifiers en
 |---|---|---|---|
 | Authentication/recovery | Signed out, validation error, pending, generic failure, reset/activation grant cleanup, signed-in redirect | Route focus, field errors, memory-only grant cleanup, E2E sign-in/reset/activation | Cross-route visual/state consolidation under WL-1105 |
 | Attendance | Clocked out/in, on break, pending, success, stale, duplicate/retry, lost response, offline, multi-device refresh, warning/incomplete | Strongest automated coverage; keyboard, touch, forced colors, 320 px | Content hierarchy and repetition (UI-008) |
-| Personal records/balances | Week/month, complete/incomplete, warnings, detail, calculation and ledger summaries | Purpose-minimized explanations, shared route states, narrow record list, and component/browser coverage | Release-level visual regression remains UI-014 / WL-1206 |
-| Requests/absence/corrections | Vacation, sickness, correction, validation, cancellation, owner history/detail, and decision evidence | Type-neutral URLs, owner-scoped API, component/axe and integration-source evidence | Release-level privacy and visual regression remains WL-1206 |
-| Manager approvals | Filtered/unfiltered, empty, pending, decision validation, stale/version conflict, pagination, detail comparison | Complete narrow records, semantic wide tables, keyboard and E2E evidence; type-neutral queue URLs | Release-level visual and assistive-technology regression remains WL-1206 |
-| Calendars | Month navigation, grid, agenda, empty, loading, error | Personal and team calendars default to agenda at narrow widths; equivalent grid and list presentations remain available | Release-level visual regression remains UI-014 / WL-1206 |
-| Monthly closure | Draft, blocked, submitted, changes requested, approved, locked, post-lock adjustment, print/copy failure | Detailed state/component and domain evidence; shared panel, status, and table patterns adopted by WL-1202 | Release-level visual regression remains WL-1206 |
-| Reports | Catalog, filters, pagination, empty, CSV pending/success/error, print/copy | Shared filters, route states, pagination, named dense-table containment, component and browser evidence | Release-level visual regression remains WL-1206 |
-| HR administration/settings | Loading, empty, filtered, create/invite, validation, effective-dated versions, constrained deactivate | Responsive employee records, separated team task, disabled-action recovery, component/browser evidence | Release-level visual regression remains WL-1206 |
-| Domain audit | Filters, empty/results, safe detail, pagination | Shared filter/table/pagination states and purpose-minimized component evidence | Release-level visual regression remains WL-1206 |
-| System operations/audit | Diagnostics loading/healthy/degraded/error; account/session actions; technical audit filters/results/detail | Valid diagnostics, shared states, separated technical projection, component/browser/axe evidence | Release-level visual regression remains WL-1206 |
-| Shared shell/boundaries | Role navigation, drawer, route focus/title, permission denied, not found, session expiry | Focus-managed drawer, reduced motion, skip link, route boundaries, shared alert and route-state adoption | Release-level visual regression remains UI-014 / WL-1206 |
+| Personal records/balances | Week/month, complete/incomplete, warnings, detail, calculation and ledger summaries | Purpose-minimized explanations, shared route states, narrow record list, and component/browser coverage | Release baseline complete through UI-014 / WL-1206 |
+| Requests/absence/corrections | Vacation, sickness, correction, validation, cancellation, owner history/detail, and decision evidence | Type-neutral URLs, owner-scoped API, component/axe and integration-source evidence | Release privacy and visual baseline complete through WL-1206 |
+| Manager approvals | Filtered/unfiltered, empty, pending, decision validation, stale/version conflict, pagination, detail comparison | Complete narrow records, semantic wide tables, keyboard and E2E evidence; type-neutral queue URLs | Release baseline complete; manual AT residual dispositioned by WL-1206 |
+| Calendars | Month navigation, grid, agenda, empty, loading, error | Personal and team calendars default to agenda at narrow widths; equivalent grid and list presentations remain available | Release baseline complete through UI-014 / WL-1206 |
+| Monthly closure | Draft, blocked, submitted, changes requested, approved, locked, post-lock adjustment, print/copy failure | Detailed state/component and domain evidence; shared panel, status, and table patterns adopted by WL-1202 | Release visual baseline complete through WL-1206 |
+| Reports | Catalog, filters, pagination, empty, CSV pending/success/error, print/copy | Shared filters, route states, pagination, named dense-table containment, component and browser evidence | Release visual baseline complete through WL-1206 |
+| HR administration/settings | Loading, empty, filtered, create/invite, validation, effective-dated versions, constrained deactivate | Responsive employee records, separated team task, disabled-action recovery, component/browser evidence | Release visual baseline complete through WL-1206 |
+| Domain audit | Filters, empty/results, safe detail, pagination | Shared filter/table/pagination states and purpose-minimized component evidence | Release visual baseline complete through WL-1206 |
+| System operations/audit | Diagnostics loading/healthy/degraded/error; account/session actions; technical audit filters/results/detail | Valid diagnostics, shared states, separated technical projection, component/browser/axe evidence | Release visual baseline complete through WL-1206 |
+| Shared shell/boundaries | Role navigation, drawer, route focus/title, permission denied, not found, session expiry | Focus-managed drawer, reduced motion, skip link, route boundaries, shared alert and route-state adoption | Release baseline complete through UI-014 / WL-1206 |
 
 ## 6. Prioritized issue register
 
@@ -167,8 +168,8 @@ requires broader route verification during its owning task.
 | UI-011 | Medium | Organization identity is hard-coded rather than validated runtime configuration | **Resolved by WL-1103** / high | Closed |
 | UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | **Resolved by WL-1205** / high | Closed |
 | UI-013 | Medium | Task pages often surface implementation/privacy guarantees as primary explanatory copy | **Resolved by WL-1205** / high | Closed |
-| UI-014 | Medium | Visual regression and route-state baseline coverage is representative, not systematic | Confirmed / high | WL-1206 |
-| UI-015 | Medium | Existing test coverage did not prevent completed-phase placeholders and route-contract drift | Confirmed / high | WL-1202, WL-1204, WL-1206 |
+| UI-014 | Medium | Visual regression and route-state baseline coverage is representative, not systematic | **Resolved by WL-1206** / high | Closed |
+| UI-015 | Medium | Existing test coverage did not prevent completed-phase placeholders and route-contract drift | **Resolved by WL-1202, WL-1204, and WL-1206** / high | Closed |
 | UI-016 | Low | Approvals presents “Clear approval filters” as a persistent peer action even at defaults | **Resolved by WL-1203** / high | Closed |
 
 ## 7. Detailed high-impact findings
@@ -418,9 +419,10 @@ requires broader route verification during its owning task.
 
 - UI-001 and UI-002 were closed by WL-1202 and WL-1204 before the final product-polish gate.
 - Apply shared patterns by workflow family instead of doing an unbounded global rewrite.
-- Maintain representative screenshots, then add deterministic visual assertions only after the
-  direction and tokens stabilize.
-- Complete or explicitly disposition the manual AT matrix `D-502` at `WL-1206`.
+- Deterministic Playwright assertions now maintain 19 representative Phase 12 route and state
+  snapshots through `pnpm run test:visual`.
+- `D-502` is dispositioned with an explicit real assistive technology and exact retail browser
+  residual in `docs/123-phase-12-gate-review.md`.
 
 ## 9. Strengths to preserve
 
