@@ -2,18 +2,19 @@
 
 **Current phase:** Phase 12 — Workflow UX remediation and product polish
 **Project readiness:** Stage 5 of 5 — Production and UI-foundation gates complete
-**Phase progress:** Phase 11 complete — 2 of 7 Phase 12 tasks complete
+**Phase progress:** Phase 11 complete — 3 of 7 Phase 12 tasks complete
 **Current milestone:** UI foundation complete — version 0.12.0
-**Active task:** `WL-1202` (next)
-**Status:** WL-1201 complete — personal workflow UX remediated
+**Active task:** `WL-1203` (next)
+**Status:** WL-1202 complete — request and monthly workflow UX remediated
 **Last verified:** 2026-08-24
 
 ## Current objective
 
-Phase 11 is complete at `0.12.0`. `WL-1200` and `WL-1201` have applied Quiet Ledger to Today and
-the personal record, balance, calendar, notification, and profile surfaces without changing domain
-rules or server authorization. The next bounded slice is `WL-1202`: improve correction, absence,
-cancellation, approval history, and monthly review workflows.
+Phase 11 is complete at `0.12.0`. `WL-1200` through `WL-1202` have applied Quiet Ledger to Today,
+personal records, and request/monthly workflows. The request area now has a type-neutral chooser,
+history, owner-authorized detail, exact workflow evidence, and state-valid cancellation actions.
+The next bounded slice is `WL-1203`: improve manager Team, Approvals, team-calendar, filtering,
+decision, and narrow-screen workflows.
 
 ## Verified decisions
 
@@ -57,6 +58,13 @@ cancellation, approval history, and monthly review workflows.
   cancellations, and monthly periods. It exposes only generic workflow category and status,
   current-team and affected-date metadata; absence subtype, including sickness, is never a list or
   URL value.
+- `/requests` is an employee-self, purpose-minimized history for correction, absence, and
+  cancellation records. The list exposes broad workflow category, state, affected dates, submitted
+  time, and opaque ID only. Exact absence subtype, correction reason, coverage, source events, and
+  decision reasons appear only in the owner-authorized `/requests/:requestId` response.
+- `/requests/new` keeps vacation, sickness, and correction selection in transient component state.
+  The former subtype-bearing sickness route is absent, and the legacy correction path redirects to
+  the canonical chooser with only its opaque daily-record target.
 - Current manager/HR scope and self exclusion apply before filters, totals, sorting, and
   pagination. Rows, totals, and team filter options share one repeatable-read snapshot.
 - Monthly-period rows use month bounds and direct restricted-period links; scope and self-exclusion
@@ -1695,17 +1703,53 @@ cancellation, approval history, and monthly review workflows.
   audit, logging, notification privacy, profile minimization, calculation source, or workspace
   version contract changed.
 
+**2026-08-24 — WL-1202 request and monthly workflow UX remediation**
+
+- Replaced the stale Requests placeholder with an employee-self history over correction, absence,
+  and absence-cancellation records. URL-owned filters accept broad workflow and progress categories
+  only; pagination and counts are computed after organization and employee scope.
+- Added strict owner request contracts plus private no-store `GET /v1/me/requests` and
+  `GET /v1/me/requests/:requestId` endpoints. List DTOs omit absence subtype, employee identity,
+  notes, reasons, coverage, entitlement, and source detail. Authorized detail restores the exact
+  workflow facts, immutable source evidence, ordered decisions, reasons, and valid actions.
+- Added a type-neutral `/requests/new` chooser whose vacation, sickness, and correction choice
+  remains in local component state. Removed `/requests/sickness`, redirected the legacy correction
+  route to the chooser with an opaque record target, and linked successful forms to their canonical
+  detail record.
+- Built state, action, effect, and evidence presentation for correction proposals, absence coverage,
+  related cancellation records, cancellation withdrawal, current status, and decision history.
+  Cancellation actions retain version checks, CSRF, authoritative refetch, and explicit unchanged
+  effect language.
+- Adopted shared panels, status badges, and captioned focusable data tables in monthly status,
+  totals, daily review, approved evidence, and post-lock adjustment sections without changing
+  monthly calculations, approvals, locking, printing, or adjustment semantics.
+- Added strict contract evidence, component/axe coverage for list minimization, authorized detail,
+  history, workflow selection, and withdrawal, plus a PostgreSQL integration scenario for list
+  minimization, owner detail, non-owner denial, and invalid sensitive filters. See
+  `docs/119-request-monthly-workflow-ux-remediation.md` for the complete boundary.
+- Split the three request routes into on-demand modules. The main application chunk is 350,398
+  bytes; the complete application is 878,217 JavaScript bytes, 236,969 gzip bytes, and 49,925 CSS
+  bytes. The executable aggregate JavaScript ceilings now allow 890,000 raw and 240,000 gzip bytes;
+  largest-chunk and CSS ceilings remain unchanged.
+- Verification passed formatting, ESLint, source and CSS boundaries, strict TypeScript, reproducible
+  OpenAPI, all 37 tooling tests, all 337 unit/component tests, 13 available integration tests with
+  45 expected PostgreSQL-dependent skips, all 33 Playwright scenarios, and the production build,
+  bundle budgets, and eight public workspace import roots.
+- No migration, domain transition, approval rule, monthly source calculation, authentication,
+  session, CSRF, audit, logging, browser persistence, dependency, or workspace version changed.
+
 ## Current blockers
 
-No decision blocks `WL-1202`. `D-502` manual assistive-technology evidence remains open for the
-Phase 12 UI release gate (`WL-1206`). `UI-001` and `UI-002` are high-priority workflow gaps owned by
-`WL-1202` and `WL-1204`; systematic visual regression remains `UI-014`/`WL-1206`. The temporary
+No decision blocks `WL-1203`. `D-502` manual assistive-technology evidence remains open for the
+Phase 12 UI release gate (`WL-1206`). `UI-001` is closed by `WL-1202`; `UI-002` remains a
+high-priority workflow gap owned by `WL-1204`, and systematic visual regression remains
+`UI-014`/`WL-1206`. The temporary
 Astro backup is recoverable at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`,
 but the public site remains deferred to `WL-1300`.
 
 ## Next task
 
-`WL-1202 — Improve correction, absence, cancellation, approval-history, and monthly-review
+`WL-1203 — Improve manager Team, Approvals, team-calendar, filtering, decision, and narrow-screen
 workflows.`
 
 ## Update rules

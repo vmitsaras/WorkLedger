@@ -17,6 +17,9 @@ import {
   resumeAttendanceEnvelopeSchema,
   notificationHistoryEnvelopeSchema,
   notificationQuerySchema,
+  personalRequestDetailEnvelopeSchema,
+  personalRequestHistoryEnvelopeSchema,
+  personalRequestQuerySchema,
   monthlyPeriodEnvelopeSchema,
   monthlyPeriodLockRequestSchema,
   monthlyPeriodReviewRequestSchema,
@@ -33,6 +36,81 @@ import {
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
+
+test('keeps personal request list filters broad and moves exact evidence to owner detail', () => {
+  const requestId = randomUUID();
+  expect(personalRequestQuerySchema.parse({})).toEqual({
+    limit: 20,
+    page: 1,
+    status: 'ALL',
+    type: 'ALL',
+  });
+  expect(() => personalRequestQuerySchema.parse({ type: 'SICKNESS' })).toThrow();
+  expect(() => personalRequestQuerySchema.parse({ absenceType: 'VACATION' })).toThrow();
+
+  const history = {
+    data: {
+      items: [
+        {
+          affectedEndDate: '2026-08-18',
+          affectedStartDate: '2026-08-18',
+          id: requestId,
+          kind: 'ABSENCE',
+          status: 'APPROVED',
+          submittedAt: '2026-08-12T08:00:00Z',
+          version: 2,
+        },
+      ],
+      pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+    },
+    meta: { requestId: randomUUID() },
+  };
+  expect(personalRequestHistoryEnvelopeSchema.parse(history)).toEqual(history);
+  expect(() =>
+    personalRequestHistoryEnvelopeSchema.parse({
+      ...history,
+      data: {
+        ...history.data,
+        items: [{ ...history.data.items[0], absenceTypeName: 'Sickness' }],
+      },
+    }),
+  ).toThrow();
+
+  const detail = {
+    data: {
+      absenceTypeName: 'Vacation',
+      affectedEndDate: '2026-08-18',
+      affectedStartDate: '2026-08-18',
+      availableActions: ['REQUEST_CANCELLATION'],
+      coverage: [
+        {
+          endsAtMinute: null,
+          kind: 'FULL_DAY',
+          localDate: '2026-08-18',
+          minutes: 480,
+          startsAtMinute: null,
+        },
+      ],
+      history: [
+        {
+          action: 'SUBMITTED',
+          actor: 'SELF',
+          occurredAt: '2026-08-12T08:00:00Z',
+          reason: null,
+        },
+      ],
+      id: requestId,
+      kind: 'ABSENCE',
+      relatedCancellations: [],
+      status: 'APPROVED',
+      submittedAt: '2026-08-12T08:00:00Z',
+      version: 2,
+      workflow: 'APPROVAL_REQUIRED',
+    },
+    meta: { requestId: randomUUID() },
+  };
+  expect(personalRequestDetailEnvelopeSchema.parse(detail)).toEqual(detail);
+});
 
 test('bounds public company identity to same-origin approved assets', () => {
   const identity = {

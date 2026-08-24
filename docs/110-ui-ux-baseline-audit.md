@@ -100,9 +100,9 @@ exist elsewhere.
 | `/my-time` | Employee | Filtered record collection | Complete; Source + component coverage | UI-005, UI-015 / WL-1201 |
 | `/time-records/:recordId` | Employee | Record detail/timeline | Complete; Source + component coverage | WL-1201 |
 | `/my-balances` | Employee | Summary/ledger collection | Complete; Source + component coverage | WL-1201 |
-| `/requests` | Employee | Request history/hub | **Gap: stale Phase 6 placeholder** | UI-001 / WL-1202 |
-| `/requests/new` | Employee | Type-neutral workflow chooser/form | **Partial: routes directly to vacation** | UI-001 / WL-1202 |
-| `/requests/:requestId` | Employee | Request detail/history | **Gap: route absent** | UI-001 / WL-1202 |
+| `/requests` | Employee | Request history/hub | **Complete by WL-1202; Source + component coverage** | UI-001 closed |
+| `/requests/new` | Employee | Type-neutral workflow chooser/form | **Complete by WL-1202; Source + component coverage** | UI-001 closed |
+| `/requests/:requestId` | Employee | Request detail/history | **Complete by WL-1202; Source + component/integration coverage** | UI-001 closed |
 | `/calendar` | Employee | Calendar + agenda | Complete; Source + component coverage | UI-005 / WL-1201 |
 | `/monthly-periods/:periodId` | Employee/manager/HR | Dense review/workflow | Complete; Source + component coverage | WL-1202 |
 | `/notifications` | Authenticated roles | Event collection | Complete; Automated | WL-1201 |
@@ -125,8 +125,8 @@ exist elsewhere.
 | `/system/audit` | System administrator | Technical audit explorer | **Gap: stale `WL-1007` placeholder** | UI-002 / WL-1204 |
 | Root/not-found/route error | Public/authenticated | Route boundary | Complete; Source + component coverage | WL-1105 |
 
-Non-canonical implemented route: `/requests/sickness`. Its subtype-bearing path conflicts with the
-explicit rule that sickness and other sensitive absence types never appear in a route value.
+The former non-canonical `/requests/sickness` route was removed by `WL-1202`. Workflow choice now
+stays in local UI state under `/requests/new`; only opaque record identifiers enter detail URLs.
 
 ## 5. Workflow and state matrix
 
@@ -135,10 +135,10 @@ explicit rule that sickness and other sensitive absence types never appear in a 
 | Authentication/recovery | Signed out, validation error, pending, generic failure, reset/activation grant cleanup, signed-in redirect | Route focus, field errors, memory-only grant cleanup, E2E sign-in/reset/activation | Cross-route visual/state consolidation under WL-1105 |
 | Attendance | Clocked out/in, on break, pending, success, stale, duplicate/retry, lost response, offline, multi-device refresh, warning/incomplete | Strongest automated coverage; keyboard, touch, forced colors, 320 px | Content hierarchy and repetition (UI-008) |
 | Personal records/balances | Week/month, complete/incomplete, warnings, detail, calculation and ledger summaries | Purpose-minimized explanations, shared route states, narrow record list, and component/browser coverage | Release-level visual regression remains UI-014 / WL-1206 |
-| Requests/absence/corrections | Vacation, sickness, correction, validation, cancellation services and decision internals exist | Individual form/workflow components exist | No complete request hub/history/detail; subtype URL leaks workflow category (UI-001) |
+| Requests/absence/corrections | Vacation, sickness, correction, validation, cancellation, owner history/detail, and decision evidence | Type-neutral URLs, owner-scoped API, component/axe and integration-source evidence | Release-level privacy and visual regression remains WL-1206 |
 | Manager approvals | Filtered/unfiltered, empty, pending, decision validation, stale/version conflict, pagination, detail comparison | Keyboard and E2E evidence; type-neutral queue URLs | Narrow-screen table action/context discoverability; default clear-filter prominence (UI-004, UI-016) |
 | Calendars | Month navigation, grid, agenda, empty, loading, error | Personal and team calendars default to agenda at narrow widths; equivalent grid and list presentations remain available | Release-level visual regression remains UI-014 / WL-1206 |
-| Monthly closure | Draft, blocked, submitted, changes requested, approved, locked, post-lock adjustment, print/copy failure | Detailed state/component and domain evidence | Visual hierarchy and cross-route consistency under WL-1202 |
+| Monthly closure | Draft, blocked, submitted, changes requested, approved, locked, post-lock adjustment, print/copy failure | Detailed state/component and domain evidence; shared panel, status, and table patterns adopted by WL-1202 | Release-level visual regression remains WL-1206 |
 | Reports | Catalog, filters, pagination, empty, CSV pending/success/error, print/copy | Authorized catalog, URL state, narrow table containment, E2E | Shared dense-table and route-state patterns (UI-004, UI-015) |
 | HR administration/settings | Loading, empty, filtered, create/invite, validation, effective-dated versions, constrained deactivate | Realistic complex forms and E2E | Employee/team task collision and unexplained disabled action (UI-009, UI-010) |
 | Domain audit | Filters, empty/results, safe detail, pagination | Purpose-minimized source/component evidence | Shared dense table/filter states under WL-1204 |
@@ -154,7 +154,7 @@ requires broader route verification during its owning task.
 
 | ID | Severity | Finding | Status / confidence | Primary owner |
 |---|---|---|---|---|
-| UI-001 | High | Requests route contract is incomplete and exposes sickness in a subtype-bearing path | Confirmed / high | WL-1202 |
+| UI-001 | High | Requests route contract was incomplete and exposed sickness in a subtype-bearing path | **Resolved by WL-1202** / high | Closed |
 | UI-002 | High | Technical Audit is still a milestone placeholder after its delivery/release gate | Confirmed / high | WL-1204 |
 | UI-003 | Medium | System technical routes use undefined styles and invalid definition-list grouping | **Resolved by WL-1102** / high | WL-1204 visual adoption |
 | UI-004 | Medium | Dense table actions and later columns are not visually discoverable at narrow width | Confirmed / high | WL-1104, WL-1203, WL-1204 |
@@ -176,7 +176,7 @@ requires broader route verification during its owning task.
 ### UI-001 — Requests route contract is incomplete and privacy-inconsistent
 
 - **Severity:** High
-- **Status/confidence:** Resolved by `WL-1200` / high
+- **Status/confidence:** Resolved by `WL-1202` / high
 - **Evidence:** `apps/web/src/app/router.tsx` maps `/requests` to `PlaceholderPage`, maps
   `/requests/new` directly to `VacationRequestPage`, exposes `/requests/sickness`, and defines no
   `/requests/:requestId`. `docs/05-ux-accessibility.md` requires a complete type-neutral hub,
@@ -195,6 +195,12 @@ requires broader route verification during its owning task.
   neutral; owner/non-owner permission tests; history/cancellation/correction state coverage;
   keyboard, error-summary, reflow, and session-expiry tests.
 - **Owner:** `WL-1202` with security/privacy regression evidence at `WL-1206`.
+- **Resolution:** `/requests` now provides broad-category history, `/requests/new` keeps workflow
+  choice in component state, and `/requests/:requestId` derives correction, absence, or cancellation
+  presentation from an owner-authorized response. `/requests/sickness` is absent. Focused component
+  and contract tests cover list minimization, exact owner detail, decision evidence, and withdrawal;
+  the PostgreSQL integration scenario covers owner scope and non-owner denial when the integration
+  database is available.
 
 ### UI-002 — Technical Audit remains a completed-milestone placeholder
 

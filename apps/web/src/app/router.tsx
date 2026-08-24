@@ -9,6 +9,7 @@ import {
   reportQuerySchema,
   teamCalendarQuerySchema,
   notificationQuerySchema,
+  personalRequestQuerySchema,
   type NavigationArea,
   type SelfContext,
   DEFAULT_COMPANY_IDENTITY,
@@ -20,6 +21,8 @@ import { RouteState } from '@workledger/ui';
 import { ApiClientError, clearSessionMemory } from './api-client.js';
 import {
   personalCalendarQuery,
+  personalRequestDetailQuery,
+  personalRequestHistoryQuery,
   companyIdentityQuery,
   approvalDetailQuery,
   approvalInboxQuery,
@@ -56,15 +59,11 @@ import {
   SignInPage,
   ActivateAccountPage,
 } from '../routes/auth-routes.js';
-import { PlaceholderPage } from '../routes/placeholder-page.js';
 import { ProfilePage } from '../routes/profile-page.js';
 import { RootNotFoundPage, RouteBoundary } from '../routes/route-boundary.js';
 import { TodayPage } from '../routes/today-page.js';
 import { MyTimePage } from '../routes/my-time-page.js';
 import { DailyTimeRecordPage } from '../routes/daily-time-record-page.js';
-import { CorrectionRequestPage } from '../routes/correction-request-page.js';
-import { VacationRequestPage } from '../routes/vacation-request-page.js';
-import { SicknessReportPage } from '../routes/sickness-report-page.js';
 import { PersonalCalendarPage } from '../routes/personal-calendar-page.js';
 import { ApprovalInboxPage } from '../routes/approval-inbox-page.js';
 import { ApprovalDetailPage } from '../routes/approval-detail-page.js';
@@ -90,25 +89,6 @@ import { TimeSettingsPage } from '../routes/time-settings-page.js';
 import { AbsenceSettingsPage } from '../routes/absence-settings-page.js';
 import { AuditPage } from '../routes/audit-page.js';
 import { HolidaySettingsPage } from '../routes/holiday-settings-page.js';
-
-type PlaceholderRoute = Readonly<{
-  area?: NavigationArea;
-  description: string;
-  milestone: string;
-  path: string;
-  title: string;
-}>;
-
-const PLACEHOLDER_ROUTES: readonly PlaceholderRoute[] = [
-  {
-    area: 'EMPLOYEE',
-    description:
-      'Vacation requests and later absence, correction, cancellation, and post-lock requests.',
-    milestone: 'WL-602 and later Phase 6',
-    path: 'requests',
-    title: 'Requests',
-  },
-];
 
 export function createWorkLedgerRouter(queryClient: QueryClient) {
   return createBrowserRouter(createWorkLedgerRoutes(queryClient));
@@ -197,18 +177,34 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               handle: { title: 'Monthly period' },
             },
             {
-              path: 'requests/new',
-              loader: protectedLoader,
-              element: <VacationRequestPage />,
+              path: 'requests',
+              loader: createPersonalRequestHistoryLoader(queryClient),
+              lazy: async () => {
+                const { RequestHistoryPage } = await import('../routes/request-history-page.js');
+                return { Component: RequestHistoryPage };
+              },
               errorElement: <RouteBoundary />,
-              handle: { title: 'Request vacation' },
+              handle: { title: 'My requests' },
             },
             {
-              path: 'requests/sickness',
-              loader: protectedLoader,
-              element: <SicknessReportPage />,
+              path: 'requests/new',
+              loader: createEmployeeTimeLoader(queryClient),
+              lazy: async () => {
+                const { RequestNewPage } = await import('../routes/request-new-page.js');
+                return { Component: RequestNewPage };
+              },
               errorElement: <RouteBoundary />,
-              handle: { title: 'Report sickness' },
+              handle: { title: 'New request' },
+            },
+            {
+              path: 'requests/:requestId',
+              loader: createPersonalRequestDetailLoader(queryClient),
+              lazy: async () => {
+                const { RequestDetailPage } = await import('../routes/request-detail-page.js');
+                return { Component: RequestDetailPage };
+              },
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Request details' },
             },
             {
               path: 'calendar',
@@ -219,8 +215,12 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
             },
             {
               path: 'time-records/:recordId/correction',
-              loader: createEmployeeTimeLoader(queryClient),
-              element: <CorrectionRequestPage />,
+              loader: createCorrectionRequestRedirectLoader(queryClient),
+              element: (
+                <RouteState kind="loading" title="Opening correction request">
+                  <p>WorkLedger is opening the request chooser.</p>
+                </RouteState>
+              ),
               errorElement: <RouteBoundary />,
               handle: { title: 'Request a time correction' },
             },
@@ -343,22 +343,6 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               errorElement: <RouteBoundary />,
               handle: { title: 'Technical audit' },
             },
-            ...PLACEHOLDER_ROUTES.map((route) => ({
-              path: route.path,
-              loader:
-                route.area === undefined
-                  ? protectedLoader
-                  : createAreaLoader(queryClient, route.area),
-              element: (
-                <PlaceholderPage
-                  description={route.description}
-                  milestone={route.milestone}
-                  title={route.title}
-                />
-              ),
-              errorElement: <RouteBoundary />,
-              handle: { title: route.title },
-            })),
           ],
         },
         { path: '*', element: <RootNotFoundPage />, handle: { title: 'Page not found' } },
@@ -481,6 +465,45 @@ function createEmployeeTimeLoader(queryClient: QueryClient): LoaderFunction {
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
     return null;
+  };
+}
+
+function createPersonalRequestHistoryLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
+    const searchParams = new URL(request.url).searchParams;
+    const values: Record<string, string> = {};
+    for (const key of new Set(searchParams.keys())) {
+      const entries = searchParams.getAll(key);
+      if (entries.length !== 1 || entries[0] === undefined) return redirect('/requests');
+      values[key] = entries[0];
+    }
+    const parsed = personalRequestQuerySchema.safeParse(values);
+    if (!parsed.success) return redirect('/requests');
+    void queryClient.prefetchQuery(personalRequestHistoryQuery(parsed.data));
+    return parsed.data;
+  };
+}
+
+function createPersonalRequestDetailLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ params }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
+    const requestId = params['requestId'];
+    if (requestId === undefined) throw new Response(null, { status: 404 });
+    void queryClient.prefetchQuery(personalRequestDetailQuery(requestId));
+    return null;
+  };
+}
+
+function createCorrectionRequestRedirectLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ params }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('EMPLOYEE')) throw new Response(null, { status: 403 });
+    const recordId = params['recordId'];
+    if (recordId === undefined) throw new Response(null, { status: 404 });
+    return redirect(`/requests/new?recordId=${encodeURIComponent(recordId)}`);
   };
 }
 

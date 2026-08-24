@@ -27,7 +27,7 @@ const EMPTY_VALUES: FormValues = Object.freeze({
   startsAt: '',
 });
 
-export function VacationRequestPage() {
+export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const summaryRef = useRef<HTMLDivElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
@@ -84,11 +84,19 @@ export function VacationRequestPage() {
 
   return (
     <section className="grid max-w-3xl gap-6">
-      <PageHeader
-        eyebrow="Requests"
-        title="Request vacation"
-        description="Choose full-day, obligation-half, or exact time coverage. Weekends, public holidays, and zero-hour days remain visible but use no vacation entitlement."
-      />
+      {embedded ? null : (
+        <PageHeader
+          eyebrow="Requests"
+          title="Request vacation"
+          description="Choose full-day, obligation-half, or exact time coverage. Weekends, public holidays, and zero-hour days remain visible but use no vacation entitlement."
+        />
+      )}
+      {embedded ? (
+        <p className="m-0 text-[var(--wl-text-muted)]">
+          Choose full-day, obligation-half, or exact time coverage. Weekends, public holidays, and
+          zero-hour days remain visible but use no vacation entitlement.
+        </p>
+      ) : null}
       {success === null ? (
         <form noValidate className="grid gap-6" onSubmit={(event) => void onSubmit(event)}>
           <FormErrorSummary
@@ -173,11 +181,8 @@ export function VacationRequestPage() {
             <button className="wl-button-primary" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Submitting request…' : 'Submit vacation request'}
             </button>
-            <Link className="wl-button-secondary" to="/my-balances">
+            <Link className="wl-button-secondary" to="/requests">
               Cancel
-            </Link>
-            <Link className="wl-button-secondary" to="/requests/sickness">
-              Report sickness instead
             </Link>
           </div>
         </form>
@@ -209,8 +214,8 @@ export function VacationRequestPage() {
               </li>
             ))}
           </ul>
-          <Link className="wl-button-secondary w-fit" to="/my-balances">
-            View My balances
+          <Link className="wl-button-secondary w-fit" to={`/requests/${success.id}`}>
+            View request details
           </Link>
         </div>
       )}

@@ -17,6 +17,7 @@ import {
   correctionDecisionEnvelopeSchema,
   correctionReviewQueueEnvelopeSchema,
   submittedAbsenceCancellationEnvelopeSchema,
+  withdrawnAbsenceCancellationEnvelopeSchema,
   submitCorrectionRequestEnvelopeSchema,
   submittedSicknessReportEnvelopeSchema,
   submittedVacationRequestEnvelopeSchema,
@@ -35,6 +36,8 @@ import {
   reportResultEnvelopeSchema,
   dismissedNotificationEnvelopeSchema,
   personalCalendarEnvelopeSchema,
+  personalRequestDetailEnvelopeSchema,
+  personalRequestHistoryEnvelopeSchema,
   type ApiErrorCode,
   type ApprovalInbox,
   type AbsenceSettingsAdminDetail,
@@ -64,6 +67,9 @@ import {
   type MyTimeQuery,
   type PersonalCalendar,
   type PersonalCalendarQuery,
+  type PersonalRequestDetail,
+  type PersonalRequestHistoryPage,
+  type PersonalRequestQuery,
   type NotificationHistory,
   type MonthlyPeriod,
   type MonthlyPeriodLockRequest,
@@ -446,6 +452,38 @@ export async function submitCorrectionRequest(
   return parsed.data.data;
 }
 
+export async function loadPersonalRequestHistory(
+  query: PersonalRequestQuery,
+  signal?: AbortSignal,
+): Promise<PersonalRequestHistoryPage> {
+  const search = new URLSearchParams({
+    limit: query.limit.toString(),
+    page: query.page.toString(),
+    status: query.status,
+    type: query.type,
+  });
+  const body = await requestJson(
+    `/v1/me/requests?${search.toString()}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = personalRequestHistoryEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function loadPersonalRequestDetail(
+  requestId: string,
+  signal?: AbortSignal,
+): Promise<PersonalRequestDetail> {
+  const body = await requestJson(
+    `/v1/me/requests/${encodeURIComponent(requestId)}`,
+    signal === undefined ? {} : { signal },
+  );
+  const parsed = personalRequestDetailEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
 export async function submitVacationRequest(
   input: SubmitVacationRequest,
 ): Promise<SubmittedVacationRequest> {
@@ -491,6 +529,21 @@ export async function submitAbsenceCancellation(
     },
   );
   const parsed = submittedAbsenceCancellationEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function withdrawAbsenceCancellation(cancellationId: string, expectedVersion: number) {
+  const token = await getCsrfToken();
+  const body = await requestJson(
+    `/v1/me/absence-cancellations/${encodeURIComponent(cancellationId)}/withdraw`,
+    {
+      body: JSON.stringify({ expectedVersion }),
+      headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+      method: 'POST',
+    },
+  );
+  const parsed = withdrawnAbsenceCancellationEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

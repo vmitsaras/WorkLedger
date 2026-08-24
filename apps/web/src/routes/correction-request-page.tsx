@@ -26,7 +26,7 @@ const EMPTY_VALUES: FormValues = Object.freeze({
 const LOCAL_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const UTC_OFFSET_PATTERN = /^[+-](?:0\d|1\d|2[0-3]):[0-5]\d$/;
 
-export function CorrectionRequestPage() {
+export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const [search] = useSearchParams();
   const recordId = search.get('recordId');
   const summaryRef = useRef<HTMLDivElement>(null);
@@ -37,6 +37,7 @@ export function CorrectionRequestPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState<Readonly<{
     applicationMode: 'ORDINARY_CORRECTION' | 'POST_LOCK_ADJUSTMENT';
+    id: string;
     localDate: string;
     minutes: number;
   }> | null>(null);
@@ -52,10 +53,10 @@ export function CorrectionRequestPage() {
     if (success !== null) successRef.current?.focus();
   }, [success]);
 
-  if (recordId === null) return <MissingRecordTarget />;
-  if (recordQuery.isPending) return <LoadingCorrectionRequest />;
+  if (recordId === null) return <MissingRecordTarget embedded={embedded} />;
+  if (recordQuery.isPending) return <LoadingCorrectionRequest embedded={embedded} />;
   if (recordQuery.isError || recordQuery.data === undefined)
-    return <UnavailableRecord error={recordQuery.error} />;
+    return <UnavailableRecord embedded={embedded} error={recordQuery.error} />;
   const record = recordQuery.data;
   const correctionRecordId = recordId;
 
@@ -95,6 +96,7 @@ export function CorrectionRequestPage() {
       });
       setSuccess({
         applicationMode: submitted.applicationMode,
+        id: submitted.id,
         localDate: submitted.localDate,
         minutes: submitted.proposedDurationMinutes,
       });
@@ -116,11 +118,19 @@ export function CorrectionRequestPage() {
 
   return (
     <section className="grid max-w-4xl gap-8">
-      <PageHeader
-        eyebrow="Requests"
-        title="Request a time correction"
-        description={`Propose one replacement work interval for ${formatLocalDate(record.localDate)}. It will be reviewed before it can affect your record.`}
-      />
+      {embedded ? null : (
+        <PageHeader
+          eyebrow="Requests"
+          title="Request a time correction"
+          description={`Propose one replacement work interval for ${formatLocalDate(record.localDate)}. It will be reviewed before it can affect your record.`}
+        />
+      )}
+      {embedded ? (
+        <p className="m-0 text-[var(--wl-text-muted)]">
+          Propose one replacement work interval for {formatLocalDate(record.localDate)}. It will be
+          reviewed before it can affect your record.
+        </p>
+      ) : null}
       <section
         aria-labelledby="original-record-heading"
         className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4"
@@ -253,11 +263,8 @@ export function CorrectionRequestPage() {
               ? 'Because this month is locked, approval will append an adjustment while preserving the approved monthly record.'
               : 'If approved and applied, the unlocked daily calculation will be replaced.'}
           </p>
-          <Link
-            className="wl-button-secondary w-fit"
-            to={`/time-records/${encodeURIComponent(recordId)}`}
-          >
-            Return to daily record
+          <Link className="wl-button-secondary w-fit" to={`/requests/${success.id}`}>
+            View request details
           </Link>
         </div>
       )}
@@ -353,14 +360,18 @@ function mapServerFieldErrors(fields: ApiClientError['fields']): Readonly<Record
   ]);
   return Object.fromEntries(entries);
 }
-function LoadingCorrectionRequest() {
+function LoadingCorrectionRequest({ embedded }: Readonly<{ embedded: boolean }>) {
   return (
     <section className="grid max-w-4xl gap-6" aria-busy="true">
-      <PageHeader
-        eyebrow="Requests"
-        title="Request a time correction"
-        description="Loading the daily record…"
-      />
+      {embedded ? (
+        <h2 className="m-0 text-xl font-bold">Loading the daily record…</h2>
+      ) : (
+        <PageHeader
+          eyebrow="Requests"
+          title="Request a time correction"
+          description="Loading the daily record…"
+        />
+      )}
       <div
         aria-label="Loading daily record"
         role="progressbar"
@@ -369,33 +380,55 @@ function LoadingCorrectionRequest() {
     </section>
   );
 }
-function MissingRecordTarget() {
+function MissingRecordTarget({ embedded }: Readonly<{ embedded: boolean }>) {
   return (
     <section className="grid max-w-4xl gap-6">
-      <PageHeader
-        eyebrow="Requests"
-        title="Choose a daily record"
-        description="Open the daily record you want to correct, then choose Request a correction."
-      />
+      {embedded ? (
+        <div className="grid gap-2">
+          <h2 className="m-0 text-xl font-bold">Choose a daily record</h2>
+          <p className="m-0">
+            Open the daily record you want to correct, then choose Request a correction.
+          </p>
+        </div>
+      ) : (
+        <PageHeader
+          eyebrow="Requests"
+          title="Choose a daily record"
+          description="Open the daily record you want to correct, then choose Request a correction."
+        />
+      )}
       <Link className="wl-button-secondary w-fit" to="/my-time">
         Go to My time
       </Link>
     </section>
   );
 }
-function UnavailableRecord({ error }: Readonly<{ error: unknown }>) {
+function UnavailableRecord({ embedded, error }: Readonly<{ embedded: boolean; error: unknown }>) {
   const denied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
   return (
     <section className="grid max-w-4xl gap-6">
-      <PageHeader
-        eyebrow="Requests"
-        title={denied ? 'Permission denied' : 'Daily record unavailable'}
-        description={
-          denied
-            ? 'You do not have access to this daily record.'
-            : 'WorkLedger could not load the daily record for this correction request.'
-        }
-      />
+      {embedded ? (
+        <div className="grid gap-2">
+          <h2 className="m-0 text-xl font-bold">
+            {denied ? 'Permission denied' : 'Daily record unavailable'}
+          </h2>
+          <p className="m-0">
+            {denied
+              ? 'You do not have access to this daily record.'
+              : 'WorkLedger could not load the daily record for this correction request.'}
+          </p>
+        </div>
+      ) : (
+        <PageHeader
+          eyebrow="Requests"
+          title={denied ? 'Permission denied' : 'Daily record unavailable'}
+          description={
+            denied
+              ? 'You do not have access to this daily record.'
+              : 'WorkLedger could not load the daily record for this correction request.'
+          }
+        />
+      )}
       <Link className="wl-button-secondary w-fit" to="/my-time">
         Back to My time
       </Link>

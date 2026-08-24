@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom';
 import { Link, useParams } from 'react-router';
 
 import type { MonthlyPeriod } from '@workledger/contracts';
-import { Button, Dialog } from '@workledger/ui';
+import { Button, DataTable, Dialog, Panel, StatusBadge } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -192,10 +192,7 @@ export function MonthlyPeriodPage() {
       }}
     >
       <div className="wl-screen-only grid gap-8">
-        <section
-          aria-labelledby="monthly-status-heading"
-          className="grid gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface)] p-4"
-        >
+        <Panel aria-labelledby="monthly-status-heading" className="grid gap-4" density="balanced">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2
@@ -211,9 +208,11 @@ export function MonthlyPeriodPage() {
                 {period.snapshotVersion.schemaVersion.toString()}
               </p>
             </div>
-            <span className="rounded-full border border-[var(--wl-border)] px-3 py-1 text-sm font-semibold">
+            <StatusBadge
+              tone={period.readiness.status === 'READY_FOR_SUBMISSION' ? 'success' : 'warning'}
+            >
               {readinessLabel(period)}
-            </span>
+            </StatusBadge>
           </div>
           <p className="m-0">{readinessExplanation(period)}</p>
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
@@ -222,7 +221,7 @@ export function MonthlyPeriodPage() {
             daily calculations. The source fingerprint changes whenever the reviewed source set
             changes.
           </p>
-        </section>
+        </Panel>
 
         <AttentionSection period={period} />
         <TotalsSection totals={period.totals} />
@@ -671,7 +670,7 @@ function ApprovedRecordSection({ period }: Readonly<{ period: MonthlyPeriod }>) 
           No approval snapshot has been created for the current review cycle.
         </p>
       ) : (
-        <div className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4">
+        <Panel className="grid gap-4" density="balanced">
           <p className="m-0">
             <strong>Approval cycle {record.approvalCycle.toString()}</strong> · workflow version{' '}
             {record.periodVersion.toString()} · schema {record.schemaVersion.toString()} · engine{' '}
@@ -684,7 +683,7 @@ function ApprovedRecordSection({ period }: Readonly<{ period: MonthlyPeriod }>) 
             {formatDuration(record.totals.balanceMinutes, true)}, closing posted balance{' '}
             {formatDuration(record.totals.ledgerClosingBalanceMinutes, true)}.
           </p>
-        </div>
+        </Panel>
       )}
       {period.reviewHistory.length === 0 ? null : (
         <ol className="m-0 grid gap-3 pl-5" aria-label="Monthly reviewer history">
@@ -717,82 +716,83 @@ function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod
           correction and absence-cancellation chain to that baseline.
         </p>
       </div>
-      <dl
-        aria-label="Post-lock balance reconciliation"
-        className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <Total label="Original closing balance" value={view.originalClosingBalanceMinutes} signed />
-        <Total label="Cumulative post-lock delta" value={view.cumulativeDeltaMinutes} signed />
-        <Total label="Adjusted closing balance" value={view.adjustedClosingBalanceMinutes} signed />
-        <div>
-          <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">
-            Current view version
-          </dt>
-          <dd className="m-0 mt-1 text-xl font-bold tabular-nums">
-            {view.currentViewVersion.toString()}
-          </dd>
-        </div>
-      </dl>
+      <Panel density="balanced">
+        <dl
+          aria-label="Post-lock balance reconciliation"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <Total
+            label="Original closing balance"
+            value={view.originalClosingBalanceMinutes}
+            signed
+          />
+          <Total label="Cumulative post-lock delta" value={view.cumulativeDeltaMinutes} signed />
+          <Total
+            label="Adjusted closing balance"
+            value={view.adjustedClosingBalanceMinutes}
+            signed
+          />
+          <div>
+            <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">
+              Current view version
+            </dt>
+            <dd className="m-0 mt-1 text-xl font-bold tabular-nums">
+              {view.currentViewVersion.toString()}
+            </dd>
+          </div>
+        </dl>
+      </Panel>
       {view.adjustments.length === 0 ? (
         <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
           No post-lock adjustment has been accepted. The current view equals the approved baseline.
         </p>
       ) : (
-        <div
-          className="overflow-x-auto rounded-xl border border-[var(--wl-border)]"
-          role="region"
-          aria-label="Scrollable post-lock adjustment history"
-          tabIndex={0}
+        <DataTable
+          caption="Ordered post-lock corrections and absence cancellations applied to the approved monthly baseline"
+          className="min-w-[52rem]"
+          scrollHint="Scroll horizontally to review every adjustment column."
+          scrollLabel="Scrollable post-lock adjustment history"
         >
-          <table className="w-full min-w-[52rem] border-collapse text-left">
-            <caption className="sr-only">
-              Ordered post-lock corrections and absence cancellations applied to the approved
-              monthly baseline
-            </caption>
-            <thead>
-              <tr className="border-b border-[var(--wl-border)] text-sm">
-                {['Version', 'Date', 'Source', 'Effect', 'Balance delta', 'Link'].map((label) => (
-                  <th className="p-3" key={label} scope="col">
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {view.adjustments.map((adjustment) => (
-                <tr
-                  className="border-b border-[var(--wl-border)] last:border-0"
-                  key={adjustment.id}
-                >
-                  <th className="p-3" scope="row">
-                    {adjustment.adjustmentVersion.toString()}
-                  </th>
-                  <td className="p-3">{formatLocalDate(adjustment.localDate)}</td>
-                  <td className="p-3">
-                    {adjustment.kind === 'CORRECTION' ? 'Time correction' : 'Absence cancellation'}
-                  </td>
-                  <td className="p-3 tabular-nums">
-                    {adjustment.kind === 'CORRECTION'
-                      ? `${formatDuration(adjustment.previousAdjustedWorkedMinutes)} → ${formatDuration(adjustment.proposedWorkedMinutes)} worked`
-                      : `Absence credit ${formatDuration(adjustment.absenceCreditMinutesDelta, true)}; expected ${formatDuration(adjustment.expectedMinutesDelta, true)}`}
-                  </td>
-                  <td className="p-3 tabular-nums">{formatDuration(adjustment.minutes, true)}</td>
-                  <td className="p-3">
-                    {adjustment.kind === 'ABSENCE_CANCELLATION'
-                      ? adjustment.minutes === 0
-                        ? 'Zero-delta cancellation evidence'
-                        : 'Cancellation adjustment'
-                      : adjustment.reversesAdjustmentId === null
-                        ? adjustment.minutes === 0
-                          ? 'Zero-delta evidence'
-                          : 'Correction adjustment'
-                        : `Reverses version ${reversedVersion(view, adjustment.reversesAdjustmentId)}`}
-                  </td>
-                </tr>
+          <thead>
+            <tr className="border-b border-[var(--wl-border)] text-sm">
+              {['Version', 'Date', 'Source', 'Effect', 'Balance delta', 'Link'].map((label) => (
+                <th className="p-3" key={label} scope="col">
+                  {label}
+                </th>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody>
+            {view.adjustments.map((adjustment) => (
+              <tr className="border-b border-[var(--wl-border)] last:border-0" key={adjustment.id}>
+                <th className="p-3" scope="row">
+                  {adjustment.adjustmentVersion.toString()}
+                </th>
+                <td className="p-3">{formatLocalDate(adjustment.localDate)}</td>
+                <td className="p-3">
+                  {adjustment.kind === 'CORRECTION' ? 'Time correction' : 'Absence cancellation'}
+                </td>
+                <td className="p-3 tabular-nums">
+                  {adjustment.kind === 'CORRECTION'
+                    ? `${formatDuration(adjustment.previousAdjustedWorkedMinutes)} → ${formatDuration(adjustment.proposedWorkedMinutes)} worked`
+                    : `Absence credit ${formatDuration(adjustment.absenceCreditMinutesDelta, true)}; expected ${formatDuration(adjustment.expectedMinutesDelta, true)}`}
+                </td>
+                <td className="p-3 tabular-nums">{formatDuration(adjustment.minutes, true)}</td>
+                <td className="p-3">
+                  {adjustment.kind === 'ABSENCE_CANCELLATION'
+                    ? adjustment.minutes === 0
+                      ? 'Zero-delta cancellation evidence'
+                      : 'Cancellation adjustment'
+                    : adjustment.reversesAdjustmentId === null
+                      ? adjustment.minutes === 0
+                        ? 'Zero-delta evidence'
+                        : 'Correction adjustment'
+                      : `Reverses version ${reversedVersion(view, adjustment.reversesAdjustmentId)}`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </DataTable>
       )}
     </section>
   );
@@ -817,19 +817,21 @@ function TotalsSection({ totals }: Readonly<{ totals: MonthlyPeriod['totals'] }>
           labelled.
         </p>
       </div>
-      <dl
-        aria-label="Monthly calculated totals"
-        className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <Total label="Expected" value={totals.expectedMinutes} />
-        <Total label="Worked" value={totals.workedMinutes} />
-        <Total label="Break" value={totals.breakMinutes} />
-        <Total label="Absence credit" value={totals.absenceCreditMinutes} />
-        <Total label="Adjustment" value={totals.adjustmentMinutes} signed />
-        <Total label="Credited" value={totals.creditedMinutes} />
-        <Total label="Calculated balance" value={totals.balanceMinutes} signed />
-        <Total label="Posted period delta" value={totals.ledgerPeriodDeltaMinutes} signed />
-      </dl>
+      <Panel density="balanced">
+        <dl
+          aria-label="Monthly calculated totals"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <Total label="Expected" value={totals.expectedMinutes} />
+          <Total label="Worked" value={totals.workedMinutes} />
+          <Total label="Break" value={totals.breakMinutes} />
+          <Total label="Absence credit" value={totals.absenceCreditMinutes} />
+          <Total label="Adjustment" value={totals.adjustmentMinutes} signed />
+          <Total label="Credited" value={totals.creditedMinutes} />
+          <Total label="Calculated balance" value={totals.balanceMinutes} signed />
+          <Total label="Posted period delta" value={totals.ledgerPeriodDeltaMinutes} signed />
+        </dl>
+      </Panel>
       <p className="m-0 text-sm text-[var(--wl-text-muted)]">
         Posted opening balance {formatDuration(totals.ledgerOpeningBalanceMinutes, true)}; posted
         closing balance {formatDuration(totals.ledgerClosingBalanceMinutes, true)}.
@@ -852,58 +854,57 @@ function DailyRows({
           Final amounts appear only for complete dates. A dash means the date is not final.
         </p>
       </div>
-      <div
-        className="overflow-x-auto rounded-xl border border-[var(--wl-border)]"
-        role="region"
-        aria-label="Scrollable monthly daily review"
-        tabIndex={0}
+      <DataTable
+        caption={`Per-date monthly calculation for ${formatLocalDate(monthStart)}`}
+        className="min-w-[58rem]"
+        scrollHint="Scroll horizontally to review all daily calculation columns."
+        scrollLabel="Scrollable monthly daily review"
       >
-        <table className="w-full min-w-[58rem] border-collapse text-left">
-          <caption className="sr-only">
-            Per-date monthly calculation for {formatLocalDate(monthStart)}
-          </caption>
-          <thead>
-            <tr className="border-b border-[var(--wl-border)] text-sm">
-              {[
-                'Date',
-                'Status',
-                'Expected',
-                'Worked',
-                'Absence credit',
-                'Adjustment',
-                'Credited',
-                'Balance',
-              ].map((label) => (
-                <th key={label} scope="col" className="p-3">
-                  {label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.localDate} className="border-b border-[var(--wl-border)] last:border-0">
-                <th scope="row" className="p-3 font-medium">
-                  {row.recordId === null ? (
-                    formatLocalDate(row.localDate)
-                  ) : (
-                    <Link to={`/time-records/${encodeURIComponent(row.recordId)}`}>
-                      {formatLocalDate(row.localDate)}
-                    </Link>
-                  )}
-                </th>
-                <td className="p-3">{dailyStatusLabel(row.status)}</td>
-                <MinuteCell value={row.expectedMinutes} />
-                <MinuteCell value={row.workedMinutes} />
-                <MinuteCell value={row.absenceCreditMinutes} />
-                <MinuteCell value={row.adjustmentMinutes} signed />
-                <MinuteCell value={row.creditedMinutes} />
-                <MinuteCell value={row.balanceMinutes} signed />
-              </tr>
+        <thead>
+          <tr className="border-b border-[var(--wl-border)] text-sm">
+            {[
+              'Date',
+              'Status',
+              'Expected',
+              'Worked',
+              'Absence credit',
+              'Adjustment',
+              'Credited',
+              'Balance',
+            ].map((label) => (
+              <th key={label} scope="col" className="p-3">
+                {label}
+              </th>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.localDate} className="border-b border-[var(--wl-border)] last:border-0">
+              <th scope="row" className="p-3 font-medium">
+                {row.recordId === null ? (
+                  formatLocalDate(row.localDate)
+                ) : (
+                  <Link to={`/time-records/${encodeURIComponent(row.recordId)}`}>
+                    {formatLocalDate(row.localDate)}
+                  </Link>
+                )}
+              </th>
+              <td className="p-3">
+                <StatusBadge tone={row.status === 'COMPLETE' ? 'success' : 'warning'}>
+                  {dailyStatusLabel(row.status)}
+                </StatusBadge>
+              </td>
+              <MinuteCell value={row.expectedMinutes} />
+              <MinuteCell value={row.workedMinutes} />
+              <MinuteCell value={row.absenceCreditMinutes} />
+              <MinuteCell value={row.adjustmentMinutes} signed />
+              <MinuteCell value={row.creditedMinutes} />
+              <MinuteCell value={row.balanceMinutes} signed />
+            </tr>
+          ))}
+        </tbody>
+      </DataTable>
     </section>
   );
 }

@@ -13,6 +13,7 @@ import type {
   LeaveEntitlementRepository,
   OrganizationRepository,
   NotificationRepository,
+  PersonalRequestRepository,
   ReportRepository,
   MonthlyPeriodRepository,
   RetentionRepository,
@@ -48,6 +49,7 @@ export interface WorkLedgerTransaction {
   readonly leaveEntitlements: LeaveEntitlementRepository;
   readonly organizations: OrganizationRepository;
   readonly notifications: NotificationRepository;
+  readonly personalRequests: PersonalRequestRepository;
   readonly reports: ReportRepository;
   readonly monthlyPeriods: MonthlyPeriodRepository;
   readonly retention: RetentionRepository;

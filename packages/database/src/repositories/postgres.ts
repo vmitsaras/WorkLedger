@@ -175,6 +175,10 @@ import type {
   LeaveReportRecord,
   MissingRecordReportRecord,
   PersonalCalendarRecords,
+  ListPersonalRequestsInput,
+  PersonalRequestHistoryRecord,
+  PersonalRequestListItemRecord,
+  PersonalRequestRepository,
   ReplaceDailyProjectionInput,
   ReplaceActiveRolesInput,
   SecurityAuditEventRecord,
@@ -242,6 +246,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   leaveEntitlements: LeaveEntitlementRepository;
   organizations: OrganizationRepository;
   notifications: NotificationRepository;
+  personalRequests: PersonalRequestRepository;
   reports: ReportRepository;
   monthlyPeriods: MonthlyPeriodRepository;
   retention: RetentionRepository;
@@ -264,6 +269,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     leaveEntitlements: new PostgresLeaveEntitlementRepository(transaction),
     organizations: new PostgresOrganizationRepository(transaction),
     notifications: new PostgresNotificationRepository(transaction),
+    personalRequests: new PostgresPersonalRequestRepository(transaction),
     reports: new PostgresReportRepository(transaction),
     monthlyPeriods: new PostgresMonthlyPeriodRepository(transaction),
     retention: new PostgresRetentionRepository(transaction),
@@ -2806,6 +2812,338 @@ class PostgresApprovalInboxRepository implements ApprovalInboxRepository {
       total: countRow?.total ?? 0,
     });
   }
+}
+
+class PostgresPersonalRequestRepository implements PersonalRequestRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async list(input: ListPersonalRequestsInput) {
+    const correctionQuery = this.transaction
+      .select({
+        affectedEndDate: sql<LocalDate>`${correctionRequests.localDate}`.as('affected_end_date'),
+        affectedStartDate: sql<LocalDate>`${correctionRequests.localDate}`.as(
+          'affected_start_date',
+        ),
+        id: sql<string>`${correctionRequests.id}`.as('item_id'),
+        kind: sql<PersonalRequestListItemRecord['kind']>`'CORRECTION'`.as('kind'),
+        progress: sql<'COMPLETED' | 'IN_PROGRESS'>`case
+          when ${correctionRequests.status} in ('SUBMITTED', 'CHANGES_REQUESTED') then 'IN_PROGRESS'
+          when ${correctionRequests.status} = 'APPROVED' and not exists (
+            select 1 from ${appliedCorrections}
+            where ${appliedCorrections.organizationId} = ${input.organizationId}
+              and ${appliedCorrections.correctionRequestId} = ${correctionRequests.id}
+          ) then 'IN_PROGRESS'
+          else 'COMPLETED'
+        end`.as('progress'),
+        status: sql<PersonalRequestListItemRecord['status']>`case
+          when exists (
+            select 1 from ${appliedCorrections}
+            where ${appliedCorrections.organizationId} = ${input.organizationId}
+              and ${appliedCorrections.correctionRequestId} = ${correctionRequests.id}
+          ) then 'APPLIED'
+          else ${correctionRequests.status}
+        end`.as('status'),
+        submittedAt: sql<string>`${correctionRequests.createdAt}`.as('submitted_at'),
+        version: sql<number>`${correctionRequests.version}`.as('version'),
+      })
+      .from(correctionRequests)
+      .where(
+        and(
+          eq(correctionRequests.organizationId, input.organizationId),
+          eq(correctionRequests.employeeId, input.employeeId),
+        ),
+      );
+
+    const absenceQuery = this.transaction
+      .select({
+        affectedEndDate: sql<LocalDate>`max(${absenceCoverageSegments.localDate})`.as(
+          'affected_end_date',
+        ),
+        affectedStartDate: sql<LocalDate>`min(${absenceCoverageSegments.localDate})`.as(
+          'affected_start_date',
+        ),
+        id: sql<string>`${absenceRequests.id}`.as('item_id'),
+        kind: sql<PersonalRequestListItemRecord['kind']>`'ABSENCE'`.as('kind'),
+        progress: sql<'COMPLETED' | 'IN_PROGRESS'>`case
+          when ${absenceRequests.status} in ('SUBMITTED', 'REPORTED', 'CHANGES_REQUESTED')
+            then 'IN_PROGRESS'
+          else 'COMPLETED'
+        end`.as('progress'),
+        status: sql<PersonalRequestListItemRecord['status']>`${absenceRequests.status}`.as(
+          'status',
+        ),
+        submittedAt: sql<string>`${absenceRequests.submittedAt}`.as('submitted_at'),
+        version: sql<number>`${absenceRequests.version}`.as('version'),
+      })
+      .from(absenceRequests)
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.organizationId, input.organizationId),
+          eq(absenceCoverageSegments.absenceRequestId, absenceRequests.id),
+        ),
+      )
+      .where(
+        and(
+          eq(absenceRequests.organizationId, input.organizationId),
+          eq(absenceRequests.employeeId, input.employeeId),
+        ),
+      )
+      .groupBy(
+        absenceRequests.id,
+        absenceRequests.status,
+        absenceRequests.submittedAt,
+        absenceRequests.version,
+      );
+
+    const cancellationQuery = this.transaction
+      .select({
+        affectedEndDate: sql<LocalDate>`max(${absenceCoverageSegments.localDate})`.as(
+          'affected_end_date',
+        ),
+        affectedStartDate: sql<LocalDate>`min(${absenceCoverageSegments.localDate})`.as(
+          'affected_start_date',
+        ),
+        id: sql<string>`${absenceCancellations.id}`.as('item_id'),
+        kind: sql<PersonalRequestListItemRecord['kind']>`'CANCELLATION'`.as('kind'),
+        progress: sql<'COMPLETED' | 'IN_PROGRESS'>`case
+          when ${absenceCancellations.status} in ('PENDING_DECISION', 'CHANGES_REQUESTED')
+            then 'IN_PROGRESS'
+          else 'COMPLETED'
+        end`.as('progress'),
+        status: sql<PersonalRequestListItemRecord['status']>`${absenceCancellations.status}`.as(
+          'status',
+        ),
+        submittedAt: sql<string>`${absenceCancellations.submittedAt}`.as('submitted_at'),
+        version: sql<number>`${absenceCancellations.version}`.as('version'),
+      })
+      .from(absenceCancellations)
+      .innerJoin(
+        absenceCancellationSegments,
+        and(
+          eq(absenceCancellationSegments.organizationId, input.organizationId),
+          eq(absenceCancellationSegments.absenceCancellationId, absenceCancellations.id),
+        ),
+      )
+      .innerJoin(
+        absenceCoverageSegments,
+        and(
+          eq(absenceCoverageSegments.organizationId, input.organizationId),
+          eq(absenceCoverageSegments.id, absenceCancellationSegments.absenceCoverageSegmentId),
+        ),
+      )
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, input.organizationId),
+          eq(absenceCancellations.employeeId, input.employeeId),
+        ),
+      )
+      .groupBy(
+        absenceCancellations.id,
+        absenceCancellations.status,
+        absenceCancellations.submittedAt,
+        absenceCancellations.version,
+      );
+
+    const unified = unionAll(correctionQuery, absenceQuery, cancellationQuery).as(
+      'personal_requests',
+    );
+    const filters = and(
+      input.type === 'ALL' ? undefined : eq(unified.kind, input.type),
+      input.status === 'ALL' ? undefined : eq(unified.progress, input.status),
+    );
+    const rows = await this.transaction
+      .select()
+      .from(unified)
+      .where(filters)
+      .orderBy(desc(unified.submittedAt), desc(unified.kind), desc(unified.id))
+      .limit(input.limit)
+      .offset(input.offset);
+    const [countRow] = await this.transaction
+      .select({ total: sql<number>`count(*)::integer`.mapWith(Number) })
+      .from(unified)
+      .where(filters);
+
+    return Object.freeze({
+      items: Object.freeze(rows.map(mapPersonalRequestListItem)),
+      total: countRow?.total ?? 0,
+    });
+  }
+
+  async listCorrectionHistory(
+    organizationId: Parameters<PersonalRequestRepository['listCorrectionHistory']>[0],
+    requestId: Parameters<PersonalRequestRepository['listCorrectionHistory']>[1],
+  ): Promise<readonly PersonalRequestHistoryRecord[]> {
+    const decisions = await this.transaction
+      .select({
+        action: correctionDecisions.action,
+        occurredAt: correctionDecisions.decidedAt,
+        reason: correctionDecisions.reason,
+      })
+      .from(correctionDecisions)
+      .where(
+        and(
+          eq(correctionDecisions.organizationId, organizationId),
+          eq(correctionDecisions.correctionRequestId, requestId),
+        ),
+      )
+      .orderBy(asc(correctionDecisions.decidedAt), asc(correctionDecisions.id));
+    const applied = await this.transaction
+      .select({ occurredAt: appliedCorrections.createdAt })
+      .from(appliedCorrections)
+      .where(
+        and(
+          eq(appliedCorrections.organizationId, organizationId),
+          eq(appliedCorrections.correctionRequestId, requestId),
+        ),
+      )
+      .orderBy(asc(appliedCorrections.createdAt), asc(appliedCorrections.id));
+    return sortPersonalRequestHistory([
+      ...decisions.map((row) =>
+        mapPersonalRequestDecision(row.action, row.occurredAt, row.reason, 'REVIEWER'),
+      ),
+      ...applied.map((row) => mapPersonalRequestDecision('APPLY', row.occurredAt, null, 'SYSTEM')),
+    ]);
+  }
+
+  async listAbsenceHistory(
+    organizationId: Parameters<PersonalRequestRepository['listAbsenceHistory']>[0],
+    requestId: Parameters<PersonalRequestRepository['listAbsenceHistory']>[1],
+  ): Promise<readonly PersonalRequestHistoryRecord[]> {
+    const rows = await this.transaction
+      .select({
+        action: absenceDecisions.action,
+        occurredAt: absenceDecisions.decidedAt,
+        reason: absenceDecisions.reason,
+      })
+      .from(absenceDecisions)
+      .where(
+        and(
+          eq(absenceDecisions.organizationId, organizationId),
+          eq(absenceDecisions.absenceRequestId, requestId),
+        ),
+      )
+      .orderBy(asc(absenceDecisions.decidedAt), asc(absenceDecisions.id));
+    return Object.freeze(
+      rows.map((row) =>
+        mapPersonalRequestDecision(row.action, row.occurredAt, row.reason, 'REVIEWER'),
+      ),
+    );
+  }
+
+  async listCancellationHistory(
+    organizationId: Parameters<PersonalRequestRepository['listCancellationHistory']>[0],
+    cancellationId: Parameters<PersonalRequestRepository['listCancellationHistory']>[1],
+  ): Promise<readonly PersonalRequestHistoryRecord[]> {
+    const rows = await this.transaction
+      .select({
+        action: absenceCancellationDecisions.action,
+        actorAuthority: absenceCancellationDecisions.actorAuthority,
+        occurredAt: absenceCancellationDecisions.decidedAt,
+        reason: absenceCancellationDecisions.reason,
+      })
+      .from(absenceCancellationDecisions)
+      .where(
+        and(
+          eq(absenceCancellationDecisions.organizationId, organizationId),
+          eq(absenceCancellationDecisions.absenceCancellationId, cancellationId),
+        ),
+      )
+      .orderBy(asc(absenceCancellationDecisions.decidedAt), asc(absenceCancellationDecisions.id));
+    return Object.freeze(
+      rows.map((row) =>
+        mapPersonalRequestDecision(
+          row.action,
+          row.occurredAt,
+          row.reason,
+          row.actorAuthority === 'SELF' ? 'SELF' : 'REVIEWER',
+        ),
+      ),
+    );
+  }
+
+  async listRelatedCancellations(
+    organizationId: Parameters<PersonalRequestRepository['listRelatedCancellations']>[0],
+    requestId: Parameters<PersonalRequestRepository['listRelatedCancellations']>[1],
+  ) {
+    const rows = await this.transaction
+      .select({
+        id: absenceCancellations.id,
+        status: absenceCancellations.status,
+        submittedAt: absenceCancellations.submittedAt,
+      })
+      .from(absenceCancellations)
+      .where(
+        and(
+          eq(absenceCancellations.organizationId, organizationId),
+          eq(absenceCancellations.absenceRequestId, requestId),
+        ),
+      )
+      .orderBy(desc(absenceCancellations.submittedAt), desc(absenceCancellations.id));
+    return Object.freeze(
+      rows.map((row) =>
+        Object.freeze({
+          id: mapDomainId<'AbsenceCancellation'>(row.id, 'absence_cancellations', 'id'),
+          status: row.status,
+          submittedAt: mapInstant(row.submittedAt, 'absence_cancellations', 'submitted_at'),
+        }),
+      ),
+    );
+  }
+}
+
+function mapPersonalRequestListItem(
+  row: Readonly<{
+    affectedEndDate: LocalDate;
+    affectedStartDate: LocalDate;
+    id: string;
+    kind: PersonalRequestListItemRecord['kind'];
+    status: PersonalRequestListItemRecord['status'];
+    submittedAt: string;
+    version: number;
+  }>,
+): PersonalRequestListItemRecord {
+  const id =
+    row.kind === 'CORRECTION'
+      ? mapDomainId<'CorrectionRequest'>(row.id, 'correction_requests', 'id')
+      : row.kind === 'ABSENCE'
+        ? mapDomainId<'AbsenceRequest'>(row.id, 'absence_requests', 'id')
+        : mapDomainId<'AbsenceCancellation'>(row.id, 'absence_cancellations', 'id');
+  return Object.freeze({
+    affectedEndDate: mapLocalDate(row.affectedEndDate, 'personal_requests', 'affected_end_date'),
+    affectedStartDate: mapLocalDate(
+      row.affectedStartDate,
+      'personal_requests',
+      'affected_start_date',
+    ),
+    id,
+    kind: row.kind,
+    status: row.status,
+    submittedAt: mapInstant(row.submittedAt, 'personal_requests', 'submitted_at'),
+    version: row.version,
+  });
+}
+
+function mapPersonalRequestDecision(
+  action: PersonalRequestHistoryRecord['action'],
+  occurredAt: string,
+  reason: string | null,
+  actor: PersonalRequestHistoryRecord['actor'],
+): PersonalRequestHistoryRecord {
+  return Object.freeze({
+    action,
+    actor,
+    occurredAt: mapInstant(occurredAt, 'request_decisions', 'decided_at'),
+    reason,
+  });
+}
+
+function sortPersonalRequestHistory(
+  history: readonly PersonalRequestHistoryRecord[],
+): readonly PersonalRequestHistoryRecord[] {
+  return Object.freeze(
+    [...history].sort((left, right) => left.occurredAt.localeCompare(right.occurredAt)),
+  );
 }
 
 class PostgresReportRepository implements ReportRepository {

@@ -6,6 +6,7 @@ import {
   todayAttendanceSchema,
   type MyTimeQuery,
   type PersonalCalendarQuery,
+  type PersonalRequestQuery,
   type TeamCalendarQuery,
   type NotificationQuery,
   type ReportKey,
@@ -26,6 +27,8 @@ import {
   loadApprovalInbox,
   loadMyTime,
   loadPersonalCalendar,
+  loadPersonalRequestDetail,
+  loadPersonalRequestHistory,
   loadManagerCorrectionQueue,
   loadMonthlyPeriod,
   loadSelfContext,
@@ -194,6 +197,19 @@ export const monthlyPeriodQuery = (periodId: string) =>
   queryOptions({
     queryFn: ({ signal }) => loadMonthlyPeriod(periodId, signal),
     queryKey: ['monthly-periods', 'detail', periodId] as const,
+  });
+
+export const personalRequestHistoryQuery = (query: PersonalRequestQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadPersonalRequestHistory(query, signal),
+    queryKey: ['self', 'requests', query] as const,
+  });
+
+export const personalRequestDetailQuery = (requestId: string) =>
+  queryOptions({
+    queryFn: ({ signal }) => loadPersonalRequestDetail(requestId, signal),
+    queryKey: ['self', 'request', requestId] as const,
   });
 
 export const reportCatalogQuery = () =>

@@ -21,6 +21,10 @@ import { clearSessionMemory } from '../src/app/api-client.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
+const EMPTY_REQUEST_HISTORY = {
+  items: [],
+  pagination: { limit: 20, page: 1, total: 0, totalPages: 0 },
+} as const;
 let routerSequence = 0;
 const EMPLOYEE_CONTEXT: SelfContext = {
   account: { email: 'emma@northstar.test', name: 'Emma Reed' },
@@ -384,12 +388,13 @@ test('keeps combined-role work areas distinct and account utilities outside dest
     vi.fn(async (input: RequestInfo | URL) => {
       const path = requestPath(input);
       if (path === '/v1/me/context') return successResponse(COMBINED_CONTEXT);
+      if (path === '/v1/me/requests') return successResponse(EMPTY_REQUEST_HISTORY);
       throw new Error(`Unexpected test request: ${path}`);
     }),
   );
   const { container } = renderApplication('/requests');
 
-  await screen.findByRole('heading', { name: 'Requests' });
+  await screen.findByRole('heading', { name: 'My requests' });
   const workAreas = screen.getByRole('navigation', { name: 'Work areas' });
   expect(within(workAreas).getByRole('link', { name: 'My work' })).toHaveAttribute(
     'aria-current',
@@ -420,6 +425,7 @@ test('preserves the selected work area when the mobile drawer remounts on a shar
     vi.fn(async (input: RequestInfo | URL) => {
       const path = requestPath(input);
       if (path === '/v1/me/context') return successResponse(COMBINED_CONTEXT);
+      if (path === '/v1/me/requests') return successResponse(EMPTY_REQUEST_HISTORY);
       if (path === '/v1/team/status') {
         return successResponse({
           asOf: '2026-08-14T10:30:45Z',
@@ -457,7 +463,7 @@ test('preserves the selected work area when the mobile drawer remounts on a shar
   const user = userEvent.setup();
   const { container } = renderApplication('/requests');
 
-  await screen.findByRole('heading', { name: 'Requests' });
+  await screen.findByRole('heading', { name: 'My requests' });
   await user.click(screen.getByRole('button', { name: 'Menu' }));
   let drawer = screen.getByRole('dialog', { name: 'Navigation' });
   await user.click(within(drawer).getByRole('link', { name: 'Team', exact: true }));
@@ -579,7 +585,8 @@ test('presents an accessible vacation-request form with a focused validation sum
   vi.stubGlobal('fetch', authenticatedFetch());
   const { container } = renderApplication('/requests/new');
 
-  expect(await screen.findByRole('heading', { name: 'Request vacation' })).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'New request' })).toBeVisible();
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Choose vacation' }));
   expect(screen.getByText(/Weekends, public holidays, and zero-hour days/u)).toBeVisible();
   const user = userEvent.setup();
   await user.selectOptions(screen.getByLabelText('Coverage'), 'MINUTE_INTERVAL');
@@ -598,12 +605,165 @@ test('presents an accessible vacation-request form with a focused validation sum
 
 test('presents a no-medical-detail sickness-report form with accessible recovery', async () => {
   vi.stubGlobal('fetch', authenticatedFetch());
-  const { container } = renderApplication('/requests/sickness');
-  expect(await screen.findByRole('heading', { name: 'Report sickness' })).toBeVisible();
+  const { container } = renderApplication('/requests/new');
+  expect(await screen.findByRole('heading', { name: 'New request' })).toBeVisible();
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Choose sickness' }));
   expect(screen.getByText(/Do not include a diagnosis/u)).toBeVisible();
   expect(screen.queryByRole('textbox', { name: /note|diagnosis|reason/u })).toBeNull();
   await userEvent.setup().click(screen.getByRole('button', { name: 'Report sickness' }));
   expect(await screen.findByRole('heading', { name: 'There is a problem' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('keeps personal request history type neutral until the owner opens a record', async () => {
+  const absenceId = '123e4567-e89b-42d3-a456-426614174710';
+  const correctionId = '123e4567-e89b-42d3-a456-426614174711';
+  const history = {
+    items: [
+      {
+        affectedEndDate: '2026-08-18',
+        affectedStartDate: '2026-08-18',
+        id: absenceId,
+        kind: 'ABSENCE',
+        status: 'APPROVED',
+        submittedAt: '2026-08-12T08:00:00Z',
+        version: 2,
+      },
+      {
+        affectedEndDate: '2026-08-11',
+        affectedStartDate: '2026-08-11',
+        id: correctionId,
+        kind: 'CORRECTION',
+        status: 'SUBMITTED',
+        submittedAt: '2026-08-11T18:00:00Z',
+        version: 1,
+      },
+    ],
+    pagination: { limit: 20, page: 1, total: 2, totalPages: 1 },
+  } as const;
+  const detail = {
+    absenceTypeName: 'Vacation',
+    affectedEndDate: '2026-08-18',
+    affectedStartDate: '2026-08-18',
+    availableActions: ['REQUEST_CANCELLATION'],
+    coverage: [
+      {
+        endsAtMinute: null,
+        kind: 'FULL_DAY',
+        localDate: '2026-08-18',
+        minutes: 480,
+        startsAtMinute: null,
+      },
+    ],
+    history: [
+      { action: 'SUBMITTED', actor: 'SELF', occurredAt: '2026-08-12T08:00:00Z', reason: null },
+      {
+        action: 'APPROVE',
+        actor: 'REVIEWER',
+        occurredAt: '2026-08-13T09:00:00Z',
+        reason: 'Coverage matches the recorded entitlement.',
+      },
+    ],
+    id: absenceId,
+    kind: 'ABSENCE',
+    relatedCancellations: [],
+    status: 'APPROVED',
+    submittedAt: '2026-08-12T08:00:00Z',
+    version: 2,
+    workflow: 'APPROVAL_REQUIRED',
+  } as const;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/requests') return successResponse(history);
+      if (path === `/v1/me/requests/${absenceId}`) return successResponse(detail);
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/requests?limit=20&page=1&status=ALL&type=ALL');
+
+  expect(await screen.findByRole('heading', { name: 'My requests' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Absence request' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Time correction' })).toBeVisible();
+  expect(screen.queryByText('Vacation')).not.toBeInTheDocument();
+
+  const absenceCard = screen.getByRole('heading', { name: 'Absence request' }).closest('article');
+  expect(absenceCard).not.toBeNull();
+  await user.click(
+    within(absenceCard as HTMLElement).getByRole('link', { name: 'View request details' }),
+  );
+
+  expect(await screen.findByRole('heading', { name: 'Vacation' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Coverage and effect' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Decision history' })).toBeVisible();
+  expect(screen.getByText(/Coverage matches the recorded entitlement/u)).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('withdraws an owned cancellation from its evidence view and preserves the original absence link', async () => {
+  const absenceId = '123e4567-e89b-42d3-a456-426614174720';
+  const cancellationId = '123e4567-e89b-42d3-a456-426614174721';
+  let withdrawn = false;
+  const requestBodies: unknown[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(43) });
+      if (path === `/v1/me/requests/${cancellationId}`) {
+        return successResponse({
+          absenceRequestId: absenceId,
+          absenceTypeName: 'Vacation',
+          affectedEndDate: '2026-08-18',
+          affectedStartDate: '2026-08-18',
+          availableActions: withdrawn ? [] : ['WITHDRAW_CANCELLATION'],
+          coverage: [
+            {
+              endsAtMinute: null,
+              kind: 'FULL_DAY',
+              localDate: '2026-08-18',
+              minutes: 480,
+              startsAtMinute: null,
+            },
+          ],
+          history: [
+            {
+              action: 'SUBMITTED',
+              actor: 'SELF',
+              occurredAt: '2026-08-14T08:00:00Z',
+              reason: null,
+            },
+          ],
+          id: cancellationId,
+          kind: 'CANCELLATION',
+          status: withdrawn ? 'WITHDRAWN' : 'PENDING_DECISION',
+          submittedAt: '2026-08-14T08:00:00Z',
+          version: withdrawn ? 2 : 1,
+        });
+      }
+      if (path === `/v1/me/absence-cancellations/${cancellationId}/withdraw`) {
+        requestBodies.push(JSON.parse(String(init?.body)));
+        withdrawn = true;
+        return successResponse({ id: cancellationId, status: 'WITHDRAWN', version: 2 });
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication(`/requests/${cancellationId}`);
+
+  expect(await screen.findByRole('heading', { name: 'Cancellation request' })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'View original absence request' })).toHaveAttribute(
+    'href',
+    `/requests/${absenceId}`,
+  );
+  await user.click(screen.getByRole('button', { name: 'Withdraw cancellation request' }));
+  expect(await screen.findByRole('heading', { name: 'Request updated' })).toBeVisible();
+  expect(requestBodies).toEqual([{ expectedVersion: 1 }]);
   await expectNoAxeViolations(container);
 });
 
@@ -1464,6 +1624,7 @@ function authenticatedFetch(
     if (path === '/v1/me/attendance/today') return successResponse(today);
     if (path === '/v1/me/time') return successResponse(myTime);
     if (path === '/v1/me/calendar') return successResponse(PERSONAL_CALENDAR);
+    if (path === '/v1/me/requests') return successResponse(EMPTY_REQUEST_HISTORY);
     if (path.startsWith('/v1/me/time-records/')) return successResponse(dailyTimeRecord);
     throw new Error(`Unexpected test request: ${path}`);
   });

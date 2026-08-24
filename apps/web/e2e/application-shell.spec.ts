@@ -40,6 +40,8 @@ const COMBINED_CONTEXT = {
 const APPROVAL_TEAM_ID = '123e4567-e89b-42d3-a456-426614174500';
 const CORRECTION_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174501';
 const ABSENCE_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174502';
+const PERSONAL_ABSENCE_ID = '123e4567-e89b-42d3-a456-426614174510';
+const PERSONAL_CORRECTION_ID = '123e4567-e89b-42d3-a456-426614174511';
 const APPROVAL_ITEMS = [
   {
     affectedEndDate: '2026-08-12',
@@ -1959,6 +1961,137 @@ test('uses responsive personal records and an agenda-first personal calendar', a
   );
   await page.setViewportSize({ width: 320, height: 900 });
   await capturePhase12Personal(page, 'calendar-grid-reflow-320x900');
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('keeps request URLs neutral while showing owner evidence and a state-valid action', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  let cancellationSubmitted = false;
+  const cancellationBodies: unknown[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'c'.repeat(43) }), status: 200 });
+  });
+  await page.route('**/v1/me/absence-requests/*/cancellations', async (route) => {
+    cancellationBodies.push(route.request().postDataJSON());
+    cancellationSubmitted = true;
+    await route.fulfill({
+      json: success({
+        id: '123e4567-e89b-42d3-a456-426614174512',
+        status: 'PENDING_DECISION',
+        version: 1,
+      }),
+      status: 201,
+    });
+  });
+  await page.route(`**/v1/me/requests/${PERSONAL_ABSENCE_ID}`, async (route) => {
+    await route.fulfill({
+      json: success({
+        absenceTypeName: 'Vacation',
+        affectedEndDate: '2026-08-18',
+        affectedStartDate: '2026-08-18',
+        availableActions: cancellationSubmitted ? [] : ['REQUEST_CANCELLATION'],
+        coverage: [
+          {
+            endsAtMinute: null,
+            kind: 'FULL_DAY',
+            localDate: '2026-08-18',
+            minutes: 480,
+            startsAtMinute: null,
+          },
+        ],
+        history: [
+          {
+            action: 'SUBMITTED',
+            actor: 'SELF',
+            occurredAt: '2026-08-12T08:00:00Z',
+            reason: null,
+          },
+          {
+            action: 'APPROVE',
+            actor: 'REVIEWER',
+            occurredAt: '2026-08-13T09:00:00Z',
+            reason: 'Coverage matches the recorded entitlement.',
+          },
+        ],
+        id: PERSONAL_ABSENCE_ID,
+        kind: 'ABSENCE',
+        relatedCancellations: [],
+        status: 'APPROVED',
+        submittedAt: '2026-08-12T08:00:00Z',
+        version: 2,
+        workflow: 'APPROVAL_REQUIRED',
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/requests?*', async (route) => {
+    const url = new URL(route.request().url());
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      limit: '20',
+      page: '1',
+      status: 'ALL',
+      type: 'ALL',
+    });
+    await route.fulfill({
+      json: success({
+        items: [
+          {
+            affectedEndDate: '2026-08-18',
+            affectedStartDate: '2026-08-18',
+            id: PERSONAL_ABSENCE_ID,
+            kind: 'ABSENCE',
+            status: 'APPROVED',
+            submittedAt: '2026-08-12T08:00:00Z',
+            version: 2,
+          },
+          {
+            affectedEndDate: '2026-08-11',
+            affectedStartDate: '2026-08-11',
+            id: PERSONAL_CORRECTION_ID,
+            kind: 'CORRECTION',
+            status: 'SUBMITTED',
+            submittedAt: '2026-08-11T18:00:00Z',
+            version: 1,
+          },
+        ],
+        pagination: { limit: 20, page: 1, total: 2, totalPages: 1 },
+      }),
+      status: 200,
+    });
+  });
+
+  await page.goto('/requests');
+  await expect(page.getByRole('heading', { name: 'My requests' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Absence request' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Time correction' })).toBeVisible();
+  await expect(page.getByText('Vacation')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/requests\?*$/u);
+
+  await page
+    .getByRole('heading', { name: 'Absence request' })
+    .locator('xpath=ancestor::article')
+    .getByRole('link', { name: 'View request details' })
+    .click();
+  await expect(page.getByRole('heading', { name: 'Vacation' })).toBeFocused();
+  await expect(page).toHaveURL(`/requests/${PERSONAL_ABSENCE_ID}`);
+  await expect(page.getByRole('heading', { name: 'Decision history' })).toBeVisible();
+  await expect(page.getByText(/Coverage matches the recorded entitlement/u)).toBeVisible();
+  await expect(
+    page.getByText(/absence remains effective until that request is approved/iu),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Request cancellation' }).click();
+  await expect(page.getByRole('heading', { name: 'Request updated' })).toBeVisible();
+  expect(cancellationBodies).toEqual([{ expectedRequestVersion: 2 }]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await capturePhase12Personal(page, 'request-detail-mobile-390x900');
   await expectPageToHaveNoAxeViolations(page);
 });
 

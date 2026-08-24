@@ -9,6 +9,8 @@ import {
   approvalInboxEnvelopeSchema,
   dismissedNotificationEnvelopeSchema,
   notificationHistoryEnvelopeSchema,
+  personalRequestDetailEnvelopeSchema,
+  personalRequestHistoryEnvelopeSchema,
   type ApprovalInbox,
   type NotificationHistory,
 } from '@workledger/contracts';
@@ -79,6 +81,53 @@ integrationTest(
 
       const managerCookie = await signIn(app, scenario.manager.email, scenario.manager.password);
       const alphaCookie = await signIn(app, scenario.alpha.email, scenario.alpha.password);
+
+      const personalHistoryResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/me/requests?limit=20&page=1&status=ALL&type=CORRECTION',
+        headers: { cookie: alphaCookie, origin: ORIGIN },
+      });
+      expect(personalHistoryResponse.statusCode).toBe(200);
+      expect(personalHistoryResponse.headers['cache-control']).toBe('private, no-store');
+      const personalHistory = personalRequestHistoryEnvelopeSchema.parse(
+        personalHistoryResponse.json(),
+      ).data;
+      expect(personalHistory.items.length).toBeGreaterThan(0);
+      expect(personalHistory.items.every((item) => item.kind === 'CORRECTION')).toBe(true);
+      expect(personalHistory.items.map((item) => item.id)).toContain(scenario.alphaCorrectionId);
+      expect(personalHistoryResponse.payload).not.toMatch(
+        /employeeDisplayName|absenceTypeName|requestReason|Private correction reason/u,
+      );
+
+      const personalDetailResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/me/requests/${scenario.alphaCorrectionId}`,
+        headers: { cookie: alphaCookie, origin: ORIGIN },
+      });
+      expect(personalDetailResponse.statusCode).toBe(200);
+      expect(
+        personalRequestDetailEnvelopeSchema.parse(personalDetailResponse.json()).data,
+      ).toMatchObject({
+        id: scenario.alphaCorrectionId,
+        kind: 'CORRECTION',
+        requestReason: 'Private correction reason 1',
+        timeZone: 'Europe/Berlin',
+      });
+      const managerPersonalDenied = await app.inject({
+        method: 'GET',
+        url: `/v1/me/requests/${scenario.alphaCorrectionId}`,
+        headers: { cookie: managerCookie, origin: ORIGIN },
+      });
+      expect(managerPersonalDenied.statusCode).toBe(403);
+      expect(managerPersonalDenied.payload).not.toContain('Private correction reason 1');
+      const invalidPersonalFilter = await app.inject({
+        method: 'GET',
+        url: '/v1/me/requests?type=SICKNESS',
+        headers: { cookie: alphaCookie, origin: ORIGIN },
+      });
+      expect(invalidPersonalFilter.statusCode).toBe(422);
+      expect(invalidPersonalFilter.payload).not.toContain('SICKNESS');
+
       const employeeDenied = await getInbox(app, alphaCookie);
       expect(employeeDenied.statusCode).toBe(403);
       expect(employeeDenied.json()).toMatchObject({ error: { code: 'ACCESS_DENIED' } });

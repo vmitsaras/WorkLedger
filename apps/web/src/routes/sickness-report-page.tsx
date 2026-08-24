@@ -30,7 +30,7 @@ const EMPTY_VALUES: FormValues = Object.freeze({
   startsAt: '',
 });
 
-export function SicknessReportPage() {
+export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const summaryRef = useRef<HTMLDivElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
@@ -103,11 +103,19 @@ export function SicknessReportPage() {
   }
   return (
     <section className="grid max-w-3xl gap-6">
-      <PageHeader
-        eyebrow="Requests"
-        title="Report sickness"
-        description="Choose full-day, obligation-half, or exact time coverage. Do not include a diagnosis, symptoms, treatment, or other medical detail."
-      />
+      {embedded ? null : (
+        <PageHeader
+          eyebrow="Requests"
+          title="Report sickness"
+          description="Choose full-day, obligation-half, or exact time coverage. Do not include a diagnosis, symptoms, treatment, or other medical detail."
+        />
+      )}
+      {embedded ? (
+        <p className="m-0 text-[var(--wl-text-muted)]">
+          Choose full-day, obligation-half, or exact time coverage. Do not include a diagnosis,
+          symptoms, treatment, or other medical detail.
+        </p>
+      ) : null}
       {success === null ? (
         <form noValidate className="grid gap-6" onSubmit={(event) => void onSubmit(event)}>
           <FormErrorSummary
@@ -241,8 +249,8 @@ export function SicknessReportPage() {
               )}
             </div>
           )}
-          <Link className="wl-button-secondary w-fit" to="/today">
-            Return to Today
+          <Link className="wl-button-secondary w-fit" to={`/requests/${success.id}`}>
+            View request details
           </Link>
         </div>
       )}

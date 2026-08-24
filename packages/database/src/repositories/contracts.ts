@@ -39,6 +39,16 @@ export type NotificationDeliveryStatus = 'NOT_CONFIGURED' | 'PENDING' | Notifica
 export type ApprovalInboxStatus = 'ACTION_REQUIRED' | 'COMPLETED' | 'WAITING_ON_EMPLOYEE';
 export type ApprovalInboxType = 'ABSENCE' | 'CANCELLATION' | 'CORRECTION' | 'MONTHLY_PERIOD';
 export type ApprovalInboxSort = 'AFFECTED_DATE' | 'EMPLOYEE' | 'SUBMITTED_AT';
+export type PersonalRequestFilterStatus = 'ALL' | 'COMPLETED' | 'IN_PROGRESS';
+export type PersonalRequestKind = 'ABSENCE' | 'CANCELLATION' | 'CORRECTION';
+export type PersonalRequestStatus =
+  | AbsenceCancellationStatus
+  | CorrectionRequestStatus
+  | 'ACKNOWLEDGED'
+  | 'APPLIED'
+  | 'CANCELLED'
+  | 'PARTIALLY_CANCELLED'
+  | 'REPORTED';
 export type ReportSort = 'DATE' | 'EMPLOYEE' | 'STATUS' | 'VALUE';
 export type ReportDirection = 'ASC' | 'DESC';
 export type AuditOutcome = 'SUCCESS' | 'DENIED' | 'FAILURE';
@@ -1260,6 +1270,44 @@ export type ListApprovalInboxInput = Readonly<{
   type: 'ALL' | ApprovalInboxType;
 }>;
 
+export type ListPersonalRequestsInput = Readonly<{
+  employeeId: DomainId<'Employee'>;
+  limit: number;
+  offset: number;
+  organizationId: DomainId<'Organization'>;
+  status: PersonalRequestFilterStatus;
+  type: 'ALL' | PersonalRequestKind;
+}>;
+
+export type PersonalRequestListItemRecord = Readonly<{
+  affectedEndDate: LocalDate;
+  affectedStartDate: LocalDate;
+  id: DomainId<'AbsenceCancellation'> | DomainId<'AbsenceRequest'> | DomainId<'CorrectionRequest'>;
+  kind: PersonalRequestKind;
+  status: PersonalRequestStatus;
+  submittedAt: Instant;
+  version: number;
+}>;
+
+export type PersonalRequestPageRecord = Readonly<{
+  items: readonly PersonalRequestListItemRecord[];
+  total: number;
+}>;
+
+export type PersonalRequestHistoryRecord = Readonly<{
+  action:
+    'ACKNOWLEDGE' | 'APPLY' | 'APPROVE' | 'CANCEL' | 'REJECT' | 'REQUEST_CHANGES' | 'WITHDRAW';
+  actor: 'REVIEWER' | 'SELF' | 'SYSTEM';
+  occurredAt: Instant;
+  reason: string | null;
+}>;
+
+export type RelatedPersonalCancellationRecord = Readonly<{
+  id: DomainId<'AbsenceCancellation'>;
+  status: AbsenceCancellationStatus;
+  submittedAt: Instant;
+}>;
+
 export type AttendanceIdempotencySuccessSnapshot = Readonly<{
   attendanceRevision: number;
   command: AttendanceCommand;
@@ -1317,6 +1365,26 @@ export interface OrganizationRepository {
 
 export interface ApprovalInboxRepository {
   list(input: ListApprovalInboxInput): Promise<ApprovalInboxPageRecord>;
+}
+
+export interface PersonalRequestRepository {
+  list(input: ListPersonalRequestsInput): Promise<PersonalRequestPageRecord>;
+  listAbsenceHistory(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'AbsenceRequest'>,
+  ): Promise<readonly PersonalRequestHistoryRecord[]>;
+  listCancellationHistory(
+    organizationId: DomainId<'Organization'>,
+    cancellationId: DomainId<'AbsenceCancellation'>,
+  ): Promise<readonly PersonalRequestHistoryRecord[]>;
+  listCorrectionHistory(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'CorrectionRequest'>,
+  ): Promise<readonly PersonalRequestHistoryRecord[]>;
+  listRelatedCancellations(
+    organizationId: DomainId<'Organization'>,
+    requestId: DomainId<'AbsenceRequest'>,
+  ): Promise<readonly RelatedPersonalCancellationRecord[]>;
 }
 
 export interface ReportRepository {

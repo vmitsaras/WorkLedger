@@ -34,6 +34,7 @@ import {
 } from './notifications/delivery.js';
 import { createWorkLedgerLogger, type WorkLedgerLogger } from './logging/logger.js';
 import { registerCompanyIdentityRoutes } from './identity/routes.js';
+import { registerPersonalRequestRoutes } from './requests/routes.js';
 import { WORKLEDGER_VERSION } from './version.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
@@ -89,6 +90,7 @@ export function createApiServer(
       registerAttendanceRoutes(app, config, authentication, database, dependencies.now);
       registerMyTimeRoutes(app, authentication, database, dependencies.now);
       registerCorrectionRequestRoutes(app, config, authentication, database, dependencies.now);
+      registerPersonalRequestRoutes(app, authentication, database, dependencies.now);
       registerCorrectionReviewRoutes(app, config, authentication, database, dependencies.now);
       registerApprovalInboxRoutes(
         app,
