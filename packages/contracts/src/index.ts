@@ -39,13 +39,21 @@ export {
 
 export {
   DOMAIN_AUDIT_TARGET_KINDS,
+  SECURITY_AUDIT_TARGET_KINDS,
   domainAuditFactSchema,
   domainAuditListItemSchema,
   domainAuditPageEnvelopeSchema,
   domainAuditPageSchema,
   domainAuditQuerySchema,
+  securityAuditFactSchema,
+  securityAuditListItemSchema,
+  securityAuditPageEnvelopeSchema,
+  securityAuditPageSchema,
+  securityAuditQuerySchema,
   type DomainAuditPage,
   type DomainAuditQuery,
+  type SecurityAuditPage,
+  type SecurityAuditQuery,
 } from './audit.js';
 
 export {

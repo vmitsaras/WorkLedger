@@ -5,6 +5,8 @@ import {
   apiErrorEnvelopeSchema,
   domainAuditPageEnvelopeSchema,
   domainAuditQuerySchema,
+  securityAuditPageEnvelopeSchema,
+  securityAuditQuerySchema,
 } from '@workledger/contracts';
 import type { Instant } from '@workledger/domain';
 import type { WorkLedgerDatabase } from '@workledger/database';
@@ -17,7 +19,7 @@ import type { WorkLedgerAuthentication } from '../auth/authentication.js';
 import { requireRequestSession } from '../auth/request-session.js';
 import { createAuditService } from './service.js';
 
-export function registerDomainAuditRoutes(
+export function registerAuditRoutes(
   app: FastifyInstance,
   authentication: WorkLedgerAuthentication,
   database: WorkLedgerDatabase,
@@ -44,6 +46,33 @@ export function registerDomainAuditRoutes(
     },
     async (request, reply) => {
       const data = await service.listDomain(
+        await identity(request, authentication),
+        request.query,
+        instant(now),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+  api.get(
+    '/v1/system/security-audit',
+    {
+      schema: {
+        operationId: 'listSecurityAuditForSystemAdministration',
+        querystring: securityAuditQuerySchema,
+        response: {
+          200: securityAuditPageEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'List redacted security and technical audit evidence',
+        tags: ['Security audit'],
+      },
+    },
+    async (request, reply) => {
+      const data = await service.listSecurity(
         await identity(request, authentication),
         request.query,
         instant(now),

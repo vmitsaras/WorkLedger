@@ -5,7 +5,7 @@ import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
-import type { DomainAuditPage, SelfContext } from '@workledger/contracts';
+import type { DomainAuditPage, SecurityAuditPage, SelfContext } from '@workledger/contracts';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
@@ -33,6 +33,31 @@ const PAGE: DomainAuditPage = {
       reasonCode: null,
       targetKind: 'CONFIGURATION',
       targetReference: 'holiday-1',
+    },
+  ],
+  pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+};
+const SYSTEM_CONTEXT: SelfContext = {
+  account: { email: 'system@example.test', name: 'System Administrator' },
+  defaultPath: '/system/operations',
+  employee: null,
+  navigationAreas: ['SYSTEM'],
+  organization: { name: 'Northstar Studio' },
+  roles: ['SYSTEM_ADMINISTRATOR'],
+};
+const SECURITY_PAGE: SecurityAuditPage = {
+  items: [
+    {
+      action: 'SESSION_REVOKED',
+      actor: { kind: 'ACCOUNT', role: 'SYSTEM_ADMINISTRATOR' },
+      facts: { httpStatus: 204, scope: 'TECHNICAL', sessionReference: 'session-safe-reference' },
+      id: 'security-audit-1',
+      occurredAt: '2026-08-16T10:00:00Z',
+      outcome: 'SUCCESS',
+      privileged: true,
+      reasonCode: 'ADMINISTRATIVE_REVOCATION',
+      targetKind: 'SESSION',
+      targetReference: 'revoked-session',
     },
   ],
   pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
@@ -70,6 +95,34 @@ test('owns filters in the URL and reveals only redacted audit detail', async () 
   await expectNoAxeViolations(container);
 });
 
+test('provides a filtered technical audit explorer without domain or account payloads', async () => {
+  const requests: URL[] = [];
+  stubSystemFetch(requests);
+  const user = userEvent.setup();
+  const queryClient = createWorkLedgerQueryClient();
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+    initialEntries: ['/system/audit'],
+  });
+  const { container } = render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByText('SESSION_REVOKED')).toBeVisible();
+  expect(screen.queryByText(/full search implementation coming/i)).not.toBeInTheDocument();
+  await user.selectOptions(screen.getByLabelText('Target type'), 'SESSION');
+  expect(router.state.location.search).toContain('targetKind=SESSION');
+  await user.click(screen.getByText('View redacted detail'));
+  const detail = screen.getByText('View redacted detail').closest('details');
+  if (detail === null) throw new Error('Expected redacted technical audit detail.');
+  expect(within(detail).getByText('revoked-session')).toBeVisible();
+  expect(within(detail).getByText(/Http status: 204/)).toBeVisible();
+  expect(container).not.toHaveTextContent('account-secret-id');
+  expect(container).not.toHaveTextContent('sickness detail');
+  expect(requests.some((url) => url.searchParams.get('targetKind') === 'SESSION')).toBe(true);
+  await expectNoAxeViolations(container);
+});
+
 function stubFetch(requests: URL[]) {
   vi.stubGlobal(
     'fetch',
@@ -82,6 +135,24 @@ function stubFetch(requests: URL[]) {
       if (url.pathname === '/v1/hr/domain-audit') {
         requests.push(url);
         return success(PAGE);
+      }
+      throw new Error(`Unexpected request: ${url.pathname}`);
+    }),
+  );
+}
+
+function stubSystemFetch(requests: URL[]) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: string | URL | Request) => {
+      const url = new URL(
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+        'https://app.test',
+      );
+      if (url.pathname === '/v1/me/context') return success(SYSTEM_CONTEXT);
+      if (url.pathname === '/v1/system/security-audit') {
+        requests.push(url);
+        return success(SECURITY_PAGE);
       }
       throw new Error(`Unexpected request: ${url.pathname}`);
     }),

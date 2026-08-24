@@ -286,28 +286,36 @@ integrationTest(
           subjectEmployeeId: target.employeeId,
         }),
       ).toEqual({ allowed: false, code: 'ACCESS_DENIED' });
-      expect(
-        await audit.listSecurity({
-          accountId: hr.accountId,
+      await expect(
+        audit.listSecurity({ accountId: hr.accountId }, { limit: 20, page: 1 }, OCCURRED_AT),
+      ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
+      const organizationSecurity = await audit.listSecurity(
+        { accountId: systemAccountId },
+        {
+          action: 'SESSION_REVOKED',
+          from: '2026-08-10',
           limit: 10,
-          localDate: CURRENT_DATE,
-          offset: 0,
-          organizationId,
-        }),
-      ).toEqual({ allowed: false, code: 'ACCESS_DENIED' });
-      expect(
-        await audit.listSecurity({
-          accountId: systemAccountId,
-          limit: 10,
-          localDate: CURRENT_DATE,
-          offset: 0,
-          organizationId,
-        }),
-      ).toMatchObject({
-        allowed: true,
-        events: [{ id: securityEvent.id }],
-        scope: 'TECHNICAL',
+          outcome: 'SUCCESS',
+          page: 1,
+          targetKind: 'SESSION',
+          to: '2026-08-10',
+        },
+        OCCURRED_AT,
+      );
+      expect(organizationSecurity).toMatchObject({
+        items: [
+          {
+            action: 'SESSION_REVOKED',
+            actor: { kind: 'ACCOUNT', role: 'SYSTEM_ADMINISTRATOR' },
+            id: securityEvent.id,
+            targetKind: 'SESSION',
+          },
+        ],
+        pagination: { limit: 10, page: 1, total: 1, totalPages: 1 },
       });
+      expect(JSON.stringify(organizationSecurity)).not.toContain(systemAccountId);
+      expect(JSON.stringify(organizationSecurity)).not.toContain('requestId');
+      expect(JSON.stringify(organizationSecurity)).not.toContain('targetAccountId');
 
       const organizationDomain = await audit.listDomain(
         { accountId: hr.accountId },

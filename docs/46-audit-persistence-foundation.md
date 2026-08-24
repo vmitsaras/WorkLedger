@@ -71,8 +71,12 @@ the same database transaction:
 - security history uses `SECURITY_AUDIT_READ`; and
 - HR-only accounts are denied technical security history.
 
-Feature routes added later must serialize purpose-specific audit DTOs through the shared contract
-foundation. They must not expose the database records directly or merge the two audiences.
+The domain and technical audit routes serialize purpose-specific DTOs through the shared contract
+foundation. They do not expose database records directly or merge the two audiences. The
+`/v1/system/security-audit` projection added by `WL-1204` applies organization-local date, exact
+action, outcome, and target-kind filters before totals and pagination. It omits actor/target account
+IDs, organization ID, request ID, domain payloads, and notification content while mapping the
+existing security-fact allowlist to explicitly named safe fields.
 
 ## Evidence
 
@@ -88,8 +92,11 @@ Schema and PostgreSQL tests cover:
 - owner/current manager/HR domain grants;
 - former manager/system domain denial;
 - HR security denial and system security grant; and
-- organization isolation for technical audit rows.
+- organization isolation for technical audit rows;
+- filtered technical-audit totals and pagination; and
+- purpose-specific technical DTO minimization that excludes account and request identifiers.
 
-No UI changed. Later audit/history views must render codes and identifiers as escaped plain text,
-state audience and scope clearly, use semantic tables/lists, and preserve keyboard, reflow, focus,
-and error-state behavior from `docs/05-ux-accessibility.md`.
+`WL-1204` added the technical audit UI over this boundary. Audit/history views render codes and
+references as escaped plain text, state audience clearly, use semantic tables and named local
+overflow regions, and preserve keyboard, reflow, focus, and error-state behavior from
+`docs/05-ux-accessibility.md`.

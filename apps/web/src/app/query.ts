@@ -3,6 +3,7 @@ import { keepPreviousData, QueryClient, queryOptions } from '@tanstack/react-que
 import {
   type ApprovalInboxQuery,
   type DomainAuditQuery,
+  type SecurityAuditQuery,
   todayAttendanceSchema,
   type MyTimeQuery,
   type PersonalCalendarQuery,
@@ -20,6 +21,7 @@ import {
   loadDailyTimeRecord,
   loadCompanyIdentity,
   loadDomainAuditPage,
+  loadSecurityAuditPage,
   loadAbsenceSettingsAdminDetail,
   loadHolidaySettingsAdminDetail,
   loadEmployeeEntitlementAdminDetail,
@@ -129,6 +131,13 @@ export const domainAuditPageQuery = (query: DomainAuditQuery) =>
     placeholderData: keepPreviousData,
     queryFn: ({ signal }) => loadDomainAuditPage(query, signal),
     queryKey: ['audit', 'domain', query] as const,
+  });
+
+export const securityAuditPageQuery = (query: SecurityAuditQuery) =>
+  queryOptions({
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) => loadSecurityAuditPage(query, signal),
+    queryKey: ['audit', 'security', query] as const,
   });
 
 export const holidaySettingsAdminDetailQuery = () =>

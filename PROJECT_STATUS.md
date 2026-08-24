@@ -2,19 +2,19 @@
 
 **Current phase:** Phase 12 — Workflow UX remediation and product polish
 **Project readiness:** Stage 5 of 5 — Production and UI-foundation gates complete
-**Phase progress:** Phase 11 complete — 4 of 7 Phase 12 tasks complete
+**Phase progress:** Phase 11 complete — 5 of 7 Phase 12 tasks complete
 **Current milestone:** UI foundation complete — version 0.12.0
-**Active task:** `WL-1204` (next)
-**Status:** WL-1203 complete — manager workflow UX remediated
+**Active task:** `WL-1205` (next)
+**Status:** WL-1204 complete — administration, report, audit, and system workflow UX remediated
 **Last verified:** 2026-08-24
 
 ## Current objective
 
-Phase 11 is complete at `0.12.0`. `WL-1200` through `WL-1203` have applied Quiet Ledger to Today,
-personal records, request/monthly workflows, and manager decisions. Team and approval collections
-now retain complete record context and actions through deliberate narrow lists and wider semantic
-tables. The next bounded slice is `WL-1204`: improve employee administration, settings, reports,
-audit, and system administration surfaces.
+Phase 11 is complete at `0.12.0`. `WL-1200` through `WL-1204` have applied Quiet Ledger to Today,
+personal records, request/monthly workflows, manager decisions, administration, settings, reports,
+and both audit audiences. The technical audit placeholder is closed through a separate minimized
+system-admin projection. The next bounded slice is `WL-1205`: complete the cross-route microcopy,
+responsive, state-consistency, motion, and recovery pass.
 
 ## Verified decisions
 
@@ -211,9 +211,18 @@ audit, and system administration surfaces.
 - Route navigation updates the document title and visible heading with deterministic focus behavior; screen states have persistent, non-duplicative focus and announcement rules.
 - Narrow-screen calendars use an equivalent agenda/list when the grid is unsuitable, and responsive transformations preserve reading order, relationships, and actions.
 - System-administrator routes expose only technical account/session, safe operations, and technical-audit data; restore, secret rotation, and upgrade remain host-operator workflows.
+- `/system/audit` is a bounded redacted explorer over the physically separate security audit store.
+  `SECURITY_AUDIT_READ` is resolved inside the query transaction; organization scope, local-date,
+  action, outcome, and target-kind filters precede totals/pagination. Browser DTOs omit
+  actor/target account IDs, organization ID, request ID, domain payloads, notification content, IP
+  addresses, user agents, tokens, and unrestricted text.
 - HR employee administration and system account administration use separate contracts and routes:
   HR owns stable employee/employment history and employee/manager/HR roles; system administration
   receives no HR fields and owns only technical account state, system role, and session revocation.
+- The employee directory uses complete record cards below 48 rem and a captioned comparison table
+  above it. Team catalog work is visually separated, and disabled team deactivation references an
+  adjacent reason and recovery path. Report and audit comparisons retain named local scroll regions
+  with persistent narrow-screen guidance.
 - Employee deactivation ends the current half-open employment period, deactivates the linked
   account, and revokes all sessions without deleting prior periods or roles. Technical account
   state changes never mutate employment, and cannot re-enable an employee-linked account while the
@@ -1782,6 +1791,38 @@ audit, and system administration surfaces.
   protected cache, URL privacy, audit, logging, browser persistence, dependency, or workspace
   version changed.
 
+**2026-08-24 — WL-1204 administration, report, and audit workflow UX remediation**
+
+- Reworked the employee directory into complete narrow record cards below 48 rem and a captioned
+  comparison table above it. Employee context no longer depends on horizontal panning; the team
+  catalog is a visibly separate secondary task, and populated-team deactivation exposes its reason
+  and recovery path through adjacent described text.
+- Adopted shared panels, alerts, status badges, filters, pagination, tables, and route states across
+  employee details and assignments, time/absence/holiday settings, reports, domain audit, technical
+  accounts, and operations. Sickness-fixed controls, unavailable assignment catalogs, and blocked
+  holiday changes now explain why they are disabled and how to recover.
+- Replaced the stale Technical Audit placeholder with URL-owned filters, pagination, redacted
+  detail, and a captioned named local scroll region. Added strict contracts and
+  `GET /v1/system/security-audit`; the service authorizes `SECURITY_AUDIT_READ`, resolves the
+  organization timezone, and applies organization/action/date/outcome/target filters before totals
+  and pagination.
+- The technical DTO maps only the existing safe fact allowlist and omits actor/target account IDs,
+  organization ID, request ID, domain payload, notification content, IP/user-agent data, tokens,
+  and unrestricted text. The domain and technical audiences remain separate; no schema or audit
+  write shape changed.
+- Added component/axe coverage for the technical explorer and a Chromium workflow covering 320 px
+  employee records, wide employee tables, disabled-action recovery, technical filters/detail,
+  hostile long references, forced colors, and page containment. The audit PostgreSQL scenario now
+  verifies filtered totals and technical DTO minimization when an integration database is present.
+- Verification passed reproducible OpenAPI, formatting, ESLint, source and CSS boundaries, strict
+  TypeScript, all 37 tooling tests, all 342 unit/component tests, 13 available integration tests
+  with 45 expected PostgreSQL-dependent skips, all 34 Playwright scenarios, and the production
+  build/public imports. Bundle budgets pass at 359,898 largest JavaScript bytes, 887,717 total
+  JavaScript bytes, 239,366 gzip JavaScript bytes, and 49,658 CSS bytes. See
+  `docs/121-administration-report-audit-workflow-ux-remediation.md` for the evidence boundary.
+- No migration, domain rule, authentication flow, CSRF rule, dependency, browser persistence,
+  publication, deployment, or workspace version changed.
+
 **2026-08-24 — Root startup recovery regression fix**
 
 - Added a standalone top-level route boundary for self-context failures before any application or
@@ -1805,18 +1846,17 @@ audit, and system administration surfaces.
 
 ## Current blockers
 
-No decision blocks `WL-1204`. `D-502` manual assistive-technology evidence remains open for the
-Phase 12 UI release gate (`WL-1206`). The manager portion of `UI-004` and all of `UI-016` are closed
-by `WL-1203`; dense administration, report, and audit adoption remains `WL-1204`. `UI-002` remains a
-high-priority workflow gap owned by `WL-1204`, and systematic visual regression remains
-`UI-014`/`WL-1206`. The temporary
+No decision blocks `WL-1205`. `UI-001`, `UI-002`, `UI-004`, `UI-009`, `UI-010`, and `UI-016` are
+closed by the completed Phase 12 workflow passes. `D-502` manual assistive-technology evidence and
+systematic visual regression `UI-014` remain open for the Phase 12 UI release gate (`WL-1206`). The
+temporary
 Astro backup is recoverable at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`,
 but the public site remains deferred to `WL-1300`.
 
 ## Next task
 
-`WL-1204 — Improve employee administration, time and absence settings, reports, audit, and system
-administration surfaces using appropriate dense layouts.`
+`WL-1205 — Complete the cross-route microcopy, responsive, state-consistency, motion, and recovery
+pass.`
 
 ## Update rules
 

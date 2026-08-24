@@ -1853,7 +1853,7 @@ test('keeps system operations semantic and contained across desktop, mobile, and
 
   await page.goto('/system/operations');
   await expect(page.getByRole('heading', { name: 'Operations' })).toBeFocused();
-  await expect(page.getByText('Degraded')).toBeVisible();
+  await expect(page.getByText('Degraded', { exact: true })).toBeVisible();
   await expect(page.getByText('Unavailable')).toBeVisible();
   await expect(page.getByText('Healthy')).toBeVisible();
   await expect(page.getByText(/Database connection timed out/u)).toBeVisible();
@@ -2540,6 +2540,118 @@ test('creates an immutable weekly schedule version with keyboard-recoverable val
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('keeps employee and technical audit administration usable from reflow to desktop', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(COMBINED_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/hr/employees*', async (route) => {
+    await route.fulfill({
+      json: success({
+        items: [
+          {
+            account: {
+              active: false,
+              email: 'long.employee.account@example.test',
+              invitationPending: true,
+            },
+            currentEmployment: {
+              endsOn: null,
+              id: '123e4567-e89b-42d3-a456-426614174971',
+              startsOn: '2026-08-01',
+            },
+            displayName:
+              'Alexandra Very Long Employee Name for Reflow and Localization Verification',
+            employeeNumber: 'WL-EMPLOYEE-VERY-LONG-0001',
+            id: '123e4567-e89b-42d3-a456-426614174970',
+            roles: ['EMPLOYEE', 'MANAGER'],
+            status: 'ACTIVE',
+          },
+        ],
+        pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/hr/teams*', async (route) => {
+    await route.fulfill({
+      json: success({
+        items: [
+          {
+            active: true,
+            currentMemberCount: 3,
+            id: 'team-client-services',
+            name: 'International Client Services and Workplace Operations',
+          },
+        ],
+        pagination: { limit: 50, page: 1, total: 1, totalPages: 1 },
+      }),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/system/security-audit*', async (route) => {
+    await route.fulfill({
+      json: success({
+        items: [
+          {
+            action: 'AUTHORIZATION_SCOPE_DENIED',
+            actor: { kind: 'ACCOUNT', role: 'SYSTEM_ADMINISTRATOR' },
+            facts: { failureCategory: 'OUTSIDE_SCOPE', httpStatus: 403, scope: 'TECHNICAL' },
+            id: 'technical-audit-event-1',
+            occurredAt: '2026-08-24T10:15:00Z',
+            outcome: 'DENIED',
+            privileged: true,
+            reasonCode: 'ACCESS_DENIED',
+            targetKind: 'AUTHORIZATION',
+            targetReference:
+              'authorization-reference-with-hostile-unbroken-content-0000000000000000000000000001',
+          },
+        ],
+        pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+      }),
+      status: 200,
+    });
+  });
+
+  await page.goto('/employees');
+  await expect(page.getByRole('heading', { name: 'Employees', exact: true })).toBeFocused();
+  await expect(page.getByRole('list', { name: 'Employee directory results' })).toBeVisible();
+  await expect(page.getByRole('table', { name: /Employees matching/u })).toHaveCount(0);
+  const teamAction = page.getByRole('button', {
+    name: 'Deactivate International Client Services and Workplace Operations',
+  });
+  await expect(teamAction).toBeDisabled();
+  await expect(teamAction).toHaveAccessibleDescription(/Move all current members/u);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await capturePhase12Administration(page, 'employees-reflow-320x900');
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.getByRole('table', { name: /Employees matching/u })).toBeVisible();
+  await capturePhase12Administration(page, 'employees-desktop-1440x900');
+
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto('/system/audit');
+  await expect(page.getByRole('heading', { name: 'Technical audit', exact: true })).toBeFocused();
+  await expect(page.getByText('AUTHORIZATION_SCOPE_DENIED')).toBeVisible();
+  const auditRegion = page.getByRole('region', { name: 'Technical audit results' });
+  await expect(auditRegion).toContainText(/scroll this results region horizontally/iu);
+  await page.getByLabel('Target type').selectOption('AUTHORIZATION');
+  await page.getByText('View redacted detail').click();
+  await expect(page.getByText(/Http status: 403/u)).toBeVisible();
+  await expect(page.getByText(/account-secret|sickness detail/iu)).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await capturePhase12Administration(page, 'technical-audit-reflow-320x900');
+  await page.emulateMedia({ forcedColors: 'active' });
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('captures, cleans, and consumes an invitation grant without automatic sign-in', async ({
   page,
 }) => {
@@ -2646,6 +2758,17 @@ async function capturePhase12Personal(page: Page, name: string): Promise<void> {
 async function capturePhase12Manager(page: Page, name: string): Promise<void> {
   if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
   const directory = 'output/playwright/wl1203';
+  await mkdir(directory, { recursive: true });
+  await page.screenshot({
+    animations: 'disabled',
+    fullPage: true,
+    path: `${directory}/${name}.png`,
+  });
+}
+
+async function capturePhase12Administration(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_CAPTURE_PHASE_12'] !== '1') return;
+  const directory = 'output/playwright/wl1204';
   await mkdir(directory, { recursive: true });
   await page.screenshot({
     animations: 'disabled',

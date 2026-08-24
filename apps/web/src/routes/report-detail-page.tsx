@@ -13,7 +13,15 @@ import {
   type ReportRow,
   type ReportSort,
 } from '@workledger/contracts';
-import { Button, buttonVariants } from '@workledger/ui';
+import {
+  Button,
+  buttonVariants,
+  DataTable,
+  FilterBar,
+  Pagination,
+  RouteState,
+  StatusBadge,
+} from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
@@ -164,105 +172,96 @@ function ReportFilters({
   report: ReportCatalogItem;
 }>) {
   return (
-    <section className="grid gap-3" aria-labelledby="report-filters-heading">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="report-filters-heading" className="m-0 text-xl font-bold">
-            Date range and order
-          </h2>
-          <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-            Applied: {formatLocalDate(query.from)} through {formatLocalDate(query.to)};{' '}
-            {sortLabel(query.sort).toLocaleLowerCase()}, {query.direction.toLocaleLowerCase()}.
-            {query.employeeId === undefined ? '' : ' One authorized employee target is applied.'}
-          </p>
-        </div>
-        <Button type="button" variant="quiet" className="w-fit" onPress={onReset}>
-          Reset report filters
-        </Button>
-      </div>
-      <form
-        className="grid gap-4 rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-4"
-        onSubmit={onSubmit}
-      >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="grid gap-2 text-sm font-semibold" htmlFor="report-from">
-            From
-            <input
-              aria-describedby={error === undefined ? undefined : 'report-filter-error'}
-              aria-invalid={error === undefined ? undefined : true}
-              className="wl-field-control"
-              id="report-from"
-              name="from"
-              type="date"
-              value={draft.from}
-              onChange={(event) => onChange({ ...draft, from: event.currentTarget.value })}
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-semibold" htmlFor="report-to">
-            To
-            <input
-              aria-describedby={error === undefined ? undefined : 'report-filter-error'}
-              aria-invalid={error === undefined ? undefined : true}
-              className="wl-field-control"
-              id="report-to"
-              name="to"
-              type="date"
-              value={draft.to}
-              onChange={(event) => onChange({ ...draft, to: event.currentTarget.value })}
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-semibold" htmlFor="report-sort">
-            Sort by
-            <select
-              className="wl-field-control"
-              id="report-sort"
-              name="sort"
-              value={draft.sort}
-              onChange={(event) => {
-                const parsed = reportSortSchema.safeParse(event.currentTarget.value);
-                if (parsed.success) onChange({ ...draft, sort: parsed.data });
-              }}
-            >
-              {report.availableSorts.map((sort) => (
-                <option key={sort} value={sort}>
-                  {sortLabel(sort)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm font-semibold" htmlFor="report-direction">
-            Direction
-            <select
-              className="wl-field-control"
-              id="report-direction"
-              name="direction"
-              value={draft.direction}
-              onChange={(event) =>
-                onChange({
-                  ...draft,
-                  direction: event.currentTarget.value === 'DESC' ? 'DESC' : 'ASC',
-                })
-              }
-            >
-              <option value="ASC">Ascending</option>
-              <option value="DESC">Descending</option>
-            </select>
-          </label>
-        </div>
-        {error === undefined ? null : (
-          <p
-            className="m-0 text-sm font-semibold text-[var(--wl-danger)]"
-            id="report-filter-error"
-            role="alert"
-          >
-            {error}
-          </p>
-        )}
-        <Button className="w-fit" type="submit">
-          Apply report filters
-        </Button>
-      </form>
-    </section>
+    <FilterBar
+      description={
+        <>
+          Applied: {formatLocalDate(query.from)} through {formatLocalDate(query.to)};{' '}
+          {sortLabel(query.sort).toLocaleLowerCase()}, {query.direction.toLocaleLowerCase()}.
+          {query.employeeId === undefined ? '' : ' One authorized employee target is applied.'}
+        </>
+      }
+      onSubmit={onSubmit}
+      title="Date range and order"
+    >
+      <label className="grid gap-2 text-sm font-semibold" htmlFor="report-from">
+        From
+        <input
+          aria-describedby={error === undefined ? undefined : 'report-filter-error'}
+          aria-invalid={error === undefined ? undefined : true}
+          className="wl-field-control"
+          id="report-from"
+          name="from"
+          type="date"
+          value={draft.from}
+          onChange={(event) => onChange({ ...draft, from: event.currentTarget.value })}
+        />
+      </label>
+      <label className="grid gap-2 text-sm font-semibold" htmlFor="report-to">
+        To
+        <input
+          aria-describedby={error === undefined ? undefined : 'report-filter-error'}
+          aria-invalid={error === undefined ? undefined : true}
+          className="wl-field-control"
+          id="report-to"
+          name="to"
+          type="date"
+          value={draft.to}
+          onChange={(event) => onChange({ ...draft, to: event.currentTarget.value })}
+        />
+      </label>
+      <label className="grid gap-2 text-sm font-semibold" htmlFor="report-sort">
+        Sort by
+        <select
+          className="wl-field-control"
+          id="report-sort"
+          name="sort"
+          value={draft.sort}
+          onChange={(event) => {
+            const parsed = reportSortSchema.safeParse(event.currentTarget.value);
+            if (parsed.success) onChange({ ...draft, sort: parsed.data });
+          }}
+        >
+          {report.availableSorts.map((sort) => (
+            <option key={sort} value={sort}>
+              {sortLabel(sort)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="grid gap-2 text-sm font-semibold" htmlFor="report-direction">
+        Direction
+        <select
+          className="wl-field-control"
+          id="report-direction"
+          name="direction"
+          value={draft.direction}
+          onChange={(event) =>
+            onChange({
+              ...draft,
+              direction: event.currentTarget.value === 'DESC' ? 'DESC' : 'ASC',
+            })
+          }
+        >
+          <option value="ASC">Ascending</option>
+          <option value="DESC">Descending</option>
+        </select>
+      </label>
+      {error === undefined ? null : (
+        <p
+          className="m-0 basis-full text-sm font-semibold text-[var(--wl-danger)]"
+          id="report-filter-error"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
+      <Button className="w-fit" type="submit">
+        Apply report filters
+      </Button>
+      <Button type="button" variant="quiet" className="w-fit" onPress={onReset}>
+        Reset report filters
+      </Button>
+    </FilterBar>
   );
 }
 
@@ -305,16 +304,19 @@ function ReportResults({
         </p>
       </div>
       {data.partial ? (
-        <p className="wl-alert wl-alert-warning m-0 rounded-xl border p-4">
-          This report is partial because one or more daily records are incomplete. Totals may change
-          after those records are resolved.
-        </p>
+        <section className="wl-alert wl-alert--warning rounded-xl border p-4">
+          <h3 className="m-0 text-base font-bold">Partial report</h3>
+          <p>
+            This report is partial because one or more daily records are incomplete. Totals may
+            change after those records are resolved.
+          </p>
+        </section>
       ) : null}
       <ReportSummary data={data} />
       {data.rows.length === 0 ? (
-        <p className="wl-alert m-0 rounded-xl border p-4">
+        <RouteState kind="empty" title="No report rows match this view">
           No report rows match the applied date range and permission scope.
-        </p>
+        </RouteState>
       ) : (
         <ReportTable data={data} query={query} />
       )}
@@ -359,10 +361,7 @@ function ReportSummary({ data }: Readonly<{ data: ReportResult }>) {
   return (
     <dl className="m-0 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map(([label, value]) => (
-        <div
-          key={label}
-          className="rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-4"
-        >
+        <div key={label} className="wl-panel wl-panel--compact">
           <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">{label}</dt>
           <dd className="m-0 mt-1 text-xl font-bold">{value}</dd>
         </div>
@@ -374,20 +373,14 @@ function ReportSummary({ data }: Readonly<{ data: ReportResult }>) {
 function ReportTable({ data, query }: Readonly<{ data: ReportResult; query: ReportQuery }>) {
   const content = tableContent(data.key, data.rows, query, data.timeZone);
   return (
-    <div
-      aria-label={`${reportKeyLabel(data.key)} report table`}
-      className="overflow-x-auto rounded-xl border border-[var(--wl-border)]"
-      role="region"
-      tabIndex={0}
+    <DataTable
+      caption={`${reportKeyLabel(data.key)} rows for ${formatLocalDate(data.range.from)} through ${formatLocalDate(data.range.to)}`}
+      className="min-w-[48rem] text-sm"
+      scrollHint="On narrow screens, scroll this results region horizontally to compare every report column."
+      scrollLabel={`${reportKeyLabel(data.key)} report table`}
     >
-      <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
-        <caption className="sr-only">
-          {reportKeyLabel(data.key)} rows for {formatLocalDate(data.range.from)} through{' '}
-          {formatLocalDate(data.range.to)}
-        </caption>
-        {content}
-      </table>
-    </div>
+      {content}
+    </DataTable>
   );
 }
 
@@ -532,7 +525,11 @@ function monthlyTimeRow(row: ReportRow, index: number): ReactNode {
           {formatLocalDate(row.monthStart)}
         </Link>
       </td>
-      <td className="px-4 py-3">{humanize(row.workflowStatus)}</td>
+      <td className="px-4 py-3">
+        <StatusBadge tone={workflowTone(row.workflowStatus)}>
+          {humanize(row.workflowStatus)}
+        </StatusBadge>
+      </td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.expectedMinutes)}</td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.workedMinutes)}</td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.creditedMinutes)}</td>
@@ -597,7 +594,9 @@ function missingRecordRow(row: ReportRow, index: number): ReactNode {
         {row.employeeDisplayName}
       </th>
       <td className="px-4 py-3">{formatLocalDate(row.localDate)}</td>
-      <td className="px-4 py-3">Incomplete</td>
+      <td className="px-4 py-3">
+        <StatusBadge tone="warning">Incomplete</StatusBadge>
+      </td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.expectedMinutes)}</td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.workedMinutes)}</td>
       <td className="px-4 py-3">
@@ -642,60 +641,52 @@ function ReportPagination({
   data,
   onPage,
 }: Readonly<{ data: ReportResult; onPage: (page: number) => void }>) {
-  if (data.pagination.totalPages <= 1) return null;
   return (
-    <nav aria-label="Report pages" className="flex flex-wrap items-center justify-between gap-3">
-      <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-        Page {data.pagination.page} of {data.pagination.totalPages}
-      </p>
-      <div className="flex gap-2">
-        <Button
-          variant="secondary"
-          isDisabled={data.pagination.page <= 1}
-          onPress={() => onPage(data.pagination.page - 1)}
-        >
-          Previous page
-        </Button>
-        <Button
-          variant="secondary"
-          isDisabled={data.pagination.page >= data.pagination.totalPages}
-          onPress={() => onPage(data.pagination.page + 1)}
-        >
-          Next page
-        </Button>
-      </div>
-    </nav>
+    <Pagination
+      ariaLabel="Report pages"
+      currentPage={data.pagination.page}
+      onPageChange={onPage}
+      pageCount={data.pagination.totalPages}
+      summary={`Page ${data.pagination.page} of ${Math.max(1, data.pagination.totalPages)}. ${data.pagination.total} report rows.`}
+    />
   );
 }
 
 function ReportLoading() {
-  return (
-    <p className="wl-alert m-0 rounded-xl border p-4" role="status">
-      Running report…
-    </p>
-  );
+  return <RouteState kind="loading">Running report…</RouteState>;
 }
 
 function ReportError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
   const denied = error instanceof ApiClientError && error.status === 403;
   return (
-    <div className="wl-alert wl-alert-error grid gap-3 rounded-xl border p-4" role="alert">
-      <p className="m-0 font-semibold">
+    <RouteState
+      actions={
+        denied ? (
+          <Link className={buttonVariants({ variant: 'secondary' })} to="/reports">
+            Return to reports
+          </Link>
+        ) : (
+          <Button className="w-fit" variant="secondary" onPress={retry}>
+            Try again
+          </Button>
+        )
+      }
+      kind={denied ? 'permission-denied' : 'error'}
+    >
+      <p>
         {denied
           ? 'You no longer have permission to run this report.'
           : 'The report could not be loaded.'}
       </p>
-      {denied ? (
-        <Link className={buttonVariants({ variant: 'secondary' })} to="/reports">
-          Return to reports
-        </Link>
-      ) : (
-        <Button className="w-fit" variant="secondary" onPress={retry}>
-          Try again
-        </Button>
-      )}
-    </div>
+    </RouteState>
   );
+}
+
+function workflowTone(status: string): 'info' | 'success' | 'warning' | 'neutral' {
+  if (status === 'APPROVED' || status === 'LOCKED') return 'success';
+  if (status === 'OPEN' || status === 'SUBMITTED') return 'info';
+  if (status === 'REJECTED') return 'warning';
+  return 'neutral';
 }
 
 function toDraft(query: ReportQuery): FilterDraft {

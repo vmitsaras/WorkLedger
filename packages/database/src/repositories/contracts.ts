@@ -229,9 +229,20 @@ export type DomainAuditPageRecord = Readonly<{
 }>;
 
 export type ListSecurityAuditEventsInput = Readonly<{
+  action: string | null;
+  from: LocalDate | null;
   limit: number;
   offset: number;
   organizationId: DomainId<'Organization'>;
+  outcome: AuditOutcome | null;
+  targetKind: SecurityAuditTargetKind | null;
+  timeZone: string;
+  to: LocalDate | null;
+}>;
+
+export type SecurityAuditPageRecord = Readonly<{
+  items: readonly SecurityAuditEventRecord[];
+  total: number;
 }>;
 
 export type AuthorizationActorRecord = Readonly<{
@@ -1413,7 +1424,7 @@ export interface AuditRepository {
     input: ListDomainAuditEventsInput,
   ): Promise<readonly DomainAuditEventRecord[]>;
   listDomain(input: ListDomainAuditPageInput): Promise<DomainAuditPageRecord>;
-  listSecurity(input: ListSecurityAuditEventsInput): Promise<readonly SecurityAuditEventRecord[]>;
+  listSecurity(input: ListSecurityAuditEventsInput): Promise<SecurityAuditPageRecord>;
 }
 
 export interface EmployeeRepository {

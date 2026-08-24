@@ -195,6 +195,7 @@ export type {
   ReplaceDailyProjectionInput,
   ReplaceActiveRolesInput,
   SecurityAuditEventRecord,
+  SecurityAuditPageRecord,
   SubmitCorrectionRequestInput,
   SubmitAbsenceCancellationInput,
   SecurityAuditFacts,

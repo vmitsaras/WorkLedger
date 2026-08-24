@@ -153,7 +153,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1201` Improve personal time records, balances, calendars, notifications, profile, loading, empty, and error experiences.
 - [x] `WL-1202` Improve correction, absence, cancellation, approval-history, and monthly-review workflows.
 - [x] `WL-1203` Improve manager Team, Approvals, team-calendar, filtering, decision, and narrow-screen workflows.
-- [ ] `WL-1204` Improve employee administration, time/absence/holiday settings, reports, audit, and system-administration surfaces using appropriate dense layouts.
+- [x] `WL-1204` Improve employee administration, time/absence/holiday settings, reports, audit, and system-administration surfaces using appropriate dense layouts.
 - [ ] `WL-1205` Complete the cross-route microcopy, responsive, state-consistency, motion, and recovery pass.
 - [ ] `WL-1206` Pass visual-regression, usability, accessibility, and UI release gates and bump all workspace manifests to `0.13.0`.
 

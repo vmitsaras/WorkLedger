@@ -25,7 +25,7 @@ import { registerAdministrationRoutes } from './administration/routes.js';
 import type { AccountInvitationSender } from './administration/service.js';
 import { registerTimeAdministrationRoutes } from './time-administration/routes.js';
 import { registerAbsenceAdministrationRoutes } from './absence-administration/routes.js';
-import { registerDomainAuditRoutes } from './audit/routes.js';
+import { registerAuditRoutes } from './audit/routes.js';
 import { registerSystemOperationsRoutes } from './system/operations-routes.js';
 import { registerRetentionRoutes } from './retention/routes.js';
 import {
@@ -122,7 +122,7 @@ export function createApiServer(
       );
       registerTimeAdministrationRoutes(app, config, authentication, database, dependencies.now);
       registerAbsenceAdministrationRoutes(app, config, authentication, database, dependencies.now);
-      registerDomainAuditRoutes(app, authentication, database, dependencies.now);
+      registerAuditRoutes(app, authentication, database, dependencies.now);
       registerRetentionRoutes(app, config, authentication, database, dependencies.now);
       registerSystemOperationsRoutes(
         app,

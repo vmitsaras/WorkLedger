@@ -5,7 +5,7 @@ import type {
   AbsenceTypePolicyAdmin,
   CreateAbsenceTypeVersionAdminRequest,
 } from '@workledger/contracts';
-import { Button, TextField } from '@workledger/ui';
+import { Alert, Button, Panel, RouteState, StatusBadge, TextField } from '@workledger/ui';
 
 import { ApiClientError, createAbsenceTypeVersionForAdministration } from '../app/api-client.js';
 import { formatLocalDate } from '../app/date-time-format.js';
@@ -90,13 +90,17 @@ export function AbsenceSettingsPage() {
         description="Create bounded, effective-dated absence-type versions without reinterpreting existing requests or exposing sickness records."
       />
       {message === undefined ? null : (
-        <div
-          ref={messageRef}
-          tabIndex={message.kind === 'error' ? -1 : undefined}
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={`wl-alert ${message.kind === 'success' ? 'wl-alert-success' : 'wl-alert-error'} rounded-xl border p-4`}
-        >
-          {message.text}
+        <div ref={messageRef} tabIndex={message.kind === 'error' ? -1 : undefined}>
+          <Alert
+            title={
+              message.kind === 'error'
+                ? 'Absence type update failed'
+                : 'Absence type version created'
+            }
+            tone={message.kind === 'error' ? 'danger' : 'success'}
+          >
+            <p>{message.text}</p>
+          </Alert>
         </div>
       )}
       <form className="wl-panel grid gap-5" onSubmit={submit} noValidate>
@@ -173,6 +177,7 @@ export function AbsenceSettingsPage() {
             label="Workflow"
             value={policy.workflow}
             disabled={code === 'SICKNESS'}
+            disabledReason="Sickness uses the fixed report and acknowledge workflow to avoid approval decisions about medical absence."
             options={[
               ['APPROVAL_REQUIRED', 'Approval required'],
               ['REPORT_AND_ACKNOWLEDGE', 'Report and acknowledge'],
@@ -205,6 +210,7 @@ export function AbsenceSettingsPage() {
             label="Request note"
             value={policy.requestNoteMode}
             disabled={code === 'SICKNESS'}
+            disabledReason="Sickness notes are disabled to minimize medical information."
             options={[
               ['DISABLED', 'Disabled'],
               ['OPTIONAL', 'Optional'],
@@ -220,7 +226,11 @@ export function AbsenceSettingsPage() {
           <TextField
             id="absence-account"
             label="Entitlement account category"
-            description="Leave blank when this type has no entitlement balance."
+            description={
+              code === 'SICKNESS'
+                ? 'Sickness cannot use an entitlement account because medical absence is not a leave balance.'
+                : 'Leave blank when this type has no entitlement balance.'
+            }
             value={policy.entitlementAccountCategory ?? ''}
             onChange={(value) =>
               setPolicy((current) => ({
@@ -257,20 +267,28 @@ export function AbsenceSettingsPage() {
             }
           />
         </div>
-        <label className="flex gap-3 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={policy.pendingReservationBehavior === 'RESERVE_PENDING'}
-            disabled={code === 'SICKNESS'}
-            onChange={(event) =>
-              setPolicy((current) => ({
-                ...current,
-                pendingReservationBehavior: event.target.checked ? 'RESERVE_PENDING' : 'NONE',
-              }))
-            }
-          />
-          Reserve entitlement while approval is pending
-        </label>
+        <div className="grid gap-1">
+          <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
+            <input
+              type="checkbox"
+              checked={policy.pendingReservationBehavior === 'RESERVE_PENDING'}
+              disabled={code === 'SICKNESS'}
+              aria-describedby={code === 'SICKNESS' ? 'absence-reservation-reason' : undefined}
+              onChange={(event) =>
+                setPolicy((current) => ({
+                  ...current,
+                  pendingReservationBehavior: event.target.checked ? 'RESERVE_PENDING' : 'NONE',
+                }))
+              }
+            />
+            Reserve entitlement while approval is pending
+          </label>
+          {code === 'SICKNESS' ? (
+            <p id="absence-reservation-reason" className="m-0 text-sm text-[var(--wl-text-muted)]">
+              Sickness has no entitlement reservation and does not enter an approval queue.
+            </p>
+          ) : null}
+        </div>
         <Button type="submit" isDisabled={mutation.isPending}>
           {mutation.isPending ? 'Creating version…' : 'Create absence-type version'}
         </Button>
@@ -280,19 +298,25 @@ export function AbsenceSettingsPage() {
           Version history
         </h2>
         {query.isPending ? (
-          <p role="status">Loading absence-type versions…</p>
+          <RouteState kind="loading">Absence type versions are being retrieved.</RouteState>
         ) : query.data.versions.length === 0 ? (
-          <div className="wl-panel">No absence-type versions.</div>
+          <RouteState kind="empty" title="No absence type versions">
+            Create the first effective dated absence type above.
+          </RouteState>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {query.data.versions.map((version) => (
-              <article key={version.id} className="wl-panel">
+              <Panel key={version.id} as="article">
                 <h3 className="m-0 text-xl font-bold">
                   {version.name} · version {version.version}
                 </h3>
-                <p className="font-semibold">
-                  {version.latestVersion ? 'Latest version' : 'Historical version'} ·{' '}
-                  {version.active ? 'Available' : 'Inactive'}
+                <p className="flex flex-wrap items-center gap-2 font-semibold">
+                  <StatusBadge tone={version.latestVersion ? 'info' : 'neutral'}>
+                    {version.latestVersion ? 'Latest version' : 'Historical version'}
+                  </StatusBadge>
+                  <StatusBadge tone={version.active ? 'success' : 'neutral'}>
+                    {version.active ? 'Available' : 'Inactive'}
+                  </StatusBadge>
                 </p>
                 <p>
                   {formatLocalDate(version.validFrom)} to{' '}
@@ -307,7 +331,7 @@ export function AbsenceSettingsPage() {
                     ? 'No entitlement account'
                     : `Entitlement: ${version.policy.entitlementAccountCategory}`}
                 </p>
-              </article>
+              </Panel>
             ))}
           </div>
         )}
@@ -318,6 +342,7 @@ export function AbsenceSettingsPage() {
 
 function SelectField({
   disabled = false,
+  disabledReason,
   id,
   label,
   onChange,
@@ -325,6 +350,7 @@ function SelectField({
   value,
 }: Readonly<{
   disabled?: boolean;
+  disabledReason?: string;
   id: string;
   label: string;
   onChange: (value: string) => void;
@@ -332,11 +358,12 @@ function SelectField({
   value: string;
 }>) {
   return (
-    <label className="grid gap-2 text-sm font-semibold" htmlFor={id}>
-      {label}
+    <div className="grid gap-2 text-sm font-semibold">
+      <label htmlFor={id}>{label}</label>
       <select
         id={id}
         disabled={disabled}
+        aria-describedby={disabled && disabledReason !== undefined ? `${id}-reason` : undefined}
         className="min-h-11 rounded-lg border px-3"
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -347,7 +374,12 @@ function SelectField({
           </option>
         ))}
       </select>
-    </label>
+      {disabled && disabledReason !== undefined ? (
+        <p id={`${id}-reason`} className="m-0 font-normal text-[var(--wl-text-muted)]">
+          {disabledReason}
+        </p>
+      ) : null}
+    </div>
   );
 }
 function mutationError(error: unknown): string {

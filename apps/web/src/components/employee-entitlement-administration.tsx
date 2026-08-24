@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { EmployeeEntitlementAdminDetail } from '@workledger/contracts';
-import { Button, TextField } from '@workledger/ui';
+import { Alert, Button, Panel, RouteState, TextField } from '@workledger/ui';
 
 import { ApiClientError, createEntitlementAdjustmentForAdministration } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
@@ -68,19 +68,23 @@ export function EmployeeEntitlementAdministration({
         </p>
       </div>
       {message === undefined ? null : (
-        <div
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={`wl-alert ${message.kind === 'success' ? 'wl-alert-success' : 'wl-alert-error'} rounded-xl border p-4`}
+        <Alert
+          title={
+            message.kind === 'error' ? 'Entitlement update failed' : 'Entitlement adjustment added'
+          }
+          tone={message.kind === 'error' ? 'danger' : 'success'}
         >
-          {message.text}
-        </div>
+          <p>{message.text}</p>
+        </Alert>
       )}
       {entitlement.accounts.length === 0 ? (
-        <div className="wl-panel">No entitlement-backed absence type is currently available.</div>
+        <RouteState kind="empty" title="No entitlement backed absence type is available">
+          Configure an entitlement backed absence type before managing employee leave balances.
+        </RouteState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {entitlement.accounts.map((account) => (
-            <article key={account.absenceTypeId} className="wl-panel grid gap-3">
+            <Panel key={account.absenceTypeId} as="article" className="grid gap-3">
               <h3 className="m-0 text-xl font-bold">{account.absenceTypeName}</h3>
               <dl className="m-0 grid grid-cols-3 gap-3">
                 <Value label="Available" minutes={account.availableMinutes} />
@@ -105,7 +109,7 @@ export function EmployeeEntitlementAdministration({
                   ))}
                 </ol>
               )}
-            </article>
+            </Panel>
           ))}
         </div>
       )}
@@ -162,10 +166,21 @@ export function EmployeeEntitlementAdministration({
           />
           <Button
             type="submit"
+            {...(entitlement.adjustableAbsenceTypes.length === 0
+              ? { 'aria-describedby': 'entitlement-adjustment-unavailable-reason' }
+              : {})}
             isDisabled={mutation.isPending || entitlement.adjustableAbsenceTypes.length === 0}
           >
             {mutation.isPending ? 'Appending adjustment…' : 'Append entitlement adjustment'}
           </Button>
+          {entitlement.adjustableAbsenceTypes.length === 0 ? (
+            <p
+              id="entitlement-adjustment-unavailable-reason"
+              className="m-0 text-sm text-[var(--wl-text-muted)]"
+            >
+              Configure an active entitlement backed absence type before appending an adjustment.
+            </p>
+          ) : null}
         </form>
       )}
     </section>

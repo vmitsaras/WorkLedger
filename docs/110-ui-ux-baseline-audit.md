@@ -14,14 +14,14 @@ textual status, forced-colors behavior, reduced-motion handling, focusable dense
 no page-level horizontal overflow in the representative 320 CSS px checks. The current interface
 is operationally credible, especially on Today, Approvals, employee administration, and sign-in.
 
-The audit also found two release-significant workflow gaps that must be resolved before cosmetic
-polish can be considered complete:
+The audit found two release-significant workflow gaps that were resolved during Phase 12:
 
 1. The employee Requests destination remains a stale placeholder, the canonical request-detail
    route is absent, and sickness is encoded in `/requests/sickness` despite the accepted
    type-neutral URL/privacy contract.
-2. `/system/audit` remains a stale `WL-1007` placeholder even though the Phase 10 production gate
-   records the technical-audit surface as complete.
+2. `/system/audit` was a stale `WL-1007` placeholder even though the Phase 10 production gate
+   recorded the technical-audit surface as complete. `WL-1204` added the bounded, redacted
+   technical audit explorer.
 
 The remaining findings primarily concern CSS/component ownership, responsive dense-data
 discoverability, shell scale, hierarchy, copy density, and state consistency. They are sequenced
@@ -111,18 +111,18 @@ exist elsewhere.
 | `/approvals` | Manager/HR | Responsive filtered action queue | **Remediated by WL-1203; Component + browser evidence** | Manager UI-004 and UI-016 closed |
 | `/approvals/:approvalId` | Manager/HR | Decision detail | **Remediated by WL-1203; Component + browser evidence** | Release regression remains WL-1206 |
 | `/team-calendar` | Manager/HR | Calendar + agenda | **Remediated by WL-1203; Component + browser evidence** | Release regression remains WL-1206 |
-| `/employees` | HR | Dense administration index | Complete; Runtime + Automated | UI-009, UI-010 / WL-1204 |
-| `/employees/new` | HR | Complex administration form | Complete; Automated | WL-1204 |
-| `/employees/:employeeId` | HR | Multi-section administration detail | Complete; Automated/component coverage | WL-1204 |
-| `/reports` | Employee/manager/HR | Authorized catalog | Complete; Automated | WL-1204 |
-| `/reports/:reportKey` | Employee/manager/HR | Filtered dense report | Complete; Automated | UI-004 / WL-1204 |
-| `/settings/time` | HR | Versioned configuration | Complete; Automated | WL-1204 |
-| `/settings/absence` | HR | Versioned configuration | Complete; component coverage | WL-1204 |
-| `/settings/holidays` | HR | Calendar configuration | Complete; component coverage | WL-1204 |
-| `/audit` | HR | Filtered audit explorer | Complete; Source + component coverage | UI-004 / WL-1204 |
-| `/system/accounts` | System administrator | Technical account administration | Complete; component/e2e workflow coverage | WL-1204 |
-| `/system/operations` | System administrator | Technical diagnostics | Functionally present; Automated; WL-1102 semantic/CSS repair complete | WL-1204 visual adoption |
-| `/system/audit` | System administrator | Technical audit explorer | **Gap: stale `WL-1007` placeholder** | UI-002 / WL-1204 |
+| `/employees` | HR | Responsive administration index | **Remediated by WL-1204; Component + browser evidence** | UI-004, UI-009, and UI-010 closed |
+| `/employees/new` | HR | Complex administration form | **Remediated by WL-1204; Component + browser evidence** | Release regression remains WL-1206 |
+| `/employees/:employeeId` | HR | Multi-section administration detail | **Remediated by WL-1204; Component + browser evidence** | Release regression remains WL-1206 |
+| `/reports` | Employee/manager/HR | Authorized catalog | **Remediated by WL-1204; Component coverage** | Release regression remains WL-1206 |
+| `/reports/:reportKey` | Employee/manager/HR | Filtered dense report | **Remediated by WL-1204; Component + existing browser evidence** | Report UI-004 closed |
+| `/settings/time` | HR | Versioned configuration | **Remediated by WL-1204; Component + browser evidence** | Release regression remains WL-1206 |
+| `/settings/absence` | HR | Versioned configuration | **Remediated by WL-1204; Component coverage** | Release regression remains WL-1206 |
+| `/settings/holidays` | HR | Calendar configuration | **Remediated by WL-1204; Component coverage** | Release regression remains WL-1206 |
+| `/audit` | HR | Filtered audit explorer | **Remediated by WL-1204; Component coverage** | Audit UI-004 closed |
+| `/system/accounts` | System administrator | Technical account administration | **Remediated by WL-1204; Component coverage** | Release regression remains WL-1206 |
+| `/system/operations` | System administrator | Technical diagnostics | **Remediated by WL-1204; Browser evidence** | UI-003 visual adoption closed |
+| `/system/audit` | System administrator | Technical audit explorer | **Complete by WL-1204; Component + browser evidence** | UI-002 closed |
 | Root/not-found/route error | Public/authenticated | Route boundary | Complete; Source + component coverage | WL-1105 |
 
 The former non-canonical `/requests/sickness` route was removed by `WL-1202`. Workflow choice now
@@ -139,10 +139,10 @@ stays in local UI state under `/requests/new`; only opaque record identifiers en
 | Manager approvals | Filtered/unfiltered, empty, pending, decision validation, stale/version conflict, pagination, detail comparison | Complete narrow records, semantic wide tables, keyboard and E2E evidence; type-neutral queue URLs | Release-level visual and assistive-technology regression remains WL-1206 |
 | Calendars | Month navigation, grid, agenda, empty, loading, error | Personal and team calendars default to agenda at narrow widths; equivalent grid and list presentations remain available | Release-level visual regression remains UI-014 / WL-1206 |
 | Monthly closure | Draft, blocked, submitted, changes requested, approved, locked, post-lock adjustment, print/copy failure | Detailed state/component and domain evidence; shared panel, status, and table patterns adopted by WL-1202 | Release-level visual regression remains WL-1206 |
-| Reports | Catalog, filters, pagination, empty, CSV pending/success/error, print/copy | Authorized catalog, URL state, narrow table containment, E2E | Shared dense-table and route-state patterns (UI-004, UI-015) |
-| HR administration/settings | Loading, empty, filtered, create/invite, validation, effective-dated versions, constrained deactivate | Realistic complex forms and E2E | Employee/team task collision and unexplained disabled action (UI-009, UI-010) |
-| Domain audit | Filters, empty/results, safe detail, pagination | Purpose-minimized source/component evidence | Shared dense table/filter states under WL-1204 |
-| System operations/audit | Diagnostics loading/healthy/degraded/error; account/session actions | Runtime diagnostics, valid Operations definition lists/statuses, CSS-contract and component/axe evidence | Technical Audit remains a placeholder (UI-002) |
+| Reports | Catalog, filters, pagination, empty, CSV pending/success/error, print/copy | Shared filters, route states, pagination, named dense-table containment, component and browser evidence | Release-level visual regression remains WL-1206 |
+| HR administration/settings | Loading, empty, filtered, create/invite, validation, effective-dated versions, constrained deactivate | Responsive employee records, separated team task, disabled-action recovery, component/browser evidence | Release-level visual regression remains WL-1206 |
+| Domain audit | Filters, empty/results, safe detail, pagination | Shared filter/table/pagination states and purpose-minimized component evidence | Release-level visual regression remains WL-1206 |
+| System operations/audit | Diagnostics loading/healthy/degraded/error; account/session actions; technical audit filters/results/detail | Valid diagnostics, shared states, separated technical projection, component/browser/axe evidence | Release-level visual regression remains WL-1206 |
 | Shared shell/boundaries | Role navigation, drawer, route focus/title, permission denied, not found, session expiry | Focus-managed drawer, reduced motion, skip link, route boundaries | Navigation scale and visual treatment (UI-006, UI-007) |
 
 ## 6. Prioritized issue register
@@ -155,17 +155,17 @@ requires broader route verification during its owning task.
 | ID | Severity | Finding | Status / confidence | Primary owner |
 |---|---|---|---|---|
 | UI-001 | High | Requests route contract was incomplete and exposed sickness in a subtype-bearing path | **Resolved by WL-1202** / high | Closed |
-| UI-002 | High | Technical Audit is still a milestone placeholder after its delivery/release gate | Confirmed / high | WL-1204 |
-| UI-003 | Medium | System technical routes use undefined styles and invalid definition-list grouping | **Resolved by WL-1102** / high | WL-1204 visual adoption |
-| UI-004 | Medium | Dense table actions and later columns are not visually discoverable at narrow width | **Manager routes resolved by WL-1203; administration/report adoption remains** / high | WL-1204 |
+| UI-002 | High | Technical Audit is still a milestone placeholder after its delivery/release gate | **Resolved by WL-1204** / high | Closed |
+| UI-003 | Medium | System technical routes use undefined styles and invalid definition-list grouping | **Resolved by WL-1102; visual adoption completed by WL-1204** / high | Closed |
+| UI-004 | Medium | Dense table actions and later columns are not visually discoverable at narrow width | **Resolved by WL-1203 and WL-1204** / high | Closed |
 | UI-005 | Medium | Horizontal-record and calendar responsive contracts are inconsistent | **Resolved by WL-1201** / high | Closed |
 | UI-006 | Medium | The shell navigation does not scale cleanly for combined-role or long HR inventories | **Resolved by WL-1105** / high | WL-1105 |
-| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | **Foundation complete; Today, personal, request, monthly, and manager routes adopted** / high | WL-1204–WL-1205 |
+| UI-007 | Medium | Repeated route primitives remain hand-built instead of governed by the local UI system | **Foundation and workflow-family adoption complete through WL-1204** / high | WL-1205 consistency pass |
 | UI-008 | Medium | Today repeats the same calculation meaning across labels, values, and narrative formulas | **Resolved by WL-1200** / high | Closed |
-| UI-009 | Medium | Employee directory and team management compete in one long administration route | Confirmed / medium | WL-1204 |
-| UI-010 | Medium | Disabled team deactivation has no adjacent explanation or recovery path | Confirmed / medium | WL-1204 |
+| UI-009 | Medium | Employee directory and team management compete in one long administration route | **Resolved by WL-1204** / high | Closed |
+| UI-010 | Medium | Disabled team deactivation has no adjacent explanation or recovery path | **Resolved by WL-1204** / high | Closed |
 | UI-011 | Medium | Organization identity is hard-coded rather than validated runtime configuration | **Resolved by WL-1103** / high | Closed |
-| UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | **Foundation complete; Today, personal, request, monthly, and manager routes adopted** / high | WL-1204–WL-1205 |
+| UI-012 | Medium | Route loading, empty, warning, and error presentation lacks a shared visual/semantic contract | **Foundation and workflow-family adoption complete through WL-1204** / high | WL-1205 consistency pass |
 | UI-013 | Medium | Task pages often surface implementation/privacy guarantees as primary explanatory copy | Confirmed / medium | WL-1101, WL-1205 |
 | UI-014 | Medium | Visual regression and route-state baseline coverage is representative, not systematic | Confirmed / high | WL-1206 |
 | UI-015 | Medium | Existing test coverage did not prevent completed-phase placeholders and route-contract drift | Confirmed / high | WL-1202, WL-1204, WL-1206 |
@@ -205,7 +205,7 @@ requires broader route verification during its owning task.
 ### UI-002 — Technical Audit remains a completed-milestone placeholder
 
 - **Severity:** High
-- **Status/confidence:** Resolved by WL-1201 / high
+- **Status/confidence:** Resolved by `WL-1204` / high
 - **Evidence:** `apps/web/src/routes/system-audit-page.tsx` describes itself as a placeholder,
   promises implementation in `WL-1007`, and presents no search/results states. The task board and
   Phase 10 gate mark `WL-1006`, `WL-1007`, and the production gate complete; the canonical route
@@ -222,7 +222,14 @@ requires broader route verification during its owning task.
 - **Validation:** Loading, empty, results, filters, pagination, safe detail, permission denial,
   dependency error, hostile-text, and narrow-table tests; confirm no domain/HR payload enters the
   DTO or interface.
-- **Owner:** `WL-1204`; regression gate `WL-1206`.
+- **Resolution evidence:** `/system/audit` now uses the separate security audit store through a
+  bounded system-admin-only, organization-scoped, organization-local-date projection. URL-owned
+  filters, totals, pagination, shared loading/empty states, a captioned named scroll region, and
+  redacted detail are implemented. Browser DTOs omit actor/target account IDs, organization ID,
+  request ID, domain payloads, notification content, and unrestricted text. Component/axe and
+  Chromium reflow, forced-colors, filter, hostile-reference, and page-containment evidence cover
+  the route.
+- **Owner:** Resolved in `WL-1204`; regression gate `WL-1206`.
 
 ### UI-003 — System routes bypass the styling and semantic contracts
 
@@ -253,8 +260,7 @@ requires broader route verification during its owning task.
 ### UI-004 — Narrow dense tables hide task-critical context and actions
 
 - **Severity:** Medium
-- **Status/confidence:** Manager routes resolved by `WL-1203`; administration and report adoption
-  remains / high
+- **Status/confidence:** Resolved by `WL-1203` and `WL-1204` / high
 - **Evidence:** The 320 px Approval table is `928 px` wide in a `278 px` scroll region; the Action,
   affected-date, submitted, and team columns start off-canvas. Employee administration similarly
   exposes only the earliest columns initially. The regions are keyboard focusable, retain page
@@ -273,9 +279,12 @@ requires broader route verification during its owning task.
 - **Resolution evidence:** `docs/120-manager-workflow-ux-remediation.md` records complete Team and
   Approval record lists below 48 rem, wide semantic tables, visible review actions and 44 px narrow
   targets, named locally scrollable calendar/detail tables, 320/390 px page containment, component
-  and axe coverage, and a passing Chromium manager workflow. Employee administration, reports, and
-  audit still require the `WL-1204` adoption pass.
-- **Owner:** Shared contract completed in `WL-1104`; remaining adoption in `WL-1204`.
+  and axe coverage, and a passing Chromium manager workflow.
+  `docs/121-administration-report-audit-workflow-ux-remediation.md` records complete employee cards
+  below 48 rem plus a wide table, named and instructed report/audit table regions, hostile-content
+  wrapping, 320 px page containment, component/axe evidence, and a passing Chromium administration
+  workflow.
+- **Owner:** Shared contract completed in `WL-1104`; adoption completed in `WL-1203` and `WL-1204`.
 
 ### UI-005 — Responsive overflow and calendar behavior are inconsistent
 
@@ -404,7 +413,7 @@ requires broader route verification during its owning task.
 
 ### WL-1200–WL-1206 — Workflow adoption and gate
 
-- Fix UI-001 and UI-002 before describing the interface as product-polished.
+- UI-001 and UI-002 were closed by WL-1202 and WL-1204 before the final product-polish gate.
 - Apply shared patterns by workflow family instead of doing an unbounded global rewrite.
 - Maintain representative screenshots, then add deterministic visual assertions only after the
   direction and tokens stabilize.

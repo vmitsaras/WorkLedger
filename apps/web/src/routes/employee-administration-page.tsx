@@ -10,9 +10,21 @@ import {
   type EmployeeScheduleAdminDetail,
   type EmployeePolicyAdminDetail,
   type EmployeeEntitlementAdminDetail,
+  type EmployeeAdminPage,
   type TeamAdminPage,
 } from '@workledger/contracts';
-import { Button, linkVariants, TextField } from '@workledger/ui';
+import {
+  Alert,
+  Button,
+  DataTable,
+  FilterBar,
+  linkVariants,
+  Pagination,
+  Panel,
+  RouteState,
+  StatusBadge,
+  TextField,
+} from '@workledger/ui';
 
 import {
   activateEmployeeForAdministration,
@@ -54,6 +66,7 @@ export function EmployeeAdministrationPage() {
   const employeesQuery = useQuery(employeeAdminPageQuery(query));
   const teamsQuery = useQuery(teamAdminPageQuery({ limit: 50, page: 1, status: 'ALL' }));
   const [status, setStatus] = useState(query.status);
+  const wideLayout = useWideEmployeeLayout();
 
   if (employeesQuery.isError) throw employeesQuery.error;
   if (teamsQuery.isError) throw teamsQuery.error;
@@ -72,8 +85,9 @@ export function EmployeeAdministrationPage() {
         }
       </PageHeader>
 
-      <form
-        className="wl-panel flex flex-wrap items-end gap-4"
+      <FilterBar
+        description="The selected employment state is stored in the URL so this directory view can be shared."
+        title="Filter employee directory"
         onSubmit={(event) => {
           event.preventDefault();
           setSearchParams({ limit: '20', page: '1', status });
@@ -95,119 +109,152 @@ export function EmployeeAdministrationPage() {
         <Button type="submit" variant="secondary">
           Apply filter
         </Button>
-      </form>
+      </FilterBar>
 
       {employeesQuery.isPending ? (
-        <div className="wl-panel" aria-busy="true">
-          Loading employees…
-        </div>
+        <RouteState kind="loading">Employee records are being retrieved.</RouteState>
       ) : employeesQuery.data.items.length === 0 ? (
-        <div className="wl-panel">
-          <h2 className="m-0 text-xl font-bold">No matching employees</h2>
-          <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
-            Change the status filter or create the first employee record.
-          </p>
-        </div>
+        <RouteState kind="empty" title="No matching employees">
+          Change the status filter or create the first employee record.
+        </RouteState>
+      ) : wideLayout ? (
+        <EmployeeDirectoryTable employees={employeesQuery.data} />
       ) : (
-        <div
-          className="overflow-x-auto rounded-xl border border-[var(--wl-border)]"
-          role="region"
-          aria-label="Employee administration results"
-          tabIndex={0}
-        >
-          <table className="w-full min-w-[48rem] border-collapse text-left">
-            <caption className="sr-only">Employees matching the selected employment status</caption>
-            <thead className="bg-[var(--wl-surface-subtle)]">
-              <tr>
-                <th className="px-4 py-3" scope="col">
-                  Employee
-                </th>
-                <th className="px-4 py-3" scope="col">
-                  Number
-                </th>
-                <th className="px-4 py-3" scope="col">
-                  Employment
-                </th>
-                <th className="px-4 py-3" scope="col">
-                  Account
-                </th>
-                <th className="px-4 py-3" scope="col">
-                  Roles
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {employeesQuery.data.items.map((employee) => (
-                <tr key={employee.id} className="border-t border-[var(--wl-border)] align-top">
-                  <th className="px-4 py-4" scope="row">
-                    <Link className="font-semibold" to={`/employees/${employee.id}`}>
-                      {employee.displayName}
-                    </Link>
-                  </th>
-                  <td className="px-4 py-4">{employee.employeeNumber}</td>
-                  <td className="px-4 py-4">
-                    {employee.status === 'ACTIVE' ? 'Active' : 'Inactive'}
-                    {employee.currentEmployment === null
-                      ? ' — no current period'
-                      : ` — since ${formatDate(employee.currentEmployment.startsOn)}`}
-                  </td>
-                  <td className="px-4 py-4">
-                    {employee.account === null
-                      ? 'No linked account'
-                      : employee.account.invitationPending
-                        ? 'Invitation pending'
-                        : employee.account.active
-                          ? 'Active account'
-                          : 'Inactive account'}
-                  </td>
-                  <td className="px-4 py-4">
-                    {employee.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'None'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <EmployeeDirectoryList employees={employeesQuery.data} />
       )}
 
       {employeesQuery.data === undefined ? null : (
-        <nav aria-label="Employee result pages" className="flex flex-wrap items-center gap-4">
-          <Button
-            variant="secondary"
-            isDisabled={query.page <= 1}
-            onPress={() =>
-              setSearchParams({
-                limit: query.limit.toString(),
-                page: (query.page - 1).toString(),
-                status: query.status,
-              })
-            }
-          >
-            Previous page
-          </Button>
-          <p className="m-0 text-sm">
-            Page {query.page} of {Math.max(1, employeesQuery.data.pagination.totalPages)} —{' '}
-            {employeesQuery.data.pagination.total} employees
-          </p>
-          <Button
-            variant="secondary"
-            isDisabled={query.page >= employeesQuery.data.pagination.totalPages}
-            onPress={() =>
-              setSearchParams({
-                limit: query.limit.toString(),
-                page: (query.page + 1).toString(),
-                status: query.status,
-              })
-            }
-          >
-            Next page
-          </Button>
-        </nav>
+        <Pagination
+          ariaLabel="Employee result pages"
+          currentPage={query.page}
+          onPageChange={(page) =>
+            setSearchParams({
+              limit: query.limit.toString(),
+              page: page.toString(),
+              status: query.status,
+            })
+          }
+          pageCount={employeesQuery.data.pagination.totalPages}
+          summary={`Page ${query.page} of ${Math.max(1, employeesQuery.data.pagination.totalPages)}. ${employeesQuery.data.pagination.total} employees.`}
+        />
       )}
 
-      <TeamAdministration teams={teamsQuery.data} isPending={teamsQuery.isPending} />
+      <div className="border-t border-[var(--wl-border-strong)] pt-8">
+        <TeamAdministration teams={teamsQuery.data} isPending={teamsQuery.isPending} />
+      </div>
     </section>
   );
+}
+
+function EmployeeDirectoryTable({ employees }: Readonly<{ employees: EmployeeAdminPage }>) {
+  return (
+    <DataTable
+      caption="Employees matching the selected employment status"
+      className="min-w-[48rem]"
+      scrollHint="Scroll horizontally if every employee comparison column does not fit."
+      scrollLabel="Employee directory results"
+    >
+      <thead>
+        <tr>
+          <th scope="col">Employee</th>
+          <th scope="col">Number</th>
+          <th scope="col">Employment</th>
+          <th scope="col">Account</th>
+          <th scope="col">Roles</th>
+        </tr>
+      </thead>
+      <tbody>
+        {employees.items.map((employee) => (
+          <tr key={employee.id}>
+            <th scope="row">
+              <Link className="font-semibold" to={`/employees/${employee.id}`}>
+                {employee.displayName}
+              </Link>
+            </th>
+            <td>{employee.employeeNumber}</td>
+            <td>{employmentText(employee)}</td>
+            <td>{accountText(employee)}</td>
+            <td>{employee.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'None'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </DataTable>
+  );
+}
+
+function EmployeeDirectoryList({ employees }: Readonly<{ employees: EmployeeAdminPage }>) {
+  return (
+    <ol className="m-0 grid list-none gap-3 p-0" aria-label="Employee directory results">
+      {employees.items.map((employee) => (
+        <li key={employee.id}>
+          <Panel as="article" className="grid gap-3" density="compact">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="m-0 text-lg font-bold">
+                  <Link to={`/employees/${employee.id}`}>{employee.displayName}</Link>
+                </h2>
+                <p className="m-0 text-sm text-[var(--wl-text-muted)]">{employee.employeeNumber}</p>
+              </div>
+              <StatusBadge tone={employee.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                {employee.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+              </StatusBadge>
+            </div>
+            <dl className="m-0 grid gap-2 text-sm">
+              <EmployeeFact label="Employment" value={employmentText(employee)} />
+              <EmployeeFact label="Account" value={accountText(employee)} />
+              <EmployeeFact
+                label="Roles"
+                value={employee.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'None'}
+              />
+            </dl>
+          </Panel>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function EmployeeFact({ label, value }: Readonly<{ label: string; value: string }>) {
+  return (
+    <div>
+      <dt className="font-semibold text-[var(--wl-text-muted)]">{label}</dt>
+      <dd className="m-0 break-words">{value}</dd>
+    </div>
+  );
+}
+
+function employmentText(employee: EmployeeAdminPage['items'][number]) {
+  const status = employee.status === 'ACTIVE' ? 'Active' : 'Inactive';
+  return employee.currentEmployment === null
+    ? `${status}, no current period`
+    : `${status} since ${formatDate(employee.currentEmployment.startsOn)}`;
+}
+
+function accountText(employee: EmployeeAdminPage['items'][number]) {
+  return employee.account === null
+    ? 'No linked account'
+    : employee.account.invitationPending
+      ? 'Invitation pending'
+      : employee.account.active
+        ? 'Active account'
+        : 'Inactive account';
+}
+
+function useWideEmployeeLayout(): boolean {
+  const [wide, setWide] = useState(readWideEmployeeLayout);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(min-width: 48rem)');
+    const update = () => setWide(media.matches);
+    media.addEventListener('change', update);
+    update();
+    return () => media.removeEventListener('change', update);
+  }, []);
+  return wide;
+}
+
+function readWideEmployeeLayout(): boolean {
+  return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 48rem)').matches;
 }
 
 export function NewEmployeeAdministrationPage() {
@@ -367,23 +414,23 @@ function TeamAdministration({
   }
 
   return (
-    <section className="wl-panel grid gap-5" aria-labelledby="team-catalog-heading">
+    <Panel className="grid gap-5" aria-labelledby="team-catalog-heading">
       <div>
         <h2 id="team-catalog-heading" className="m-0 text-xl font-bold">
           Teams
         </h2>
         <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
           Teams group employees for orientation only. Direct-manager assignments independently
-          control manager scope.
+          control manager scope. This catalog is a separate task from the employee directory above.
         </p>
       </div>
       {message === undefined ? null : (
-        <div
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className="wl-alert rounded-xl border p-4"
+        <Alert
+          title={message.kind === 'error' ? 'Team update failed' : 'Team catalog updated'}
+          tone={message.kind === 'error' ? 'danger' : 'success'}
         >
-          {message.text}
-        </div>
+          <p>{message.text}</p>
+        </Alert>
       )}
       <form
         className="flex flex-wrap items-end gap-3"
@@ -400,11 +447,11 @@ function TeamAdministration({
         </Button>
       </form>
       {isPending ? (
-        <p className="m-0" aria-busy="true">
-          Loading teams…
-        </p>
+        <RouteState kind="loading">Team records are being retrieved.</RouteState>
       ) : teams === undefined || teams.items.length === 0 ? (
-        <p className="m-0">No teams have been created.</p>
+        <RouteState kind="empty" title="No teams have been created">
+          Create a team when employees need a shared orientation group.
+        </RouteState>
       ) : (
         <ul className="m-0 grid gap-3 p-0" aria-label="Team catalog">
           {teams.items.map((team) => (
@@ -414,23 +461,42 @@ function TeamAdministration({
             >
               <div>
                 <h3 className="m-0 text-base font-bold">{team.name}</h3>
-                <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-                  {team.active ? 'Active' : 'Inactive'} — {team.currentMemberCount}{' '}
-                  {team.currentMemberCount === 1 ? 'current member' : 'current members'}
+                <p className="m-0 mt-2 flex flex-wrap items-center gap-2 text-sm text-[var(--wl-text-muted)]">
+                  <StatusBadge tone={team.active ? 'success' : 'neutral'}>
+                    {team.active ? 'Active' : 'Inactive'}
+                  </StatusBadge>
+                  <span>
+                    {team.currentMemberCount}{' '}
+                    {team.currentMemberCount === 1 ? 'current member' : 'current members'}
+                  </span>
                 </p>
               </div>
-              <Button
-                variant="quiet"
-                isDisabled={mutation.isPending || (team.active && team.currentMemberCount > 0)}
-                onPress={() => void run({ active: !team.active, teamId: team.id })}
-              >
-                {team.active ? `Deactivate ${team.name}` : `Activate ${team.name}`}
-              </Button>
+              <div className="grid max-w-sm justify-items-start gap-2">
+                <Button
+                  {...(team.active && team.currentMemberCount > 0
+                    ? { 'aria-describedby': `team-${team.id}-deactivation-reason` }
+                    : {})}
+                  variant="quiet"
+                  isDisabled={mutation.isPending || (team.active && team.currentMemberCount > 0)}
+                  onPress={() => void run({ active: !team.active, teamId: team.id })}
+                >
+                  {team.active ? `Deactivate ${team.name}` : `Activate ${team.name}`}
+                </Button>
+                {team.active && team.currentMemberCount > 0 ? (
+                  <p
+                    id={`team-${team.id}-deactivation-reason`}
+                    className="m-0 text-sm text-[var(--wl-text-muted)]"
+                  >
+                    Move all current members to another team or end their team assignments before
+                    deactivating this team.
+                  </p>
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>
       )}
-    </section>
+    </Panel>
   );
 }
 
@@ -469,8 +535,9 @@ export function EmployeeAdministrationDetailPage() {
     entitlementQuery.isPending
   ) {
     return (
-      <section aria-busy="true">
+      <section className="grid gap-6">
         <PageHeader title="Employee" description="Loading lifecycle history…" />
+        <RouteState kind="loading">Employee administration details are being retrieved.</RouteState>
       </section>
     );
   }
@@ -569,19 +636,16 @@ function EmployeeDetail({
         }
       </PageHeader>
       {message === undefined ? null : (
-        <div
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={`wl-alert ${message.kind === 'error' ? 'wl-alert-error' : 'wl-alert-success'} rounded-xl border p-4`}
+        <Alert
+          title={message.kind === 'error' ? 'Employee update failed' : 'Employee record updated'}
+          tone={message.kind === 'error' ? 'danger' : 'success'}
         >
-          {message.text}
-        </div>
+          <p>{message.text}</p>
+        </Alert>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section
-          className="wl-panel grid content-start gap-4"
-          aria-labelledby="employment-history-heading"
-        >
+        <Panel className="grid content-start gap-4" aria-labelledby="employment-history-heading">
           <h2 id="employment-history-heading" className="m-0 text-xl font-bold">
             Employment history
           </h2>
@@ -597,12 +661,9 @@ function EmployeeDetail({
             Re-employment adds a new non-overlapping period. Earlier attendance, balances,
             approvals, and audit attribution remain linked to this employee.
           </p>
-        </section>
+        </Panel>
 
-        <section
-          className="wl-panel grid content-start gap-4"
-          aria-labelledby="employee-account-heading"
-        >
+        <Panel className="grid content-start gap-4" aria-labelledby="employee-account-heading">
           <h2 id="employee-account-heading" className="m-0 text-xl font-bold">
             Employee-linked account
           </h2>
@@ -628,7 +689,7 @@ function EmployeeDetail({
               </div>
             </dl>
           )}
-        </section>
+        </Panel>
       </div>
 
       <AssignmentAdministration assignments={assignments} employeeId={employee.id} />
@@ -638,16 +699,15 @@ function EmployeeDetail({
       <EmployeeEntitlementAdministration employeeId={employee.id} entitlement={entitlement} />
 
       {!employee.privilegedActionsAllowed ? (
-        <div className="wl-alert rounded-xl border p-4">
-          You may review your own employee record here, but privileged self-edit controls are
-          unavailable.
-        </div>
+        <Alert title="Review only" tone="info">
+          <p>
+            You may review your own employee record here, but privileged self-edit controls are
+            unavailable. Ask another HR administrator to make a required change.
+          </p>
+        </Alert>
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
-          <section
-            className="wl-panel grid content-start gap-5"
-            aria-labelledby="role-management-heading"
-          >
+          <Panel className="grid content-start gap-5" aria-labelledby="role-management-heading">
             <h2 id="role-management-heading" className="m-0 text-xl font-bold">
               HR-managed roles
             </h2>
@@ -677,12 +737,9 @@ function EmployeeDetail({
             <Button isDisabled={mutation.isPending} onPress={() => void run('roles')}>
               Save roles
             </Button>
-          </section>
+          </Panel>
 
-          <section
-            className="wl-panel grid content-start gap-5"
-            aria-labelledby="lifecycle-actions-heading"
-          >
+          <Panel className="grid content-start gap-5" aria-labelledby="lifecycle-actions-heading">
             <h2 id="lifecycle-actions-heading" className="m-0 text-xl font-bold">
               Lifecycle actions
             </h2>
@@ -710,7 +767,7 @@ function EmployeeDetail({
                 Reissue 24-hour invitation
               </Button>
             )}
-          </section>
+          </Panel>
         </div>
       )}
     </section>
@@ -789,12 +846,12 @@ function AssignmentAdministration({
         </p>
       </div>
       {message === undefined ? null : (
-        <div
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className="wl-alert rounded-xl border p-4"
+        <Alert
+          title={message.kind === 'error' ? 'Assignment update failed' : 'Assignment updated'}
+          tone={message.kind === 'error' ? 'danger' : 'success'}
         >
-          {message.text}
-        </div>
+          <p>{message.text}</p>
+        </Alert>
       )}
       <div className="grid gap-6 xl:grid-cols-2">
         <AssignmentHistoryCard
@@ -913,7 +970,7 @@ function AssignmentHistoryCard({
   }>[];
 }>) {
   return (
-    <section className="wl-panel grid content-start gap-4">
+    <Panel className="grid content-start gap-4">
       <h3 className="m-0 text-xl font-bold">{heading}</h3>
       <p className="m-0 font-semibold">Current: {current}</p>
       {items.length === 0 ? (
@@ -928,7 +985,7 @@ function AssignmentHistoryCard({
           ))}
         </ol>
       )}
-    </section>
+    </Panel>
   );
 }
 

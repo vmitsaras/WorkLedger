@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { EmployeeScheduleAdminDetail } from '@workledger/contracts';
-import { Button } from '@workledger/ui';
+import { Alert, Button, Panel } from '@workledger/ui';
 
 import { ApiClientError, replaceScheduleAssignmentForAdministration } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
@@ -61,19 +61,16 @@ export function EmployeeScheduleAdministration({
       </div>
 
       {message === undefined ? null : (
-        <div
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={`wl-alert ${message.kind === 'success' ? 'wl-alert-success' : 'wl-alert-error'} rounded-xl border p-4`}
+        <Alert
+          title={message.kind === 'error' ? 'Schedule update failed' : 'Schedule updated'}
+          tone={message.kind === 'error' ? 'danger' : 'success'}
         >
-          {message.text}
-        </div>
+          <p>{message.text}</p>
+        </Alert>
       )}
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <section
-          className="wl-panel grid content-start gap-4"
-          aria-labelledby="schedule-current-heading"
-        >
+        <Panel className="grid content-start gap-4" aria-labelledby="schedule-current-heading">
           <h3 id="schedule-current-heading" className="m-0 text-xl font-bold">
             Current schedule
           </h3>
@@ -96,7 +93,7 @@ export function EmployeeScheduleAdministration({
               Current and scheduled employment is covered.
             </p>
           ) : (
-            <div className="wl-alert wl-alert-error grid gap-2 rounded-xl border p-4">
+            <section className="wl-alert wl-alert--danger grid gap-2 rounded-xl border p-4">
               <h4 className="m-0 text-base font-bold">Schedule coverage needs attention</h4>
               <ul className="m-0 grid gap-1 pl-5 text-sm">
                 {schedule.coverageGaps.map((gap) => (
@@ -106,14 +103,11 @@ export function EmployeeScheduleAdministration({
                   </li>
                 ))}
               </ul>
-            </div>
+            </section>
           )}
-        </section>
+        </Panel>
 
-        <section
-          className="wl-panel grid content-start gap-4"
-          aria-labelledby="schedule-history-heading"
-        >
+        <Panel className="grid content-start gap-4" aria-labelledby="schedule-history-heading">
           <h3 id="schedule-history-heading" className="m-0 text-xl font-bold">
             Schedule history
           </h3>
@@ -134,7 +128,7 @@ export function EmployeeScheduleAdministration({
               ))}
             </ol>
           )}
-        </section>
+        </Panel>
       </div>
 
       {!schedule.privilegedActionsAllowed ? null : (
@@ -176,10 +170,21 @@ export function EmployeeScheduleAdministration({
           </label>
           <Button
             type="submit"
+            {...(schedule.assignableSchedules.length === 0
+              ? { 'aria-describedby': 'employee-schedule-unavailable-reason' }
+              : {})}
             isDisabled={mutation.isPending || schedule.assignableSchedules.length === 0}
           >
             {mutation.isPending ? 'Saving schedule…' : 'Save weekly schedule'}
           </Button>
+          {schedule.assignableSchedules.length === 0 ? (
+            <p
+              id="employee-schedule-unavailable-reason"
+              className="m-0 text-sm text-[var(--wl-text-muted)]"
+            >
+              Create a weekly schedule version in Time settings before assigning one here.
+            </p>
+          ) : null}
         </form>
       )}
     </section>

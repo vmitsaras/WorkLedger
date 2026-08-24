@@ -14,6 +14,7 @@ import {
   type SelfContext,
   DEFAULT_COMPANY_IDENTITY,
   employeeAdminQuerySchema,
+  securityAuditQuerySchema,
   systemAccountQuerySchema,
 } from '@workledger/contracts';
 import { RouteState } from '@workledger/ui';
@@ -46,6 +47,7 @@ import {
   timeSettingsAdminDetailQuery,
   absenceSettingsAdminDetailQuery,
   domainAuditPageQuery,
+  securityAuditPageQuery,
   holidaySettingsAdminDetailQuery,
   systemDiagnosticsQuery,
 } from './query.js';
@@ -697,10 +699,14 @@ function createSystemOperationsLoader(queryClient: QueryClient): LoaderFunction 
 }
 
 function createSystemAuditLoader(queryClient: QueryClient): LoaderFunction {
-  return async () => {
+  return async ({ request }) => {
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes('SYSTEM')) throw new Response(null, { status: 403 });
-    return null;
+    const values = Object.fromEntries(new URL(request.url).searchParams);
+    const parsed = securityAuditQuerySchema.safeParse(values);
+    const query = parsed.success ? parsed.data : securityAuditQuerySchema.parse({});
+    void queryClient.prefetchQuery(securityAuditPageQuery(query));
+    return query;
   };
 }
 

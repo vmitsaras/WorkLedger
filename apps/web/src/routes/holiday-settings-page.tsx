@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { HolidayImpactPreviewAdmin } from '@workledger/contracts';
-import { Button, TextField } from '@workledger/ui';
+import { Alert, Button, Panel, RouteState, TextField } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -79,13 +79,13 @@ export function HolidaySettingsPage() {
         description="Add organization-wide date-only holidays after reviewing their calculation impact. Submitted, approved, and locked months remain protected."
       />
       {message === undefined ? null : (
-        <div
-          ref={messageRef}
-          tabIndex={message.kind === 'error' ? -1 : undefined}
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={`wl-alert ${message.kind === 'success' ? 'wl-alert-success' : 'wl-alert-error'} rounded-xl border p-4`}
-        >
-          {message.text}
+        <div ref={messageRef} tabIndex={message.kind === 'error' ? -1 : undefined}>
+          <Alert
+            title={message.kind === 'error' ? 'Holiday update failed' : 'Holiday created'}
+            tone={message.kind === 'error' ? 'danger' : 'success'}
+          >
+            <p>{message.text}</p>
+          </Alert>
         </div>
       )}
       <form className="wl-panel grid gap-5" onSubmit={submit} noValidate>
@@ -114,6 +114,9 @@ export function HolidaySettingsPage() {
         <div>
           <Button
             type="submit"
+            {...(preview?.mutationAllowed === false
+              ? { 'aria-describedby': 'holiday-impact-blocked' }
+              : {})}
             isDisabled={
               previewMutation.isPending ||
               createMutation.isPending ||
@@ -130,15 +133,19 @@ export function HolidaySettingsPage() {
           </Button>
         </div>
       </form>
-      <section className="wl-panel grid gap-4" aria-labelledby="configured-holidays">
+      <Panel className="grid gap-4" aria-labelledby="configured-holidays">
         <h2 id="configured-holidays" className="m-0 text-2xl font-bold">
           Configured holidays
         </h2>
-        {query.data?.holidays.length === 0 ? (
-          <p className="m-0 text-[var(--wl-text-muted)]">No holidays have been configured.</p>
+        {query.isPending ? (
+          <RouteState kind="loading">Configured holidays are being retrieved.</RouteState>
+        ) : query.data.holidays.length === 0 ? (
+          <RouteState kind="empty" title="No holidays have been configured">
+            Add the first date only holiday above after reviewing its impact.
+          </RouteState>
         ) : (
           <ul className="m-0 grid list-none gap-3 p-0">
-            {query.data?.holidays.map((holiday) => (
+            {query.data.holidays.map((holiday) => (
               <li key={holiday.id} className="rounded-xl border p-4">
                 <strong>{holiday.name}</strong>
                 <span className="block text-sm text-[var(--wl-text-muted)]">
@@ -148,14 +155,14 @@ export function HolidaySettingsPage() {
             ))}
           </ul>
         )}
-      </section>
+      </Panel>
     </section>
   );
 }
 
 function ImpactPreview({ preview }: Readonly<{ preview: HolidayImpactPreviewAdmin }>) {
   return (
-    <section className="rounded-xl border p-4" aria-labelledby="holiday-impact" role="status">
+    <Panel density="compact" aria-labelledby="holiday-impact" role="status">
       <h3 id="holiday-impact" className="mt-0">
         Calculation impact
       </h3>
@@ -166,12 +173,12 @@ function ImpactPreview({ preview }: Readonly<{ preview: HolidayImpactPreviewAdmi
       {preview.mutationAllowed ? (
         <p className="mb-0">No submitted, approved, or locked monthly period blocks this change.</p>
       ) : (
-        <p className="wl-text-danger mb-0">
+        <p id="holiday-impact-blocked" className="wl-text-danger mb-0">
           This change cannot be saved: the date is in the past, is already configured, or belongs to{' '}
           {preview.blockedPeriodCount} protected monthly periods.
         </p>
       )}
-    </section>
+    </Panel>
   );
 }
 

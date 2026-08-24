@@ -140,6 +140,13 @@ Navigation visibility is convenience only; the API enforces authorization.
 | Back up and restore | Authorized host operator runs documented, verified PostgreSQL procedures outside the application UI. | `WL-1004` |
 | Migrate and upgrade | Authorized host operator follows versioned migration, backup, readiness, and rollback guidance outside the application UI. | `WL-1005` |
 
+The technical audit explorer uses URL-owned bounded filters and a captioned, named local scroll
+region. Its detail disclosure contains only allowlisted technical facts and purpose-specific
+references. Account identifiers, request identifiers, domain payloads, notification content, and
+unrestricted text do not enter the browser projection. Employee administration uses complete
+record cards below `48rem` and a comparison table above that boundary; report and audit tables keep
+visible scroll guidance because their column relationships are intrinsically two-dimensional.
+
 Browser routes do not create an authorization path for host operations. Destructive restore, secret rotation, and upgrade actions remain explicit operator workflows for the MVP.
 
 ## 4. Today screen hierarchy

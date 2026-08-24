@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { TimePolicyRules, WeeklyScheduleMinutes } from '@workledger/contracts';
-import { Button, TextField } from '@workledger/ui';
+import { Alert, Button, Panel, RouteState, TextField } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -96,12 +96,12 @@ export function TimeSettingsPage() {
 
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
       {status === undefined ? null : (
-        <div role="status" className="wl-alert wl-alert-success rounded-xl border p-4">
-          {status}
-        </div>
+        <Alert title="Schedule version created" tone="success">
+          <p>{status}</p>
+        </Alert>
       )}
 
-      <section className="wl-panel grid gap-5" aria-labelledby="create-schedule-heading">
+      <Panel className="grid gap-5" aria-labelledby="create-schedule-heading">
         <div className="grid gap-2">
           <h2 id="create-schedule-heading" className="m-0 text-2xl font-bold">
             Create schedule version
@@ -149,7 +149,7 @@ export function TimeSettingsPage() {
             {mutation.isPending ? 'Creating version…' : 'Create schedule version'}
           </Button>
         </form>
-      </section>
+      </Panel>
 
       <TimePolicyVersionAdministration policyVersions={query.data?.policyVersions ?? []} />
 
@@ -163,13 +163,15 @@ export function TimeSettingsPage() {
           </p>
         </div>
         {query.isPending ? (
-          <p role="status">Loading schedule versions…</p>
+          <RouteState kind="loading">Schedule versions are being retrieved.</RouteState>
         ) : query.data.scheduleVersions.length === 0 ? (
-          <div className="wl-panel">No schedule versions have been created.</div>
+          <RouteState kind="empty" title="No schedule versions have been created">
+            Create the first immutable weekly schedule above.
+          </RouteState>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {query.data.scheduleVersions.map((schedule) => (
-              <article key={schedule.id} className="wl-panel grid gap-4">
+              <Panel key={schedule.id} as="article" className="grid gap-4">
                 <div>
                   <h3 className="m-0 text-xl font-bold">
                     {schedule.name} · version {schedule.version}
@@ -189,7 +191,7 @@ export function TimeSettingsPage() {
                     </div>
                   ))}
                 </dl>
-              </article>
+              </Panel>
             ))}
           </div>
         )}
@@ -249,12 +251,12 @@ function TimePolicyVersionAdministration({
         </p>
       </div>
       {message === undefined ? null : (
-        <div
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={`wl-alert ${message.kind === 'success' ? 'wl-alert-success' : 'wl-alert-error'} rounded-xl border p-4`}
+        <Alert
+          title={message.kind === 'error' ? 'Time policy update failed' : 'Time policy created'}
+          tone={message.kind === 'error' ? 'danger' : 'success'}
         >
-          {message.text}
-        </div>
+          <p>{message.text}</p>
+        </Alert>
       )}
       <form className="wl-panel grid max-w-3xl gap-4" onSubmit={submit} noValidate>
         <TextField id="policy-name" label="Time-policy name" value={name} onChange={setName} />
@@ -275,11 +277,13 @@ function TimePolicyVersionAdministration({
         </Button>
       </form>
       {policyVersions.length === 0 ? (
-        <div className="wl-panel">No time-policy versions have been created.</div>
+        <RouteState kind="empty" title="No time policy versions have been created">
+          Create the first bounded time policy above.
+        </RouteState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {policyVersions.map((policy) => (
-            <article key={policy.id} className="wl-panel">
+            <Panel key={policy.id} as="article">
               <h3 className="m-0 text-xl font-bold">
                 {policy.name} · version {policy.version}
               </h3>
@@ -288,7 +292,7 @@ function TimePolicyVersionAdministration({
                 {formatDuration(policy.rules.flexibleTimeWarningMinutes)} warning threshold
               </p>
               <p className="mb-0 text-sm">Manual breaks with warnings · no rounding</p>
-            </article>
+            </Panel>
           ))}
         </div>
       )}

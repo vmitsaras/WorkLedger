@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Button, TextField } from '@workledger/ui';
+import { Alert, Button, Panel, RouteState, StatusBadge, TextField } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -97,15 +97,12 @@ export function SystemAccountAdministrationPage() {
 
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
       {status === undefined ? null : (
-        <div role="status" className="wl-alert wl-alert-success rounded-xl border p-4">
-          {status}
-        </div>
+        <Alert title="Technical account updated" tone="success">
+          <p>{status}</p>
+        </Alert>
       )}
 
-      <section
-        className="wl-panel grid max-w-3xl gap-5"
-        aria-labelledby="create-technical-account-heading"
-      >
+      <Panel className="grid max-w-3xl gap-5" aria-labelledby="create-technical-account-heading">
         <div className="grid gap-2">
           <h2 id="create-technical-account-heading" className="m-0 text-xl font-bold">
             Invite technical administrator
@@ -139,7 +136,7 @@ export function SystemAccountAdministrationPage() {
             {createMutation.isPending ? 'Creating…' : 'Create and invite technical account'}
           </Button>
         </form>
-      </section>
+      </Panel>
 
       <section className="grid gap-5" aria-labelledby="account-directory-heading">
         <div className="grid gap-2">
@@ -153,108 +150,123 @@ export function SystemAccountAdministrationPage() {
           </p>
         </div>
         {accountsQuery.isPending ? (
-          <div className="wl-panel" aria-busy="true">
-            Loading accounts…
-          </div>
+          <RouteState kind="loading">Technical account records are being retrieved.</RouteState>
         ) : accountsQuery.data.items.length === 0 ? (
-          <div className="wl-panel">No accounts are associated with this installation.</div>
+          <RouteState kind="empty" title="No accounts are associated with this installation">
+            Invite the first technical administrator above.
+          </RouteState>
         ) : (
           <ul className="m-0 grid list-none gap-5 p-0" role="list">
             {accountsQuery.data.items.map((account) => (
-              <li key={account.id} className="wl-panel grid gap-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="grid gap-1">
-                    <h3 className="m-0 text-xl font-bold">{account.name}</h3>
-                    <p className="m-0 break-all text-sm text-[var(--wl-text-muted)]">
-                      {account.email}
+              <li key={account.id}>
+                <Panel as="article" className="grid gap-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="grid gap-1">
+                      <h3 className="m-0 text-xl font-bold">{account.name}</h3>
+                      <p className="m-0 break-all text-sm text-[var(--wl-text-muted)]">
+                        {account.email}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2" aria-label="Account state and authority">
+                      <StatusBadge
+                        tone={
+                          account.active
+                            ? 'success'
+                            : account.invitationPending
+                              ? 'info'
+                              : 'neutral'
+                        }
+                      >
+                        {account.active
+                          ? 'Active account'
+                          : account.invitationPending
+                            ? 'Invitation pending'
+                            : 'Inactive account'}
+                      </StatusBadge>
+                      <StatusBadge tone={account.systemAdministrator ? 'warning' : 'neutral'}>
+                        {account.systemAdministrator ? 'System administrator' : 'No system role'}
+                      </StatusBadge>
+                      <StatusBadge tone="neutral">
+                        {account.employeeLinked ? 'Employee linked' : 'Technical only'}
+                      </StatusBadge>
+                    </div>
+                  </div>
+
+                  {!account.privilegedActionsAllowed ? (
+                    <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+                      This is your current account. Use Profile for your own sessions; self role and
+                      account-state changes are prohibited.
                     </p>
-                  </div>
-                  <p className="m-0 font-semibold">
-                    {account.active
-                      ? 'Active account'
-                      : account.invitationPending
-                        ? 'Invitation pending'
-                        : 'Inactive account'}
-                    {' — '}
-                    {account.systemAdministrator ? 'System administrator' : 'No system role'}
-                    {account.employeeLinked ? ' — Employee-linked' : ' — Technical-only'}
-                  </p>
-                </div>
-
-                {!account.privilegedActionsAllowed ? (
-                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                    This is your current account. Use Profile for your own sessions; self role and
-                    account-state changes are prohibited.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-3">
-                    <Button
-                      variant="secondary"
-                      isDisabled={actionMutation.isPending}
-                      onPress={() =>
-                        void runAction({
-                          accountId: account.id,
-                          active: !account.active,
-                          kind: 'state',
-                        })
-                      }
-                    >
-                      {account.active ? 'Deactivate account' : 'Activate account'}
-                    </Button>
-                    <Button
-                      variant="quiet"
-                      isDisabled={actionMutation.isPending}
-                      onPress={() =>
-                        void runAction({
-                          accountId: account.id,
-                          enabled: !account.systemAdministrator,
-                          kind: 'role',
-                        })
-                      }
-                    >
-                      {account.systemAdministrator ? 'Revoke system role' : 'Assign system role'}
-                    </Button>
-                  </div>
-                )}
-
-                <section className="grid gap-3" aria-labelledby={`sessions-${account.id}`}>
-                  <h4 id={`sessions-${account.id}`} className="m-0 text-base font-bold">
-                    Active sessions
-                  </h4>
-                  {account.sessions.length === 0 ? (
-                    <p className="m-0 text-sm text-[var(--wl-text-muted)]">No active sessions.</p>
                   ) : (
-                    <ul className="m-0 grid list-none gap-3 p-0" role="list">
-                      {account.sessions.map((session) => (
-                        <li
-                          key={session.id}
-                          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--wl-border)] p-3"
-                        >
-                          <span>
-                            <strong>{session.deviceSummary}</strong>
-                            {' — last active '}
-                            {DATE_TIME_FORMATTER.format(new Date(session.lastActiveAt))}
-                          </span>
-                          {account.privilegedActionsAllowed ? (
-                            <Button
-                              variant="quiet"
-                              isDisabled={actionMutation.isPending}
-                              onPress={() =>
-                                void runAction({
-                                  accountId: account.id,
-                                  kind: 'session',
-                                  sessionId: session.id,
-                                })
-                              }
-                            >
-                              Revoke session
-                            </Button>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        variant="secondary"
+                        isDisabled={actionMutation.isPending}
+                        onPress={() =>
+                          void runAction({
+                            accountId: account.id,
+                            active: !account.active,
+                            kind: 'state',
+                          })
+                        }
+                      >
+                        {account.active ? 'Deactivate account' : 'Activate account'}
+                      </Button>
+                      <Button
+                        variant="quiet"
+                        isDisabled={actionMutation.isPending}
+                        onPress={() =>
+                          void runAction({
+                            accountId: account.id,
+                            enabled: !account.systemAdministrator,
+                            kind: 'role',
+                          })
+                        }
+                      >
+                        {account.systemAdministrator ? 'Revoke system role' : 'Assign system role'}
+                      </Button>
+                    </div>
                   )}
-                </section>
+
+                  <section className="grid gap-3" aria-labelledby={`sessions-${account.id}`}>
+                    <h4 id={`sessions-${account.id}`} className="m-0 text-base font-bold">
+                      Active sessions
+                    </h4>
+                    {account.sessions.length === 0 ? (
+                      <p className="m-0 text-sm text-[var(--wl-text-muted)]">No active sessions.</p>
+                    ) : (
+                      <ul className="m-0 grid list-none gap-3 p-0" role="list">
+                        {account.sessions.map((session) => (
+                          <li
+                            key={session.id}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--wl-border)] p-3"
+                          >
+                            <span>
+                              <strong>{session.deviceSummary}</strong>
+                              {' — last active '}
+                              {DATE_TIME_FORMATTER.format(new Date(session.lastActiveAt))}
+                            </span>
+                            {account.privilegedActionsAllowed ? (
+                              <Button
+                                variant="quiet"
+                                isDisabled={actionMutation.isPending}
+                                onPress={() =>
+                                  void runAction({
+                                    accountId: account.id,
+                                    kind: 'session',
+                                    sessionId: session.id,
+                                  })
+                                }
+                              >
+                                Revoke session
+                              </Button>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                </Panel>
               </li>
             ))}
           </ul>

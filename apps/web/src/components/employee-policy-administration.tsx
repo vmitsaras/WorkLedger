@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { EmployeePolicyAdminDetail } from '@workledger/contracts';
-import { Button } from '@workledger/ui';
+import { Alert, Button, Panel } from '@workledger/ui';
 
 import { ApiClientError, replacePolicyAssignmentForAdministration } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
@@ -60,18 +60,15 @@ export function EmployeePolicyAdministration({
         </p>
       </div>
       {message === undefined ? null : (
-        <div
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={`wl-alert ${message.kind === 'success' ? 'wl-alert-success' : 'wl-alert-error'} rounded-xl border p-4`}
+        <Alert
+          title={message.kind === 'error' ? 'Time policy update failed' : 'Time policy updated'}
+          tone={message.kind === 'error' ? 'danger' : 'success'}
         >
-          {message.text}
-        </div>
+          <p>{message.text}</p>
+        </Alert>
       )}
       <div className="grid gap-5 lg:grid-cols-2">
-        <section
-          className="wl-panel grid content-start gap-3"
-          aria-labelledby="policy-current-heading"
-        >
+        <Panel className="grid content-start gap-3" aria-labelledby="policy-current-heading">
           <h3 id="policy-current-heading" className="m-0 text-xl font-bold">
             Current policy
           </h3>
@@ -85,8 +82,8 @@ export function EmployeePolicyAdministration({
               Current and scheduled employment is covered.
             </p>
           ) : (
-            <div className="wl-alert wl-alert-error rounded-xl border p-4">
-              <strong>Policy coverage needs attention</strong>
+            <section className="wl-alert wl-alert--danger rounded-xl border p-4">
+              <h4 className="m-0 text-base font-bold">Policy coverage needs attention</h4>
               <ul>
                 {policy.coverageGaps.map((gap) => (
                   <li key={`${gap.startsOn}:${gap.endsOn ?? 'ongoing'}`}>
@@ -95,13 +92,10 @@ export function EmployeePolicyAdministration({
                   </li>
                 ))}
               </ul>
-            </div>
+            </section>
           )}
-        </section>
-        <section
-          className="wl-panel grid content-start gap-3"
-          aria-labelledby="policy-history-heading"
-        >
+        </Panel>
+        <Panel className="grid content-start gap-3" aria-labelledby="policy-history-heading">
           <h3 id="policy-history-heading" className="m-0 text-xl font-bold">
             Policy history
           </h3>
@@ -116,7 +110,7 @@ export function EmployeePolicyAdministration({
               ))}
             </ol>
           )}
-        </section>
+        </Panel>
       </div>
       {!policy.privilegedActionsAllowed ? null : (
         <form className="wl-panel grid max-w-3xl gap-4" onSubmit={submit}>
@@ -176,10 +170,21 @@ export function EmployeePolicyAdministration({
           </section>
           <Button
             type="submit"
+            {...(policy.assignablePolicies.length === 0
+              ? { 'aria-describedby': 'employee-policy-unavailable-reason' }
+              : {})}
             isDisabled={mutation.isPending || policy.assignablePolicies.length === 0}
           >
             {mutation.isPending ? 'Saving policy…' : 'Save time policy'}
           </Button>
+          {policy.assignablePolicies.length === 0 ? (
+            <p
+              id="employee-policy-unavailable-reason"
+              className="m-0 text-sm text-[var(--wl-text-muted)]"
+            >
+              Create a time policy version in Time settings before assigning one here.
+            </p>
+          ) : null}
         </form>
       )}
     </section>

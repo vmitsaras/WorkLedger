@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { StatusBadge } from '@workledger/ui';
+import { Alert, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
 import { systemDiagnosticsQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
@@ -25,12 +25,25 @@ export function SystemOperationsPage() {
       />
 
       {diagnostics === undefined ? (
-        <div role="status" aria-label="Loading diagnostics">
-          <p className="text-[var(--wl-text-muted)]">Loading system diagnostics...</p>
-        </div>
+        <RouteState kind="loading">System diagnostics are being retrieved.</RouteState>
       ) : (
         <div className="grid gap-6">
-          <section className="wl-panel">
+          {diagnostics.health === 'healthy' ? null : (
+            <Alert
+              title={
+                diagnostics.health === 'degraded'
+                  ? 'Service is degraded'
+                  : 'Service needs immediate attention'
+              }
+              tone={diagnostics.health === 'degraded' ? 'warning' : 'danger'}
+            >
+              <p>
+                Review the dependency evidence below, then use the documented host operator recovery
+                procedures. This page does not expose restart or restore controls.
+              </p>
+            </Alert>
+          )}
+          <Panel>
             <h2 className="mb-4 text-lg font-semibold">Service status</h2>
             <dl className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -58,9 +71,9 @@ export function SystemOperationsPage() {
                 </dd>
               </div>
             </dl>
-          </section>
+          </Panel>
 
-          <section className="wl-panel">
+          <Panel>
             <h2 className="mb-4 text-lg font-semibold">Dependencies</h2>
             <div className="grid gap-6">
               <section aria-labelledby="database-diagnostics-heading">
@@ -117,9 +130,9 @@ export function SystemOperationsPage() {
                 </dl>
               </section>
             </div>
-          </section>
+          </Panel>
 
-          <section className="wl-panel">
+          <Panel>
             <h2 className="mb-4 text-lg font-semibold">Deployment procedures</h2>
             <p className="mb-4 text-[var(--wl-text-muted)]">
               Backup, restore, migration, and upgrade workflows are host-operator procedures and are
@@ -128,7 +141,7 @@ export function SystemOperationsPage() {
             <p className="text-sm text-[var(--wl-text-muted)]">
               See the deployment and operations documentation for validated procedures.
             </p>
-          </section>
+          </Panel>
         </div>
       )}
     </section>
