@@ -284,6 +284,18 @@ or resembles accumulated debt. The new five-image `WL-1304` baseline is separate
 historical sets. `AUD-1300-05` remains assigned to `WL-1306`; the timeline and calculation-detail
 work moves next to `WL-1305`.
 
+### `WL-1305` follow-up
+
+`WL-1305` completes the concise timeline and auditable calculation evidence in
+`docs/129-today-timeline-calculation-evidence.md`. The Today snapshot now distinguishes immutable
+punch events, purpose-minimized approved correction effects, and other approved adjustments. The
+native disclosure contains a semantic source table, while the timeline keeps corrected and original
+evidence separate in stable document order.
+
+The dedicated five-viewport update and independent comparison passed, including axe and overflow
+checks at 1440 and 320 CSS pixels. `AUD-1300-05` remains assigned to `WL-1306`, which is now the next
+task; exact retail assistive-technology and browser verification remains assigned to `WL-1307`.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.

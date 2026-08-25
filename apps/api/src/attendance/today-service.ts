@@ -85,6 +85,7 @@ export function createTodayAttendanceService(database: WorkLedgerDatabase): Toda
             employeeId: employee.id,
             localDate,
             organizationId: context.organization.id,
+            snapshotCapturedAt: at,
           });
           const postedThroughBoundary = addLocalDateDays(localDate, -1);
           const ledgerEntries = await transaction.timeAccount.listForEmployeeThroughSnapshot(
@@ -103,10 +104,17 @@ export function createTodayAttendanceService(database: WorkLedgerDatabase): Toda
             throw new WorkLedgerApiError({ code: ledger.error.code, statusCode: 503 });
           }
           const attendanceState = source.head?.state ?? 'OFF_WORK';
+          const approvedCorrectionMinutes = parseSignedMinuteTotal(
+            source.appliedCorrections.map(({ adjustmentMinutes }) => adjustmentMinutes),
+          );
+          const combinedApprovedAdjustmentMinutes = parseSignedMinuteTotal([
+            approvedCorrectionMinutes,
+            source.otherApprovedAdjustmentMinutes,
+          ]);
           const result = calculateCurrentDayAttendance({
             absenceCreditMinutes: source.absenceCreditMinutes,
             absenceExpectedReductionMinutes: source.absenceExpectedReductionMinutes,
-            approvedAdjustmentMinutes: source.approvedAdjustmentMinutes,
+            approvedAdjustmentMinutes: combinedApprovedAdjustmentMinutes,
             calculationAsOf,
             events: source.events.map(({ event }) => event),
             expectedState: attendanceState,
@@ -123,7 +131,14 @@ export function createTodayAttendanceService(database: WorkLedgerDatabase): Toda
           });
 
           return selectTodayAttendanceDisplay({
+            appliedCorrections: source.appliedCorrections.map(
+              ({ correctedWorkedMinutes, originalWorkedMinutes }) => ({
+                correctedWorkedMinutes,
+                originalWorkedMinutes,
+              }),
+            ),
             asOf: calculationAsOf,
+            approvedCorrectionMinutes,
             attendanceRevision: source.head?.attendanceRevision ?? 0,
             attendanceState,
             currentDay: result,
@@ -131,6 +146,7 @@ export function createTodayAttendanceService(database: WorkLedgerDatabase): Toda
             flexPositiveThresholdMinutes: source.flexPositiveThresholdMinutes,
             holidayName: source.holiday?.name ?? null,
             localDate,
+            otherApprovedAdjustmentMinutes: source.otherApprovedAdjustmentMinutes,
             postedFlexBalanceMinutes: ledger.value.closingBalanceMinutes,
             postedThroughDate: latestEffectiveDate(ledgerEntries),
             snapshotCapturedAt: at,
@@ -150,6 +166,14 @@ export function createTodayAttendanceService(database: WorkLedgerDatabase): Toda
     },
   };
   return Object.freeze(service);
+}
+
+function parseSignedMinuteTotal(values: readonly number[]) {
+  const result = parseSignedMinutes(values.reduce((total, value) => total + value, 0));
+  if (!result.ok) {
+    throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  }
+  return result.value;
 }
 
 function latestEffectiveDate(

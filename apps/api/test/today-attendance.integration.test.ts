@@ -63,6 +63,7 @@ integrationTest(
       expect(response.headers['cache-control']).toBe('private, no-store');
       expect(response.json()).toMatchObject({
         data: {
+          appliedCorrections: [],
           asOf: '2026-02-03T10:30:00Z',
           attendance: {
             actionAvailability: [
@@ -92,8 +93,9 @@ integrationTest(
             isPeriodPostedOrLocked: false,
             provisional: {
               calculationSources: {
-                approvedAdjustmentMinutes: 0,
+                approvedCorrectionMinutes: 0,
                 breakMinutesToday: 15,
+                otherApprovedAdjustmentMinutes: 0,
                 workedMinutesToday: 195,
               },
               creditedMinutesToday: 195,
@@ -119,6 +121,88 @@ integrationTest(
       });
       expect(response.payload).not.toContain('employeeId');
       expect(response.payload).not.toContain('organizationId');
+
+      const correctionRequest = await fixture.client.query<{ id: string }>(
+        `insert into correction_requests (
+           organization_id, employee_id, requested_by_employee_id, local_date, status, reason,
+           original_interpretation, proposed_interpretation, version
+         ) values ($1, $2, $2, '2026-02-03', 'APPROVED', 'Private correction reason', $3::jsonb, $4::jsonb, 2)
+         returning id`,
+        [
+          employee.organizationId,
+          employee.employeeId,
+          JSON.stringify({ calculation: { workedMinutes: 195 } }),
+          JSON.stringify({
+            endsAt: '2026-02-03T10:30:00Z',
+            kind: 'REPLACE_DAILY_WORK_INTERVAL',
+            startsAt: '2026-02-03T07:00:00Z',
+          }),
+        ],
+      );
+      const correctionRequestId = correctionRequest.rows[0]?.id;
+      if (correctionRequestId === undefined) throw new Error('Expected correction request ID.');
+      const correctionDecision = await fixture.client.query<{ id: string }>(
+        `insert into correction_decisions (
+           organization_id, correction_request_id, actor_account_id, actor_employee_id,
+           actor_authority, action, reason, decided_at
+         ) values ($1, $2, $3, null, 'ORGANIZATION_HR', 'APPROVE', 'Private decision reason', $4)
+         returning id`,
+        [employee.organizationId, correctionRequestId, employee.accountId, NOW],
+      );
+      const correctionDecisionId = correctionDecision.rows[0]?.id;
+      if (correctionDecisionId === undefined) throw new Error('Expected correction decision ID.');
+      await fixture.client.query(
+        `insert into applied_corrections (
+           organization_id, correction_request_id, correction_decision_id, employee_id,
+           local_date, version, interpretation, created_at
+         ) values ($1, $2, $3, $4, '2026-02-03', 1, $5::jsonb, '2026-02-03T10:30:30Z')`,
+        [
+          employee.organizationId,
+          correctionRequestId,
+          correctionDecisionId,
+          employee.employeeId,
+          JSON.stringify({
+            endsAt: '2026-02-03T10:30:00Z',
+            kind: 'REPLACE_DAILY_WORK_INTERVAL',
+            startsAt: '2026-02-03T07:00:00Z',
+            workedMinutes: 210,
+          }),
+        ],
+      );
+
+      const correctedResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/me/attendance/today',
+        headers: { cookie, origin: ORIGIN },
+      });
+      expect(correctedResponse.statusCode).toBe(200);
+      expect(correctedResponse.json()).toMatchObject({
+        data: {
+          appliedCorrections: [
+            {
+              correctedWorkedMinutes: 210,
+              originalWorkedMinutes: 195,
+            },
+          ],
+          calculation: {
+            attentionItems: [],
+            provisional: {
+              calculationSources: {
+                approvedCorrectionMinutes: 15,
+                otherApprovedAdjustmentMinutes: 0,
+              },
+              creditedMinutesToday: 210,
+              provisionalDifferenceMinutes: -270,
+            },
+            remainingExpectedMinutes: 270,
+            status: 'PROVISIONAL',
+          },
+        },
+      });
+      expect(correctedResponse.payload).not.toContain('Private correction reason');
+      expect(correctedResponse.payload).not.toContain('Private decision reason');
+      expect(correctedResponse.payload).not.toContain(correctionRequestId);
+      expect(correctedResponse.payload).not.toContain(correctionDecisionId);
 
       await fixture.client.query(`delete from schedule_assignments where employee_id = $1`, [
         employee.employeeId,
@@ -869,7 +953,7 @@ integrationTest(
 
 async function createTodayEmployee(
   client: pg.PoolClient,
-): Promise<Readonly<{ employeeId: string; organizationId: string }>> {
+): Promise<Readonly<{ accountId: string; employeeId: string; organizationId: string }>> {
   const passwordHash = await hashPassword(PASSWORD);
   const organization = await client.query<{ id: string }>(
     `insert into organizations (name, time_zone)
@@ -966,7 +1050,7 @@ async function createTodayEmployee(
     );
   }
 
-  return Object.freeze({ employeeId, organizationId });
+  return Object.freeze({ accountId, employeeId, organizationId });
 }
 
 async function insertProjection(

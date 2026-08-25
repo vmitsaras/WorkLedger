@@ -839,6 +839,7 @@ test('keeps self-profile and session transport fields purpose-minimized', () => 
 test('keeps the Today contract provisional, bounded, and free of account identity fields', () => {
   const response = {
     data: {
+      appliedCorrections: [],
       asOf: '2026-08-11T10:30:00Z',
       attendance: {
         actionAvailability: [
@@ -873,9 +874,10 @@ test('keeps the Today contract provisional, bounded, and free of account identit
           calculationSources: {
             absenceCreditMinutes: 0,
             absenceExpectedReductionMinutes: 0,
-            approvedAdjustmentMinutes: 0,
+            approvedCorrectionMinutes: 0,
             breakMinutesToday: 0,
             holidayExpectedReductionMinutes: 0,
+            otherApprovedAdjustmentMinutes: 0,
             scheduledMinutes: 480,
             workedMinutesToday: 90,
           },
@@ -898,6 +900,43 @@ test('keeps the Today contract provisional, bounded, and free of account identit
   };
 
   expect(todayAttendanceEnvelopeSchema.parse(response)).toEqual(response);
+  const correctedResponse = {
+    ...response,
+    data: {
+      ...response.data,
+      appliedCorrections: [
+        {
+          correctedWorkedMinutes: 120,
+          originalWorkedMinutes: 90,
+        },
+      ],
+      calculation: {
+        ...response.data.calculation,
+        provisional: {
+          ...response.data.calculation.provisional,
+          calculationSources: {
+            ...response.data.calculation.provisional.calculationSources,
+            approvedCorrectionMinutes: 30,
+          },
+          creditedMinutesToday: 120,
+          provisionalDifferenceMinutes: -360,
+        },
+        remainingExpectedMinutes: 360,
+      },
+    },
+  };
+  expect(todayAttendanceEnvelopeSchema.parse(correctedResponse)).toEqual(correctedResponse);
+  expect(() =>
+    todayAttendanceEnvelopeSchema.parse({
+      ...correctedResponse,
+      data: {
+        ...correctedResponse.data,
+        appliedCorrections: [
+          { ...correctedResponse.data.appliedCorrections[0], reason: 'Private correction reason' },
+        ],
+      },
+    }),
+  ).toThrow();
   expect(() =>
     todayAttendanceEnvelopeSchema.parse({
       ...response,

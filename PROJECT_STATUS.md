@@ -2,19 +2,18 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 5 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 6 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1305` (next)
-**Status:** WL-1304 complete — Today metric hierarchy separates provisional and posted facts
+**Active task:** `WL-1306` (next)
+**Status:** WL-1305 complete — Today timeline and calculation evidence are concise and auditable
 **Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1304` now presents the active attendance interval, credited
-progress, estimated finish, provisional daily difference, and dated posted flexible-time balance as
-separate authoritative facts with accessible progress and responsive semantic order. The next
-bounded slice is `WL-1305`: rebuild the Today timeline and calculation details for transparent,
-concise, auditable explanations.
+Phase 12 is complete at `0.13.0`. `WL-1305` now keeps immutable punch events distinct from
+purpose-minimized approved correction effects and explains every Today calculation source in a
+semantic table inside the native disclosure. The next bounded slice is `WL-1306`: replace generic
+warnings with actionable attention and correction-recovery workflows.
 
 ## Verified decisions
 
@@ -187,12 +186,14 @@ concise, auditable explanations.
   then attention, immutable timeline, and calculation disclosure in stable DOM order. Its
   container-sized layout never reorders controls, and the focused route heading shrink-wraps the
   existing product-owned outline instead of resembling a full-width input.
-- Today calculation detail groups server-provided integer minutes into expected, credited, and
-  estimated-balance description lists with explicit natural-language equations; the browser
-  formats but does not derive authoritative totals.
+- Today calculation detail presents server-provided integer-minute sources in a captioned semantic
+  table for expected time, credited time, and the provisional result. Applied corrections and other
+  approved adjustments remain separate evidence, and the browser does not derive authoritative
+  calculation totals.
 - Today attendance history is a semantic ordered list with event meaning, organization-local date,
-  IANA timezone, and same-time recorded-order context. Intrinsic cards and wrapped labels reflow
-  without horizontal page overflow at the automated 320 px boundary.
+  IANA timezone, and same-time recorded-order context. Purpose-minimized approved correction
+  evidence states the original and corrected worked totals without rewriting or hiding punch events.
+  The table and timeline reflow without horizontal page overflow at the automated 320 px boundary.
 - Today polls every 30 seconds only in the foreground and always refetches on tab return or
   reconnect. Newer device revisions cannot be replaced by older snapshots; if a refresh removes
   the focused action, current-status focus and one polite device-change message preserve context.
@@ -2070,18 +2071,48 @@ concise, auditable explanations.
 - No domain rule, API contract, database schema, migration, authorization, dependency, lockfile,
   manifest, publication, deployment, tag, or workspace version changed.
 
+**2026-08-25 — WL-1305 Today timeline and calculation evidence**
+
+- Added exact-snapshot applied-correction history to the Today repository source. The service now
+  reconciles immutable punch work with incremental approved correction deltas and keeps persisted
+  other adjustments separate before invoking the current-day domain calculation.
+- Added a purpose-minimized browser correction contract containing only original and corrected
+  worked totals. Request and decision reasons, actors, workflow identifiers, raw interpretations,
+  and correction-detail timestamps remain outside the Today response. The tracked OpenAPI artifact
+  was regenerated.
+- Rebuilt the Today history as corrected interpretation evidence followed by the original ordered
+  punch list. Rebuilt calculation details as a captioned semantic table for expected sources,
+  credited sources, and the provisional result inside the collapsed native disclosure.
+- Added contract, selector, PostgreSQL integration, component, axe, narrow keyboard, and visual
+  coverage. Five separate `WL-1305` snapshots from 1440×900 through 320×568 were updated, compared
+  independently, and inspected at wide and narrow original resolution.
+- Aligned the phase-version checker with the accepted `WL-1313` Phase 13 gate after final project
+  memory exposed its superseded `WL-1305` identifier. Version `0.13.0` correctly remains unchanged.
+- Full verification passed runtime configuration, reproducible OpenAPI, formatting, ESLint,
+  288-file/1,507-import boundaries, CSS ownership, strict TypeScript, all 37 tooling tests, all 361
+  unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 36
+  Playwright scenarios with the opt-in visual capture skipped, and the production/public-root
+  build. Bundle budgets pass at 367,672 largest JavaScript bytes, 894,855 total JavaScript bytes,
+  241,785 gzip JavaScript bytes, and 49,993 CSS bytes.
+- The new database-backed correction-history case is present but did not execute locally:
+  `pnpm db:test` returned `ECONNREFUSED`, and `pnpm db:up` then encountered a local Docker API error.
+  No schema migration, dependency, lockfile, manifest, phase version, publication, deployment, or
+  tag changed. See `docs/129-today-timeline-calculation-evidence.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1305`. Exact partial-day work-versus-absence overlap and
+No decision blocks `WL-1306`. Exact partial-day work-versus-absence overlap and
 calculation-to-ledger mismatch signals still need dedicated repository facts; Today does not guess
-them from minute totals. `D-502` remains an explicit real assistive technology and exact
-retail-browser residual rather than a conformance claim. The temporary Astro backup is recoverable
-at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical
-and belongs only to the unnumbered portfolio draft.
+them from minute totals. The PostgreSQL-backed `WL-1305` correction-history case remains locally
+unexecuted until the Docker database service is available. `D-502` remains an explicit real
+assistive technology and exact retail-browser residual rather than a conformance claim. The
+temporary Astro backup is recoverable at
+`/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical and
+belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1305 — Rebuild Today's timeline and calculation details for transparent, concise, auditable explanations.`
+`WL-1306 — Replace generic warnings with actionable attention and correction-recovery workflows.`
 
 ## Update rules
 

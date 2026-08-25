@@ -128,12 +128,18 @@ export const todayTimelineEventSchema = z.strictObject({
   type: punchEventTypeSchema,
 });
 
+export const todayAppliedCorrectionSchema = z.strictObject({
+  correctedWorkedMinutes: minuteSchema,
+  originalWorkedMinutes: minuteSchema,
+});
+
 export const todayCalculationSourcesSchema = z.strictObject({
   absenceCreditMinutes: minuteSchema,
   absenceExpectedReductionMinutes: minuteSchema,
-  approvedAdjustmentMinutes: signedMinuteSchema,
+  approvedCorrectionMinutes: signedMinuteSchema,
   breakMinutesToday: minuteSchema,
   holidayExpectedReductionMinutes: minuteSchema,
+  otherApprovedAdjustmentMinutes: signedMinuteSchema,
   scheduledMinutes: minuteSchema,
   workedMinutesToday: minuteSchema,
 });
@@ -176,6 +182,7 @@ const thresholdWarningCodeSet = new Set<string>([
 
 export const todayAttendanceSchema = z
   .strictObject({
+    appliedCorrections: z.array(todayAppliedCorrectionSchema).max(500),
     asOf: instantSchema,
     attendance: todayAttendanceStateSchema,
     calculation: todayCalculationSchema,
@@ -213,7 +220,8 @@ export const todayAttendanceSchema = z
       const creditedMinutes =
         sources.workedMinutesToday +
         sources.absenceCreditMinutes +
-        sources.approvedAdjustmentMinutes;
+        sources.approvedCorrectionMinutes +
+        sources.otherApprovedAdjustmentMinutes;
       const provisionalDifference = creditedMinutes - expectedMinutes;
       const remainingExpectedMinutes = Math.max(expectedMinutes - creditedMinutes, 0);
       const valuesReconcile =
@@ -393,6 +401,7 @@ export type StartBreakRequest = z.infer<typeof startBreakRequestSchema>;
 export type StartBreakResult = z.infer<typeof startBreakResultSchema>;
 export type TodayAttendance = z.infer<typeof todayAttendanceSchema>;
 export type TodayActionAvailability = z.infer<typeof todayActionAvailabilitySchema>;
+export type TodayAppliedCorrection = z.infer<typeof todayAppliedCorrectionSchema>;
 export type TodayAttentionItem = z.infer<typeof todayAttentionItemSchema>;
 export type TodayCalculationSources = z.infer<typeof todayCalculationSourcesSchema>;
 export type TodayProvisionalCalculation = z.infer<typeof todayProvisionalCalculationSchema>;

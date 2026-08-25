@@ -191,6 +191,7 @@ import type {
   TeamStatusRepository,
   TimeAccountRepository,
   TodayAttendanceRepository,
+  TodayAppliedCorrectionRecord,
   TodayAttendanceSourceRecord,
   SubmitVacationRequestInput,
   VacationRequestConfigurationRecord,
@@ -4724,6 +4725,7 @@ class PostgresAttendanceRepository implements AttendanceRepository {
 }
 
 const TODAY_SOURCE_EVENT_LIMIT = 500;
+const TODAY_SOURCE_CORRECTION_LIMIT = 500;
 
 class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
   constructor(private readonly transaction: RepositoryTransaction) {}
@@ -4772,7 +4774,7 @@ class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
       )
       .orderBy(desc(punchEvents.eventSequence))
       .limit(TODAY_SOURCE_EVENT_LIMIT + 1);
-    const timelineTruncated = eventRows.length > TODAY_SOURCE_EVENT_LIMIT;
+    const eventHistoryTruncated = eventRows.length > TODAY_SOURCE_EVENT_LIMIT;
     const events = eventRows.slice(0, TODAY_SOURCE_EVENT_LIMIT).reverse().map(mapStoredPunchEvent);
 
     const scheduleRows = await this.transaction
@@ -4940,11 +4942,40 @@ class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
         ),
       )
       .limit(1);
-    const approvedAdjustmentMinutes = mapSignedMinutes(
+    const otherApprovedAdjustmentMinutes = mapSignedMinutes(
       projectionRow?.adjustmentMinutes ?? 0,
       'daily_projections',
       'adjustment_minutes',
     );
+
+    const appliedCorrectionRows = await this.transaction
+      .select({
+        appliedAt: appliedCorrections.createdAt,
+        interpretation: appliedCorrections.interpretation,
+        originalInterpretation: correctionRequests.originalInterpretation,
+      })
+      .from(appliedCorrections)
+      .innerJoin(
+        correctionRequests,
+        and(
+          eq(correctionRequests.id, appliedCorrections.correctionRequestId),
+          eq(correctionRequests.organizationId, appliedCorrections.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(appliedCorrections.organizationId, input.organizationId),
+          eq(appliedCorrections.employeeId, input.employeeId),
+          eq(appliedCorrections.localDate, input.localDate),
+          lte(appliedCorrections.createdAt, input.snapshotCapturedAt),
+        ),
+      )
+      .orderBy(asc(appliedCorrections.createdAt), asc(appliedCorrections.id))
+      .limit(TODAY_SOURCE_CORRECTION_LIMIT + 1);
+    const correctionHistoryTruncated = appliedCorrectionRows.length > TODAY_SOURCE_CORRECTION_LIMIT;
+    const mappedAppliedCorrections = appliedCorrectionRows
+      .slice(0, TODAY_SOURCE_CORRECTION_LIMIT)
+      .map(mapTodayAppliedCorrection);
 
     const [unresolvedCorrection] = await this.transaction
       .select({ id: correctionRequests.id })
@@ -4954,7 +4985,17 @@ class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
           eq(correctionRequests.organizationId, input.organizationId),
           eq(correctionRequests.employeeId, input.employeeId),
           eq(correctionRequests.localDate, input.localDate),
-          inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED', 'APPROVED']),
+          or(
+            inArray(correctionRequests.status, ['SUBMITTED', 'CHANGES_REQUESTED']),
+            and(
+              eq(correctionRequests.status, 'APPROVED'),
+              sql`not exists (
+                select 1 from ${appliedCorrections}
+                where ${appliedCorrections.organizationId} = ${correctionRequests.organizationId}
+                  and ${appliedCorrections.correctionRequestId} = ${correctionRequests.id}
+              )`,
+            ),
+          ),
         ),
       )
       .limit(1);
@@ -4981,7 +5022,7 @@ class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
     return Object.freeze({
       absenceCreditMinutes,
       absenceExpectedReductionMinutes,
-      approvedAdjustmentMinutes,
+      appliedCorrections: Object.freeze(mappedAppliedCorrections),
       events: Object.freeze(events),
       flexNegativeThresholdMinutes: warningThreshold,
       flexPositiveThresholdMinutes: warningThreshold,
@@ -4995,11 +5036,60 @@ class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
               id: mapDomainId<'Holiday'>(holidayRow.id, 'holidays', 'id'),
               name: holidayRow.name,
             }),
+      otherApprovedAdjustmentMinutes,
       policyAssignments: Object.freeze(mappedPolicyAssignments),
       scheduleAssignments: Object.freeze(mappedScheduleAssignments),
-      timelineTruncated,
+      timelineTruncated: eventHistoryTruncated || correctionHistoryTruncated,
     });
   }
+}
+
+function mapTodayAppliedCorrection(row: {
+  appliedAt: string;
+  interpretation: Readonly<Record<string, unknown>>;
+  originalInterpretation: Readonly<Record<string, unknown>>;
+}): TodayAppliedCorrectionRecord {
+  const originalCalculation = row.originalInterpretation['calculation'];
+  if (
+    originalCalculation === null ||
+    Array.isArray(originalCalculation) ||
+    typeof originalCalculation !== 'object' ||
+    row.interpretation['kind'] !== 'REPLACE_DAILY_WORK_INTERVAL'
+  ) {
+    throw new DatabaseValueError('applied_corrections', 'interpretation');
+  }
+  const originalCalculationRecord = originalCalculation as Readonly<Record<string, unknown>>;
+  const originalWorkedMinutes = mapNonNegativeMinutes(
+    originalCalculationRecord['workedMinutes'],
+    'correction_requests',
+    'original_interpretation',
+  );
+  const correctedWorkedMinutes = mapNonNegativeMinutes(
+    row.interpretation['workedMinutes'],
+    'applied_corrections',
+    'interpretation',
+  );
+
+  return Object.freeze({
+    adjustmentMinutes: mapSignedMinutes(
+      correctedWorkedMinutes - originalWorkedMinutes,
+      'applied_corrections',
+      'interpretation',
+    ),
+    appliedAt: mapInstant(row.appliedAt, 'applied_corrections', 'created_at'),
+    correctedEndsAt: mapInstant(
+      row.interpretation['endsAt'],
+      'applied_corrections',
+      'interpretation',
+    ),
+    correctedStartsAt: mapInstant(
+      row.interpretation['startsAt'],
+      'applied_corrections',
+      'interpretation',
+    ),
+    correctedWorkedMinutes,
+    originalWorkedMinutes,
+  });
 }
 
 function mapPolicyWarningThreshold(rules: Readonly<Record<string, unknown>> | undefined) {

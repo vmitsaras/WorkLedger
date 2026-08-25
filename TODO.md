@@ -164,7 +164,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1302` Implement the revised Today information architecture and visual hierarchy from the approved reference.
 - [x] `WL-1303` Implement the complete attendance-state matrix and reliable clock-action feedback and recovery behavior.
 - [x] `WL-1304` Separate current session, today’s progress, estimated completion, provisional difference, and posted flexible-time balance.
-- [ ] `WL-1305` Rebuild Today’s timeline and calculation details for transparent, concise, auditable explanations.
+- [x] `WL-1305` Rebuild Today’s timeline and calculation details for transparent, concise, auditable explanations.
 - [ ] `WL-1306` Replace generic warnings with actionable attention and correction-recovery workflows.
 - [ ] `WL-1307` Pass the dedicated Today responsive, accessibility, usability, and visual sub-gate.
 - [ ] `WL-1308` Prioritize actionable work and simplify filtering, actions, pagination, and narrow-screen behavior in Approval inbox.

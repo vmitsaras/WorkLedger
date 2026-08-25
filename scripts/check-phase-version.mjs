@@ -18,7 +18,7 @@ export const PHASE_GATES = [
   { phase: 10, taskId: 'WL-1008' },
   { phase: 11, taskId: 'WL-1106' },
   { phase: 12, taskId: 'WL-1206' },
-  { phase: 13, taskId: 'WL-1305' },
+  { phase: 13, taskId: 'WL-1313' },
 ];
 
 const WORKSPACE_VERSION_PATTERN = /^0\.(?:0|[1-9]\d*)\.0$/;

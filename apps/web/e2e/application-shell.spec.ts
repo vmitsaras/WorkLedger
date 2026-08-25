@@ -165,7 +165,35 @@ const TEAM_CALENDAR = {
   timeZone: 'Europe/Berlin',
 };
 const TODAY_ATTENDANCE: TodayAttendance = COHERENT_TODAY_ATTENDANCE;
-const PHASE_13_TODAY_BASELINE: TodayAttendance = COHERENT_TODAY_ATTENDANCE;
+const PHASE_13_TODAY_BASELINE: TodayAttendance = {
+  ...COHERENT_TODAY_ATTENDANCE,
+  appliedCorrections: [
+    {
+      correctedWorkedMinutes: 210,
+      originalWorkedMinutes: 195,
+    },
+  ],
+  calculation: {
+    ...COHERENT_TODAY_ATTENDANCE.calculation,
+    estimatedFinishAt: '2026-08-11T15:15:00Z',
+    provisional: {
+      calculationSources: {
+        absenceCreditMinutes: 0,
+        absenceExpectedReductionMinutes: 0,
+        approvedCorrectionMinutes: 15,
+        breakMinutesToday: 30,
+        holidayExpectedReductionMinutes: 0,
+        otherApprovedAdjustmentMinutes: 0,
+        scheduledMinutes: 480,
+        workedMinutesToday: 195,
+      },
+      creditedMinutesToday: 210,
+      expectedMinutesToday: 480,
+      provisionalDifferenceMinutes: -270,
+    },
+    remainingExpectedMinutes: 270,
+  },
+};
 const PERSONAL_TIME = {
   balance: {
     eligibleProjectedMinutes: 15,
@@ -1305,9 +1333,10 @@ test('keeps the calculation explanation and event history readable at 320px', as
             calculationSources: {
               absenceCreditMinutes: 0,
               absenceExpectedReductionMinutes: 0,
-              approvedAdjustmentMinutes: 0,
+              approvedCorrectionMinutes: 0,
               breakMinutesToday: 0,
               holidayExpectedReductionMinutes: 480,
+              otherApprovedAdjustmentMinutes: 0,
               scheduledMinutes: 480,
               workedMinutesToday: 60,
             },
@@ -1338,15 +1367,15 @@ test('keeps the calculation explanation and event history readable at 320px', as
   await page.goto('/today');
   const calculationDetails = page.locator('summary').filter({ hasText: 'Calculation details' });
   await expect(calculationDetails).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Expected time', exact: true })).toBeHidden();
+  const calculationTable = page.locator('.wl-calculation-table');
+  await expect(calculationTable).toBeHidden();
   await calculationDetails.focus();
   await page.keyboard.press('Enter');
+  await expect(calculationTable).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Why expected time is zero' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Expected time', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Credited time', exact: true })).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: 'Provisional difference', exact: true }),
-  ).toBeVisible();
+  await expect(calculationTable).toContainText('Expected time');
+  await expect(calculationTable).toContainText('Credited time');
+  await expect(calculationTable).toContainText('Provisional difference');
   await expect(
     page.getByRole('region', { name: 'Today’s timeline' }).getByRole('listitem'),
   ).toHaveCount(2);
@@ -1435,10 +1464,12 @@ test('preserves the Today task order, target sizes, and reflow across supported 
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('captures the WL-1304 Today metric hierarchy @phase13-baseline', async ({ page }) => {
+test('captures the WL-1305 Today timeline and calculation evidence @phase13-baseline', async ({
+  page,
+}) => {
   test.skip(
     process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1',
-    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1304 metric snapshots.',
+    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1305 evidence snapshots.',
   );
   await page.clock.setFixedTime(new Date('2026-08-11T10:45:00Z'));
   await page.route('**/v1/me/context', async (route) => {
@@ -1458,6 +1489,10 @@ test('captures the WL-1304 Today metric hierarchy @phase13-baseline', async ({ p
 
   await page.setViewportSize(viewports[0]);
   await page.goto('/today');
+  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeFocused();
+  const calculationSummary = page.locator('summary').filter({ hasText: 'Calculation details' });
+  await calculationSummary.click();
+  await expect(calculationSummary).toBeFocused();
 
   for (const viewport of viewports) {
     await test.step(`${viewport.name} viewport`, async () => {
@@ -1470,21 +1505,29 @@ test('captures the WL-1304 Today metric hierarchy @phase13-baseline', async ({ p
       await expect(currentStatus.getByText('11:15 AM', { exact: true })).toBeVisible();
       await expect(page.getByText('Estimate updated 12:45 PM')).toBeVisible();
       const progress = page.getByRole('region', { name: 'Today’s progress' });
-      await expect(progress.getByText('3h 15m credited', { exact: true })).toBeVisible();
-      await expect(progress.getByText('4h 45m', { exact: true })).toBeVisible();
-      await expect(progress.getByText('5:30 PM', { exact: true })).toBeVisible();
-      await expect(progress.getByText('−4h 45m', { exact: true })).toBeVisible();
+      await expect(progress.getByText('3h 30m credited', { exact: true })).toBeVisible();
+      await expect(progress.getByText('4h 30m', { exact: true })).toBeVisible();
+      await expect(progress.getByText('5:15 PM', { exact: true })).toBeVisible();
+      await expect(progress.getByText('−4h 30m', { exact: true })).toBeVisible();
       await expect(
         progress.getByRole('progressbar', { name: 'Today’s credited progress' }),
-      ).toHaveAttribute('value', '195');
+      ).toHaveAttribute('value', '210');
       const posted = page.getByRole('region', { name: 'Posted balance' });
       await expect(posted.getByText('+6h 20m', { exact: true })).toBeVisible();
       await expect(posted).toContainText('Posted through Monday, August 10, 2026');
       await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Clock out', exact: true })).toBeVisible();
+      const timeline = page.getByRole('region', { name: 'Today’s timeline' });
       await expect(
-        page.getByRole('region', { name: 'Today’s timeline' }).getByRole('listitem'),
-      ).toHaveCount(3);
+        timeline.getByRole('heading', { name: 'Approved interpretation' }),
+      ).toBeVisible();
+      await expect(timeline).toContainText('Worked time changed from 3h 15m to 3h 30m (+0h 15m).');
+      await expect(timeline.locator('.wl-timeline-list').getByRole('listitem')).toHaveCount(3);
+      await expect(
+        page.getByRole('table', {
+          name: 'Source amounts and server-calculated results for today',
+        }),
+      ).toContainText('Approved corrections+0h 15m');
       const hierarchy = await page.evaluate(() => {
         const status = document.querySelector('.wl-today-status')?.getBoundingClientRect();
         const progress = document
@@ -1546,7 +1589,7 @@ test('captures the WL-1304 Today metric hierarchy @phase13-baseline', async ({ p
       if (viewport.width === 1440 || viewport.width === 320) {
         await expectPageToHaveNoAxeViolations(page);
       }
-      await capturePhase13Metrics(page, viewport.name);
+      await capturePhase13Evidence(page, viewport.name);
     });
   }
 });
@@ -3016,11 +3059,11 @@ async function capturePhase12Administration(page: Page, name: string): Promise<v
   await capturePhase12Surface(page, 'wl1204', name);
 }
 
-async function capturePhase13Metrics(page: Page, name: string): Promise<void> {
+async function capturePhase13Evidence(page: Page, name: string): Promise<void> {
   if (process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1') return;
 
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page).toHaveScreenshot(['phase-13', 'wl1304', `${name}.png`], {
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1305', `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

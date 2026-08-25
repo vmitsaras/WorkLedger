@@ -1,14 +1,8 @@
 import type { TodayAttendance, TodayProvisionalCalculation } from '@workledger/contracts';
-import { Panel } from '@workledger/ui';
 
 import { formatDuration } from '../app/date-time-format.js';
 
-type CalculationRow = Readonly<{
-  label: string;
-  signed?: boolean;
-  total?: boolean;
-  value: number;
-}>;
+type CalculationRow = readonly [label: string, value: number, signed?: boolean, total?: boolean];
 
 export function DailyTimeBreakdown({
   holidayName,
@@ -22,15 +16,14 @@ export function DailyTimeBreakdown({
   const sources = provisional.calculationSources;
   return (
     <section className="grid gap-4" aria-labelledby="calculation-breakdown-title">
-      <div className="grid gap-1">
-        <h2 id="calculation-breakdown-title" className="m-0 text-2xl font-bold">
-          Calculation breakdown
+      <div className="grid gap-2">
+        <h2 id="calculation-breakdown-title" className="m-0 text-xl font-bold">
+          How today is calculated
         </h2>
         <p className="m-0 max-w-3xl text-sm leading-6 text-[var(--wl-text-muted)]">
           {status === 'PROVISIONAL'
-            ? 'This is a provisional estimate for today, not a posted or locked balance.'
-            : 'This estimate is incomplete and cannot become a posted balance until every blocker is resolved.'}{' '}
-          Every source amount remains visible below in hours and minutes.
+            ? 'Provisional, not posted, and still changing.'
+            : 'Incomplete. Resolve every blocker before relying on this result.'}
         </p>
       </div>
 
@@ -46,93 +39,70 @@ export function DailyTimeBreakdown({
         </div>
       ) : null}
 
-      <div className="wl-calculation-groups grid gap-4">
-        <CalculationGroup
-          description="Scheduled time minus holiday and absence reductions."
-          rows={[
-            { label: 'Scheduled time', value: sources.scheduledMinutes },
-            {
-              label: 'Public-holiday reduction',
-              value: sources.holidayExpectedReductionMinutes,
-            },
-            {
-              label: 'Absence reduction',
-              value: sources.absenceExpectedReductionMinutes,
-            },
-            {
-              label: 'Expected time',
-              total: true,
-              value: provisional.expectedMinutesToday,
-            },
-          ]}
-          title="Expected time"
-        />
-        <CalculationGroup
-          description="Worked time plus absence credit and approved adjustments. Break time is already excluded from worked time and is not subtracted again."
-          rows={[
-            { label: 'Worked time', value: sources.workedMinutesToday },
-            { label: 'Break time', value: sources.breakMinutesToday },
-            { label: 'Absence credit', value: sources.absenceCreditMinutes },
-            {
-              label: 'Approved adjustments',
-              signed: true,
-              value: sources.approvedAdjustmentMinutes,
-            },
-            {
-              label: 'Credited time',
-              total: true,
-              value: provisional.creditedMinutesToday,
-            },
-          ]}
-          title="Credited time"
-        />
-        <CalculationGroup
-          description="Credited time so far minus expected time. This provisional difference may be positive, zero, or negative and can still change today."
-          rows={[
-            { label: 'Credited time', value: provisional.creditedMinutesToday },
-            { label: 'Expected time', value: provisional.expectedMinutesToday },
-            {
-              label: 'Provisional difference',
-              signed: true,
-              total: true,
-              value: provisional.provisionalDifferenceMinutes,
-            },
-          ]}
-          title="Provisional difference"
-        />
+      <div className="wl-table-scroll">
+        <table className="wl-data-table wl-calculation-table">
+          <caption className="sr-only">
+            Source amounts and server-calculated results for today
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Source</th>
+              <th scope="col">Time</th>
+            </tr>
+          </thead>
+          <CalculationGroup
+            rows={[
+              ['Scheduled time', sources.scheduledMinutes],
+              ['Public holiday reduction', sources.holidayExpectedReductionMinutes],
+              ['Absence reduction', sources.absenceExpectedReductionMinutes],
+              ['Expected today', provisional.expectedMinutesToday, false, true],
+            ]}
+            title="Expected time"
+          />
+          <CalculationGroup
+            rows={[
+              ['Recorded work', sources.workedMinutesToday],
+              ['Breaks already excluded', sources.breakMinutesToday],
+              ['Approved corrections', sources.approvedCorrectionMinutes, true],
+              ['Absence credit', sources.absenceCreditMinutes],
+              ['Other approved adjustments', sources.otherApprovedAdjustmentMinutes, true],
+              ['Credited today', provisional.creditedMinutesToday, false, true],
+            ]}
+            title="Credited time"
+          />
+          <CalculationGroup
+            rows={[
+              ['Provisional difference', provisional.provisionalDifferenceMinutes, true, true],
+            ]}
+            title="Today’s result"
+          />
+        </table>
       </div>
+      <p className="m-0 text-xs leading-5 text-[var(--wl-text-muted)]">
+        Breaks are already excluded from recorded work. Corrections preserve original punch events.
+      </p>
     </section>
   );
 }
 
 function CalculationGroup({
-  description,
   rows,
   title,
 }: Readonly<{
-  description: string;
   rows: readonly CalculationRow[];
   title: string;
 }>) {
   return (
-    <Panel as="article" className="grid min-w-0 content-start gap-4">
-      <div className="grid gap-1">
-        <h3 className="m-0 text-lg font-bold">{title}</h3>
-        <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">{description}</p>
-      </div>
-      <dl className="m-0 grid gap-0">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className={`flex min-w-0 items-baseline justify-between gap-4 border-b border-[var(--wl-border)] py-3 last:border-0 ${row.total === true ? 'font-bold' : ''}`}
-          >
-            <dt className="min-w-0 text-sm text-[var(--wl-text-muted)]">{row.label}</dt>
-            <dd className="m-0 shrink-0 tabular-nums">
-              {formatDuration(row.value, row.signed === true)}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </Panel>
+    <tbody>
+      <tr>
+        <th colSpan={2}>{title}</th>
+      </tr>
+      {rows.map(([label, value, signed, total]) => (
+        <tr key={label} className={total === true ? 'font-bold' : undefined}>
+          <th scope="row">{label}</th>
+          <td>{formatDuration(value, signed === true)}</td>
+        </tr>
+      ))}
+    </tbody>
   );
 }

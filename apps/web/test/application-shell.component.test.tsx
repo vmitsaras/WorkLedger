@@ -350,6 +350,13 @@ test('renders the role-aware shell and focuses each completed route navigation',
     .getByRole('group', { name: 'Attendance actions' })
     .closest('.wl-today-action-footer');
   const timeline = screen.getByRole('region', { name: 'Today’s timeline' });
+  expect(within(timeline).getByText('Clocked in.')).toBeVisible();
+  await user.click(screen.getByText('Calculation details'));
+  expect(
+    screen.getByRole('table', {
+      name: 'Source amounts and server-calculated results for today',
+    }),
+  ).toBeVisible();
   const calculationDetails = container.querySelector('#calculation-details');
   if (currentStatus === null || actions === null || calculationDetails === null) {
     throw new Error('Expected the complete Today hierarchy to render.');
@@ -372,7 +379,7 @@ test('renders the role-aware shell and focuses each completed route navigation',
     screen.queryByText('The calculation source does not match its recorded ledger entry.'),
   ).not.toBeInTheDocument();
   expect(screen.queryByText(/configured flexible-time warning threshold/u)).not.toBeInTheDocument();
-  expect(screen.getByText('Clocked in')).toBeVisible();
+  expect(screen.getByText('Clocked in.')).toBeVisible();
 
   await user.click(screen.getByRole('link', { name: 'My time' }));
   const timeHeading = await screen.findByRole('heading', { name: 'My time' });
@@ -833,10 +840,16 @@ test('explains incomplete overnight record slices without presenting a final cal
   await expectNoAxeViolations(container);
 });
 
-test('explains the daily arithmetic and preserves attendance event order in semantic groups', async () => {
+test('explains corrected and original Today evidence in a semantic calculation table and timeline', async () => {
   const user = userEvent.setup();
   const completedSequence: TodayAttendance = {
     ...TODAY_ATTENDANCE,
+    appliedCorrections: [
+      {
+        correctedWorkedMinutes: 165,
+        originalWorkedMinutes: 195,
+      },
+    ],
     attendance: attendanceForState('OFF_WORK', 4),
     calculation: {
       ...TODAY_ATTENDANCE.calculation,
@@ -849,7 +862,8 @@ test('explains the daily arithmetic and preserves attendance event order in sema
               ...TODAY_ATTENDANCE.calculation.provisional,
               calculationSources: {
                 ...TODAY_ATTENDANCE.calculation.provisional.calculationSources,
-                approvedAdjustmentMinutes: -30,
+                approvedCorrectionMinutes: -30,
+                otherApprovedAdjustmentMinutes: 0,
               },
               creditedMinutesToday: 165,
               provisionalDifferenceMinutes: -315,
@@ -873,36 +887,48 @@ test('explains the daily arithmetic and preserves attendance event order in sema
   expect(within(progress).getByText('2h 45m credited')).toBeVisible();
   expect(within(progress).getByText('−5h 15m')).toBeVisible();
   expect(within(progress).getByText('Start work to estimate')).toBeVisible();
-  expect(screen.getByRole('region', { name: 'Calculation breakdown' })).not.toBeVisible();
+  expect(screen.queryByRole('region', { name: 'How today is calculated' })).not.toBeVisible();
   await user.click(screen.getByText('Calculation details'));
-  const breakdown = screen.getByRole('region', { name: 'Calculation breakdown' });
-  expect(within(breakdown).getByRole('heading', { name: 'Expected time' })).toBeVisible();
-  expect(within(breakdown).getByRole('heading', { name: 'Credited time' })).toBeVisible();
-  expect(within(breakdown).getByRole('heading', { name: 'Provisional difference' })).toBeVisible();
-  expect(breakdown).toHaveTextContent('Scheduled time8h 00m');
-  expect(breakdown).toHaveTextContent('Credited time2h 45m');
-  expect(breakdown).toHaveTextContent('Provisional difference−5h 15m');
-  expect(breakdown).toHaveTextContent('Approved adjustments−0h 30m');
-  expect(breakdown).toHaveTextContent(
-    'Break time is already excluded from worked time and is not subtracted again.',
-  );
+  const breakdown = screen.getByRole('region', { name: 'How today is calculated' });
+  const table = within(breakdown).getByRole('table', {
+    name: 'Source amounts and server-calculated results for today',
+  });
+  expect(table).toBeVisible();
+  expect(table).toHaveTextContent('Expected time');
+  expect(table).toHaveTextContent('Scheduled time8h 00m');
+  expect(table).toHaveTextContent('Credited time');
+  expect(table).toHaveTextContent('Credited today2h 45m');
+  expect(table).toHaveTextContent('Approved corrections−0h 30m');
+  expect(table).toHaveTextContent('Other approved adjustments0h 00m');
+  const provisionalDifferenceRow = within(table)
+    .getByRole('rowheader', { name: /Provisional difference/u })
+    .closest('tr');
+  expect(provisionalDifferenceRow).toHaveTextContent('−5h 15m');
+  await user.click(screen.getByText('Calculation details'));
+  expect(table).not.toBeVisible();
+  await user.click(screen.getByText('Calculation details'));
+  expect(table).toBeVisible();
 
   const timeline = screen.getByRole('region', { name: 'Today’s timeline' });
-  expect(timeline).toHaveTextContent('Times are shown in Europe/Berlin');
+  expect(timeline).toHaveTextContent('Tuesday, August 11, 2026 in Europe/Berlin');
   expect(timeline).toHaveTextContent('Events sharing one time keep their recorded order.');
-  const events = within(timeline).getAllByRole('listitem');
+  expect(within(timeline).getByRole('heading', { name: 'Approved interpretation' })).toBeVisible();
+  expect(timeline).toHaveTextContent('Worked time changed from 3h 15m to 2h 45m (−0h 30m).');
+  expect(within(timeline).getByRole('heading', { name: 'Original recorded events' })).toBeVisible();
+  const originalList = container.querySelector('.wl-timeline-list');
+  if (originalList === null) throw new Error('Expected the original event list.');
+  const events = within(originalList).getAllByRole('listitem');
   expect(events).toHaveLength(4);
   expect(events.map((event) => event.textContent)).toEqual([
-    'Clocked in9:00 AMWork session started.',
-    'Break started10:45 AMWorking time paused.',
-    'Break ended11:15 AMWorking time resumed.',
-    'Clocked out12:45 PMWork session ended.',
+    '9:00 AMClocked in. Work session started.',
+    '10:45 AMBreak started. Working time paused.',
+    '11:15 AMBreak ended. Working time resumed.',
+    '12:45 PMClocked out. Work session ended.',
   ]);
   await expectNoAxeViolations(container);
 });
 
 test('explains zero expected time before presenting credited work', async () => {
-  const user = userEvent.setup();
   const holidayToday: TodayAttendance = {
     ...TODAY_ATTENDANCE,
     calculation: {
@@ -934,9 +960,10 @@ test('explains zero expected time before presenting credited work', async () => 
         calculationSources: {
           absenceCreditMinutes: 0,
           absenceExpectedReductionMinutes: 0,
-          approvedAdjustmentMinutes: 0,
+          approvedCorrectionMinutes: 0,
           breakMinutesToday: 0,
           holidayExpectedReductionMinutes: 480,
+          otherApprovedAdjustmentMinutes: 0,
           scheduledMinutes: 480,
           workedMinutesToday: 60,
         },
@@ -963,7 +990,7 @@ test('explains zero expected time before presenting credited work', async () => 
   const postedBalance = screen.getByRole('region', { name: 'Posted balance' });
   expect(within(postedBalance).getByText('0h 00m')).toBeVisible();
   expect(within(postedBalance).getByText('No entries posted before today.')).toBeVisible();
-  await user.click(screen.getByText('Calculation details'));
+  await userEvent.setup().click(screen.getByText('Calculation details'));
   expect(screen.getByRole('heading', { name: 'Why expected time is zero' })).toBeVisible();
   expect(
     screen.getByText(/German Unity Day reduces today’s scheduled expectation to zero/u),
@@ -983,9 +1010,10 @@ test('caps the visual progress while preserving over-expected credited values wi
         calculationSources: {
           absenceCreditMinutes: 240,
           absenceExpectedReductionMinutes: 240,
-          approvedAdjustmentMinutes: -15,
+          approvedCorrectionMinutes: 0,
           breakMinutesToday: 0,
           holidayExpectedReductionMinutes: 0,
+          otherApprovedAdjustmentMinutes: -15,
           scheduledMinutes: 480,
           workedMinutesToday: 60,
         },

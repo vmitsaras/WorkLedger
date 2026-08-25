@@ -625,12 +625,13 @@ export type TodayAttendanceSourceInput = Readonly<{
   employeeId: DomainId<'Employee'>;
   localDate: LocalDate;
   organizationId: DomainId<'Organization'>;
+  snapshotCapturedAt: Instant;
 }>;
 
 export type TodayAttendanceSourceRecord = Readonly<{
   absenceCreditMinutes: NonNegativeMinutes;
   absenceExpectedReductionMinutes: NonNegativeMinutes;
-  approvedAdjustmentMinutes: SignedMinutes;
+  appliedCorrections: readonly TodayAppliedCorrectionRecord[];
   events: readonly StoredPunchEvent[];
   flexNegativeThresholdMinutes: NonNegativeMinutes | null;
   flexPositiveThresholdMinutes: NonNegativeMinutes | null;
@@ -638,9 +639,19 @@ export type TodayAttendanceSourceRecord = Readonly<{
   hasUnresolvedCorrection: boolean;
   head: AttendanceHeadRecord | null;
   holiday: TodayHolidayRecord | null;
+  otherApprovedAdjustmentMinutes: SignedMinutes;
   policyAssignments: readonly PolicyAssignment[];
   scheduleAssignments: readonly ScheduleAssignment[];
   timelineTruncated: boolean;
+}>;
+
+export type TodayAppliedCorrectionRecord = Readonly<{
+  adjustmentMinutes: SignedMinutes;
+  appliedAt: Instant;
+  correctedEndsAt: Instant;
+  correctedStartsAt: Instant;
+  correctedWorkedMinutes: NonNegativeMinutes;
+  originalWorkedMinutes: NonNegativeMinutes;
 }>;
 
 export type AppendPunchEvent = Readonly<{

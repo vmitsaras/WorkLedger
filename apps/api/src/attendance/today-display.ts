@@ -21,7 +21,9 @@ import {
 type AttentionCode = CalculationBlockerCode | CalculationWarningCode;
 
 export type TodayDisplaySelectionInput = Readonly<{
+  appliedCorrections: TodayAttendance['appliedCorrections'];
   asOf: Instant;
+  approvedCorrectionMinutes: SignedMinutes;
   attendanceRevision: number;
   attendanceState: AttendanceState;
   currentDay: CurrentDayAttendance;
@@ -29,6 +31,7 @@ export type TodayDisplaySelectionInput = Readonly<{
   flexPositiveThresholdMinutes: NonNegativeMinutes | null;
   holidayName: string | null;
   localDate: LocalDate;
+  otherApprovedAdjustmentMinutes: SignedMinutes;
   postedFlexBalanceMinutes: SignedMinutes;
   postedThroughDate: LocalDate | null;
   snapshotCapturedAt: Instant;
@@ -106,6 +109,7 @@ export function selectTodayAttendanceDisplay(input: TodayDisplaySelectionInput):
   const estimate = input.currentDay.estimate;
 
   return todayAttendanceSchema.parse({
+    appliedCorrections: input.appliedCorrections,
     asOf: input.asOf,
     attendance: {
       actionAvailability: ATTENDANCE_COMMANDS.map((command) =>
@@ -136,9 +140,10 @@ export function selectTodayAttendanceDisplay(input: TodayDisplaySelectionInput):
               calculationSources: {
                 absenceCreditMinutes: estimate.absenceCreditMinutes,
                 absenceExpectedReductionMinutes: estimate.absenceExpectedReductionMinutes,
-                approvedAdjustmentMinutes: estimate.approvedAdjustmentMinutes,
+                approvedCorrectionMinutes: input.approvedCorrectionMinutes,
                 breakMinutesToday: estimate.breakMinutes,
                 holidayExpectedReductionMinutes: estimate.holidayExpectedReductionMinutes,
+                otherApprovedAdjustmentMinutes: input.otherApprovedAdjustmentMinutes,
                 scheduledMinutes: estimate.scheduledMinutes,
                 workedMinutesToday: estimate.workedMinutes,
               },

@@ -443,6 +443,7 @@ function renderTodayReady({
         />
 
         <TodayAttendanceTimeline
+          appliedCorrections={today.appliedCorrections}
           events={today.timeline}
           localDate={today.localDate}
           timeZone={today.timeZone}
@@ -459,7 +460,7 @@ function renderTodayReady({
             <summary className="min-h-[var(--wl-control-min-block-size)] cursor-pointer rounded-[var(--wl-radius-control)] outline-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]">
               <span className="font-bold">Calculation details</span>
               <span className="mt-1 block text-sm text-[var(--wl-text-muted)]">
-                Review every source amount used for today’s estimate.
+                See evidence behind today’s estimate.
               </span>
             </summary>
             <div className="border-t border-[var(--wl-border)] pt-5">

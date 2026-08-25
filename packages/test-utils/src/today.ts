@@ -2,6 +2,7 @@ import type { TodayAttendance } from '@workledger/contracts';
 
 /** Coherent, purpose-minimized Today snapshot shared by browser-level tests. */
 export const COHERENT_TODAY_ATTENDANCE: TodayAttendance = {
+  appliedCorrections: [],
   asOf: '2026-08-11T10:45:00Z',
   attendance: {
     actionAvailability: [
@@ -26,9 +27,10 @@ export const COHERENT_TODAY_ATTENDANCE: TodayAttendance = {
       calculationSources: {
         absenceCreditMinutes: 0,
         absenceExpectedReductionMinutes: 0,
-        approvedAdjustmentMinutes: 0,
+        approvedCorrectionMinutes: 0,
         breakMinutesToday: 30,
         holidayExpectedReductionMinutes: 0,
+        otherApprovedAdjustmentMinutes: 0,
         scheduledMinutes: 480,
         workedMinutesToday: 195,
       },

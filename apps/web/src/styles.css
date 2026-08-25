@@ -573,12 +573,13 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   }
 
-  .wl-calculation-groups {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-  }
-
   .wl-zero-expected-note {
     overflow-wrap: anywhere;
+  }
+
+  .wl-calculation-table :is(th:not([colspan]), td):last-child {
+    text-align: end;
+    white-space: nowrap;
   }
 
   .wl-timeline-list {
@@ -586,7 +587,8 @@
   }
 
   .wl-timeline-item {
-    grid-template-columns: 0.75rem minmax(0, 1fr);
+    grid-template-columns: max-content var(--wl-space-3) minmax(0, 1fr);
+    align-items: start;
     padding-block: var(--wl-space-4);
   }
 
@@ -603,9 +605,9 @@
   }
 
   .wl-timeline-marker {
-    inline-size: 0.75rem;
-    block-size: 0.75rem;
-    margin-block-start: 0.35rem;
+    inline-size: var(--wl-space-3);
+    block-size: var(--wl-space-3);
+    margin-block-start: var(--wl-space-1);
     border: 2px solid var(--wl-action-primary);
     border-radius: 999px;
     background: var(--wl-surface-raised);

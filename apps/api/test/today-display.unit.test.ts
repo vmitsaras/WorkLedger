@@ -58,7 +58,9 @@ function selectToday(
   currentDayOverrides: Partial<CurrentDayAttendance> = {},
 ) {
   return selectTodayAttendanceDisplay({
+    appliedCorrections: [],
     asOf: instant('2026-08-11T10:45:00Z'),
+    approvedCorrectionMinutes: signedMinutes(0),
     attendanceRevision: 3,
     attendanceState: 'WORKING',
     currentDay: currentDay(currentDayOverrides),
@@ -66,6 +68,7 @@ function selectToday(
     flexPositiveThresholdMinutes: minutes(600),
     holidayName: null,
     localDate: localDate('2026-08-11'),
+    otherApprovedAdjustmentMinutes: signedMinutes(0),
     postedFlexBalanceMinutes: signedMinutes(380),
     postedThroughDate: localDate('2026-08-10'),
     snapshotCapturedAt: instant('2026-08-11T10:45:30Z'),
@@ -177,7 +180,7 @@ test('keeps a completed multi-session day provisional and preserves its immutabl
   ]);
 });
 
-test('exposes paid absence and approved adjustment as separate source amounts', () => {
+test('exposes paid absence and other approved adjustment as separate source amounts', () => {
   const estimate = {
     absenceCreditMinutes: minutes(240),
     absenceExpectedReductionMinutes: minutes(240),
@@ -191,7 +194,7 @@ test('exposes paid absence and approved adjustment as separate source amounts', 
     workedMinutes: minutes(60),
   };
   const today = selectToday(
-    {},
+    { otherApprovedAdjustmentMinutes: signedMinutes(-15) },
     {
       estimate,
       estimatedFinishAt: null,
@@ -204,9 +207,10 @@ test('exposes paid absence and approved adjustment as separate source amounts', 
     calculationSources: {
       absenceCreditMinutes: 240,
       absenceExpectedReductionMinutes: 240,
-      approvedAdjustmentMinutes: -15,
+      approvedCorrectionMinutes: 0,
       breakMinutesToday: 0,
       holidayExpectedReductionMinutes: 0,
+      otherApprovedAdjustmentMinutes: -15,
       scheduledMinutes: 480,
       workedMinutesToday: 60,
     },
@@ -214,6 +218,39 @@ test('exposes paid absence and approved adjustment as separate source amounts', 
     expectedMinutesToday: 240,
     provisionalDifferenceMinutes: 45,
   });
+});
+
+test('keeps applied correction evidence separate from immutable punches and other adjustments', () => {
+  const baseEstimate = currentDay().estimate;
+  if (baseEstimate === null) throw new Error('Expected a provisional estimate fixture.');
+  const correction = {
+    correctedWorkedMinutes: 225,
+    originalWorkedMinutes: 195,
+  } as const;
+  const today = selectToday(
+    {
+      appliedCorrections: [correction],
+      approvedCorrectionMinutes: signedMinutes(30),
+    },
+    {
+      estimate: {
+        ...baseEstimate,
+        approvedAdjustmentMinutes: signedMinutes(30),
+        creditedMinutes: minutes(225),
+        dailyBalanceMinutes: signedMinutes(-255),
+      },
+      estimatedFinishAt: instant('2026-08-11T15:00:00Z'),
+      remainingExpectedMinutes: minutes(255),
+    },
+  );
+
+  expect(today.appliedCorrections).toEqual([correction]);
+  expect(today.timeline).toHaveLength(3);
+  expect(today.calculation.provisional?.calculationSources).toMatchObject({
+    approvedCorrectionMinutes: 30,
+    otherApprovedAdjustmentMinutes: 0,
+  });
+  expect(today.calculation.provisional?.creditedMinutesToday).toBe(225);
 });
 
 test('turns unresolved corrections and unavailable calculations into actionable blockers', () => {
