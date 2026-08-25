@@ -97,7 +97,7 @@ or request identifier, IP address, user agent, or unrestricted technical payload
 separate HR and technical audit audiences, current scope, non self actions, no store responses, and
 protected in memory state remain unchanged.
 
-## Accepted residuals and Phase 13 handoff
+## Accepted residuals and later-work handoff
 
 - `UI-014` is closed through the stored systematic visual baseline and `pnpm run test:visual`.
 - `UI-015` is closed through canonical route assertions, implemented request and technical audit
@@ -106,8 +106,8 @@ protected in memory state remain unchanged.
   residual described above.
 - The ignored Phase 11 and Phase 12 review captures remain local evidence. The tracked snapshots
   are the deterministic regression source.
-- The temporary Astro backup remains noncanonical. `WL-1300` owns the explicit Phase 13 site
-  scaffold or adoption decision.
+- The temporary Astro backup remains noncanonical. The unnumbered portfolio draft retains the site
+  scaffold or adoption decision; the reconciled Phase 13 does not adopt it.
 
 ## Versioning
 

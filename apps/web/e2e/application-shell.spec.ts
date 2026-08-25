@@ -200,6 +200,53 @@ const TODAY_ATTENDANCE = {
   ],
   timelineTruncated: false,
 };
+const PHASE_13_TODAY_BASELINE = {
+  asOf: '2026-08-11T10:45:00Z',
+  attendance: {
+    activeSince: '2026-08-11T09:15:00Z',
+    attendanceRevision: 3,
+    state: 'WORKING',
+    validActions: ['START_BREAK', 'CLOCK_OUT'],
+  },
+  calculation: {
+    blockers: [],
+    estimate: {
+      absenceCreditMinutes: 0,
+      absenceExpectedReductionMinutes: 0,
+      adjustmentMinutes: 0,
+      balanceMinutes: -285,
+      breakMinutes: 30,
+      creditedMinutes: 195,
+      expectedMinutes: 480,
+      holidayExpectedReductionMinutes: 0,
+      scheduledMinutes: 480,
+      workedMinutes: 195,
+    },
+    holidayName: null,
+    status: 'PROVISIONAL',
+    warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
+  },
+  localDate: '2026-08-11',
+  timeZone: 'Europe/Berlin',
+  timeline: [
+    {
+      id: '123e4567-e89b-42d3-a456-426614174301',
+      occurredAt: '2026-08-11T07:00:00Z',
+      type: 'CLOCK_IN',
+    },
+    {
+      id: '123e4567-e89b-42d3-a456-426614174302',
+      occurredAt: '2026-08-11T08:45:00Z',
+      type: 'BREAK_START',
+    },
+    {
+      id: '123e4567-e89b-42d3-a456-426614174303',
+      occurredAt: '2026-08-11T09:15:00Z',
+      type: 'BREAK_END',
+    },
+  ],
+  timelineTruncated: false,
+};
 const PERSONAL_TIME = {
   balance: {
     eligibleProjectedMinutes: 15,
@@ -1359,6 +1406,60 @@ test('preserves the Today task order, target sizes, and reflow across supported 
     }),
   ).toBe(true);
   await expectPageToHaveNoAxeViolations(page);
+});
+
+test('captures the coherent Phase 13 Today audit baseline @phase13-baseline', async ({ page }) => {
+  test.skip(
+    process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1',
+    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1300 audit snapshots.',
+  );
+  await page.clock.setFixedTime(new Date('2026-08-11T10:45:00Z'));
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({ json: success(PHASE_13_TODAY_BASELINE), status: 200 });
+  });
+
+  const viewports = [
+    { height: 900, name: 'today-audit-1440x900', width: 1440 },
+    { height: 720, name: 'today-audit-1024x720', width: 1024 },
+    { height: 1024, name: 'today-audit-768x1024', width: 768 },
+    { height: 844, name: 'today-audit-390x844', width: 390 },
+    { height: 568, name: 'today-audit-320x568', width: 320 },
+  ] as const;
+
+  await page.setViewportSize(viewports[0]);
+  await page.goto('/today');
+
+  for (const viewport of viewports) {
+    await test.step(`${viewport.name} viewport`, async () => {
+      await page.setViewportSize({ height: viewport.height, width: viewport.width });
+      await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
+      await expect(page.getByText('Since 11:15 AM.')).toBeVisible();
+      await expect(page.getByText('Estimate updated 12:45 PM')).toBeVisible();
+      await expect(
+        page.locator('#calculation-title').locator('..').getByText('−4h 45m', { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText('3h 15m credited − 8h 00m expected')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Clock out', exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('region', { name: 'Today’s timeline' }).getByRole('listitem'),
+      ).toHaveCount(3);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+
+      if (viewport.width === 1440 || viewport.width === 320) {
+        await expectPageToHaveNoAxeViolations(page);
+      }
+      await capturePhase13Baseline(page, viewport.name);
+    });
+  }
 });
 
 test('keeps text, controls, focus, and boundaries perceivable in forced colors', async ({
@@ -2751,6 +2852,16 @@ async function capturePhase12Manager(page: Page, name: string): Promise<void> {
 
 async function capturePhase12Administration(page: Page, name: string): Promise<void> {
   await capturePhase12Surface(page, 'wl1204', name);
+}
+
+async function capturePhase13Baseline(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1') return;
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1300', `${name}.png`], {
+    animations: 'disabled',
+    fullPage: true,
+  });
 }
 
 async function capturePhase12Surface(

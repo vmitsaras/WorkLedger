@@ -4,6 +4,26 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-25 — Phase 13 hardening supersedes the numbered portfolio phase
+
+The explicit `WL-1300` request adopts the supplied attendance clarity and workflow usability
+hardening catalog as Phase 13. This supersedes the tracked use of `WL-1300` through `WL-1305` for
+portfolio presentation. The accepted portfolio scope is preserved in
+`docs/drafts/portfolio-presentation.md`, but it remains an unnumbered draft because later product
+phases may be inserted before it.
+
+- Phase 13 is attendance clarity, operational trust, and workflow usability hardening
+  (`WL-1300` through `WL-1313`), with gate version `0.14.0`.
+- Portfolio presentation has no active task identifiers, phase number, dependency chain, or
+  version gate.
+- The supplied handoff pack is planning input. Ratified domain, permission, immutable-history,
+  ledger, UX, and API rules remain authoritative when its examples conflict with the repository.
+- The Today reference image governs hierarchy only. Its sample arithmetic is not domain evidence.
+
+This reconciliation changes task coordination only. It does not authorize early portfolio work,
+production contract changes in `WL-1300`, a manifest bump before `WL-1313`, or deletion of the
+supplied handoff pack.
+
 ### 2026-08-21 — Company identity remains post-MVP bounded scope
 
 `docs/01-scope-and-non-goals.md` lists organization branding as a nice-to-have after MVP, while the

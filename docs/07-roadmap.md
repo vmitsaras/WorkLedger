@@ -430,29 +430,60 @@ Apply the Phase 11 foundation to complete, understandable, recoverable workflows
 
 ---
 
-# Phase 13 — Portfolio Presentation
+# Phase 13 — Attendance Clarity, Operational Trust, and Workflow Usability Hardening
 
 ## Objective
 
-Present the product decisions and engineering quality clearly to recruiters, collaborators, and open-source users.
+Turn the Phase 12 implementation into a cognitively clear, trustworthy, and production-ready
+experience. Establish one coherent Today display contract before changing layout, then apply the
+proven clarity standards to manager and administration workflows.
+
+The previously scheduled portfolio presentation work remains preserved as an unnumbered draft in
+`docs/drafts/portfolio-presentation.md`. It has no active task identifiers or version gate until the
+remaining product phases are known.
+
+## Dependencies
+
+- Phase 12 is complete and all workspace manifests are at `0.13.0`.
+- Existing domain rules, immutable attendance history, ledger behavior, permissions, and API
+  contracts remain authoritative.
+- `docs/references/phase-13/today-redesign-reference.png` is a visual hierarchy reference, not a
+  source of domain or arithmetic truth.
 
 ## Deliverables
 
-- Astro public project site.
-- Safe seeded demo and reset.
-- Architecture and domain diagrams.
-- Accessibility statement and test notes.
-- Threat model summary.
-- Calculation examples.
-- Screenshots or short workflow media.
-- README, setup, limitations, and roadmap.
+- One coherent Today attendance snapshot and display contract.
+- Revised Today information architecture and responsive implementation.
+- Complete attendance-state and clock-action feedback matrix.
+- Clear separation of current session, daily progress, provisional difference, and posted
+  flexible-time balance.
+- Actionable warning and recovery patterns.
+- Improved timeline and calculation disclosure.
+- Streamlined manager Approval inbox and Team status workflows.
+- Clearer employee and team administration surfaces.
+- Cross-route navigation, microcopy, focus, overflow, and responsive consistency.
+- Deterministic visual, integration, usability, and accessibility regression coverage.
+- Updated screenshots, product documentation, status files, and release notes.
 
-## Portfolio release gate
+## Attendance clarity and operational trust release gate
 
-- [ ] A visitor understands the problem and product within the first screen.
-- [ ] Demo data tells realistic employee and manager stories.
-- [ ] Documentation explains why immutable events, ledgers, Temporal, scoped permissions, and locking were selected.
-- [ ] Accessibility is demonstrated rather than merely claimed.
-- [ ] Installation and local setup are reproducible.
-- [ ] Known limitations are direct and credible.
-- [ ] The gate advances every workspace manifest to `0.14.0`.
+- [ ] Every value on Today comes from one coherent server snapshot and all visible times reconcile.
+- [ ] A first-time employee can identify current state, session start, worked time, remaining time,
+  next action, and any real problem without opening a secondary panel.
+- [ ] An in-progress day is not presented as posted flexible-time debt.
+- [ ] Posted flexible-time balance is dated and visually separated from current-day progress.
+- [ ] Every `Needs attention` item is actionable, dated where relevant, and classified as blocking
+  or non-blocking.
+- [ ] Clock actions pass duplicate, stale-state, network-loss, two-tab/device, and session-expiry
+  tests.
+- [ ] Today passes keyboard-only, screen-reader, 200% zoom, 320 CSS-pixel reflow, forced-colors,
+  reduced-motion, and mobile tests.
+- [ ] Approval inbox defaults to actionable work and secondary filters no longer dominate the
+  first viewport.
+- [ ] Team and employee administration rows expose clear next actions and work on narrow screens.
+- [ ] Permanent horizontal-scroll instructions are removed unless overflow is present and
+  relevant.
+- [ ] Automated and manual visual, usability, accessibility, and regression gates pass.
+- [ ] Project status, roadmap, task board, release notes, screenshots, and relevant UX
+  documentation are current.
+- [ ] The gate advances every workspace manifest to `0.14.0` only after every Phase 13 task passes.

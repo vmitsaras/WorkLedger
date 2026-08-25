@@ -1,21 +1,20 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 13 — Portfolio presentation
+**Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 0 of 6 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 1 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1300` (next)
-**Status:** WL-1206 complete — visual regression, usability, accessibility, and UI release gates passed
+**Active task:** `WL-1301` (next)
+**Status:** WL-1300 complete — Phase 12 audited and deterministic Phase 13 evidence registered
 **Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. Quiet Ledger now governs Today, personal records,
-request/monthly workflows, manager decisions, administration, settings, reports, both audit
-audiences, and shared cross-route states and copy. The UI release gate adds 19 deterministic
-Chromium snapshots and dispositions the manual assistive technology boundary without making an
-unsupported conformance claim. The next bounded slice is `WL-1300`: scaffold the deferred Astro
-project site and case study information architecture.
+Phase 12 is complete at `0.13.0`. `WL-1300` reconciles Phase 13 around attendance clarity and
+workflow hardening, registers the hierarchy-only Today reference, traces the Phase 12
+implementation and contradictions, and adds five reproducible Today audit baselines without
+changing production behavior. The next bounded slice is `WL-1301`: establish one authoritative
+Today attendance display contract and eliminate contradictory timestamps, durations, and balances.
 
 ## Verified decisions
 
@@ -252,7 +251,7 @@ project site and case study information architecture.
 - Cross-project deep/sibling-source imports, app imports, undeclared path-alias edges, workspace cycles, production test/config imports, and browser imports of authoritative domain/database/server code are prohibited and fail executable checks.
 - pnpm with one root lockfile and no Turborepo is sufficient for the initial workspace; new production projects, dependency edges, orchestration, or package publication require an ADR.
 - The root toolchain is pinned to Node `24.18.0` LTS and pnpm `11.20.0` stable; the generated lockfile records the Node runtime integrity variants.
-- The exact workspace is two non-importable application shells plus six packages with explicit exports; five expose only their typed root and config also exposes its accepted tooling surfaces. `apps/site` remains deferred to the portfolio phase (now Phase 13).
+- The exact workspace is two non-importable application shells plus six packages with explicit exports; five expose only their typed root and config also exposes its accepted tooling surfaces. `apps/site` remains deferred to the unnumbered portfolio draft.
 - The eight accepted internal edges resolve through `@workledger/*` package roots and emit typed ESM entries; no sibling-source or deep import exists in the scaffold.
 - TypeScript `7.0.2` is governed by a shared strict composite configuration; the root solution and per-project references exactly mirror the eight runtime edges and cannot use path aliases.
 - Seven explicit development-only `@workledger/config` edges provide shared TypeScript configuration without making config production runtime code.
@@ -1496,8 +1495,10 @@ project site and case study information architecture.
   production gate.
 - Recorded 14 additional medium/low foundation, responsive, hierarchy, state-consistency, and test
   coverage findings with exact owners through `WL-1206`.
-- Reconciled the intentional UI/UX roadmap insertion: UI foundation is Phase 11, workflow polish is
-  Phase 12, and the preserved portfolio scope is Phase 13.
+- Reconciled the intentional UI/UX roadmap insertion as it stood on 2026-08-21: UI foundation was
+  Phase 11, workflow polish was Phase 12, and portfolio was then scheduled as Phase 13. The
+  explicit 2026-08-25 Phase 13 reconciliation supersedes that future numbering while preserving
+  the portfolio scope as an unnumbered draft.
 - Verification passed through direct equivalents: Prettier; ESLint and source boundaries; strict
   TypeScript build; 32 tooling tests; 323 unit/component tests; 12 integration tests with 45
   database-dependent skips; all 25 Playwright scenarios across the configured browser matrix; web
@@ -1902,17 +1903,46 @@ project site and case study information architecture.
   boundaries, strict TypeScript, 32 focused tooling tests, runtime config, OpenAPI, production
   build/budgets/public imports, all 29 visual flows and 19 snapshots, and `git diff --check`.
 
+**2026-08-25 — WL-1300 Phase 12 audit and Phase 13 baseline**
+
+- Reconciled the numbered Phase 13 as attendance clarity, operational trust, and workflow
+  usability hardening with 14 tasks through the `WL-1313`/`0.14.0` gate. Preserved the former
+  portfolio presentation scope as an unnumbered draft without task IDs or a version gate.
+- Registered the hierarchy-only Today reference at
+  `docs/references/phase-13/today-redesign-reference.png` without changing the supplied handoff
+  pack.
+- Added `docs/124-phase-13-baseline.md` with route, component, query, API, service, domain,
+  repository, and test inventories; a source classification for every visible Today value; all 17
+  warning/blocker codes; the complete state/error matrix; route-specific P1/P2 findings; and the
+  exact `WL-1301` candidate file groups.
+- Kept the Phase 12 Today fixture and all 19 Phase 12 snapshots unchanged. Added a separate coherent
+  fixture fixed at 2026-08-11 12:45 PM Europe/Berlin and five opt-in full-page Chromium baselines
+  from 1440×900 through 320×568.
+- Manually inspected all five new images for hierarchy, reconciled values, clipping, focus,
+  responsive order, and private data. No P0 finding or page-level horizontal overflow was found.
+  The provisional flexible-time warning, excessive estimate hierarchy, and input-like H1 focus
+  treatment remain recorded findings rather than silent fixes.
+- `pnpm verify` passed under Node `24.18.0` and pnpm `11.20.0` through a temporary no-install wrapper:
+  37 tooling tests, 343 unit/component tests, 13 available integration tests with 45
+  PostgreSQL-dependent skips, 34 established Playwright scenarios with the Phase 13 scenario
+  skipped unless explicitly enabled, strict TypeScript, lint, formatting,
+  OpenAPI, build, bundle, boundaries, CSS, workspace, and version checks all passed. The unchanged
+  Phase 12 visual gate passed 29 flows and 19 snapshots; the Phase 13 update and comparison runs
+  passed all five new screenshots. `git diff --check` passed.
+- No production domain, database, API, TypeScript, permission, or UI behavior changed. No dependency,
+  manifest, migration, lockfile, Phase 12 snapshot, or handoff-pack file changed.
+
 ## Current blockers
 
-No decision blocks `WL-1300`. `UI-014` and `UI-015` are closed by the Phase 12 visual and route
-regression gate. `D-502` is dispositioned with explicit real assistive technology and exact retail
-browser residuals. The temporary Astro backup is recoverable at
-`/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical;
-`WL-1300` owns the explicit site scaffold or adoption decision.
+No decision blocks `WL-1301`. `AUD-1300-02` through `AUD-1300-05` define the contract and source
+questions that task must resolve. `D-502` remains an explicit real assistive technology and exact
+retail-browser residual rather than a conformance claim. The temporary Astro backup is recoverable
+at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical
+and belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1300 — Scaffold the Astro project site and case-study information architecture.`
+`WL-1301 — Establish one authoritative Today attendance display contract and eliminate contradictory timestamps, durations, and balances.`
 
 ## Update rules
 

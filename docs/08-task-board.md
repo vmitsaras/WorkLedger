@@ -216,13 +216,21 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 ---
 
-## Phase 13 — Portfolio presentation
+## Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-1300 | Scaffold Astro project site and case-study information architecture | WL-1206 | Accessible public shell and project narrative | Not started |
-| WL-1301 | Add safe demo mode, demo accounts, reset, and clear data disclaimer | WL-1206 | Demo cannot expose production-style secrets; deterministic reset | Not started |
-| WL-1302 | Publish architecture, domain, accessibility, security, and tradeoff documentation | WL-1300 | Diagrams/text match implementation | Not started |
-| WL-1303 | Add screenshots, workflow media, and example calculations | WL-1300, WL-1301 | Media has alternatives/captions and reflects real states | Not started |
-| WL-1304 | Finalize public README, setup, scripts, limitations, and roadmap | WL-1300–WL-1303 | Fresh-user documentation review | Not started |
-| WL-1305 | Execute portfolio release gate | WL-1300–WL-1304 | Public quality checklist complete; every workspace manifest is `0.14.0` | Not started |
+| WL-1300 | Audit Phase 12 implementation, capture deterministic baselines, and register Phase 13 references and constraints | WL-1206 | Route/component/API inventory; baseline screenshots; reference image registered; risk and contradiction report | Done |
+| WL-1301 | Establish authoritative Today attendance display contract and eliminate contradictory timestamps, durations, and balances | WL-1300 | Typed display contract; coherent fixture; selector/contract tests; all visible values reconcile to one `asOf` snapshot | Not started |
+| WL-1302 | Implement revised Today information architecture and visual hierarchy from approved reference | WL-1301 | Desktop/tablet/mobile implementation; screenshot comparison; design-token and component review | Not started |
+| WL-1303 | Implement complete attendance-state matrix and reliable clock-action feedback and recovery | WL-1301, WL-1302 | State stories; mutation integration tests; duplicate/stale/offline/session-expiry/two-device Playwright evidence | Not started |
+| WL-1304 | Separate current session, today progress, estimated completion, provisional difference, and posted flexible-time balance | WL-1301, WL-1302 | Semantic metric hierarchy; calculation tests; no provisional-debt warning; accessible progress semantics | Not started |
+| WL-1305 | Rebuild Today timeline and calculation details for concise and auditable explanation | WL-1301, WL-1302, WL-1304 | Timeline/list and disclosure tests; corrected/original history representation; calculation-table evidence | Not started |
+| WL-1306 | Replace generic warnings with actionable attention and correction-recovery workflows | WL-1301, WL-1303, WL-1305 | Attention-item contract; actionable CTAs; blocking/non-blocking behavior; recovery integration tests | Not started |
+| WL-1307 | Execute dedicated Today responsive, accessibility, usability, and visual sub-gate | WL-1302–WL-1306 | 1440/1024/768/390/320 evidence; keyboard, screen-reader, axe, reflow, forced-colors, reduced-motion, usability notes | Not started |
+| WL-1308 | Prioritize actionable work and simplify Approval inbox filtering, actions, pagination, and narrow-screen behavior | WL-1307 | Needs-review default; URL-state tests; responsive table/card evidence; privacy and permission regression | Not started |
+| WL-1309 | Improve Team status comprehension, filtering, row actionability, labels, and workspace navigation | WL-1307 | Interactive overview filters; actionable rows; copy/navigation review; narrow-screen and authorization tests | Not started |
+| WL-1310 | Improve employee and team administration search, primary actions, route separation, dense layouts, and copy | WL-1307 | Employee search and row actions; separate Teams route; admin responsive tests; history preservation evidence | Not started |
+| WL-1311 | Normalize cross-route navigation, microcopy, heading focus, status semantics, card density, and table-overflow behavior | WL-1308–WL-1310 | Copy lexicon; route/nav audit; conditional overflow behavior; focus and status visual review | Not started |
+| WL-1312 | Complete deterministic cross-route state, visual-regression, integration, accessibility, and usability coverage | WL-1307–WL-1311 | Story/state matrix; screenshot suite; Playwright flows; axe and manual audit report; no open P0/P1 UX defects | Not started |
+| WL-1313 | Execute Phase 13 release gate, update evidence and documentation, and bump manifests to 0.14.0 | WL-1312 | Signed release checklist; updated roadmap/task/status/docs/screenshots; version consistency; clean CI | Not started |

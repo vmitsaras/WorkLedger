@@ -25,7 +25,7 @@ moved intact to:
 
 The backup exists, `apps/site` is absent, and `pnpm run workspace:check` accepts the intended root
 plus eight projects. The backup is recoverable but temporary. It must not be treated as the
-canonical site source or copied back as a workspace until `WL-1300` explicitly scaffolds/adopts the
+canonical site source or copied back as a workspace until the unnumbered portfolio draft explicitly scaffolds/adopts the
 Astro project.
 
 ## Gate criteria
@@ -147,7 +147,7 @@ derives only the public internal milestone from the root manifest and adds no sc
 
 The next roadmap task is `WL-1200`: redesign Today attendance, calculation hierarchy, warnings,
 recovery, and primary clock-action feedback. The temporary Astro backup is not a Phase 12 input;
-the public site remains deferred until `WL-1300`.
+the public site remains deferred until the unnumbered portfolio draft is scheduled.
 
 ## Versioning
 

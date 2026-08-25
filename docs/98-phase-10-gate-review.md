@@ -125,7 +125,7 @@ This is an internal milestone only. It creates no Git tag, npm publication, cont
 
 The original handoff assigned `WL-1100` to the Astro portfolio site. The roadmap insertion recorded
 on 2026-08-21 supersedes that sequencing: `WL-1100` is now the canonical UI/UX baseline audit, and
-the preserved portfolio-site task is `WL-1300` after the Phase 12 gate.
+the preserved portfolio-site scope is now an unnumbered draft after the Phase 13 reconciliation.
 
 Open items carried beyond Phase 10:
 - `D-502` — Manual AT pairing evidence (macOS/Safari/VoiceOver, iOS/VoiceOver, Windows NVDA, Android TalkBack) to be completed or explicitly dispositioned by `WL-1206`.

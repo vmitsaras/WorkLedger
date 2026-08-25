@@ -5,15 +5,17 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 5 of 5 — Production and UI release gates complete**<br>
-> **Current phase progress: Phase 13 — 0 of 6 tasks complete**<br>
+> **Current phase progress: Phase 13 — 1 of 14 tasks complete**<br>
 > **Internal milestone: `0.13.0`**
 
 Phases 0–12 have passed their exit gates. The repository includes attendance, flexible-time and
 leave ledgers, correction and absence workflows, manager approvals and team availability, monthly
 review and locking, post-lock adjustments, reports and safe CSV export, HR administration,
 separate technical administration, production deployment and operations, and the Quiet Ledger UI
-system across every canonical application route. Phase 13 now owns the deferred public project
-site, safe demo presentation, case study media, and final portfolio documentation.
+system across every canonical application route. Phase 13 now audits and hardens attendance
+clarity, operational trust, responsive workflow usability, and release evidence. The deferred
+public project site, safe demo presentation, case study media, and final portfolio documentation
+remain an unnumbered draft without a task or version gate.
 
 The production reference deployment, backup/restore, migration/upgrade, retention, diagnostics,
 security, accessibility automation, and UI release gates are complete. `0.13.0` is an internal
