@@ -1344,7 +1344,9 @@ test('keeps the calculation explanation and event history readable at 320px', as
   await expect(page.getByRole('heading', { name: 'Why expected time is zero' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Expected time', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Credited time', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Estimated balance', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Provisional difference', exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Today’s timeline' }).getByRole('listitem'),
   ).toHaveCount(2);
@@ -1401,7 +1403,7 @@ test('preserves the Today task order, target sizes, and reflow across supported 
   expect(
     await page.evaluate(() => {
       const currentStatus = document.querySelector('#current-status-title')?.closest('section');
-      const calculation = document.querySelector('#calculation-title')?.closest('section');
+      const calculation = document.querySelector('#today-progress-title')?.closest('section');
       return (
         currentStatus !== null &&
         calculation !== null &&
@@ -1411,6 +1413,13 @@ test('preserves the Today task order, target sizes, and reflow across supported 
       );
     }),
   ).toBe(true);
+  const progress = page.getByRole('progressbar', { name: 'Today’s credited progress' });
+  await expect(progress).toHaveAttribute('value', '195');
+  await expect(progress).toHaveAttribute('max', '480');
+  await expect(progress).toHaveAttribute('aria-valuetext', '3h 15m credited of 8h 00m expected.');
+  await expect(page.getByRole('region', { name: 'Posted balance' })).toContainText(
+    'Posted through Monday, August 10, 2026',
+  );
   expect(
     await page.evaluate(() => {
       const details = document.querySelector('#calculation-details');
@@ -1426,10 +1435,10 @@ test('preserves the Today task order, target sizes, and reflow across supported 
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('captures the revised Phase 13 Today hierarchy @phase13-baseline', async ({ page }) => {
+test('captures the WL-1304 Today metric hierarchy @phase13-baseline', async ({ page }) => {
   test.skip(
     process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1',
-    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1302 hierarchy snapshots.',
+    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1304 metric snapshots.',
   );
   await page.clock.setFixedTime(new Date('2026-08-11T10:45:00Z'));
   await page.route('**/v1/me/context', async (route) => {
@@ -1455,12 +1464,22 @@ test('captures the revised Phase 13 Today hierarchy @phase13-baseline', async ({
       await page.setViewportSize({ height: viewport.height, width: viewport.width });
       await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
       await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
-      await expect(page.getByText('Since 11:15 AM.')).toBeVisible();
+      const currentStatus = page.getByRole('region', { name: 'Working' });
+      await expect(currentStatus.getByText('Current work interval')).toBeVisible();
+      await expect(currentStatus.getByText('1h 30m', { exact: true })).toBeVisible();
+      await expect(currentStatus.getByText('11:15 AM', { exact: true })).toBeVisible();
       await expect(page.getByText('Estimate updated 12:45 PM')).toBeVisible();
+      const progress = page.getByRole('region', { name: 'Today’s progress' });
+      await expect(progress.getByText('3h 15m credited', { exact: true })).toBeVisible();
+      await expect(progress.getByText('4h 45m', { exact: true })).toBeVisible();
+      await expect(progress.getByText('5:30 PM', { exact: true })).toBeVisible();
+      await expect(progress.getByText('−4h 45m', { exact: true })).toBeVisible();
       await expect(
-        page.locator('#calculation-title').locator('..').getByText('−4h 45m', { exact: true }),
-      ).toBeVisible();
-      await expect(page.getByText('3h 15m credited − 8h 00m expected')).toBeVisible();
+        progress.getByRole('progressbar', { name: 'Today’s credited progress' }),
+      ).toHaveAttribute('value', '195');
+      const posted = page.getByRole('region', { name: 'Posted balance' });
+      await expect(posted.getByText('+6h 20m', { exact: true })).toBeVisible();
+      await expect(posted).toContainText('Posted through Monday, August 10, 2026');
       await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Clock out', exact: true })).toBeVisible();
       await expect(
@@ -1468,7 +1487,10 @@ test('captures the revised Phase 13 Today hierarchy @phase13-baseline', async ({
       ).toHaveCount(3);
       const hierarchy = await page.evaluate(() => {
         const status = document.querySelector('.wl-today-status')?.getBoundingClientRect();
-        const estimate = document.querySelector('.wl-today-estimate')?.getBoundingClientRect();
+        const progress = document
+          .querySelector('.wl-today-progress-summary')
+          ?.getBoundingClientRect();
+        const posted = document.querySelector('.wl-today-posted-balance')?.getBoundingClientRect();
         const actions = document.querySelector('.wl-today-action-footer')?.getBoundingClientRect();
         const timeline = document
           .querySelector('#today-timeline-title')
@@ -1477,7 +1499,8 @@ test('captures the revised Phase 13 Today hierarchy @phase13-baseline', async ({
         const calculation = document.querySelector('#calculation-details')?.getBoundingClientRect();
         if (
           status === undefined ||
-          estimate === undefined ||
+          progress === undefined ||
+          posted === undefined ||
           actions === undefined ||
           timeline === undefined ||
           calculation === undefined
@@ -1487,8 +1510,10 @@ test('captures the revised Phase 13 Today hierarchy @phase13-baseline', async ({
         return {
           actionsTop: actions.top,
           calculationTop: calculation.top,
-          estimateBottom: estimate.bottom,
-          estimateTop: estimate.top,
+          postedBottom: posted.bottom,
+          postedTop: posted.top,
+          progressBottom: progress.bottom,
+          progressTop: progress.top,
           statusBottom: status.bottom,
           statusTop: status.top,
           timelineTop: timeline.top,
@@ -1496,12 +1521,19 @@ test('captures the revised Phase 13 Today hierarchy @phase13-baseline', async ({
       });
       expect(hierarchy).not.toBeNull();
       if (hierarchy !== null) {
-        const summaryIsSplit = Math.abs(hierarchy.statusTop - hierarchy.estimateTop) <= 2;
-        if (!summaryIsSplit) {
-          expect(hierarchy.estimateTop).toBeGreaterThanOrEqual(hierarchy.statusBottom);
+        const statusAndProgressShareRow =
+          Math.abs(hierarchy.statusTop - hierarchy.progressTop) <= 2;
+        if (!statusAndProgressShareRow) {
+          expect(hierarchy.progressTop).toBeGreaterThanOrEqual(hierarchy.statusBottom);
+        }
+        const postedSharesFirstRow = Math.abs(hierarchy.statusTop - hierarchy.postedTop) <= 2;
+        if (!postedSharesFirstRow) {
+          expect(hierarchy.postedTop).toBeGreaterThanOrEqual(
+            Math.max(hierarchy.statusBottom, hierarchy.progressBottom),
+          );
         }
         expect(hierarchy.actionsTop).toBeGreaterThanOrEqual(
-          Math.max(hierarchy.statusBottom, hierarchy.estimateBottom),
+          Math.max(hierarchy.statusBottom, hierarchy.progressBottom, hierarchy.postedBottom),
         );
         expect(hierarchy.calculationTop).toBeGreaterThanOrEqual(hierarchy.timelineTop);
       }
@@ -1514,7 +1546,7 @@ test('captures the revised Phase 13 Today hierarchy @phase13-baseline', async ({
       if (viewport.width === 1440 || viewport.width === 320) {
         await expectPageToHaveNoAxeViolations(page);
       }
-      await capturePhase13Hierarchy(page, viewport.name);
+      await capturePhase13Metrics(page, viewport.name);
     });
   }
 });
@@ -1538,7 +1570,7 @@ test('keeps text, controls, focus, and boundaries perceivable in forced colors',
   await expect(clockOut).toHaveAttribute('data-focus-visible', 'true');
   await expect(page.getByText('Current status', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
-  await expect(page.getByText('Provisional estimate', { exact: true })).toBeVisible();
+  await expect(page.getByText('Provisional today', { exact: true })).toBeVisible();
 
   const forcedColorStyles = await clockOut.evaluate((button) => {
     const styles = getComputedStyle(button);
@@ -2819,7 +2851,7 @@ test('captures, cleans, and consumes an invitation grant without automatic sign-
   });
   await page.route('**/v1/account-invitations/activate', async (route) => {
     submittedBody = route.request().postDataJSON();
-    expect(route.request().headers()['origin']).toBe('http://127.0.0.1:4173');
+    expect(route.request().headers()['origin']).toBe(new URL(page.url()).origin);
     await route.fulfill({ json: success({ activated: true }), status: 200 });
   });
 
@@ -2984,11 +3016,11 @@ async function capturePhase12Administration(page: Page, name: string): Promise<v
   await capturePhase12Surface(page, 'wl1204', name);
 }
 
-async function capturePhase13Hierarchy(page: Page, name: string): Promise<void> {
+async function capturePhase13Metrics(page: Page, name: string): Promise<void> {
   if (process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1') return;
 
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page).toHaveScreenshot(['phase-13', 'wl1302', `${name}.png`], {
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1304', `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

@@ -399,10 +399,126 @@
     min-inline-size: 0;
   }
 
-  .wl-today-estimate {
+  .wl-today-status,
+  .wl-today-progress-summary,
+  .wl-today-posted-balance {
+    display: grid;
+    align-content: start;
+    gap: var(--wl-space-4);
+  }
+
+  .wl-today-progress-summary,
+  .wl-today-posted-balance {
     margin-block-start: var(--wl-space-6);
     border-block-start: 1px solid var(--wl-border);
     padding-block-start: var(--wl-space-6);
+  }
+
+  .wl-today-eyebrow,
+  .wl-today-status-heading,
+  .wl-today-section-heading,
+  .wl-today-prominent-value,
+  .wl-today-copy-muted,
+  .wl-today-helper-strong,
+  .wl-today-metric dd {
+    margin: 0;
+  }
+
+  .wl-today-eyebrow {
+    color: var(--wl-text-muted);
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .wl-today-status-heading {
+    font-size: 1.875rem;
+    font-weight: 700;
+  }
+
+  .wl-today-heading-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--wl-space-3);
+  }
+
+  .wl-today-section-heading {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  .wl-today-prominent-value {
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .wl-today-copy-muted,
+  .wl-today-helper-strong {
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+  }
+
+  .wl-today-copy-muted,
+  .wl-today-metric dt,
+  .wl-today-metric dd + dd {
+    color: var(--wl-text-muted);
+  }
+
+  .wl-today-helper-strong,
+  .wl-today-metric dt {
+    font-weight: 600;
+  }
+
+  .wl-today-progress {
+    inline-size: 100%;
+    block-size: var(--wl-space-2);
+    appearance: none;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--wl-radius-status);
+    background: var(--wl-surface-subtle);
+    color: var(--wl-action-primary);
+    accent-color: var(--wl-action-primary);
+  }
+
+  .wl-today-progress::-webkit-progress-bar {
+    background: var(--wl-surface-subtle);
+  }
+
+  .wl-today-progress::-webkit-progress-value {
+    border-radius: inherit;
+    background: var(--wl-action-primary);
+  }
+
+  .wl-today-progress::-moz-progress-bar {
+    border-radius: inherit;
+    background: var(--wl-action-primary);
+  }
+
+  .wl-today-metric-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+    gap: var(--wl-space-4);
+  }
+
+  .wl-today-metric {
+    border-block-start: 1px solid var(--wl-border);
+    padding-block-start: var(--wl-space-3);
+  }
+
+  .wl-today-metric dt,
+  .wl-today-metric dd + dd {
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+  }
+
+  .wl-today-metric dd:first-of-type {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    line-height: 1.5rem;
   }
 
   .wl-today-action-footer {
@@ -418,14 +534,33 @@
 
   @container (min-width: 40rem) {
     .wl-today-summary-grid {
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     }
 
     .wl-today-status {
       padding-inline-end: var(--wl-space-6);
     }
 
-    .wl-today-estimate {
+    .wl-today-progress-summary {
+      margin-block-start: 0;
+      border-block-start: 0;
+      border-inline-start: 1px solid var(--wl-border);
+      padding-block-start: 0;
+      padding-inline-start: var(--wl-space-6);
+    }
+
+    .wl-today-posted-balance {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @container (min-width: 64rem) {
+    .wl-today-summary-grid {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.55fr) minmax(0, 0.85fr);
+    }
+
+    .wl-today-posted-balance {
+      grid-column: auto;
       margin-block-start: 0;
       border-block-start: 0;
       border-inline-start: 1px solid var(--wl-border);

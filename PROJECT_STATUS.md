@@ -2,19 +2,19 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 4 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 5 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1304` (next)
-**Status:** WL-1303 complete — attendance-state and clock-action recovery matrix implemented
+**Active task:** `WL-1305` (next)
+**Status:** WL-1304 complete — Today metric hierarchy separates provisional and posted facts
 **Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1303` now covers every authoritative attendance state and the
-duplicate, stale, rate-limited, offline, session-expired, permission-lost, and other-device recovery
-paths with deterministic feedback, focus, and cache handling. The next bounded slice is `WL-1304`:
-separate current session, today progress, estimated completion, provisional difference, and posted
-flexible-time balance.
+Phase 12 is complete at `0.13.0`. `WL-1304` now presents the active attendance interval, credited
+progress, estimated finish, provisional daily difference, and dated posted flexible-time balance as
+separate authoritative facts with accessible progress and responsive semantic order. The next
+bounded slice is `WL-1305`: rebuild the Today timeline and calculation details for transparent,
+concise, auditable explanations.
 
 ## Verified decisions
 
@@ -35,6 +35,15 @@ flexible-time balance.
   an organization-local Temporal date boundary; current-day values are explicitly provisional or
   incomplete and never final. Posted flexible-time evidence is ledger-derived through the prior
   local date and bounded by the same capture instant.
+- The Today ready panel presents current attendance, today's credited progress, and posted flexible
+  time as three labelled semantic sections in stable DOM order. The active elapsed value describes
+  only the current work interval or break; it is never presented as a whole-session duration.
+- Native Today progress compares credited minutes with expected minutes, caps only the visual
+  progress position when credit exceeds expectation, preserves the uncapped value in text, and is
+  omitted when expectation is zero or calculation is incomplete.
+- The provisional daily difference is neutral partial-day evidence, not debt or an accumulated
+  balance. Posted flexible time always carries its posted-through date or an explicit no-entry state
+  and states that today's provisional result is excluded.
 - The Today attendance state and server-provided permitted commands are the only source of clock
   actions. Permission loss latches a neutral denial presentation, removes the exact protected Today
   cache entry, closes pending confirmation, and prevents automatic refetch until route authority is
@@ -2039,9 +2048,31 @@ flexible-time balance.
   screenshot baseline, publication, deployment, tag, or workspace version changed. See
   `docs/127-today-attendance-state-feedback-recovery.md`.
 
+**2026-08-25 — WL-1304 Today metric hierarchy**
+
+- Rebuilt the ready Today summary as three semantic zones: current attendance and active interval,
+  today's credited progress and completion facts, then dated posted flexible-time balance. The
+  valid attendance actions remain after every summary fact in stable DOM order.
+- Added native credited-versus-expected progress semantics, explicit worked/break/remaining facts,
+  typed estimated-finish unavailability copy, neutral provisional-difference presentation, and an
+  explicit statement that today's partial result is excluded from posted balance.
+- Added component coverage for ordinary, zero-expectation, over-expectation, and incomplete states;
+  responsive Chromium assertions; and a separate five-viewport `WL-1304` visual baseline. The
+  visual update and comparison runs passed, and wide, intermediate, and narrow images were manually
+  inspected.
+- Full verification passed runtime configuration, reproducible OpenAPI, formatting, ESLint,
+  288-file/1,508-import boundaries, CSS ownership, strict TypeScript, all 37 tooling tests, all 360
+  unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 36
+  Playwright scenarios with the opt-in visual capture skipped, and the production/public-root
+  build. The separate five-viewport visual update and comparison runs passed. Bundle budgets pass
+  at 367,724 largest JavaScript bytes, 894,907 total JavaScript bytes, 241,728 gzip JavaScript
+  bytes, and 49,992 CSS bytes. See `docs/128-today-metric-hierarchy.md`.
+- No domain rule, API contract, database schema, migration, authorization, dependency, lockfile,
+  manifest, publication, deployment, tag, or workspace version changed.
+
 ## Current blockers
 
-No decision blocks `WL-1304`. Exact partial-day work-versus-absence overlap and
+No decision blocks `WL-1305`. Exact partial-day work-versus-absence overlap and
 calculation-to-ledger mismatch signals still need dedicated repository facts; Today does not guess
 them from minute totals. `D-502` remains an explicit real assistive technology and exact
 retail-browser residual rather than a conformance claim. The temporary Astro backup is recoverable
@@ -2050,7 +2081,7 @@ and belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1304 — Separate current session, today progress, estimated completion, provisional difference, and posted flexible-time balance.`
+`WL-1305 — Rebuild Today's timeline and calculation details for transparent, concise, auditable explanations.`
 
 ## Update rules
 

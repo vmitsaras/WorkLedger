@@ -318,35 +318,50 @@ test('renders the role-aware shell and focuses each completed route navigation',
   expect(screen.getByRole('link', { name: 'Today' })).toHaveAttribute('aria-current', 'page');
   expect(screen.queryByRole('link', { name: 'Operations' })).not.toBeInTheDocument();
   expect(await screen.findByRole('heading', { name: 'Working' })).toBeVisible();
+  const progress = screen.getByRole('region', { name: 'Today’s progress' });
+  expect(within(progress).getByText('3h 15m credited')).toBeVisible();
+  expect(within(progress).getByText('Worked today')).toBeVisible();
+  expect(within(progress).getByText('Breaks')).toBeVisible();
+  expect(within(progress).getByText('Remaining today')).toBeVisible();
+  expect(within(progress).getByText('Estimated finish')).toBeVisible();
+  expect(within(progress).getByText('Provisional difference')).toBeVisible();
+  expect(within(progress).getByText('−4h 45m')).toBeVisible();
+  expect(within(progress).getByText('5:30 PM')).toBeVisible();
+  expect(within(progress).getByText('Assumes no additional break.')).toBeVisible();
+  expect(within(progress).getByText('4h 45m')).toBeVisible();
+  expect(within(progress).getByText('0h 30m')).toBeVisible();
+  const progressbar = within(progress).getByRole('progressbar', {
+    name: 'Today’s credited progress',
+  });
+  expect(progressbar).toHaveAttribute('max', '480');
+  expect(progressbar).toHaveAttribute('value', '195');
+  expect(progressbar).toHaveAttribute('aria-valuetext', '3h 15m credited of 8h 00m expected.');
+  const postedBalance = screen.getByRole('region', { name: 'Posted balance' });
+  expect(within(postedBalance).getByText('+6h 20m')).toBeVisible();
+  expect(postedBalance).toHaveTextContent('Posted through Monday, August 10, 2026.');
   expect(
-    within(screen.getByRole('region', { name: 'Today’s balance estimate' })).getByText('−4h 45m'),
+    within(postedBalance).getByText(/Today is still provisional and is not included/u),
   ).toBeVisible();
-  expect(screen.getByText('3h 15m credited − 8h 00m expected')).toBeVisible();
   expect(screen.getByRole('group', { name: 'Attendance actions' })).toBeVisible();
   const currentStatus = screen
     .getByRole('heading', { name: 'Working' })
     .closest('.wl-today-status');
-  const estimate = screen
-    .getByRole('region', { name: 'Today’s balance estimate' })
-    .closest('.wl-today-estimate');
   const actions = screen
     .getByRole('group', { name: 'Attendance actions' })
     .closest('.wl-today-action-footer');
   const timeline = screen.getByRole('region', { name: 'Today’s timeline' });
   const calculationDetails = container.querySelector('#calculation-details');
-  if (
-    currentStatus === null ||
-    estimate === null ||
-    actions === null ||
-    calculationDetails === null
-  ) {
+  if (currentStatus === null || actions === null || calculationDetails === null) {
     throw new Error('Expected the complete Today hierarchy to render.');
   }
   expect(
-    Boolean(currentStatus.compareDocumentPosition(estimate) & Node.DOCUMENT_POSITION_FOLLOWING),
+    Boolean(currentStatus.compareDocumentPosition(progress) & Node.DOCUMENT_POSITION_FOLLOWING),
   ).toBe(true);
   expect(
-    Boolean(estimate.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING),
+    Boolean(progress.compareDocumentPosition(postedBalance) & Node.DOCUMENT_POSITION_FOLLOWING),
+  ).toBe(true);
+  expect(
+    Boolean(postedBalance.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING),
   ).toBe(true);
   expect(
     Boolean(
@@ -854,19 +869,19 @@ test('explains the daily arithmetic and preserves attendance event order in sema
   const { container } = renderApplication('/today');
 
   await screen.findByRole('heading', { name: 'Off work' });
-  expect(
-    within(screen.getByRole('region', { name: 'Today’s balance estimate' })).getByText('−5h 15m'),
-  ).toBeVisible();
-  expect(screen.getByText('2h 45m credited − 8h 00m expected')).toBeVisible();
+  const progress = screen.getByRole('region', { name: 'Today’s progress' });
+  expect(within(progress).getByText('2h 45m credited')).toBeVisible();
+  expect(within(progress).getByText('−5h 15m')).toBeVisible();
+  expect(within(progress).getByText('Start work to estimate')).toBeVisible();
   expect(screen.getByRole('region', { name: 'Calculation breakdown' })).not.toBeVisible();
   await user.click(screen.getByText('Calculation details'));
   const breakdown = screen.getByRole('region', { name: 'Calculation breakdown' });
   expect(within(breakdown).getByRole('heading', { name: 'Expected time' })).toBeVisible();
   expect(within(breakdown).getByRole('heading', { name: 'Credited time' })).toBeVisible();
-  expect(within(breakdown).getByRole('heading', { name: 'Estimated balance' })).toBeVisible();
+  expect(within(breakdown).getByRole('heading', { name: 'Provisional difference' })).toBeVisible();
   expect(breakdown).toHaveTextContent('Scheduled time8h 00m');
   expect(breakdown).toHaveTextContent('Credited time2h 45m');
-  expect(breakdown).toHaveTextContent('Estimated balance−5h 15m');
+  expect(breakdown).toHaveTextContent('Provisional difference−5h 15m');
   expect(breakdown).toHaveTextContent('Approved adjustments−0h 30m');
   expect(breakdown).toHaveTextContent(
     'Break time is already excluded from worked time and is not subtracted again.',
@@ -932,21 +947,70 @@ test('explains zero expected time before presenting credited work', async () => 
       remainingExpectedMinutes: 0,
       status: 'PROVISIONAL',
     },
+    postedFlexBalanceMinutes: 0,
+    postedThroughDate: null,
   };
   vi.stubGlobal('fetch', authenticatedFetch(holidayToday));
   const { container } = renderApplication('/today');
 
+  const progress = await screen.findByRole('region', { name: 'Today’s progress' });
+  expect(within(progress).getByText('+1h 00m')).toBeVisible();
   expect(
-    within(await screen.findByRole('region', { name: 'Today’s balance estimate' })).getByText(
-      '+1h 00m',
-    ),
+    within(progress).getByText('1h 00m credited with no scheduled expectation today.'),
   ).toBeVisible();
+  expect(within(progress).getByText('Expectation met')).toBeVisible();
+  expect(within(progress).queryByRole('progressbar')).not.toBeInTheDocument();
+  const postedBalance = screen.getByRole('region', { name: 'Posted balance' });
+  expect(within(postedBalance).getByText('0h 00m')).toBeVisible();
+  expect(within(postedBalance).getByText('No entries posted before today.')).toBeVisible();
   await user.click(screen.getByText('Calculation details'));
   expect(screen.getByRole('heading', { name: 'Why expected time is zero' })).toBeVisible();
   expect(
     screen.getByText(/German Unity Day reduces today’s scheduled expectation to zero/u),
   ).toBeVisible();
   expect(screen.getByText(/not labelled as payroll overtime/u)).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('caps the visual progress while preserving over-expected credited values without debt copy', async () => {
+  const overExpectedToday: TodayAttendance = {
+    ...TODAY_ATTENDANCE,
+    calculation: {
+      ...TODAY_ATTENDANCE.calculation,
+      estimatedFinishAt: null,
+      estimatedFinishUnavailableReason: 'NO_REMAINING_EXPECTATION',
+      provisional: {
+        calculationSources: {
+          absenceCreditMinutes: 240,
+          absenceExpectedReductionMinutes: 240,
+          approvedAdjustmentMinutes: -15,
+          breakMinutesToday: 0,
+          holidayExpectedReductionMinutes: 0,
+          scheduledMinutes: 480,
+          workedMinutesToday: 60,
+        },
+        creditedMinutesToday: 285,
+        expectedMinutesToday: 240,
+        provisionalDifferenceMinutes: 45,
+      },
+      remainingExpectedMinutes: 0,
+    },
+  };
+  vi.stubGlobal('fetch', authenticatedFetch(overExpectedToday));
+  const { container } = renderApplication('/today');
+
+  const progress = await screen.findByRole('region', { name: 'Today’s progress' });
+  const progressbar = within(progress).getByRole('progressbar', {
+    name: 'Today’s credited progress',
+  });
+  expect(progressbar).toHaveAttribute('max', '240');
+  expect(progressbar).toHaveAttribute('value', '240');
+  expect(progressbar).toHaveAttribute('aria-valuetext', '4h 45m credited of 4h 00m expected.');
+  expect(within(progress).getByText('1h 00m')).toBeVisible();
+  expect(within(progress).getByText('+0h 45m')).toBeVisible();
+  expect(within(progress).getByText('Expectation met')).toBeVisible();
+  expect(screen.queryByText(/debt/u)).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
   await expectNoAxeViolations(container);
 });
 
@@ -980,7 +1044,10 @@ test('shows an incomplete calculation without inventing an estimate', async () =
   const { container } = renderApplication('/today');
 
   expect(await screen.findByRole('heading', { name: 'Off work' })).toBeVisible();
-  expect(screen.getByText('Not available')).toBeVisible();
+  const progress = screen.getByRole('region', { name: 'Today’s progress' });
+  expect(within(progress).getByText('Progress unavailable')).toBeVisible();
+  expect(within(progress).queryByRole('progressbar')).not.toBeInTheDocument();
+  expect(screen.getByRole('region', { name: 'Posted balance' })).toBeVisible();
   expect(screen.getByText('Work schedule missing')).toBeVisible();
   expect(
     screen.getByText(/Ask your organization administrator to assign a work schedule/u),
@@ -992,30 +1059,45 @@ test('shows an incomplete calculation without inventing an estimate', async () =
 test.each([
   {
     actions: ['Clock in'],
-    activeDescription: 'No active work session.',
+    finish: 'Start work to estimate',
+    intervalLabel: null,
+    intervalValue: null,
     state: 'OFF_WORK',
     status: 'Off work',
   },
   {
     actions: ['Start break', 'Clock out'],
-    activeDescription: 'Since 11:30 AM. Current interval: 1h 15m.',
+    finish: '8:45 PM',
+    intervalLabel: 'Current work interval',
+    intervalValue: '1h 15m',
     state: 'WORKING',
     status: 'Working',
   },
   {
     actions: ['Resume work', 'Clock out'],
-    activeDescription: 'Since 12:30 PM. Current interval: 0h 15m.',
+    finish: 'Resume work to estimate',
+    intervalLabel: 'Current break',
+    intervalValue: '0h 15m',
     state: 'ON_BREAK',
     status: 'On break',
   },
 ] as const)(
   'renders the $state attendance story with only its authoritative actions',
-  async ({ actions, activeDescription, state, status }) => {
+  async ({ actions, finish, intervalLabel, intervalValue, state, status }) => {
     vi.stubGlobal('fetch', authenticatedFetch(todayWithAttendance(state, 3)));
     const { container } = renderApplication('/today');
 
     expect(await screen.findByRole('heading', { name: status })).toBeVisible();
-    expect(screen.getByText(activeDescription)).toBeVisible();
+    const currentStatus = screen.getByRole('region', { name: status });
+    if (intervalLabel === null || intervalValue === null) {
+      expect(within(currentStatus).getByText('No active work interval.')).toBeVisible();
+    } else {
+      expect(within(currentStatus).getByText(intervalLabel)).toBeVisible();
+      expect(within(currentStatus).getByText(intervalValue)).toBeVisible();
+    }
+    expect(
+      within(screen.getByRole('region', { name: 'Today’s progress' })).getByText(finish),
+    ).toBeVisible();
     const actionGroup = screen.getByRole('group', { name: 'Attendance actions' });
     expect(
       within(actionGroup)

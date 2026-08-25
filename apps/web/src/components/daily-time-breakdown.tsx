@@ -87,18 +87,18 @@ export function DailyTimeBreakdown({
           title="Credited time"
         />
         <CalculationGroup
-          description="Credited time minus expected time. The result may be positive, zero, or negative."
+          description="Credited time so far minus expected time. This provisional difference may be positive, zero, or negative and can still change today."
           rows={[
             { label: 'Credited time', value: provisional.creditedMinutesToday },
             { label: 'Expected time', value: provisional.expectedMinutesToday },
             {
-              label: 'Estimated balance',
+              label: 'Provisional difference',
               signed: true,
               total: true,
               value: provisional.provisionalDifferenceMinutes,
             },
           ]}
-          title="Estimated balance"
+          title="Provisional difference"
         />
       </div>
     </section>

@@ -3,7 +3,7 @@ import type { RefObject } from 'react';
 import type { AttendanceCommand, AttendanceState, TodayAttendance } from '@workledger/contracts';
 import { Alert, Panel, StatusBadge, type AlertProps } from '@workledger/ui';
 
-import { formatDuration, formatTime } from '../app/date-time-format.js';
+import { formatDuration, formatLocalDate, formatTime } from '../app/date-time-format.js';
 import type { AttendanceCommandIntent } from '../app/api-client.js';
 import {
   AttendanceRecovery,
@@ -16,6 +16,14 @@ const STATE_LABELS: Readonly<Record<AttendanceState, string>> = {
   ON_BREAK: 'On break',
   WORKING: 'Working',
 };
+
+const FINISH_UNAVAILABLE_LABELS = {
+  CALCULATION_INCOMPLETE: 'Calculation incomplete',
+  CALCULATION_UNAVAILABLE: 'Calculation unavailable',
+  NOT_WORKING: 'Start work to estimate',
+  NO_REMAINING_EXPECTATION: 'Expectation met',
+  ON_BREAK: 'Resume work to estimate',
+} as const;
 
 export type TodayAttendanceFeedback = Readonly<{
   command: AttendanceCommand;
@@ -60,73 +68,138 @@ export function TodayAttendanceOverview({
   statusHeadingRef: RefObject<HTMLHeadingElement | null>;
   today: TodayAttendance;
 }>) {
-  const { attendance, calculation } = today;
-  const activeDescription =
-    attendance.activeSince === null
-      ? 'No active work session.'
-      : `Since ${formatTime(attendance.activeSince, today.timeZone)}.${
-          attendance.activeElapsedMinutes === null
-            ? ''
-            : ` Current interval: ${formatDuration(attendance.activeElapsedMinutes)}.`
-        }`;
-  const provisional = calculation.provisional;
+  const { attendance, calculation, postedFlexBalanceMinutes, postedThroughDate, timeZone } = today;
+  const { activeElapsedMinutes, activeSince, state } = attendance;
+  const {
+    estimatedFinishAt,
+    estimatedFinishUnavailableReason,
+    provisional,
+    remainingExpectedMinutes,
+  } = calculation;
+  const estimatedFinishLabel =
+    estimatedFinishAt === null
+      ? estimatedFinishUnavailableReason === null
+        ? 'Not available'
+        : FINISH_UNAVAILABLE_LABELS[estimatedFinishUnavailableReason]
+      : formatTime(estimatedFinishAt, timeZone);
+  const progressDescription =
+    provisional === null
+      ? 'Today’s credited progress is unavailable. Resolve the blockers below before relying on today’s calculation.'
+      : provisional.expectedMinutesToday === 0
+        ? `${formatDuration(provisional.creditedMinutesToday)} credited with no scheduled expectation today.`
+        : `${formatDuration(provisional.creditedMinutesToday)} credited of ${formatDuration(provisional.expectedMinutesToday)} expected.`;
 
   return (
     <Panel
-      aria-labelledby="current-status-title"
+      aria-label="Today attendance summary"
       className="wl-today-overview"
       density="comfortable"
     >
       <div className="wl-today-summary-grid grid">
-        <div className="wl-today-status grid min-w-0 content-start gap-1">
-          <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
-            Current status
-          </p>
+        <section className="wl-today-status" aria-labelledby="current-status-title">
+          <p className="wl-today-eyebrow">Current status</p>
           <h2
             ref={statusHeadingRef}
             id="current-status-title"
-            className="m-0 text-3xl font-bold outline-none"
+            className="wl-today-status-heading outline-none"
             tabIndex={-1}
           >
-            {STATE_LABELS[attendance.state]}
+            {STATE_LABELS[state]}
           </h2>
-          <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">{activeDescription}</p>
-        </div>
+          {activeSince === null || activeElapsedMinutes === null ? (
+            <p className="wl-today-copy-muted">No active work interval.</p>
+          ) : (
+            metricList('m-0 grid gap-3', [
+              [
+                state === 'ON_BREAK' ? 'Current break' : 'Current work interval',
+                formatDuration(activeElapsedMinutes),
+              ],
+              ['Since', formatTime(activeSince, timeZone), activeSince],
+            ])
+          )}
+        </section>
 
-        <section
-          className="wl-today-estimate grid min-w-0 content-start gap-4"
-          aria-labelledby="calculation-title"
-        >
-          <StatusBadge tone={calculation.status === 'PROVISIONAL' ? 'info' : 'danger'}>
-            {calculation.status === 'PROVISIONAL'
-              ? 'Provisional estimate'
-              : 'Calculation incomplete'}
-          </StatusBadge>
-          <div className="grid gap-2">
-            <h2 id="calculation-title" className="m-0 text-lg font-bold">
-              Today’s balance estimate
+        <section className="wl-today-progress-summary" aria-labelledby="today-progress-title">
+          <div className="wl-today-heading-row">
+            <h2 id="today-progress-title" className="wl-today-section-heading">
+              Today’s progress
             </h2>
-            <p className="m-0 text-2xl font-bold tabular-nums">
-              {provisional === null
-                ? 'Not available'
-                : formatDuration(provisional.provisionalDifferenceMinutes, true)}
-            </p>
-            <p className="m-0 text-sm font-semibold leading-6">
-              {provisional !== null
-                ? `${formatDuration(provisional.creditedMinutesToday)} credited − ${formatDuration(provisional.expectedMinutesToday)} expected`
-                : 'Resolve the blockers below before relying on today’s calculation.'}
-            </p>
-            <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-              {provisional !== null
-                ? 'This current-day value can still change. It is not posted or locked.'
-                : 'WorkLedger does not present a partial amount as a complete estimate.'}
-            </p>
+            <StatusBadge tone={calculation.status === 'PROVISIONAL' ? 'info' : 'danger'}>
+              {calculation.status === 'PROVISIONAL'
+                ? 'Provisional today'
+                : 'Calculation incomplete'}
+            </StatusBadge>
           </div>
+          <div className="grid gap-2">
+            <p className="wl-today-prominent-value">
+              {provisional === null
+                ? 'Progress unavailable'
+                : `${formatDuration(provisional.creditedMinutesToday)} credited`}
+            </p>
+            {provisional !== null && provisional.expectedMinutesToday > 0 ? (
+              <progress
+                aria-label="Today’s credited progress"
+                aria-valuetext={progressDescription}
+                className="wl-today-progress"
+                max={provisional.expectedMinutesToday}
+                value={Math.min(provisional.creditedMinutesToday, provisional.expectedMinutesToday)}
+              />
+            ) : null}
+            <p className="wl-today-copy-muted">{progressDescription}</p>
+          </div>
+
+          {provisional === null
+            ? null
+            : metricList('wl-today-metric-grid m-0 grid', [
+                ['Worked today', formatDuration(provisional.calculationSources.workedMinutesToday)],
+                ['Breaks', formatDuration(provisional.calculationSources.breakMinutesToday)],
+                [
+                  'Remaining today',
+                  remainingExpectedMinutes === null
+                    ? 'Not available'
+                    : formatDuration(remainingExpectedMinutes),
+                ],
+                [
+                  'Estimated finish',
+                  estimatedFinishLabel,
+                  estimatedFinishAt ?? undefined,
+                  estimatedFinishAt === null ? undefined : 'Assumes no additional break.',
+                ],
+                [
+                  'Provisional difference',
+                  formatDuration(provisional.provisionalDifferenceMinutes, true),
+                ],
+              ])}
           {calculation.holidayName === null ? null : (
             <p className="m-0 min-w-0 [overflow-wrap:anywhere] border-t border-[var(--wl-border)] pt-4 text-sm font-semibold">
               Public holiday: {calculation.holidayName}
             </p>
           )}
+        </section>
+
+        <section className="wl-today-posted-balance" aria-labelledby="posted-balance-title">
+          <div className="grid gap-2">
+            <p className="wl-today-eyebrow">Flexible time</p>
+            <h2 id="posted-balance-title" className="wl-today-section-heading">
+              Posted balance
+            </h2>
+          </div>
+          <p className="wl-today-prominent-value">
+            {formatDuration(postedFlexBalanceMinutes, true)}
+          </p>
+          <p className="wl-today-helper-strong">
+            {postedThroughDate === null ? (
+              'No entries posted before today.'
+            ) : (
+              <>
+                Posted through{' '}
+                <time dateTime={postedThroughDate}>{formatLocalDate(postedThroughDate)}</time>.
+              </>
+            )}
+          </p>
+          <p className="wl-today-copy-muted">
+            Today is still provisional and is not included in this balance.
+          </p>
         </section>
       </div>
 
@@ -157,6 +230,25 @@ export function TodayAttendanceOverview({
         )}
       </div>
     </Panel>
+  );
+}
+
+function metricList(
+  className: string,
+  metrics: readonly (readonly [string, string, (string | undefined)?, (string | undefined)?])[],
+) {
+  return (
+    <dl className={className}>
+      {metrics.map(([label, value, valueDateTime, description]) => (
+        <div className="wl-today-metric min-w-0" key={label}>
+          <dt>{label}</dt>
+          <dd>
+            {valueDateTime === undefined ? value : <time dateTime={valueDateTime}>{value}</time>}
+          </dd>
+          {description === undefined ? null : <dd>{description}</dd>}
+        </div>
+      ))}
+    </dl>
   );
 }
 

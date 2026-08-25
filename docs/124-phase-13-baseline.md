@@ -271,6 +271,19 @@ Clock out while on break, so a remote transition cannot replace a focused same-n
 moving context to the authoritative status. `AUD-1300-05` remains assigned to `WL-1306`; it concerns
 attention-item destinations and missing repository facts, not clock-action recovery.
 
+### `WL-1304` follow-up
+
+`WL-1304` completes the five-part metric hierarchy in `docs/128-today-metric-hierarchy.md`.
+Current attendance and the active interval now precede credited progress, estimated completion, and
+the neutral provisional daily difference; the dated posted flexible-time balance remains a separate
+third section that explicitly excludes today. Native progress semantics cover positive
+expectations, while zero-expectation and incomplete states avoid a meaningless progress ratio.
+
+`AUD-1300-08` is closed: the provisional daily difference no longer dominates current-session truth
+or resembles accumulated debt. The new five-image `WL-1304` baseline is separate from all preserved
+historical sets. `AUD-1300-05` remains assigned to `WL-1306`; the timeline and calculation-detail
+work moves next to `WL-1305`.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.
