@@ -2,18 +2,19 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 3 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 4 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1303` (next)
-**Status:** WL-1302 complete — revised Today information architecture and visual hierarchy implemented
+**Active task:** `WL-1304` (next)
+**Status:** WL-1303 complete — attendance-state and clock-action recovery matrix implemented
 **Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1302` applies the approved Today hierarchy through one primary
-task region, a distinct action band, a responsive evidence grid, and a focused route heading that
-no longer resembles a full-width input. The next bounded slice is `WL-1303`: implement the complete
-attendance-state matrix and reliable clock-action feedback and recovery behavior.
+Phase 12 is complete at `0.13.0`. `WL-1303` now covers every authoritative attendance state and the
+duplicate, stale, rate-limited, offline, session-expired, permission-lost, and other-device recovery
+paths with deterministic feedback, focus, and cache handling. The next bounded slice is `WL-1304`:
+separate current session, today progress, estimated completion, provisional difference, and posted
+flexible-time balance.
 
 ## Verified decisions
 
@@ -34,6 +35,14 @@ attendance-state matrix and reliable clock-action feedback and recovery behavior
   an organization-local Temporal date boundary; current-day values are explicitly provisional or
   incomplete and never final. Posted flexible-time evidence is ledger-derived through the prior
   local date and bounded by the same capture instant.
+- The Today attendance state and server-provided permitted commands are the only source of clock
+  actions. Permission loss latches a neutral denial presentation, removes the exact protected Today
+  cache entry, closes pending confirmation, and prevents automatic refetch until route authority is
+  re-established.
+- Clock feedback distinguishes confirmed success, known no-effect, stale authoritative state,
+  uncertain lost-response recovery, offline refusal, session expiry, and permission loss. A remote
+  state change that preserves an action label but changes its interaction contract moves focus to
+  current status instead of silently substituting the focused control.
 - An older Today `attendanceRevision`, older `asOf` at the same revision, or older
   `snapshotCapturedAt` in the same calculation minute cannot replace newer in-memory query data.
   Today responses are no-store and exclude employee/organization, command, actor, absence-detail,
@@ -2004,9 +2013,35 @@ attendance-state matrix and reliable clock-action feedback and recovery behavior
   dependency, lockfile, manifest, publication, deployment, tag, or workspace version changed. See
   `docs/126-today-information-architecture-visual-hierarchy.md`.
 
+**2026-08-25 — WL-1303 attendance-state feedback and recovery matrix**
+
+- Documented the complete Today interaction-state matrix for off work, working, on break, pending,
+  confirmed, duplicate replay, stale intent, rate limiting, lost response, offline, reconnecting,
+  session expiry, permission loss, other-device convergence, and same-label semantic transitions.
+- Replaced ordinary Today content with a focused, purpose-minimized permission-denied boundary when
+  access disappears. The route now disables further protected queries, removes the exact cached
+  attendance projection, closes confirmation state, and exposes only a safe home link.
+- Made rate-limit feedback definitive about no recorded effect and repaired focus recovery when an
+  other-device update changes `Clock out` between direct submission and confirmation while keeping
+  the same accessible name.
+- Added authoritative-state component stories with axe checks, rate-limit and permission-loss
+  recovery tests, stale-intent and session-expiry Playwright flows, and PostgreSQL assertions that
+  inactive-account denial and revoked-session replay create no attendance, idempotency, or extra
+  audit effects.
+- Full verification passed runtime configuration, reproducible OpenAPI, formatting, ESLint,
+  288-file/1,508-import boundaries, CSS ownership, strict TypeScript, all 37 tooling tests, all 359
+  unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 36
+  Playwright scenarios with the opt-in visual capture skipped, and the production/public-root
+  build. The separate PostgreSQL gate passed all 13 database test files with 25 tests passed and one
+  established skip. Bundle budgets pass at 365,703 largest JavaScript bytes, 892,886 total
+  JavaScript bytes, 241,089 gzip JavaScript bytes, and 47,693 CSS bytes.
+- No domain rule, API contract, database schema, migration, dependency, lockfile, manifest,
+  screenshot baseline, publication, deployment, tag, or workspace version changed. See
+  `docs/127-today-attendance-state-feedback-recovery.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1303`. Exact partial-day work-versus-absence overlap and
+No decision blocks `WL-1304`. Exact partial-day work-versus-absence overlap and
 calculation-to-ledger mismatch signals still need dedicated repository facts; Today does not guess
 them from minute totals. `D-502` remains an explicit real assistive technology and exact
 retail-browser residual rather than a conformance claim. The temporary Astro backup is recoverable
@@ -2015,7 +2050,7 @@ and belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1303 — Implement the complete attendance-state matrix and reliable clock-action feedback and recovery behavior.`
+`WL-1304 — Separate current session, today progress, estimated completion, provisional difference, and posted flexible-time balance.`
 
 ## Update rules
 

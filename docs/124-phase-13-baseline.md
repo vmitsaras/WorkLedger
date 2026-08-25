@@ -257,6 +257,20 @@ portion of `AUD-1300-08` is closed by the task region, stable action band, and r
 value emphasis; `WL-1304` still owns the final five-part metric hierarchy. `AUD-1300-05` and
 `AUD-1300-06` remain open guardrails in their assigned later work.
 
+### `WL-1303` follow-up
+
+`WL-1303` completes the attendance-state and recovery matrix in
+`docs/127-today-attendance-state-feedback-recovery.md`. Dedicated stories now cover every
+authoritative state and the pending, success, replay, stale, confirmation, rate-limit, offline,
+reconnect, dependency, permission, session-expiry, and other-device paths.
+
+The permission-loss gap recorded in section 6 is closed: Today removes and disables its exact query,
+renders no cached attendance or actions, exposes no request reference, and focuses a neutral denial
+route. The focus matrix also distinguishes direct Clock out while working from confirmation-based
+Clock out while on break, so a remote transition cannot replace a focused same-named control without
+moving context to the authoritative status. `AUD-1300-05` remains assigned to `WL-1306`; it concerns
+attention-item destinations and missing repository facts, not clock-action recovery.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.

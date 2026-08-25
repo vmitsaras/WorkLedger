@@ -278,6 +278,39 @@ integrationTest(
       expect(denied.statusCode).toBe(403);
       expect(denied.json()).toMatchObject({ error: { code: 'ACCESS_DENIED' } });
       expect(denied.payload).not.toContain(employee.employeeId);
+
+      const afterDenied = await fixture.client.query<{
+        audit_count: string;
+        event_count: string;
+        idempotency_count: string;
+      }>(
+        `select
+           (select count(*) from domain_audit_events where subject_employee_id = $1) as audit_count,
+           (select count(*) from punch_events where employee_id = $1) as event_count,
+           (select count(*) from idempotency_records where employee_id = $1) as idempotency_count`,
+        [employee.employeeId],
+      );
+      expect(afterDenied.rows[0]).toEqual({
+        audit_count: '1',
+        event_count: '2',
+        idempotency_count: '3',
+      });
+
+      await fixture.client.query(
+        `delete from auth_sessions where user_id = (select id from auth_users where email = $1)`,
+        [EMAIL],
+      );
+      const revokedSessionReplay = await clockInRequest(app, cookie, csrf, idempotencyKey, 0);
+      expect(revokedSessionReplay.statusCode).toBe(401);
+      expect(revokedSessionReplay.json()).toMatchObject({ error: { code: 'AUTH_REQUIRED' } });
+
+      const afterRevokedReplay = await fixture.client.query<{ idempotency_count: string }>(
+        `select count(*)::text as idempotency_count
+         from idempotency_records
+         where employee_id = $1`,
+        [employee.employeeId],
+      );
+      expect(afterRevokedReplay.rows[0]?.idempotency_count).toBe('3');
     } finally {
       await app.close();
       await fixture.cleanup();

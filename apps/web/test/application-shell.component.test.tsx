@@ -989,6 +989,44 @@ test('shows an incomplete calculation without inventing an estimate', async () =
   await expectNoAxeViolations(container);
 });
 
+test.each([
+  {
+    actions: ['Clock in'],
+    activeDescription: 'No active work session.',
+    state: 'OFF_WORK',
+    status: 'Off work',
+  },
+  {
+    actions: ['Start break', 'Clock out'],
+    activeDescription: 'Since 11:30 AM. Current interval: 1h 15m.',
+    state: 'WORKING',
+    status: 'Working',
+  },
+  {
+    actions: ['Resume work', 'Clock out'],
+    activeDescription: 'Since 12:30 PM. Current interval: 0h 15m.',
+    state: 'ON_BREAK',
+    status: 'On break',
+  },
+] as const)(
+  'renders the $state attendance story with only its authoritative actions',
+  async ({ actions, activeDescription, state, status }) => {
+    vi.stubGlobal('fetch', authenticatedFetch(todayWithAttendance(state, 3)));
+    const { container } = renderApplication('/today');
+
+    expect(await screen.findByRole('heading', { name: status })).toBeVisible();
+    expect(screen.getByText(activeDescription)).toBeVisible();
+    const actionGroup = screen.getByRole('group', { name: 'Attendance actions' });
+    expect(
+      within(actionGroup)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(actions);
+    expect(actionGroup).not.toHaveAttribute('aria-busy', 'true');
+    await expectNoAxeViolations(container);
+  },
+);
+
 test('clocks in once, keeps the pending control stable, refetches authoritative state, and announces one result', async () => {
   const offWorkToday = todayWithAttendance('OFF_WORK', 0);
   const workingToday = todayWithAttendance('WORKING', 1);
@@ -1221,6 +1259,68 @@ test('recovers from a stale clock-in with one safe alert and logical status focu
   await expectNoAxeViolations(container);
 });
 
+test('presents rate limiting as a definitive no-effect result without retrying', async () => {
+  const offWorkToday = todayWithAttendance('OFF_WORK', 0);
+  let clockInRequests = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') return successResponse(offWorkToday);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'l'.repeat(43) });
+      if (path === '/v1/me/attendance/clock-in' && init?.method === 'POST') {
+        clockInRequests += 1;
+        return apiErrorResponse('RATE_LIMITED', 429);
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication('/today');
+
+  const clockIn = await screen.findByRole('button', { name: 'Clock in' });
+  await user.click(clockIn);
+  const alert = await screen.findByRole('alert');
+  expect(alert).toHaveTextContent(
+    'No clock-in was recorded because attendance actions are temporarily limited.',
+  );
+  expect(alert).toHaveTextContent('Review the current status and try again later.');
+  expect(clockIn).toHaveFocus();
+  expect(clockInRequests).toBe(1);
+  await expectNoAxeViolations(container);
+});
+
+test('moves focus when a remote update changes clock-out into a confirmation action', async () => {
+  let serverToday = todayWithAttendance('WORKING', 1);
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') return successResponse(serverToday);
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container, queryClient } = renderApplication('/today');
+
+  const directClockOut = await screen.findByRole('button', { name: 'Clock out' });
+  directClockOut.focus();
+  serverToday = todayWithAttendance('ON_BREAK', 2);
+  await act(() => queryClient.refetchQueries({ queryKey: todayAttendanceQuery().queryKey }));
+
+  const onBreakHeading = await screen.findByRole('heading', { name: 'On break' });
+  await waitFor(() => expect(onBreakHeading).toHaveFocus());
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'Attendance changed in another tab or device. Current status: on break.',
+  );
+  const confirmationClockOut = screen.getByRole('button', { name: 'Clock out' });
+  await user.click(confirmationClockOut);
+  expect(screen.getByRole('dialog', { name: 'Clock out while on break?' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
 test('retries a lost attendance response with the same key and announces the replay once', async () => {
   let serverToday = todayWithAttendance('OFF_WORK', 0);
   const submittedKeys: string[] = [];
@@ -1397,6 +1497,38 @@ test('clears the Today mutation state and announces recovery when the clock-in s
     'Your session expired. Sign in again to continue.',
   );
   expect(screen.queryByRole('button', { name: 'Clock in' })).not.toBeInTheDocument();
+  await expectNoAxeViolations(container);
+});
+
+test('removes cached attendance and presents permission loss without restricted details', async () => {
+  const offWorkToday = todayWithAttendance('OFF_WORK', 0);
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/attendance/today') return successResponse(offWorkToday);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'p'.repeat(43) });
+      if (path === '/v1/me/attendance/clock-in' && init?.method === 'POST') {
+        return apiErrorResponse('ACCESS_DENIED', 403);
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container, queryClient } = renderApplication('/today');
+
+  await user.click(await screen.findByRole('button', { name: 'Clock in' }));
+  const heading = await screen.findByRole('heading', { name: 'Permission denied' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(document.title).toBe('Permission denied | WorkLedger');
+  expect(screen.getByText(/No attendance details or actions are available/u)).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Off work' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('group', { name: 'Attendance actions' })).not.toBeInTheDocument();
+  expect(screen.queryByText(REQUEST_ID)).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(queryClient.getQueryData(todayAttendanceQuery().queryKey)).toBeUndefined(),
+  );
   await expectNoAxeViolations(container);
 });
 

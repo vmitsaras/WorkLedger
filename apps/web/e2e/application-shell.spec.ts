@@ -1082,6 +1082,114 @@ test('retries a lost clock-in response with one key and one accessible result', 
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('recovers a stale clock intent from the authoritative device state without claiming an effect', async ({
+  page,
+}) => {
+  let attendanceState: 'OFF_WORK' | 'WORKING' = 'OFF_WORK';
+  let attendanceRevision = 0;
+  let clockInRequests = 0;
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({
+      json: success(todayForAttendanceState(attendanceState, attendanceRevision)),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 's'.repeat(43) }), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/clock-in', async (route) => {
+    clockInRequests += 1;
+    attendanceState = 'WORKING';
+    attendanceRevision = 1;
+    await route.fulfill({
+      json: {
+        error: {
+          code: 'ATTENDANCE_STATE_CHANGED',
+          context: {
+            attendanceRevision,
+            currentState: attendanceState,
+            validActions: ['START_BREAK', 'CLOCK_OUT'],
+          },
+          message: 'The request could not be completed.',
+          requestId: REQUEST_ID,
+        },
+      },
+      status: 409,
+    });
+  });
+
+  await page.goto('/today');
+  await page.getByRole('button', { name: 'Clock in' }).click();
+
+  const workingHeading = page.getByRole('heading', { name: 'Working' });
+  await expect(workingHeading).toBeFocused();
+  await expect(page.getByRole('alert')).toContainText(
+    'No clock-in was recorded. Attendance changed in another tab or device.',
+  );
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Clock in' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Start break' })).toBeEnabled();
+  expect(clockInRequests).toBe(1);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('clears protected Today state when the attendance session expires', async ({ page }) => {
+  let authenticated = true;
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill(
+      authenticated
+        ? { json: success(EMPLOYEE_CONTEXT), status: 200 }
+        : {
+            json: {
+              error: {
+                code: 'AUTH_SESSION_EXPIRED',
+                message: 'Your session has expired.',
+                requestId: REQUEST_ID,
+              },
+            },
+            status: 401,
+          },
+    );
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({
+      json: success(todayForAttendanceState('OFF_WORK', 0)),
+      status: 200,
+    });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'x'.repeat(43) }), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/clock-in', async (route) => {
+    authenticated = false;
+    await route.fulfill({
+      json: {
+        error: {
+          code: 'AUTH_SESSION_EXPIRED',
+          message: 'Your session has expired.',
+          requestId: REQUEST_ID,
+        },
+      },
+      status: 401,
+    });
+  });
+
+  await page.goto('/today');
+  await page.getByRole('button', { name: 'Clock in' }).click();
+
+  await expect(page).toHaveURL(/\/sign-in$/u);
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeFocused();
+  await expect(page.getByRole('alert')).toContainText(
+    'Your session expired. Sign in again to continue.',
+  );
+  await expect(page.getByRole('heading', { name: 'Off work' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Attendance actions' })).toHaveCount(0);
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('does not queue attendance offline and converges before enabling a new action', async ({
   context,
   page,

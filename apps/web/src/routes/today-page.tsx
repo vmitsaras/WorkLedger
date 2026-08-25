@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react';
 import { onlineManager, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import type {
   AttendanceCommand,
@@ -8,7 +8,7 @@ import type {
   AttendanceState,
   TodayAttendance,
 } from '@workledger/contracts';
-import { Alert, Button, RouteState } from '@workledger/ui';
+import { Alert, Button, RouteState, buttonVariants } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -19,6 +19,7 @@ import {
 } from '../app/api-client.js';
 import { formatLocalDate, formatTime } from '../app/date-time-format.js';
 import { todayAttendanceQuery } from '../app/query.js';
+import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { selectTodayAttention } from '../app/today-selectors.js';
 import { DailyTimeBreakdown } from '../components/daily-time-breakdown.js';
@@ -42,7 +43,8 @@ const ATTENDANCE_RETRY_BASE_DELAY_MS = 250;
 const ATTENDANCE_RETRY_MAX_DELAY_MS = 1_000;
 
 export function TodayPage() {
-  const query = useQuery(todayAttendanceQuery());
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const query = useQuery({ ...todayAttendanceQuery(), enabled: !permissionDenied });
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
@@ -89,6 +91,8 @@ export function TodayPage() {
   });
   const authenticationError =
     isAuthenticationError(query.error) || isAuthenticationError(attendanceMutation.error);
+  const accessDenied =
+    permissionDenied || isAccessDenied(query.error) || isAccessDenied(attendanceMutation.error);
 
   useEffect(() => {
     if (!authenticationError) return;
@@ -103,6 +107,14 @@ export function TodayPage() {
     }
     void navigate('/sign-in', { replace: true });
   }, [attendanceMutation.error, authenticationError, navigate, query.error, queryClient]);
+
+  useEffect(() => {
+    if (!isAccessDenied(query.error) && !isAccessDenied(attendanceMutation.error)) return;
+    setPermissionDenied(true);
+    setClockOutConfirmationOpen(false);
+    setAttendanceFeedback(null);
+    queryClient.removeQueries({ exact: true, queryKey: todayAttendanceQuery().queryKey });
+  }, [attendanceMutation.error, query.error, queryClient]);
 
   useEffect(() => {
     if (query.data?.attendance.state !== 'ON_BREAK') setClockOutConfirmationOpen(false);
@@ -157,8 +169,12 @@ export function TodayPage() {
     }
 
     const focusedAction = focusedActionRef.current;
+    const focusedActionPresentationChanged =
+      focusedAction === 'CLOCK_OUT' &&
+      (previousAttendance.state === 'ON_BREAK') !== (nextAttendance.state === 'ON_BREAK');
     const shouldFocusStatus =
-      focusedAction !== null && !nextAttendance.validActions.includes(focusedAction);
+      focusedAction !== null &&
+      (!nextAttendance.validActions.includes(focusedAction) || focusedActionPresentationChanged);
     setAttendanceFeedback(
       Object.freeze({
         command: focusedAction ?? previousAttendance.validActions[0] ?? 'CLOCK_IN',
@@ -177,8 +193,7 @@ export function TodayPage() {
       attendanceFeedback === null ||
       !attendanceFeedback.shouldFocusStatus ||
       focusedIntentRef.current === attendanceFeedback.intentKey ||
-      query.data === undefined ||
-      query.data.attendance.validActions.includes(attendanceFeedback.command)
+      query.data === undefined
     ) {
       return;
     }
@@ -188,10 +203,20 @@ export function TodayPage() {
     ) {
       return;
     }
+    const activeElement = document.activeElement;
+    const focusRemainsOnAttendanceAction =
+      activeElement instanceof Node && attendanceControlsRef.current?.contains(activeElement);
+    if (
+      query.data.attendance.validActions.includes(attendanceFeedback.command) &&
+      focusRemainsOnAttendanceAction
+    ) {
+      return;
+    }
     statusHeadingRef.current?.focus();
     focusedIntentRef.current = attendanceFeedback.intentKey;
   }, [attendanceFeedback, query.data]);
 
+  if (accessDenied) return <TodayPermissionDenied />;
   if ((query.isPending && isOnline) || authenticationError) return renderTodayLoading();
   if (query.isPending) return renderTodayOffline();
   if (query.isError && query.data === undefined) {
@@ -269,6 +294,22 @@ function renderTodayOffline() {
           attendance action.
         </p>
       </Alert>
+    </section>
+  );
+}
+
+function TodayPermissionDenied() {
+  useBoundaryPresentation('Permission denied');
+  return (
+    <section className="grid max-w-2xl gap-6">
+      <PageHeader
+        eyebrow="Route status"
+        title="Permission denied"
+        description="Your current account cannot use employee attendance. No attendance details or actions are available."
+      />
+      <Link className={buttonVariants({ variant: 'secondary' })} to="/">
+        Go to my home
+      </Link>
     </section>
   );
 }
@@ -442,6 +483,10 @@ function isAuthenticationError(error: unknown): boolean {
   );
 }
 
+function isAccessDenied(error: unknown): boolean {
+  return error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
+}
+
 function useOnlineStatus(): boolean {
   return useSyncExternalStore(
     (notify) => onlineManager.subscribe(notify),
@@ -515,6 +560,13 @@ function attendanceErrorFeedback(
       return Object.freeze({
         ...base,
         message: `No ${outcome} was recorded because this request could not be matched safely. Review the current status before trying again.`,
+        ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
+      });
+    }
+    if (error.code === 'RATE_LIMITED') {
+      return Object.freeze({
+        ...base,
+        message: `No ${outcome} was recorded because attendance actions are temporarily limited. Review the current status and try again later.`,
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
