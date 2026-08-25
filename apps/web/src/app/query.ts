@@ -287,7 +287,9 @@ function preferNewestTodayAttendance(previous: unknown, next: unknown): unknown 
       previousToday.data.attendance.attendanceRevision ||
       (nextToday.data.attendance.attendanceRevision ===
         previousToday.data.attendance.attendanceRevision &&
-        nextToday.data.asOf < previousToday.data.asOf))
+        (nextToday.data.asOf < previousToday.data.asOf ||
+          (nextToday.data.asOf === previousToday.data.asOf &&
+            nextToday.data.snapshotCapturedAt < previousToday.data.snapshotCapturedAt))))
   ) {
     return previous;
   }

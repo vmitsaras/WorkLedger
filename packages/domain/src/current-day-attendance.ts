@@ -33,6 +33,12 @@ import {
 import { type Instant, type LocalDate, type TimeZoneId } from './shared/temporal.js';
 
 export type CurrentDayCalculationStatus = 'INCOMPLETE' | 'PROVISIONAL';
+export type EstimatedFinishUnavailableReason =
+  | 'CALCULATION_UNAVAILABLE'
+  | 'CALCULATION_INCOMPLETE'
+  | 'NOT_WORKING'
+  | 'ON_BREAK'
+  | 'NO_REMAINING_EXPECTATION';
 
 export type CurrentDayAttendanceEstimate = DailyAttendanceCalculation &
   Readonly<{ breakMinutes: NonNegativeMinutes }>;
@@ -44,8 +50,6 @@ export type CurrentDayAttendanceInput = Readonly<{
   calculationAsOf: Instant;
   events: readonly PunchEvent[];
   expectedState: AttendanceState;
-  flexNegativeThresholdMinutes: NonNegativeMinutes | null;
-  flexPositiveThresholdMinutes: NonNegativeMinutes | null;
   hasSourceLedgerMismatch: boolean;
   hasUnresolvedApprovalRequiredAbsence: boolean;
   hasUnresolvedCorrection: boolean;
@@ -59,10 +63,15 @@ export type CurrentDayAttendanceInput = Readonly<{
 }>;
 
 export type CurrentDayAttendance = Readonly<{
+  activeElapsedMinutes: NonNegativeMinutes | null;
   activeSince: Instant | null;
   blockers: readonly CalculationBlockerCode[];
   calculationStatus: CurrentDayCalculationStatus;
   estimate: CurrentDayAttendanceEstimate | null;
+  estimatedFinishAt: Instant | null;
+  estimatedFinishUnavailableReason: EstimatedFinishUnavailableReason | null;
+  isPeriodPostedOrLocked: false;
+  remainingExpectedMinutes: NonNegativeMinutes | null;
   warnings: readonly CalculationWarningCode[];
 }>;
 
@@ -136,23 +145,45 @@ export function calculateCurrentDayAttendance(
       hasIncompleteAttendance: true,
     });
   }
-  const estimate = Object.freeze({ ...calculation.value, breakMinutes });
+  const baseEstimate = Object.freeze({ ...calculation.value, breakMinutes });
   const signals = calculateSignals(input, {
     attendanceConflictCodes: [],
     configurationConflictCodes: [],
-    dailyBalanceMinutes: estimate.dailyBalanceMinutes,
-    expectedMinutes: estimate.expectedMinutes,
+    dailyBalanceMinutes: baseEstimate.dailyBalanceMinutes,
+    expectedMinutes: baseEstimate.expectedMinutes,
     hasIncompleteAttendance: input.sourceTruncated,
     hasMissingPolicy: false,
     hasMissingSchedule: false,
-    workedMinutes: estimate.workedMinutes,
+    workedMinutes: baseEstimate.workedMinutes,
+  });
+  const calculationStatus = signals.submissionBlockers.length > 0 ? 'INCOMPLETE' : 'PROVISIONAL';
+  const remainingExpectedMinutes = asNonNegativeMinutes(
+    Math.max(baseEstimate.expectedMinutes - baseEstimate.creditedMinutes, 0),
+  );
+  if (remainingExpectedMinutes === null) {
+    return unavailableResult(input, {
+      activeSince,
+      attendanceConflictCodes: ['ATTENDANCE_INVALID_EVENT_PRECISION'],
+      hasIncompleteAttendance: true,
+    });
+  }
+  const estimatedFinish = estimateFinish({
+    asOf: input.calculationAsOf,
+    calculationStatus,
+    remainingExpectedMinutes,
+    state: input.expectedState,
   });
 
   return Object.freeze({
+    activeElapsedMinutes: activeElapsedMinutes(activeSince, input.calculationAsOf),
     activeSince,
     blockers: signals.submissionBlockers,
-    calculationStatus: signals.submissionBlockers.length > 0 ? 'INCOMPLETE' : 'PROVISIONAL',
-    estimate,
+    calculationStatus,
+    estimate: baseEstimate,
+    estimatedFinishAt: estimatedFinish.at,
+    estimatedFinishUnavailableReason: estimatedFinish.unavailableReason,
+    isPeriodPostedOrLocked: false,
+    remainingExpectedMinutes,
     warnings: signals.warnings,
   });
 }
@@ -290,10 +321,18 @@ function unavailableResult(
     workedMinutes: null,
   });
   return Object.freeze({
+    activeElapsedMinutes: activeElapsedMinutes(
+      overrides.activeSince ?? null,
+      input.calculationAsOf,
+    ),
     activeSince: overrides.activeSince ?? null,
     blockers: signals.submissionBlockers,
     calculationStatus: 'INCOMPLETE',
     estimate: null,
+    estimatedFinishAt: null,
+    estimatedFinishUnavailableReason: 'CALCULATION_UNAVAILABLE',
+    isPeriodPostedOrLocked: false,
+    remainingExpectedMinutes: null,
     warnings: signals.warnings,
   });
 }
@@ -316,8 +355,8 @@ function calculateSignals(
     configurationConflictCodes: values.configurationConflictCodes,
     dailyBalanceMinutes: values.dailyBalanceMinutes,
     expectedMinutes: values.expectedMinutes,
-    flexNegativeThresholdMinutes: input.flexNegativeThresholdMinutes,
-    flexPositiveThresholdMinutes: input.flexPositiveThresholdMinutes,
+    flexNegativeThresholdMinutes: null,
+    flexPositiveThresholdMinutes: null,
     hasIncompleteAttendance: values.hasIncompleteAttendance,
     hasMissingPolicy: values.hasMissingPolicy,
     hasMissingSchedule: values.hasMissingSchedule,
@@ -327,5 +366,54 @@ function calculateSignals(
     isHoliday: input.isHoliday,
     workedMinutes: values.workedMinutes,
     workDuringAbsence: input.workDuringAbsence,
+  });
+}
+
+function activeElapsedMinutes(
+  activeSince: Instant | null,
+  calculationAsOf: Instant,
+): NonNegativeMinutes | null {
+  if (activeSince === null) return null;
+  const elapsedNanoseconds =
+    Temporal.Instant.from(calculationAsOf).epochNanoseconds -
+    Temporal.Instant.from(activeSince).epochNanoseconds;
+  const minuteNanoseconds = 60_000_000_000n;
+  if (elapsedNanoseconds < 0n || elapsedNanoseconds % minuteNanoseconds !== 0n) return null;
+  return asNonNegativeMinutes(Number(elapsedNanoseconds / minuteNanoseconds));
+}
+
+function asNonNegativeMinutes(value: number): NonNegativeMinutes | null {
+  const parsed = parseNonNegativeMinutes(value);
+  return parsed.ok ? parsed.value : null;
+}
+
+function estimateFinish(
+  input: Readonly<{
+    asOf: Instant;
+    calculationStatus: CurrentDayCalculationStatus;
+    remainingExpectedMinutes: NonNegativeMinutes;
+    state: AttendanceState;
+  }>,
+): Readonly<{
+  at: Instant | null;
+  unavailableReason: EstimatedFinishUnavailableReason | null;
+}> {
+  if (input.calculationStatus === 'INCOMPLETE') {
+    return Object.freeze({ at: null, unavailableReason: 'CALCULATION_INCOMPLETE' });
+  }
+  if (input.state === 'OFF_WORK') {
+    return Object.freeze({ at: null, unavailableReason: 'NOT_WORKING' });
+  }
+  if (input.state === 'ON_BREAK') {
+    return Object.freeze({ at: null, unavailableReason: 'ON_BREAK' });
+  }
+  if (input.remainingExpectedMinutes === 0) {
+    return Object.freeze({ at: null, unavailableReason: 'NO_REMAINING_EXPECTATION' });
+  }
+  return Object.freeze({
+    at: Temporal.Instant.from(input.asOf)
+      .add({ minutes: input.remainingExpectedMinutes })
+      .toString() as Instant,
+    unavailableReason: null,
   });
 }

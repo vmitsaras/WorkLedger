@@ -231,6 +231,19 @@ The posted flexible-time source already belongs to the My Time path:
 
 Today does not currently return a posted-through date. `WL-1301` must choose whether to compose ledger evidence into the Today service and contract or introduce another server-owned composition. It must not join separate browser queries and call the result authoritative without defining freshness, authorization, and error semantics.
 
+### `WL-1301` follow-up
+
+`WL-1301` closes `AUD-1300-01` through `AUD-1300-04` with the shared coherent fixture, nested
+provisional source set, repeatable-read posted balance composition, posted-through definition, and
+posted-only threshold semantics documented in `docs/125-today-authoritative-display-contract.md`.
+It preserves the five `WL-1300` screenshots as historical audit evidence and adds a separate five
+snapshot `WL-1301` set.
+
+`AUD-1300-05` is only partially resolved: attention now has typed recovery metadata, but exact
+partial-day work-versus-absence overlap and ledger-source mismatch still need dedicated repository
+facts. `AUD-1300-06` remains a reference guardrail. `AUD-1300-07` and `AUD-1300-08` remain assigned
+to the later Today hierarchy and presentation tasks.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.

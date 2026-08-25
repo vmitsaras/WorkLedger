@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 5 of 5 — Production and UI release gates complete**<br>
-> **Current phase progress: Phase 13 — 1 of 14 tasks complete**<br>
+> **Current phase progress: Phase 13 — 2 of 14 tasks complete**<br>
 > **Internal milestone: `0.13.0`**
 
 Phases 0–12 have passed their exit gates. The repository includes attendance, flexible-time and

@@ -2,19 +2,19 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 1 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 2 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1301` (next)
-**Status:** WL-1300 complete — Phase 12 audited and deterministic Phase 13 evidence registered
+**Active task:** `WL-1302` (next)
+**Status:** WL-1301 complete — authoritative Today display contract and coherent evidence established
 **Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1300` reconciles Phase 13 around attendance clarity and
-workflow hardening, registers the hierarchy-only Today reference, traces the Phase 12
-implementation and contradictions, and adds five reproducible Today audit baselines without
-changing production behavior. The next bounded slice is `WL-1301`: establish one authoritative
-Today attendance display contract and eliminate contradictory timestamps, durations, and balances.
+Phase 12 is complete at `0.13.0`. `WL-1301` establishes one repeatable-read, server-owned Today
+snapshot for current attendance, current-interval timing, current-day arithmetic, posted
+flexible-time evidence, estimated completion, structured attention, action availability, and
+immutable events. The next bounded slice is `WL-1302`: implement the revised Today information
+architecture and visual hierarchy from the approved reference.
 
 ## Verified decisions
 
@@ -31,11 +31,14 @@ Today attendance display contract and eliminate contradictory timestamps, durati
 - PostgreSQL source of truth.
 - React Aria plus shadcn React Aria source components and Tailwind.
 - TanStack Query for server state.
-- The Today query uses a trusted minute-aligned server instant and organization-local Temporal date
-  boundary; current-day values are explicitly provisional or incomplete and never final.
-- An older Today `attendanceRevision`, or older `asOf` value at the same revision, cannot replace
-  newer in-memory query data. Today responses are no-store and exclude employee/organization,
-  command, actor, absence-detail, and policy-detail identifiers.
+- The Today query uses an exact trusted capture instant, a minute-aligned calculation instant, and
+  an organization-local Temporal date boundary; current-day values are explicitly provisional or
+  incomplete and never final. Posted flexible-time evidence is ledger-derived through the prior
+  local date and bounded by the same capture instant.
+- An older Today `attendanceRevision`, older `asOf` at the same revision, or older
+  `snapshotCapturedAt` in the same calculation minute cannot replace newer in-memory query data.
+  Today responses are no-store and exclude employee/organization, command, actor, absence-detail,
+  policy-detail, and raw ledger identifiers.
 - React Router `8.3.0` Data Mode owns route loaders, redirects, boundaries, permission gates, URL
   restoration, titles, and route focus; TanStack Query `5.101.4` owns in-memory remote state and
   mutations without browser persistence.
@@ -1932,17 +1935,57 @@ Today attendance display contract and eliminate contradictory timestamps, durati
 - No production domain, database, API, TypeScript, permission, or UI behavior changed. No dependency,
   manifest, migration, lockfile, Phase 12 snapshot, or handoff-pack file changed.
 
+**2026-08-25 — WL-1301 authoritative Today display contract**
+
+- Replaced the loose Today estimate with a strict display contract covering exact snapshot capture,
+  minute-aligned arithmetic, current-interval elapsed time, all-command availability, provisional
+  source amounts, remaining expected minutes, estimated-finish availability, posted flexible-time
+  balance and through-date, structured attention, and immutable current-date events. Cross-field
+  validation rejects contradictory action, timing-state, arithmetic, status, finish, attention,
+  and posted-date combinations.
+- Composed Today inside one `REPEATABLE READ` transaction with both `ATTENDANCE_READ` and
+  `TIME_BALANCE_READ`. The ledger total includes only prior-local-date entries posted by the exact
+  capture instant; the browser receives the total and latest included effective date but no ledger
+  row or scope identifier. Approved current-date adjustments come from the persisted daily
+  projection source.
+- Removed provisional daily-difference threshold signaling from the current-day engine. The API
+  selector now creates positive/negative threshold attention only from the posted flexible-time
+  balance, so the coherent negative-current-day/positive-posted fixture produces no false debt
+  warning. Missing configuration and unresolved decisions remain explicit blockers with recovery
+  metadata.
+- Added selector, domain, contract, cache-ordering, API integration, component, and Playwright
+  evidence for working/off-work/break/completed states, multiple sessions, absence and adjustment
+  sources, unresolved corrections, effective schedule changes, overnight/DST behavior,
+  unavailable finish, ledger bounds, and same-minute response ordering. The tracked OpenAPI
+  artifact and source-boundary inventory were updated.
+- Preserved the five `WL-1300` audit images as historical evidence and registered five separate
+  `WL-1301` contract snapshots from 1440×900 through 320×568. Manual review found coherent visible
+  values, no page overflow or clipping, logical order, visible focus, and no private data. The
+  input-like focused H1 and existing hierarchy remain later-task findings rather than scope creep.
+- Verification passed reproducible OpenAPI, formatting, ESLint, 288-file/1,507-import boundaries,
+  CSS ownership, strict TypeScript, all 37 tooling tests, all 353 unit/component tests, 13 available
+  integration tests with 45 PostgreSQL-dependent skips, 34 Playwright scenarios across the
+  configured browser matrix, all five new snapshot comparisons, the production build, public-root
+  imports, and `git diff --check`. The web build is 364,815 largest JavaScript bytes, 891,998 total
+  JavaScript bytes, 240,840 gzip JavaScript bytes, and 46,859 CSS bytes.
+- The strict client validator and structured fields add 5,513 uncompressed and 1,544 gzip bytes
+  versus `WL-1300`; the enforced total JavaScript limits were deliberately adjusted by less than
+  1.3 percent to retain measurable headroom. No dependency, manifest, migration, lockfile,
+  publication, deployment, tag, or workspace version changed. See
+  `docs/125-today-authoritative-display-contract.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1301`. `AUD-1300-02` through `AUD-1300-05` define the contract and source
-questions that task must resolve. `D-502` remains an explicit real assistive technology and exact
+No decision blocks `WL-1302`. Exact partial-day work-versus-absence overlap and
+calculation-to-ledger mismatch signals still need dedicated repository facts; Today does not guess
+them from minute totals. `D-502` remains an explicit real assistive technology and exact
 retail-browser residual rather than a conformance claim. The temporary Astro backup is recoverable
 at `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical
 and belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1301 — Establish one authoritative Today attendance display contract and eliminate contradictory timestamps, durations, and balances.`
+`WL-1302 — Implement the revised Today information architecture and visual hierarchy from the approved reference.`
 
 ## Update rules
 

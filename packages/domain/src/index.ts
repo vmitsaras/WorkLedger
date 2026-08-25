@@ -66,6 +66,7 @@ export {
   type CurrentDayAttendanceEstimate,
   type CurrentDayAttendanceInput,
   type CurrentDayCalculationStatus,
+  type EstimatedFinishUnavailableReason,
 } from './current-day-attendance.js';
 export {
   absenceAvailabilityStates,

@@ -20,6 +20,7 @@ import {
 import { formatLocalDate, formatTime } from '../app/date-time-format.js';
 import { todayAttendanceQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
+import { selectTodayAttention } from '../app/today-selectors.js';
 import { DailyTimeBreakdown } from '../components/daily-time-breakdown.js';
 import { CalculationAttention } from '../components/calculation-attention.js';
 import { PageHeader } from '../components/page-header.js';
@@ -356,6 +357,7 @@ function renderTodayReady({
   updating: boolean;
 }>) {
   const calculation = today.calculation;
+  const attention = selectTodayAttention(today);
 
   return (
     <section className="grid max-w-6xl gap-8">
@@ -390,14 +392,15 @@ function renderTodayReady({
       />
 
       <CalculationAttention
-        attention={{ blockers: calculation.blockers, warnings: calculation.warnings }}
+        attention={attention}
         balanceHref="/my-time#flexible-time-heading"
         calculationHref="#calculation-details"
         eventHref="#today-timeline-title"
         onCalculationDetailsRequest={() => setCalculationDetailsOpen(true)}
+        thresholdBasis="POSTED_BALANCE"
       />
 
-      {calculation.estimate === null ? null : (
+      {calculation.provisional === null ? null : (
         <details
           id="calculation-details"
           className="wl-panel"
@@ -412,8 +415,8 @@ function renderTodayReady({
           </summary>
           <div className="border-t border-[var(--wl-border)] pt-5">
             <DailyTimeBreakdown
-              estimate={calculation.estimate}
               holidayName={calculation.holidayName}
+              provisional={calculation.provisional}
               status={calculation.status}
             />
           </div>

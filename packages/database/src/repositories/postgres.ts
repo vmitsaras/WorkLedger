@@ -4929,6 +4929,22 @@ class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
       ),
       'expected_reduction_minutes',
     );
+    const [projectionRow] = await this.transaction
+      .select({ adjustmentMinutes: dailyProjections.adjustmentMinutes })
+      .from(dailyProjections)
+      .where(
+        and(
+          eq(dailyProjections.organizationId, input.organizationId),
+          eq(dailyProjections.employeeId, input.employeeId),
+          eq(dailyProjections.localDate, input.localDate),
+        ),
+      )
+      .limit(1);
+    const approvedAdjustmentMinutes = mapSignedMinutes(
+      projectionRow?.adjustmentMinutes ?? 0,
+      'daily_projections',
+      'adjustment_minutes',
+    );
 
     const [unresolvedCorrection] = await this.transaction
       .select({ id: correctionRequests.id })
@@ -4965,6 +4981,7 @@ class PostgresTodayAttendanceRepository implements TodayAttendanceRepository {
     return Object.freeze({
       absenceCreditMinutes,
       absenceExpectedReductionMinutes,
+      approvedAdjustmentMinutes,
       events: Object.freeze(events),
       flexNegativeThresholdMinutes: warningThreshold,
       flexPositiveThresholdMinutes: warningThreshold,
@@ -7162,6 +7179,28 @@ class PostgresTimeAccountRepository implements TimeAccountRepository {
           eq(timeAccountEntries.organizationId, organizationId),
           eq(timeAccountEntries.employeeId, employeeId),
           lte(timeAccountEntries.localDate, endDate),
+        ),
+      )
+      .orderBy(asc(timeAccountEntries.postedAt), asc(timeAccountEntries.id));
+
+    return Object.freeze(rows.map(mapTimeAccountEntry));
+  }
+
+  async listForEmployeeThroughSnapshot(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    endDate: TimeAccountLedgerEntry['effectiveDate'],
+    recordedThrough: Instant,
+  ): Promise<readonly TimeAccountLedgerEntry[]> {
+    const rows = await this.transaction
+      .select()
+      .from(timeAccountEntries)
+      .where(
+        and(
+          eq(timeAccountEntries.organizationId, organizationId),
+          eq(timeAccountEntries.employeeId, employeeId),
+          lte(timeAccountEntries.localDate, endDate),
+          lte(timeAccountEntries.postedAt, recordedThrough),
         ),
       )
       .orderBy(asc(timeAccountEntries.postedAt), asc(timeAccountEntries.id));

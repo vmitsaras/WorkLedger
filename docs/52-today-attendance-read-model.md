@@ -1,5 +1,10 @@
 # Today Attendance Read Model
 
+> Phase 13 contract note: `WL-1301` extends this historical `WL-401` read model with exact snapshot
+> capture time, current-interval elapsed time, action availability, estimated-finish semantics,
+> posted flexible-time evidence, structured attention, and schema-level reconciliation. See
+> `docs/125-today-authoritative-display-contract.md` for the current authoritative contract.
+
 **Task:** `WL-401`  
 **Completed:** 2026-08-11  
 **Outcome:** Complete locally. WorkLedger now serves and renders an authorized, organization-local

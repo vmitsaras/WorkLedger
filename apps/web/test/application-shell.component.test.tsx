@@ -14,7 +14,7 @@ import type {
   SystemDiagnosticsResponse,
   TodayAttendance,
 } from '@workledger/contracts';
-import { expectNoAxeViolations } from '@workledger/test-utils';
+import { COHERENT_TODAY_ATTENDANCE, expectNoAxeViolations } from '@workledger/test-utils';
 
 import { createWorkLedgerQueryClient, todayAttendanceQuery } from '../src/app/query.js';
 import { clearSessionMemory } from '../src/app/api-client.js';
@@ -65,53 +65,7 @@ const SYSTEM_DIAGNOSTICS: SystemDiagnosticsResponse = {
   timestamp: '2026-08-21T10:30:00Z',
   version: '0.12.0',
 };
-const TODAY_ATTENDANCE: TodayAttendance = {
-  asOf: '2026-08-11T09:30:00Z',
-  attendance: {
-    activeSince: '2026-08-11T09:15:00Z',
-    attendanceRevision: 3,
-    state: 'WORKING',
-    validActions: ['START_BREAK', 'CLOCK_OUT'],
-  },
-  calculation: {
-    blockers: [],
-    estimate: {
-      absenceCreditMinutes: 0,
-      absenceExpectedReductionMinutes: 0,
-      adjustmentMinutes: 0,
-      balanceMinutes: -285,
-      breakMinutes: 15,
-      creditedMinutes: 195,
-      expectedMinutes: 480,
-      holidayExpectedReductionMinutes: 0,
-      scheduledMinutes: 480,
-      workedMinutes: 195,
-    },
-    holidayName: null,
-    status: 'PROVISIONAL',
-    warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
-  },
-  localDate: '2026-08-11',
-  timeZone: 'Europe/Berlin',
-  timeline: [
-    {
-      id: '123e4567-e89b-42d3-a456-426614174201',
-      occurredAt: '2026-08-11T07:00:00Z',
-      type: 'CLOCK_IN',
-    },
-    {
-      id: '123e4567-e89b-42d3-a456-426614174202',
-      occurredAt: '2026-08-11T09:00:00Z',
-      type: 'BREAK_START',
-    },
-    {
-      id: '123e4567-e89b-42d3-a456-426614174203',
-      occurredAt: '2026-08-11T09:15:00Z',
-      type: 'BREAK_END',
-    },
-  ],
-  timelineTruncated: false,
-};
+const TODAY_ATTENDANCE: TodayAttendance = COHERENT_TODAY_ATTENDANCE;
 
 const MY_TIME: MyTime = {
   balance: {
@@ -372,7 +326,7 @@ test('renders the role-aware shell and focuses each completed route navigation',
   expect(
     screen.queryByText('The calculation source does not match its recorded ledger entry.'),
   ).not.toBeInTheDocument();
-  expect(screen.getByText(/below your configured flexible-time warning threshold/u)).toBeVisible();
+  expect(screen.queryByText(/configured flexible-time warning threshold/u)).not.toBeInTheDocument();
   expect(screen.getByText('Clocked in')).toBeVisible();
 
   await user.click(screen.getByRole('link', { name: 'My time' }));
@@ -838,29 +792,30 @@ test('explains the daily arithmetic and preserves attendance event order in sema
   const user = userEvent.setup();
   const completedSequence: TodayAttendance = {
     ...TODAY_ATTENDANCE,
-    attendance: {
-      activeSince: null,
-      attendanceRevision: 4,
-      state: 'OFF_WORK',
-      validActions: ['CLOCK_IN'],
-    },
+    attendance: attendanceForState('OFF_WORK', 4),
     calculation: {
       ...TODAY_ATTENDANCE.calculation,
-      estimate:
-        TODAY_ATTENDANCE.calculation.estimate === null
+      estimatedFinishAt: null,
+      estimatedFinishUnavailableReason: 'NOT_WORKING',
+      provisional:
+        TODAY_ATTENDANCE.calculation.provisional === null
           ? null
           : {
-              ...TODAY_ATTENDANCE.calculation.estimate,
-              adjustmentMinutes: -30,
-              balanceMinutes: -315,
-              creditedMinutes: 165,
+              ...TODAY_ATTENDANCE.calculation.provisional,
+              calculationSources: {
+                ...TODAY_ATTENDANCE.calculation.provisional.calculationSources,
+                approvedAdjustmentMinutes: -30,
+              },
+              creditedMinutesToday: 165,
+              provisionalDifferenceMinutes: -315,
             },
+      remainingExpectedMinutes: 315,
     },
     timeline: [
       ...TODAY_ATTENDANCE.timeline,
       {
         id: '123e4567-e89b-42d3-a456-426614174204',
-        occurredAt: '2026-08-11T09:15:00Z',
+        occurredAt: '2026-08-11T10:45:00Z',
         type: 'CLOCK_OUT',
       },
     ],
@@ -894,9 +849,9 @@ test('explains the daily arithmetic and preserves attendance event order in sema
   expect(events).toHaveLength(4);
   expect(events.map((event) => event.textContent)).toEqual([
     'Clocked in9:00 AMWork session started.',
-    'Break started11:00 AMWorking time paused.',
+    'Break started10:45 AMWorking time paused.',
     'Break ended11:15 AMWorking time resumed.',
-    'Clocked out11:15 AMWork session ended.',
+    'Clocked out12:45 PMWork session ended.',
   ]);
   await expectNoAxeViolations(container);
 });
@@ -906,22 +861,46 @@ test('explains zero expected time before presenting credited work', async () => 
   const holidayToday: TodayAttendance = {
     ...TODAY_ATTENDANCE,
     calculation: {
-      blockers: [],
-      estimate: {
-        absenceCreditMinutes: 0,
-        absenceExpectedReductionMinutes: 0,
-        adjustmentMinutes: 0,
-        balanceMinutes: 60,
-        breakMinutes: 0,
-        creditedMinutes: 60,
-        expectedMinutes: 0,
-        holidayExpectedReductionMinutes: 480,
-        scheduledMinutes: 480,
-        workedMinutes: 60,
-      },
+      attentionItems: [
+        {
+          affectedDate: TODAY_ATTENDANCE.localDate,
+          blocksSubmission: false,
+          code: 'WORK_ON_HOLIDAY',
+          reason: 'Recorded work falls on a public holiday.',
+          recoveryAction: 'REVIEW_CALCULATION',
+          severity: 'WARNING',
+          source: 'CURRENT_DAY_CALCULATION',
+        },
+        {
+          affectedDate: TODAY_ATTENDANCE.localDate,
+          blocksSubmission: false,
+          code: 'WORK_ON_ZERO_EXPECTED_DAY',
+          reason: 'Recorded work falls on a day with no expected minutes.',
+          recoveryAction: 'REVIEW_CALCULATION',
+          severity: 'WARNING',
+          source: 'CURRENT_DAY_CALCULATION',
+        },
+      ],
+      estimatedFinishAt: null,
+      estimatedFinishUnavailableReason: 'NO_REMAINING_EXPECTATION',
       holidayName: 'German Unity Day',
+      isPeriodPostedOrLocked: false,
+      provisional: {
+        calculationSources: {
+          absenceCreditMinutes: 0,
+          absenceExpectedReductionMinutes: 0,
+          approvedAdjustmentMinutes: 0,
+          breakMinutesToday: 0,
+          holidayExpectedReductionMinutes: 480,
+          scheduledMinutes: 480,
+          workedMinutesToday: 60,
+        },
+        creditedMinutesToday: 60,
+        expectedMinutesToday: 0,
+        provisionalDifferenceMinutes: 60,
+      },
+      remainingExpectedMinutes: 0,
       status: 'PROVISIONAL',
-      warnings: ['WORK_ON_HOLIDAY', 'WORK_ON_ZERO_EXPECTED_DAY'],
     },
   };
   vi.stubGlobal('fetch', authenticatedFetch(holidayToday));
@@ -944,18 +923,26 @@ test('explains zero expected time before presenting credited work', async () => 
 test('shows an incomplete calculation without inventing an estimate', async () => {
   const incompleteToday: TodayAttendance = {
     ...TODAY_ATTENDANCE,
-    attendance: {
-      activeSince: null,
-      attendanceRevision: 0,
-      state: 'OFF_WORK',
-      validActions: ['CLOCK_IN'],
-    },
+    attendance: attendanceForState('OFF_WORK', 0),
     calculation: {
-      blockers: ['SCHEDULE_NOT_ASSIGNED'],
-      estimate: null,
+      attentionItems: [
+        {
+          affectedDate: TODAY_ATTENDANCE.localDate,
+          blocksSubmission: true,
+          code: 'SCHEDULE_NOT_ASSIGNED',
+          reason: 'No effective work schedule is assigned for today.',
+          recoveryAction: 'CONTACT_ADMINISTRATOR',
+          severity: 'BLOCKER',
+          source: 'CURRENT_DAY_CALCULATION',
+        },
+      ],
+      estimatedFinishAt: null,
+      estimatedFinishUnavailableReason: 'CALCULATION_UNAVAILABLE',
       holidayName: null,
+      isPeriodPostedOrLocked: false,
+      provisional: null,
+      remainingExpectedMinutes: null,
       status: 'INCOMPLETE',
-      warnings: [],
     },
     timeline: [],
   };
@@ -1424,12 +1411,13 @@ test('does not replace newer Today attendance with an older server snapshot', as
   response = {
     ...TODAY_ATTENDANCE,
     asOf: '2026-08-11T09:20:00Z',
-    attendance: {
-      activeSince: null,
-      attendanceRevision: 2,
-      state: 'OFF_WORK',
-      validActions: ['CLOCK_IN'],
+    attendance: attendanceForState('OFF_WORK', 2),
+    calculation: {
+      ...TODAY_ATTENDANCE.calculation,
+      estimatedFinishAt: null,
+      estimatedFinishUnavailableReason: 'NOT_WORKING',
     },
+    snapshotCapturedAt: '2026-08-11T09:20:15Z',
   };
   await queryClient.invalidateQueries({ queryKey: ['self', 'attendance', 'today'] });
   await queryClient.fetchQuery(todayAttendanceQuery());
@@ -1437,6 +1425,29 @@ test('does not replace newer Today attendance with an older server snapshot', as
   expect(queryClient.getQueryData(['self', 'attendance', 'today'])).toMatchObject({
     asOf: TODAY_ATTENDANCE.asOf,
     attendance: { attendanceRevision: 3, state: 'WORKING' },
+  });
+});
+
+test('does not replace a newer Today capture within the same calculation minute', async () => {
+  let response = TODAY_ATTENDANCE;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => successResponse(response)),
+  );
+  const queryClient = createWorkLedgerQueryClient();
+
+  await queryClient.fetchQuery(todayAttendanceQuery());
+  response = {
+    ...TODAY_ATTENDANCE,
+    snapshotCapturedAt: '2026-08-11T10:45:10Z',
+  };
+  await queryClient.invalidateQueries({ queryKey: ['self', 'attendance', 'today'] });
+  await queryClient.fetchQuery(todayAttendanceQuery());
+
+  expect(queryClient.getQueryData(['self', 'attendance', 'today'])).toMatchObject({
+    asOf: TODAY_ATTENDANCE.asOf,
+    attendance: { attendanceRevision: TODAY_ATTENDANCE.attendance.attendanceRevision },
+    snapshotCapturedAt: TODAY_ATTENDANCE.snapshotCapturedAt,
   });
 });
 
@@ -1686,37 +1697,90 @@ function todayWithAttendance(
   state: 'OFF_WORK' | 'ON_BREAK' | 'WORKING',
   attendanceRevision: number,
 ): TodayAttendance {
-  const active = state !== 'OFF_WORK';
+  const remainingExpectedMinutes = 480;
   return {
     ...TODAY_ATTENDANCE,
-    attendance: {
-      activeSince: active ? '2026-08-11T09:30:00Z' : null,
-      attendanceRevision,
-      state,
-      validActions:
-        state === 'WORKING'
-          ? ['START_BREAK', 'CLOCK_OUT']
-          : state === 'ON_BREAK'
-            ? ['RESUME', 'CLOCK_OUT']
-            : ['CLOCK_IN'],
-    },
+    attendance: attendanceForState(state, attendanceRevision),
     calculation: {
       ...TODAY_ATTENDANCE.calculation,
-      estimate:
-        TODAY_ATTENDANCE.calculation.estimate === null
+      attentionItems: [],
+      estimatedFinishAt: state === 'WORKING' ? '2026-08-11T18:45:00Z' : null,
+      estimatedFinishUnavailableReason:
+        state === 'WORKING' ? null : state === 'ON_BREAK' ? 'ON_BREAK' : 'NOT_WORKING',
+      provisional:
+        TODAY_ATTENDANCE.calculation.provisional === null
           ? null
           : {
-              ...TODAY_ATTENDANCE.calculation.estimate,
-              breakMinutes: 0,
-              creditedMinutes: 0,
-              workedMinutes: 0,
+              ...TODAY_ATTENDANCE.calculation.provisional,
+              calculationSources: {
+                ...TODAY_ATTENDANCE.calculation.provisional.calculationSources,
+                breakMinutesToday: 0,
+                workedMinutesToday: 0,
+              },
+              creditedMinutesToday: 0,
+              provisionalDifferenceMinutes: -480,
             },
-      warnings: [],
+      remainingExpectedMinutes,
     },
-    timeline: active
-      ? [{ id: 'punch-clock-in-1', occurredAt: '2026-08-11T09:30:00Z', type: 'CLOCK_IN' }]
-      : [],
+    timeline:
+      state === 'WORKING'
+        ? [{ id: 'punch-clock-in-1', occurredAt: '2026-08-11T09:30:00Z', type: 'CLOCK_IN' }]
+        : state === 'ON_BREAK'
+          ? [
+              {
+                id: 'punch-clock-in-1',
+                occurredAt: '2026-08-11T09:30:00Z',
+                type: 'CLOCK_IN',
+              },
+              {
+                id: 'punch-break-start-1',
+                occurredAt: '2026-08-11T10:30:00Z',
+                type: 'BREAK_START',
+              },
+            ]
+          : [],
   };
+}
+
+function attendanceForState(
+  state: 'OFF_WORK' | 'ON_BREAK' | 'WORKING',
+  attendanceRevision: number,
+): TodayAttendance['attendance'] {
+  const validActions: TodayAttendance['attendance']['validActions'] =
+    state === 'WORKING'
+      ? ['START_BREAK', 'CLOCK_OUT']
+      : state === 'ON_BREAK'
+        ? ['RESUME', 'CLOCK_OUT']
+        : ['CLOCK_IN'];
+  const activeSince =
+    state === 'WORKING'
+      ? '2026-08-11T09:30:00Z'
+      : state === 'ON_BREAK'
+        ? '2026-08-11T10:30:00Z'
+        : null;
+
+  return {
+    actionAvailability: [
+      actionAvailabilityFor('CLOCK_IN', validActions),
+      actionAvailabilityFor('START_BREAK', validActions),
+      actionAvailabilityFor('RESUME', validActions),
+      actionAvailabilityFor('CLOCK_OUT', validActions),
+    ],
+    activeElapsedMinutes: state === 'WORKING' ? 75 : state === 'ON_BREAK' ? 15 : null,
+    activeSince,
+    attendanceRevision,
+    state,
+    validActions: [...validActions],
+  };
+}
+
+function actionAvailabilityFor(
+  command: TodayAttendance['attendance']['validActions'][number],
+  validActions: TodayAttendance['attendance']['validActions'],
+): TodayAttendance['attendance']['actionAvailability'][number] {
+  return validActions.includes(command)
+    ? { available: true, blockingReason: null, command }
+    : { available: false, blockingReason: 'CURRENT_ATTENDANCE_STATE', command };
 }
 
 function requestPath(input: RequestInfo | URL): string {

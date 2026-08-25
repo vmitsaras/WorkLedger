@@ -133,12 +133,14 @@ export function CalculationAttention({
   calculationHref,
   eventHref,
   onCalculationDetailsRequest,
+  thresholdBasis = 'DAILY_BALANCE',
 }: Readonly<{
   attention: DailyTimeAttention;
   balanceHref: string;
   calculationHref: string;
   eventHref: string;
   onCalculationDetailsRequest?: () => void;
+  thresholdBasis?: 'DAILY_BALANCE' | 'POSTED_BALANCE';
 }>) {
   if (attention.blockers.length === 0 && attention.warnings.length === 0) return null;
   return (
@@ -157,7 +159,7 @@ export function CalculationAttention({
       )}
       {attention.warnings.length === 0 ? null : (
         <AttentionGroup
-          items={attention.warnings.map((code) => WARNING_ATTENTION[code])}
+          items={attention.warnings.map((code) => warningAttention(code, thresholdBasis))}
           kind="warning"
           links={{ balanceHref, calculationHref, eventHref }}
           {...(onCalculationDetailsRequest === undefined ? {} : { onCalculationDetailsRequest })}
@@ -166,6 +168,26 @@ export function CalculationAttention({
       )}
     </section>
   );
+}
+
+function warningAttention(
+  code: CalculationWarningCode,
+  thresholdBasis: 'DAILY_BALANCE' | 'POSTED_BALANCE',
+): AttentionItem {
+  const item = WARNING_ATTENTION[code];
+  if (
+    thresholdBasis === 'DAILY_BALANCE' ||
+    (code !== 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED' && code !== 'FLEX_POSITIVE_THRESHOLD_EXCEEDED')
+  ) {
+    return item;
+  }
+  return {
+    ...item,
+    description:
+      code === 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED'
+        ? 'The posted flexible-time balance is below your configured warning threshold.'
+        : 'The posted flexible-time balance is above your configured warning threshold.',
+  };
 }
 
 function AttentionGroup({

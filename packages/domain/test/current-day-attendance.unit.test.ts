@@ -80,8 +80,6 @@ function baseInput(overrides: Partial<CurrentDayAttendanceInput> = {}): CurrentD
     calculationAsOf: instant('2026-02-03T10:30:00Z'),
     events: [],
     expectedState: 'OFF_WORK',
-    flexNegativeThresholdMinutes: minutes(30),
-    flexPositiveThresholdMinutes: minutes(30),
     hasSourceLedgerMismatch: false,
     hasUnresolvedApprovalRequiredAbsence: false,
     hasUnresolvedCorrection: false,
@@ -109,6 +107,7 @@ test('builds a provisional working-day estimate with exact break minutes and sta
   );
 
   expect(result).toMatchObject({
+    activeElapsedMinutes: 15,
     activeSince: '2026-02-03T10:15:00Z',
     blockers: [],
     calculationStatus: 'PROVISIONAL',
@@ -119,7 +118,11 @@ test('builds a provisional working-day estimate with exact break minutes and sta
       expectedMinutes: 480,
       workedMinutes: 195,
     },
-    warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
+    estimatedFinishAt: '2026-02-03T15:15:00Z',
+    estimatedFinishUnavailableReason: null,
+    isPeriodPostedOrLocked: false,
+    remainingExpectedMinutes: 285,
+    warnings: [],
   });
   expect(Object.isFrozen(result)).toBe(true);
   expect(Object.isFrozen(result.estimate)).toBe(true);
@@ -139,17 +142,24 @@ test('attributes an open cross-midnight session and break to the current local d
   );
 
   expect(result.activeSince).toBe('2026-02-04T00:00:00Z');
+  expect(result.activeElapsedMinutes).toBe(30);
   expect(result.estimate).toMatchObject({ breakMinutes: 30, workedMinutes: 60 });
+  expect(result.estimatedFinishUnavailableReason).toBe('ON_BREAK');
 });
 
 test('marks missing configuration incomplete without inventing an estimate', () => {
   const result = calculateCurrentDayAttendance(baseInput({ scheduleAssignments: [] }));
 
   expect(result).toEqual({
+    activeElapsedMinutes: null,
     activeSince: null,
     blockers: ['SCHEDULE_NOT_ASSIGNED'],
     calculationStatus: 'INCOMPLETE',
     estimate: null,
+    estimatedFinishAt: null,
+    estimatedFinishUnavailableReason: 'CALCULATION_UNAVAILABLE',
+    isPeriodPostedOrLocked: false,
+    remainingExpectedMinutes: null,
     warnings: [],
   });
 });
@@ -164,6 +174,7 @@ test('preserves a valid current attendance state when configuration blocks the e
   );
 
   expect(result.activeSince).toBe('2026-02-03T07:00:00Z');
+  expect(result.activeElapsedMinutes).toBe(210);
   expect(result.estimate).toBeNull();
   expect(result.blockers).toEqual(['SCHEDULE_NOT_ASSIGNED']);
 });
@@ -213,7 +224,63 @@ test('uses scheduled minutes as the holiday reduction and reports holiday work o
     holidayExpectedReductionMinutes: 480,
     workedMinutes: 60,
   });
-  expect(result.warnings).toEqual(['WORK_ON_HOLIDAY', 'FLEX_POSITIVE_THRESHOLD_EXCEEDED']);
+  expect(result.warnings).toEqual(['WORK_ON_HOLIDAY']);
+  expect(result.remainingExpectedMinutes).toBe(0);
+  expect(result.estimatedFinishUnavailableReason).toBe('NO_REMAINING_EXPECTATION');
+});
+
+test('uses the schedule assignment effective on the current local date', () => {
+  const previousSchedule = expectSuccess(
+    createWeeklySchedule(
+      id<'WorkScheduleVersion'>('previous-current-day-schedule'),
+      Object.fromEntries(weekdays.map((weekday) => [weekday, 480])) as Record<Weekday, unknown>,
+    ),
+  );
+  const revisedSchedule = expectSuccess(
+    createWeeklySchedule(
+      id<'WorkScheduleVersion'>('revised-current-day-schedule'),
+      Object.fromEntries(weekdays.map((weekday) => [weekday, 420])) as Record<Weekday, unknown>,
+    ),
+  );
+  const previousAssignment = expectSuccess(
+    createScheduleAssignment(
+      id<'ScheduleAssignment'>('previous-current-day-assignment'),
+      expectSuccess(createLocalDateRange(localDate('2026-01-01'), localDate('2026-02-03'))),
+      previousSchedule,
+    ),
+  );
+  const revisedAssignment = expectSuccess(
+    createScheduleAssignment(
+      id<'ScheduleAssignment'>('revised-current-day-assignment'),
+      expectSuccess(createLocalDateRange(localDate('2026-02-03'))),
+      revisedSchedule,
+    ),
+  );
+
+  const result = calculateCurrentDayAttendance(
+    baseInput({ scheduleAssignments: [previousAssignment, revisedAssignment] }),
+  );
+
+  expect(result.estimate).toMatchObject({ expectedMinutes: 420, scheduledMinutes: 420 });
+  expect(result.remainingExpectedMinutes).toBe(420);
+});
+
+test('uses elapsed instants across the spring DST transition', () => {
+  const result = calculateCurrentDayAttendance(
+    baseInput({
+      calculationAsOf: instant('2026-03-29T01:30:00Z'),
+      events: [event(1, '2026-03-28T23:30:00Z', 'CLOCK_IN')],
+      expectedState: 'WORKING',
+      localDate: localDate('2026-03-29'),
+    }),
+  );
+
+  expect(result).toMatchObject({
+    activeElapsedMinutes: 120,
+    estimate: { workedMinutes: 120 },
+    estimatedFinishAt: '2026-03-29T07:30:00Z',
+    remainingExpectedMinutes: 360,
+  });
 });
 
 test('derives minute-aligned calculation time and DST-aware local-date bounds', () => {

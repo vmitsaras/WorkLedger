@@ -1,4 +1,4 @@
-import type { TodayAttendance, TodayAttendanceEstimate } from '@workledger/contracts';
+import type { TodayAttendance, TodayProvisionalCalculation } from '@workledger/contracts';
 import { Panel } from '@workledger/ui';
 
 import { formatDuration } from '../app/date-time-format.js';
@@ -11,14 +11,15 @@ type CalculationRow = Readonly<{
 }>;
 
 export function DailyTimeBreakdown({
-  estimate,
   holidayName,
+  provisional,
   status,
 }: Readonly<{
-  estimate: TodayAttendanceEstimate;
   holidayName: string | null;
+  provisional: TodayProvisionalCalculation;
   status: TodayAttendance['calculation']['status'];
 }>) {
+  const sources = provisional.calculationSources;
   return (
     <section className="grid gap-4" aria-labelledby="calculation-breakdown-title">
       <div className="grid gap-1">
@@ -33,7 +34,7 @@ export function DailyTimeBreakdown({
         </p>
       </div>
 
-      {estimate.expectedMinutes === 0 ? (
+      {provisional.expectedMinutesToday === 0 ? (
         <div className="wl-zero-expected-note rounded-xl border border-[var(--wl-border-strong)] bg-[var(--wl-surface-subtle)] p-4">
           <h3 className="m-0 text-base font-bold">Why expected time is zero</h3>
           <p className="mb-0 mt-1 text-sm leading-6">
@@ -49,44 +50,52 @@ export function DailyTimeBreakdown({
         <CalculationGroup
           description="Scheduled time minus holiday and absence reductions."
           rows={[
-            { label: 'Scheduled time', value: estimate.scheduledMinutes },
+            { label: 'Scheduled time', value: sources.scheduledMinutes },
             {
               label: 'Public-holiday reduction',
-              value: estimate.holidayExpectedReductionMinutes,
+              value: sources.holidayExpectedReductionMinutes,
             },
             {
               label: 'Absence reduction',
-              value: estimate.absenceExpectedReductionMinutes,
+              value: sources.absenceExpectedReductionMinutes,
             },
-            { label: 'Expected time', total: true, value: estimate.expectedMinutes },
+            {
+              label: 'Expected time',
+              total: true,
+              value: provisional.expectedMinutesToday,
+            },
           ]}
           title="Expected time"
         />
         <CalculationGroup
           description="Worked time plus absence credit and approved adjustments. Break time is already excluded from worked time and is not subtracted again."
           rows={[
-            { label: 'Worked time', value: estimate.workedMinutes },
-            { label: 'Break time', value: estimate.breakMinutes },
-            { label: 'Absence credit', value: estimate.absenceCreditMinutes },
+            { label: 'Worked time', value: sources.workedMinutesToday },
+            { label: 'Break time', value: sources.breakMinutesToday },
+            { label: 'Absence credit', value: sources.absenceCreditMinutes },
             {
               label: 'Approved adjustments',
               signed: true,
-              value: estimate.adjustmentMinutes,
+              value: sources.approvedAdjustmentMinutes,
             },
-            { label: 'Credited time', total: true, value: estimate.creditedMinutes },
+            {
+              label: 'Credited time',
+              total: true,
+              value: provisional.creditedMinutesToday,
+            },
           ]}
           title="Credited time"
         />
         <CalculationGroup
           description="Credited time minus expected time. The result may be positive, zero, or negative."
           rows={[
-            { label: 'Credited time', value: estimate.creditedMinutes },
-            { label: 'Expected time', value: estimate.expectedMinutes },
+            { label: 'Credited time', value: provisional.creditedMinutesToday },
+            { label: 'Expected time', value: provisional.expectedMinutesToday },
             {
               label: 'Estimated balance',
               signed: true,
               total: true,
-              value: estimate.balanceMinutes,
+              value: provisional.provisionalDifferenceMinutes,
             },
           ]}
           title="Estimated balance"

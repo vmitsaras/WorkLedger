@@ -2,7 +2,8 @@ import { mkdir } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { expectPageToHaveNoAxeViolations } from '@workledger/test-utils';
+import type { TodayAttendance } from '@workledger/contracts';
+import { COHERENT_TODAY_ATTENDANCE, expectPageToHaveNoAxeViolations } from '@workledger/test-utils';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 const EMPLOYEE_CONTEXT = {
@@ -163,90 +164,8 @@ const TEAM_CALENDAR = {
   scopeAsOfLocalDate: '2026-08-14',
   timeZone: 'Europe/Berlin',
 };
-const TODAY_ATTENDANCE = {
-  asOf: '2026-08-11T09:30:00Z',
-  attendance: {
-    activeSince: '2026-08-11T09:15:00Z',
-    attendanceRevision: 3,
-    state: 'WORKING',
-    validActions: ['START_BREAK', 'CLOCK_OUT'],
-  },
-  calculation: {
-    blockers: [],
-    estimate: {
-      absenceCreditMinutes: 0,
-      absenceExpectedReductionMinutes: 0,
-      adjustmentMinutes: 0,
-      balanceMinutes: -285,
-      breakMinutes: 15,
-      creditedMinutes: 195,
-      expectedMinutes: 480,
-      holidayExpectedReductionMinutes: 0,
-      scheduledMinutes: 480,
-      workedMinutes: 195,
-    },
-    holidayName: null,
-    status: 'PROVISIONAL',
-    warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
-  },
-  localDate: '2026-08-11',
-  timeZone: 'Europe/Berlin',
-  timeline: [
-    {
-      id: '123e4567-e89b-42d3-a456-426614174201',
-      occurredAt: '2026-08-11T07:00:00Z',
-      type: 'CLOCK_IN',
-    },
-  ],
-  timelineTruncated: false,
-};
-const PHASE_13_TODAY_BASELINE = {
-  asOf: '2026-08-11T10:45:00Z',
-  attendance: {
-    activeSince: '2026-08-11T09:15:00Z',
-    attendanceRevision: 3,
-    state: 'WORKING',
-    validActions: ['START_BREAK', 'CLOCK_OUT'],
-  },
-  calculation: {
-    blockers: [],
-    estimate: {
-      absenceCreditMinutes: 0,
-      absenceExpectedReductionMinutes: 0,
-      adjustmentMinutes: 0,
-      balanceMinutes: -285,
-      breakMinutes: 30,
-      creditedMinutes: 195,
-      expectedMinutes: 480,
-      holidayExpectedReductionMinutes: 0,
-      scheduledMinutes: 480,
-      workedMinutes: 195,
-    },
-    holidayName: null,
-    status: 'PROVISIONAL',
-    warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
-  },
-  localDate: '2026-08-11',
-  timeZone: 'Europe/Berlin',
-  timeline: [
-    {
-      id: '123e4567-e89b-42d3-a456-426614174301',
-      occurredAt: '2026-08-11T07:00:00Z',
-      type: 'CLOCK_IN',
-    },
-    {
-      id: '123e4567-e89b-42d3-a456-426614174302',
-      occurredAt: '2026-08-11T08:45:00Z',
-      type: 'BREAK_START',
-    },
-    {
-      id: '123e4567-e89b-42d3-a456-426614174303',
-      occurredAt: '2026-08-11T09:15:00Z',
-      type: 'BREAK_END',
-    },
-  ],
-  timelineTruncated: false,
-};
+const TODAY_ATTENDANCE: TodayAttendance = COHERENT_TODAY_ATTENDANCE;
+const PHASE_13_TODAY_BASELINE: TodayAttendance = COHERENT_TODAY_ATTENDANCE;
 const PERSONAL_TIME = {
   balance: {
     eligibleProjectedMinutes: 15,
@@ -948,21 +867,7 @@ test('completes the attendance sequence by keyboard with protected intents and b
   });
   await page.route('**/v1/me/attendance/today', async (route) => {
     await route.fulfill({
-      json: success({
-        ...TODAY_ATTENDANCE,
-        attendance: {
-          activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
-          attendanceRevision,
-          state: attendanceState,
-          validActions:
-            attendanceState === 'OFF_WORK'
-              ? ['CLOCK_IN']
-              : attendanceState === 'WORKING'
-                ? ['START_BREAK', 'CLOCK_OUT']
-                : ['RESUME', 'CLOCK_OUT'],
-        },
-        timeline,
-      }),
+      json: success(todayForAttendanceState(attendanceState, attendanceRevision, timeline)),
       status: 200,
     });
   });
@@ -1123,27 +1028,18 @@ test('retries a lost clock-in response with one key and one accessible result', 
     await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
   });
   await page.route('**/v1/me/attendance/today', async (route) => {
+    const timeline =
+      attendanceState === 'OFF_WORK'
+        ? []
+        : [
+            {
+              id: 'punch-clock-in-replay',
+              occurredAt: '2026-08-11T09:30:00Z',
+              type: 'CLOCK_IN' as const,
+            },
+          ];
     await route.fulfill({
-      json: success({
-        ...TODAY_ATTENDANCE,
-        attendance: {
-          activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
-          attendanceRevision,
-          state: attendanceState,
-          validActions:
-            attendanceState === 'OFF_WORK' ? ['CLOCK_IN'] : ['START_BREAK', 'CLOCK_OUT'],
-        },
-        timeline:
-          attendanceState === 'OFF_WORK'
-            ? []
-            : [
-                {
-                  id: 'punch-clock-in-replay',
-                  occurredAt: '2026-08-11T09:30:00Z',
-                  type: 'CLOCK_IN',
-                },
-              ],
-      }),
+      json: success(todayForAttendanceState(attendanceState, attendanceRevision, timeline)),
       status: 200,
     });
   });
@@ -1198,16 +1094,7 @@ test('does not queue attendance offline and converges before enabling a new acti
   });
   await page.route('**/v1/me/attendance/today', async (route) => {
     await route.fulfill({
-      json: success({
-        ...TODAY_ATTENDANCE,
-        attendance: {
-          activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
-          attendanceRevision,
-          state: attendanceState,
-          validActions:
-            attendanceState === 'OFF_WORK' ? ['CLOCK_IN'] : ['START_BREAK', 'CLOCK_OUT'],
-        },
-      }),
+      json: success(todayForAttendanceState(attendanceState, attendanceRevision)),
       status: 200,
     });
   });
@@ -1251,16 +1138,7 @@ test('refreshes a focused stale tab when attendance changes on another device', 
   });
   await page.route('**/v1/me/attendance/today', async (route) => {
     await route.fulfill({
-      json: success({
-        ...TODAY_ATTENDANCE,
-        attendance: {
-          activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
-          attendanceRevision,
-          state: attendanceState,
-          validActions:
-            attendanceState === 'OFF_WORK' ? ['CLOCK_IN'] : ['START_BREAK', 'CLOCK_OUT'],
-        },
-      }),
+      json: success(todayForAttendanceState(attendanceState, attendanceRevision)),
       status: 200,
     });
   });
@@ -1289,32 +1167,59 @@ test('keeps the calculation explanation and event history readable at 320px', as
     await route.fulfill({
       json: success({
         ...TODAY_ATTENDANCE,
+        attendance: attendanceForState('OFF_WORK', 2),
         calculation: {
-          blockers: [],
-          estimate: {
-            ...TODAY_ATTENDANCE.calculation.estimate,
-            balanceMinutes: 60,
-            breakMinutes: 15,
-            creditedMinutes: 60,
-            expectedMinutes: 0,
-            holidayExpectedReductionMinutes: 480,
-            workedMinutes: 60,
-          },
+          attentionItems: [
+            {
+              affectedDate: TODAY_ATTENDANCE.localDate,
+              blocksSubmission: false,
+              code: 'WORK_ON_HOLIDAY',
+              reason: 'Work is recorded on a public holiday.',
+              recoveryAction: 'REVIEW_CALCULATION',
+              severity: 'WARNING',
+              source: 'CURRENT_DAY_CALCULATION',
+            },
+            {
+              affectedDate: TODAY_ATTENDANCE.localDate,
+              blocksSubmission: false,
+              code: 'WORK_ON_ZERO_EXPECTED_DAY',
+              reason: 'Work is recorded on a day with no expected working time.',
+              recoveryAction: 'REVIEW_CALCULATION',
+              severity: 'WARNING',
+              source: 'CURRENT_DAY_CALCULATION',
+            },
+          ],
+          estimatedFinishAt: null,
+          estimatedFinishUnavailableReason: 'NOT_WORKING',
           holidayName: 'Donaudampfschifffahrtsgesellschaft Appreciation Day',
+          isPeriodPostedOrLocked: false,
+          provisional: {
+            calculationSources: {
+              absenceCreditMinutes: 0,
+              absenceExpectedReductionMinutes: 0,
+              approvedAdjustmentMinutes: 0,
+              breakMinutesToday: 0,
+              holidayExpectedReductionMinutes: 480,
+              scheduledMinutes: 480,
+              workedMinutesToday: 60,
+            },
+            creditedMinutesToday: 60,
+            expectedMinutesToday: 0,
+            provisionalDifferenceMinutes: 60,
+          },
+          remainingExpectedMinutes: 0,
           status: 'PROVISIONAL',
-          warnings: ['WORK_ON_HOLIDAY', 'WORK_ON_ZERO_EXPECTED_DAY'],
         },
         timeline: [
-          ...TODAY_ATTENDANCE.timeline,
           {
-            id: '123e4567-e89b-42d3-a456-426614174202',
-            occurredAt: '2026-08-11T08:45:00Z',
-            type: 'BREAK_START',
+            id: '123e4567-e89b-42d3-a456-426614174201',
+            occurredAt: '2026-08-11T07:00:00Z',
+            type: 'CLOCK_IN',
           },
           {
-            id: '123e4567-e89b-42d3-a456-426614174203',
-            occurredAt: '2026-08-11T09:00:00Z',
-            type: 'BREAK_END',
+            id: '123e4567-e89b-42d3-a456-426614174202',
+            occurredAt: '2026-08-11T08:00:00Z',
+            type: 'CLOCK_OUT',
           },
         ],
       }),
@@ -1334,7 +1239,7 @@ test('keeps the calculation explanation and event history readable at 320px', as
   await expect(page.getByRole('heading', { name: 'Estimated balance', exact: true })).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Today’s timeline' }).getByRole('listitem'),
-  ).toHaveCount(3);
+  ).toHaveCount(2);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
@@ -1393,25 +1298,25 @@ test('preserves the Today task order, target sizes, and reflow across supported 
   ).toBe(true);
   expect(
     await page.evaluate(() => {
-      const attention = document.querySelector('#calculation-attention-title')?.closest('section');
       const details = document.querySelector('#calculation-details');
       const timeline = document.querySelector('#today-timeline-title')?.closest('section');
       return (
-        attention !== null &&
         details !== null &&
         timeline !== null &&
-        Boolean(attention.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING) &&
         Boolean(details.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING)
       );
     }),
   ).toBe(true);
+  await expect(page.getByRole('heading', { name: 'Needs attention' })).toHaveCount(0);
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('captures the coherent Phase 13 Today audit baseline @phase13-baseline', async ({ page }) => {
+test('captures the coherent Phase 13 Today contract baseline @phase13-baseline', async ({
+  page,
+}) => {
   test.skip(
     process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1',
-    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1300 audit snapshots.',
+    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1301 contract snapshots.',
   );
   await page.clock.setFixedTime(new Date('2026-08-11T10:45:00Z'));
   await page.route('**/v1/me/context', async (route) => {
@@ -1457,7 +1362,7 @@ test('captures the coherent Phase 13 Today audit baseline @phase13-baseline', as
       if (viewport.width === 1440 || viewport.width === 320) {
         await expectPageToHaveNoAxeViolations(page);
       }
-      await capturePhase13Baseline(page, viewport.name);
+      await capturePhase13Contract(page, viewport.name);
     });
   }
 });
@@ -1481,7 +1386,7 @@ test('keeps text, controls, focus, and boundaries perceivable in forced colors',
   await expect(clockOut).toHaveAttribute('data-focus-visible', 'true');
   await expect(page.getByText('Current status', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Warnings' })).toBeVisible();
+  await expect(page.getByText('Provisional estimate', { exact: true })).toBeVisible();
 
   const forcedColorStyles = await clockOut.evaluate((button) => {
     const styles = getComputedStyle(button);
@@ -1517,17 +1422,7 @@ test('completes the primary attendance action with touch input', async ({ browse
     });
     await page.route('**/v1/me/attendance/today', async (route) => {
       await route.fulfill({
-        json: success({
-          ...TODAY_ATTENDANCE,
-          attendance: {
-            activeSince: attendanceState === 'OFF_WORK' ? null : '2026-08-11T09:30:00Z',
-            attendanceRevision,
-            state: attendanceState,
-            validActions:
-              attendanceState === 'OFF_WORK' ? ['CLOCK_IN'] : ['START_BREAK', 'CLOCK_OUT'],
-          },
-          timeline: [],
-        }),
+        json: success(todayForAttendanceState(attendanceState, attendanceRevision, [])),
         status: 200,
       });
     });
@@ -2797,6 +2692,89 @@ test('captures, cleans, and consumes an invitation grant without automatic sign-
   await expectPageToHaveNoAxeViolations(page);
 });
 
+function todayForAttendanceState(
+  state: TodayAttendance['attendance']['state'],
+  attendanceRevision: number,
+  timeline?: TodayAttendance['timeline'],
+): TodayAttendance {
+  const defaultTimeline: TodayAttendance['timeline'] =
+    state === 'OFF_WORK'
+      ? []
+      : state === 'WORKING'
+        ? [
+            {
+              id: 'punch-clock-in-state',
+              occurredAt: '2026-08-11T09:30:00Z',
+              type: 'CLOCK_IN',
+            },
+          ]
+        : [
+            {
+              id: 'punch-clock-in-state',
+              occurredAt: '2026-08-11T09:30:00Z',
+              type: 'CLOCK_IN',
+            },
+            {
+              id: 'punch-break-start-state',
+              occurredAt: '2026-08-11T10:30:00Z',
+              type: 'BREAK_START',
+            },
+          ];
+  return {
+    ...TODAY_ATTENDANCE,
+    attendance: attendanceForState(state, attendanceRevision),
+    calculation: {
+      ...TODAY_ATTENDANCE.calculation,
+      estimatedFinishAt:
+        state === 'WORKING' ? TODAY_ATTENDANCE.calculation.estimatedFinishAt : null,
+      estimatedFinishUnavailableReason:
+        state === 'WORKING' ? null : state === 'ON_BREAK' ? 'ON_BREAK' : 'NOT_WORKING',
+    },
+    timeline: timeline ?? defaultTimeline,
+  };
+}
+
+function attendanceForState(
+  state: TodayAttendance['attendance']['state'],
+  attendanceRevision: number,
+): TodayAttendance['attendance'] {
+  const validActions: TodayAttendance['attendance']['validActions'] =
+    state === 'WORKING'
+      ? ['START_BREAK', 'CLOCK_OUT']
+      : state === 'ON_BREAK'
+        ? ['RESUME', 'CLOCK_OUT']
+        : ['CLOCK_IN'];
+  const activeSince =
+    state === 'WORKING'
+      ? '2026-08-11T09:30:00Z'
+      : state === 'ON_BREAK'
+        ? '2026-08-11T10:30:00Z'
+        : null;
+
+  return {
+    actionAvailability: [
+      actionAvailabilityFor('CLOCK_IN', validActions),
+      actionAvailabilityFor('START_BREAK', validActions),
+      actionAvailabilityFor('RESUME', validActions),
+      actionAvailabilityFor('CLOCK_OUT', validActions),
+    ],
+    activeElapsedMinutes: state === 'WORKING' ? 75 : state === 'ON_BREAK' ? 15 : null,
+    activeSince,
+    attendanceRevision,
+    state,
+    validActions,
+  };
+}
+
+function actionAvailabilityFor(
+  command: TodayAttendance['attendance']['validActions'][number],
+  validActions: TodayAttendance['attendance']['validActions'],
+): TodayAttendance['attendance']['actionAvailability'][number] {
+  return validActions.includes(command)
+    ? { available: true, blockingReason: null, command }
+    : { available: false, blockingReason: 'CURRENT_ATTENDANCE_STATE', command };
+}
+
 async function mockContext(page: Page, isAuthenticated: () => boolean): Promise<void> {
   await page.route('**/v1/me/context', async (route) => {
     await route.fulfill(
@@ -2854,11 +2832,11 @@ async function capturePhase12Administration(page: Page, name: string): Promise<v
   await capturePhase12Surface(page, 'wl1204', name);
 }
 
-async function capturePhase13Baseline(page: Page, name: string): Promise<void> {
+async function capturePhase13Contract(page: Page, name: string): Promise<void> {
   if (process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1') return;
 
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page).toHaveScreenshot(['phase-13', 'wl1300', `${name}.png`], {
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1301', `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

@@ -221,7 +221,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
 | WL-1300 | Audit Phase 12 implementation, capture deterministic baselines, and register Phase 13 references and constraints | WL-1206 | Route/component/API inventory; baseline screenshots; reference image registered; risk and contradiction report | Done |
-| WL-1301 | Establish authoritative Today attendance display contract and eliminate contradictory timestamps, durations, and balances | WL-1300 | Typed display contract; coherent fixture; selector/contract tests; all visible values reconcile to one `asOf` snapshot | Not started |
+| WL-1301 | Establish authoritative Today attendance display contract and eliminate contradictory timestamps, durations, and balances | WL-1300 | Typed display contract; coherent fixture; selector/contract tests; all visible values reconcile to one `asOf` snapshot | Done |
 | WL-1302 | Implement revised Today information architecture and visual hierarchy from approved reference | WL-1301 | Desktop/tablet/mobile implementation; screenshot comparison; design-token and component review | Not started |
 | WL-1303 | Implement complete attendance-state matrix and reliable clock-action feedback and recovery | WL-1301, WL-1302 | State stories; mutation integration tests; duplicate/stale/offline/session-expiry/two-device Playwright evidence | Not started |
 | WL-1304 | Separate current session, today progress, estimated completion, provisional difference, and posted flexible-time balance | WL-1301, WL-1302 | Semantic metric hierarchy; calculation tests; no provisional-debt warning; accessible progress semantics | Not started |

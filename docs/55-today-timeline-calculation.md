@@ -5,6 +5,10 @@
 > summary and a native full-calculation disclosure. See
 > `docs/117-today-workflow-ux-remediation.md`.
 
+> Phase 13 contract note: `WL-1301` renames the current-day estimate to a nullable `provisional`
+> source set and validates every displayed total against it. The browser still formats rather than
+> calculates authoritative values. See `docs/125-today-authoritative-display-contract.md`.
+
 **Task:** `WL-404`  
 **Completed:** 2026-08-11  
 **Outcome:** Complete locally. Today now explains the provisional daily arithmetic as three

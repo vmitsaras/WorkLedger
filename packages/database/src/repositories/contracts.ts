@@ -630,6 +630,7 @@ export type TodayAttendanceSourceInput = Readonly<{
 export type TodayAttendanceSourceRecord = Readonly<{
   absenceCreditMinutes: NonNegativeMinutes;
   absenceExpectedReductionMinutes: NonNegativeMinutes;
+  approvedAdjustmentMinutes: SignedMinutes;
   events: readonly StoredPunchEvent[];
   flexNegativeThresholdMinutes: NonNegativeMinutes | null;
   flexPositiveThresholdMinutes: NonNegativeMinutes | null;
@@ -1770,6 +1771,12 @@ export interface TimeAccountRepository {
     organizationId: DomainId<'Organization'>,
     employeeId: DomainId<'Employee'>,
     endDate: LocalDate,
+  ): Promise<readonly TimeAccountLedgerEntry[]>;
+  listForEmployeeThroughSnapshot(
+    organizationId: DomainId<'Organization'>,
+    employeeId: DomainId<'Employee'>,
+    endDate: LocalDate,
+    recordedThrough: Instant,
   ): Promise<readonly TimeAccountLedgerEntry[]>;
 }
 

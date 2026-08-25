@@ -65,25 +65,49 @@ integrationTest(
         data: {
           asOf: '2026-02-03T10:30:00Z',
           attendance: {
+            actionAvailability: [
+              {
+                available: false,
+                blockingReason: 'CURRENT_ATTENDANCE_STATE',
+                command: 'CLOCK_IN',
+              },
+              { available: true, blockingReason: null, command: 'START_BREAK' },
+              {
+                available: false,
+                blockingReason: 'CURRENT_ATTENDANCE_STATE',
+                command: 'RESUME',
+              },
+              { available: true, blockingReason: null, command: 'CLOCK_OUT' },
+            ],
+            activeElapsedMinutes: 15,
             activeSince: '2026-02-03T10:15:00Z',
             attendanceRevision: 3,
             state: 'WORKING',
             validActions: ['START_BREAK', 'CLOCK_OUT'],
           },
           calculation: {
-            blockers: [],
-            estimate: {
-              balanceMinutes: -285,
-              breakMinutes: 15,
-              creditedMinutes: 195,
-              expectedMinutes: 480,
-              workedMinutes: 195,
+            attentionItems: [],
+            estimatedFinishAt: '2026-02-03T15:15:00Z',
+            estimatedFinishUnavailableReason: null,
+            isPeriodPostedOrLocked: false,
+            provisional: {
+              calculationSources: {
+                approvedAdjustmentMinutes: 0,
+                breakMinutesToday: 15,
+                workedMinutesToday: 195,
+              },
+              creditedMinutesToday: 195,
+              expectedMinutesToday: 480,
+              provisionalDifferenceMinutes: -285,
             },
             holidayName: null,
+            remainingExpectedMinutes: 285,
             status: 'PROVISIONAL',
-            warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
           },
           localDate: '2026-02-03',
+          postedFlexBalanceMinutes: 0,
+          postedThroughDate: null,
+          snapshotCapturedAt: NOW,
           timeZone: 'Europe/Berlin',
           timeline: [
             { occurredAt: '2026-02-03T07:00:00Z', type: 'CLOCK_IN' },
@@ -108,8 +132,18 @@ integrationTest(
       expect(missingScheduleResponse.json()).toMatchObject({
         data: {
           calculation: {
-            blockers: ['SCHEDULE_NOT_ASSIGNED'],
-            estimate: null,
+            attentionItems: [
+              {
+                blocksSubmission: true,
+                code: 'SCHEDULE_NOT_ASSIGNED',
+                severity: 'BLOCKER',
+                source: 'CURRENT_DAY_CALCULATION',
+              },
+            ],
+            estimatedFinishAt: null,
+            estimatedFinishUnavailableReason: 'CALCULATION_UNAVAILABLE',
+            provisional: null,
+            remainingExpectedMinutes: null,
             status: 'INCOMPLETE',
           },
         },
@@ -229,6 +263,40 @@ integrationTest(
       });
       expect(response.payload).not.toContain(employee.employeeId);
       expect(response.payload).not.toContain(employee.organizationId);
+
+      await fixture.client.query(
+        `insert into time_account_entries (
+           organization_id, employee_id, local_date, entry_type, minutes, source_id,
+           source_fingerprint, actor_kind, actor_id, explanation_code, posted_at
+         ) values
+           ($1, $2, '2026-02-02', 'MANUAL_ADMINISTRATIVE_ADJUSTMENT', 500, uuidv7(), $3, 'SYSTEM', 'test', 'FUTURE_POSTING', '2026-02-03T10:31:00Z'),
+           ($1, $2, '2026-02-03', 'MANUAL_ADMINISTRATIVE_ADJUSTMENT', 20, uuidv7(), $4, 'SYSTEM', 'test', 'CURRENT_DATE_POSTING', '2026-02-03T10:00:00Z')`,
+        [employee.organizationId, employee.employeeId, 'c'.repeat(64), 'd'.repeat(64)],
+      );
+
+      const todayResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/me/attendance/today',
+        headers: { cookie, origin: ORIGIN },
+      });
+      expect(todayResponse.statusCode).toBe(200);
+      expect(todayResponse.json()).toMatchObject({
+        data: {
+          calculation: {
+            attentionItems: [
+              {
+                blocksSubmission: false,
+                code: 'FLEX_POSITIVE_THRESHOLD_EXCEEDED',
+                recoveryAction: 'REVIEW_BALANCE',
+                severity: 'WARNING',
+                source: 'POSTED_FLEX_BALANCE',
+              },
+            ],
+          },
+          postedFlexBalanceMinutes: 630,
+          postedThroughDate: '2026-02-02',
+        },
+      });
     } finally {
       await app.close();
       await fixture.cleanup();

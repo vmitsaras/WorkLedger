@@ -841,30 +841,55 @@ test('keeps the Today contract provisional, bounded, and free of account identit
     data: {
       asOf: '2026-08-11T10:30:00Z',
       attendance: {
+        actionAvailability: [
+          { available: false, blockingReason: 'CURRENT_ATTENDANCE_STATE', command: 'CLOCK_IN' },
+          { available: true, blockingReason: null, command: 'START_BREAK' },
+          { available: false, blockingReason: 'CURRENT_ATTENDANCE_STATE', command: 'RESUME' },
+          { available: true, blockingReason: null, command: 'CLOCK_OUT' },
+        ],
+        activeElapsedMinutes: 150,
         activeSince: '2026-08-11T08:00:00Z',
         attendanceRevision: 1,
         state: 'WORKING',
         validActions: ['START_BREAK', 'CLOCK_OUT'],
       },
       calculation: {
-        blockers: [],
-        estimate: {
-          absenceCreditMinutes: 0,
-          absenceExpectedReductionMinutes: 0,
-          adjustmentMinutes: 0,
-          balanceMinutes: -390,
-          breakMinutes: 0,
-          creditedMinutes: 90,
-          expectedMinutes: 480,
-          holidayExpectedReductionMinutes: 0,
-          scheduledMinutes: 480,
-          workedMinutes: 90,
-        },
+        attentionItems: [
+          {
+            affectedDate: '2026-08-11',
+            blocksSubmission: false,
+            code: 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED',
+            reason: 'The posted flexible-time balance is below the configured threshold.',
+            recoveryAction: 'REVIEW_BALANCE',
+            severity: 'WARNING',
+            source: 'POSTED_FLEX_BALANCE',
+          },
+        ],
+        estimatedFinishAt: '2026-08-11T17:00:00Z',
+        estimatedFinishUnavailableReason: null,
         holidayName: null,
+        isPeriodPostedOrLocked: false,
+        provisional: {
+          calculationSources: {
+            absenceCreditMinutes: 0,
+            absenceExpectedReductionMinutes: 0,
+            approvedAdjustmentMinutes: 0,
+            breakMinutesToday: 0,
+            holidayExpectedReductionMinutes: 0,
+            scheduledMinutes: 480,
+            workedMinutesToday: 90,
+          },
+          creditedMinutesToday: 90,
+          expectedMinutesToday: 480,
+          provisionalDifferenceMinutes: -390,
+        },
+        remainingExpectedMinutes: 390,
         status: 'PROVISIONAL',
-        warnings: ['FLEX_NEGATIVE_THRESHOLD_EXCEEDED'],
       },
       localDate: '2026-08-11',
+      postedFlexBalanceMinutes: -610,
+      postedThroughDate: '2026-08-10',
+      snapshotCapturedAt: '2026-08-11T10:30:45Z',
       timeZone: 'Europe/Berlin',
       timeline: [{ id: 'punch-1', occurredAt: '2026-08-11T08:00:00Z', type: 'CLOCK_IN' }],
       timelineTruncated: false,
@@ -877,6 +902,36 @@ test('keeps the Today contract provisional, bounded, and free of account identit
     todayAttendanceEnvelopeSchema.parse({
       ...response,
       data: { ...response.data, employeeId: 'not-for-browser-transport' },
+    }),
+  ).toThrow();
+  expect(() =>
+    todayAttendanceEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        calculation: {
+          ...response.data.calculation,
+          provisional: {
+            ...response.data.calculation.provisional,
+            creditedMinutesToday: 91,
+          },
+        },
+      },
+    }),
+  ).toThrow();
+  expect(() =>
+    todayAttendanceEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        calculation: {
+          ...response.data.calculation,
+          attentionItems: response.data.calculation.attentionItems.map((item) => ({
+            ...item,
+            source: 'CURRENT_DAY_CALCULATION',
+          })),
+        },
+      },
     }),
   ).toThrow();
 });

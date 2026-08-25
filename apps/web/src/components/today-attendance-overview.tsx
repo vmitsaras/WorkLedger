@@ -64,8 +64,12 @@ export function TodayAttendanceOverview({
   const activeDescription =
     attendance.activeSince === null
       ? 'No active work session.'
-      : `Since ${formatTime(attendance.activeSince, today.timeZone)}.`;
-  const estimate = calculation.estimate;
+      : `Since ${formatTime(attendance.activeSince, today.timeZone)}.${
+          attendance.activeElapsedMinutes === null
+            ? ''
+            : ` Current interval: ${formatDuration(attendance.activeElapsedMinutes)}.`
+        }`;
+  const provisional = calculation.provisional;
 
   return (
     <Panel aria-labelledby="current-status-title" density="comfortable">
@@ -131,15 +135,17 @@ export function TodayAttendanceOverview({
               Today’s balance estimate
             </h2>
             <p className="m-0 text-3xl font-bold tabular-nums">
-              {estimate === null ? 'Not available' : formatDuration(estimate.balanceMinutes, true)}
+              {provisional === null
+                ? 'Not available'
+                : formatDuration(provisional.provisionalDifferenceMinutes, true)}
             </p>
             <p className="m-0 text-sm font-semibold leading-6">
-              {estimate !== null
-                ? `${formatDuration(estimate.creditedMinutes)} credited − ${formatDuration(estimate.expectedMinutes)} expected`
+              {provisional !== null
+                ? `${formatDuration(provisional.creditedMinutesToday)} credited − ${formatDuration(provisional.expectedMinutesToday)} expected`
                 : 'Resolve the blockers below before relying on today’s calculation.'}
             </p>
             <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-              {estimate !== null
+              {provisional !== null
                 ? 'This current-day value can still change. It is not posted or locked.'
                 : 'WorkLedger does not present a partial amount as a complete estimate.'}
             </p>

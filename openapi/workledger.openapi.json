@@ -57428,6 +57428,50 @@
                         "attendance": {
                           "additionalProperties": false,
                           "properties": {
+                            "actionAvailability": {
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "available": { "enum": [true], "type": "boolean" },
+                                      "blockingReason": { "type": "null" },
+                                      "command": {
+                                        "enum": ["CLOCK_IN", "START_BREAK", "RESUME", "CLOCK_OUT"],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": ["available", "blockingReason", "command"],
+                                    "type": "object"
+                                  },
+                                  {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "available": { "enum": [false], "type": "boolean" },
+                                      "blockingReason": {
+                                        "enum": ["CURRENT_ATTENDANCE_STATE"],
+                                        "type": "string"
+                                      },
+                                      "command": {
+                                        "enum": ["CLOCK_IN", "START_BREAK", "RESUME", "CLOCK_OUT"],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": ["available", "blockingReason", "command"],
+                                    "type": "object"
+                                  }
+                                ]
+                              },
+                              "maxItems": 4,
+                              "minItems": 4,
+                              "type": "array"
+                            },
+                            "activeElapsedMinutes": {
+                              "anyOf": [
+                                { "maximum": 9007199254740991, "minimum": 0, "type": "integer" },
+                                { "type": "null" }
+                              ]
+                            },
                             "activeSince": {
                               "anyOf": [
                                 {
@@ -57457,6 +57501,8 @@
                             }
                           },
                           "required": [
+                            "actionAvailability",
+                            "activeElapsedMinutes",
                             "activeSince",
                             "attendanceRevision",
                             "state",
@@ -57467,96 +57513,99 @@
                         "calculation": {
                           "additionalProperties": false,
                           "properties": {
-                            "blockers": {
+                            "attentionItems": {
                               "items": {
-                                "enum": [
-                                  "ATTENDANCE_INCOMPLETE",
-                                  "ATTENDANCE_OVERLAP",
-                                  "ATTENDANCE_INVALID_EVENT_ORDER",
-                                  "ATTENDANCE_INVALID_EVENT_PRECISION",
-                                  "SCHEDULE_NOT_ASSIGNED",
-                                  "SCHEDULE_ASSIGNMENT_OVERLAP",
-                                  "POLICY_NOT_ASSIGNED",
-                                  "POLICY_ASSIGNMENT_OVERLAP",
-                                  "POLICY_CONFIGURATION_INVALID",
-                                  "CORRECTION_UNRESOLVED",
-                                  "ABSENCE_APPROVAL_PENDING",
-                                  "LEDGER_SOURCE_MISMATCH"
+                                "additionalProperties": false,
+                                "properties": {
+                                  "affectedDate": {
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    "type": "string"
+                                  },
+                                  "blocksSubmission": { "type": "boolean" },
+                                  "code": {
+                                    "anyOf": [
+                                      {
+                                        "enum": [
+                                          "ATTENDANCE_INCOMPLETE",
+                                          "ATTENDANCE_OVERLAP",
+                                          "ATTENDANCE_INVALID_EVENT_ORDER",
+                                          "ATTENDANCE_INVALID_EVENT_PRECISION",
+                                          "SCHEDULE_NOT_ASSIGNED",
+                                          "SCHEDULE_ASSIGNMENT_OVERLAP",
+                                          "POLICY_NOT_ASSIGNED",
+                                          "POLICY_ASSIGNMENT_OVERLAP",
+                                          "POLICY_CONFIGURATION_INVALID",
+                                          "CORRECTION_UNRESOLVED",
+                                          "ABSENCE_APPROVAL_PENDING",
+                                          "LEDGER_SOURCE_MISMATCH"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      {
+                                        "enum": [
+                                          "WORK_ON_ZERO_EXPECTED_DAY",
+                                          "WORK_ON_HOLIDAY",
+                                          "WORK_DURING_ABSENCE",
+                                          "FLEX_POSITIVE_THRESHOLD_EXCEEDED",
+                                          "FLEX_NEGATIVE_THRESHOLD_EXCEEDED"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "reason": { "maxLength": 240, "minLength": 1, "type": "string" },
+                                  "recoveryAction": {
+                                    "enum": [
+                                      "CONTACT_ADMINISTRATOR",
+                                      "REVIEW_BALANCE",
+                                      "REVIEW_CALCULATION",
+                                      "REVIEW_REQUESTS",
+                                      "REVIEW_TIMELINE"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "severity": { "enum": ["BLOCKER", "WARNING"], "type": "string" },
+                                  "source": {
+                                    "enum": ["CURRENT_DAY_CALCULATION", "POSTED_FLEX_BALANCE"],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "affectedDate",
+                                  "blocksSubmission",
+                                  "code",
+                                  "reason",
+                                  "recoveryAction",
+                                  "severity",
+                                  "source"
                                 ],
-                                "type": "string"
+                                "type": "object"
                               },
-                              "maxItems": 12,
+                              "maxItems": 17,
                               "type": "array"
                             },
-                            "estimate": {
+                            "estimatedFinishAt": {
                               "anyOf": [
                                 {
-                                  "additionalProperties": false,
-                                  "properties": {
-                                    "absenceCreditMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": 0,
-                                      "type": "integer"
-                                    },
-                                    "absenceExpectedReductionMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": 0,
-                                      "type": "integer"
-                                    },
-                                    "adjustmentMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": -9007199254740991,
-                                      "type": "integer"
-                                    },
-                                    "balanceMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": -9007199254740991,
-                                      "type": "integer"
-                                    },
-                                    "breakMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": 0,
-                                      "type": "integer"
-                                    },
-                                    "creditedMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": 0,
-                                      "type": "integer"
-                                    },
-                                    "expectedMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": 0,
-                                      "type": "integer"
-                                    },
-                                    "holidayExpectedReductionMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": 0,
-                                      "type": "integer"
-                                    },
-                                    "scheduledMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": 0,
-                                      "type": "integer"
-                                    },
-                                    "workedMinutes": {
-                                      "maximum": 9007199254740991,
-                                      "minimum": 0,
-                                      "type": "integer"
-                                    }
-                                  },
-                                  "required": [
-                                    "absenceCreditMinutes",
-                                    "absenceExpectedReductionMinutes",
-                                    "adjustmentMinutes",
-                                    "balanceMinutes",
-                                    "breakMinutes",
-                                    "creditedMinutes",
-                                    "expectedMinutes",
-                                    "holidayExpectedReductionMinutes",
-                                    "scheduledMinutes",
-                                    "workedMinutes"
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                  "type": "string"
+                                },
+                                { "type": "null" }
+                              ]
+                            },
+                            "estimatedFinishUnavailableReason": {
+                              "anyOf": [
+                                {
+                                  "enum": [
+                                    "CALCULATION_UNAVAILABLE",
+                                    "CALCULATION_INCOMPLETE",
+                                    "NOT_WORKING",
+                                    "ON_BREAK",
+                                    "NO_REMAINING_EXPECTATION"
                                   ],
-                                  "type": "object"
+                                  "type": "string"
                                 },
                                 { "type": "null" }
                               ]
@@ -57567,28 +57616,132 @@
                                 { "type": "null" }
                               ]
                             },
-                            "status": { "enum": ["PROVISIONAL", "INCOMPLETE"], "type": "string" },
-                            "warnings": {
-                              "items": {
-                                "enum": [
-                                  "WORK_ON_ZERO_EXPECTED_DAY",
-                                  "WORK_ON_HOLIDAY",
-                                  "WORK_DURING_ABSENCE",
-                                  "FLEX_POSITIVE_THRESHOLD_EXCEEDED",
-                                  "FLEX_NEGATIVE_THRESHOLD_EXCEEDED"
-                                ],
-                                "type": "string"
-                              },
-                              "maxItems": 5,
-                              "type": "array"
-                            }
+                            "isPeriodPostedOrLocked": { "enum": [false], "type": "boolean" },
+                            "provisional": {
+                              "anyOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "calculationSources": {
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "absenceCreditMinutes": {
+                                          "maximum": 9007199254740991,
+                                          "minimum": 0,
+                                          "type": "integer"
+                                        },
+                                        "absenceExpectedReductionMinutes": {
+                                          "maximum": 9007199254740991,
+                                          "minimum": 0,
+                                          "type": "integer"
+                                        },
+                                        "approvedAdjustmentMinutes": {
+                                          "maximum": 9007199254740991,
+                                          "minimum": -9007199254740991,
+                                          "type": "integer"
+                                        },
+                                        "breakMinutesToday": {
+                                          "maximum": 9007199254740991,
+                                          "minimum": 0,
+                                          "type": "integer"
+                                        },
+                                        "holidayExpectedReductionMinutes": {
+                                          "maximum": 9007199254740991,
+                                          "minimum": 0,
+                                          "type": "integer"
+                                        },
+                                        "scheduledMinutes": {
+                                          "maximum": 9007199254740991,
+                                          "minimum": 0,
+                                          "type": "integer"
+                                        },
+                                        "workedMinutesToday": {
+                                          "maximum": 9007199254740991,
+                                          "minimum": 0,
+                                          "type": "integer"
+                                        }
+                                      },
+                                      "required": [
+                                        "absenceCreditMinutes",
+                                        "absenceExpectedReductionMinutes",
+                                        "approvedAdjustmentMinutes",
+                                        "breakMinutesToday",
+                                        "holidayExpectedReductionMinutes",
+                                        "scheduledMinutes",
+                                        "workedMinutesToday"
+                                      ],
+                                      "type": "object"
+                                    },
+                                    "creditedMinutesToday": {
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "expectedMinutesToday": {
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "provisionalDifferenceMinutes": {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    }
+                                  },
+                                  "required": [
+                                    "calculationSources",
+                                    "creditedMinutesToday",
+                                    "expectedMinutesToday",
+                                    "provisionalDifferenceMinutes"
+                                  ],
+                                  "type": "object"
+                                },
+                                { "type": "null" }
+                              ]
+                            },
+                            "remainingExpectedMinutes": {
+                              "anyOf": [
+                                { "maximum": 9007199254740991, "minimum": 0, "type": "integer" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "status": { "enum": ["PROVISIONAL", "INCOMPLETE"], "type": "string" }
                           },
-                          "required": ["blockers", "estimate", "holidayName", "status", "warnings"],
+                          "required": [
+                            "attentionItems",
+                            "estimatedFinishAt",
+                            "estimatedFinishUnavailableReason",
+                            "holidayName",
+                            "isPeriodPostedOrLocked",
+                            "provisional",
+                            "remainingExpectedMinutes",
+                            "status"
+                          ],
                           "type": "object"
                         },
                         "localDate": {
                           "format": "date",
                           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                          "type": "string"
+                        },
+                        "postedFlexBalanceMinutes": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "postedThroughDate": {
+                          "anyOf": [
+                            {
+                              "format": "date",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                              "type": "string"
+                            },
+                            { "type": "null" }
+                          ]
+                        },
+                        "snapshotCapturedAt": {
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
                           "type": "string"
                         },
                         "timeline": {
@@ -57620,6 +57773,9 @@
                         "attendance",
                         "calculation",
                         "localDate",
+                        "postedFlexBalanceMinutes",
+                        "postedThroughDate",
+                        "snapshotCapturedAt",
                         "timeZone",
                         "timeline",
                         "timelineTruncated"
