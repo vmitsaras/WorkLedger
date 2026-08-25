@@ -323,6 +323,36 @@ test('renders the role-aware shell and focuses each completed route navigation',
   ).toBeVisible();
   expect(screen.getByText('3h 15m credited − 8h 00m expected')).toBeVisible();
   expect(screen.getByRole('group', { name: 'Attendance actions' })).toBeVisible();
+  const currentStatus = screen
+    .getByRole('heading', { name: 'Working' })
+    .closest('.wl-today-status');
+  const estimate = screen
+    .getByRole('region', { name: 'Today’s balance estimate' })
+    .closest('.wl-today-estimate');
+  const actions = screen
+    .getByRole('group', { name: 'Attendance actions' })
+    .closest('.wl-today-action-footer');
+  const timeline = screen.getByRole('region', { name: 'Today’s timeline' });
+  const calculationDetails = container.querySelector('#calculation-details');
+  if (
+    currentStatus === null ||
+    estimate === null ||
+    actions === null ||
+    calculationDetails === null
+  ) {
+    throw new Error('Expected the complete Today hierarchy to render.');
+  }
+  expect(
+    Boolean(currentStatus.compareDocumentPosition(estimate) & Node.DOCUMENT_POSITION_FOLLOWING),
+  ).toBe(true);
+  expect(
+    Boolean(estimate.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING),
+  ).toBe(true);
+  expect(
+    Boolean(
+      timeline.compareDocumentPosition(calculationDetails) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ),
+  ).toBe(true);
   expect(
     screen.queryByText('The calculation source does not match its recorded ledger entry.'),
   ).not.toBeInTheDocument();

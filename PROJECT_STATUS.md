@@ -2,19 +2,18 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 2 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 3 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1302` (next)
-**Status:** WL-1301 complete — authoritative Today display contract and coherent evidence established
+**Active task:** `WL-1303` (next)
+**Status:** WL-1302 complete — revised Today information architecture and visual hierarchy implemented
 **Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1301` establishes one repeatable-read, server-owned Today
-snapshot for current attendance, current-interval timing, current-day arithmetic, posted
-flexible-time evidence, estimated completion, structured attention, action availability, and
-immutable events. The next bounded slice is `WL-1302`: implement the revised Today information
-architecture and visual hierarchy from the approved reference.
+Phase 12 is complete at `0.13.0`. `WL-1302` applies the approved Today hierarchy through one primary
+task region, a distinct action band, a responsive evidence grid, and a focused route heading that
+no longer resembles a full-width input. The next bounded slice is `WL-1303`: implement the complete
+attendance-state matrix and reliable clock-action feedback and recovery behavior.
 
 ## Verified decisions
 
@@ -166,6 +165,10 @@ architecture and visual hierarchy from the approved reference.
 - The Today screen renders only authoritative valid actions, disables the complete control group for
   one pending in-memory intent, and uses a controlled modal for deliberate active-break clock-out;
   cancel/Escape causes no attendance effect and confirmed submission creates a new intent key.
+- The ready Today route uses one raised status/summary region, one rule-separated valid-action band,
+  then attention, immutable timeline, and calculation disclosure in stable DOM order. Its
+  container-sized layout never reorders controls, and the focused route heading shrink-wraps the
+  existing product-owned outline instead of resembling a full-width input.
 - Today calculation detail groups server-provided integer minutes into expected, credited, and
   estimated-balance description lists with explicit natural-language equations; the browser
   formats but does not derive authoritative totals.
@@ -1974,9 +1977,36 @@ architecture and visual hierarchy from the approved reference.
   publication, deployment, tag, or workspace version changed. See
   `docs/125-today-authoritative-display-contract.md`.
 
+**2026-08-25 — WL-1302 Today information architecture and visual hierarchy**
+
+- Rebuilt the ready Today composition around one raised task region with a responsive
+  status/provisional summary and a rule-separated footer for only the authoritative attendance
+  actions, existing recovery, and persistent mutation feedback. The estimate has less visual
+  weight than current attendance truth and the action pair retains its strong primary/secondary
+  treatment.
+- Moved the supporting surface into the approved attention, immutable timeline, and native
+  calculation-disclosure scan order. Intrinsic columns adapt to actual container space, preserve
+  DOM order, and remain single-column without page overflow at 390 and 320 CSS pixels.
+- Shrink-wrapped the shared focused route heading while preserving its three-pixel product-owned
+  focus outline. Added component and Playwright assertions for semantic order, heading geometry,
+  ten-width reflow, 44-pixel controls, axe, forced colors, touch, and containment.
+- Preserved all ten `WL-1300`/`WL-1301` historical images and added five separate deterministic
+  `WL-1302` screenshots from 1440×900 through 320×568. Update and comparison runs passed; original
+  resolution review found no clipping, page overflow, private data, blocking regression, or major
+  regression. The 1024 layout threshold was corrected during review.
+- Full verification passed runtime configuration, reproducible OpenAPI, formatting, ESLint,
+  288-file/1,507-import boundaries, CSS ownership, strict TypeScript, 37 tooling tests, 353
+  unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 34
+  Playwright scenarios, and the production/public-root build. Bundle budgets pass at 364,637
+  largest JavaScript bytes, 891,820 total JavaScript bytes, 240,872 gzip JavaScript bytes, and
+  47,693 CSS bytes.
+- No API, database, migration, domain rule, calculation, permission, mutation, storage, logging,
+  dependency, lockfile, manifest, publication, deployment, tag, or workspace version changed. See
+  `docs/126-today-information-architecture-visual-hierarchy.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1302`. Exact partial-day work-versus-absence overlap and
+No decision blocks `WL-1303`. Exact partial-day work-versus-absence overlap and
 calculation-to-ledger mismatch signals still need dedicated repository facts; Today does not guess
 them from minute totals. `D-502` remains an explicit real assistive technology and exact
 retail-browser residual rather than a conformance claim. The temporary Astro backup is recoverable
@@ -1985,7 +2015,7 @@ and belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1302 — Implement the revised Today information architecture and visual hierarchy from the approved reference.`
+`WL-1303 — Implement the complete attendance-state matrix and reliable clock-action feedback and recovery behavior.`
 
 ## Update rules
 

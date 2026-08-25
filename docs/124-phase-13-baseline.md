@@ -244,6 +244,19 @@ partial-day work-versus-absence overlap and ledger-source mismatch still need de
 facts. `AUD-1300-06` remains a reference guardrail. `AUD-1300-07` and `AUD-1300-08` remain assigned
 to the later Today hierarchy and presentation tasks.
 
+### `WL-1302` follow-up
+
+`WL-1302` implements the hierarchy-only reference boundary through one primary Today task region,
+a rule-separated attendance-action band, and an intrinsic attention/timeline/calculation support
+grid. It preserves every `WL-1301` value and all prior snapshots while adding a separate five-image
+`WL-1302` set documented in `docs/126-today-information-architecture-visual-hierarchy.md`.
+
+`AUD-1300-07` is closed: the shared route heading now shrink-wraps its existing product-owned focus
+outline instead of drawing an input-like outline across the content column. The visual-hierarchy
+portion of `AUD-1300-08` is closed by the task region, stable action band, and reduced provisional
+value emphasis; `WL-1304` still owns the final five-part metric hierarchy. `AUD-1300-05` and
+`AUD-1300-06` remain open guardrails in their assigned later work.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.

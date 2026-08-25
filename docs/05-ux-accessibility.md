@@ -152,12 +152,12 @@ Browser routes do not create an authorization path for host operations. Destruct
 ## 4. Today screen hierarchy
 
 1. Page heading and date.
-2. Current state: off work, working, or on break.
-3. Primary clock control plus only the attendance actions valid for the authoritative state.
-4. Current session start and today’s elapsed/credited summary.
+2. One primary task region with the current state and current-session summary.
+3. Today’s concise provisional summary, with posted flexible-time evidence labelled separately when shown.
+4. A visually distinct action band with only the attendance actions valid for the authoritative state.
 5. Unresolved blocker, warning, or correction requirement.
-6. Concise calculation result with a complete explanation path.
-7. Today’s event history.
+6. Today’s event history.
+7. Calculation detail with a complete explanation path.
 8. Upcoming approved absence.
 
 Do not render organization-wide statistics on the employee’s primary screen.
@@ -353,7 +353,7 @@ Responsive changes follow available space and content fit, not user-agent or dev
 | Surface | Narrow-screen behavior | Wide-screen behavior | Acceptance boundary |
 |---|---|---|---|
 | Application shell | One labelled navigation trigger opens a modal navigation region; utility actions remain reachable in the same logical order. | Persistent navigation may be visible beside `main`. | Skip link reaches `main`; opening/closing navigation follows the focus contract; no destination disappears solely because of viewport size. |
-| Today | State, primary valid action, concise current-session summary, warnings, then calculation/timeline appear in task order. | Summary and calculation may share columns without moving the primary action after secondary content. | At 200% zoom and the narrow supported viewport, the current state and valid action remain visible without horizontal page scrolling. |
+| Today | One task region presents state and current-session context, the concise provisional summary, then the valid-action band; attention, timeline, and calculation detail follow in DOM order. | State and summary may share columns above one stable action band; supporting sections use intrinsic columns without CSS reordering. | At 200% zoom and the narrow supported viewport, the current state and valid action remain available without horizontal page scrolling. |
 | Complex forms | Fields and explanatory summaries use one logical column; decision/submit actions follow the fields they act on. | Related fields may share rows when label, description, error, and focus order remain unambiguous. | Error summary precedes the invalid fields; zoom/reflow never separates a control from its label, error, policy consequence, or submit action. |
 | Passive and interactive tables | Keep a caption and provide either contained horizontal scrolling or an explicitly designed list transformation. | Show columns needed for comparison; lower-priority fields may move into an accessible detail disclosure. | A list transformation preserves every label/value relationship and row action. Two-dimensional comparison tables may scroll within a named region rather than becoming misleading cards. |
 | Original/proposed or approved/adjusted comparison | Stack explicitly headed records followed by a signed-difference summary. | Side-by-side presentation is allowed in addition to the same explicit headings and difference summary. | Meaning never depends on spatial position, strike-through, or color; reading order is original/approved, proposed/current, then difference. |

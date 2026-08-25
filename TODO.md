@@ -161,7 +161,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 - [x] `WL-1300` Audit the Phase 12 implementation, capture deterministic baselines, and register Phase 13 references and constraints.
 - [x] `WL-1301` Establish one authoritative Today attendance display contract and eliminate contradictory timestamps, durations, and balances.
-- [ ] `WL-1302` Implement the revised Today information architecture and visual hierarchy from the approved reference.
+- [x] `WL-1302` Implement the revised Today information architecture and visual hierarchy from the approved reference.
 - [ ] `WL-1303` Implement the complete attendance-state matrix and reliable clock-action feedback and recovery behavior.
 - [ ] `WL-1304` Separate current session, today’s progress, estimated completion, provisional difference, and posted flexible-time balance.
 - [ ] `WL-1305` Rebuild Today’s timeline and calculation details for transparent, concise, auditable explanations.

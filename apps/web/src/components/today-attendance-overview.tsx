@@ -72,59 +72,31 @@ export function TodayAttendanceOverview({
   const provisional = calculation.provisional;
 
   return (
-    <Panel aria-labelledby="current-status-title" density="comfortable">
-      <div className="wl-today-grid grid gap-6">
-        <div className="grid min-w-0 content-start gap-5">
-          <div className="grid gap-1">
-            <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
-              Current status
-            </p>
-            <h2
-              ref={statusHeadingRef}
-              id="current-status-title"
-              className="m-0 text-3xl font-bold outline-none"
-              tabIndex={-1}
-            >
-              {STATE_LABELS[attendance.state]}
-            </h2>
-            <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">{activeDescription}</p>
-          </div>
-
-          <div className="grid gap-3 border-t border-[var(--wl-border)] pt-4">
-            <div className="grid gap-1">
-              <h3 className="m-0 text-lg font-bold">Next action</h3>
-              <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-                Only actions valid for your current attendance state are available.
-              </p>
-            </div>
-            <TodayAttendanceControls
-              attendance={attendance}
-              controlsDisabled={controlsDisabled}
-              controlsRef={controlsRef}
-              clockOutConfirmationOpen={clockOutConfirmationOpen}
-              onActionFocus={onActionFocus}
-              onAttendanceCommand={onAttendanceCommand}
-              pendingIntent={pendingIntent}
-              setClockOutConfirmationOpen={setClockOutConfirmationOpen}
-            />
-            <AttendanceRecovery error={dependencyError} mode={recoveryMode} retry={retryToday} />
-            {feedback === null ? null : (
-              <Alert
-                announce={feedback.kind !== 'ERROR' || recoveryMode === null}
-                headingLevel="h3"
-                title={feedbackTitle(feedback.kind)}
-                tone={feedbackTone(feedback.kind)}
-              >
-                <p className="m-0 text-sm font-semibold">{feedback.message}</p>
-                {feedback.requestId === undefined ? null : (
-                  <p className="m-0 break-all text-xs">Request reference: {feedback.requestId}</p>
-                )}
-              </Alert>
-            )}
-          </div>
+    <Panel
+      aria-labelledby="current-status-title"
+      className="wl-today-overview"
+      density="comfortable"
+    >
+      <div className="wl-today-summary-grid grid">
+        <div className="wl-today-status grid min-w-0 content-start gap-1">
+          <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
+            Current status
+          </p>
+          <h2
+            ref={statusHeadingRef}
+            id="current-status-title"
+            className="m-0 text-3xl font-bold outline-none"
+            tabIndex={-1}
+          >
+            {STATE_LABELS[attendance.state]}
+          </h2>
+          <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">{activeDescription}</p>
         </div>
 
-        <section className="grid min-w-0 content-start gap-4" aria-labelledby="calculation-title">
+        <section
+          className="wl-today-estimate grid min-w-0 content-start gap-4"
+          aria-labelledby="calculation-title"
+        >
           <StatusBadge tone={calculation.status === 'PROVISIONAL' ? 'info' : 'danger'}>
             {calculation.status === 'PROVISIONAL'
               ? 'Provisional estimate'
@@ -134,7 +106,7 @@ export function TodayAttendanceOverview({
             <h2 id="calculation-title" className="m-0 text-lg font-bold">
               Today’s balance estimate
             </h2>
-            <p className="m-0 text-3xl font-bold tabular-nums">
+            <p className="m-0 text-2xl font-bold tabular-nums">
               {provisional === null
                 ? 'Not available'
                 : formatDuration(provisional.provisionalDifferenceMinutes, true)}
@@ -156,6 +128,33 @@ export function TodayAttendanceOverview({
             </p>
           )}
         </section>
+      </div>
+
+      <div className="wl-today-action-footer grid gap-4">
+        <TodayAttendanceControls
+          attendance={attendance}
+          controlsDisabled={controlsDisabled}
+          controlsRef={controlsRef}
+          clockOutConfirmationOpen={clockOutConfirmationOpen}
+          onActionFocus={onActionFocus}
+          onAttendanceCommand={onAttendanceCommand}
+          pendingIntent={pendingIntent}
+          setClockOutConfirmationOpen={setClockOutConfirmationOpen}
+        />
+        <AttendanceRecovery error={dependencyError} mode={recoveryMode} retry={retryToday} />
+        {feedback === null ? null : (
+          <Alert
+            announce={feedback.kind !== 'ERROR' || recoveryMode === null}
+            headingLevel="h3"
+            title={feedbackTitle(feedback.kind)}
+            tone={feedbackTone(feedback.kind)}
+          >
+            <p className="m-0 text-sm font-semibold">{feedback.message}</p>
+            {feedback.requestId === undefined ? null : (
+              <p className="m-0 break-all text-xs">Request reference: {feedback.requestId}</p>
+            )}
+          </Alert>
+        )}
       </div>
     </Panel>
   );

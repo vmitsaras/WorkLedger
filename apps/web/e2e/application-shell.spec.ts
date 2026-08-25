@@ -1275,6 +1275,13 @@ test('preserves the Today task order, target sizes, and reflow across supported 
         expect(bounds?.width).toBeGreaterThanOrEqual(44);
         expect(bounds?.height).toBeGreaterThanOrEqual(44);
       }
+      const routeHeadingBounds = await page
+        .getByRole('heading', { level: 1, name: 'Today' })
+        .boundingBox();
+      const mainBounds = await page.locator('#main-content').boundingBox();
+      expect(routeHeadingBounds).not.toBeNull();
+      expect(mainBounds).not.toBeNull();
+      expect(routeHeadingBounds?.width).toBeLessThan((mainBounds?.width ?? 0) / 2);
       if (width === 320) await capturePhase12Today(page, 'today-reflow-320x900');
       if (width === 390) await capturePhase12Today(page, 'today-mobile-390x900');
       if (width === 1440) await capturePhase12Today(page, 'today-desktop-1440x900');
@@ -1303,7 +1310,7 @@ test('preserves the Today task order, target sizes, and reflow across supported 
       return (
         details !== null &&
         timeline !== null &&
-        Boolean(details.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING)
+        Boolean(timeline.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING)
       );
     }),
   ).toBe(true);
@@ -1311,12 +1318,10 @@ test('preserves the Today task order, target sizes, and reflow across supported 
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('captures the coherent Phase 13 Today contract baseline @phase13-baseline', async ({
-  page,
-}) => {
+test('captures the revised Phase 13 Today hierarchy @phase13-baseline', async ({ page }) => {
   test.skip(
     process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1',
-    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1301 contract snapshots.',
+    'Set WORKLEDGER_ASSERT_PHASE_13_BASELINES=1 to compare the WL-1302 hierarchy snapshots.',
   );
   await page.clock.setFixedTime(new Date('2026-08-11T10:45:00Z'));
   await page.route('**/v1/me/context', async (route) => {
@@ -1353,6 +1358,45 @@ test('captures the coherent Phase 13 Today contract baseline @phase13-baseline',
       await expect(
         page.getByRole('region', { name: 'Today’s timeline' }).getByRole('listitem'),
       ).toHaveCount(3);
+      const hierarchy = await page.evaluate(() => {
+        const status = document.querySelector('.wl-today-status')?.getBoundingClientRect();
+        const estimate = document.querySelector('.wl-today-estimate')?.getBoundingClientRect();
+        const actions = document.querySelector('.wl-today-action-footer')?.getBoundingClientRect();
+        const timeline = document
+          .querySelector('#today-timeline-title')
+          ?.closest('section')
+          ?.getBoundingClientRect();
+        const calculation = document.querySelector('#calculation-details')?.getBoundingClientRect();
+        if (
+          status === undefined ||
+          estimate === undefined ||
+          actions === undefined ||
+          timeline === undefined ||
+          calculation === undefined
+        ) {
+          return null;
+        }
+        return {
+          actionsTop: actions.top,
+          calculationTop: calculation.top,
+          estimateBottom: estimate.bottom,
+          estimateTop: estimate.top,
+          statusBottom: status.bottom,
+          statusTop: status.top,
+          timelineTop: timeline.top,
+        };
+      });
+      expect(hierarchy).not.toBeNull();
+      if (hierarchy !== null) {
+        const summaryIsSplit = Math.abs(hierarchy.statusTop - hierarchy.estimateTop) <= 2;
+        if (!summaryIsSplit) {
+          expect(hierarchy.estimateTop).toBeGreaterThanOrEqual(hierarchy.statusBottom);
+        }
+        expect(hierarchy.actionsTop).toBeGreaterThanOrEqual(
+          Math.max(hierarchy.statusBottom, hierarchy.estimateBottom),
+        );
+        expect(hierarchy.calculationTop).toBeGreaterThanOrEqual(hierarchy.timelineTop);
+      }
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
@@ -1362,7 +1406,7 @@ test('captures the coherent Phase 13 Today contract baseline @phase13-baseline',
       if (viewport.width === 1440 || viewport.width === 320) {
         await expectPageToHaveNoAxeViolations(page);
       }
-      await capturePhase13Contract(page, viewport.name);
+      await capturePhase13Hierarchy(page, viewport.name);
     });
   }
 });
@@ -2832,11 +2876,11 @@ async function capturePhase12Administration(page: Page, name: string): Promise<v
   await capturePhase12Surface(page, 'wl1204', name);
 }
 
-async function capturePhase13Contract(page: Page, name: string): Promise<void> {
+async function capturePhase13Hierarchy(page: Page, name: string): Promise<void> {
   if (process.env['WORKLEDGER_ASSERT_PHASE_13_BASELINES'] !== '1') return;
 
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page).toHaveScreenshot(['phase-13', 'wl1301', `${name}.png`], {
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1302', `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

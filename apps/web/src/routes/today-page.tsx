@@ -360,7 +360,7 @@ function renderTodayReady({
   const attention = selectTodayAttention(today);
 
   return (
-    <section className="grid max-w-6xl gap-8">
+    <section className="wl-today-layout grid max-w-6xl gap-8">
       <PageHeader
         eyebrow={formatLocalDate(today.localDate)}
         title="Today"
@@ -391,44 +391,46 @@ function renderTodayReady({
         today={today}
       />
 
-      <CalculationAttention
-        attention={attention}
-        balanceHref="/my-time#flexible-time-heading"
-        calculationHref="#calculation-details"
-        eventHref="#today-timeline-title"
-        onCalculationDetailsRequest={() => setCalculationDetailsOpen(true)}
-        thresholdBasis="POSTED_BALANCE"
-      />
+      <div className="wl-today-support-grid grid gap-8">
+        <CalculationAttention
+          attention={attention}
+          balanceHref="/my-time#flexible-time-heading"
+          calculationHref="#calculation-details"
+          eventHref="#today-timeline-title"
+          onCalculationDetailsRequest={() => setCalculationDetailsOpen(true)}
+          thresholdBasis="POSTED_BALANCE"
+        />
 
-      {calculation.provisional === null ? null : (
-        <details
-          id="calculation-details"
-          className="wl-panel"
-          open={calculationDetailsOpen}
-          onToggle={(event) => setCalculationDetailsOpen(event.currentTarget.open)}
-        >
-          <summary className="min-h-[var(--wl-control-min-block-size)] cursor-pointer rounded-[var(--wl-radius-control)] outline-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]">
-            <span className="font-bold">Calculation details</span>
-            <span className="mt-1 block text-sm text-[var(--wl-text-muted)]">
-              Review every source amount used for today’s estimate.
-            </span>
-          </summary>
-          <div className="border-t border-[var(--wl-border)] pt-5">
-            <DailyTimeBreakdown
-              holidayName={calculation.holidayName}
-              provisional={calculation.provisional}
-              status={calculation.status}
-            />
-          </div>
-        </details>
-      )}
+        <TodayAttendanceTimeline
+          events={today.timeline}
+          localDate={today.localDate}
+          timeZone={today.timeZone}
+          truncated={today.timelineTruncated}
+        />
 
-      <TodayAttendanceTimeline
-        events={today.timeline}
-        localDate={today.localDate}
-        timeZone={today.timeZone}
-        truncated={today.timelineTruncated}
-      />
+        {calculation.provisional === null ? null : (
+          <details
+            id="calculation-details"
+            className="wl-panel"
+            open={calculationDetailsOpen}
+            onToggle={(event) => setCalculationDetailsOpen(event.currentTarget.open)}
+          >
+            <summary className="min-h-[var(--wl-control-min-block-size)] cursor-pointer rounded-[var(--wl-radius-control)] outline-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]">
+              <span className="font-bold">Calculation details</span>
+              <span className="mt-1 block text-sm text-[var(--wl-text-muted)]">
+                Review every source amount used for today’s estimate.
+              </span>
+            </summary>
+            <div className="border-t border-[var(--wl-border)] pt-5">
+              <DailyTimeBreakdown
+                holidayName={calculation.holidayName}
+                provisional={calculation.provisional}
+                status={calculation.status}
+              />
+            </div>
+          </details>
+        )}
+      </div>
     </section>
   );
 }
