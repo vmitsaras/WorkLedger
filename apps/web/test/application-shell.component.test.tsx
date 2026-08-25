@@ -363,13 +363,13 @@ test('renders the role-aware shell and focuses each completed route navigation',
     throw new Error('Expected the complete Today hierarchy to render.');
   }
   expect(
-    Boolean(currentStatus.compareDocumentPosition(progress) & Node.DOCUMENT_POSITION_FOLLOWING),
+    Boolean(currentStatus.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING),
+  ).toBe(true);
+  expect(
+    Boolean(actions.compareDocumentPosition(progress) & Node.DOCUMENT_POSITION_FOLLOWING),
   ).toBe(true);
   expect(
     Boolean(progress.compareDocumentPosition(postedBalance) & Node.DOCUMENT_POSITION_FOLLOWING),
-  ).toBe(true);
-  expect(
-    Boolean(postedBalance.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING),
   ).toBe(true);
   expect(
     Boolean(

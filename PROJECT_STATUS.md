@@ -2,18 +2,19 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 7 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 8 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1307` (next)
-**Status:** WL-1306 complete — Today attention and correction recovery are actionable and source-bound
-**Last verified:** 2026-08-25
+**Active task:** `WL-1308` (next)
+**Status:** WL-1307 complete — the dedicated Today responsive, accessibility, usability, and visual sub-gate passes
+**Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1306` now carries server-owned attention explanations,
-blocking effect, recovery destinations, and expected next states through the Today contract and
-routes attendance fixes into the immutable correction workflow. The next bounded slice is
-`WL-1307`: pass the dedicated Today responsive, accessibility, usability, and visual sub-gate.
+Phase 12 is complete at `0.13.0`. `WL-1307` proves the completed Today slice at five deterministic
+viewports with current screenshots, axe, reflow, focus, state, manual visual, usability, and real
+VoiceOver evidence. Status and clock actions now remain one primary task column before progress and
+posted-balance detail at narrow widths. The next bounded slice is `WL-1308`: prioritize actionable
+work and simplify filtering, actions, pagination, and narrow-screen behavior in Approval inbox.
 
 ## Verified decisions
 
@@ -37,6 +38,13 @@ routes attendance fixes into the immutable correction workflow. The next bounded
 - The Today ready panel presents current attendance, today's credited progress, and posted flexible
   time as three labelled semantic sections in stable DOM order. The active elapsed value describes
   only the current work interval or break; it is never presented as a whole-session duration.
+- Current status and its permitted attendance actions form one primary task column. Narrow source
+  order is status, actions, progress, then posted balance; wide layout keeps the same action group
+  with status beside the other semantic zones. Actions never fall below secondary Today details.
+- The current Today visual gate is the separate five-file `WL-1307` baseline. Phase 12 screenshots
+  remain historical and unchanged. The current gate covers 1440, 1024, 768, 390, and 320 CSS-pixel
+  viewports plus axe, zoom-equivalent reflow, text spacing, reduced motion, long identity, privacy,
+  and overflow assertions.
 - Native Today progress compares credited minutes with expected minutes, caps only the visual
   progress position when credit exceeds expectation, preserves the uncapped value in text, and is
   omitted when expectation is zero or calculation is incomplete.
@@ -2137,23 +2145,52 @@ routes attendance fixes into the immutable correction workflow. The next bounded
   from the cumulative Phase 13 layout even with no attention item. The images remain untouched.
   `WL-1307` owns the new Today visual gate, and `WL-1312` owns later cross-route visual closure.
 
+**2026-08-26 — WL-1307 Today responsive, accessibility, usability, and visual sub-gate**
+
+- Resolved one P1 responsive usability defect found by the gate: at 320 CSS pixels, attendance
+  actions followed all progress and posted-balance detail. Status and actions now form one task
+  column, so the narrow semantic/source order is status, actions, progress, and posted balance.
+- Added a dedicated opt-in `WL-1307` browser gate with a coherent final Today fixture and five
+  full-page baselines at 1440×900, 1024×720, 768×1024, 390×844, and 320×568. The update run passed
+  once and repeated comparison runs passed without snapshot-update mode.
+- The gate asserts one main/H1, route focus, heading order, visible 44×44 actions, calculation-table
+  structure, source order, no page overflow, axe at 1440 and 320, 200-percent-zoom-equivalent and
+  landscape reflow, WCAG text spacing, reduced motion, long account identity, nonblocking warning
+  order, and no sensitive URL or browser-storage persistence.
+- Manual original-resolution inspection found no impossible values, clipping, lost sign/unit,
+  private data, or hierarchy regression. VoiceOver with Chrome for Testing and Safari confirmed
+  the same Start break → Clock out → Calculation details order and the native calculation table's
+  exposed structure, state, and focus behavior. VoiceOver was restored to its original off state.
+- Full verification passed runtime configuration, reproducible OpenAPI, formatting, ESLint,
+  289-source/1,515-import boundaries, CSS ownership, strict TypeScript, all 37 tooling tests, all
+  368 unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 37
+  Playwright scenarios with one opt-in capture skipped, and the production/public-root build.
+  Bundle budgets pass at 370,228 largest JavaScript bytes, 897,411 total JavaScript bytes, 242,647
+  gzip JavaScript bytes, and 49,961 CSS bytes; no budget changed.
+- The required unchanged Phase 12 visual command remains historical and non-green: 28 scenarios
+  passed, one opt-in capture skipped, and four preserved snapshot comparisons failed. The current
+  Today gate passes; Approvals, My Time, and Employees drift remains `WL-1312` work. No Phase 12
+  image, dependency, lockfile, manifest, migration, phase version, publication, deployment, or tag
+  changed. See `docs/131-today-responsive-accessibility-usability-visual-gate.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1307`. Exact partial-day work-versus-absence overlap,
+No decision blocks `WL-1308`. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still need authoritative domain
 or repository facts; Today does not guess them from minute totals or an otherwise valid overnight
 session. The PostgreSQL-backed `WL-1305` correction-history case remains locally unexecuted until
 the Docker database service is available. The preserved Phase 12 visual command currently reports
-four historical snapshot mismatches; `WL-1307` owns Today and `WL-1312` owns cross-route closure.
-`D-502` remains an explicit real
-assistive technology and exact retail-browser residual rather than a conformance claim. The
+four historical snapshot mismatches; the current Today gate passes and `WL-1312` owns cross-route
+closure. `D-502` remains the broader exact retail assistive-technology matrix rather than a
+whole-product conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for
+Testing and Safari. The
 temporary Astro backup is recoverable at
 `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical and
 belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1307 — Pass the dedicated Today responsive, accessibility, usability, and visual sub-gate.`
+`WL-1308 — Prioritize actionable work and simplify filtering, actions, pagination, and narrow-screen behavior in Approval inbox.`
 
 ## Update rules
 

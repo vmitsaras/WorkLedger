@@ -309,6 +309,21 @@ Exact partial-day work-versus-absence overlap, calculation-to-ledger mismatch, a
 warnings remain source gaps rather than fabricated UI signals. The dedicated Today responsive,
 assistive-technology, usability, and visual sub-gate moves next to `WL-1307`.
 
+### `WL-1307` follow-up
+
+`WL-1307` passes the dedicated Today sub-gate in
+`docs/131-today-responsive-accessibility-usability-visual-gate.md`. The current five-viewport
+baseline is separate from and does not overwrite the Phase 12 images. It proves status-first action
+order, 44×44 clock targets, reflow, text spacing, reduced motion, current axe coverage, and no page
+overflow. Manual inspection found no impossible value, clipping, lost sign/unit, or private data.
+
+The gate found and resolved one P1 responsive usability defect: at 320 CSS pixels the attendance
+actions followed the full progress and posted-balance detail. Status and actions now form one task
+column, so narrow source order is status, actions, progress, and posted balance. VoiceOver checks in
+Chrome for Testing and Safari confirmed the same primary-action order and the native calculation
+table's exposed structure. There is no remaining P0 or P1 Today issue; secondary-route work may
+begin with `WL-1308`.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.

@@ -194,6 +194,30 @@ const PHASE_13_TODAY_BASELINE: TodayAttendance = {
     remainingExpectedMinutes: 270,
   },
 };
+const PHASE_13_TODAY_WARNING: TodayAttendance = {
+  ...PHASE_13_TODAY_BASELINE,
+  calculation: {
+    ...PHASE_13_TODAY_BASELINE.calculation,
+    attentionItems: [
+      {
+        affectedDate: '2026-08-10',
+        blocksSubmission: false,
+        code: 'FLEX_POSITIVE_THRESHOLD_EXCEEDED',
+        reason: 'Your posted flexible-time balance is above the configured warning threshold.',
+        recovery: {
+          action: 'REVIEW_BALANCE_HISTORY',
+          destination: 'MY_BALANCES',
+          label: 'View balance history',
+          statusAfterAction:
+            'The warning clears only after posted ledger entries bring the balance back within the configured threshold.',
+        },
+        severity: 'WARNING',
+        source: 'POSTED_FLEX_BALANCE',
+        title: 'Positive flexible-time threshold reached',
+      },
+    ],
+  },
+};
 const PERSONAL_TIME = {
   balance: {
     eligibleProjectedMinutes: 15,
@@ -1609,6 +1633,263 @@ test('captures the WL-1305 Today timeline and calculation evidence @phase13-base
       await capturePhase13Evidence(page, viewport.name);
     });
   }
+});
+
+test('passes the WL-1307 Today responsive, accessibility, and usability sub-gate', async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date('2026-08-11T10:45:00Z'));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/attendance/today', async (route) => {
+    await route.fulfill({ json: success(PHASE_13_TODAY_BASELINE), status: 200 });
+  });
+
+  const viewports = [
+    { height: 900, name: 'today-gate-1440x900', width: 1440 },
+    { height: 720, name: 'today-gate-1024x720', width: 1024 },
+    { height: 1024, name: 'today-gate-768x1024', width: 768 },
+    { height: 844, name: 'today-gate-390x844', width: 390 },
+    { height: 568, name: 'today-gate-320x568', width: 320 },
+  ] as const;
+
+  await page.setViewportSize(viewports[0]);
+  await page.goto('/today');
+  await expect(page.getByRole('main')).toHaveCount(1);
+  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+
+  const headingLevels = await page
+    .locator('#main-content :is(h1, h2, h3, h4, h5, h6)')
+    .evaluateAll((headings) => headings.map((heading) => Number(heading.tagName.slice(1))));
+  expect(headingLevels[0]).toBe(1);
+  for (let index = 1; index < headingLevels.length; index += 1) {
+    expect(headingLevels[index]).toBeLessThanOrEqual((headingLevels[index - 1] ?? 1) + 1);
+  }
+
+  const currentStatus = page.getByRole('region', { name: 'Working' });
+  await expect(currentStatus.getByText('11:15 AM', { exact: true })).toBeVisible();
+  const progress = page.getByRole('region', { name: 'Today’s progress' });
+  await expect(progress.getByText('3h 15m', { exact: true })).toBeVisible();
+  await expect(progress.getByText('4h 30m', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Clock out', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Needs attention' })).toHaveCount(0);
+
+  const calculationSummary = page.locator('summary').filter({ hasText: 'Calculation details' });
+  await calculationSummary.focus();
+  await page.keyboard.press('Enter');
+  await expect(calculationSummary).toBeFocused();
+  await expect(page.locator('#calculation-details')).toHaveAttribute('open', '');
+
+  for (const viewport of viewports) {
+    await test.step(`${viewport.name} viewport`, async () => {
+      await page.setViewportSize({ height: viewport.height, width: viewport.width });
+      await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Clock out', exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('table', {
+          name: 'Source amounts and server-calculated results for today',
+        }),
+      ).toBeVisible();
+
+      for (const action of ['Start break', 'Clock out']) {
+        const bounds = await page.getByRole('button', { name: action, exact: true }).boundingBox();
+        expect(bounds).not.toBeNull();
+        expect(bounds?.width).toBeGreaterThanOrEqual(44);
+        expect(bounds?.height).toBeGreaterThanOrEqual(44);
+      }
+
+      const layout = await page.evaluate(() => {
+        const status = document.querySelector('.wl-today-status')?.getBoundingClientRect();
+        const actions = document.querySelector('.wl-today-action-footer')?.getBoundingClientRect();
+        const progress = document
+          .querySelector('.wl-today-progress-summary')
+          ?.getBoundingClientRect();
+        const posted = document.querySelector('.wl-today-posted-balance')?.getBoundingClientRect();
+        const timeline = document
+          .querySelector('#today-timeline-title')
+          ?.closest('section')
+          ?.getBoundingClientRect();
+        const calculation = document.querySelector('#calculation-details')?.getBoundingClientRect();
+        if (
+          status === undefined ||
+          actions === undefined ||
+          progress === undefined ||
+          posted === undefined ||
+          timeline === undefined ||
+          calculation === undefined
+        ) {
+          return null;
+        }
+        return {
+          actionBottom: actions.bottom,
+          actionTop: actions.top,
+          calculationTop: calculation.top,
+          firstActionTop:
+            document
+              .querySelector<HTMLElement>('.wl-today-action-footer button')
+              ?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY,
+          postedBottom: posted.bottom,
+          postedTop: posted.top,
+          progressBottom: progress.bottom,
+          progressTop: progress.top,
+          statusTop: status.top,
+          timelineTop: timeline.top,
+        };
+      });
+      expect(layout).not.toBeNull();
+      if (layout !== null) {
+        expect(layout.actionTop).toBeGreaterThanOrEqual(layout.statusTop);
+        expect(layout.calculationTop).toBeGreaterThanOrEqual(layout.timelineTop);
+        if (viewport.width < 640) {
+          expect(layout.actionBottom).toBeLessThanOrEqual(layout.progressTop);
+          expect(layout.firstActionTop).toBeLessThan(viewport.height);
+        } else {
+          expect(layout.actionTop).toBeLessThan(
+            Math.max(layout.progressBottom, layout.postedBottom),
+          );
+        }
+      }
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+
+      if (viewport.width === 1440 || viewport.width === 320) {
+        await expectPageToHaveNoAxeViolations(page);
+      }
+      await capturePhase13TodayGate(page, viewport.name);
+    });
+  }
+
+  await test.step('200 percent zoom equivalent and landscape reflow', async () => {
+    await page.setViewportSize({ height: 450, width: 640 });
+    await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+
+    await page.setViewportSize({ height: 390, width: 844 });
+    await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+  });
+
+  await test.step('WCAG text-spacing override and reduced motion', async () => {
+    await page.setViewportSize({ height: 900, width: 320 });
+    await page.addStyleTag({
+      content: `
+        #main-content,
+        #main-content * {
+          letter-spacing: 0.12em !important;
+          line-height: 1.5 !important;
+          word-spacing: 0.16em !important;
+        }
+        #main-content p {
+          margin-block-end: 2em !important;
+        }
+      `,
+    });
+    await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
+    await expect(page.getByText('Assumes no additional break.')).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    expect(
+      await page.getByRole('button', { name: 'Start break' }).evaluate((button) => {
+        const styles = getComputedStyle(button);
+        return {
+          animationName: styles.animationName,
+          transform: styles.transform,
+          transitionDuration: styles.transitionDuration,
+        };
+      }),
+    ).toEqual({ animationName: 'none', transform: 'none', transitionDuration: '0.001s' });
+  });
+
+  await test.step('non-blocking attention stays after the primary action without a load alert', async () => {
+    await page.unroute('**/v1/me/attendance/today');
+    await page.route('**/v1/me/attendance/today', async (route) => {
+      await route.fulfill({ json: success(PHASE_13_TODAY_WARNING), status: 200 });
+    });
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Needs attention' })).toBeVisible();
+    await expect(page.getByText('Does not block submission')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'View balance history' })).toHaveAttribute(
+      'href',
+      '/my-balances#ledger-heading',
+    );
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    expect(
+      await page.evaluate(() => {
+        const actions = document.querySelector('.wl-today-action-footer');
+        const attention = document.querySelector('#today-attention-title')?.closest('section');
+        return (
+          actions !== null &&
+          attention !== null &&
+          Boolean(actions.compareDocumentPosition(attention) & Node.DOCUMENT_POSITION_FOLLOWING)
+        );
+      }),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    expect(page.url()).not.toContain('sickness');
+    const browserStorage = await page.evaluate(() => ({
+      local: Object.entries(localStorage),
+      session: Object.entries(sessionStorage),
+    }));
+    expect(browserStorage.local).toEqual([]);
+    expect(JSON.stringify(browserStorage)).not.toMatch(
+      /Emma Reed|emma@northstar\.test|sickness|flexible-time balance/iu,
+    );
+  });
+
+  await test.step('long account identity and recovery copy reflow in the narrow shell', async () => {
+    const longDisplayName =
+      'Alexandra Very Long Employee Name for Reflow and Localization Verification';
+    await page.unroute('**/v1/me/context');
+    await page.route('**/v1/me/context', async (route) => {
+      await route.fulfill({
+        json: success({
+          ...EMPLOYEE_CONTEXT,
+          account: { ...EMPLOYEE_CONTEXT.account, name: longDisplayName },
+          employee: { ...EMPLOYEE_CONTEXT.employee, displayName: longDisplayName },
+        }),
+        status: 200,
+      });
+    });
+    await page.setViewportSize({ height: 568, width: 320 });
+    await page.reload();
+    await page.getByRole('button', { name: 'Menu' }).click();
+    const navigationDialog = page.getByRole('dialog', { name: 'Navigation' });
+    await expect(navigationDialog.getByText(longDisplayName, { exact: true })).toBeVisible();
+    await expect(navigationDialog.getByRole('button', { name: 'Sign out' })).toBeVisible();
+    expect(
+      await navigationDialog.evaluate((dialog) => dialog.scrollWidth <= dialog.clientWidth),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    await navigationDialog.getByRole('button', { name: 'Close' }).click();
+  });
 });
 
 test('keeps text, controls, focus, and boundaries perceivable in forced colors', async ({
@@ -3081,6 +3362,16 @@ async function capturePhase13Evidence(page: Page, name: string): Promise<void> {
 
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page).toHaveScreenshot(['phase-13', 'wl1305', `${name}.png`], {
+    animations: 'disabled',
+    fullPage: true,
+  });
+}
+
+async function capturePhase13TodayGate(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_ASSERT_PHASE_13_TODAY_GATE'] !== '1') return;
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1307', `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

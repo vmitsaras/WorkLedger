@@ -166,7 +166,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1304` Separate current session, today’s progress, estimated completion, provisional difference, and posted flexible-time balance.
 - [x] `WL-1305` Rebuild Today’s timeline and calculation details for transparent, concise, auditable explanations.
 - [x] `WL-1306` Replace generic warnings with actionable attention and correction-recovery workflows.
-- [ ] `WL-1307` Pass the dedicated Today responsive, accessibility, usability, and visual sub-gate.
+- [x] `WL-1307` Pass the dedicated Today responsive, accessibility, usability, and visual sub-gate.
 - [ ] `WL-1308` Prioritize actionable work and simplify filtering, actions, pagination, and narrow-screen behavior in Approval inbox.
 - [ ] `WL-1309` Improve Team status comprehension, filtering, actionability, labels, and workspace navigation.
 - [ ] `WL-1310` Improve employee and team administration search, primary actions, route separation, dense layouts, and explanatory copy.

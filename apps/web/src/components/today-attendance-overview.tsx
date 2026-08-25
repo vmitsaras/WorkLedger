@@ -96,28 +96,57 @@ export function TodayAttendanceOverview({
       density="comfortable"
     >
       <div className="wl-today-summary-grid grid">
-        <section className="wl-today-status" aria-labelledby="current-status-title">
-          <p className="wl-today-eyebrow">Current status</p>
-          <h2
-            ref={statusHeadingRef}
-            id="current-status-title"
-            className="wl-today-status-heading outline-none"
-            tabIndex={-1}
-          >
-            {STATE_LABELS[state]}
-          </h2>
-          {activeSince === null || activeElapsedMinutes === null ? (
-            <p className="wl-today-copy-muted">No active work interval.</p>
-          ) : (
-            metricList('m-0 grid gap-3', [
-              [
-                state === 'ON_BREAK' ? 'Current break' : 'Current work interval',
-                formatDuration(activeElapsedMinutes),
-              ],
-              ['Since', formatTime(activeSince, timeZone), activeSince],
-            ])
-          )}
-        </section>
+        <div className="wl-today-status-task grid content-start gap-3">
+          <section className="wl-today-status" aria-labelledby="current-status-title">
+            <p className="wl-today-eyebrow">Current status</p>
+            <h2
+              ref={statusHeadingRef}
+              id="current-status-title"
+              className="wl-today-status-heading outline-none"
+              tabIndex={-1}
+            >
+              {STATE_LABELS[state]}
+            </h2>
+            {activeSince === null || activeElapsedMinutes === null ? (
+              <p className="wl-today-copy-muted">No active work interval.</p>
+            ) : (
+              metricList('m-0 grid gap-3', [
+                [
+                  state === 'ON_BREAK' ? 'Current break' : 'Current work interval',
+                  formatDuration(activeElapsedMinutes),
+                ],
+                ['Since', formatTime(activeSince, timeZone), activeSince],
+              ])
+            )}
+          </section>
+
+          <div className="wl-today-action-footer grid gap-4">
+            <TodayAttendanceControls
+              attendance={attendance}
+              controlsDisabled={controlsDisabled}
+              controlsRef={controlsRef}
+              clockOutConfirmationOpen={clockOutConfirmationOpen}
+              onActionFocus={onActionFocus}
+              onAttendanceCommand={onAttendanceCommand}
+              pendingIntent={pendingIntent}
+              setClockOutConfirmationOpen={setClockOutConfirmationOpen}
+            />
+            <AttendanceRecovery error={dependencyError} mode={recoveryMode} retry={retryToday} />
+            {feedback === null ? null : (
+              <Alert
+                announce={feedback.kind !== 'ERROR' || recoveryMode === null}
+                headingLevel="h3"
+                title={feedbackTitle(feedback.kind)}
+                tone={feedbackTone(feedback.kind)}
+              >
+                <p className="m-0 text-sm font-semibold">{feedback.message}</p>
+                {feedback.requestId === undefined ? null : (
+                  <p className="m-0 break-all text-xs">Request reference: {feedback.requestId}</p>
+                )}
+              </Alert>
+            )}
+          </div>
+        </div>
 
         <section className="wl-today-progress-summary" aria-labelledby="today-progress-title">
           <div className="wl-today-heading-row">
@@ -201,33 +230,6 @@ export function TodayAttendanceOverview({
             Today is still provisional and is not included in this balance.
           </p>
         </section>
-      </div>
-
-      <div className="wl-today-action-footer grid gap-4">
-        <TodayAttendanceControls
-          attendance={attendance}
-          controlsDisabled={controlsDisabled}
-          controlsRef={controlsRef}
-          clockOutConfirmationOpen={clockOutConfirmationOpen}
-          onActionFocus={onActionFocus}
-          onAttendanceCommand={onAttendanceCommand}
-          pendingIntent={pendingIntent}
-          setClockOutConfirmationOpen={setClockOutConfirmationOpen}
-        />
-        <AttendanceRecovery error={dependencyError} mode={recoveryMode} retry={retryToday} />
-        {feedback === null ? null : (
-          <Alert
-            announce={feedback.kind !== 'ERROR' || recoveryMode === null}
-            headingLevel="h3"
-            title={feedbackTitle(feedback.kind)}
-            tone={feedbackTone(feedback.kind)}
-          >
-            <p className="m-0 text-sm font-semibold">{feedback.message}</p>
-            {feedback.requestId === undefined ? null : (
-              <p className="m-0 break-all text-xs">Request reference: {feedback.requestId}</p>
-            )}
-          </Alert>
-        )}
       </div>
     </Panel>
   );

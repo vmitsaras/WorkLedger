@@ -522,9 +522,8 @@
   }
 
   .wl-today-action-footer {
-    margin-block-start: var(--wl-space-6);
     border-block-start: 1px solid var(--wl-border);
-    padding-block-start: var(--wl-space-5);
+    padding-block-start: var(--wl-space-3);
   }
 
   .wl-today-support-grid {
@@ -537,7 +536,7 @@
       grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     }
 
-    .wl-today-status {
+    .wl-today-status-task {
       padding-inline-end: var(--wl-space-6);
     }
 
