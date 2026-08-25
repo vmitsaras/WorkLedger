@@ -857,13 +857,19 @@ test('keeps the Today contract provisional, bounded, and free of account identit
       calculation: {
         attentionItems: [
           {
-            affectedDate: '2026-08-11',
+            affectedDate: '2026-08-10',
             blocksSubmission: false,
             code: 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED',
             reason: 'The posted flexible-time balance is below the configured threshold.',
-            recoveryAction: 'REVIEW_BALANCE',
+            recovery: {
+              action: 'REVIEW_BALANCE_HISTORY',
+              destination: 'MY_BALANCES',
+              label: 'View balance history',
+              statusAfterAction: 'The warning clears after a later posted ledger change.',
+            },
             severity: 'WARNING',
             source: 'POSTED_FLEX_BALANCE',
+            title: 'Negative flexible-time threshold reached',
           },
         ],
         estimatedFinishAt: '2026-08-11T17:00:00Z',
@@ -968,6 +974,56 @@ test('keeps the Today contract provisional, bounded, and free of account identit
           attentionItems: response.data.calculation.attentionItems.map((item) => ({
             ...item,
             source: 'CURRENT_DAY_CALCULATION',
+          })),
+        },
+      },
+    }),
+  ).toThrow();
+  expect(() =>
+    todayAttendanceEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        calculation: {
+          ...response.data.calculation,
+          attentionItems: response.data.calculation.attentionItems.map((item) => ({
+            ...item,
+            recovery: {
+              action: 'FIX_ENTRY',
+              destination: 'MY_TIME',
+              label: 'Fix entry',
+              statusAfterAction: 'Choose the affected day.',
+            },
+          })),
+        },
+      },
+    }),
+  ).toThrow();
+  expect(() =>
+    todayAttendanceEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        calculation: {
+          ...response.data.calculation,
+          attentionItems: response.data.calculation.attentionItems.map((item) => ({
+            ...item,
+            requestId: 'private-workflow-id',
+          })),
+        },
+      },
+    }),
+  ).toThrow();
+  expect(() =>
+    todayAttendanceEnvelopeSchema.parse({
+      ...response,
+      data: {
+        ...response.data,
+        calculation: {
+          ...response.data.calculation,
+          attentionItems: response.data.calculation.attentionItems.map((item) => ({
+            ...item,
+            code: 'BREAK_POLICY_WARNING',
           })),
         },
       },

@@ -2,18 +2,18 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 6 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 7 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1306` (next)
-**Status:** WL-1305 complete — Today timeline and calculation evidence are concise and auditable
+**Active task:** `WL-1307` (next)
+**Status:** WL-1306 complete — Today attention and correction recovery are actionable and source-bound
 **Last verified:** 2026-08-25
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1305` now keeps immutable punch events distinct from
-purpose-minimized approved correction effects and explains every Today calculation source in a
-semantic table inside the native disclosure. The next bounded slice is `WL-1306`: replace generic
-warnings with actionable attention and correction-recovery workflows.
+Phase 12 is complete at `0.13.0`. `WL-1306` now carries server-owned attention explanations,
+blocking effect, recovery destinations, and expected next states through the Today contract and
+routes attendance fixes into the immutable correction workflow. The next bounded slice is
+`WL-1307`: pass the dedicated Today responsive, accessibility, usability, and visual sub-gate.
 
 ## Verified decisions
 
@@ -43,6 +43,11 @@ warnings with actionable attention and correction-recovery workflows.
 - The provisional daily difference is neutral partial-day evidence, not debt or an accumulated
   balance. Posted flexible time always carries its posted-through date or an explicit no-entry state
   and states that today's provisional result is excluded.
+- Today attention is server-owned typed metadata: each emitted issue has one safe title,
+  explanation, affected source date, severity, explicit submission effect, compatible recovery
+  action and destination, link label, and expected next state. The browser renders that metadata
+  without inferring errors from minutes, prose, current overnight attendance, or missing policy
+  rules.
 - The Today attendance state and server-provided permitted commands are the only source of clock
   actions. Permission loss latches a neutral denial presentation, removes the exact protected Today
   cache entry, closes pending confirmation, and prevents automatic refetch until route authority is
@@ -2099,12 +2104,48 @@ warnings with actionable attention and correction-recovery workflows.
   No schema migration, dependency, lockfile, manifest, phase version, publication, deployment, or
   tag changed. See `docs/129-today-timeline-calculation-evidence.md`.
 
+**2026-08-25 — WL-1306 actionable attention and correction recovery**
+
+- Extended the Today response with server-owned attention titles, safe explanations, affected
+  dates, explicit blocking effects, typed recovery actions and destinations, link labels, and
+  expected next states. Contract reconciliation rejects incompatible code/action/destination
+  combinations, duplicate codes, extra workflow identifiers, and invented warning codes.
+- Replaced the browser's second issue map with direct rendering of the authoritative response.
+  Blocking issues and warnings are separated in text, every item has a real navigation link, and
+  only a newly appearing blocker is announced assertively after mount.
+- Routed historical attendance blockers to the exact immutable correction workflow. Recoverable
+  correction failures retain every entered proposal value for a deliberate retry, while successful
+  locked-period proposals explain that approval appends a post-lock adjustment. Authorized request
+  detail covers returned and rejected decisions without widening the generic Today response.
+- Recorded source-bound exclusions instead of fabricating data: valid overnight work is not a
+  missing clock-out, the accepted policy has no break-duration threshold, and Today still has no
+  repository fact for exact partial-day absence overlap or calculation-to-ledger mismatch.
+- Full verification passed runtime configuration, reproducible OpenAPI, formatting, ESLint,
+  289-file/1,515-import boundaries, CSS ownership, strict TypeScript, all 37 tooling tests, all 368
+  unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 36
+  Playwright scenarios with the opt-in visual capture skipped, and the production/public-root
+  build. Bundle budgets pass at 370,142 largest JavaScript bytes, 897,325 total JavaScript bytes,
+  242,635 gzip JavaScript bytes, and 49,993 CSS bytes.
+- The measured implementation adds 2,470 uncompressed JavaScript bytes over `WL-1305`; the total
+  JavaScript limit increased by 3,000 bytes to 898,000 while the largest-chunk, gzip, and CSS limits
+  remained unchanged. No database schema, migration, dependency, lockfile, manifest, screenshot
+  baseline, phase version, publication, deployment, or tag changed. See
+  `docs/130-today-actionable-attention-recovery.md`.
+- The additional historical Phase 12 visual command did not pass: 27 scenarios passed, one skipped,
+  and four snapshot comparisons failed. Three cross-route images had small one-percent raster
+  differences; the Today image retained the older Phase 12 hierarchy and differed substantially
+  from the cumulative Phase 13 layout even with no attention item. The images remain untouched.
+  `WL-1307` owns the new Today visual gate, and `WL-1312` owns later cross-route visual closure.
+
 ## Current blockers
 
-No decision blocks `WL-1306`. Exact partial-day work-versus-absence overlap and
-calculation-to-ledger mismatch signals still need dedicated repository facts; Today does not guess
-them from minute totals. The PostgreSQL-backed `WL-1305` correction-history case remains locally
-unexecuted until the Docker database service is available. `D-502` remains an explicit real
+No decision blocks `WL-1307`. Exact partial-day work-versus-absence overlap,
+calculation-to-ledger mismatch, and break-duration warning signals still need authoritative domain
+or repository facts; Today does not guess them from minute totals or an otherwise valid overnight
+session. The PostgreSQL-backed `WL-1305` correction-history case remains locally unexecuted until
+the Docker database service is available. The preserved Phase 12 visual command currently reports
+four historical snapshot mismatches; `WL-1307` owns Today and `WL-1312` owns cross-route closure.
+`D-502` remains an explicit real
 assistive technology and exact retail-browser residual rather than a conformance claim. The
 temporary Astro backup is recoverable at
 `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical and
@@ -2112,7 +2153,7 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1306 — Replace generic warnings with actionable attention and correction-recovery workflows.`
+`WL-1307 — Pass the dedicated Today responsive, accessibility, usability, and visual sub-gate.`
 
 ## Update rules
 

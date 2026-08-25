@@ -4,6 +4,27 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-25 — WL-1306 attention patterns remain source-bound
+
+The Phase 13 handoff names break-policy warnings, previous-session recovery, and a submitted month
+blocked by an incomplete record. The repository's accepted rules constrain those examples:
+
+- The current policy records breaks manually but defines no minimum break duration or compliance
+  threshold. `WL-1306` therefore rejects an invented `BREAK_POLICY_WARNING`; a positive warning
+  requires a later accepted domain rule and effective-dated source.
+- Overnight work sessions are valid and split at organization-local midnight. Today does not label
+  every current cross-midnight session as a missed clock-out. Recovery is shown only when an
+  authoritative past daily record is `INCOMPLETE` and identifies the previous-date slice.
+- A monthly period with readiness blockers cannot complete submission. “Submitted month blocked”
+  means the submission attempt is rejected while the workflow remains `OPEN` or
+  `CHANGES_REQUESTED`; it does not create a contradictory persisted `SUBMITTED` state.
+- Returned and rejected correction detail stays on the separately authorized request route. Today
+  exposes the generic unresolved calculation blocker without request ID, decision reason, or a
+  permanent rejected-item notification that has no acknowledgement lifecycle.
+
+These choices preserve immutable history, permission scope, privacy, and the existing monthly
+state machine. See `docs/130-today-actionable-attention-recovery.md`.
+
 ### 2026-08-25 — Phase 13 hardening supersedes the numbered portfolio phase
 
 The explicit `WL-1300` request adopts the supplied attendance clarity and workflow usability

@@ -77,7 +77,9 @@ export function DailyTimeRecordPage() {
         attention={record.attention}
         balanceHref="/my-time#flexible-time-heading"
         calculationHref="#daily-calculation-heading"
-        eventHref="#events-heading"
+        fixEntryHref={`/requests/new?recordId=${encodeURIComponent(recordId)}`}
+        myTimeHref={`/my-time?date=${encodeURIComponent(record.localDate)}&view=WEEK`}
+        requestHref="/requests"
       />
       {record.calculation === null ? (
         <Alert announce={false} title="Calculation unavailable" tone="danger">

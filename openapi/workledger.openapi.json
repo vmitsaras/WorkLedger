@@ -57576,30 +57576,65 @@
                                     ]
                                   },
                                   "reason": { "maxLength": 240, "minLength": 1, "type": "string" },
-                                  "recoveryAction": {
-                                    "enum": [
-                                      "CONTACT_ADMINISTRATOR",
-                                      "REVIEW_BALANCE",
-                                      "REVIEW_CALCULATION",
-                                      "REVIEW_REQUESTS",
-                                      "REVIEW_TIMELINE"
+                                  "recovery": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "action": {
+                                        "enum": [
+                                          "FIX_ENTRY",
+                                          "REVIEW_BALANCE_HISTORY",
+                                          "REVIEW_CALCULATION",
+                                          "REVIEW_RECORD",
+                                          "REVIEW_REQUEST",
+                                          "REVIEW_TIMELINE"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "destination": {
+                                        "enum": [
+                                          "MY_BALANCES",
+                                          "MY_REQUESTS",
+                                          "MY_TIME",
+                                          "TODAY_CALCULATION",
+                                          "TODAY_TIMELINE"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "label": {
+                                        "maxLength": 80,
+                                        "minLength": 1,
+                                        "type": "string"
+                                      },
+                                      "statusAfterAction": {
+                                        "maxLength": 240,
+                                        "minLength": 1,
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "action",
+                                      "destination",
+                                      "label",
+                                      "statusAfterAction"
                                     ],
-                                    "type": "string"
+                                    "type": "object"
                                   },
                                   "severity": { "enum": ["BLOCKER", "WARNING"], "type": "string" },
                                   "source": {
                                     "enum": ["CURRENT_DAY_CALCULATION", "POSTED_FLEX_BALANCE"],
                                     "type": "string"
-                                  }
+                                  },
+                                  "title": { "maxLength": 100, "minLength": 1, "type": "string" }
                                 },
                                 "required": [
                                   "affectedDate",
                                   "blocksSubmission",
                                   "code",
                                   "reason",
-                                  "recoveryAction",
+                                  "recovery",
                                   "severity",
-                                  "source"
+                                  "source",
+                                  "title"
                                 ],
                                 "type": "object"
                               },

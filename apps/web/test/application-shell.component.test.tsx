@@ -9,6 +9,7 @@ import type {
   DailyTimeRecord,
   MyTime,
   PersonalCalendar,
+  PersonalRequestDetail,
   SelfContext,
   SelfProfile,
   SystemDiagnosticsResponse,
@@ -564,9 +565,40 @@ test('presents a daily record with calculation, exact session intervals, and off
   expect(screen.getByRole('heading', { name: 'Recorded events' })).toBeVisible();
   expect(screen.getByText(/Recorded order 4/u)).toBeVisible();
   expect(screen.getByText('Negative flexible-time threshold reached')).toBeVisible();
-  expect(
-    screen.getByRole('link', { name: /Review your posted and projected flexible-time balance/u }),
-  ).toHaveAttribute('href', '/my-time#flexible-time-heading');
+  expect(screen.getByRole('link', { name: 'View balance history' })).toHaveAttribute(
+    'href',
+    '/my-time#flexible-time-heading',
+  );
+  await expectNoAxeViolations(container);
+});
+
+test('routes an incomplete session from the previous date into the correction workflow', async () => {
+  const recordId = '123e4567-e89b-42d3-a456-426614174301';
+  const incompleteRecord: DailyTimeRecord = {
+    ...DAILY_TIME_RECORD,
+    attention: {
+      blockers: ['ATTENDANCE_INCOMPLETE', 'ATTENDANCE_OVERLAP'],
+      warnings: [],
+    },
+    calculation: null,
+    sessions: DAILY_TIME_RECORD.sessions.map((session) => ({
+      ...session,
+      continuesFromPreviousDate: true,
+      continuesToNextDate: true,
+    })),
+    status: 'INCOMPLETE',
+  };
+  vi.stubGlobal('fetch', authenticatedFetch(TODAY_ATTENDANCE, incompleteRecord));
+  const { container } = renderApplication(`/time-records/${recordId}`);
+
+  expect(await screen.findByText('Attendance entry incomplete')).toBeVisible();
+  expect(screen.getByText('Attendance intervals overlap')).toBeVisible();
+  expect(screen.getByText(/Continues from the previous local date/u)).toBeVisible();
+  expect(screen.getByText(/Continues into the next local date/u)).toBeVisible();
+  expect(screen.getAllByRole('link', { name: 'Fix entry' })).toHaveLength(2);
+  for (const link of screen.getAllByRole('link', { name: 'Fix entry' })) {
+    expect(link).toHaveAttribute('href', `/requests/new?recordId=${recordId}`);
+  }
   await expectNoAxeViolations(container);
 });
 
@@ -586,6 +618,65 @@ test('presents an accessible correction-request form with a focused validation s
     'href',
     '#startsAtLocalTime',
   );
+  await expectNoAxeViolations(container);
+});
+
+test('preserves correction input after a recoverable failure and explains post-lock recovery', async () => {
+  const recordId = '123e4567-e89b-42d3-a456-426614174301';
+  const correctionId = '123e4567-e89b-42d3-a456-426614174799';
+  const submittedBodies: unknown[] = [];
+  let submitAttempts = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === `/v1/me/time-records/${recordId}`) return successResponse(DAILY_TIME_RECORD);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(43) });
+      if (path === '/v1/me/correction-requests' && init?.method === 'POST') {
+        submittedBodies.push(JSON.parse(String(init.body)));
+        submitAttempts += 1;
+        if (submitAttempts === 1) return apiErrorResponse('DATABASE_UNAVAILABLE', 503);
+        return successResponse({
+          applicationMode: 'POST_LOCK_ADJUSTMENT',
+          id: correctionId,
+          localDate: DAILY_TIME_RECORD.localDate,
+          proposedDurationMinutes: 480,
+          status: 'SUBMITTED',
+          submittedAt: '2026-08-11T18:00:00Z',
+        });
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const { container } = renderApplication(`/requests/new?recordId=${recordId}`);
+
+  const startsAt = await screen.findByLabelText('Start time');
+  const endsAt = screen.getByLabelText('End time');
+  const reason = screen.getByLabelText('Why does this need correcting?');
+  await user.type(startsAt, '09:00');
+  await user.type(endsAt, '17:00');
+  await user.type(reason, 'The recorded interval omitted the confirmed end of the workday.');
+  await user.click(screen.getByRole('button', { name: 'Submit correction request' }));
+
+  const summary = await screen.findByRole('heading', { name: 'There is a problem' });
+  await waitFor(() => expect(summary.closest('section')).toHaveFocus());
+  expect(startsAt).toHaveValue('09:00');
+  expect(endsAt).toHaveValue('17:00');
+  expect(reason).toHaveValue('The recorded interval omitted the confirmed end of the workday.');
+  expect(screen.getByText(/Your recorded events were not changed/u)).toBeVisible();
+
+  await user.click(screen.getByRole('button', { name: 'Submit correction request' }));
+  const success = await screen.findByRole('heading', { name: 'Correction request submitted' });
+  await waitFor(() => expect(success.closest('section')).toHaveFocus());
+  expect(screen.getByText(/approval will append an adjustment/u)).toBeVisible();
+  expect(screen.getByRole('link', { name: 'View request details' })).toHaveAttribute(
+    'href',
+    `/requests/${correctionId}`,
+  );
+  expect(submittedBodies).toHaveLength(2);
+  expect(submittedBodies[1]).toEqual(submittedBodies[0]);
   await expectNoAxeViolations(container);
 });
 
@@ -711,6 +802,75 @@ test('keeps personal request history type neutral until the owner opens a record
   await expectNoAxeViolations(container);
 });
 
+test.each([
+  [
+    'CHANGES_REQUESTED',
+    'A reviewer requested changes. The current daily record remains unchanged.',
+    'REQUEST_CHANGES',
+  ],
+  ['REJECTED', 'This workflow is complete. The current daily record remains unchanged.', 'REJECT'],
+] as const)(
+  'shows a %s correction decision and its preserved record evidence',
+  async (status, explanation, decisionAction) => {
+    const correctionId = '123e4567-e89b-42d3-a456-426614174711';
+    const detail: PersonalRequestDetail = {
+      affectedEndDate: '2026-08-11',
+      affectedStartDate: '2026-08-11',
+      applicationMode: 'ORDINARY_CORRECTION',
+      availableActions: [],
+      events: DAILY_TIME_RECORD.events,
+      history: [
+        {
+          action: 'SUBMITTED',
+          actor: 'SELF',
+          occurredAt: '2026-08-11T18:00:00Z',
+          reason: null,
+        },
+        {
+          action: decisionAction,
+          actor: 'REVIEWER',
+          occurredAt: '2026-08-12T08:00:00Z',
+          reason: 'The decision explains the next permitted workflow step.',
+        },
+      ],
+      id: correctionId,
+      kind: 'CORRECTION',
+      originalCalculation: {
+        balanceMinutes: DAILY_TIME_RECORD.calculation?.balanceMinutes ?? 0,
+        breakMinutes: DAILY_TIME_RECORD.calculation?.breakMinutes ?? 0,
+        creditedMinutes: DAILY_TIME_RECORD.calculation?.creditedMinutes ?? 0,
+        expectedMinutes: DAILY_TIME_RECORD.calculation?.expectedMinutes ?? 0,
+        workedMinutes: DAILY_TIME_RECORD.calculation?.workedMinutes ?? 0,
+      },
+      proposedEndsAt: '2026-08-11T15:00:00Z',
+      proposedStartsAt: '2026-08-11T07:00:00Z',
+      requestReason: 'The recorded interval omitted the confirmed end of the workday.',
+      status,
+      submittedAt: '2026-08-11T18:00:00Z',
+      timeZone: 'Europe/Berlin',
+      version: 2,
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const path = requestPath(input);
+        if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+        if (path === `/v1/me/requests/${correctionId}`) return successResponse(detail);
+        throw new Error(`Unexpected test request: ${path}`);
+      }),
+    );
+    const { container } = renderApplication(`/requests/${correctionId}`);
+
+    expect(await screen.findByRole('heading', { name: 'Time correction' })).toBeVisible();
+    expect(screen.getByText(explanation)).toBeVisible();
+    expect(
+      screen.getByText(/The decision explains the next permitted workflow step/u),
+    ).toBeVisible();
+    expect(screen.getByText(/Original punch events remain preserved/u)).toBeVisible();
+    await expectNoAxeViolations(container);
+  },
+);
+
 test('withdraws an owned cancellation from its evidence view and preserves the original absence link', async () => {
   const absenceId = '123e4567-e89b-42d3-a456-426614174720';
   const cancellationId = '123e4567-e89b-42d3-a456-426614174721';
@@ -831,9 +991,9 @@ test('explains incomplete overnight record slices without presenting a final cal
   expect(await screen.findByRole('heading', { name: 'This record is incomplete' })).toBeVisible();
   expect(screen.getByText('This calculation is not a final posted result.')).toBeVisible();
   expect(screen.getByText('Attendance entry incomplete')).toBeVisible();
-  expect(screen.getByRole('link', { name: /Review the recorded events/u })).toHaveAttribute(
+  expect(screen.getByRole('link', { name: 'Fix entry' })).toHaveAttribute(
     'href',
-    '#events-heading',
+    '/requests/new?recordId=123e4567-e89b-42d3-a456-426614174302',
   );
   expect(screen.getByText('Continues from the previous local date.')).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Calculation' })).toBeVisible();
@@ -938,18 +1098,30 @@ test('explains zero expected time before presenting credited work', async () => 
           blocksSubmission: false,
           code: 'WORK_ON_HOLIDAY',
           reason: 'Recorded work falls on a public holiday.',
-          recoveryAction: 'REVIEW_CALCULATION',
+          recovery: {
+            action: 'REVIEW_CALCULATION',
+            destination: 'TODAY_CALCULATION',
+            label: 'Review calculation',
+            statusAfterAction: 'Reviewing the explanation does not change the record.',
+          },
           severity: 'WARNING',
           source: 'CURRENT_DAY_CALCULATION',
+          title: 'Work recorded on a public holiday',
         },
         {
           affectedDate: TODAY_ATTENDANCE.localDate,
           blocksSubmission: false,
           code: 'WORK_ON_ZERO_EXPECTED_DAY',
           reason: 'Recorded work falls on a day with no expected minutes.',
-          recoveryAction: 'REVIEW_CALCULATION',
+          recovery: {
+            action: 'REVIEW_CALCULATION',
+            destination: 'TODAY_CALCULATION',
+            label: 'Review calculation',
+            statusAfterAction: 'Reviewing the explanation does not change the record.',
+          },
           severity: 'WARNING',
           source: 'CURRENT_DAY_CALCULATION',
+          title: 'Work recorded on a zero-expected day',
         },
       ],
       estimatedFinishAt: null,
@@ -1053,9 +1225,15 @@ test('shows an incomplete calculation without inventing an estimate', async () =
           blocksSubmission: true,
           code: 'SCHEDULE_NOT_ASSIGNED',
           reason: 'No effective work schedule is assigned for today.',
-          recoveryAction: 'CONTACT_ADMINISTRATOR',
+          recovery: {
+            action: 'REVIEW_RECORD',
+            destination: 'MY_TIME',
+            label: 'Review affected day',
+            statusAfterAction: 'An administrator must assign a work schedule.',
+          },
           severity: 'BLOCKER',
           source: 'CURRENT_DAY_CALCULATION',
+          title: 'Work schedule missing',
         },
       ],
       estimatedFinishAt: null,
@@ -1077,9 +1255,12 @@ test('shows an incomplete calculation without inventing an estimate', async () =
   expect(within(progress).queryByRole('progressbar')).not.toBeInTheDocument();
   expect(screen.getByRole('region', { name: 'Posted balance' })).toBeVisible();
   expect(screen.getByText('Work schedule missing')).toBeVisible();
-  expect(
-    screen.getByText(/Ask your organization administrator to assign a work schedule/u),
-  ).toBeVisible();
+  expect(screen.getByText('Blocks month submission')).toBeVisible();
+  expect(screen.getByText(/An administrator must assign a work schedule/u)).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Review affected day' })).toHaveAttribute(
+    'href',
+    '/my-time?date=2026-08-11&view=WEEK',
+  );
   expect(screen.getByText('No attendance events have been recorded today.')).toBeVisible();
   await expectNoAxeViolations(container);
 });

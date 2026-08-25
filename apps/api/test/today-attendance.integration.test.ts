@@ -371,9 +371,14 @@ integrationTest(
               {
                 blocksSubmission: false,
                 code: 'FLEX_POSITIVE_THRESHOLD_EXCEEDED',
-                recoveryAction: 'REVIEW_BALANCE',
+                recovery: {
+                  action: 'REVIEW_BALANCE_HISTORY',
+                  destination: 'MY_BALANCES',
+                  label: 'View balance history',
+                },
                 severity: 'WARNING',
                 source: 'POSTED_FLEX_BALANCE',
+                title: 'Positive flexible-time threshold reached',
               },
             ],
           },

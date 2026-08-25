@@ -8,119 +8,112 @@ import { Alert } from '@workledger/ui';
 type AttentionItem = Readonly<{
   action: string;
   description: string;
-  href: 'BALANCE' | 'CALCULATION' | 'EVENTS' | null;
+  href: 'BALANCE' | 'CALCULATION' | 'FIX_ENTRY' | 'MY_TIME' | 'REQUESTS';
   title: string;
 }>;
 
 const BLOCKER_ATTENTION: Readonly<Record<CalculationBlockerCode, AttentionItem>> = {
   ABSENCE_APPROVAL_PENDING: {
-    action: 'Wait for the absence decision before relying on this record.',
+    action: 'Review request',
     description: 'An approval-required absence may still change this day’s calculation.',
-    href: null,
+    href: 'REQUESTS',
     title: 'Absence decision pending',
   },
   ATTENDANCE_INCOMPLETE: {
-    action:
-      'Review the recorded events. If the day is still open, use Today to record only the next valid attendance action.',
+    action: 'Fix entry',
     description: 'One or more attendance intervals touching this date have not been completed.',
-    href: 'EVENTS',
+    href: 'FIX_ENTRY',
     title: 'Attendance entry incomplete',
   },
   ATTENDANCE_INVALID_EVENT_ORDER: {
-    action: 'Review the recorded events. This historical record cannot be changed from this page.',
+    action: 'Fix entry',
     description: 'The recorded attendance events cannot be reconstructed in a valid order.',
-    href: 'EVENTS',
+    href: 'FIX_ENTRY',
     title: 'Attendance event order needs review',
   },
   ATTENDANCE_INVALID_EVENT_PRECISION: {
-    action: 'Review the recorded events. This historical record cannot be changed from this page.',
+    action: 'Fix entry',
     description: 'A recorded attendance event is not aligned to a whole minute.',
-    href: 'EVENTS',
+    href: 'FIX_ENTRY',
     title: 'Attendance event time needs review',
   },
   ATTENDANCE_OVERLAP: {
-    action: 'Review the recorded events. This historical record cannot be changed from this page.',
+    action: 'Fix entry',
     description: 'The derived attendance intervals overlap and cannot form a reliable calculation.',
-    href: 'EVENTS',
+    href: 'FIX_ENTRY',
     title: 'Attendance intervals overlap',
   },
   CORRECTION_UNRESOLVED: {
-    action: 'Wait for the correction decision before relying on this record.',
+    action: 'Review request',
     description: 'A submitted correction can still change this day’s calculation.',
-    href: null,
+    href: 'REQUESTS',
     title: 'Correction decision pending',
   },
   LEDGER_SOURCE_MISMATCH: {
-    action:
-      'No employee action is available. Ask your organization administrator to reconcile the record.',
+    action: 'Review affected period',
     description: 'The calculation source does not match its posted ledger evidence.',
-    href: null,
+    href: 'MY_TIME',
     title: 'Ledger reconciliation needed',
   },
   POLICY_ASSIGNMENT_OVERLAP: {
-    action:
-      'No employee action is available. Ask your organization administrator to resolve the policy assignment.',
+    action: 'Review affected period',
     description: 'More than one time policy applies to this date.',
-    href: null,
+    href: 'MY_TIME',
     title: 'Time-policy assignment overlap',
   },
   POLICY_CONFIGURATION_INVALID: {
-    action:
-      'No employee action is available. Ask your organization administrator to correct the time policy.',
+    action: 'Review affected period',
     description: 'The assigned time policy cannot produce a reliable calculation.',
-    href: null,
+    href: 'MY_TIME',
     title: 'Time-policy configuration needs review',
   },
   POLICY_NOT_ASSIGNED: {
-    action:
-      'No employee action is available. Ask your organization administrator to assign a time policy.',
+    action: 'Review affected period',
     description: 'No time policy applies to this date.',
-    href: null,
+    href: 'MY_TIME',
     title: 'Time policy missing',
   },
   SCHEDULE_ASSIGNMENT_OVERLAP: {
-    action:
-      'No employee action is available. Ask your organization administrator to resolve the work-schedule assignment.',
+    action: 'Review affected period',
     description: 'More than one work schedule applies to this date.',
-    href: null,
+    href: 'MY_TIME',
     title: 'Work-schedule assignment overlap',
   },
   SCHEDULE_NOT_ASSIGNED: {
-    action:
-      'No employee action is available. Ask your organization administrator to assign a work schedule.',
+    action: 'Review affected period',
     description: 'No work schedule applies to this date.',
-    href: null,
+    href: 'MY_TIME',
     title: 'Work schedule missing',
   },
 };
 
 const WARNING_ATTENTION: Readonly<Record<CalculationWarningCode, AttentionItem>> = {
   FLEX_NEGATIVE_THRESHOLD_EXCEEDED: {
-    action: 'Review your posted and projected flexible-time balance.',
+    action: 'View balance history',
     description: 'The daily balance is below your configured flexible-time warning threshold.',
     href: 'BALANCE',
     title: 'Negative flexible-time threshold reached',
   },
   FLEX_POSITIVE_THRESHOLD_EXCEEDED: {
-    action: 'Review your posted and projected flexible-time balance.',
+    action: 'View balance history',
     description: 'The daily balance is above your configured flexible-time warning threshold.',
     href: 'BALANCE',
     title: 'Positive flexible-time threshold reached',
   },
   WORK_DURING_ABSENCE: {
-    action: 'Review the recorded attendance events and calculation.',
+    action: 'Fix entry',
     description: 'Recorded work overlaps credited absence time. No absence category is shown here.',
-    href: 'EVENTS',
+    href: 'FIX_ENTRY',
     title: 'Work overlaps credited absence',
   },
   WORK_ON_HOLIDAY: {
-    action: 'Review the calculation that explains the zero expected time.',
+    action: 'Review calculation',
     description: 'Work is recorded on a public holiday and remains credited separately.',
     href: 'CALCULATION',
     title: 'Work recorded on a public holiday',
   },
   WORK_ON_ZERO_EXPECTED_DAY: {
-    action: 'Review the calculation that explains the zero expected time.',
+    action: 'Review calculation',
     description: 'Work is recorded on a day with no expected working time.',
     href: 'CALCULATION',
     title: 'Work recorded on a zero-expected day',
@@ -131,15 +124,19 @@ export function CalculationAttention({
   attention,
   balanceHref,
   calculationHref,
-  eventHref,
+  fixEntryHref,
+  myTimeHref,
   onCalculationDetailsRequest,
+  requestHref,
   thresholdBasis = 'DAILY_BALANCE',
 }: Readonly<{
   attention: DailyTimeAttention;
   balanceHref: string;
   calculationHref: string;
-  eventHref: string;
+  fixEntryHref: string;
+  myTimeHref: string;
   onCalculationDetailsRequest?: () => void;
+  requestHref: string;
   thresholdBasis?: 'DAILY_BALANCE' | 'POSTED_BALANCE';
 }>) {
   if (attention.blockers.length === 0 && attention.warnings.length === 0) return null;
@@ -152,7 +149,7 @@ export function CalculationAttention({
         <AttentionGroup
           items={attention.blockers.map((code) => BLOCKER_ATTENTION[code])}
           kind="blocker"
-          links={{ balanceHref, calculationHref, eventHref }}
+          links={{ balanceHref, calculationHref, fixEntryHref, myTimeHref, requestHref }}
           {...(onCalculationDetailsRequest === undefined ? {} : { onCalculationDetailsRequest })}
           title="Calculation blockers"
         />
@@ -161,7 +158,7 @@ export function CalculationAttention({
         <AttentionGroup
           items={attention.warnings.map((code) => warningAttention(code, thresholdBasis))}
           kind="warning"
-          links={{ balanceHref, calculationHref, eventHref }}
+          links={{ balanceHref, calculationHref, fixEntryHref, myTimeHref, requestHref }}
           {...(onCalculationDetailsRequest === undefined ? {} : { onCalculationDetailsRequest })}
           title="Warnings"
         />
@@ -199,7 +196,13 @@ function AttentionGroup({
 }: Readonly<{
   items: readonly AttentionItem[];
   kind: 'blocker' | 'warning';
-  links: Readonly<{ balanceHref: string; calculationHref: string; eventHref: string }>;
+  links: Readonly<{
+    balanceHref: string;
+    calculationHref: string;
+    fixEntryHref: string;
+    myTimeHref: string;
+    requestHref: string;
+  }>;
   onCalculationDetailsRequest?: () => void;
   title: string;
 }>) {
@@ -215,16 +218,12 @@ function AttentionGroup({
           <li key={item.title} className="grid gap-1">
             <strong>{item.title}</strong>
             <span>{item.description}</span>
-            {item.href === null ? (
-              <span>{item.action}</span>
-            ) : (
-              <a
-                href={links[actionHrefKey(item.href)]}
-                onClick={item.href === 'CALCULATION' ? onCalculationDetailsRequest : undefined}
-              >
-                {item.action}
-              </a>
-            )}
+            <a
+              href={links[actionHrefKey(item.href)]}
+              onClick={item.href === 'CALCULATION' ? onCalculationDetailsRequest : undefined}
+            >
+              {item.action}
+            </a>
           </li>
         ))}
       </ul>
@@ -233,14 +232,18 @@ function AttentionGroup({
 }
 
 function actionHrefKey(
-  href: Exclude<AttentionItem['href'], null>,
-): 'balanceHref' | 'calculationHref' | 'eventHref' {
+  href: AttentionItem['href'],
+): 'balanceHref' | 'calculationHref' | 'fixEntryHref' | 'myTimeHref' | 'requestHref' {
   switch (href) {
     case 'BALANCE':
       return 'balanceHref';
     case 'CALCULATION':
       return 'calculationHref';
-    case 'EVENTS':
-      return 'eventHref';
+    case 'FIX_ENTRY':
+      return 'fixEntryHref';
+    case 'MY_TIME':
+      return 'myTimeHref';
+    case 'REQUESTS':
+      return 'requestHref';
   }
 }

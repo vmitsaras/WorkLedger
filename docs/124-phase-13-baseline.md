@@ -296,6 +296,19 @@ The dedicated five-viewport update and independent comparison passed, including 
 checks at 1440 and 320 CSS pixels. `AUD-1300-05` remains assigned to `WL-1306`, which is now the next
 task; exact retail assistive-technology and browser verification remains assigned to `WL-1307`.
 
+### `WL-1306` follow-up
+
+`WL-1306` closes the presentation and recovery portion of `AUD-1300-05` in
+`docs/130-today-actionable-attention-recovery.md`. Today now renders the server-owned attention
+title, explanation, source date, blocking status, typed recovery destination, link label, and
+expected next state without reducing the DTO to client-owned code arrays. Historical attendance
+blockers route to the immutable correction workflow, correction input survives recoverable API
+errors, and locked changes remain append-only adjustments.
+
+Exact partial-day work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration
+warnings remain source gaps rather than fabricated UI signals. The dedicated Today responsive,
+assistive-technology, usability, and visual sub-gate moves next to `WL-1307`.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.

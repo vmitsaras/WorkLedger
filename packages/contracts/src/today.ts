@@ -14,12 +14,20 @@ export const TODAY_ESTIMATED_FINISH_UNAVAILABLE_REASONS = [
   'ON_BREAK',
   'NO_REMAINING_EXPECTATION',
 ] as const;
-export const TODAY_ATTENTION_RECOVERY_ACTIONS = [
-  'CONTACT_ADMINISTRATOR',
-  'REVIEW_BALANCE',
+export const TODAY_ATTENTION_ACTIONS = [
+  'FIX_ENTRY',
+  'REVIEW_BALANCE_HISTORY',
   'REVIEW_CALCULATION',
-  'REVIEW_REQUESTS',
+  'REVIEW_RECORD',
+  'REVIEW_REQUEST',
   'REVIEW_TIMELINE',
+] as const;
+export const TODAY_ATTENTION_DESTINATIONS = [
+  'MY_BALANCES',
+  'MY_REQUESTS',
+  'MY_TIME',
+  'TODAY_CALCULATION',
+  'TODAY_TIMELINE',
 ] as const;
 export const TODAY_ATTENTION_SEVERITIES = ['BLOCKER', 'WARNING'] as const;
 export const TODAY_ATTENTION_SOURCES = ['CURRENT_DAY_CALCULATION', 'POSTED_FLEX_BALANCE'] as const;
@@ -60,7 +68,8 @@ export const todayActionBlockingReasonSchema = z.enum(TODAY_ACTION_BLOCKING_REAS
 export const todayEstimatedFinishUnavailableReasonSchema = z.enum(
   TODAY_ESTIMATED_FINISH_UNAVAILABLE_REASONS,
 );
-export const todayAttentionRecoveryActionSchema = z.enum(TODAY_ATTENTION_RECOVERY_ACTIONS);
+export const todayAttentionActionSchema = z.enum(TODAY_ATTENTION_ACTIONS);
+export const todayAttentionDestinationSchema = z.enum(TODAY_ATTENTION_DESTINATIONS);
 export const todayAttentionSeveritySchema = z.enum(TODAY_ATTENTION_SEVERITIES);
 export const todayAttentionSourceSchema = z.enum(TODAY_ATTENTION_SOURCES);
 
@@ -151,14 +160,22 @@ export const todayProvisionalCalculationSchema = z.strictObject({
   provisionalDifferenceMinutes: signedMinuteSchema,
 });
 
+export const todayAttentionRecoverySchema = z.strictObject({
+  action: todayAttentionActionSchema,
+  destination: todayAttentionDestinationSchema,
+  label: z.string().min(1).max(80),
+  statusAfterAction: z.string().min(1).max(240),
+});
+
 export const todayAttentionItemSchema = z.strictObject({
   affectedDate: z.iso.date(),
   blocksSubmission: z.boolean(),
   code: z.union([calculationBlockerCodeSchema, calculationWarningCodeSchema]),
   reason: z.string().min(1).max(240),
-  recoveryAction: todayAttentionRecoveryActionSchema,
+  recovery: todayAttentionRecoverySchema,
   severity: todayAttentionSeveritySchema,
   source: todayAttentionSourceSchema,
+  title: z.string().min(1).max(100),
 });
 
 export const todayCalculationSchema = z.strictObject({
@@ -179,6 +196,40 @@ const thresholdWarningCodeSet = new Set<string>([
   'FLEX_NEGATIVE_THRESHOLD_EXCEEDED',
   'FLEX_POSITIVE_THRESHOLD_EXCEEDED',
 ]);
+const expectedAttentionAction: Readonly<
+  Record<
+    (typeof CALCULATION_BLOCKER_CODES)[number] | (typeof CALCULATION_WARNING_CODES)[number],
+    (typeof TODAY_ATTENTION_ACTIONS)[number]
+  >
+> = {
+  ABSENCE_APPROVAL_PENDING: 'REVIEW_REQUEST',
+  ATTENDANCE_INCOMPLETE: 'FIX_ENTRY',
+  ATTENDANCE_INVALID_EVENT_ORDER: 'FIX_ENTRY',
+  ATTENDANCE_INVALID_EVENT_PRECISION: 'FIX_ENTRY',
+  ATTENDANCE_OVERLAP: 'FIX_ENTRY',
+  CORRECTION_UNRESOLVED: 'REVIEW_REQUEST',
+  FLEX_NEGATIVE_THRESHOLD_EXCEEDED: 'REVIEW_BALANCE_HISTORY',
+  FLEX_POSITIVE_THRESHOLD_EXCEEDED: 'REVIEW_BALANCE_HISTORY',
+  LEDGER_SOURCE_MISMATCH: 'REVIEW_RECORD',
+  POLICY_ASSIGNMENT_OVERLAP: 'REVIEW_RECORD',
+  POLICY_CONFIGURATION_INVALID: 'REVIEW_RECORD',
+  POLICY_NOT_ASSIGNED: 'REVIEW_RECORD',
+  SCHEDULE_ASSIGNMENT_OVERLAP: 'REVIEW_RECORD',
+  SCHEDULE_NOT_ASSIGNED: 'REVIEW_RECORD',
+  WORK_DURING_ABSENCE: 'FIX_ENTRY',
+  WORK_ON_HOLIDAY: 'REVIEW_CALCULATION',
+  WORK_ON_ZERO_EXPECTED_DAY: 'REVIEW_CALCULATION',
+};
+const expectedAttentionDestination: Readonly<
+  Record<(typeof TODAY_ATTENTION_ACTIONS)[number], (typeof TODAY_ATTENTION_DESTINATIONS)[number]>
+> = {
+  FIX_ENTRY: 'MY_TIME',
+  REVIEW_BALANCE_HISTORY: 'MY_BALANCES',
+  REVIEW_CALCULATION: 'TODAY_CALCULATION',
+  REVIEW_RECORD: 'MY_TIME',
+  REVIEW_REQUEST: 'MY_REQUESTS',
+  REVIEW_TIMELINE: 'TODAY_TIMELINE',
+};
 
 export const todayAttendanceSchema = z
   .strictObject({
@@ -261,10 +312,15 @@ export const todayAttendanceSchema = z
       }
       attentionCodes.add(item.code);
       const isBlocker = blockerCodeSet.has(item.code);
+      const expectedAffectedDate = thresholdWarningCodeSet.has(item.code)
+        ? (today.postedThroughDate ?? today.localDate)
+        : today.localDate;
       if (isBlocker) blockerCount += 1;
       if (
-        item.affectedDate !== today.localDate ||
+        item.affectedDate !== expectedAffectedDate ||
         item.blocksSubmission !== isBlocker ||
+        item.recovery.action !== expectedAttentionAction[item.code] ||
+        item.recovery.destination !== expectedAttentionDestination[item.recovery.action] ||
         item.severity !== (isBlocker ? 'BLOCKER' : 'WARNING') ||
         (thresholdWarningCodeSet.has(item.code)
           ? item.source !== 'POSTED_FLEX_BALANCE'
@@ -272,7 +328,7 @@ export const todayAttendanceSchema = z
       ) {
         context.addIssue({
           code: 'custom',
-          message: 'Today attention metadata must match its code and snapshot date.',
+          message: 'Today attention metadata must match its code and authoritative source date.',
           path: ['calculation', 'attentionItems', index],
         });
       }
@@ -403,6 +459,7 @@ export type TodayAttendance = z.infer<typeof todayAttendanceSchema>;
 export type TodayActionAvailability = z.infer<typeof todayActionAvailabilitySchema>;
 export type TodayAppliedCorrection = z.infer<typeof todayAppliedCorrectionSchema>;
 export type TodayAttentionItem = z.infer<typeof todayAttentionItemSchema>;
+export type TodayAttentionRecovery = z.infer<typeof todayAttentionRecoverySchema>;
 export type TodayCalculationSources = z.infer<typeof todayCalculationSourcesSchema>;
 export type TodayProvisionalCalculation = z.infer<typeof todayProvisionalCalculationSchema>;
 export type TodayTimelineEvent = z.infer<typeof todayTimelineEventSchema>;

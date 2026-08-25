@@ -21,10 +21,9 @@ import { formatLocalDate, formatTime } from '../app/date-time-format.js';
 import { todayAttendanceQuery } from '../app/query.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
-import { selectTodayAttention } from '../app/today-selectors.js';
 import { DailyTimeBreakdown } from '../components/daily-time-breakdown.js';
-import { CalculationAttention } from '../components/calculation-attention.js';
 import { PageHeader } from '../components/page-header.js';
+import { TodayAttention } from '../components/today-attention.js';
 import type { AttendanceRecoveryMode } from '../components/today-attendance-controls.js';
 import {
   TodayAttendanceOverview,
@@ -398,7 +397,6 @@ function renderTodayReady({
   updating: boolean;
 }>) {
   const calculation = today.calculation;
-  const attention = selectTodayAttention(today);
 
   return (
     <section className="wl-today-layout grid max-w-6xl gap-8">
@@ -433,14 +431,7 @@ function renderTodayReady({
       />
 
       <div className="wl-today-support-grid grid gap-8">
-        <CalculationAttention
-          attention={attention}
-          balanceHref="/my-time#flexible-time-heading"
-          calculationHref="#calculation-details"
-          eventHref="#today-timeline-title"
-          onCalculationDetailsRequest={() => setCalculationDetailsOpen(true)}
-          thresholdBasis="POSTED_BALANCE"
-        />
+        <TodayAttention items={calculation.attentionItems} />
 
         <TodayAttendanceTimeline
           appliedCorrections={today.appliedCorrections}

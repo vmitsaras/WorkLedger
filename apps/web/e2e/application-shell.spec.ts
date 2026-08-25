@@ -1311,18 +1311,30 @@ test('keeps the calculation explanation and event history readable at 320px', as
               blocksSubmission: false,
               code: 'WORK_ON_HOLIDAY',
               reason: 'Work is recorded on a public holiday.',
-              recoveryAction: 'REVIEW_CALCULATION',
+              recovery: {
+                action: 'REVIEW_CALCULATION',
+                destination: 'TODAY_CALCULATION',
+                label: 'Review calculation',
+                statusAfterAction: 'Reviewing the explanation does not change the record.',
+              },
               severity: 'WARNING',
               source: 'CURRENT_DAY_CALCULATION',
+              title: 'Work recorded on a public holiday',
             },
             {
               affectedDate: TODAY_ATTENDANCE.localDate,
               blocksSubmission: false,
               code: 'WORK_ON_ZERO_EXPECTED_DAY',
               reason: 'Work is recorded on a day with no expected working time.',
-              recoveryAction: 'REVIEW_CALCULATION',
+              recovery: {
+                action: 'REVIEW_CALCULATION',
+                destination: 'TODAY_CALCULATION',
+                label: 'Review calculation',
+                statusAfterAction: 'Reviewing the explanation does not change the record.',
+              },
               severity: 'WARNING',
               source: 'CURRENT_DAY_CALCULATION',
+              title: 'Work recorded on a zero-expected day',
             },
           ],
           estimatedFinishAt: null,
@@ -1365,6 +1377,11 @@ test('keeps the calculation explanation and event history readable at 320px', as
   });
 
   await page.goto('/today');
+  await expect(page.getByText('Does not block submission')).toHaveCount(2);
+  const attentionActions = page.getByRole('link', { name: 'Review calculation' });
+  await expect(attentionActions).toHaveCount(2);
+  await expect(attentionActions.first()).toHaveAttribute('href', '#calculation-details');
+  await expect(page.getByRole('alert')).toHaveCount(0);
   const calculationDetails = page.locator('summary').filter({ hasText: 'Calculation details' });
   await expect(calculationDetails).toBeVisible();
   const calculationTable = page.locator('.wl-calculation-table');
