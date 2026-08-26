@@ -2,11 +2,26 @@ import { gzipSync } from 'node:zlib';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-export const BUNDLE_BUDGETS = Object.freeze({
+export const APPLICATION_BUNDLE_BASELINE = Object.freeze({
   largestJavaScriptBytes: 500_000,
   totalJavaScriptBytes: 910_000,
   totalJavaScriptGzipBytes: 246_000,
   totalCssBytes: 51_000,
+});
+
+export const INTERNATIONALIZATION_RUNTIME_ALLOWANCE = Object.freeze({
+  totalJavaScriptBytes: 55_000,
+  totalJavaScriptGzipBytes: 18_000,
+});
+
+export const BUNDLE_BUDGETS = Object.freeze({
+  ...APPLICATION_BUNDLE_BASELINE,
+  totalJavaScriptBytes:
+    APPLICATION_BUNDLE_BASELINE.totalJavaScriptBytes +
+    INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes,
+  totalJavaScriptGzipBytes:
+    APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes +
+    INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes,
 });
 
 export const LOCALE_BUNDLE_BUDGETS = Object.freeze({
@@ -39,6 +54,21 @@ export function assertBundleBudget(entries, budgets = BUNDLE_BUDGETS) {
       throw new Error(`${name} is ${values[name]} bytes; budget is ${limit}.`);
   }
   return values;
+}
+
+export function measureInternationalizationRuntimeAllowance(values) {
+  return {
+    rawBytes: Math.max(
+      0,
+      values.totalJavaScriptBytes - APPLICATION_BUNDLE_BASELINE.totalJavaScriptBytes,
+    ),
+    rawBudget: INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes,
+    gzipBytes: Math.max(
+      0,
+      values.totalJavaScriptGzipBytes - APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes,
+    ),
+    gzipBudget: INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes,
+  };
 }
 
 export function assertLocaleBundleBudget(entries, budgets = LOCALE_BUNDLE_BUDGETS) {
@@ -97,8 +127,11 @@ async function main() {
       }),
   );
   const application = assertBundleBudget(entries);
+  const internationalizationRuntime = measureInternationalizationRuntimeAllowance(application);
   const locales = assertLocaleBundleBudget(entries);
-  console.log(`Web bundle budget valid: ${JSON.stringify({ application, locales })}.`);
+  console.log(
+    `Web bundle budget valid: ${JSON.stringify({ application, internationalizationRuntime, locales })}.`,
+  );
 }
 
 if (

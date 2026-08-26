@@ -546,8 +546,8 @@ the same product-quality gate.
   preserve authorization, privacy, formula-neutralization, and data-minimization guarantees.
 - [ ] Keyboard, focus, live-region, forced-colors, reduced-motion, representative screen-reader,
   and 320 CSS-pixel reflow checks pass for all three locales.
-- [ ] Existing non-catalog JavaScript budgets remain enforced and locale chunks pass their
-  separate budgets.
+- [ ] The application baseline, bounded internationalization-runtime allowance, and separate
+  locale-chunk budgets remain enforced.
 - [ ] The full repository quality gate passes with no mixed-language workflow or open P0/P1
   defect.
 - [ ] Project status, roadmap, task board, decisions, implementation evidence, and operations

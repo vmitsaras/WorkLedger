@@ -2,26 +2,27 @@
 
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 2 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1402` account and device locale implementation awaiting bundle decision
-**Active task:** `WL-1402` (blocked in release verification by `D-508`)
-**Status:** Functional gates pass; production bundle exceeds ADR 0013's unchanged limits
+**Phase progress:** Phase 13 complete — 3 of 11 Phase 14 tasks complete
+**Current milestone:** `WL-1402` account and device locale preferences complete
+**Active task:** `WL-1403` (next; not started)
+**Status:** Account/device locale persistence and switching complete; `D-508` resolved by bounded runtime allowance
 **Last verified:** 2026-08-26
 
 ## Current objective
 
 Phase 13 is complete at `0.14.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
-foundation, and the `WL-1402` implementation now persists authoritative account and invitation
-locales plus the bounded signed-out device preference. Profile and authentication selectors switch
+foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
+bounded signed-out device preference. Profile and authentication selectors switch
 the available catalog messages immediately with focus continuity and failure rollback; protected
 content waits for the account catalog. Most product copy remains English until its owned
 translation tasks, so these selectors currently demonstrate only the locale preference messages.
-Functional tests pass, but the production graph exceeds ADR 0013's unchanged non-catalog limits by
-6,728 raw and 1,903 gzip bytes. `D-508` must resolve that contradiction before `WL-1402` can
-complete or `WL-1403` can start. Workflow translation and outbound output remain gated behind
-their numbered tasks. The broader `D-502` retail browser and assistive-technology matrix remains an
-explicit limitation rather than a conformance claim. The portfolio presentation scope remains an
-unnumbered draft.
+`D-508` amended ADR 0013 through a 55,000-byte raw and 18,000-byte gzip Phase 14 runtime allowance
+above the preserved 910,000/246,000-byte application baseline. The current build consumes
+6,728/1,840 bytes of that allowance, and a forced full-engine measurement remains within the
+combined gates. `WL-1403` is next; workflow translation and outbound output remain gated behind
+their numbered tasks. The broader `D-502` retail browser and assistive-technology matrix remains
+an explicit limitation rather than a conformance claim. The portfolio presentation scope remains
+an unnumbered draft.
 
 ## Verified decisions
 
@@ -171,8 +172,11 @@ unnumbered draft.
   `en-GB` fallback, repository-local catalog chunks, safe text interpolation, and explicit
   locale/timezone formatting. Existing screens still activate English only until their owning
   migration tasks complete.
-- Phase 14 still requires per-account preference, complete user-facing-output coverage, and
-  fluent-human German and Spanish review before the multilingual product can ship.
+- The preserved non-catalog application baseline is 910,000 bytes raw and 246,000 bytes gzip.
+  Phase 14 localization runtime and integration have a separate 55,000/18,000-byte allowance;
+  largest-chunk, CSS, and locale-catalog ceilings remain independent and unchanged (`D-508`).
+- Phase 14 still requires complete user-facing-output coverage and fluent-human German and Spanish
+  review before the multilingual product can ship.
 - Employee self-service profile data is read-only; HR-owned employment facts are not self-editable.
 - The self-context/profile transport exposes only active account, organization, employee summary,
   current application roles, derived navigation areas, and minimized session/device summaries; IP
@@ -2442,7 +2446,7 @@ unnumbered draft.
   the production/workspace build. One intentional browser capture and 45 PostgreSQL-dependent
   integration cases remain skipped because their opt-in service/evidence is unavailable.
 
-**2026-08-26 — WL-1402 account and device locale implementation candidate**
+**2026-08-26 — WL-1402 account and device locale preferences**
 
 - Added the required `auth_users.locale` field, `en-GB` upgrade default, exact database allowlist,
   locale-aware self-context/Profile contracts, and a current-account-only `PUT /v1/me/locale`
@@ -2460,21 +2464,27 @@ unnumbered draft.
   unsupported values, CSRF/origin failures, cross-session persistence, invitation/reset locale
   propagation, startup precedence without a prior-language flash, focus, and rollback. Also aligned
   the Today integration fixture with the decision-actor migrations its seed SQL already required.
-- Formatting, lint, strict TypeScript, 46 tooling tests, 394 unit/component tests, 25 PostgreSQL
-  integration tests with one intentional skip, and 39 browser scenarios with one intentional skip
-  pass. The application compiles and emits the expected locale chunks.
-- The unchanged bundle gate fails at 916,728 raw and 247,903 gzip non-catalog JavaScript bytes,
-  respectively 6,728 and 1,903 bytes above ADR 0013's limits. No application code was hidden in
-  catalog chunks and no limit was silently raised. `D-508` blocks completion.
+- The database-enabled implementation run passed 25 PostgreSQL integration tests with one
+  intentional skip. The final completion rerun passes runtime configuration, reproducible OpenAPI,
+  formatting, lint with 313-source/1,649-import boundaries, CSS ownership, strict TypeScript, 48
+  tooling tests, 394 unit/component tests, 13 environment-independent integration tests, 39
+  browser scenarios with one intentional skip, and the production/workspace build. The final rerun
+  skipped 45 PostgreSQL-dependent cases because the local database service was unavailable.
+- Resolved `D-508` through Option B after source attribution and supported build experiments showed
+  that preserving the original total gate would require an unrelated application refactor or
+  unsafe minification. ADR 0013 now retains the 910,000/246,000-byte application baseline and adds
+  a separately named, regression-tested 55,000/18,000-byte Phase 14 runtime allowance.
+- The pinned-toolchain production build passes at 395,242 largest-chunk bytes, 916,728 total raw
+  bytes, 247,840 total gzip bytes, and 50,219 CSS bytes outside the separately bounded catalogs.
+  Current runtime-allowance use is 6,728 raw and 1,840 gzip bytes. A forced full-engine build also
+  passes the combined gate at 961,249 raw and 261,327 gzip bytes, anticipating `WL-1404`.
 - No dependency, lockfile, manifest, workspace version, phase gate, deployment, publication, tag,
   domain rule, permission, or audit policy changed. See `docs/142-account-locale-preferences.md`.
 
 ## Current blockers
 
-`D-508` blocks `WL-1402`: the fully compiled locale-preference implementation exceeds ADR 0013's
-unchanged non-catalog JavaScript limits, and changing that accepted architecture decision requires
-explicit direction. German and Spanish still require named fluent reviewers before
-`WL-1408`; their absence does not block the typed English-first foundation. Exact partial-day
+German and Spanish still require named fluent reviewers before `WL-1408`; their absence does not
+block the typed English-first foundation. Exact partial-day
 work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
 still require authoritative domain or repository facts; Today does not guess them from minute
 totals or an otherwise valid overnight session. The earlier Phase 12 and task-specific Phase 13
@@ -2487,12 +2497,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Resolve `D-508`, then complete `WL-1402` by passing the production bundle gate.
-
-The implementation and functional evidence are complete. Do not start `WL-1403` until the accepted
-non-catalog budget conflict is resolved and `WL-1402` is checked complete. The portfolio
-presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as an unnumbered
-draft.
+Start `WL-1403`: replace user-facing API prose dependencies with bounded message descriptors and
+structured presentation data. The portfolio presentation scope remains preserved in
+`docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 
 ## Update rules
 

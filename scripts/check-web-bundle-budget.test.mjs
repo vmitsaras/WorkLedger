@@ -2,9 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  APPLICATION_BUNDLE_BASELINE,
+  BUNDLE_BUDGETS,
+  INTERNATIONALIZATION_RUNTIME_ALLOWANCE,
   assertBundleBudget,
   assertLocaleBundleBudget,
   localeForChunk,
+  measureInternationalizationRuntimeAllowance,
 } from './check-web-bundle-budget.mjs';
 
 test('accepts assets within every budget', () => {
@@ -27,7 +31,58 @@ test('rejects a JavaScript regression above a budget', () => {
   );
 });
 
-test('keeps locale chunks outside the unchanged application JavaScript budget', () => {
+test('adds only the measured internationalization runtime allowance to application totals', () => {
+  assert.equal(
+    BUNDLE_BUDGETS.totalJavaScriptBytes,
+    APPLICATION_BUNDLE_BASELINE.totalJavaScriptBytes +
+      INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes,
+  );
+  assert.equal(
+    BUNDLE_BUDGETS.totalJavaScriptGzipBytes,
+    APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes +
+      INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes,
+  );
+  assert.equal(
+    BUNDLE_BUDGETS.largestJavaScriptBytes,
+    APPLICATION_BUNDLE_BASELINE.largestJavaScriptBytes,
+  );
+  assert.equal(BUNDLE_BUDGETS.totalCssBytes, APPLICATION_BUNDLE_BASELINE.totalCssBytes);
+
+  assert.deepEqual(
+    measureInternationalizationRuntimeAllowance({
+      totalJavaScriptBytes: 916_728,
+      totalJavaScriptGzipBytes: 247_840,
+    }),
+    { rawBytes: 6_728, rawBudget: 55_000, gzipBytes: 1_840, gzipBudget: 18_000 },
+  );
+});
+
+test('rejects totals above the combined application and runtime ceiling', () => {
+  const entriesAtLimit = [
+    { name: 'app-a.js', bytes: 482_500, gzipBytes: 132_000 },
+    { name: 'app-b.js', bytes: 482_500, gzipBytes: 132_000 },
+  ];
+
+  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 965_000);
+  assert.throws(
+    () =>
+      assertBundleBudget([
+        entriesAtLimit[0],
+        { ...entriesAtLimit[1], bytes: entriesAtLimit[1].bytes + 1 },
+      ]),
+    /totalJavaScriptBytes/,
+  );
+  assert.throws(
+    () =>
+      assertBundleBudget([
+        entriesAtLimit[0],
+        { ...entriesAtLimit[1], gzipBytes: entriesAtLimit[1].gzipBytes + 1 },
+      ]),
+    /totalJavaScriptGzipBytes/,
+  );
+});
+
+test('keeps locale chunks outside the application and runtime JavaScript budget', () => {
   const entries = [
     { name: 'app.js', bytes: 100, gzipBytes: 50 },
     { name: 'locale-en-GB-a1.js', bytes: 30, gzipBytes: 10 },

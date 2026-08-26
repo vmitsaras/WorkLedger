@@ -1,6 +1,6 @@
 # ADR 0013: Local Internationalization and Message Ownership
 
-**Status:** Accepted by `WL-1400`
+**Status:** Accepted by `WL-1400`; bundle accounting amended by `WL-1402` / `D-508`
 
 ## Context
 
@@ -135,7 +135,21 @@ cannot contain executable or user supplied HTML.
 
 ### Loading, budgets, and enforcement
 
-Only the resolved locale is loaded. The existing non catalog JavaScript budget remains unchanged.
+Only the resolved locale is loaded. The pre-internationalization application baseline remains
+910,000 bytes raw and 246,000 bytes gzip for total non-catalog JavaScript, with the existing
+500,000-byte largest-chunk and 51,000-byte CSS ceilings unchanged. Phase 14 has a separate bounded
+internationalization-runtime allowance of 55,000 bytes raw and 18,000 bytes gzip, producing
+combined non-catalog gates of 965,000 bytes raw and 264,000 bytes gzip. The allowance covers only
+localization runtime and integration behavior; it is not general application headroom and it does
+not classify runtime code as catalog data.
+
+`D-508` selected this accounting after the complete `WL-1402` integration measured 916,728 bytes
+raw and 247,840 bytes gzip under the pinned toolchain. A forced production activation of the
+already-pinned i18next/react-i18next bridge measured 961,249 bytes raw and 261,327 bytes gzip. Both
+fit the bounded allowance while leaving unrelated largest-chunk and CSS limits unchanged. The
+budget checker reports allowance consumption explicitly and regression tests keep the baseline,
+allowance, and combined ceilings linked.
+
 Each locale chunk is limited to 150 KiB raw and 50 KiB gzip. All three locale chunks together are
 limited to 450 KiB raw and 150 KiB gzip.
 

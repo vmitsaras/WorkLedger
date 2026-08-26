@@ -5,7 +5,7 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 5 of 5 — Production and UI release gates complete**<br>
-> **Current phase progress: Phase 14 — 2 of 11 tasks complete**<br>
+> **Current phase progress: Phase 14 — 3 of 11 tasks complete**<br>
 > **Internal milestone: `0.14.0`**
 
 Phases 0–13 have passed their exit gates. The repository includes attendance, flexible-time and
@@ -22,9 +22,10 @@ security, accessibility automation, and UI release gates are complete. `0.14.0` 
 milestone, not a hosted service, package publication, container release, browser support warranty,
 or WCAG conformance statement.
 
-Phase 14 now has an accepted internationalization architecture and a typed local foundation for
-`en-GB`, `de-DE`, and `es-ES`. The product still activates English only until account persistence
-and workflow/output migrations are completed in their ordered tasks.
+Phase 14 now has an accepted internationalization architecture, a typed local foundation for
+`en-GB`, `de-DE`, and `es-ES`, and persisted account/invitation plus signed-out device locale
+preferences. Most workflows remain English until their ordered descriptor, translation, and
+output tasks complete.
 
 ## Current status
 
@@ -230,7 +231,7 @@ versions and makes no response-time or production-support promise.
 | [docs/96-phase-10-threat-permission-baseline.md](docs/96-phase-10-threat-permission-baseline.md) through [docs/107-retention-and-minimization.md](docs/107-retention-and-minimization.md) | Phase 10 security, production deployment, operations, retention, restore, upgrade, and release-gate evidence |
 | [docs/110-ui-ux-baseline-audit.md](docs/110-ui-ux-baseline-audit.md) through [docs/123-phase-12-gate-review.md](docs/123-phase-12-gate-review.md) | Phase 11–12 UI foundation, workflow remediation, visual regression, and release-gate evidence |
 | [docs/124-phase-13-baseline.md](docs/124-phase-13-baseline.md) through [docs/137-phase-13-gate-review.md](docs/137-phase-13-gate-review.md) | Phase 13 attendance clarity, workflow usability, cross-route regression, accessibility, visual, and release-gate evidence |
-| [docs/138-phase-14-internationalization-roadmap.md](docs/138-phase-14-internationalization-roadmap.md) through [docs/141-shared-i18n-foundation.md](docs/141-shared-i18n-foundation.md) | Phase 14 internationalization roadmap, inventory, glossary, accepted architecture, and typed runtime foundation evidence |
+| [docs/138-phase-14-internationalization-roadmap.md](docs/138-phase-14-internationalization-roadmap.md) through [docs/142-account-locale-preferences.md](docs/142-account-locale-preferences.md) | Phase 14 internationalization roadmap, inventory, glossary, architecture, typed runtime foundation, and locale-preference evidence |
 
 ## License
 

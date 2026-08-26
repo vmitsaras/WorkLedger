@@ -1,7 +1,7 @@
 # Account and device locale preferences
 
 **Task:** `WL-1402`  
-**Status:** Implementation complete; release evidence blocked by `D-508`  
+**Status:** Complete
 **Date:** 2026-08-26  
 **Workspace version:** `0.14.0`
 
@@ -70,18 +70,27 @@ Automated evidence covers:
 - protected-shell startup precedence without a prior-language flash, and
 - the generated OpenAPI contract and the existing application/catalog bundle budgets.
 
-Formatting, lint, type checking, 46 tooling tests, 394 unit/component tests, 25 PostgreSQL
-integration tests with one intentional skip, and 39 browser tests with one intentional skip pass.
-The PostgreSQL and browser commands required the existing local services to run outside the
-filesystem/network sandbox.
+The database-enabled implementation run passed 25 PostgreSQL integration tests with one
+intentional skip. The final `D-508` completion rerun passes runtime configuration, reproducible
+OpenAPI, formatting, lint and boundaries, CSS ownership, strict TypeScript, 48 tooling tests, 394
+unit/component tests, 13 environment-independent integration tests, 39 browser tests with one
+intentional skip, and the production/workspace build. The final integration rerun skipped 45
+PostgreSQL-dependent cases because the local database service was unavailable; the browser command
+required permission to bind the existing local Vite server.
 
 The production application compiles, emits only the three expected locale chunks, and keeps the
-full i18next/react-i18next engine out of the production graph. The final budget assertion does not
-pass: non-catalog JavaScript measures 916,728 bytes raw and 247,903 bytes gzip against ADR 0013's
-unchanged 910,000/246,000-byte limits. This is 7,422 raw and 2,241 gzip bytes above the verified
-`WL-1401` build and 6,728 raw and 1,903 gzip bytes above the gates. The implementation does not
-reclassify application code as catalog data or silently raise a limit. `D-508` records the required
-decision, so `WL-1402` remains unchecked.
+full i18next/react-i18next engine out of the production graph until `WL-1404`. Under the pinned
+toolchain it measures 916,728 bytes raw and 247,840 bytes gzip outside catalogs. This consumes
+6,728 raw and 1,840 gzip bytes of `D-508`'s separately named 55,000/18,000-byte Phase 14
+internationalization-runtime allowance above the preserved 910,000/246,000-byte application
+baseline. Largest-chunk, CSS, and locale-catalog limits remain unchanged.
+
+The allowance was not inferred from only the current feature. A forced production activation of
+the already-pinned i18next/react-i18next bridge measured 961,249 bytes raw and 261,327 bytes gzip,
+which is 3,751 raw and 2,673 gzip bytes below the combined 965,000/264,000-byte gates. The checker
+reports current allowance consumption explicitly and its regression tests link the immutable
+baseline, allowance, and combined ceilings. Locale chunks remain the only excluded catalog data;
+no application or runtime code was reclassified.
 
 ## Remaining ownership
 
