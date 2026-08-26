@@ -207,6 +207,7 @@ export const authUsers = pgTable(
     emailVerified: boolean('email_verified').default(false).notNull(),
     image: text('image'),
     active: boolean('active').default(true).notNull(),
+    locale: varchar('locale', { length: 5 }).default('en-GB').notNull(),
     createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
   },
@@ -215,6 +216,7 @@ export const authUsers = pgTable(
     index('auth_users_active_idx').on(table.active),
     check('auth_users_name_not_blank', sql`length(btrim(${table.name})) > 0`),
     check('auth_users_email_normalized', sql`${table.email} = lower(${table.email})`),
+    check('auth_users_locale_supported', sql`${table.locale} in ('en-GB', 'de-DE', 'es-ES')`),
   ],
 );
 

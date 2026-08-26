@@ -1,9 +1,12 @@
 import {
   DEFAULT_COMPANY_IDENTITY,
+  isSupportedLocale,
   type CompanyIdentity,
   type NavigationArea,
   type SelfContext,
   type SelfProfile,
+  type SupportedLocale,
+  type UpdateSelfLocaleResult,
 } from '@workledger/contracts';
 import { parseDomainId, parseInstant, type DomainId, type Instant } from '@workledger/domain';
 import type {
@@ -24,6 +27,11 @@ export type SelfServiceIdentity = Readonly<{
 export interface AccountSelfService {
   getContext(identity: SelfServiceIdentity, at: Instant): Promise<SelfContext>;
   getProfile(identity: SelfServiceIdentity, at: Instant): Promise<SelfProfile>;
+  updateLocale(
+    identity: SelfServiceIdentity,
+    locale: SupportedLocale,
+    at: Instant,
+  ): Promise<UpdateSelfLocaleResult>;
   revokeSession(
     identity: SelfServiceIdentity,
     input: Readonly<{
@@ -59,6 +67,19 @@ export function createAccountSelfService(
           ...mapSelfContext(context, companyIdentity),
           sessions: sessions.map((session) => mapSession(session, identity.currentSessionId)),
         });
+      });
+    },
+
+    async updateLocale(identity, locale, at) {
+      return database.transaction(async (transaction) => {
+        const context = requireActiveContext(
+          await transaction.accountSelfService.findContext(identity.accountId, at),
+        );
+        requireAccountLocale(context.locale);
+        if (!(await transaction.accountSelfService.updateLocale(identity.accountId, locale, at))) {
+          throw new WorkLedgerApiError({ code: 'AUTH_SESSION_EXPIRED', statusCode: 401 });
+        }
+        return Object.freeze({ locale });
       });
     },
 
@@ -151,6 +172,7 @@ function mapSelfContext(
             employeeNumber: context.employee.employeeNumber,
             status: context.employee.status,
           }),
+    locale: requireAccountLocale(context.locale),
     navigationAreas,
     organization: Object.freeze({
       accentColor: companyIdentity.accentColor,
@@ -160,6 +182,13 @@ function mapSelfContext(
     }),
     roles: [...context.roles],
   });
+}
+
+function requireAccountLocale(value: string): SupportedLocale {
+  if (!isSupportedLocale(value)) {
+    throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  }
+  return value;
 }
 
 function navigationAreasFor(context: AccountSelfContextRecord): NavigationArea[] {

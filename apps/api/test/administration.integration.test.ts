@@ -39,6 +39,7 @@ const migrationFiles = [
   '0017_boring_aaron_stack.sql',
   '0018_bored_medusa.sql',
   '0019_stale_loners.sql',
+  '0022_account_locale.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -64,7 +65,6 @@ integrationTest(
         now: () => AT,
       },
     );
-
     try {
       const actors = await createAdministrationActors(fixture.client);
       const hrCookie = await signIn(app, 'hr@example.test', ADMIN_PASSWORD);
@@ -85,6 +85,21 @@ integrationTest(
       });
       expect(hrOnSystem.statusCode).toBe(403);
 
+      const unsupportedInvitationLocale = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          displayName: 'Unsupported Locale',
+          email: 'unsupported@example.test',
+          employeeNumber: 'WL-UNSUPPORTED',
+          employmentStartsOn: '2026-08-01',
+          locale: 'en-US',
+          roles: ['EMPLOYEE'],
+        },
+        url: '/v1/hr/employees',
+      });
+      expect(unsupportedInvitationLocale.statusCode).toBe(422);
+
       const createEmployee = await app.inject({
         headers: mutationHeaders(hrCookie, hrCsrf),
         method: 'POST',
@@ -93,6 +108,7 @@ integrationTest(
           email: 'jordan@example.test',
           employeeNumber: 'WL-900-001',
           employmentStartsOn: '2026-08-01',
+          locale: 'de-DE',
           roles: ['EMPLOYEE', 'MANAGER'],
         },
         url: '/v1/hr/employees',
@@ -146,6 +162,7 @@ integrationTest(
       });
       expect(createEmployee.payload).not.toMatch(/token|activationUrl/iu);
       expect(invitations).toHaveLength(1);
+      expect(invitations[0]?.locale).toBe('de-DE');
       const activationToken = invitations[0]?.activationUrl.searchParams.get('token');
       expect(activationToken).toMatch(/^[A-Za-z0-9_-]{43}$/u);
       const verification = await fixture.client.query<{ identifier: string }>(
@@ -153,9 +170,10 @@ integrationTest(
       );
       expect(verification.rows).toHaveLength(1);
       expect(verification.rows[0]?.identifier).not.toContain(activationToken);
-      const invitedAccount = await fixture.client.query<{ id: string }>(
-        `select id from auth_users where email = 'jordan@example.test'`,
+      const invitedAccount = await fixture.client.query<{ id: string; locale: string }>(
+        `select id, locale from auth_users where email = 'jordan@example.test'`,
       );
+      expect(invitedAccount.rows[0]?.locale).toBe('de-DE');
       const invitedAccountId = invitedAccount.rows[0]?.id;
       if (invitedAccountId === undefined) throw new Error('Expected invited account ID.');
       const systemCannotBypassInvitation = await app.inject({
@@ -323,6 +341,7 @@ integrationTest(
         method: 'POST',
         payload: {
           email: 'operator@example.test',
+          locale: 'es-ES',
           name: 'Backup Operator',
           systemAdministrator: true,
         },
@@ -330,6 +349,11 @@ integrationTest(
       });
       expect(createTechnical.statusCode).toBe(200);
       expect(invitations).toHaveLength(2);
+      expect(invitations[1]?.locale).toBe('es-ES');
+      const technicalLocale = await fixture.client.query<{ locale: string }>(
+        `select locale from auth_users where email = 'operator@example.test'`,
+      );
+      expect(technicalLocale.rows[0]?.locale).toBe('es-ES');
 
       const historyCounts = await fixture.client.query<{
         domain_count: string;

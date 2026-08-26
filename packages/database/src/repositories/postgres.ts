@@ -303,6 +303,7 @@ class PostgresAccountSelfServiceRepository implements AccountSelfServiceReposito
         active: authUsers.active,
         email: authUsers.email,
         id: authUsers.id,
+        locale: authUsers.locale,
         name: authUsers.name,
       })
       .from(authUsers)
@@ -394,6 +395,7 @@ class PostgresAccountSelfServiceRepository implements AccountSelfServiceReposito
       employee,
       employeeCapabilityActive:
         account.active && employee?.status === 'ACTIVE' && hasCurrentEmployment,
+      locale: account.locale,
       name: account.name,
       organization: mapOrganization(organizationRow),
       roles: Object.freeze(roleRows.map(({ role }) => role)),
@@ -445,6 +447,19 @@ class PostgresAccountSelfServiceRepository implements AccountSelfServiceReposito
       .for('update')
       .limit(1);
     return row === undefined ? null : mapAccountSession(row);
+  }
+
+  async updateLocale(
+    accountId: Parameters<AccountSelfServiceRepository['updateLocale']>[0],
+    locale: Parameters<AccountSelfServiceRepository['updateLocale']>[1],
+    changedAt: Parameters<AccountSelfServiceRepository['updateLocale']>[2],
+  ): Promise<boolean> {
+    const rows = await this.transaction
+      .update(authUsers)
+      .set({ locale, updatedAt: new Date(changedAt) })
+      .where(and(eq(authUsers.id, accountId), eq(authUsers.active, true)))
+      .returning({ id: authUsers.id });
+    return rows.length === 1;
   }
 }
 
@@ -798,6 +813,7 @@ class PostgresAdministrationRepository implements AdministrationRepository {
         active: false,
         email: input.accountEmail,
         emailVerified: false,
+        locale: input.locale,
         name: input.accountName,
       })
       .returning({ id: authUsers.id });
@@ -1167,7 +1183,13 @@ class PostgresAdministrationRepository implements AdministrationRepository {
   ) {
     const [account] = await this.transaction
       .insert(authUsers)
-      .values({ active: false, email: input.email, emailVerified: false, name: input.name })
+      .values({
+        active: false,
+        email: input.email,
+        emailVerified: false,
+        locale: input.locale,
+        name: input.name,
+      })
       .returning({ id: authUsers.id });
     if (account === undefined) throw new DatabaseValueError('auth_users', 'id');
     const accountId = mapDomainId<'Account'>(account.id, 'auth_users', 'id');
@@ -1256,7 +1278,7 @@ class PostgresAdministrationRepository implements AdministrationRepository {
     let roles: readonly ApplicationRole[] = Object.freeze([]);
     if (accountId !== null) {
       const [accountRow] = await this.transaction
-        .select({ active: authUsers.active, email: authUsers.email })
+        .select({ active: authUsers.active, email: authUsers.email, locale: authUsers.locale })
         .from(authUsers)
         .where(eq(authUsers.id, accountId))
         .limit(1);
@@ -1266,6 +1288,7 @@ class PostgresAdministrationRepository implements AdministrationRepository {
           email: accountRow.email,
           id: accountId,
           invitationPending: await this.invitationPending(accountId, at),
+          locale: accountRow.locale,
         });
       }
       roles = await this.listActiveRoles(organizationId, accountId);
@@ -2253,6 +2276,7 @@ class PostgresAdministrationRepository implements AdministrationRepository {
         active: authUsers.active,
         email: authUsers.email,
         id: authUsers.id,
+        locale: authUsers.locale,
         name: authUsers.name,
       })
       .from(authUsers)
@@ -2291,6 +2315,7 @@ class PostgresAdministrationRepository implements AdministrationRepository {
       email: row.email,
       id: accountId,
       invitationPending: await this.invitationPending(accountId, at),
+      locale: row.locale,
       name: row.name,
       sessions: Object.freeze(sessionRows.map(mapAccountSession)),
       systemAdministrator: roles.includes('SYSTEM_ADMINISTRATOR'),

@@ -1,21 +1,23 @@
 import { randomBytes } from 'node:crypto';
 
-import type {
-  AdministrationActionResult,
-  CreateTeamAdminRequest,
-  CreateEmployeeAdminRequest,
-  CreateTechnicalAccountRequest,
-  EmployeeAdminDetail,
-  EmployeeAdminPage,
-  EmployeeAdminQuery,
-  EmployeeAdminSearchRequest,
-  EmployeeAssignmentAdminDetail,
-  ReplaceManagerAssignmentRequest,
-  ReplaceTeamAssignmentRequest,
-  SystemAccountPage,
-  SystemAccountQuery,
-  TeamAdminPage,
-  TeamAdminQuery,
+import {
+  isSupportedLocale,
+  type SupportedLocale,
+  type AdministrationActionResult,
+  type CreateTeamAdminRequest,
+  type CreateEmployeeAdminRequest,
+  type CreateTechnicalAccountRequest,
+  type EmployeeAdminDetail,
+  type EmployeeAdminPage,
+  type EmployeeAdminQuery,
+  type EmployeeAdminSearchRequest,
+  type EmployeeAssignmentAdminDetail,
+  type ReplaceManagerAssignmentRequest,
+  type ReplaceTeamAssignmentRequest,
+  type SystemAccountPage,
+  type SystemAccountQuery,
+  type TeamAdminPage,
+  type TeamAdminQuery,
 } from '@workledger/contracts';
 import {
   localDateAtInstant,
@@ -56,6 +58,7 @@ export type AdministrationIdentity = Readonly<{
 export type AccountInvitationMessage = Readonly<{
   activationUrl: URL;
   email: string;
+  locale: SupportedLocale;
   name: string;
 }>;
 
@@ -214,6 +217,7 @@ export function createAdministrationService(
             employmentStartsOn: parseLocalDateInput(input.employmentStartsOn),
             invitationExpiresAt: invitationExpiry(at),
             invitationIdentifier: invitationIdentifier(token),
+            locale: input.locale,
             organizationId: context.organization.id,
             roles: input.roles,
           });
@@ -259,7 +263,11 @@ export function createAdministrationService(
       if (created.employee.account !== null) {
         await deliverInvitation(
           sendInvitation,
-          { email: created.employee.account.email, name: created.employee.displayName },
+          {
+            email: created.employee.account.email,
+            locale: requireSupportedAccountLocale(created.employee.account.locale),
+            name: created.employee.displayName,
+          },
           token,
           canonicalOrigin,
         );
@@ -283,6 +291,7 @@ export function createAdministrationService(
             email: input.email,
             invitationExpiresAt: invitationExpiry(at),
             invitationIdentifier: invitationIdentifier(token),
+            locale: input.locale,
             name: input.name,
             organizationId: context.organization.id,
           });
@@ -307,7 +316,11 @@ export function createAdministrationService(
       }
       await deliverInvitation(
         sendInvitation,
-        { email: account.email, name: account.name },
+        {
+          email: account.email,
+          locale: requireSupportedAccountLocale(account.locale),
+          name: account.name,
+        },
         token,
         canonicalOrigin,
       );
@@ -581,7 +594,11 @@ export function createAdministrationService(
         throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
       await deliverInvitation(
         sendInvitation,
-        { email: employee.account.email, name: employee.displayName },
+        {
+          email: employee.account.email,
+          locale: requireSupportedAccountLocale(employee.account.locale),
+          name: employee.displayName,
+        },
         token,
         canonicalOrigin,
       );
@@ -981,11 +998,11 @@ async function listEmployeePage(
     const localDate = organizationLocalDate(at, context.organization.timeZone);
     return Object.freeze({
       items: page.items.map((employee) => {
-        const { privilegedActionsAllowed: _privilegedActionsAllowed, ...item } = mapEmployee(
-          employee,
-          localDate,
-          false,
-        );
+        const {
+          employmentHistory: _employmentHistory,
+          privilegedActionsAllowed: _privilegedActionsAllowed,
+          ...item
+        } = mapEmployee(employee, localDate, false);
         return item;
       }),
       pagination: pagination(query.page, query.limit, page.total),
@@ -1322,19 +1339,31 @@ function organizationLocalDate(at: Instant, timeZoneValue: string): LocalDate {
 
 async function deliverInvitation(
   sender: AccountInvitationSender,
-  recipient: Readonly<{ email: string; name: string }>,
+  recipient: Readonly<{ email: string; locale: SupportedLocale; name: string }>,
   token: string,
   canonicalOrigin: string,
 ): Promise<void> {
   const activationUrl = new URL('/activate-account', canonicalOrigin);
   activationUrl.searchParams.set('token', token);
   try {
-    await sender({ activationUrl, email: recipient.email, name: recipient.name });
+    await sender({
+      activationUrl,
+      email: recipient.email,
+      locale: recipient.locale,
+      name: recipient.name,
+    });
   } catch {
     process.stderr.write(
       '[workledger] Invitation delivery failed after the protected grant was persisted.\n',
     );
   }
+}
+
+function requireSupportedAccountLocale(locale: string): SupportedLocale {
+  if (!isSupportedLocale(locale)) {
+    throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  }
+  return locale;
 }
 
 function mapAdministrationDatabaseError(error: unknown): Error {

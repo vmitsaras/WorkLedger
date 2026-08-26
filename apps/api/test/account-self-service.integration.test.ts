@@ -24,6 +24,7 @@ const migrationFiles = [
   '0004_audit_foundation.sql',
   '0005_idempotency_foundation.sql',
   '0006_zero_daily_delta.sql',
+  '0022_account_locale.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -68,6 +69,7 @@ integrationTest(
             employeeNumber: 'PROFILE-001',
             status: 'ACTIVE',
           },
+          locale: 'en-GB',
           navigationAreas: ['EMPLOYEE'],
           organization: {
             accentColor: '#14532d',
@@ -81,6 +83,81 @@ integrationTest(
       expect(contextResponse.payload).not.toContain('employeeId');
       expect(contextResponse.payload).not.toContain('organizationId');
 
+      const firstCsrf = await getCsrf(app, firstCookie);
+      const crossOriginLocale = await app.inject({
+        method: 'PUT',
+        payload: { locale: 'de-DE' },
+        url: '/v1/me/locale',
+        headers: {
+          cookie: firstCookie,
+          origin: 'https://attacker.example.test',
+          'x-workledger-csrf': firstCsrf,
+        },
+      });
+      expect(crossOriginLocale.statusCode).toBe(403);
+
+      const missingCsrfLocale = await app.inject({
+        method: 'PUT',
+        payload: { locale: 'de-DE' },
+        url: '/v1/me/locale',
+        headers: { cookie: firstCookie, origin: ORIGIN },
+      });
+      expect(missingCsrfLocale.statusCode).toBe(403);
+
+      const unsupportedLocale = await app.inject({
+        method: 'PUT',
+        payload: { locale: 'en-US' },
+        url: '/v1/me/locale',
+        headers: {
+          cookie: firstCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': firstCsrf,
+        },
+      });
+      expect(unsupportedLocale.statusCode).toBe(422);
+
+      const crossAccountLocale = await app.inject({
+        method: 'PUT',
+        payload: { accountId: randomUUID(), locale: 'de-DE' },
+        url: '/v1/me/locale',
+        headers: {
+          cookie: firstCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': firstCsrf,
+        },
+      });
+      expect(crossAccountLocale.statusCode).toBe(422);
+
+      const localeUpdate = await app.inject({
+        method: 'PUT',
+        payload: { locale: 'de-DE' },
+        url: '/v1/me/locale',
+        headers: {
+          cookie: firstCookie,
+          origin: ORIGIN,
+          'x-workledger-csrf': firstCsrf,
+        },
+      });
+      expect(localeUpdate.statusCode, localeUpdate.payload).toBe(200);
+      expect(localeUpdate.headers['cache-control']).toBe('private, no-store');
+      expect(localeUpdate.json()).toMatchObject({ data: { locale: 'de-DE' } });
+
+      const secondContext = await app.inject({
+        method: 'GET',
+        url: '/v1/me/context',
+        headers: { cookie: secondCookie, origin: ORIGIN },
+      });
+      expect(secondContext.json()).toMatchObject({ data: { locale: 'de-DE' } });
+      const storedLocale = await fixture.client.query<{ locale: string }>(
+        `select locale from auth_users where id = $1`,
+        [accountId],
+      );
+      expect(storedLocale.rows[0]?.locale).toBe('de-DE');
+      const localeAudit = await fixture.client.query<{ count: string }>(
+        `select count(*) from security_audit_events where action_code like '%LOCALE%'`,
+      );
+      expect(Number(localeAudit.rows[0]?.count)).toBe(0);
+
       const profileResponse = await app.inject({
         method: 'GET',
         url: '/v1/me/profile',
@@ -88,12 +165,14 @@ integrationTest(
       });
       expect(profileResponse.statusCode).toBe(200);
       const profile = profileResponse.json().data as {
+        locale: string;
         sessions: Array<{
           current: boolean;
           deviceSummary: string;
           id: string;
         }>;
       };
+      expect(profile.locale).toBe('de-DE');
       expect(profile.sessions).toHaveLength(2);
       expect(profile.sessions.map(({ deviceSummary }) => deviceSummary).sort()).toEqual([
         'Chrome on macOS',
@@ -113,7 +192,6 @@ integrationTest(
         `update auth_sessions set created_at = now() - interval '20 minutes' where id = $1`,
         [firstSession.id],
       );
-      const firstCsrf = await getCsrf(app, firstCookie);
       const staleRevoke = await app.inject({
         method: 'POST',
         url: `/v1/me/sessions/${secondSession.id}/revoke`,

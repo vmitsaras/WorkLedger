@@ -524,6 +524,16 @@ Under reduced motion, preserve immediate state feedback and remove spatial trave
 - when an actor opens `/profile`, revokes an own session, or signs out,
 - then only the eligible account/employee summary is shown, HR-owned facts remain read-only, the targeted outcome is confirmed once, and revoked/current-session behavior is explicit.
 
+#### AC-LOCALE-01 — Account and signed-out language preferences
+
+- Given an authenticated account locale, a different signed-out device preference, unsupported
+  stored input, unavailable browser storage, and catalog or API failure,
+- when an actor starts a protected route or changes language from Profile or an authentication
+  route,
+- then the account locale wins before protected UI mounts, the signed-out selector follows the
+  bounded device/browser/fallback order, and immediate switching preserves route, safe URL and form
+  state, scroll position, and selector focus while one polite status reports success or rollback.
+
 #### AC-ADMIN-01 — Employee and effective-dated settings
 
 - Given new/existing employee, overlap/gap, future-effective, timezone-blocked, holiday-impact, entitlement-adjustment, and privileged-self-action fixtures,

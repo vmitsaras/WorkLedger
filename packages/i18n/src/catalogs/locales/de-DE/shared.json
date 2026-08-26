@@ -9,5 +9,15 @@
     "greeting": "Hallo, {{name}}.",
     "initializing": "Spracheinstellungen werden geladen…",
     "loadError": "WorkLedger konnte die ausgewählte Sprache nicht laden."
+  },
+  "locale": {
+    "accountDescription": "Diese Sprache wird in Ihrem Konto gespeichert und auf Ihren anderen Geräten verwendet.",
+    "accountSaveFailed": "Ihre Sprache konnte nicht gespeichert werden. WorkLedger hat die vorherige Sprache wiederhergestellt.",
+    "accountSaved": "Ihre Kontosprache wurde aktualisiert.",
+    "deviceDescription": "Diese nicht sensible Einstellung wird nur verwendet, während Sie auf diesem Gerät abgemeldet sind.",
+    "deviceSaveFailed": "Die Sprache konnte auf diesem Gerät nicht gespeichert werden. WorkLedger hat die vorherige Sprache wiederhergestellt.",
+    "deviceSaved": "Die Sprache für den abgemeldeten Zustand wurde auf diesem Gerät aktualisiert.",
+    "invitationDescription": "Die Einladung und das neue Konto starten mit dieser Sprache. Der Kontoinhaber kann sie später ändern.",
+    "label": "Sprache"
   }
 }

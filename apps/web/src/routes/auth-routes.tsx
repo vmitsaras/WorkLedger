@@ -5,9 +5,16 @@ import { useQuery } from '@tanstack/react-query';
 
 import {
   DEFAULT_COMPANY_IDENTITY,
+  DEFAULT_LOCALE,
   PASSWORD_MAXIMUM_LENGTH,
   PASSWORD_MINIMUM_LENGTH,
+  type SupportedLocale,
 } from '@workledger/contracts';
+import {
+  translateStaticMessage,
+  type LocaleRuntime,
+  type StaticMessageKey,
+} from '@workledger/i18n';
 import { Alert, Button, linkVariants, TextField } from '@workledger/ui';
 
 import {
@@ -33,6 +40,8 @@ import {
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 import { CompanyIdentity, CompanyIdentityEffects } from '../components/company-identity.js';
+import { LanguageSelect } from '../components/language-select.js';
+import { saveDeviceLocale, useOptionalWebLocale } from '../app/locale.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
 
@@ -63,7 +72,10 @@ export function AuthenticationLayout() {
           </p>
         </section>
         <div className="wl-auth-card rounded-3xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-6 shadow-[var(--wl-shadow-card)] sm:p-8">
-          <Outlet />
+          <div className="grid gap-8">
+            <SignedOutLanguageControl />
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>
@@ -73,6 +85,7 @@ export function AuthenticationLayout() {
 export function SignInPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const locale = useOptionalWebLocale();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -101,6 +114,7 @@ export function SignInPage() {
       clearSessionMemory();
       queryClient.removeQueries({ queryKey: ['self'] });
       const context = await queryClient.fetchQuery(selfContextQuery());
+      await locale?.activateLocale(context.locale);
       await navigate(context.defaultPath, { replace: true });
     } catch (error) {
       setFormError(signInErrorMessage(error));
@@ -157,6 +171,85 @@ export function SignInPage() {
       </form>
     </section>
   );
+}
+
+function SignedOutLanguageControl() {
+  const locale = useOptionalWebLocale();
+  const [pending, setPending] = useState(false);
+  const [status, setStatus] = useState<string>();
+  const currentLocale = locale?.runtime.locale ?? DEFAULT_LOCALE;
+
+  async function changeLocale(nextLocale: SupportedLocale) {
+    if (nextLocale === currentLocale) return;
+    setPending(true);
+    setStatus(undefined);
+    const previousRuntime = locale?.runtime;
+    try {
+      const nextRuntime = await locale?.activateLocale(nextLocale);
+      if (!saveDeviceLocale(nextLocale)) {
+        if (previousRuntime !== undefined) locale?.restoreLocale(previousRuntime);
+        setStatus(
+          message(
+            previousRuntime,
+            'shared.locale.deviceSaveFailed',
+            'Language was not changed. Device preferences are unavailable.',
+          ),
+        );
+        return;
+      }
+      setStatus(
+        message(
+          nextRuntime,
+          'shared.locale.deviceSaved',
+          'Language preference saved for this device.',
+        ),
+      );
+    } catch {
+      if (previousRuntime !== undefined) locale?.restoreLocale(previousRuntime);
+      setStatus(
+        message(
+          previousRuntime,
+          'shared.locale.deviceSaveFailed',
+          'Language was not changed. Try again.',
+        ),
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-2 border-b border-[var(--wl-border)] pb-6">
+      <LanguageSelect
+        description={message(
+          locale?.runtime,
+          'shared.locale.deviceDescription',
+          'Used on this device while you are signed out.',
+        )}
+        disabled={pending}
+        id="signed-out-language"
+        label={message(locale?.runtime, 'shared.locale.label', 'Language')}
+        restoreFocusAfterDisabled
+        value={currentLocale}
+        onChange={(nextLocale) => void changeLocale(nextLocale)}
+      />
+      {status === undefined ? null : (
+        <p aria-live="polite" className="m-0 text-sm" role="status">
+          {status}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function message(
+  runtime: LocaleRuntime | null | undefined,
+  key: StaticMessageKey,
+  fallback: string,
+): string {
+  return runtime === undefined || runtime === null
+    ? fallback
+    : translateStaticMessage(runtime, key);
 }
 
 export function ForgotPasswordPage() {

@@ -27,6 +27,7 @@ const migrationFiles = [
   '0002_auth_foundation.sql',
   '0003_authorization_foundation.sql',
   '0004_audit_foundation.sql',
+  '0022_account_locale.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 const CURRENT_DATE = localDate('2026-08-10');
 const OCCURRED_AT = instant('2026-08-10T12:00:00Z');

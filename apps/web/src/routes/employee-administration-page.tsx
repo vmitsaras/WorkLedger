@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 
 import {
+  DEFAULT_LOCALE,
   employeeAdminQuerySchema,
   type EmployeeAdminDetail,
   type EmployeeAdminQuery,
@@ -12,7 +13,9 @@ import {
   type EmployeeEntitlementAdminDetail,
   type EmployeeAdminPage,
   type EmployeeAdminSearchRequest,
+  type SupportedLocale,
 } from '@workledger/contracts';
+import { translateStaticMessage } from '@workledger/i18n';
 import {
   Alert,
   Button,
@@ -47,11 +50,13 @@ import {
 } from '../app/query.js';
 import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useWideAdministrationLayout } from '../app/use-wide-administration-layout.js';
+import { useOptionalWebLocale } from '../app/locale.js';
 import { EmployeeScheduleAdministration } from '../components/employee-schedule-administration.js';
 import { EmployeePolicyAdministration } from '../components/employee-policy-administration.js';
 import { EmployeeEntitlementAdministration } from '../components/employee-entitlement-administration.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
+import { LanguageSelect } from '../components/language-select.js';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
 const ROLE_LABELS = {
@@ -331,10 +336,12 @@ function accountText(employee: EmployeeAdminPage['items'][number]) {
 
 export function NewEmployeeAdministrationPage() {
   const navigate = useNavigate();
+  const accountLocale = useOptionalWebLocale();
   const [displayName, setDisplayName] = useState('');
   const [employeeNumber, setEmployeeNumber] = useState('');
   const [email, setEmail] = useState('');
   const [employmentStartsOn, setEmploymentStartsOn] = useState('');
+  const [locale, setLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
   const [manager, setManager] = useState(false);
   const [hrAdministrator, setHrAdministrator] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -354,6 +361,7 @@ export function NewEmployeeAdministrationPage() {
         email: email.trim().toLocaleLowerCase('en-US'),
         employeeNumber: employeeNumber.trim(),
         employmentStartsOn,
+        locale,
         roles: [
           'EMPLOYEE',
           ...(manager ? (['MANAGER'] as const) : []),
@@ -415,6 +423,17 @@ export function NewEmployeeAdministrationPage() {
           {...(fieldErrors['employment-starts-on'] === undefined
             ? {}
             : { error: fieldErrors['employment-starts-on'] })}
+        />
+        <LanguageSelect
+          description={
+            accountLocale === null
+              ? "Sets the account language used for this invitation and the employee's first sign-in."
+              : translateStaticMessage(accountLocale.runtime, 'shared.locale.invitationDescription')
+          }
+          id="employee-invitation-language"
+          label="Invitation language"
+          value={locale}
+          onChange={setLocale}
         />
         <fieldset className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4">
           <legend className="px-1 text-sm font-bold">Application roles</legend>

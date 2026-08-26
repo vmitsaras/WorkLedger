@@ -9,6 +9,7 @@ const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 const EMPLOYEE_CONTEXT = {
   account: { email: 'emma@northstar.test', name: 'Emma Reed' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Emma Reed', employeeNumber: 'NS-001', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE'],
   organization: { name: 'Northstar Studio' },
@@ -17,6 +18,7 @@ const EMPLOYEE_CONTEXT = {
 const MANAGER_CONTEXT = {
   account: { email: 'maja@northstar.test', name: 'Maja Novak' },
   defaultPath: '/profile',
+  locale: 'en-GB',
   employee: { displayName: 'Maja Novak', employeeNumber: 'NS-010', status: 'ACTIVE' },
   navigationAreas: ['MANAGER'],
   organization: { name: 'Northstar Studio' },
@@ -25,6 +27,7 @@ const MANAGER_CONTEXT = {
 const HR_CONTEXT = {
   account: { email: 'priya@northstar.test', name: 'Priya Shah' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Priya Shah', employeeNumber: 'NS-020', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE', 'HR'],
   organization: { name: 'Northstar Studio' },
@@ -33,6 +36,7 @@ const HR_CONTEXT = {
 const COMBINED_CONTEXT = {
   account: { email: 'alex@northstar.test', name: 'Alex Morgan' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Alex Morgan', employeeNumber: 'NS-099', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE', 'MANAGER', 'HR', 'SYSTEM'],
   organization: { name: 'Northstar Studio' },
@@ -394,6 +398,28 @@ test('preserves shared alert tone colors through the application stylesheet casc
 
     expect(resolvedColors.actual).toEqual(resolvedColors.expected);
   }
+});
+
+test('persists a bounded signed-out language choice and keeps focus on the selector', async ({
+  page,
+}) => {
+  await mockContext(page, () => false);
+  await page.goto('/sign-in');
+
+  const language = page.getByLabel('Language');
+  await language.focus();
+  await language.selectOption('de-DE');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de-DE');
+  await expect(page.getByLabel('Sprache')).toBeFocused();
+  await expect(page.getByRole('status')).toContainText(
+    'Die Sprache für den abgemeldeten Zustand wurde auf diesem Gerät aktualisiert.',
+  );
+  expect(await page.evaluate(() => localStorage.getItem('workledger.locale'))).toBe('de-DE');
+
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de-DE');
+  await expect(page.getByLabel('Sprache')).toHaveValue('de-DE');
+  await expectPageToHaveNoAxeViolations(page);
 });
 
 test('keeps runtime company identity accessible across broken assets, reflow, forced colors, and print', async ({
@@ -2510,6 +2536,7 @@ test('keeps system operations semantic and contained across desktop, mobile, and
       json: success({
         account: { email: 'system@northstar.test', name: 'System Administrator' },
         defaultPath: '/system/operations',
+        locale: 'en-GB',
         employee: null,
         navigationAreas: ['SYSTEM'],
         organization: { name: 'Northstar Studio' },
@@ -2633,25 +2660,31 @@ test('keeps route boundaries focused, recoverable, and purpose-minimized', async
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('presents the initial session check as one polite loading state', async ({ page }) => {
+test('blocks protected rendering until the authoritative account locale is ready', async ({
+  page,
+}) => {
   let releaseContext: (() => void) | undefined;
   const contextGate = new Promise<void>((resolve) => {
     releaseContext = resolve;
   });
+  await page.addInitScript(() => localStorage.setItem('workledger.locale', 'es-ES'));
   await page.route('**/v1/me/context', async (route) => {
     await contextGate;
-    await route.fulfill({ json: success(EMPLOYEE_CONTEXT), status: 200 });
+    await route.fulfill({
+      json: success({ ...EMPLOYEE_CONTEXT, locale: 'de-DE' }),
+      status: 200,
+    });
   });
   await mockToday(page);
 
   const navigation = page.goto('/today');
-  const loadingHeading = page.getByRole('heading', { name: 'Loading WorkLedger' });
-  await expect(loadingHeading).toBeVisible();
-  await expect(page.getByRole('main')).toHaveAttribute('aria-busy', 'true');
-  await capturePhase11Surface(page, 'route-boundary-loading-desktop-1280x720');
+  await expect(page.getByRole('main')).toHaveCount(0);
+  await expect(page.getByRole('heading')).toHaveCount(0);
   releaseContext?.();
   await navigation;
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de-DE');
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeFocused();
+  expect(await page.evaluate(() => localStorage.getItem('workledger.locale'))).toBe('es-ES');
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -3135,6 +3168,7 @@ test('creates, invites, and assigns an employee through the keyboard-complete HR
   await page.getByLabel('Employee number').fill('NS-021');
   await page.getByLabel('Account email').fill('Jordan@example.test');
   await page.getByLabel('Employment starts on').fill('2026-08-18');
+  await page.getByLabel('Invitation language').selectOption('de-DE');
   await page.getByLabel('Manager').check();
   await page.getByRole('button', { name: 'Create and invite employee' }).click();
 
@@ -3146,6 +3180,7 @@ test('creates, invites, and assigns an employee through the keyboard-complete HR
       email: 'jordan@example.test',
       employeeNumber: 'NS-021',
       employmentStartsOn: '2026-08-18',
+      locale: 'de-DE',
       roles: ['EMPLOYEE', 'MANAGER'],
     },
   ]);

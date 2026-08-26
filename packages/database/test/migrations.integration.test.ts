@@ -98,9 +98,16 @@ integrationTest(
         ),
       ).resolves.toBeDefined();
 
-      const account = await client.query<{ id: string }>(
-        `insert into auth_users (name, email) values ('Migration Account', 'migration@example.test') returning id`,
+      const account = await client.query<{ id: string; locale: string }>(
+        `insert into auth_users (name, email) values ('Migration Account', 'migration@example.test') returning id, locale`,
       );
+      expect(account.rows[0]?.locale).toBe('en-GB');
+      await expect(
+        client.query(
+          `insert into auth_users (name, email, locale)
+           values ('Unsupported Locale', 'unsupported-locale@example.test', 'en-US')`,
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
       await client.query(
         `insert into account_employee_links (organization_id, user_id, employee_id) values ($1, $2, $3)`,
         [organizationId, account.rows[0]?.id, employeeId],

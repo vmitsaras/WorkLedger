@@ -19,6 +19,7 @@ let routerSequence = 0;
 const EMPLOYEE_CONTEXT: SelfContext = {
   account: { email: 'employee@northstar.test', name: 'Emma Reed' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Emma Reed', employeeNumber: 'NS-001', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE'],
   organization: { name: 'Northstar Studio' },
@@ -224,7 +225,7 @@ test('validates report dates before changing URL state or rerunning the report',
   fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-02' } });
   await user.click(screen.getByRole('button', { name: 'Apply report filters' }));
 
-  expect(screen.getByRole('alert')).toHaveTextContent('keep the range within 366 days');
+  expect(await screen.findByRole('alert')).toHaveTextContent('keep the range within 366 days');
   expect(router.state.location.search).toContain('from=2026-08-01');
   expect(reportUrls).toHaveLength(1);
 });

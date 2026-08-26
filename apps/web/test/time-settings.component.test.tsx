@@ -16,6 +16,7 @@ const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 const HR_CONTEXT: SelfContext = {
   account: { email: 'hr@example.test', name: 'HR Administrator' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'HR Administrator', employeeNumber: 'HR-001', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE', 'HR'],
   organization: { name: 'Northstar Studio' },

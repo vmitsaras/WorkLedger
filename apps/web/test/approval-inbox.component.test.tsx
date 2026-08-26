@@ -23,6 +23,7 @@ let routerSequence = 0;
 const MANAGER_CONTEXT: SelfContext = {
   account: { email: 'maja@northstar.test', name: 'Maja Novak' },
   defaultPath: '/profile',
+  locale: 'en-GB',
   employee: { displayName: 'Maja Novak', employeeNumber: 'NS-010', status: 'ACTIVE' },
   navigationAreas: ['MANAGER'],
   organization: { name: 'Northstar Studio' },
@@ -32,6 +33,7 @@ const MANAGER_CONTEXT: SelfContext = {
 const HR_CONTEXT: SelfContext = {
   account: { email: 'hr@northstar.test', name: 'Alex Morgan' },
   defaultPath: '/employees',
+  locale: 'en-GB',
   employee: null,
   navigationAreas: ['HR'],
   organization: { name: 'Northstar Studio' },

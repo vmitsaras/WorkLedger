@@ -688,3 +688,25 @@ regression contract for `WL-1008`.
   formatting, package, bundle, and enforcement architecture. The implementation inventory and risk
   register are in `docs/139-phase-14-internationalization-architecture-audit.md`; the human-review
   structure is in `docs/140-phase-14-translation-glossary.md`.
+
+### D-508 — Non-catalog budget ownership for locale runtime behavior
+
+**Status:** Open; blocks `WL-1402` completion.
+
+- ADR 0013 and the Phase 14 roadmap require the existing 910,000-byte raw and 246,000-byte gzip
+  non-catalog JavaScript budgets to remain unchanged. The verified `WL-1401` graph measured 909,306
+  raw and 245,662 gzip bytes, leaving less space than the required account/device persistence,
+  selector, focus, rollback, and protected-startup behavior.
+- The complete `WL-1402` implementation compiles to 916,728 raw and 247,903 gzip non-catalog bytes.
+  The three locale resources remain separately bounded, only the resolved catalog loads, and the
+  full i18next/react-i18next engine remains absent from the production graph. No application code
+  has been reclassified as locale catalog data.
+- Option A preserves ADR 0013 literally and authorizes a separate, evidence-backed application
+  bundle-reduction slice before `WL-1402` completes. This expands scope beyond locale persistence
+  and must not become an opaque code-golf or unsafe-minification exercise.
+- Option B supersedes the unchanged-budget clause with a measured internationalization-runtime
+  allowance or narrowly revised application limits, with explicit runtime classification and new
+  regression tests. This requires an accepted ADR amendment and must anticipate the later
+  `WL-1404` activation of the already pinned translation engine.
+- Until one option is authorized, keep `WL-1402` unchecked, keep the numeric budget unchanged, and
+  do not start `WL-1403`.

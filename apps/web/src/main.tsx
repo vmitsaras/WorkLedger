@@ -1,6 +1,6 @@
-import { DEFAULT_LOCALE } from '@workledger/contracts';
+import { DEFAULT_LOCALE, type SelfContext } from '@workledger/contracts';
 import { initializeLocale } from '@workledger/i18n';
-import { synchronizeDocumentLocale, WorkLedgerLocaleProvider } from '@workledger/i18n/react';
+import { synchronizeDocumentLocale } from '@workledger/i18n/react';
 import { Button, RouteState } from '@workledger/ui';
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -8,6 +8,13 @@ import { onlineManager, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router/dom';
 
 import { createWorkLedgerQueryClient } from './app/query.js';
+import { loadSelfContext } from './app/api-client.js';
+import {
+  createWebLocaleController,
+  LocaleControllerProvider,
+  resolveDeviceLocale,
+} from './app/locale.js';
+import { selfContextQuery } from './app/query.js';
 import { captureResetGrant } from './app/reset-grant.js';
 import { createWorkLedgerRouter } from './app/router.js';
 import './styles.css';
@@ -27,23 +34,35 @@ void startWorkLedger();
 
 async function startWorkLedger() {
   try {
-    const localeRuntime = await initializeLocale(DEFAULT_LOCALE);
-    synchronizeDocumentLocale(localeRuntime);
-
     const queryClient = createWorkLedgerQueryClient();
-    const router = createWorkLedgerRouter(queryClient);
+    const context = await loadInitialSelfContext(queryClient);
+    const localeRuntime = await initializeLocale(context?.locale ?? resolveDeviceLocale());
+    const localeController = createWebLocaleController(localeRuntime);
+    const router = createWorkLedgerRouter(queryClient, localeController);
     root.render(
       <StrictMode>
-        <WorkLedgerLocaleProvider runtime={localeRuntime}>
+        <LocaleControllerProvider controller={localeController}>
           <QueryClientProvider client={queryClient}>
             <RouterProvider router={router} />
           </QueryClientProvider>
-        </WorkLedgerLocaleProvider>
+        </LocaleControllerProvider>
       </StrictMode>,
     );
   } catch {
     synchronizeDocumentLocale({ direction: 'ltr', locale: DEFAULT_LOCALE });
     root.render(<LocalizationStartupFailure />);
+  }
+}
+
+async function loadInitialSelfContext(
+  queryClient: ReturnType<typeof createWorkLedgerQueryClient>,
+): Promise<SelfContext | null> {
+  try {
+    const context = await loadSelfContext();
+    queryClient.setQueryData(selfContextQuery().queryKey, context);
+    return context;
+  } catch {
+    return null;
   }
 }
 

@@ -25,6 +25,7 @@ const migrationFiles = [
   '0004_audit_foundation.sql',
   '0005_idempotency_foundation.sql',
   '0006_zero_daily_delta.sql',
+  '0022_account_locale.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(

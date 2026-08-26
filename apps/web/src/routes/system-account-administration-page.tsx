@@ -1,6 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { DEFAULT_LOCALE, type SupportedLocale } from '@workledger/contracts';
+import { translateStaticMessage } from '@workledger/i18n';
 import { Alert, Button, Panel, RouteState, StatusBadge, TextField } from '@workledger/ui';
 
 import {
@@ -11,8 +13,10 @@ import {
   setSystemAdministratorRole,
 } from '../app/api-client.js';
 import { systemAccountPageQuery } from '../app/query.js';
+import { useOptionalWebLocale } from '../app/locale.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
+import { LanguageSelect } from '../components/language-select.js';
 
 const DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',
@@ -21,9 +25,11 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
 
 export function SystemAccountAdministrationPage() {
   const queryClient = useQueryClient();
+  const accountLocale = useOptionalWebLocale();
   const accountsQuery = useQuery(systemAccountPageQuery({ limit: 20, page: 1 }));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [locale, setLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const [status, setStatus] = useState<string>();
@@ -61,11 +67,13 @@ export function SystemAccountAdministrationPage() {
     try {
       await createMutation.mutateAsync({
         email: email.trim().toLocaleLowerCase('en-US'),
+        locale,
         name: name.trim(),
         systemAdministrator: true,
       });
       setName('');
       setEmail('');
+      setLocale(DEFAULT_LOCALE);
       await queryClient.invalidateQueries({ queryKey: ['administration', 'system-accounts'] });
       setStatus('Technical account created and a 24-hour invitation was issued.');
     } catch (error) {
@@ -131,6 +139,20 @@ export function SystemAccountAdministrationPage() {
             isInvalid={fieldErrors['technical-account-email'] !== undefined}
             errorMessage={fieldErrors['technical-account-email']}
             autoComplete="email"
+          />
+          <LanguageSelect
+            description={
+              accountLocale === null
+                ? "Sets the account language used for this invitation and the administrator's first sign-in."
+                : translateStaticMessage(
+                    accountLocale.runtime,
+                    'shared.locale.invitationDescription',
+                  )
+            }
+            id="technical-account-invitation-language"
+            label="Invitation language"
+            value={locale}
+            onChange={setLocale}
           />
           <Button type="submit" isDisabled={createMutation.isPending}>
             {createMutation.isPending ? 'Creating…' : 'Create and invite technical account'}

@@ -3,6 +3,7 @@ import type { BetterAuthOptions } from 'better-auth';
 import { createHash } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
 
+import { isSupportedLocale, type SupportedLocale } from '@workledger/contracts';
 import { createWorkLedgerAuthDatabase, type WorkLedgerAuthDatabase } from '@workledger/database';
 
 import type { RuntimeConfig } from '../config.js';
@@ -38,6 +39,7 @@ export const AUTH_SECURITY_PROFILE = Object.freeze({
 
 export type PasswordResetMessage = Readonly<{
   email: string;
+  locale: SupportedLocale;
   resetUrl: URL;
 }>;
 
@@ -202,7 +204,11 @@ export function createAuthOptions(
       async sendResetPassword({ token, user }) {
         const resetUrl = new URL('/reset-password', config.canonicalOrigin);
         resetUrl.searchParams.set('token', token);
-        await sendPasswordReset(Object.freeze({ email: user.email, resetUrl }));
+        const locale = await authDatabase.getUserLocale(user.id);
+        if (!isSupportedLocale(locale)) {
+          throw new Error('Password reset account locale is unavailable or unsupported.');
+        }
+        await sendPasswordReset(Object.freeze({ email: user.email, locale, resetUrl }));
       },
     },
     logger: { disabled: true },

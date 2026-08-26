@@ -10590,6 +10590,11 @@
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
                     "type": "string"
                   },
+                  "locale": {
+                    "default": "en-GB",
+                    "enum": ["en-GB", "de-DE", "es-ES"],
+                    "type": "string"
+                  },
                   "roles": {
                     "items": {
                       "enum": ["EMPLOYEE", "MANAGER", "HR_ADMINISTRATOR"],
@@ -60745,6 +60750,7 @@
                             { "type": "null" }
                           ]
                         },
+                        "locale": { "enum": ["en-GB", "de-DE", "es-ES"], "type": "string" },
                         "navigationAreas": {
                           "items": {
                             "enum": ["EMPLOYEE", "MANAGER", "HR", "SYSTEM"],
@@ -60802,6 +60808,7 @@
                         "account",
                         "defaultPath",
                         "employee",
+                        "locale",
                         "navigationAreas",
                         "organization",
                         "roles"
@@ -62888,6 +62895,693 @@
         "tags": ["Account"]
       }
     },
+    "/v1/me/locale": {
+      "put": {
+        "description": "Updates only the current authenticated account locale after same-origin and session-bound CSRF validation.",
+        "operationId": "updateSelfLocale",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "locale": { "enum": ["en-GB", "de-DE", "es-ES"], "type": "string" }
+                },
+                "required": ["locale"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "locale": { "enum": ["en-GB", "de-DE", "es-ES"], "type": "string" }
+                      },
+                      "required": ["locale"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "idempotentReplay": { "type": "boolean" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["requestId"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["data", "meta"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "ACCOUNT_EMAIL_ALREADY_EXISTS",
+                            "ACCOUNT_STATE_CONFLICT",
+                            "ABSENCE_TYPE_VERSION_CONFLICT",
+                            "ASSIGNMENT_EFFECTIVE_DATE_INVALID",
+                            "ASSIGNMENT_STATE_CONFLICT",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "EXPORT_EXPIRED",
+                            "EXPORT_NOT_FOUND",
+                            "EMPLOYEE_NUMBER_ALREADY_EXISTS",
+                            "EMPLOYEE_STATE_CONFLICT",
+                            "ENTITLEMENT_ADJUSTMENT_CONFLICT",
+                            "HOLIDAY_CHANGE_BLOCKED",
+                            "HOLIDAY_DATE_CONFLICT",
+                            "EMPLOYMENT_PERIOD_OVERLAP",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "MANAGER_ASSIGNMENT_CYCLE",
+                            "MANAGER_NOT_ELIGIBLE",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REPORT_EXPORT_TOO_LARGE",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "SCHEDULE_VERSION_CONFLICT",
+                            "SCHEDULE_VERSION_NO_CHANGE",
+                            "POLICY_VERSION_CONFLICT",
+                            "POLICY_VERSION_NO_CHANGE",
+                            "TEAM_NAME_ALREADY_EXISTS",
+                            "TEAM_STATE_CONFLICT",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "ACCOUNT_EMAIL_ALREADY_EXISTS",
+                            "ACCOUNT_STATE_CONFLICT",
+                            "ABSENCE_TYPE_VERSION_CONFLICT",
+                            "ASSIGNMENT_EFFECTIVE_DATE_INVALID",
+                            "ASSIGNMENT_STATE_CONFLICT",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "EXPORT_EXPIRED",
+                            "EXPORT_NOT_FOUND",
+                            "EMPLOYEE_NUMBER_ALREADY_EXISTS",
+                            "EMPLOYEE_STATE_CONFLICT",
+                            "ENTITLEMENT_ADJUSTMENT_CONFLICT",
+                            "HOLIDAY_CHANGE_BLOCKED",
+                            "HOLIDAY_DATE_CONFLICT",
+                            "EMPLOYMENT_PERIOD_OVERLAP",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "MANAGER_ASSIGNMENT_CYCLE",
+                            "MANAGER_NOT_ELIGIBLE",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REPORT_EXPORT_TOO_LARGE",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "SCHEDULE_VERSION_CONFLICT",
+                            "SCHEDULE_VERSION_NO_CHANGE",
+                            "POLICY_VERSION_CONFLICT",
+                            "POLICY_VERSION_NO_CHANGE",
+                            "TEAM_NAME_ALREADY_EXISTS",
+                            "TEAM_STATE_CONFLICT",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "ABSENCE_ALREADY_DECIDED",
+                            "ABSENCE_AMBIGUOUS_LOCAL_TIME",
+                            "ABSENCE_CANNOT_CANCEL",
+                            "ABSENCE_COVERAGE_INVALID",
+                            "ABSENCE_DURATION_NOT_ALLOWED",
+                            "ABSENCE_INSUFFICIENT_BALANCE",
+                            "ABSENCE_NONEXISTENT_LOCAL_TIME",
+                            "ABSENCE_OVERLAP",
+                            "ABSENCE_OVERRIDE_REASON_REQUIRED",
+                            "ABSENCE_POLICY_INACTIVE",
+                            "ABSENCE_REPORT_CANNOT_REJECT",
+                            "ABSENCE_REQUEST_NOTE_NOT_ALLOWED",
+                            "ABSENCE_RETROACTIVE_LIMIT",
+                            "ABSENCE_STATE_CHANGED",
+                            "ACCESS_DENIED",
+                            "APPROVAL_OUT_OF_SCOPE",
+                            "APPROVAL_REASON_REQUIRED",
+                            "APPROVAL_SELF_NOT_ALLOWED",
+                            "APPROVAL_STATE_CONFLICT",
+                            "ATTENDANCE_ALREADY_OFF_WORK",
+                            "ATTENDANCE_ALREADY_ON_BREAK",
+                            "ATTENDANCE_ALREADY_WORKING",
+                            "ATTENDANCE_AMBIGUOUS_LOCAL_TIME",
+                            "ATTENDANCE_BREAK_CONFIRMATION_REQUIRED",
+                            "ATTENDANCE_FUTURE_EVENT",
+                            "ATTENDANCE_INCOMPLETE",
+                            "ATTENDANCE_INVALID_EVENT_ORDER",
+                            "ATTENDANCE_INVALID_EVENT_PRECISION",
+                            "ATTENDANCE_NONEXISTENT_LOCAL_TIME",
+                            "ATTENDANCE_NOT_ON_BREAK",
+                            "ATTENDANCE_NOT_WORKING",
+                            "ATTENDANCE_OVERLAP",
+                            "ATTENDANCE_STATE_CHANGED",
+                            "AUTH_CSRF_INVALID",
+                            "AUTH_INVALID_CREDENTIALS",
+                            "AUTH_INVITATION_INVALID_OR_EXPIRED",
+                            "AUTH_ORIGIN_INVALID",
+                            "AUTH_REQUIRED",
+                            "AUTH_RESET_INVALID_OR_EXPIRED",
+                            "AUTH_SESSION_EXPIRED",
+                            "AUTH_SESSION_NOT_FRESH",
+                            "ACCOUNT_EMAIL_ALREADY_EXISTS",
+                            "ACCOUNT_STATE_CONFLICT",
+                            "ABSENCE_TYPE_VERSION_CONFLICT",
+                            "ASSIGNMENT_EFFECTIVE_DATE_INVALID",
+                            "ASSIGNMENT_STATE_CONFLICT",
+                            "CORRECTION_UNRESOLVED",
+                            "DATABASE_UNAVAILABLE",
+                            "EMPLOYEE_NOT_FOUND",
+                            "EXPORT_EXPIRED",
+                            "EXPORT_NOT_FOUND",
+                            "EMPLOYEE_NUMBER_ALREADY_EXISTS",
+                            "EMPLOYEE_STATE_CONFLICT",
+                            "ENTITLEMENT_ADJUSTMENT_CONFLICT",
+                            "HOLIDAY_CHANGE_BLOCKED",
+                            "HOLIDAY_DATE_CONFLICT",
+                            "EMPLOYMENT_PERIOD_OVERLAP",
+                            "IDEMPOTENCY_KEY_CONFLICT",
+                            "IDEMPOTENCY_KEY_INVALID",
+                            "IDEMPOTENCY_KEY_REQUIRED",
+                            "INTERNAL_ERROR",
+                            "LEDGER_SOURCE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_ENTRY",
+                            "LEAVE_ENTITLEMENT_LEDGER_DUPLICATE_SOURCE",
+                            "LEAVE_ENTITLEMENT_LEDGER_ENTRY_INVALID",
+                            "LEAVE_ENTITLEMENT_LEDGER_SCOPE_MISMATCH",
+                            "LEAVE_ENTITLEMENT_LEDGER_TOTAL_INVALID",
+                            "MALFORMED_REQUEST",
+                            "MANAGER_ASSIGNMENT_CYCLE",
+                            "MANAGER_NOT_ELIGIBLE",
+                            "ORGANIZATION_TIMEZONE_LOCKED",
+                            "PERIOD_ADJUSTMENT_REQUIRED",
+                            "PERIOD_ALREADY_SUBMITTED",
+                            "PERIOD_LEDGER_MISMATCH",
+                            "PERIOD_LOCKED",
+                            "PERIOD_NOT_READY",
+                            "PERIOD_REOPEN_REQUIRED",
+                            "PERIOD_SOURCE_CHANGED",
+                            "PERIOD_STATE_CONFLICT",
+                            "PERIOD_VERSION_CONFLICT",
+                            "PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED",
+                            "POLICY_ASSIGNMENT_OVERLAP",
+                            "POLICY_CONFIGURATION_INVALID",
+                            "POLICY_NOT_ASSIGNED",
+                            "RATE_LIMITED",
+                            "RECORD_VERSION_CONFLICT",
+                            "REPORT_EXPORT_TOO_LARGE",
+                            "REQUEST_TOO_LARGE",
+                            "ROUTE_NOT_FOUND",
+                            "SCHEDULE_ASSIGNMENT_OVERLAP",
+                            "SCHEDULE_NOT_ASSIGNED",
+                            "SCHEDULE_VERSION_CONFLICT",
+                            "SCHEDULE_VERSION_NO_CHANGE",
+                            "POLICY_VERSION_CONFLICT",
+                            "POLICY_VERSION_NO_CHANGE",
+                            "TEAM_NAME_ALREADY_EXISTS",
+                            "TEAM_STATE_CONFLICT",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_ENTRY",
+                            "TIME_ACCOUNT_LEDGER_DUPLICATE_SOURCE",
+                            "TIME_ACCOUNT_LEDGER_SCOPE_MISMATCH",
+                            "TIME_ACCOUNT_LEDGER_TOTAL_INVALID",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "VALIDATION_FAILED"
+                          ],
+                          "type": "string"
+                        },
+                        "context": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  { "maxLength": 256, "type": "string" },
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  { "type": "boolean" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    { "maxLength": 256, "type": "string" },
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    { "type": "boolean" },
+                                    { "type": "null" }
+                                  ]
+                                },
+                                "maxItems": 50,
+                                "type": "array"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "fields": {
+                          "additionalProperties": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "enum": [
+                                    "INVALID_FORMAT",
+                                    "INVALID_TYPE",
+                                    "INVALID_VALUE",
+                                    "REQUIRED",
+                                    "UNKNOWN_FIELD",
+                                    "VALUE_TOO_LARGE",
+                                    "VALUE_TOO_SMALL"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": { "maxLength": 256, "minLength": 1, "type": "string" }
+                              },
+                              "required": ["code", "message"],
+                              "type": "object"
+                            },
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "propertyNames": { "maxLength": 256, "minLength": 1, "type": "string" },
+                          "type": "object"
+                        },
+                        "message": { "maxLength": 256, "minLength": 1, "type": "string" },
+                        "requestId": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["code", "message", "requestId"],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": false,
+                      "properties": { "idempotentReplay": { "type": "boolean" } },
+                      "required": ["idempotentReplay"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["error"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Update current account locale",
+        "tags": ["Account"]
+      }
+    },
     "/v1/me/notifications": {
       "get": {
         "description": "Returns the authenticated actor’s generic in-app notification history. Copy and links omit absence subtype, sickness classification, reasons, notes, entitlement, reviewer context, and source identifiers.",
@@ -64616,6 +65310,7 @@
                             { "type": "null" }
                           ]
                         },
+                        "locale": { "enum": ["en-GB", "de-DE", "es-ES"], "type": "string" },
                         "navigationAreas": {
                           "items": {
                             "enum": ["EMPLOYEE", "MANAGER", "HR", "SYSTEM"],
@@ -64713,6 +65408,7 @@
                         "account",
                         "defaultPath",
                         "employee",
+                        "locale",
                         "navigationAreas",
                         "organization",
                         "roles",
@@ -85854,6 +86550,11 @@
                     "format": "email",
                     "maxLength": 320,
                     "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                    "type": "string"
+                  },
+                  "locale": {
+                    "default": "en-GB",
+                    "enum": ["en-GB", "de-DE", "es-ES"],
                     "type": "string"
                   },
                   "name": { "maxLength": 160, "minLength": 1, "type": "string" },

@@ -5,7 +5,10 @@ import type pg from 'pg';
 import { createWorkLedgerAuthDatabase } from '@workledger/database';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
-import { createWorkLedgerAuthentication } from '../src/auth/authentication.js';
+import {
+  createWorkLedgerAuthentication,
+  type PasswordResetMessage,
+} from '../src/auth/authentication.js';
 import { createRuntimeConfig } from '../src/config.js';
 import { createApiServer } from '../src/server.js';
 
@@ -20,6 +23,7 @@ const migrationFiles = [
   '0000_initial_schema.sql',
   '0001_integrity_constraints.sql',
   '0002_auth_foundation.sql',
+  '0022_account_locale.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
@@ -151,11 +155,12 @@ integrationTest(
       expect(knownFailure.statusCode).toBe(unknownFailure.statusCode);
       expect(knownFailure.payload).toBe(unknownFailure.payload);
 
-      const resetMessages: URL[] = [];
+      await fixture.client.query(`update auth_users set locale = 'de-DE' where id = $1`, [userId]);
+      const resetMessages: PasswordResetMessage[] = [];
       const resetAuthentication = createWorkLedgerAuthentication(
         { ...config, authSecret: AUTH_SECRET, databaseUrl: fixture.databaseUrl },
-        async ({ resetUrl }) => {
-          resetMessages.push(resetUrl);
+        async (message) => {
+          resetMessages.push(message);
         },
       );
       try {
@@ -175,10 +180,11 @@ integrationTest(
         expect(unknownReset.status).toBe(200);
         expect(await knownReset.text()).toBe(await unknownReset.text());
         expect(resetMessages).toHaveLength(1);
-        expect(resetMessages[0]?.origin).toBe(ORIGIN);
-        expect(resetMessages[0]?.pathname).toBe('/reset-password');
+        expect(resetMessages[0]?.locale).toBe('de-DE');
+        expect(resetMessages[0]?.resetUrl.origin).toBe(ORIGIN);
+        expect(resetMessages[0]?.resetUrl.pathname).toBe('/reset-password');
 
-        const resetToken = resetMessages[0]?.searchParams.get('token');
+        const resetToken = resetMessages[0]?.resetUrl.searchParams.get('token');
         if (resetToken === null || resetToken === undefined) {
           throw new Error('Expected a reset grant from the test reset sender.');
         }
@@ -223,7 +229,7 @@ integrationTest(
           jsonRequest('/api/auth/request-password-reset', { email: EMAIL }),
         );
         expect(expiringRequest.status).toBe(200);
-        const expiringToken = resetMessages[1]?.searchParams.get('token');
+        const expiringToken = resetMessages[1]?.resetUrl.searchParams.get('token');
         if (expiringToken === null || expiringToken === undefined) {
           throw new Error('Expected a second reset grant from the test reset sender.');
         }

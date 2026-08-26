@@ -2,13 +2,27 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 
-import type { ApplicationRole, SelfSessionSummary } from '@workledger/contracts';
+import type {
+  ApplicationRole,
+  SelfContext,
+  SelfProfile,
+  SelfSessionSummary,
+  SupportedLocale,
+} from '@workledger/contracts';
+import { translateStaticMessage } from '@workledger/i18n';
 import { Alert, Button, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
-import { ApiClientError, clearSessionMemory, revokeSelfSession } from '../app/api-client.js';
-import { selfProfileQuery } from '../app/query.js';
+import {
+  ApiClientError,
+  clearSessionMemory,
+  revokeSelfSession,
+  updateSelfLocale,
+} from '../app/api-client.js';
+import { useOptionalWebLocale } from '../app/locale.js';
+import { selfContextQuery, selfProfileQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
+import { LanguageSelect } from '../components/language-select.js';
 
 const ROLE_LABELS: Readonly<Record<ApplicationRole, string>> = {
   EMPLOYEE: 'Employee',
@@ -26,8 +40,11 @@ export function ProfilePage() {
   const profileQuery = useQuery(selfProfileQuery());
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<Readonly<{ kind: 'error' | 'success'; message: string }>>();
+  const locale = useOptionalWebLocale();
+  const [status, setStatus] =
+    useState<Readonly<{ kind: 'error' | 'success'; message: string; title: string }>>();
   const revokeMutation = useMutation({ mutationFn: revokeSelfSession });
+  const localeMutation = useMutation({ mutationFn: updateSelfLocale });
 
   if (profileQuery.isPending) {
     return (
@@ -73,14 +90,68 @@ export function ProfilePage() {
       if (result.revokedCurrentSession) {
         clearSessionMemory();
         queryClient.clear();
+        try {
+          await locale?.activateSignedOutLocale();
+        } catch {
+          // Session revocation remains authoritative if a signed-out catalog cannot load.
+        }
         setPendingSignInNotice('SIGNED_OUT');
         await navigate('/sign-in', { replace: true });
         return;
       }
       await queryClient.invalidateQueries({ queryKey: ['self', 'profile'] });
-      setStatus({ kind: 'success', message: `${session.deviceSummary} was signed out.` });
+      setStatus({
+        kind: 'success',
+        message: `${session.deviceSummary} was signed out.`,
+        title: 'Session revoked',
+      });
     } catch (error) {
-      setStatus({ kind: 'error', message: revokeErrorMessage(error) });
+      setStatus({
+        kind: 'error',
+        message: revokeErrorMessage(error),
+        title: 'Session not revoked',
+      });
+    }
+  }
+
+  async function handleLocaleChange(nextLocale: SupportedLocale) {
+    if (nextLocale === profile.locale) return;
+    setStatus(undefined);
+    const previousRuntime = locale?.runtime;
+    const contextKey = selfContextQuery().queryKey;
+    const profileKey = selfProfileQuery().queryKey;
+    const previousContext = queryClient.getQueryData<SelfContext>(contextKey);
+    const previousProfile = queryClient.getQueryData<SelfProfile>(profileKey);
+
+    try {
+      const nextRuntime = await locale?.activateLocale(nextLocale);
+      queryClient.setQueryData<SelfContext>(contextKey, (current) =>
+        current === undefined ? current : { ...current, locale: nextLocale },
+      );
+      queryClient.setQueryData<SelfProfile>(profileKey, (current) =>
+        current === undefined ? current : { ...current, locale: nextLocale },
+      );
+      await localeMutation.mutateAsync(nextLocale);
+      setStatus({
+        kind: 'success',
+        message:
+          nextRuntime === undefined
+            ? 'Your account language was saved.'
+            : translateStaticMessage(nextRuntime, 'shared.locale.accountSaved'),
+        title: 'Language changed',
+      });
+    } catch {
+      if (previousRuntime !== undefined) locale?.restoreLocale(previousRuntime);
+      queryClient.setQueryData(contextKey, previousContext);
+      queryClient.setQueryData(profileKey, previousProfile);
+      setStatus({
+        kind: 'error',
+        message:
+          previousRuntime === undefined
+            ? 'Your account language was not changed. Try again.'
+            : translateStaticMessage(previousRuntime, 'shared.locale.accountSaveFailed'),
+        title: 'Language not changed',
+      });
     }
   }
 
@@ -93,12 +164,15 @@ export function ProfilePage() {
       />
 
       {status === undefined ? null : (
-        <Alert
-          title={status.kind === 'error' ? 'Session not revoked' : 'Session revoked'}
-          tone={status.kind === 'error' ? 'danger' : 'success'}
-        >
-          <p className="m-0">{status.message}</p>
-        </Alert>
+        <div aria-live="polite" role="status">
+          <Alert
+            announce={false}
+            title={status.title}
+            tone={status.kind === 'error' ? 'danger' : 'success'}
+          >
+            <p className="m-0">{status.message}</p>
+          </Alert>
+        </div>
       )}
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -145,6 +219,39 @@ export function ProfilePage() {
               ]}
             />
           )}
+        </Panel>
+
+        <Panel
+          className="grid content-start gap-5 xl:col-span-2"
+          aria-labelledby="language-preference-title"
+        >
+          <div>
+            <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
+              Account preference
+            </p>
+            <h2 id="language-preference-title" className="m-0 mt-1 text-2xl font-bold">
+              Language and region
+            </h2>
+          </div>
+          <div className="max-w-md">
+            <LanguageSelect
+              description={
+                locale === null
+                  ? 'Used for your account on every device after you sign in.'
+                  : translateStaticMessage(locale.runtime, 'shared.locale.accountDescription')
+              }
+              disabled={localeMutation.isPending}
+              id="account-language"
+              label={
+                locale === null
+                  ? 'Language'
+                  : translateStaticMessage(locale.runtime, 'shared.locale.label')
+              }
+              restoreFocusAfterDisabled
+              value={profile.locale}
+              onChange={(nextLocale) => void handleLocaleChange(nextLocale)}
+            />
+          </div>
         </Panel>
       </div>
 

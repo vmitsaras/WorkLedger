@@ -55,6 +55,7 @@ import {
 import { RoutePresentation } from './route-presentation.js';
 import { canonicalRouteLabel } from './route-copy.js';
 import { setPendingSignInNotice } from './session-notice.js';
+import type { WebLocaleController } from './locale.js';
 import { parseTeamStatusView, toTeamStatusSearchParams } from './team-status-view.js';
 import { ApplicationShell } from '../components/application-shell.js';
 import {
@@ -96,11 +97,20 @@ import { AbsenceSettingsPage } from '../routes/absence-settings-page.js';
 import { AuditPage } from '../routes/audit-page.js';
 import { HolidaySettingsPage } from '../routes/holiday-settings-page.js';
 
-export function createWorkLedgerRouter(queryClient: QueryClient) {
-  return createBrowserRouter(createWorkLedgerRoutes(queryClient));
+const localeControllers = new WeakMap<QueryClient, WebLocaleController>();
+
+export function createWorkLedgerRouter(
+  queryClient: QueryClient,
+  localeController?: WebLocaleController,
+) {
+  return createBrowserRouter(createWorkLedgerRoutes(queryClient, localeController));
 }
 
-export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] {
+export function createWorkLedgerRoutes(
+  queryClient: QueryClient,
+  localeController?: WebLocaleController,
+): RouteObject[] {
+  if (localeController !== undefined) localeControllers.set(queryClient, localeController);
   const publicOnlyLoader = createPublicOnlyLoader(queryClient);
   const protectedLoader = createProtectedLoader(queryClient);
 
@@ -408,9 +418,13 @@ function createHomeLoader(queryClient: QueryClient): LoaderFunction {
   return async () => {
     try {
       const context = await queryClient.ensureQueryData(selfContextQuery());
+      await activateAccountLocale(queryClient, context);
       return redirect(context.defaultPath);
     } catch (error) {
-      if (isAuthenticationError(error)) return redirect('/sign-in');
+      if (isAuthenticationError(error)) {
+        await localeControllers.get(queryClient)?.activateSignedOut();
+        return redirect('/sign-in');
+      }
       throw error;
     }
   };
@@ -420,9 +434,11 @@ function createPublicOnlyLoader(queryClient: QueryClient): LoaderFunction {
   return async () => {
     try {
       const context = await queryClient.ensureQueryData(selfContextQuery());
+      await activateAccountLocale(queryClient, context);
       return redirect(context.defaultPath);
     } catch (error) {
       if (isAuthenticationError(error)) {
+        await localeControllers.get(queryClient)?.activateSignedOut();
         await ensureCompanyIdentity(queryClient);
         return null;
       }
@@ -774,7 +790,7 @@ async function ensureReportCatalog(queryClient: QueryClient) {
   try {
     return await queryClient.ensureQueryData(reportCatalogQuery());
   } catch (error) {
-    if (isAuthenticationError(error)) throw expireSession(queryClient, error);
+    if (isAuthenticationError(error)) throw await expireSession(queryClient, error);
     if (error instanceof ApiClientError && error.status === 403) {
       throw new Response(null, { status: 403 });
     }
@@ -818,20 +834,30 @@ async function requireReportAudience(queryClient: QueryClient): Promise<void> {
 
 async function requireContext(queryClient: QueryClient): Promise<SelfContext> {
   try {
-    return await queryClient.ensureQueryData(selfContextQuery());
+    const context = await queryClient.ensureQueryData(selfContextQuery());
+    await activateAccountLocale(queryClient, context);
+    return context;
   } catch (error) {
-    if (isAuthenticationError(error)) throw expireSession(queryClient, error);
+    if (isAuthenticationError(error)) throw await expireSession(queryClient, error);
     throw error;
   }
 }
 
-function expireSession(queryClient: QueryClient, error: unknown): Response {
+async function expireSession(queryClient: QueryClient, error: unknown): Promise<Response> {
   clearSessionMemory();
   queryClient.clear();
+  await localeControllers.get(queryClient)?.activateSignedOut();
   if (error instanceof ApiClientError && error.code === 'AUTH_SESSION_EXPIRED') {
     setPendingSignInNotice('SESSION_EXPIRED');
   }
   return redirect('/sign-in');
+}
+
+async function activateAccountLocale(
+  queryClient: QueryClient,
+  context: SelfContext,
+): Promise<void> {
+  await localeControllers.get(queryClient)?.activate(context.locale);
 }
 
 function isAuthenticationError(error: unknown): boolean {

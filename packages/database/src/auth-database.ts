@@ -28,6 +28,7 @@ export interface WorkLedgerAuthDatabase {
     now?: number,
   ): Promise<Readonly<{ allowed: boolean; retryAfter: number | null }>>;
   deactivateUser(userId: string): Promise<void>;
+  getUserLocale(userId: string): Promise<string | null>;
   getRateLimit(key: string): Promise<Readonly<RateLimitRecord> | null>;
   isUserActive(userId: string): Promise<boolean>;
   revokeUserSessions(userId: string): Promise<void>;
@@ -143,6 +144,14 @@ export function createWorkLedgerAuthDatabase(
         await transaction.update(authUsers).set({ active: false }).where(eq(authUsers.id, userId));
         await transaction.delete(authSessions).where(eq(authSessions.userId, userId));
       });
+    },
+    async getUserLocale(userId: string): Promise<string | null> {
+      const [row] = await database
+        .select({ locale: authUsers.locale })
+        .from(authUsers)
+        .where(eq(authUsers.id, userId))
+        .limit(1);
+      return row?.locale ?? null;
     },
     async getRateLimit(key: string): Promise<Readonly<RateLimitRecord> | null> {
       const [row] = await database

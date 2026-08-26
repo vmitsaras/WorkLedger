@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { selfSessionSummarySchema } from './account.js';
 import { createSuccessEnvelopeSchema } from './api.js';
+import { DEFAULT_LOCALE, supportedLocaleSchema } from './locales.js';
 
 export const HR_MANAGED_ROLES = ['EMPLOYEE', 'MANAGER', 'HR_ADMINISTRATOR'] as const;
 export const EMPLOYEE_ADMIN_STATUSES = ['ALL', 'ACTIVE', 'INACTIVE'] as const;
@@ -145,6 +146,7 @@ export const createEmployeeAdminRequestSchema = z
     email: inputEmailSchema,
     employeeNumber: employeeNumberSchema,
     employmentStartsOn: localDateSchema,
+    locale: supportedLocaleSchema.default(DEFAULT_LOCALE),
     roles: z.array(hrManagedRoleSchema).min(1).max(HR_MANAGED_ROLES.length),
   })
   .refine((value) => value.roles.includes('EMPLOYEE'), {
@@ -202,6 +204,7 @@ export const systemAccountPageSchema = z.strictObject({
 
 export const createTechnicalAccountRequestSchema = z.strictObject({
   email: inputEmailSchema,
+  locale: supportedLocaleSchema.default(DEFAULT_LOCALE),
   name: displayTextSchema,
   systemAdministrator: z.literal(true),
 });

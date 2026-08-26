@@ -3,12 +3,14 @@ import {
   formatDateOnly,
   formatDuration,
   formatInstant,
+  initializeLocale,
   initializeI18n,
   loadCatalog,
   matchBrowserLocale,
   requireSupportedLocale,
   resolveSignedOutLocale,
   translate,
+  translateStaticMessage,
 } from '../src/index.js';
 
 test('resolves an allowlisted device preference before browser languages', () => {
@@ -67,6 +69,14 @@ test('loads one requested local catalog with every production namespace', async 
     'shared',
     'system',
   ]);
+});
+
+test('reads selector copy directly from the active lightweight catalog', async () => {
+  const runtime = await initializeLocale('de-DE');
+  expect(translateStaticMessage(runtime, 'shared.locale.label')).toBe('Sprache');
+  expect(translateStaticMessage(runtime, 'shared.locale.accountSaved')).toBe(
+    'Ihre Kontosprache wurde aktualisiert.',
+  );
 });
 
 test('initializes a typed plain-text runtime with British English fallback configured', async () => {

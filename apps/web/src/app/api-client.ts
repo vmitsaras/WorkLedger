@@ -26,6 +26,7 @@ import {
   revokeSelfSessionEnvelopeSchema,
   selfContextEnvelopeSchema,
   selfProfileEnvelopeSchema,
+  updateSelfLocaleEnvelopeSchema,
   startBreakEnvelopeSchema,
   teamStatusEnvelopeSchema,
   teamCalendarEnvelopeSchema,
@@ -65,6 +66,8 @@ import {
   type DailyTimeRecord,
   type SelfContext,
   type SelfProfile,
+  type SupportedLocale,
+  type UpdateSelfLocaleResult,
   type TodayAttendance,
   type MyTime,
   type MyTimeQuery,
@@ -170,6 +173,18 @@ export async function loadSelfContext(): Promise<SelfContext> {
 export async function loadSelfProfile(): Promise<SelfProfile> {
   const body = await requestJson('/v1/me/profile');
   const parsed = selfProfileEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function updateSelfLocale(locale: SupportedLocale): Promise<UpdateSelfLocaleResult> {
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/me/locale', {
+    body: JSON.stringify({ locale }),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'PUT',
+  });
+  const parsed = updateSelfLocaleEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

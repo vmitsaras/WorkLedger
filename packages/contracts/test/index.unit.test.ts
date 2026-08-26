@@ -15,7 +15,9 @@ import {
   clockOutEnvelopeSchema,
   clockOutRequestSchema,
   companyIdentityEnvelopeSchema,
+  createEmployeeAdminRequestSchema,
   createSuccessEnvelopeSchema,
+  createTechnicalAccountRequestSchema,
   resumeAttendanceEnvelopeSchema,
   notificationHistoryEnvelopeSchema,
   notificationQuerySchema,
@@ -36,6 +38,7 @@ import {
   teamCalendarQuerySchema,
   teamStatusEnvelopeSchema,
   todayAttendanceEnvelopeSchema,
+  updateSelfLocaleRequestSchema,
   workspaceDependencies,
   workspacePackage,
 } from '../src/index.js';
@@ -812,6 +815,32 @@ test('allows only production locales at the transport boundary', () => {
   }
 });
 
+test('defaults invitation locale and strictly validates account locale mutations', () => {
+  const employee = {
+    displayName: 'Employee Example',
+    email: 'employee@example.test',
+    employeeNumber: 'EX-001',
+    employmentStartsOn: '2026-08-26',
+    roles: ['EMPLOYEE'],
+  };
+  const technical = {
+    email: 'technical@example.test',
+    name: 'Technical Example',
+    systemAdministrator: true,
+  };
+
+  expect(createEmployeeAdminRequestSchema.parse(employee).locale).toBe(DEFAULT_LOCALE);
+  expect(createTechnicalAccountRequestSchema.parse(technical).locale).toBe(DEFAULT_LOCALE);
+  expect(createEmployeeAdminRequestSchema.parse({ ...employee, locale: 'de-DE' }).locale).toBe(
+    'de-DE',
+  );
+  expect(updateSelfLocaleRequestSchema.parse({ locale: 'es-ES' })).toEqual({ locale: 'es-ES' });
+  expect(
+    updateSelfLocaleRequestSchema.safeParse({ accountId: 'another', locale: 'en-GB' }).success,
+  ).toBe(false);
+  expect(updateSelfLocaleRequestSchema.safeParse({ locale: 'en-US' }).success).toBe(false);
+});
+
 test('keeps self-profile and session transport fields purpose-minimized', () => {
   const profile = {
     data: {
@@ -822,6 +851,7 @@ test('keeps self-profile and session transport fields purpose-minimized', () => 
         employeeNumber: 'EX-001',
         status: 'ACTIVE',
       },
+      locale: 'de-DE',
       navigationAreas: ['EMPLOYEE'],
       organization: { name: 'Example Organization' },
       roles: ['EMPLOYEE'],

@@ -6,6 +6,7 @@ import {
   companyIdentityFaviconPathSchema,
   companyIdentityLogoPathSchema,
 } from './company-identity.js';
+import { supportedLocaleSchema } from './locales.js';
 
 export const APPLICATION_ROLES = [
   'EMPLOYEE',
@@ -49,6 +50,7 @@ export const selfContextSchema = z.strictObject({
   account: accountSummarySchema,
   defaultPath: z.enum(['/today', '/employees', '/system/operations', '/profile']),
   employee: employeeSelfSummarySchema.nullable(),
+  locale: supportedLocaleSchema,
   navigationAreas: z.array(navigationAreaSchema).max(NAVIGATION_AREAS.length),
   organization: organizationSummarySchema,
   roles: z.array(applicationRoleSchema).max(APPLICATION_ROLES.length),
@@ -76,11 +78,22 @@ export const revokeSelfSessionResultSchema = z.strictObject({
   revokedSessionId: opaqueIdentifierSchema,
 });
 
+export const updateSelfLocaleRequestSchema = z.strictObject({
+  locale: supportedLocaleSchema,
+});
+
+export const updateSelfLocaleResultSchema = z.strictObject({
+  locale: supportedLocaleSchema,
+});
+
 export const selfContextEnvelopeSchema = createSuccessEnvelopeSchema(selfContextSchema);
 export const selfProfileEnvelopeSchema = createSuccessEnvelopeSchema(selfProfileSchema);
 export const csrfBootstrapEnvelopeSchema = createSuccessEnvelopeSchema(csrfBootstrapSchema);
 export const revokeSelfSessionEnvelopeSchema = createSuccessEnvelopeSchema(
   revokeSelfSessionResultSchema,
+);
+export const updateSelfLocaleEnvelopeSchema = createSuccessEnvelopeSchema(
+  updateSelfLocaleResultSchema,
 );
 
 export type ApplicationRole = z.infer<typeof applicationRoleSchema>;
@@ -88,3 +101,5 @@ export type NavigationArea = z.infer<typeof navigationAreaSchema>;
 export type SelfContext = z.infer<typeof selfContextSchema>;
 export type SelfProfile = z.infer<typeof selfProfileSchema>;
 export type SelfSessionSummary = z.infer<typeof selfSessionSummarySchema>;
+export type UpdateSelfLocaleRequest = z.infer<typeof updateSelfLocaleRequestSchema>;
+export type UpdateSelfLocaleResult = z.infer<typeof updateSelfLocaleResultSchema>;

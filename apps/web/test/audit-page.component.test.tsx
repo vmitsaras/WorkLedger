@@ -15,6 +15,7 @@ import { createWorkLedgerRoutes } from '../src/app/router.js';
 const CONTEXT: SelfContext = {
   account: { email: 'hr@example.test', name: 'HR Administrator' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'HR Administrator', employeeNumber: 'HR-001', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE', 'HR'],
   organization: { name: 'Northstar Studio' },
@@ -40,6 +41,7 @@ const PAGE: DomainAuditPage = {
 const SYSTEM_CONTEXT: SelfContext = {
   account: { email: 'system@example.test', name: 'System Administrator' },
   defaultPath: '/system/operations',
+  locale: 'en-GB',
   employee: null,
   navigationAreas: ['SYSTEM'],
   organization: { name: 'Northstar Studio' },

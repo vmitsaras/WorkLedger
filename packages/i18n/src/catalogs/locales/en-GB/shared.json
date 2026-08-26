@@ -9,5 +9,15 @@
     "greeting": "Hello, {{name}}.",
     "initializing": "Loading language settings…",
     "loadError": "WorkLedger could not load the selected language."
+  },
+  "locale": {
+    "accountDescription": "This language is saved to your account and follows you to other devices.",
+    "accountSaveFailed": "Your language could not be saved. WorkLedger restored the previous language.",
+    "accountSaved": "Your account language was updated.",
+    "deviceDescription": "This non-sensitive preference is used only while you are signed out on this device.",
+    "deviceSaveFailed": "The language could not be saved on this device. WorkLedger restored the previous language.",
+    "deviceSaved": "The signed-out language was updated for this device.",
+    "invitationDescription": "The invitation and new account start with this language. The account owner can change it later.",
+    "label": "Language"
   }
 }

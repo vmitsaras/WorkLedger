@@ -6,6 +6,7 @@ import type { NavigationArea, SelfContext } from '@workledger/contracts';
 import { Alert, Button, Drawer } from '@workledger/ui';
 
 import { clearSessionMemory, signOut } from '../app/api-client.js';
+import { useOptionalWebLocale } from '../app/locale.js';
 import { canonicalRouteLabel } from '../app/route-copy.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import {
@@ -369,6 +370,7 @@ function navigationItemsFor(
 function ShellSignOutButton() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const locale = useOptionalWebLocale();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -389,6 +391,11 @@ function ShellSignOutButton() {
             await signOut();
             clearSessionMemory();
             queryClient.clear();
+            try {
+              await locale?.activateSignedOutLocale();
+            } catch {
+              // A completed sign-out must not be reported as failed if a catalog cannot load.
+            }
             setPendingSignInNotice('SIGNED_OUT');
             await navigate('/sign-in', { replace: true });
           } catch {

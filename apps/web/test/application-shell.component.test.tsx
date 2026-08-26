@@ -16,7 +16,13 @@ import type {
   TodayAttendance,
 } from '@workledger/contracts';
 import { COHERENT_TODAY_ATTENDANCE, expectNoAxeViolations } from '@workledger/test-utils';
+import { initializeLocale } from '@workledger/i18n';
 
+import {
+  createWebLocaleController,
+  LocaleControllerProvider,
+  type WebLocaleController,
+} from '../src/app/locale.js';
 import { createWorkLedgerQueryClient, todayAttendanceQuery } from '../src/app/query.js';
 import { clearSessionMemory } from '../src/app/api-client.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
@@ -30,6 +36,7 @@ let routerSequence = 0;
 const EMPLOYEE_CONTEXT: SelfContext = {
   account: { email: 'emma@northstar.test', name: 'Emma Reed' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Emma Reed', employeeNumber: 'NS-001', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE'],
   organization: { name: 'Northstar Studio' },
@@ -38,6 +45,7 @@ const EMPLOYEE_CONTEXT: SelfContext = {
 const SYSTEM_CONTEXT: SelfContext = {
   account: { email: 'system@northstar.test', name: 'System Administrator' },
   defaultPath: '/system/operations',
+  locale: 'en-GB',
   employee: null,
   navigationAreas: ['SYSTEM'],
   organization: { name: 'Northstar Studio' },
@@ -46,6 +54,7 @@ const SYSTEM_CONTEXT: SelfContext = {
 const COMBINED_CONTEXT: SelfContext = {
   account: { email: 'alex@northstar.test', name: 'Alex Morgan' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Alex Morgan', employeeNumber: 'NS-099', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE', 'MANAGER', 'HR', 'SYSTEM'],
   organization: { name: 'Northstar Studio' },
@@ -2084,10 +2093,57 @@ test('keeps profile fields read-only and clears protected state after current-se
   await expectNoAxeViolations(container);
 });
 
-function renderApplication(initialEntry: string) {
+test('switches account locale immediately and restores runtime, cache, and focus on failure', async () => {
+  const profile: SelfProfile = { ...EMPLOYEE_CONTEXT, sessions: [] };
+  const localeRequests: string[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = requestPath(input);
+      if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (path === '/v1/me/profile') return successResponse(profile);
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(43) });
+      if (path === '/v1/me/locale' && init?.method === 'PUT') {
+        const request = JSON.parse(String(init.body)) as { locale: string };
+        localeRequests.push(request.locale);
+        return request.locale === 'es-ES'
+          ? apiErrorResponse('DATABASE_UNAVAILABLE', 503)
+          : successResponse({ locale: request.locale });
+      }
+      throw new Error(`Unexpected test request: ${path}`);
+    }),
+  );
+  const runtime = await initializeLocale('en-GB');
+  const localeController = createWebLocaleController(runtime);
+  const user = userEvent.setup();
+  const { container } = renderApplication('/profile', localeController);
+
+  await screen.findByRole('heading', { name: 'Profile' });
+  const language = screen.getByRole('combobox', { name: 'Language' });
+  language.focus();
+  await user.selectOptions(language, 'de-DE');
+  await waitFor(() => expect(document.documentElement.lang).toBe('de-DE'));
+  expect(language).toHaveValue('de-DE');
+  expect(language).toHaveFocus();
+  expect(screen.getByRole('status')).toHaveTextContent('Ihre Kontosprache wurde aktualisiert.');
+
+  await user.selectOptions(language, 'es-ES');
+  await waitFor(() =>
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Ihre Sprache konnte nicht gespeichert werden.',
+    ),
+  );
+  expect(language).toHaveValue('de-DE');
+  expect(document.documentElement.lang).toBe('de-DE');
+  expect(language).toHaveFocus();
+  expect(localeRequests).toEqual(['de-DE', 'es-ES']);
+  await expectNoAxeViolations(container);
+});
+
+function renderApplication(initialEntry: string, localeController?: WebLocaleController) {
   const queryClient = createWorkLedgerQueryClient();
   const url = new URL(initialEntry, 'https://workledger.test');
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: [
       {
         key: `component-test-${(routerSequence += 1).toString()}`,
@@ -2096,10 +2152,19 @@ function renderApplication(initialEntry: string) {
       },
     ],
   });
-  const rendered = render(
+  const application = (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-    </QueryClientProvider>,
+    </QueryClientProvider>
+  );
+  const rendered = render(
+    localeController === undefined ? (
+      application
+    ) : (
+      <LocaleControllerProvider controller={localeController}>
+        {application}
+      </LocaleControllerProvider>
+    ),
   );
   return { ...rendered, queryClient };
 }

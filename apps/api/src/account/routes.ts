@@ -8,6 +8,8 @@ import {
   revokeSelfSessionEnvelopeSchema,
   selfContextEnvelopeSchema,
   selfProfileEnvelopeSchema,
+  updateSelfLocaleEnvelopeSchema,
+  updateSelfLocaleRequestSchema,
 } from '@workledger/contracts';
 import type { WorkLedgerDatabase } from '@workledger/database';
 
@@ -58,6 +60,42 @@ export function registerAccountSelfServiceRoutes(
       const context = await selfService.getContext(identity, requestInstant());
       reply.header('cache-control', 'private, no-store');
       return { data: context, meta: { requestId: request.id } };
+    },
+  );
+
+  api.put(
+    '/v1/me/locale',
+    {
+      schema: {
+        body: updateSelfLocaleRequestSchema,
+        description:
+          'Updates only the current authenticated account locale after same-origin and session-bound CSRF validation.',
+        operationId: 'updateSelfLocale',
+        response: {
+          200: updateSelfLocaleEnvelopeSchema,
+          ...AUTH_ERROR_RESPONSES,
+          422: apiErrorEnvelopeSchema,
+        },
+        summary: 'Update current account locale',
+        tags: ['Account'],
+      },
+    },
+    async (request, reply) => {
+      requireSameOrigin(request, config.canonicalOrigin);
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      const identity = parseSelfServiceIdentity({
+        accountId: session.userId,
+        currentSessionId: session.id,
+        fresh: session.fresh,
+      });
+      await requireRequestCsrf(request, authentication, headers);
+      const result = await selfService.updateLocale(
+        identity,
+        request.body.locale,
+        requestInstant(),
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data: result, meta: { requestId: request.id } };
     },
   );
 

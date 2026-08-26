@@ -11,5 +11,15 @@
     "greeting": "Hola, {{name}}.",
     "initializing": "Cargando la configuración de idioma…",
     "loadError": "WorkLedger no pudo cargar el idioma seleccionado."
+  },
+  "locale": {
+    "accountDescription": "Este idioma se guarda en tu cuenta y se usa también en tus otros dispositivos.",
+    "accountSaveFailed": "No se pudo guardar el idioma. WorkLedger restauró el idioma anterior.",
+    "accountSaved": "Se actualizó el idioma de tu cuenta.",
+    "deviceDescription": "Esta preferencia no sensible solo se usa mientras no has iniciado sesión en este dispositivo.",
+    "deviceSaveFailed": "No se pudo guardar el idioma en este dispositivo. WorkLedger restauró el idioma anterior.",
+    "deviceSaved": "Se actualizó el idioma sin sesión iniciada para este dispositivo.",
+    "invitationDescription": "La invitación y la nueva cuenta empiezan con este idioma. La persona titular puede cambiarlo más adelante.",
+    "label": "Idioma"
   }
 }

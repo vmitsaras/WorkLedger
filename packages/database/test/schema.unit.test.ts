@@ -64,7 +64,12 @@ describe('initial PostgreSQL schema', () => {
   });
 
   it('maps the Better Auth persistence surface without exposing domain roles', () => {
-    expect(getTableConfig(authUsers).name).toBe('auth_users');
+    const userConfiguration = getTableConfig(authUsers);
+    expect(userConfiguration.name).toBe('auth_users');
+    expect(userConfiguration.columns.find(({ name }) => name === 'locale')?.default).toBe('en-GB');
+    expect(userConfiguration.checks.map(({ name }) => name)).toContain(
+      'auth_users_locale_supported',
+    );
     expect(getTableConfig(authSessions).indexes.map(({ config }) => config.name)).toContain(
       'auth_sessions_token_uidx',
     );
@@ -286,6 +291,7 @@ describe('initial PostgreSQL schema', () => {
       '0019_stale_loners',
       '0020_chemical_micromacro',
       '0021_retention_tracking',
+      '0022_account_locale',
     ]);
   });
 });

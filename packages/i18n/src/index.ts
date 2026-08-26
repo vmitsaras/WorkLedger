@@ -28,7 +28,12 @@ export {
   formatNumber,
 } from './format.js';
 export { loadCatalog } from './load-catalog.js';
-export { initializeLocale, type LocaleRuntime } from './locale-runtime.js';
+export {
+  initializeLocale,
+  translateStaticMessage,
+  type LocaleRuntime,
+  type StaticMessageKey,
+} from './locale-runtime.js';
 export {
   LOCALE_DIRECTIONS,
   UnsupportedLocaleError,

@@ -19,6 +19,14 @@ export type MessageParameterMap = Readonly<{
   'shared.i18n.greeting': Readonly<{ name: string }>;
   'shared.i18n.initializing': undefined;
   'shared.i18n.loadError': undefined;
+  'shared.locale.accountDescription': undefined;
+  'shared.locale.accountSaveFailed': undefined;
+  'shared.locale.accountSaved': undefined;
+  'shared.locale.deviceDescription': undefined;
+  'shared.locale.deviceSaveFailed': undefined;
+  'shared.locale.deviceSaved': undefined;
+  'shared.locale.invitationDescription': undefined;
+  'shared.locale.label': undefined;
 }>;
 
 export const MESSAGE_KEYS = [
@@ -27,6 +35,14 @@ export const MESSAGE_KEYS = [
   'shared.i18n.greeting',
   'shared.i18n.initializing',
   'shared.i18n.loadError',
+  'shared.locale.accountDescription',
+  'shared.locale.accountSaveFailed',
+  'shared.locale.accountSaved',
+  'shared.locale.deviceDescription',
+  'shared.locale.deviceSaveFailed',
+  'shared.locale.deviceSaved',
+  'shared.locale.invitationDescription',
+  'shared.locale.label',
 ] as const satisfies readonly (keyof MessageParameterMap)[];
 
 export type MessageKey = (typeof MESSAGE_KEYS)[number];

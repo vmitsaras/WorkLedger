@@ -39,6 +39,7 @@ const allMigrationFiles = [
   '0019_stale_loners.sql',
   '0020_chemical_micromacro.sql',
   '0021_retention_tracking.sql',
+  '0022_account_locale.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 describe('User data export', () => {

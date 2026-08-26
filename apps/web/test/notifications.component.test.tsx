@@ -19,6 +19,7 @@ let routerSequence = 0;
 const CONTEXT: SelfContext = {
   account: { email: 'employee@northstar.test', name: 'Emma Reed' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Emma Reed', employeeNumber: 'NS-001', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE'],
   organization: { name: 'Northstar Studio' },

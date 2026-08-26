@@ -1,6 +1,6 @@
 # Phase 14 Internationalization and Multilingual Product Roadmap
 
-**Status:** Active; `WL-1400` and `WL-1401` complete; `WL-1402` next
+**Status:** Active; `WL-1400` and `WL-1401` complete; `WL-1402` blocked in release verification by `D-508`
 **Tasks:** `WL-1400` through `WL-1410`
 **Dependency:** Completed Phase 13 gate `WL-1313` at workspace version `0.14.0`
 **Gate version:** `0.15.0`
@@ -17,7 +17,10 @@ This document began as the roadmap and implementation handoff. `WL-1400` accepte
 recorded the route and output audit, risk register, API prose boundary, and glossary structure.
 `WL-1401` has now established the typed locale contract, private i18n package, local catalogs,
 formatters, React/React Aria synchronization, automated catalog checks, and separate locale-chunk
-budgets. Account and device persistence remain `WL-1402`.
+budgets. The `WL-1402` implementation now contains authoritative account and invitation locale
+persistence, the bounded signed-out device preference, accessible selectors, and immediate
+switching with rollback, but it cannot be marked complete until `D-508` resolves the measured
+non-catalog bundle conflict.
 
 ## 2. Locked product and architecture instructions
 
@@ -191,8 +194,10 @@ and its own content, layout, accessibility, output, and operational evidence.
 `WL-1400` and `WL-1401` are complete. ADR 0013 is accepted, the canonical inventory and risk register are in
 `docs/139-phase-14-internationalization-architecture-audit.md`, and the translation-review structure
 is in `docs/140-phase-14-translation-glossary.md`. The executable runtime foundation and measured
-bundle evidence are in `docs/141-shared-i18n-foundation.md`.
+bundle evidence are in `docs/141-shared-i18n-foundation.md`. Account, invitation, and device locale
+evidence is in `docs/142-account-locale-preferences.md`.
 
-`WL-1402` is next. It owns authenticated account and invitation locale persistence, bounded
-signed-out device preference, selectors, immediate switching, focus continuity, and failure
-recovery. It must not begin the user-facing API prose migration owned by `WL-1403`.
+`WL-1402` remains active. Its functional evidence passes, but its production build is 6,728 raw and
+1,903 gzip bytes above ADR 0013's unchanged non-catalog gates. `D-508` must choose between a bounded
+budget-contract revision and a separately authorized bundle-reduction slice before `WL-1402` can
+complete. `WL-1403` must not start first.

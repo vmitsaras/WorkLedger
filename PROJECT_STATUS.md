@@ -3,22 +3,25 @@
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 13 complete — 2 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1401` shared internationalization foundation complete — version 0.14.0
-**Active task:** `WL-1402` (next; not started)
-**Status:** Typed locale, catalog, formatting, React synchronization, and bundle contracts are executable
+**Current milestone:** `WL-1402` account and device locale implementation awaiting bundle decision
+**Active task:** `WL-1402` (blocked in release verification by `D-508`)
+**Status:** Functional gates pass; production bundle exceeds ADR 0013's unchanged limits
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 13 is complete at `0.14.0`. `WL-1400` accepted ADR 0013 and `WL-1401` now provides the exact
-locale contract, private typed i18n package, local catalog chunks, explicit formatters, React and
-React Aria synchronization, catalog enforcement, and separate locale budgets. The existing product
-still activates `en-GB` only so untranslated workflows do not present a mixed-language interface.
-`WL-1402` is next and owns account/invitation persistence, signed-out device preference, selectors,
-and immediate switching. API descriptor migrations, workflow translation, and outbound output
-remain gated behind their numbered tasks. The broader `D-502` retail browser and
-assistive-technology matrix remains an explicit limitation rather than a conformance claim. The
-portfolio presentation scope remains an unnumbered draft.
+Phase 13 is complete at `0.14.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
+foundation, and the `WL-1402` implementation now persists authoritative account and invitation
+locales plus the bounded signed-out device preference. Profile and authentication selectors switch
+the available catalog messages immediately with focus continuity and failure rollback; protected
+content waits for the account catalog. Most product copy remains English until its owned
+translation tasks, so these selectors currently demonstrate only the locale preference messages.
+Functional tests pass, but the production graph exceeds ADR 0013's unchanged non-catalog limits by
+6,728 raw and 1,903 gzip bytes. `D-508` must resolve that contradiction before `WL-1402` can
+complete or `WL-1403` can start. Workflow translation and outbound output remain gated behind
+their numbered tasks. The broader `D-502` retail browser and assistive-technology matrix remains an
+explicit limitation rather than a conformance claim. The portfolio presentation scope remains an
+unnumbered draft.
 
 ## Verified decisions
 
@@ -2439,30 +2442,57 @@ portfolio presentation scope remains an unnumbered draft.
   the production/workspace build. One intentional browser capture and 45 PostgreSQL-dependent
   integration cases remain skipped because their opt-in service/evidence is unavailable.
 
+**2026-08-26 — WL-1402 account and device locale implementation candidate**
+
+- Added the required `auth_users.locale` field, `en-GB` upgrade default, exact database allowlist,
+  locale-aware self-context/Profile contracts, and a current-account-only `PUT /v1/me/locale`
+  mutation protected by session, origin, CSRF, strict input, and no-store response controls.
+- Added initial employee and technical invitation locale selection. Reissued invitations and
+  password-reset sender boundaries now receive the stored account locale; localized outbound
+  rendering remains `WL-1407`.
+- Added the bounded `workledger.locale` signed-out device preference with invalid-value removal,
+  browser-language matching, storage-failure recovery, and authoritative account precedence before
+  protected UI mounts.
+- Added accessible Profile and authentication language selectors, immediate catalog/React
+  Aria/document synchronization, Query-cache updates, one polite outcome, in-place focus recovery,
+  and runtime/cache rollback when persistence fails.
+- Added contract, migration, repository, API, component, axe, and browser coverage for defaults,
+  unsupported values, CSRF/origin failures, cross-session persistence, invitation/reset locale
+  propagation, startup precedence without a prior-language flash, focus, and rollback. Also aligned
+  the Today integration fixture with the decision-actor migrations its seed SQL already required.
+- Formatting, lint, strict TypeScript, 46 tooling tests, 394 unit/component tests, 25 PostgreSQL
+  integration tests with one intentional skip, and 39 browser scenarios with one intentional skip
+  pass. The application compiles and emits the expected locale chunks.
+- The unchanged bundle gate fails at 916,728 raw and 247,903 gzip non-catalog JavaScript bytes,
+  respectively 6,728 and 1,903 bytes above ADR 0013's limits. No application code was hidden in
+  catalog chunks and no limit was silently raised. `D-508` blocks completion.
+- No dependency, lockfile, manifest, workspace version, phase gate, deployment, publication, tag,
+  domain rule, permission, or audit policy changed. See `docs/142-account-locale-preferences.md`.
+
 ## Current blockers
 
-No blocker prevents `WL-1402`. German and Spanish still require named fluent reviewers before
+`D-508` blocks `WL-1402`: the fully compiled locale-preference implementation exceeds ADR 0013's
+unchanged non-catalog JavaScript limits, and changing that accepted architecture decision requires
+explicit direction. German and Spanish still require named fluent reviewers before
 `WL-1408`; their absence does not block the typed English-first foundation. Exact partial-day
 work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
 still require authoritative domain or repository facts; Today does not guess them from minute
-totals or an otherwise valid overnight session. The PostgreSQL-backed `WL-1305`
-correction-history case remains locally unexecuted until the Docker database service is available.
-The earlier Phase 12 and task-specific Phase 13 images remain historical and intentionally differ
-from the current green `WL-1312` visual gate. `D-502` remains the broader exact retail
-assistive-technology matrix rather than a whole-product conformance claim; `WL-1307` supplies
-bounded VoiceOver evidence in Chrome for Testing and Safari. The temporary Astro backup is
-recoverable at
+totals or an otherwise valid overnight session. The earlier Phase 12 and task-specific Phase 13
+images remain historical and intentionally differ from the current green `WL-1312` visual gate.
+`D-502` remains the broader exact retail assistive-technology matrix rather than a whole-product
+conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for Testing and Safari.
+The temporary Astro backup is recoverable at
 `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical and
 belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1402 — Implement per-account locale persistence, signed-out device preference, initial
-invitation locale, profile/auth selectors, and immediate language switching.`
+Resolve `D-508`, then complete `WL-1402` by passing the production bundle gate.
 
-The i18n foundation is complete, but account/device persistence and any non-English product
-activation remain unimplemented. The portfolio presentation scope remains preserved in
-`docs/drafts/portfolio-presentation.md` as an unnumbered draft.
+The implementation and functional evidence are complete. Do not start `WL-1403` until the accepted
+non-catalog budget conflict is resolved and `WL-1402` is checked complete. The portfolio
+presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as an unnumbered
+draft.
 
 ## Update rules
 

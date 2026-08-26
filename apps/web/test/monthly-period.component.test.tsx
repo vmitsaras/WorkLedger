@@ -19,6 +19,7 @@ const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 const EMPLOYEE_CONTEXT: SelfContext = {
   account: { email: 'employee@northstar.test', name: 'Monthly Employee' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Monthly Employee', employeeNumber: 'NS-021', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE'],
   organization: { name: 'Northstar Studio' },

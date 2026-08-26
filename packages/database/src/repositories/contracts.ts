@@ -342,6 +342,7 @@ export type AdministrationEmployeeRecord = Readonly<{
     email: string;
     id: DomainId<'Account'>;
     invitationPending: boolean;
+    locale: string;
   }> | null;
   displayName: string;
   employeeNumber: string;
@@ -540,6 +541,7 @@ export type CreateAdministrationEmployeeInput = Readonly<{
   employmentStartsOn: LocalDate;
   invitationExpiresAt: Instant;
   invitationIdentifier: string;
+  locale: string;
   organizationId: DomainId<'Organization'>;
   roles: readonly ApplicationRole[];
 }>;
@@ -550,6 +552,7 @@ export type AdministrationSystemAccountRecord = Readonly<{
   email: string;
   id: DomainId<'Account'>;
   invitationPending: boolean;
+  locale: string;
   name: string;
   sessions: readonly AccountSessionRecord[];
   systemAdministrator: boolean;
@@ -565,6 +568,7 @@ export type CreateAdministrationTechnicalAccountInput = Readonly<{
   email: string;
   invitationExpiresAt: Instant;
   invitationIdentifier: string;
+  locale: string;
   name: string;
   organizationId: DomainId<'Organization'>;
 }>;
@@ -581,6 +585,7 @@ export type AccountSelfContextRecord = Readonly<{
   email: string;
   employee: EmployeeRecord | null;
   employeeCapabilityActive: boolean;
+  locale: string;
   name: string;
   organization: OrganizationRecord;
   roles: readonly ApplicationRole[];
@@ -1619,6 +1624,11 @@ export interface AccountSelfServiceRepository {
     accountId: DomainId<'Account'>,
     sessionId: DomainId<'Session'>,
   ): Promise<AccountSessionRecord | null>;
+  updateLocale(
+    accountId: DomainId<'Account'>,
+    locale: string,
+    changedAt: Instant,
+  ): Promise<boolean>;
 }
 
 export interface AuthorizationRepository {

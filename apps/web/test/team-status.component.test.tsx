@@ -18,6 +18,7 @@ let routerSequence = 0;
 const MANAGER_CONTEXT: SelfContext = {
   account: { email: 'manager@northstar.test', name: 'Maja Novak' },
   defaultPath: '/profile',
+  locale: 'en-GB',
   employee: { displayName: 'Maja Novak', employeeNumber: 'NS-010', status: 'ACTIVE' },
   navigationAreas: ['MANAGER'],
   organization: { name: 'Northstar Studio' },
@@ -27,6 +28,7 @@ const MANAGER_CONTEXT: SelfContext = {
 const EMPLOYEE_CONTEXT: SelfContext = {
   account: { email: 'employee@northstar.test', name: 'Maria Chen' },
   defaultPath: '/today',
+  locale: 'en-GB',
   employee: { displayName: 'Maria Chen', employeeNumber: 'NS-021', status: 'ACTIVE' },
   navigationAreas: ['EMPLOYEE'],
   organization: { name: 'Northstar Studio' },
@@ -148,7 +150,7 @@ test('keeps generic overview filters in the URL, combines them, and restores foc
   await user.click(working);
   await waitFor(() => expect(router.state.location.search).toBe('?availability=WORKING'));
   expect(working).toHaveFocus();
-  expect(working).toHaveAttribute('aria-pressed', 'true');
+  await waitFor(() => expect(working).toHaveAttribute('aria-pressed', 'true'));
   const table = screen.getByRole('table');
   expect(within(table).getByText('Ari Working')).toBeVisible();
   expect(within(table).queryByText('Bea Break')).not.toBeInTheDocument();

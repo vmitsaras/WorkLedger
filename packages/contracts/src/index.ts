@@ -444,11 +444,16 @@ export {
   selfProfileEnvelopeSchema,
   selfProfileSchema,
   selfSessionSummarySchema,
+  updateSelfLocaleEnvelopeSchema,
+  updateSelfLocaleRequestSchema,
+  updateSelfLocaleResultSchema,
   type ApplicationRole,
   type NavigationArea,
   type SelfContext,
   type SelfProfile,
   type SelfSessionSummary,
+  type UpdateSelfLocaleRequest,
+  type UpdateSelfLocaleResult,
 } from './account.js';
 
 export {
