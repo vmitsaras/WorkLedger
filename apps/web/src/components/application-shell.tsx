@@ -29,6 +29,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   { area: 'MANAGER', label: 'Approval inbox', to: '/approvals' },
   { area: 'MANAGER', label: 'Team calendar', to: '/team-calendar' },
   { area: 'HR', label: 'Employees', to: '/employees' },
+  { area: 'HR', label: 'Teams', to: '/teams' },
   { area: 'HR', label: 'Time settings', to: '/settings/time' },
   { area: 'HR', label: 'Absence settings', to: '/settings/absence' },
   { area: 'HR', label: 'Holiday calendars', to: '/settings/holidays' },
@@ -310,6 +311,7 @@ function areaForPath(
   if (
     (pathname === '/employees' ||
       pathname.startsWith('/employees/') ||
+      pathname === '/teams' ||
       pathname.startsWith('/settings/') ||
       pathname === '/audit') &&
     has('HR')

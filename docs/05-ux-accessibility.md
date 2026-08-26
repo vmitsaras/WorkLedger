@@ -119,9 +119,10 @@ Navigation visibility is convenience only; the API enforces authorization.
 
 | Route | Eligible actor and observable purpose | Implementation owner |
 |---|---|---|
-| `/employees` | HR lists employees within the organization, with scoped pagination and safe non-sensitive filters. | `WL-900` |
+| `/employees` | HR browses employees by generic URL-backed status or searches by display name, employee number, or current linked account email through memory-only private-body state; every result has an explicit record action. | `WL-900`, `WL-1310` |
 | `/employees/new` | Eligible non-self HR creates an employee/employment record and starts the account invitation flow. | `WL-900` |
 | `/employees/:employeeId` | HR views and manages one employee's employment history, team/manager assignment, schedule/policy assignment, entitlement administration, account state, and linked history through purpose-specific sections. Privileged self-edit controls are absent and rejected by the API. | `WL-900`–`WL-904` |
+| `/teams` | HR creates, browses, activates, or deactivates orientation-only teams without changing the direct-manager relationship that controls manager access. | `WL-900`, `WL-1310` |
 | `/reports` | Eligible self, current manager, or HR chooses from only the reports their scope grants. | `WL-804` |
 | `/reports/:reportKey` | Eligible actor runs one allow-listed `monthly-time`, `flexible-time`, `leave`, `missing-records`, or `pending-approvals` report; scope is applied before totals/pagination and export/print uses the same minimized data. | `WL-804`–`WL-805` |
 | `/settings/time` | HR manages effective-dated schedules, time policies, assignments, and the constrained organization-timezone setting with impact explanation. | `WL-902`–`WL-903` |
@@ -143,9 +144,12 @@ Navigation visibility is convenience only; the API enforces authorization.
 The technical audit explorer uses URL-owned bounded filters and a captioned, named local scroll
 region. Its detail disclosure contains only allowlisted technical facts and purpose-specific
 references. Account identifiers, request identifiers, domain payloads, notification content, and
-unrestricted text do not enter the browser projection. Employee administration uses complete
-record cards below `48rem` and a comparison table above that boundary; report and audit tables keep
-visible scroll guidance because their column relationships are intrinsically two-dimensional.
+unrestricted text do not enter the browser projection. Employee and team administration use
+complete record lists below `48rem` and comparison tables above that boundary. Employee search has
+a visible native label and keeps person-identifying text in a protected request body and in-memory
+query state rather than the URL; generic status and ordinary page state remain restorable. Report
+and audit tables keep visible scroll guidance because their column relationships are intrinsically
+two-dimensional.
 
 Browser routes do not create an authorization path for host operations. Destructive restore, secret rotation, and upgrade actions remain explicit operator workflows for the MVP.
 

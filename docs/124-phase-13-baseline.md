@@ -22,7 +22,7 @@ The supplied handoff pack is planning input. The repository's accepted domain, p
 | My Time and balances | `/my-time` and legacy `/my-balances`; `apps/web/src/routes/my-time-page.tsx`; calculation attention, period controls, summaries, day records, ledgers | `myTimeQuery`, key `['self', 'time', query]`; `loadMyTime`; `GET /v1/me/time`; time-record detail query | `packages/contracts/src/time.ts`; `apps/api/src/time/routes.ts`; `my-time-service.ts`; `packages/domain/src/time-account-ledger.ts`; daily projection and time-account repository contracts; `PostgresDailyProjectionRepository`; `PostgresTimeAccountRepository` | Time-account domain tests; API My Time integration coverage; application-shell component and E2E balance states |
 | Approvals | `/approvals`; `approval-inbox-page.tsx`; `/approvals/:approvalId`; `approval-detail-page.tsx`; filters, table, decision forms, history | `approvalInboxQuery`, `approvalDetailQuery`; `GET /v1/approvals`; `GET /v1/approvals/:id`; decision endpoint | `packages/contracts/src/approvals.ts`; approval routes, service, authorization, and database inbox/history repositories | `apps/api/test/approval-inbox.integration.test.ts`; approval inbox/detail component tests; existing Phase 12 desktop and mobile screenshots |
 | Team | `/team`; `team-status-page.tsx`; `/team/calendar`; `team-calendar-page.tsx`; availability table and calendar/list alternatives | `teamStatusQuery`; `teamCalendarQuery`; `GET /v1/team/status`; `GET /v1/team/calendar` | `packages/contracts/src/team-status.ts`; `team-calendar.ts`; team routes, services, authorization, and repositories | `apps/api/test/team-status.integration.test.ts`; team status/calendar component tests; existing Phase 12 screenshots |
-| Employees and teams administration | `/employees`; `employee-administration-page.tsx`; employee directory and team administration; employee detail, assignment, schedule, and policy routes | Employee and team administration queries under `['administration', ...]`; `/v1/hr/employees*`; `/v1/hr/teams*`; schedule, policy, role, team, and manager assignment mutations | Administration contracts; API administration routes/services; employee, team, assignment, schedule, and policy repositories | `administration.component.test.tsx`; API administration tests; existing Phase 12 screenshots |
+| Employees and teams administration | `/employees` and `/teams`; separate employee-directory and team-catalog route files; employee detail, assignment, schedule, and policy routes | Employee and team administration queries under `['administration', ...]`; private-body employee search; `/v1/hr/employees*`; `/v1/hr/teams*`; schedule, policy, role, team, and manager assignment mutations | Administration contracts; API administration routes/services; employee, team, assignment, schedule, and policy repositories | `administration.component.test.tsx`; API administration tests; four current `WL-1310` screenshots plus preserved Phase 12 history |
 | Navigation and headings | `application-shell.tsx`; `page-header.tsx`; `router.tsx`; route metadata; desktop navigation, mobile navigation, skip link, and route-heading focus | `selfContextQuery` and router loaders determine visible navigation and permission gates | Self-context contract and authorization policy determine role and capability visibility | Application-shell component tests; E2E navigation, route focus, narrow layout, and axe checks |
 | Statuses, tables, and overflow | Shared `StatusBadge`, `DataTable`, `Alert`, `RouteState`, and `Panel` in `packages/ui`; route-specific responsive wrappers; `apps/web/src/styles.css`; `packages/ui/src/styles.css` | Route queries provide loading, stale, empty, and error state | Response schemas constrain status values; server authorization remains authoritative | Component assertions plus Phase 12 responsive screenshots and new Today overflow assertions |
 | Shared errors and route focus | `apps/web/src/routes/route-boundary.tsx`; shared error envelope handling in `api-client.ts`; title and focus logic in `router.tsx` and `PageHeader` | TanStack Query owns server state and refresh; React Router owns route boundaries; API client parses request references and stable error codes | `packages/contracts/src/api.ts`; API error conventions; Fastify error mapping | Application-shell error, session, retry, route-heading focus, and axe tests |
@@ -356,6 +356,21 @@ Team calendar. The comparison table remains available at genuinely wide content 
 semantic list records, four current screenshots, keyboard focus, axe, privacy, permission, target
 size, and overflow assertions provide the bounded acceptance evidence at 768, 390, and 320 pixels.
 Employee and team administration work moves next to `WL-1310`.
+
+### `WL-1310` follow-up
+
+`WL-1310` separates the HR employee directory at `/employees` from the orientation-team catalog at
+`/teams`. Both routes preserve server-owned HR authorization, organization scoping, effective-dated
+history, and narrow-screen meaning while giving their primary actions and per-record actions a
+clear hierarchy.
+
+Employee search matches display name, employee number, or the current linked account email only
+after scope and status are fixed. Because those values may identify a person, the submitted term
+and its pagination use a bounded, same-origin, CSRF-protected POST body and in-memory query state;
+the URL retains only generic status and ordinary browse pagination. Wide tables and narrow
+semantic lists, four current screenshots, axe, privacy, route separation, and history-preservation
+assertions provide the bounded evidence. Cross-route normalization remains assigned to `WL-1311`
+and `WL-1312`.
 
 ## 10. Original `WL-1300` verification result
 

@@ -25,6 +25,10 @@ export const employeeAdminQuerySchema = z.strictObject({
   status: employeeAdminStatusSchema.default('ALL'),
 });
 
+export const employeeAdminSearchRequestSchema = employeeAdminQuerySchema.extend({
+  search: z.string().trim().min(2).max(320),
+});
+
 export const administrationPaginationSchema = z.strictObject({
   limit: z.number().int().min(1).max(50),
   page: z.number().int().min(1),
@@ -251,6 +255,7 @@ export const employeeAssignmentAdminDetailEnvelopeSchema = createSuccessEnvelope
 );
 
 export type EmployeeAdminQuery = z.infer<typeof employeeAdminQuerySchema>;
+export type EmployeeAdminSearchRequest = z.infer<typeof employeeAdminSearchRequestSchema>;
 export type EmployeeAdminPage = z.infer<typeof employeeAdminPageSchema>;
 export type EmployeeAdminDetail = z.infer<typeof employeeAdminDetailSchema>;
 export type CreateEmployeeAdminRequest = z.infer<typeof createEmployeeAdminRequestSchema>;

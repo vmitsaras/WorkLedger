@@ -8,6 +8,7 @@ import type {
   EmployeeAdminDetail,
   EmployeeAdminPage,
   EmployeeAdminQuery,
+  EmployeeAdminSearchRequest,
   EmployeeAssignmentAdminDetail,
   ReplaceManagerAssignmentRequest,
   ReplaceTeamAssignmentRequest,
@@ -473,28 +474,15 @@ export function createAdministrationService(
       query: EmployeeAdminQuery,
       at: Instant,
     ): Promise<EmployeeAdminPage> {
-      return database.transaction(async (transaction) => {
-        const { context } = await requireHrReadContext(transaction, identity, at);
-        const page = await transaction.administration.listEmployees({
-          at,
-          limit: query.limit,
-          offset: (query.page - 1) * query.limit,
-          organizationId: context.organization.id,
-          status: query.status === 'ALL' ? null : query.status,
-        });
-        const localDate = organizationLocalDate(at, context.organization.timeZone);
-        return Object.freeze({
-          items: page.items.map((employee) => {
-            const { privilegedActionsAllowed: _privilegedActionsAllowed, ...item } = mapEmployee(
-              employee,
-              localDate,
-              false,
-            );
-            return item;
-          }),
-          pagination: pagination(query.page, query.limit, page.total),
-        });
-      });
+      return listEmployeePage(database, identity, query, null, at);
+    },
+
+    async searchEmployees(
+      identity: AdministrationIdentity,
+      query: EmployeeAdminSearchRequest,
+      at: Instant,
+    ): Promise<EmployeeAdminPage> {
+      return listEmployeePage(database, identity, query, query.search, at);
     },
 
     async listTeams(
@@ -970,6 +958,38 @@ export function createAdministrationService(
         );
       }, serializableRetry);
     },
+  });
+}
+
+async function listEmployeePage(
+  database: WorkLedgerDatabase,
+  identity: AdministrationIdentity,
+  query: EmployeeAdminQuery,
+  search: string | null,
+  at: Instant,
+): Promise<EmployeeAdminPage> {
+  return database.transaction(async (transaction) => {
+    const { context } = await requireHrReadContext(transaction, identity, at);
+    const page = await transaction.administration.listEmployees({
+      at,
+      limit: query.limit,
+      offset: (query.page - 1) * query.limit,
+      organizationId: context.organization.id,
+      search,
+      status: query.status === 'ALL' ? null : query.status,
+    });
+    const localDate = organizationLocalDate(at, context.organization.timeZone);
+    return Object.freeze({
+      items: page.items.map((employee) => {
+        const { privilegedActionsAllowed: _privilegedActionsAllowed, ...item } = mapEmployee(
+          employee,
+          localDate,
+          false,
+        );
+        return item;
+      }),
+      pagination: pagination(query.page, query.limit, page.total),
+    });
   });
 }
 

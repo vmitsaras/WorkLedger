@@ -112,6 +112,38 @@ integrationTest(
         privilegedActionsAllowed: true,
         roles: ['EMPLOYEE', 'MANAGER'],
       });
+      const identifyingUrlSearch = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'GET',
+        url: '/v1/hr/employees?limit=20&page=1&status=ALL&search=Jordan',
+      });
+      expect(identifyingUrlSearch.statusCode).toBe(422);
+      const searchWithoutCsrf = await app.inject({
+        headers: { cookie: hrCookie, origin: ORIGIN },
+        method: 'POST',
+        payload: { limit: 20, page: 1, search: 'Jordan', status: 'ALL' },
+        url: '/v1/hr/employees/search',
+      });
+      expect(searchWithoutCsrf.statusCode).toBe(403);
+      const searchEmployee = await app.inject({
+        headers: mutationHeaders(hrCookie, hrCsrf),
+        method: 'POST',
+        payload: {
+          limit: 20,
+          page: 1,
+          search: 'JORDAN@EXAMPLE.TEST',
+          status: 'ALL',
+        },
+        url: '/v1/hr/employees/search',
+      });
+      expect(searchEmployee.statusCode, searchEmployee.payload).toBe(200);
+      expect(searchEmployee.headers['cache-control']).toBe('private, no-store');
+      expect(searchEmployee.json()).toMatchObject({
+        data: {
+          items: [{ displayName: 'Jordan Lee', id: created.id }],
+          pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+        },
+      });
       expect(createEmployee.payload).not.toMatch(/token|activationUrl/iu);
       expect(invitations).toHaveLength(1);
       const activationToken = invitations[0]?.activationUrl.searchParams.get('token');

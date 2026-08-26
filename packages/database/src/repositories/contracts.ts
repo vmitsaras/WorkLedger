@@ -1545,6 +1545,7 @@ export interface AdministrationRepository {
       limit: number;
       offset: number;
       organizationId: DomainId<'Organization'>;
+      search: string | null;
       status: EmployeeStatus | null;
     }>,
   ): Promise<AdministrationEmployeePageRecord>;

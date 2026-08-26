@@ -4,6 +4,20 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-26 — WL-1310 employee search remains outside URL state
+
+`WL-1310` requires useful employee administration search, while ADR 0007 and the accepted privacy
+contract prohibit names, email addresses, and person-identifying free text in URLs. Search therefore
+uses an authenticated, same-origin, CSRF-protected `POST /v1/hr/employees/search` read with a bounded
+JSON body. The browser keeps submitted search text and search pagination in memory only; ordinary
+status and page browsing remains URL-backed when no identifying search is active.
+
+The server fixes organization and HR authority before applying the search to display name, employee
+number, or the currently linked account email, and before totals and pagination. The endpoint is
+private and no-store, accepts no unrestricted sort or target scope, and does not add search text to
+audit, operational logs, browser persistence, or navigation. This reconciles the task without
+weakening the accepted router, privacy, authorization, or employee-history contracts.
+
 ### 2026-08-25 — WL-1306 attention patterns remain source-bound
 
 The Phase 13 handoff names break-policy warnings, previous-session recovery, and a submitted month

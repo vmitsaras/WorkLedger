@@ -264,9 +264,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test('renders a dense, accessible employee directory and textual team catalog states', async () => {
+test('searches the employee directory without placing identifying text in the URL', async () => {
   stubFetch(HR_CONTEXT, { employeePage: EMPLOYEE_PAGE, teamPage: TEAM_PAGE });
-  const { container } = renderApplication('/employees?limit=20&page=1&status=ALL');
+  const user = userEvent.setup();
+  const { container, router } = renderApplication('/employees?limit=20&page=1&status=ALL');
 
   const heading = await screen.findByRole('heading', { name: 'Employees' });
   await waitFor(() => expect(heading).toHaveFocus());
@@ -274,15 +275,58 @@ test('renders a dense, accessible employee directory and textual team catalog st
     'href',
     '/employees/new',
   );
-  const table = screen.getByRole('table', { name: /employees matching/iu });
+  expect(screen.getByRole('link', { name: 'Manage teams' })).toHaveAttribute('href', '/teams');
+  const table = screen.getByRole('table', { name: /employee directory results/iu });
   const row = within(table).getByRole('row', { name: /Jordan Lee/iu });
   expect(row).toHaveTextContent('Invitation pending');
   expect(row).toHaveTextContent('Employee, Manager');
+  expect(within(row).getByRole('link', { name: 'Open record for Jordan Lee' })).toHaveAttribute(
+    'href',
+    `/employees/${EMPLOYEE_ID}`,
+  );
   expect(screen.getByLabelText('Employment status')).toBeVisible();
-  expect(screen.getByRole('heading', { name: 'Teams' })).toBeVisible();
-  expect(screen.getByRole('heading', { name: 'Client Services' })).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Teams' })).not.toBeInTheDocument();
+
+  await user.type(
+    screen.getByRole('searchbox', { name: 'Name, employee number, or account email' }),
+    'jordan@example.test',
+  );
+  await user.click(screen.getByRole('button', { name: 'Search directory' }));
+  await waitFor(() =>
+    expect(
+      vi
+        .mocked(globalThis.fetch)
+        .mock.calls.some(
+          ([input]) =>
+            (typeof input === 'string'
+              ? input
+              : input instanceof URL
+                ? input.pathname
+                : input.url) === '/v1/hr/employees/search',
+        ),
+    ).toBe(true),
+  );
+  expect(router.state.location.pathname).toBe('/employees');
+  expect(router.state.location.search).toBe('?limit=20&page=1&status=ALL');
+  expect(router.state.location.search).not.toContain('jordan');
+  expect(screen.getByRole('button', { name: 'Clear search' })).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
+test('renders team lifecycle controls on a separate responsive administration route', async () => {
+  stubFetch(HR_CONTEXT, { teamPage: TEAM_PAGE });
+  const { container } = renderApplication('/teams?limit=20&page=1&status=ALL');
+
+  const heading = await screen.findByRole('heading', { name: 'Teams' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(screen.getByRole('link', { name: 'Employee directory' })).toHaveAttribute(
+    'href',
+    '/employees',
+  );
+  expect(screen.getByRole('table', { name: /Teams matching/iu })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Deactivate Client Services' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Activate Former Operations' })).toBeVisible();
+  expect(screen.getByText(/Existing assignment history remains unchanged/iu)).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -401,7 +445,11 @@ function stubFetch(
         'https://app.test',
       );
       if (url.pathname === '/v1/me/context') return successResponse(context);
+      if (url.pathname === '/v1/me/csrf') return successResponse({ token: 's'.repeat(43) });
       if (url.pathname === '/v1/hr/employees' && responses.employeePage !== undefined) {
+        return successResponse(responses.employeePage);
+      }
+      if (url.pathname === '/v1/hr/employees/search' && responses.employeePage !== undefined) {
         return successResponse(responses.employeePage);
       }
       if (url.pathname === '/v1/hr/teams' && responses.teamPage !== undefined) {

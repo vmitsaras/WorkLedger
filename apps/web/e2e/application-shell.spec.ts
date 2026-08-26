@@ -2471,6 +2471,7 @@ test('keeps combined-role work areas and account utilities reachable in a short 
   const peopleNavigation = page.getByRole('navigation', { name: 'People and policy navigation' });
   for (const [name, href] of [
     ['Employees', '/employees'],
+    ['Teams', '/teams'],
     ['Time settings', '/settings/time'],
     ['Absence settings', '/settings/absence'],
     ['Holiday calendars', '/settings/holidays'],
@@ -3226,14 +3227,19 @@ test('creates an immutable weekly schedule version with keyboard-recoverable val
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('keeps employee and technical audit administration usable from reflow to desktop', async ({
+test('keeps employee, team, and technical audit administration usable from reflow to desktop', async ({
   page,
 }) => {
+  const employeeSearchBodies: unknown[] = [];
   await page.setViewportSize({ width: 320, height: 900 });
   await page.route('**/v1/me/context', async (route) => {
     await route.fulfill({ json: success(COMBINED_CONTEXT), status: 200 });
   });
-  await page.route('**/v1/hr/employees*', async (route) => {
+  await page.route('**/v1/hr/employees**', async (route) => {
+    if (route.request().method() === 'POST') {
+      expect(route.request().headers()['x-workledger-csrf']).toBe('h'.repeat(43));
+      employeeSearchBodies.push(route.request().postDataJSON());
+    }
     await route.fulfill({
       json: success({
         items: [
@@ -3261,6 +3267,9 @@ test('keeps employee and technical audit administration usable from reflow to de
       status: 200,
     });
   });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'h'.repeat(43) }), status: 200 });
+  });
   await page.route('**/v1/hr/teams*', async (route) => {
     await route.fulfill({
       json: success({
@@ -3272,7 +3281,7 @@ test('keeps employee and technical audit administration usable from reflow to de
             name: 'International Client Services and Workplace Operations',
           },
         ],
-        pagination: { limit: 50, page: 1, total: 1, totalPages: 1 },
+        pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
       }),
       status: 200,
     });
@@ -3304,7 +3313,41 @@ test('keeps employee and technical audit administration usable from reflow to de
   await page.goto('/employees');
   await expect(page.getByRole('heading', { name: 'Employees', exact: true })).toBeFocused();
   await expect(page.getByRole('list', { name: 'Employee directory results' })).toBeVisible();
-  await expect(page.getByRole('table', { name: /Employees matching/u })).toHaveCount(0);
+  await expect(page.getByRole('table', { name: /Employee directory results/u })).toHaveCount(0);
+  await expect(
+    page.getByRole('link', {
+      name: 'Open record for Alexandra Very Long Employee Name for Reflow and Localization Verification',
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole('searchbox', { name: 'Name, employee number, or account email' })
+    .fill('long.employee.account@example.test');
+  await page.getByRole('button', { name: 'Search directory' }).click();
+  await expect(page).toHaveURL('/employees?limit=20&page=1&status=ALL');
+  expect(employeeSearchBodies).toEqual([
+    {
+      limit: 20,
+      page: 1,
+      search: 'long.employee.account@example.test',
+      status: 'ALL',
+    },
+  ]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await capturePhase12Administration(page, 'employees-reflow-320x900');
+  await capturePhase13Administration(page, 'employees-320x900');
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.getByRole('table', { name: /Employee directory results/u })).toBeVisible();
+  await capturePhase12Administration(page, 'employees-desktop-1440x900');
+  await capturePhase13Administration(page, 'employees-1440x900');
+
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto('/teams?limit=20&page=1&status=ALL');
+  await expect(page.getByRole('heading', { name: 'Teams', exact: true })).toBeFocused();
+  await expect(page.getByRole('list', { name: 'Team catalog results' })).toBeVisible();
   const teamAction = page.getByRole('button', {
     name: 'Deactivate International Client Services and Workplace Operations',
   });
@@ -3313,12 +3356,14 @@ test('keeps employee and technical audit administration usable from reflow to de
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  await capturePhase12Administration(page, 'employees-reflow-320x900');
+  await capturePhase13Administration(page, 'teams-320x900');
   await expectPageToHaveNoAxeViolations(page);
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await expect(page.getByRole('table', { name: /Employees matching/u })).toBeVisible();
-  await capturePhase12Administration(page, 'employees-desktop-1440x900');
+  await expect(page.getByRole('table', { name: /Teams matching/u })).toBeVisible();
+  await capturePhase13Administration(page, 'teams-1440x900');
+  await page.getByRole('link', { name: 'Create team' }).click();
+  await expect(page.getByRole('textbox', { name: 'Team name' })).toBeFocused();
 
   await page.setViewportSize({ width: 320, height: 900 });
   await page.goto('/system/audit');
@@ -3557,6 +3602,16 @@ async function capturePhase13TeamStatus(page: Page, name: string): Promise<void>
 
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page).toHaveScreenshot(['phase-13', 'wl1309', `${name}.png`], {
+    animations: 'disabled',
+    fullPage: true,
+  });
+}
+
+async function capturePhase13Administration(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_ASSERT_PHASE_13_ADMINISTRATION'] !== '1') return;
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1310', `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

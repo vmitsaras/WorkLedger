@@ -156,6 +156,13 @@ Owns generic deterministic clocks, builders/factories based on public domain/con
 - Search params own date range, page, sort, status, team, and employee filters.
 - Sensitive values do not belong in URLs.
 
+Employee-directory free-text search is the bounded exception to URL-owned filtering. The browser
+sends the 2-to-320-character display-name, employee-number, or current linked-account-email term in
+the JSON body of an authenticated, same-origin, CSRF-protected `POST /v1/hr/employees/search` read
+and keeps that term in TanStack Query memory only. Generic employment status and ordinary browsing
+pagination remain URL-owned. The server resolves HR and organization scope before applying the
+term, calculating totals, or paginating.
+
 ## 4. API shape
 
 Prefer domain-oriented commands over generic CRUD where rules matter.

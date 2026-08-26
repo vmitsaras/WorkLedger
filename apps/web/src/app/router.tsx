@@ -16,6 +16,7 @@ import {
   employeeAdminQuerySchema,
   securityAuditQuerySchema,
   systemAccountQuerySchema,
+  teamAdminQuerySchema,
 } from '@workledger/contracts';
 import { RouteState } from '@workledger/ui';
 
@@ -85,6 +86,7 @@ import {
   EmployeeAdministrationPage,
   NewEmployeeAdministrationPage,
 } from '../routes/employee-administration-page.js';
+import { TeamAdministrationPage } from '../routes/team-administration-page.js';
 import { SystemAccountAdministrationPage } from '../routes/system-account-administration-page.js';
 import { SystemOperationsPage } from '../routes/system-operations-page.js';
 import { SystemAuditPage } from '../routes/system-audit-page.js';
@@ -297,6 +299,13 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               element: <EmployeeAdministrationDetailPage />,
               errorElement: <RouteBoundary />,
               handle: { title: 'Employee' },
+            },
+            {
+              path: 'teams',
+              loader: createTeamAdminListLoader(queryClient),
+              element: <TeamAdministrationPage />,
+              errorElement: <RouteBoundary />,
+              handle: { title: 'Teams' },
             },
             {
               path: 'settings/time',
@@ -626,7 +635,18 @@ function createEmployeeAdminListLoader(queryClient: QueryClient): LoaderFunction
     const parsed = employeeAdminQuerySchema.safeParse(values);
     if (!parsed.success) return redirect('/employees?limit=20&page=1&status=ALL');
     void queryClient.prefetchQuery(employeeAdminPageQuery(parsed.data));
-    void queryClient.prefetchQuery(teamAdminPageQuery({ limit: 50, page: 1, status: 'ALL' }));
+    return parsed.data;
+  };
+}
+
+function createTeamAdminListLoader(queryClient: QueryClient): LoaderFunction {
+  return async ({ request }) => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('HR')) throw new Response(null, { status: 403 });
+    const values = Object.fromEntries(new URL(request.url).searchParams);
+    const parsed = teamAdminQuerySchema.safeParse(values);
+    if (!parsed.success) return redirect('/teams?limit=20&page=1&status=ACTIVE');
+    void queryClient.prefetchQuery(teamAdminPageQuery(parsed.data));
     return parsed.data;
   };
 }

@@ -314,7 +314,12 @@ Posting state is separate from calculation status. Responses label the ledger-de
 - Sort fields are allowlisted.
 - Filters are validated.
 - Manager/HR scope is applied before pagination/result calculation.
-- Web filters use URL search params.
+- Web filters use URL search params only when their accepted values are non-sensitive and safe to
+  retain in browser history.
+- Employee-directory identifying search is a bounded exception: `POST /v1/hr/employees/search`
+  accepts a strict 2-to-320-character term in its CSRF-protected JSON body, while the client keeps
+  the term and search pagination in memory. The endpoint still applies HR and organization scope
+  before matching, totals, and pagination.
 
 ## 12. Date/time serialization
 

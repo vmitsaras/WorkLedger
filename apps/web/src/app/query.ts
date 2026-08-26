@@ -13,6 +13,7 @@ import {
   type ReportKey,
   type ReportQuery,
   type EmployeeAdminQuery,
+  type EmployeeAdminSearchRequest,
   type TeamAdminQuery,
   type SystemAccountQuery,
 } from '@workledger/contracts';
@@ -43,6 +44,7 @@ import {
   loadReportCatalog,
   loadEmployeeAdminDetail,
   loadEmployeeAdminPage,
+  searchEmployeeAdminPage,
   loadEmployeeAssignmentAdminDetail,
   loadEmployeeScheduleAdminDetail,
   loadEmployeePolicyAdminDetail,
@@ -83,12 +85,21 @@ export const selfContextQuery = () =>
 export const selfProfileQuery = () =>
   queryOptions({ queryFn: loadSelfProfile, queryKey: ['self', 'profile'] as const });
 
-export const employeeAdminPageQuery = (query: EmployeeAdminQuery) =>
+const employeeAdminDirectoryQuery = (query: EmployeeAdminQuery | EmployeeAdminSearchRequest) =>
   queryOptions({
     placeholderData: keepPreviousData,
-    queryFn: ({ signal }) => loadEmployeeAdminPage(query, signal),
-    queryKey: ['administration', 'employees', query] as const,
+    queryFn: ({ signal }) =>
+      'search' in query
+        ? searchEmployeeAdminPage(query, signal)
+        : loadEmployeeAdminPage(query, signal),
+    queryKey: ['administration', 'employee-directory', query] as const,
   });
+
+export const employeeAdminPageQuery = (query: EmployeeAdminQuery) =>
+  employeeAdminDirectoryQuery(query);
+
+export const employeeAdminSearchPageQuery = (query: EmployeeAdminSearchRequest) =>
+  employeeAdminDirectoryQuery(query);
 
 export const employeeAdminDetailQuery = (employeeId: string) =>
   queryOptions({

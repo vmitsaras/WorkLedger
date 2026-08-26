@@ -100,6 +100,7 @@ import {
   administrationActionEnvelopeSchema,
   employeeAdminDetailEnvelopeSchema,
   employeeAdminPageEnvelopeSchema,
+  employeeAdminSearchRequestSchema,
   employeeAssignmentAdminDetailEnvelopeSchema,
   invitationActivationEnvelopeSchema,
   systemAccountPageEnvelopeSchema,
@@ -116,6 +117,7 @@ import {
   type EmployeeAdminDetail,
   type EmployeeAdminPage,
   type EmployeeAdminQuery,
+  type EmployeeAdminSearchRequest,
   type EmployeeAssignmentAdminDetail,
   type ReplaceManagerAssignmentRequest,
   type ReplaceEmployeeRolesRequest,
@@ -185,6 +187,24 @@ export async function loadEmployeeAdminPage(
     `/v1/hr/employees?${search}`,
     signal === undefined ? {} : { signal },
   );
+  const parsed = employeeAdminPageEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function searchEmployeeAdminPage(
+  query: EmployeeAdminSearchRequest,
+  signal?: AbortSignal,
+): Promise<EmployeeAdminPage> {
+  const parsedRequest = employeeAdminSearchRequestSchema.safeParse(query);
+  if (!parsedRequest.success) throw new ApiClientError('VALIDATION_FAILED', 422);
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/hr/employees/search', {
+    body: JSON.stringify(parsedRequest.data),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+    ...(signal === undefined ? {} : { signal }),
+  });
   const parsed = employeeAdminPageEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;

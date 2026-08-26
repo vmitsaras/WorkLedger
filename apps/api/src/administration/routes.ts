@@ -13,6 +13,7 @@ import {
   employeeAdminDetailEnvelopeSchema,
   employeeAdminPageEnvelopeSchema,
   employeeAdminQuerySchema,
+  employeeAdminSearchRequestSchema,
   employeeAssignmentAdminDetailEnvelopeSchema,
   invitationActivationEnvelopeSchema,
   invitationActivationRequestSchema,
@@ -125,6 +126,27 @@ export function registerAdministrationRoutes(
     async (request, reply) => {
       const identity = await readIdentity(request, authentication);
       const data = await service.listEmployees(identity, request.query, requestInstant(now));
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
+  api.post(
+    '/v1/hr/employees/search',
+    {
+      schema: {
+        body: employeeAdminSearchRequestSchema,
+        description:
+          'Searches the authorized organization employee directory by display name, employee number, or linked account email using a bounded body so identifying text never enters URL state.',
+        operationId: 'searchEmployeesForAdministration',
+        response: { 200: employeeAdminPageEnvelopeSchema, ...READ_ERRORS },
+        summary: 'Search employees for administration',
+        tags: ['Employee administration'],
+      },
+    },
+    async (request, reply) => {
+      const prepared = await mutationIdentity(request, config, authentication, now);
+      const data = await service.searchEmployees(prepared.identity, request.body, prepared.at);
       reply.header('cache-control', 'private, no-store');
       return { data, meta: { requestId: request.id } };
     },

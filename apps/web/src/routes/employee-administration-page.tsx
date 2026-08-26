@@ -11,7 +11,7 @@ import {
   type EmployeePolicyAdminDetail,
   type EmployeeEntitlementAdminDetail,
   type EmployeeAdminPage,
-  type TeamAdminPage,
+  type EmployeeAdminSearchRequest,
 } from '@workledger/contracts';
 import {
   Alert,
@@ -30,23 +30,22 @@ import {
   activateEmployeeForAdministration,
   ApiClientError,
   createEmployeeForAdministration,
-  createTeamForAdministration,
   deactivateEmployeeForAdministration,
   reissueEmployeeInvitation,
   replaceManagerAssignmentForAdministration,
   replaceEmployeeRolesForAdministration,
   replaceTeamAssignmentForAdministration,
-  setTeamStateForAdministration,
 } from '../app/api-client.js';
 import {
   employeeAdminDetailQuery,
   employeeAdminPageQuery,
+  employeeAdminSearchPageQuery,
   employeeAssignmentAdminDetailQuery,
   employeeScheduleAdminDetailQuery,
   employeePolicyAdminDetailQuery,
   employeeEntitlementAdminDetailQuery,
-  teamAdminPageQuery,
 } from '../app/query.js';
+import { useWideAdministrationLayout } from '../app/use-wide-administration-layout.js';
 import { EmployeeScheduleAdministration } from '../components/employee-schedule-administration.js';
 import { EmployeePolicyAdministration } from '../components/employee-policy-administration.js';
 import { EmployeeEntitlementAdministration } from '../components/employee-entitlement-administration.js';
@@ -63,41 +62,93 @@ const ROLE_LABELS = {
 export function EmployeeAdministrationPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = readEmployeeQuery(searchParams);
-  const employeesQuery = useQuery(employeeAdminPageQuery(query));
-  const teamsQuery = useQuery(teamAdminPageQuery({ limit: 50, page: 1, status: 'ALL' }));
   const [status, setStatus] = useState(query.status);
-  const wideLayout = useWideEmployeeLayout();
+  const [searchInput, setSearchInput] = useState('');
+  const [searchRequest, setSearchRequest] = useState<EmployeeAdminSearchRequest | null>(null);
+  const [searchError, setSearchError] = useState<string>();
+  const employeesQuery = useQuery(
+    searchRequest === null
+      ? employeeAdminPageQuery(query)
+      : employeeAdminSearchPageQuery(searchRequest),
+  );
+  const wideLayout = useWideAdministrationLayout();
+
+  useEffect(() => {
+    setStatus(query.status);
+    setSearchRequest((current) =>
+      current !== null && (current.status !== query.status || query.page !== 1) ? null : current,
+    );
+  }, [query.page, query.status]);
 
   if (employeesQuery.isError) throw employeesQuery.error;
-  if (teamsQuery.isError) throw teamsQuery.error;
+
+  const activePage = searchRequest?.page ?? query.page;
+  const activeSearch = searchRequest?.search ?? null;
+
+  function submitDirectorySearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const search = searchInput.trim();
+    if (search.length === 1) {
+      setSearchError('Enter at least 2 characters, or clear the search field to browse by status.');
+      document.querySelector<HTMLElement>('#employee-directory-search')?.focus();
+      return;
+    }
+    setSearchError(undefined);
+    setSearchParams({ limit: '20', page: '1', status });
+    setSearchRequest(search === '' ? null : { limit: 20, page: 1, search, status });
+  }
+
+  function clearDirectorySearch() {
+    setSearchInput('');
+    setSearchError(undefined);
+    setSearchRequest(null);
+    setSearchParams({ limit: '20', page: '1', status });
+    document.querySelector<HTMLElement>('#employee-directory-search')?.focus();
+  }
 
   return (
     <section className="grid gap-8">
       <PageHeader
         eyebrow="People administration"
         title="Employees"
-        description="Manage employee lifecycle records without rewriting employment, account, role, or attendance history."
+        description="Find lifecycle records and open the right employee workspace without rewriting employment, assignment, account, role, or attendance history."
       >
-        {
+        <div className="flex flex-wrap gap-3">
           <Link className={linkVariants({ prominence: 'default' })} to="/employees/new">
             Add employee
           </Link>
-        }
+          <Link className={linkVariants({ prominence: 'quiet' })} to="/teams">
+            Manage teams
+          </Link>
+        </div>
       </PageHeader>
 
       <FilterBar
-        description="Show active employees, inactive employees, or the complete directory."
-        title="Filter employee directory"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setSearchParams({ limit: '20', page: '1', status });
-        }}
+        description="Search by display name, employee number, or linked account email. Search text stays in this tab and is never added to the URL."
+        title="Search employee directory"
+        onSubmit={submitDirectorySearch}
       >
+        <TextField
+          id="employee-directory-search"
+          className="min-w-64 flex-[2_1_20rem]"
+          label="Name, employee number, or account email"
+          maxLength={320}
+          name="employee-search"
+          value={searchInput}
+          onChange={(value) => {
+            setSearchInput(value);
+            if (searchError !== undefined) setSearchError(undefined);
+          }}
+          errorMessage={searchError}
+          isInvalid={searchError !== undefined}
+          type="search"
+        />
         <label className="grid gap-2 text-sm font-semibold" htmlFor="employee-status-filter">
           Employment status
           <select
             id="employee-status-filter"
             className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3"
+            name="status"
             value={status}
             onChange={(event) => setStatus(event.target.value as EmployeeAdminQuery['status'])}
           >
@@ -107,41 +158,61 @@ export function EmployeeAdministrationPage() {
           </select>
         </label>
         <Button type="submit" variant="secondary">
-          Apply filter
+          Search directory
         </Button>
+        {activeSearch === null ? null : (
+          <Button type="button" variant="quiet" onPress={clearDirectorySearch}>
+            Clear search
+          </Button>
+        )}
       </FilterBar>
 
       {employeesQuery.isPending ? (
         <RouteState kind="loading">Employee records are being retrieved.</RouteState>
       ) : employeesQuery.data.items.length === 0 ? (
-        <RouteState kind="empty" title="No matching employees">
-          Change the status filter or create the first employee record.
+        <RouteState
+          kind="empty"
+          title={
+            activeSearch === null ? 'No employees in this view' : 'No employees match this search'
+          }
+        >
+          {activeSearch === null
+            ? 'Change the employment status or create the first employee record.'
+            : 'Clear the search or change the employment status to broaden the directory results.'}
         </RouteState>
-      ) : wideLayout ? (
-        <EmployeeDirectoryTable employees={employeesQuery.data} />
       ) : (
-        <EmployeeDirectoryList employees={employeesQuery.data} />
+        <div className="grid gap-4">
+          <p className="m-0 text-sm text-[var(--wl-text-muted)]" role="status" aria-live="polite">
+            {employeesQuery.data.pagination.total}{' '}
+            {employeesQuery.data.pagination.total === 1 ? 'employee' : 'employees'} in this result.
+          </p>
+          {wideLayout ? (
+            <EmployeeDirectoryTable employees={employeesQuery.data} />
+          ) : (
+            <EmployeeDirectoryList employees={employeesQuery.data} />
+          )}
+        </div>
       )}
 
       {employeesQuery.data === undefined ? null : (
         <Pagination
           ariaLabel="Employee result pages"
-          currentPage={query.page}
-          onPageChange={(page) =>
-            setSearchParams({
-              limit: query.limit.toString(),
-              page: page.toString(),
-              status: query.status,
-            })
-          }
+          currentPage={activePage}
+          onPageChange={(page) => {
+            if (searchRequest === null) {
+              setSearchParams({
+                limit: query.limit.toString(),
+                page: page.toString(),
+                status: query.status,
+              });
+              return;
+            }
+            setSearchRequest({ ...searchRequest, page });
+          }}
           pageCount={employeesQuery.data.pagination.totalPages}
-          summary={`Page ${query.page} of ${Math.max(1, employeesQuery.data.pagination.totalPages)}. ${employeesQuery.data.pagination.total} employees.`}
+          summary={`Page ${activePage} of ${Math.max(1, employeesQuery.data.pagination.totalPages)}. ${employeesQuery.data.pagination.total} employees.`}
         />
       )}
-
-      <div className="border-t border-[var(--wl-border-strong)] pt-8">
-        <TeamAdministration teams={teamsQuery.data} isPending={teamsQuery.isPending} />
-      </div>
     </section>
   );
 }
@@ -149,7 +220,7 @@ export function EmployeeAdministrationPage() {
 function EmployeeDirectoryTable({ employees }: Readonly<{ employees: EmployeeAdminPage }>) {
   return (
     <DataTable
-      caption="Employees matching the selected employment status"
+      caption="Employee directory results for the current search and employment status"
       className="min-w-[48rem]"
       scrollHint="Scroll horizontally if every employee comparison column does not fit."
       scrollLabel="Employee directory results"
@@ -161,20 +232,22 @@ function EmployeeDirectoryTable({ employees }: Readonly<{ employees: EmployeeAdm
           <th scope="col">Employment</th>
           <th scope="col">Account</th>
           <th scope="col">Roles</th>
+          <th scope="col">Action</th>
         </tr>
       </thead>
       <tbody>
         {employees.items.map((employee) => (
           <tr key={employee.id}>
-            <th scope="row">
-              <Link className="font-semibold" to={`/employees/${employee.id}`}>
-                {employee.displayName}
-              </Link>
+            <th scope="row" className="font-semibold">
+              {employee.displayName}
             </th>
             <td>{employee.employeeNumber}</td>
             <td>{employmentText(employee)}</td>
             <td>{accountText(employee)}</td>
             <td>{employee.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'None'}</td>
+            <td>
+              <EmployeeRecordLink employee={employee} />
+            </td>
           </tr>
         ))}
       </tbody>
@@ -190,9 +263,7 @@ function EmployeeDirectoryList({ employees }: Readonly<{ employees: EmployeeAdmi
           <Panel as="article" className="grid gap-3" density="compact">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="m-0 text-lg font-bold">
-                  <Link to={`/employees/${employee.id}`}>{employee.displayName}</Link>
-                </h2>
+                <h2 className="m-0 text-lg font-bold">{employee.displayName}</h2>
                 <p className="m-0 text-sm text-[var(--wl-text-muted)]">{employee.employeeNumber}</p>
               </div>
               <StatusBadge tone={employee.status === 'ACTIVE' ? 'success' : 'neutral'}>
@@ -207,10 +278,27 @@ function EmployeeDirectoryList({ employees }: Readonly<{ employees: EmployeeAdmi
                 value={employee.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'None'}
               />
             </dl>
+            <div>
+              <EmployeeRecordLink employee={employee} />
+            </div>
           </Panel>
         </li>
       ))}
     </ol>
+  );
+}
+
+function EmployeeRecordLink({
+  employee,
+}: Readonly<{ employee: EmployeeAdminPage['items'][number] }>) {
+  return (
+    <Link
+      aria-label={`Open record for ${employee.displayName}`}
+      className={linkVariants({ prominence: 'quiet' })}
+      to={`/employees/${employee.id}`}
+    >
+      Open record
+    </Link>
   );
 }
 
@@ -238,23 +326,6 @@ function accountText(employee: EmployeeAdminPage['items'][number]) {
       : employee.account.active
         ? 'Active account'
         : 'Inactive account';
-}
-
-function useWideEmployeeLayout(): boolean {
-  const [wide, setWide] = useState(readWideEmployeeLayout);
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return;
-    const media = window.matchMedia('(min-width: 48rem)');
-    const update = () => setWide(media.matches);
-    media.addEventListener('change', update);
-    update();
-    return () => media.removeEventListener('change', update);
-  }, []);
-  return wide;
-}
-
-function readWideEmployeeLayout(): boolean {
-  return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 48rem)').matches;
 }
 
 export function NewEmployeeAdministrationPage() {
@@ -379,124 +450,6 @@ export function NewEmployeeAdministrationPage() {
         </div>
       </form>
     </section>
-  );
-}
-
-function TeamAdministration({
-  isPending,
-  teams,
-}: Readonly<{ isPending: boolean; teams: TeamAdminPage | undefined }>) {
-  const queryClient = useQueryClient();
-  const [name, setName] = useState('');
-  const [message, setMessage] = useState<Readonly<{ kind: 'error' | 'success'; text: string }>>();
-  const mutation = useMutation({
-    mutationFn: async (operation: Readonly<{ active?: boolean; teamId?: string }>) => {
-      if (operation.teamId === undefined) return createTeamForAdministration({ name: name.trim() });
-      return setTeamStateForAdministration(operation.teamId, operation.active ?? false);
-    },
-  });
-
-  async function run(operation: Readonly<{ active?: boolean; teamId?: string }>) {
-    setMessage(undefined);
-    if (operation.teamId === undefined && name.trim() === '') {
-      setMessage({ kind: 'error', text: 'Enter a team name.' });
-      document.querySelector<HTMLElement>('#new-team-name')?.focus();
-      return;
-    }
-    try {
-      await mutation.mutateAsync(operation);
-      setName('');
-      await queryClient.invalidateQueries({ queryKey: ['administration'] });
-      setMessage({ kind: 'success', text: 'The team catalog was updated.' });
-    } catch (error) {
-      setMessage({ kind: 'error', text: employeeMutationError(error) });
-    }
-  }
-
-  return (
-    <Panel className="grid gap-5" aria-labelledby="team-catalog-heading">
-      <div>
-        <h2 id="team-catalog-heading" className="m-0 text-xl font-bold">
-          Teams
-        </h2>
-        <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
-          Teams group employees for orientation only. Direct-manager assignments independently
-          control manager scope. This catalog is a separate task from the employee directory above.
-        </p>
-      </div>
-      {message === undefined ? null : (
-        <Alert
-          title={message.kind === 'error' ? 'Team update failed' : 'Team catalog updated'}
-          tone={message.kind === 'error' ? 'danger' : 'success'}
-        >
-          <p>{message.text}</p>
-        </Alert>
-      )}
-      <form
-        className="flex flex-wrap items-end gap-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void run({});
-        }}
-      >
-        <div className="min-w-64 flex-1">
-          <TextField id="new-team-name" label="New team name" value={name} onChange={setName} />
-        </div>
-        <Button type="submit" isDisabled={mutation.isPending}>
-          Create team
-        </Button>
-      </form>
-      {isPending ? (
-        <RouteState kind="loading">Team records are being retrieved.</RouteState>
-      ) : teams === undefined || teams.items.length === 0 ? (
-        <RouteState kind="empty" title="No teams have been created">
-          Create a team when employees need a shared orientation group.
-        </RouteState>
-      ) : (
-        <ul className="m-0 grid gap-3 p-0" aria-label="Team catalog">
-          {teams.items.map((team) => (
-            <li
-              key={team.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--wl-border)] p-4"
-            >
-              <div>
-                <h3 className="m-0 text-base font-bold">{team.name}</h3>
-                <p className="m-0 mt-2 flex flex-wrap items-center gap-2 text-sm text-[var(--wl-text-muted)]">
-                  <StatusBadge tone={team.active ? 'success' : 'neutral'}>
-                    {team.active ? 'Active' : 'Inactive'}
-                  </StatusBadge>
-                  <span>
-                    {team.currentMemberCount}{' '}
-                    {team.currentMemberCount === 1 ? 'current member' : 'current members'}
-                  </span>
-                </p>
-              </div>
-              <div className="grid max-w-sm justify-items-start gap-2">
-                <Button
-                  {...(team.active && team.currentMemberCount > 0
-                    ? { 'aria-describedby': `team-${team.id}-deactivation-reason` }
-                    : {})}
-                  variant="quiet"
-                  isDisabled={mutation.isPending || (team.active && team.currentMemberCount > 0)}
-                  onPress={() => void run({ active: !team.active, teamId: team.id })}
-                >
-                  {team.active ? `Deactivate ${team.name}` : `Activate ${team.name}`}
-                </Button>
-                {team.active && team.currentMemberCount > 0 ? (
-                  <p
-                    id={`team-${team.id}-deactivation-reason`}
-                    className="m-0 text-sm text-[var(--wl-text-muted)]"
-                  >
-                    Move all current members to another team or end their team assignments before
-                    deactivating this team.
-                  </p>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
   );
 }
 

@@ -1625,7 +1625,27 @@ class PostgresAdministrationRepository implements AdministrationRepository {
 
   async listEmployees(input: Parameters<AdministrationRepository['listEmployees']>[0]) {
     const statusCondition = input.status === null ? undefined : eq(employees.status, input.status);
-    const where = and(eq(employees.organizationId, input.organizationId), statusCondition);
+    const searchCondition =
+      input.search === null
+        ? undefined
+        : or(
+            sql`position(lower(${input.search}) in lower(${employees.displayName})) > 0`,
+            sql`position(lower(${input.search}) in lower(${employees.employeeNumber})) > 0`,
+            sql`exists (
+              select 1
+              from ${accountEmployeeLinks}
+              inner join ${authUsers} on ${authUsers.id} = ${accountEmployeeLinks.userId}
+              where ${accountEmployeeLinks.organizationId} = ${input.organizationId}
+                and ${accountEmployeeLinks.employeeId} = ${employees.id}
+                and ${accountEmployeeLinks.unlinkedAt} is null
+                and position(lower(${input.search}) in lower(${authUsers.email})) > 0
+            )`,
+          );
+    const where = and(
+      eq(employees.organizationId, input.organizationId),
+      statusCondition,
+      searchCondition,
+    );
     const [totalRow] = await this.transaction
       .select({ value: count() })
       .from(employees)

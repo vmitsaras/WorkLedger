@@ -2,21 +2,21 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 10 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 11 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1310` (next)
-**Status:** WL-1309 complete — Team status has privacy-safe URL filters, clearer labels, actionable records, responsive lists, and explicit workspace navigation
+**Active task:** `WL-1311` (next)
+**Status:** WL-1310 complete — employee search is private and scoped, Teams has a separate route, and both catalogs have explicit actions and responsive layouts
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1309` turns the Team overview totals into keyboard-operable,
-URL-backed availability and open-record filters, clarifies time-bound status language, and gives
-each applicable result a direct next step. The comparison table is reserved for genuinely wide
-content space; complete records remain visible as semantic list articles at 768, 390, and 320
-pixels. The server-scoped API, privacy-minimized projection, and permission boundary remain
-unchanged. The next bounded slice is `WL-1310`: improve employee and team administration search,
-primary actions, route separation, dense layouts, and explanatory copy.
+Phase 12 is complete at `0.13.0`. `WL-1310` gives HR a bounded display-name, employee-number, or
+current-email search without placing identifying text in URL or persistent browser state. Employee
+and orientation-team administration now use separate canonical routes, clear primary and
+per-record actions, complete narrow lists, and wide comparison tables while preserving the
+effective-dated history and direct-manager authorization boundary. The next bounded slice is
+`WL-1311`: normalize cross-route navigation, microcopy, heading focus, status semantics, card
+density, and table-overflow behavior.
 
 ## Verified decisions
 
@@ -259,7 +259,7 @@ primary actions, route separation, dense layouts, and explanatory copy.
 - Phase 10 threat evidence is cumulative: `WL-1000` owns the application baseline and central
   permission matrix, while load, deployment, restore, upgrade, diagnostics, and retention tasks add
   their required operational evidence before `WL-1008` can close `T-001`–`T-020` (`D-505`).
-- The MVP application has 31 canonical route patterns plus three explicit host-operator workflows, each with stable implementation ownership.
+- The MVP application has 32 canonical route patterns plus three explicit host-operator workflows, each with stable implementation ownership.
 - Request and approval routes are type-neutral; sensitive workflow types, notes, reasons, entitlement values, and person-identifying search text never become URL state.
 - Route navigation updates the document title and visible heading with deterministic focus behavior; screen states have persistent, non-duplicative focus and announcement rules.
 - Narrow-screen calendars use an equivalent agenda/list when the grid is unsuitable, and responsive transformations preserve reading order, relationships, and actions.
@@ -272,10 +272,12 @@ primary actions, route separation, dense layouts, and explanatory copy.
 - HR employee administration and system account administration use separate contracts and routes:
   HR owns stable employee/employment history and employee/manager/HR roles; system administration
   receives no HR fields and owns only technical account state, system role, and session revocation.
-- The employee directory uses complete record cards below 48 rem and a captioned comparison table
-  above it. Team catalog work is visually separated, and disabled team deactivation references an
-  adjacent reason and recovery path. Report and audit comparisons retain named local scroll regions
-  with persistent narrow-screen guidance.
+- The employee directory and separate `/teams` catalog use complete record cards below 48 rem and
+  captioned comparison tables above it. Identifying employee search uses a bounded,
+  same-origin/CSRF-protected private body after HR and organization scope, while generic status and
+  ordinary browse pagination remain URL-owned. Explicit record actions replace linked identity
+  text; disabled team deactivation references an adjacent reason and recovery path. Report and
+  audit comparisons retain named local scroll regions with persistent narrow-screen guidance.
 - Employee deactivation ends the current half-open employment period, deactivates the linked
   account, and revokes all sessions without deleting prior periods or roles. Technical account
   state changes never mutate employment, and cannot re-enable an employee-linked account while the
@@ -2247,9 +2249,35 @@ primary actions, route separation, dense layouts, and explanatory copy.
   migration, dependency, lockfile, manifest, workspace version, publication, deployment, or tag
   changed. See `docs/133-team-status-workspace.md`.
 
+**2026-08-26 — WL-1310 employee and team administration hardening**
+
+- Added HR-scoped employee search over display name, employee number, and the current linked
+  account email. The strict search contract uses an authenticated, same-origin, CSRF-protected
+  `POST /v1/hr/employees/search` body so person-identifying text and search pagination never enter
+  URL state or persistent browser storage; organization and status scope precede matching, totals,
+  ordering, and pagination.
+- Separated the employee directory at `/employees` from the orientation-team catalog at `/teams`,
+  added reciprocal navigation and primary actions, and exposed explicit employee record and team
+  lifecycle actions without changing the direct-manager access boundary or effective-dated
+  history flows.
+- Reserved captioned comparison tables for viewports at least 48 rem wide and rendered complete
+  ordered-list articles below that boundary. Four current Phase 13 screenshots passed an update
+  run, a clean comparison, original-resolution inspection, axe, focus, URL privacy, target-action,
+  and page-overflow assertions at 1440 and 320 pixels.
+- Exact `pnpm verify` passed with pinned Node 24.18.0 and pnpm 11.20.0: reproducible OpenAPI,
+  formatting, lint, 292-source/1,530-import boundaries, CSS ownership, strict TypeScript, all 37
+  tooling tests, all 372 unit/component tests, 13 available integration tests with 45
+  PostgreSQL-dependent skips, 38 browser scenarios with one opt-in capture skipped, and the
+  production/public-root build.
+- The bundle passes at 381,403 largest JavaScript bytes, 908,586 total JavaScript bytes, 244,916
+  gzip JavaScript bytes, and 50,540 CSS bytes. The total-JavaScript budget moves narrowly from
+  904,000 to 910,000 bytes. No domain rule, database schema, migration, dependency, lockfile,
+  manifest, workspace version, publication, deployment, or tag changed. See
+  `docs/134-employee-team-administration.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1310`. Exact partial-day work-versus-absence overlap,
+No decision blocks `WL-1311`. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still need authoritative domain
 or repository facts; Today does not guess them from minute totals or an otherwise valid overnight
 session. The PostgreSQL-backed `WL-1305` correction-history case remains locally unexecuted until
@@ -2264,7 +2292,7 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1310 — Improve employee and team administration search, primary actions, route separation, dense layouts, and explanatory copy.`
+`WL-1311 — Normalize cross-route navigation labels, microcopy, heading focus, status semantics, card density, and table-overflow behavior.`
 
 ## Update rules
 
