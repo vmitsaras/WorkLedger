@@ -172,4 +172,4 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1310` Improve employee and team administration search, primary actions, route separation, dense layouts, and explanatory copy.
 - [x] `WL-1311` Normalize cross-route navigation labels, microcopy, heading focus, status semantics, card density, and table-overflow behavior.
 - [x] `WL-1312` Complete deterministic cross-route state, visual-regression, integration, accessibility, and usability coverage.
-- [ ] `WL-1313` Pass the Phase 13 release gate, update evidence and documentation, and bump all workspace manifests to `0.14.0`.
+- [x] `WL-1313` Pass the Phase 13 release gate, update evidence and documentation, and bump all workspace manifests to `0.14.0`.

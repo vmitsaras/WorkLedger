@@ -1,20 +1,21 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
+**Current phase:** Phase 13 complete — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 13 of 14 Phase 13 tasks complete
-**Current milestone:** Phase 13 cross-route regression gate complete — version 0.13.0
-**Active task:** `WL-1313` (next)
-**Status:** WL-1312 complete — the deterministic current-state visual, integration, accessibility, and usability gate passes with no open P0/P1 UX defect
+**Phase progress:** Phase 13 complete — 14 of 14 tasks complete
+**Current milestone:** Phase 13 release gate complete — version 0.14.0
+**Active task:** None — no later numbered roadmap task is assigned
+**Status:** WL-1313 complete — the signed Phase 13 release gate passes and every workspace manifest is 0.14.0
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1312` promotes the cumulative Phase 13 UI into one
-deterministic 19-image cross-route visual gate, records the complete representative story/state
-matrix, and closes the bounded accessibility and usability audit with no open P0 or P1 UX defect.
-The next bounded slice is `WL-1313`: execute the Phase 13 release gate, reconcile final evidence
-and documentation, and advance every workspace manifest to `0.14.0`.
+Phase 13 is complete at `0.14.0`. The release gate reconciles every Phase 13 criterion with its
+task evidence, retains the deterministic 19-image cross-route visual comparison, and records a
+green available local quality gate with no open P0 or P1 UX defect. The broader `D-502` retail
+browser and assistive-technology matrix remains an explicit limitation rather than a conformance
+claim. No later numbered roadmap task is assigned; the portfolio presentation scope remains an
+unnumbered draft.
 
 ## Verified decisions
 
@@ -2336,23 +2337,47 @@ and documentation, and advance every workspace manifest to `0.14.0`.
   comparison to the current Phase 13 suite. See
   `docs/136-cross-route-regression-accessibility-usability-gate.md`.
 
+**2026-08-26 — WL-1313 Phase 13 release gate**
+
+- Signed the complete attendance-clarity and operational-trust release checklist against the
+  `WL-1300` through `WL-1312` evidence. All 14 Phase 13 tasks are complete, and the bounded gate
+  retains no open P0 or P1 UX defect.
+- Reconciled the roadmap, ordered TODO, task board, README release summary and documentation map,
+  current project status, and the dedicated Phase 13 gate review. The current 19-image `WL-1312`
+  screenshot suite remains the reviewed comparison source; no historical image was rewritten.
+- Exact post-transition `pnpm --config.verify-deps-before-run=warn run verify` passes runtime
+  configuration, reproducible OpenAPI, formatting, lint, 296-source/1,552-import boundaries, CSS
+  ownership, strict TypeScript, all 37 tooling tests, all 376 unit/component tests, 13 available
+  integration tests, 38 browser scenarios, and the production/public-root build. The 45
+  PostgreSQL-dependent tests remain skipped because the local Docker daemon is not running.
+- `pnpm test:visual` passes 33 current Chromium flows with one intentional opt-in historical
+  capture skip and reproduces all 19 Phase 13 screenshots. The bundle remains within budget at
+  383,163 largest JavaScript bytes, 909,700 total JavaScript bytes, 245,304 gzip JavaScript bytes,
+  and 50,131 CSS bytes.
+- Advanced the root and all eight private workspace manifests from `0.13.0` to `0.14.0`.
+  The phase-version guard confirms 14 sequential phase gates. No dependency, lockfile, runtime
+  contract, domain rule, API, database schema, migration, publication, deployment, or tag changed.
+  See `docs/137-phase-13-gate-review.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1313`. Exact partial-day work-versus-absence overlap,
-calculation-to-ledger mismatch, and break-duration warning signals still need authoritative domain
-or repository facts; Today does not guess them from minute totals or an otherwise valid overnight
-session. The PostgreSQL-backed `WL-1305` correction-history case remains locally unexecuted until
-the Docker database service is available. The earlier Phase 12 and task-specific Phase 13 images
-remain historical and intentionally differ from the current green `WL-1312` visual gate. `D-502`
-remains the broader exact retail assistive-technology matrix rather than a whole-product
-conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for Testing and Safari.
-The temporary Astro backup is recoverable at
+No blocker remains in the numbered roadmap. Exact partial-day work-versus-absence overlap,
+calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
+domain or repository facts; Today does not guess them from minute totals or an otherwise valid
+overnight session. The PostgreSQL-backed `WL-1305` correction-history case remains locally
+unexecuted until the Docker database service is available. The earlier Phase 12 and task-specific
+Phase 13 images remain historical and intentionally differ from the current green `WL-1312` visual
+gate. `D-502` remains the broader exact retail assistive-technology matrix rather than a
+whole-product conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for
+Testing and Safari. The temporary Astro backup is recoverable at
 `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical and
 belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1313 — Execute the Phase 13 release gate, update evidence and documentation, and bump every workspace manifest to 0.14.0.`
+No numbered roadmap task is assigned. The portfolio presentation scope remains preserved in
+`docs/drafts/portfolio-presentation.md` and requires an explicit future scheduling decision before
+implementation.
 
 ## Update rules
 

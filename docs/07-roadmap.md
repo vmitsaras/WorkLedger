@@ -467,23 +467,23 @@ remaining product phases are known.
 
 ## Attendance clarity and operational trust release gate
 
-- [ ] Every value on Today comes from one coherent server snapshot and all visible times reconcile.
-- [ ] A first-time employee can identify current state, session start, worked time, remaining time,
+- [x] Every value on Today comes from one coherent server snapshot and all visible times reconcile.
+- [x] A first-time employee can identify current state, session start, worked time, remaining time,
   next action, and any real problem without opening a secondary panel.
-- [ ] An in-progress day is not presented as posted flexible-time debt.
-- [ ] Posted flexible-time balance is dated and visually separated from current-day progress.
-- [ ] Every `Needs attention` item is actionable, dated where relevant, and classified as blocking
+- [x] An in-progress day is not presented as posted flexible-time debt.
+- [x] Posted flexible-time balance is dated and visually separated from current-day progress.
+- [x] Every `Needs attention` item is actionable, dated where relevant, and classified as blocking
   or non-blocking.
-- [ ] Clock actions pass duplicate, stale-state, network-loss, two-tab/device, and session-expiry
+- [x] Clock actions pass duplicate, stale-state, network-loss, two-tab/device, and session-expiry
   tests.
-- [ ] Today passes keyboard-only, screen-reader, 200% zoom, 320 CSS-pixel reflow, forced-colors,
+- [x] Today passes keyboard-only, screen-reader, 200% zoom, 320 CSS-pixel reflow, forced-colors,
   reduced-motion, and mobile tests.
-- [ ] Approval inbox defaults to actionable work and secondary filters no longer dominate the
+- [x] Approval inbox defaults to actionable work and secondary filters no longer dominate the
   first viewport.
-- [ ] Team and employee administration rows expose clear next actions and work on narrow screens.
+- [x] Team and employee administration rows expose clear next actions and work on narrow screens.
 - [x] Permanent horizontal-scroll instructions are removed unless overflow is present and
   relevant.
-- [ ] Automated and manual visual, usability, accessibility, and regression gates pass.
-- [ ] Project status, roadmap, task board, release notes, screenshots, and relevant UX
+- [x] Automated and manual visual, usability, accessibility, and regression gates pass.
+- [x] Project status, roadmap, task board, release notes, screenshots, and relevant UX
   documentation are current.
-- [ ] The gate advances every workspace manifest to `0.14.0` only after every Phase 13 task passes.
+- [x] The gate advances every workspace manifest to `0.14.0` only after every Phase 13 task passes.
