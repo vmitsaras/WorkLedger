@@ -2,19 +2,20 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 8 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 9 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1308` (next)
-**Status:** WL-1307 complete — the dedicated Today responsive, accessibility, usability, and visual sub-gate passes
+**Active task:** `WL-1309` (next)
+**Status:** WL-1308 complete — the Approval inbox is needs-review first with simpler URL views, filters, actions, pagination, and responsive records
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1307` proves the completed Today slice at five deterministic
-viewports with current screenshots, axe, reflow, focus, state, manual visual, usability, and real
-VoiceOver evidence. Status and clock actions now remain one primary task column before progress and
-posted-balance detail at narrow widths. The next bounded slice is `WL-1308`: prioritize actionable
-work and simplify filtering, actions, pagination, and narrow-screen behavior in Approval inbox.
+Phase 12 is complete at `0.13.0`. `WL-1308` makes Approval inbox a needs-review-first queue with
+URL-backed state views, a concise applied-state summary, collapsed secondary filters, one
+human-readable Order field, range-based pagination, and complete record actions at 768, 390, and
+320 pixels. The server-scoped API, privacy-minimized projection, and permission boundary remain
+unchanged. The next bounded slice is `WL-1309`: improve Team status comprehension, filtering,
+actionability, labels, and workspace navigation.
 
 ## Verified decisions
 
@@ -2173,9 +2174,38 @@ work and simplify filtering, actions, pagination, and narrow-screen behavior in 
   image, dependency, lockfile, manifest, migration, phase version, publication, deployment, or tag
   changed. See `docs/131-today-responsive-accessibility-usability-visual-gate.md`.
 
+**2026-08-26 — WL-1308 Approval inbox triage and responsive flow**
+
+- Reordered the Approval inbox around its current scoped queue. The route now leads with the
+  needs-review total and exposes Needs review, Waiting on employee, Completed, and All records
+  through one URL-backed Queue view control with a visible and programmatic current value.
+- Collapsed secondary filters at every width, kept the applied view visible, combined sort key and
+  direction into one Order field, and made reset return to the documented needs-review default.
+  No named saved view or browser persistence was added.
+- Simplified multi-page context to a visible record range, omitted pagination when it is not
+  needed, preserved same-route and browser-back focus, shortened wide-table actions, and made
+  action-required list actions explicit as Review and decide.
+- Kept the comparison table for genuinely wide layouts and transformed the same records into
+  complete semantic list articles at 768, 390, and 320 pixels. Four current Phase 13 screenshots
+  pass their opt-in comparison and were inspected at original resolution with no page overflow,
+  clipped action, hidden record field, or color-only current queue state.
+- Added component and browser regression for the default queue, status navigation, canonical URL,
+  validation, table/list equivalence, pagination, axe, permission loss, HR access, privacy field
+  absence, and sensitive-query rejection. The existing API and PostgreSQL authorization evidence
+  remain unchanged.
+- Full `pnpm verify` passed runtime configuration, reproducible OpenAPI, formatting, lint,
+  289-source/1,515-import boundaries, CSS ownership, strict TypeScript, all 37 tooling checks, all
+  369 unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 37
+  browser scenarios with one opt-in capture skipped, and the production/public-root build. Bundle
+  budgets pass unchanged at 370,748 largest JavaScript bytes, 897,931 total JavaScript bytes,
+  242,867 gzip JavaScript bytes, and 49,960 CSS bytes.
+- No domain rule, API contract, database schema, migration, dependency, lockfile, manifest,
+  workspace version, publication, deployment, or tag changed. See
+  `docs/132-approval-inbox-triage.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1308`. Exact partial-day work-versus-absence overlap,
+No decision blocks `WL-1309`. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still need authoritative domain
 or repository facts; Today does not guess them from minute totals or an otherwise valid overnight
 session. The PostgreSQL-backed `WL-1305` correction-history case remains locally unexecuted until
@@ -2190,7 +2220,7 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1308 — Prioritize actionable work and simplify filtering, actions, pagination, and narrow-screen behavior in Approval inbox.`
+`WL-1309 — Improve Team status comprehension, filtering, actionability, labels, and workspace navigation.`
 
 ## Update rules
 

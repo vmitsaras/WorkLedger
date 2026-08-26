@@ -662,12 +662,6 @@
     }
   }
 
-  @media (min-width: 48rem) {
-    .wl-approval-filter-summary {
-      display: none;
-    }
-  }
-
   @media (forced-colors: active) {
     .wl-nav-link-active {
       border-color: Highlight;

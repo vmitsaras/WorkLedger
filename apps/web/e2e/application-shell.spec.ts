@@ -439,7 +439,7 @@ test('signs in through the accessible form and focuses the destination route', a
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('uses the unified approval inbox by keyboard with canonical URL, focus, and narrow reflow', async ({
+test('prioritizes needs-review approvals with URL views, concise filters, pagination, and narrow records', async ({
   page,
 }) => {
   const approvalQueries: URLSearchParams[] = [];
@@ -455,8 +455,13 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
     expect(url.searchParams.get('type')).not.toBe('VACATION');
     const limit = Number(url.searchParams.get('limit'));
     const pageNumber = Number(url.searchParams.get('page'));
-    const items =
-      url.searchParams.get('type') === 'CORRECTION' ? APPROVAL_ITEMS.slice(0, 1) : APPROVAL_ITEMS;
+    const status = url.searchParams.get('status');
+    const type = url.searchParams.get('type');
+    const items = APPROVAL_ITEMS.filter(
+      (item) =>
+        (status === 'ALL' || item.status === status) && (type === 'ALL' || item.kind === type),
+    );
+    const total = status === 'WAITING_ON_EMPLOYEE' ? 7 : status === 'COMPLETED' ? 0 : 41;
     await route.fulfill({
       json: success({
         filterOptions: {
@@ -466,8 +471,8 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
         pagination: {
           limit,
           page: pageNumber,
-          total: 25,
-          totalPages: 3,
+          total,
+          totalPages: total === 0 ? 0 : Math.ceil(total / limit),
         },
         timeZone: 'Europe/Berlin',
       }),
@@ -475,56 +480,69 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
     });
   });
 
-  await page.goto(
-    '/approvals?status=ALL&type=ALL&sort=SUBMITTED_AT&direction=DESC&page=3&limit=10',
-  );
+  await page.goto('/approvals');
   await expect(page).toHaveTitle('Approvals | WorkLedger');
   await expect(page.getByRole('heading', { name: 'Approval inbox' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Needs review: 41' })).toBeVisible();
+  const queueView = page.getByRole('combobox', { name: 'Queue view' });
+  await expect(queueView).toHaveValue('ACTION_REQUIRED');
 
-  const table = page.getByRole('table', { name: /Unified approval inbox/u });
+  const table = page.getByRole('table', { name: 'Approval inbox results' });
   const scrollRegion = page.getByRole('region', { name: 'Approval inbox results table' });
   await expect(table).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
-  await capturePhase12Manager(page, 'approvals-desktop-1440x900');
-  await page.setViewportSize({ width: 390, height: 844 });
+  await capturePhase13ApprovalInbox(page, 'approval-inbox-1440x900');
+  await page.setViewportSize({ width: 768, height: 1024 });
   const mobileResults = page.getByRole('list', { name: 'Approval inbox results' });
   await expect(table).toHaveCount(0);
   await expect(mobileResults).toBeVisible();
+  await capturePhase13ApprovalInbox(page, 'approval-inbox-768x1024');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(table).toHaveCount(0);
+  await expect(mobileResults).toBeVisible();
   await expect(mobileResults.getByText('Maria Chen')).toBeVisible();
-  await expect(mobileResults.getByText('Client Services')).toHaveCount(2);
+  await expect(mobileResults.getByText('Client Services')).toBeVisible();
   await expect(
     mobileResults.getByRole('link', { name: 'Review correction for Maria Chen' }),
   ).toBeVisible();
-  await capturePhase12Manager(page, 'approvals-mobile-390x844');
+  await capturePhase13ApprovalInbox(page, 'approval-inbox-390x844');
+  await page.setViewportSize({ width: 320, height: 900 });
+  await expect(mobileResults).toBeVisible();
+  await capturePhase13ApprovalInbox(page, 'approval-inbox-320x900');
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(table).toBeVisible();
-  await expect(table.locator('caption')).toContainText(
-    'Monthly periods link to their dedicated review page; absence subtypes remain hidden.',
-  );
+  await expect(table.locator('caption')).toHaveText('Approval inbox results');
   await expect(table.getByRole('columnheader', { name: 'Submitted' })).toHaveAttribute(
     'aria-sort',
     'descending',
   );
-  await expect(table.getByText('Absence request')).toBeVisible();
+  await expect(table.getByText('Correction')).toBeVisible();
   await expect(
     table.getByRole('link', { name: 'Review correction for Maria Chen' }),
   ).toHaveAttribute('href', `/approvals/${CORRECTION_APPROVAL_ID}`);
 
-  const status = page.getByRole('combobox', { name: 'Queue status' });
-  await status.selectOption('ACTION_REQUIRED');
-  await expect(status).toHaveValue('ACTION_REQUIRED');
+  await queueView.focus();
+  await queueView.selectOption('WAITING_ON_EMPLOYEE');
+  await expect(page).toHaveURL(/status=WAITING_ON_EMPLOYEE/u);
+  await expect(page.getByRole('heading', { name: 'Waiting on employee: 7' })).toBeVisible();
+  await expect(queueView).toBeFocused();
+  await expect(queueView).toHaveValue('WAITING_ON_EMPLOYEE');
+  await page.goBack();
+  await expect(page).toHaveURL(/\/approvals$/u);
+  await expect(page.getByRole('heading', { name: 'Needs review: 41' })).toBeVisible();
+  await expect(queueView).toBeFocused();
+  await expect(queueView).toHaveValue('ACTION_REQUIRED');
+
+  await page.getByText('Refine this view', { exact: true }).click();
   const category = page.getByRole('combobox', { name: 'Workflow category' });
   await category.selectOption('CORRECTION');
   await expect(category).toHaveValue('CORRECTION');
   const team = page.getByRole('combobox', { name: 'Current team' });
   await team.selectOption(APPROVAL_TEAM_ID);
   await expect(team).toHaveValue(APPROVAL_TEAM_ID);
-  const sort = page.getByRole('combobox', { name: 'Sort by' });
-  await sort.selectOption('AFFECTED_DATE');
-  await expect(sort).toHaveValue('AFFECTED_DATE');
-  const direction = page.getByRole('combobox', { name: 'Sort direction' });
-  await direction.selectOption('ASC');
-  await expect(direction).toHaveValue('ASC');
+  const order = page.getByRole('combobox', { name: 'Order' });
+  await order.selectOption('AFFECTED_DATE:ASC');
+  await expect(order).toHaveValue('AFFECTED_DATE:ASC');
   await page.getByLabel('Affected from').fill('2026-08-01');
   await page.getByLabel('Affected through').fill('2026-08-31');
 
@@ -540,7 +558,7 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual({
     direction: 'ASC',
     from: '2026-08-01',
-    limit: '10',
+    limit: '20',
     page: '1',
     sort: 'AFFECTED_DATE',
     status: 'ACTION_REQUIRED',
@@ -553,25 +571,25 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
   await nextPage.focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/page=2/u);
-  await expect(page.getByText(/Page 2 of 3/u)).toBeVisible();
+  await expect(page.getByText('Showing 21–40 of 41')).toBeVisible();
   await expect(nextPage).toBeFocused();
 
   await page.goBack();
   await expect(page).toHaveURL(/page=1/u);
-  await expect(page.getByText(/Page 1 of 3/u)).toBeVisible();
+  await expect(page.getByText('Showing 1–20 of 41')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next page' })).toBeFocused();
   expect(approvalQueries.length).toBeGreaterThanOrEqual(3);
 
   await page.setViewportSize({ width: 320, height: 900 });
-  const filterDisclosure = page.getByText('Show approval filters', { exact: true });
+  const filterDisclosure = page.getByText('Hide filters', { exact: true });
   await expect(filterDisclosure).toBeVisible();
-  await expect(status).toBeHidden();
-  await expect(page.getByText(/^Applied:/u)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Clear approval filters' })).toBeVisible();
+  await expect(category).toBeVisible();
+  await expect(page.getByText(/^Applied view:/u)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reset to needs review' })).toBeVisible();
   await filterDisclosure.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByText('Hide approval filters', { exact: true })).toBeFocused();
-  await expect(status).toBeVisible();
+  await expect(page.getByText('Refine this view', { exact: true })).toBeFocused();
+  await expect(category).toBeHidden();
   await expect(table).toHaveCount(0);
   await expect(mobileResults).toBeVisible();
   const mobileReview = mobileResults.getByRole('link', {
@@ -586,7 +604,6 @@ test('uses the unified approval inbox by keyboard with canonical URL, focus, and
     ),
   ).toBe(true);
   await expect(scrollRegion).toHaveCount(0);
-  await capturePhase12Manager(page, 'approvals-reflow-320x900');
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -3372,6 +3389,16 @@ async function capturePhase13TodayGate(page: Page, name: string): Promise<void> 
 
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page).toHaveScreenshot(['phase-13', 'wl1307', `${name}.png`], {
+    animations: 'disabled',
+    fullPage: true,
+  });
+}
+
+async function capturePhase13ApprovalInbox(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_ASSERT_PHASE_13_APPROVALS'] !== '1') return;
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1308', `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

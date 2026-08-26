@@ -4,6 +4,7 @@ import { Link, useLoaderData, useNavigate, useSearchParams } from 'react-router'
 
 import {
   approvalInboxQuerySchema,
+  approvalInboxStatusSchema,
   type ApprovalInbox,
   type ApprovalInboxDirection,
   type ApprovalInboxQuery,
@@ -101,6 +102,9 @@ export function ApprovalInboxPage() {
   const setPage = (page: number) => {
     setSearchParams(toSearchParams({ ...queryInput, page }));
   };
+  const setQueueStatus = (status: ApprovalInboxStatus) => {
+    setSearchParams(toSearchParams({ ...queryInput, page: 1, status }));
+  };
 
   if (query.isError && isAccessDenied(query.error)) return <ApprovalInboxPermissionDenied />;
 
@@ -109,27 +113,23 @@ export function ApprovalInboxPage() {
       <PageHeader
         eyebrow="Approvals"
         title="Approval inbox"
-        description="Prioritize corrections, absence work, cancellations, and monthly periods that need review."
-      />
-      <ApprovalFilters
-        draft={draft}
-        error={filterError}
-        onChange={setDraft}
-        onClear={clearFilters}
-        onSubmit={submitFilters}
-        query={queryInput}
-        teams={query.data?.filterOptions.teams ?? []}
+        description="Review and decide the corrections, absence work, cancellations, and monthly periods in your scope."
       />
       {query.isPending ? (
         <ApprovalInboxLoading />
       ) : query.isError || query.data === undefined ? (
         <ApprovalInboxError error={query.error} retry={() => void query.refetch()} />
       ) : (
-        <ApprovalResults
+        <ApprovalWorkspace
           data={query.data}
+          draft={draft}
+          error={filterError}
           isFetching={query.isFetching}
+          onChange={setDraft}
           onClear={clearFilters}
           onPage={setPage}
+          onQueueStatus={setQueueStatus}
+          onSubmit={submitFilters}
           query={queryInput}
         />
       )}
@@ -157,65 +157,32 @@ function ApprovalFilters({
   draft,
   error,
   onChange,
-  onClear,
   onSubmit,
-  query,
   teams,
 }: Readonly<{
   draft: FilterDraft;
   error: string | undefined;
   onChange: (draft: FilterDraft) => void;
-  onClear: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  query: ApprovalInboxQuery;
   teams: ApprovalInbox['filterOptions']['teams'];
 }>) {
-  const wideLayout = useWideApprovalLayout();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const filtered = hasNonDefaultFilters(query);
+  const [open, setOpen] = useState(false);
 
   return (
-    <section aria-labelledby="approval-filters-heading" className="grid gap-3">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="approval-filters-heading" className="m-0 text-xl font-bold">
-            Filter and sort
-          </h2>
-          <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-            Applied: {appliedFilterSummary(query)}
-          </p>
-        </div>
-        {filtered ? (
-          <Button type="button" variant="quiet" className="w-fit" onPress={onClear}>
-            Clear approval filters
-          </Button>
-        ) : null}
-      </div>
+    <div className="grid gap-3">
       <details
         className="wl-approval-filter-disclosure rounded-xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)]"
-        open={wideLayout || mobileOpen}
+        open={open}
         onToggle={(event) => {
-          if (!wideLayout) setMobileOpen(event.currentTarget.open);
+          setOpen(event.currentTarget.open);
         }}
       >
         <summary className="wl-approval-filter-summary">
-          {!wideLayout && mobileOpen ? 'Hide approval filters' : 'Show approval filters'}
+          {open ? 'Hide filters' : 'Refine this view'}
         </summary>
         <FilterBar aria-label="Approval filters" className="border-0 p-4" onSubmit={onSubmit}>
           <div className="grid w-full gap-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <SelectFilter
-                id="approval-status"
-                label="Queue status"
-                value={draft.status}
-                onChange={(status) => onChange({ ...draft, status: status as ApprovalInboxStatus })}
-                options={[
-                  ['ACTION_REQUIRED', 'Action required'],
-                  ['WAITING_ON_EMPLOYEE', 'Waiting on employee'],
-                  ['COMPLETED', 'Completed'],
-                  ['ALL', 'All statuses'],
-                ]}
-              />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <SelectFilter
                 id="approval-type"
                 label="Workflow category"
@@ -250,26 +217,24 @@ function ApprovalFilters({
                 </select>
               </label>
               <SelectFilter
-                id="approval-sort"
-                label="Sort by"
-                value={draft.sort}
-                onChange={(sort) => onChange({ ...draft, sort: sort as ApprovalInboxSort })}
+                id="approval-order"
+                label="Order"
+                value={`${draft.sort}:${draft.direction}`}
+                onChange={(order) => {
+                  const [sort, direction] = order.split(':');
+                  onChange({
+                    ...draft,
+                    direction: direction === 'ASC' ? 'ASC' : 'DESC',
+                    sort: sort === 'AFFECTED_DATE' || sort === 'EMPLOYEE' ? sort : 'SUBMITTED_AT',
+                  });
+                }}
                 options={[
-                  ['SUBMITTED_AT', 'Submitted time'],
-                  ['AFFECTED_DATE', 'Affected date'],
-                  ['EMPLOYEE', 'Employee name'],
-                ]}
-              />
-              <SelectFilter
-                id="approval-direction"
-                label="Sort direction"
-                value={draft.direction}
-                onChange={(direction) =>
-                  onChange({ ...draft, direction: direction as ApprovalInboxDirection })
-                }
-                options={[
-                  ['DESC', 'Descending'],
-                  ['ASC', 'Ascending'],
+                  ['SUBMITTED_AT:DESC', 'Newest submitted first'],
+                  ['SUBMITTED_AT:ASC', 'Oldest submitted first'],
+                  ['AFFECTED_DATE:ASC', 'Earliest affected first'],
+                  ['AFFECTED_DATE:DESC', 'Latest affected first'],
+                  ['EMPLOYEE:ASC', 'Employee A to Z'],
+                  ['EMPLOYEE:DESC', 'Employee Z to A'],
                 ]}
               />
               <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-from">
@@ -315,7 +280,7 @@ function ApprovalFilters({
           </div>
         </FilterBar>
       </details>
-    </section>
+    </div>
   );
 }
 
@@ -324,7 +289,7 @@ function useWideApprovalLayout(): boolean {
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
-    const media = window.matchMedia('(min-width: 48rem)');
+    const media = window.matchMedia('(min-width: 72rem)');
     const update = () => setWide(media.matches);
     media.addEventListener('change', update);
     update();
@@ -335,7 +300,7 @@ function useWideApprovalLayout(): boolean {
 }
 
 function readWideApprovalLayout(): boolean {
-  return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 48rem)').matches;
+  return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 72rem)').matches;
 }
 
 function SelectFilter({
@@ -371,17 +336,27 @@ function SelectFilter({
   );
 }
 
-function ApprovalResults({
+function ApprovalWorkspace({
   data,
+  draft,
+  error,
   isFetching,
+  onChange,
   onClear,
   onPage,
+  onQueueStatus,
+  onSubmit,
   query,
 }: Readonly<{
   data: ApprovalInbox;
+  draft: FilterDraft;
+  error: string | undefined;
   isFetching: boolean;
+  onChange: (draft: FilterDraft) => void;
   onClear: () => void;
   onPage: (page: number) => void;
+  onQueueStatus: (status: ApprovalInboxStatus) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   query: ApprovalInboxQuery;
 }>) {
   const { pagination } = data;
@@ -390,24 +365,58 @@ function ApprovalResults({
   const pageCount = Math.max(1, pagination.totalPages);
   return (
     <section aria-labelledby="approval-results-heading" className="grid gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="approval-results-heading" className="m-0 text-xl font-bold">
-            {query.status === 'ACTION_REQUIRED' ? 'Needs action' : 'Approval records'}
-          </h2>
-          <p
-            className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]"
-            role="status"
-            aria-label="Approval results status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {isFetching
-              ? 'Updating results…'
-              : approvalResultSummary(pagination.total, query.status)}
+      <div className="grid gap-4 border-b border-[var(--wl-border)] pb-4">
+        <div className="grid gap-1">
+          <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[var(--wl-text-muted)]">
+            Current queue
           </p>
+          <h2 id="approval-results-heading" className="m-0 text-2xl font-bold">
+            {query.status === 'ACTION_REQUIRED' ? 'Needs review' : statusLabel(query.status)}:{' '}
+            {pagination.total.toLocaleString()}
+          </h2>
+        </div>
+        <div>
+          <SelectFilter
+            id="approval-queue-view"
+            label="Queue view"
+            value={query.status}
+            onChange={(status) => onQueueStatus(approvalInboxStatusSchema.parse(status))}
+            options={[
+              ['ACTION_REQUIRED', 'Needs review'],
+              ['WAITING_ON_EMPLOYEE', 'Waiting on employee'],
+              ['COMPLETED', 'Completed'],
+              ['ALL', 'All records'],
+            ]}
+          />
         </div>
       </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+          <strong className="text-[var(--wl-text)]">Applied view:</strong>{' '}
+          {appliedFilterSummary(query, data.filterOptions.teams)}
+        </p>
+        {filtered ? (
+          <Button type="button" variant="quiet" className="w-fit" onPress={onClear}>
+            Reset to needs review
+          </Button>
+        ) : null}
+      </div>
+      <ApprovalFilters
+        draft={draft}
+        error={error}
+        onChange={onChange}
+        onSubmit={onSubmit}
+        teams={data.filterOptions.teams}
+      />
+      <p
+        className={isFetching ? 'm-0 text-sm font-semibold text-[var(--wl-text-muted)]' : 'sr-only'}
+        role="status"
+        aria-label="Approval results status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {isFetching ? 'Updating approval results…' : ''}
+      </p>
       {data.items.length === 0 ? (
         <RouteState
           actions={
@@ -431,15 +440,17 @@ function ApprovalResults({
       ) : (
         <ApprovalResultsList data={data} isFetching={isFetching} />
       )}
-      <Pagination
-        ariaLabel="Approval inbox pages"
-        currentPage={pagination.page}
-        nextFocusKey="approval-next-page"
-        onPageChange={onPage}
-        pageCount={pageCount}
-        previousFocusKey="approval-previous-page"
-        summary={`Page ${pagination.page} of ${pageCount}. ${pagination.total} approval${pagination.total === 1 ? '' : 's'}.`}
-      />
+      {pageCount > 1 ? (
+        <Pagination
+          ariaLabel="Approval inbox pages"
+          currentPage={pagination.page}
+          nextFocusKey="approval-next-page"
+          onPageChange={onPage}
+          pageCount={pageCount}
+          previousFocusKey="approval-previous-page"
+          summary={approvalPageSummary(pagination)}
+        />
+      ) : null}
     </section>
   );
 }
@@ -451,9 +462,8 @@ function ApprovalResultsTable({
 }: Readonly<{ data: ApprovalInbox; isFetching: boolean; query: ApprovalInboxQuery }>) {
   return (
     <DataTable
-      caption="Unified approval inbox. Monthly periods link to their dedicated review page; absence subtypes remain hidden."
-      className="min-w-[58rem]"
-      scrollHint="Scroll horizontally if every comparison column does not fit."
+      caption="Approval inbox results"
+      className="min-w-[46rem]"
       scrollLabel="Approval inbox results table"
     >
       <thead>
@@ -469,14 +479,20 @@ function ApprovalResultsTable({
           <SortHeader active={query.sort === 'SUBMITTED_AT'} direction={query.direction}>
             Submitted
           </SortHeader>
-          <th scope="col">Current team</th>
           <th scope="col">Action</th>
         </tr>
       </thead>
       <tbody>
         {data.items.map((item) => (
           <tr key={`${item.kind}-${item.id}`}>
-            <th scope="row">{item.employeeDisplayName}</th>
+            <th scope="row">
+              <span className="grid gap-1">
+                <span>{item.employeeDisplayName}</span>
+                <span className="text-xs font-normal text-[var(--wl-text-muted)]">
+                  {item.team?.name ?? 'No current team'}
+                </span>
+              </span>
+            </th>
             <td>{workflowLabel(item.kind)}</td>
             <td>
               <StatusBadge tone={approvalStatusTone(item.status)}>
@@ -485,8 +501,7 @@ function ApprovalResultsTable({
             </td>
             <td>{formatAffectedDates(item)}</td>
             <td>{formatSubmittedAt(item.submittedAt, data.timeZone)}</td>
-            <td>{item.team?.name ?? 'No current team'}</td>
-            <td>{approvalAction(item, isFetching)}</td>
+            <td>{approvalAction(item, isFetching, 'table')}</td>
           </tr>
         ))}
       </tbody>
@@ -502,7 +517,7 @@ function ApprovalResultsList({
     <ol className="m-0 grid list-none gap-3 p-0" aria-label="Approval inbox results">
       {data.items.map((item) => (
         <li key={`${item.kind}-${item.id}`}>
-          <Panel as="article" className="grid gap-3" density="compact">
+          <Panel as="article" className="grid min-w-0 gap-3" density="compact">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="grid gap-1">
                 <h3 className="m-0 text-lg font-bold">{item.employeeDisplayName}</h3>
@@ -522,7 +537,7 @@ function ApprovalResultsList({
               />
               <ApprovalFact label="Current team" value={item.team?.name ?? 'No current team'} />
             </dl>
-            {approvalAction(item, isFetching)}
+            {approvalAction(item, isFetching, 'list')}
           </Panel>
         </li>
       ))}
@@ -539,7 +554,11 @@ function ApprovalFact({ label, value }: Readonly<{ label: string; value: string 
   );
 }
 
-function approvalAction(item: ApprovalInbox['items'][number], isFetching: boolean): ReactNode {
+function approvalAction(
+  item: ApprovalInbox['items'][number],
+  isFetching: boolean,
+  presentation: 'list' | 'table',
+): ReactNode {
   if (isFetching) {
     return (
       <span className="text-sm text-[var(--wl-text-muted)]">Review after update finishes</span>
@@ -548,14 +567,21 @@ function approvalAction(item: ApprovalInbox['items'][number], isFetching: boolea
   return (
     <Link
       aria-label={`Review ${workflowLabel(item.kind).toLowerCase()} for ${item.employeeDisplayName}`}
-      className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
+      className={buttonVariants({
+        variant: item.status === 'ACTION_REQUIRED' ? 'primary' : 'secondary',
+        className: presentation === 'list' ? 'w-full' : 'w-fit',
+      })}
       to={
         item.kind === 'MONTHLY_PERIOD'
           ? `/monthly-periods/${encodeURIComponent(item.id)}`
           : `/approvals/${encodeURIComponent(item.id)}`
       }
     >
-      Review
+      {presentation === 'table'
+        ? 'Review'
+        : item.status === 'ACTION_REQUIRED'
+          ? 'Review and decide'
+          : 'Review record'}
     </Link>
   );
 }
@@ -645,16 +671,25 @@ function toSearchParams(query: ApprovalInboxQuery): URLSearchParams {
   return params;
 }
 
-function appliedFilterSummary(query: ApprovalInboxQuery): string {
-  const values = [statusLabel(query.status), typeFilterLabel(query.type)];
-  if (query.team !== undefined) values.push('one current team');
+function appliedFilterSummary(
+  query: ApprovalInboxQuery,
+  teams: ApprovalInbox['filterOptions']['teams'],
+): string {
+  const selectedTeam = teams.find((team) => team.id === query.team);
+  const values = [
+    statusLabel(query.status),
+    typeFilterLabel(query.type),
+    query.team === undefined
+      ? 'all current teams'
+      : (selectedTeam?.name ?? 'selected current team'),
+  ];
   if (query.from !== undefined && query.to !== undefined) {
     values.push(`${formatLocalDate(query.from)} to ${formatLocalDate(query.to)}`);
+  } else {
+    values.push('any affected date');
   }
-  values.push(
-    `sorted by ${sortLabel(query.sort)}, ${query.direction === 'ASC' ? 'ascending' : 'descending'}`,
-  );
-  return values.join('; ');
+  values.push(orderLabel(query));
+  return values.join(', ');
 }
 
 function hasNonDefaultFilters(query: ApprovalInboxQuery): boolean {
@@ -669,11 +704,11 @@ function hasNonDefaultFilters(query: ApprovalInboxQuery): boolean {
   );
 }
 
-function approvalResultSummary(total: number, status: ApprovalInboxStatus): string {
-  if (status === 'ACTION_REQUIRED') {
-    return `${total.toString()} approval${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} action.`;
-  }
-  return `${total.toString()} approval${total === 1 ? '' : 's'} match this view.`;
+function approvalPageSummary(pagination: ApprovalInbox['pagination']): string {
+  if (pagination.total === 0) return 'No approvals';
+  const first = (pagination.page - 1) * pagination.limit + 1;
+  const last = Math.min(pagination.page * pagination.limit, pagination.total);
+  return `Showing ${first.toString()}–${last.toString()} of ${pagination.total.toString()}`;
 }
 
 function formatAffectedDates(item: ApprovalInbox['items'][number]): string {
@@ -706,19 +741,21 @@ function statusLabel(status: ApprovalInboxStatus): string {
       ? 'Waiting on employee'
       : status === 'COMPLETED'
         ? 'Completed'
-        : 'All statuses';
+        : 'All records';
 }
 
 function typeFilterLabel(type: ApprovalInboxType): string {
   return type === 'ALL' ? 'all workflow categories' : workflowLabel(type);
 }
 
-function sortLabel(sort: ApprovalInboxSort): string {
-  return sort === 'SUBMITTED_AT'
-    ? 'submitted time'
-    : sort === 'AFFECTED_DATE'
-      ? 'affected date'
-      : 'employee name';
+function orderLabel(value: Pick<ApprovalInboxQuery, 'direction' | 'sort'>): string {
+  if (value.sort === 'SUBMITTED_AT') {
+    return value.direction === 'ASC' ? 'oldest submitted first' : 'newest submitted first';
+  }
+  if (value.sort === 'AFFECTED_DATE') {
+    return value.direction === 'ASC' ? 'earliest affected first' : 'latest affected first';
+  }
+  return value.direction === 'ASC' ? 'employee A to Z' : 'employee Z to A';
 }
 
 function formatSubmittedAt(value: string, timeZone: string): string {

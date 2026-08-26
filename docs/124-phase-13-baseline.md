@@ -324,6 +324,23 @@ Chrome for Testing and Safari confirmed the same primary-action order and the na
 table's exposed structure. There is no remaining P0 or P1 Today issue; secondary-route work may
 begin with `WL-1308`.
 
+### `WL-1308` follow-up
+
+`WL-1308` closes `AUD-1300-09` in `docs/132-approval-inbox-triage.md`. The Approval inbox now
+opens on needs-review work, promotes the scoped result count and queue view before secondary
+controls, promotes the status field as one URL-backed Queue view control, combines sort key and
+direction into one understandable Order control, and collapses the remaining filters at every
+width. The accepted URL remains the restorable view state; no named view or browser persistence was
+added.
+
+The responsive gate now uses the comparison table only when the shell content column can keep its
+stable columns and Review action usable. At 768, 390, and 320 pixels a complete record list exposes
+the same identity, workflow, text status, affected dates, submitted time, current team, and action
+without page-level horizontal scrolling. Four current Phase 13 images, axe, URL and browser-history
+tests, pagination focus, permission loss, HR access, privacy-field absence, and sensitive-query
+rejection provide the bounded acceptance evidence. `AUD-1300-09` is resolved; cross-route
+normalization remains assigned to `WL-1311` and `WL-1312`.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.

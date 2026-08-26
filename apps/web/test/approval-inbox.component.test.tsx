@@ -102,15 +102,22 @@ test('hydrates controls from the URL and renders a privacy-minimized, accessible
   const heading = await screen.findByRole('heading', { name: 'Approval inbox' });
   await waitFor(() => expect(heading).toHaveFocus());
   expect(document.title).toBe('Approvals | WorkLedger');
-  expect(screen.getByRole('combobox', { name: 'Queue status' })).toHaveValue('ALL');
+  expect(screen.getByRole('heading', { name: 'All records: 11' })).toBeVisible();
+  expect(screen.getByRole('combobox', { name: 'Queue view' })).toHaveValue('ALL');
+  const appliedView = screen.getByText(/Applied view:/u).closest('p');
+  expect(appliedView).not.toBeNull();
+  if (appliedView === null) throw new Error('Expected the applied view summary.');
+  expect(appliedView).toHaveTextContent('Client Services');
+  expect(appliedView).toHaveTextContent('employee A to Z');
+  expect(screen.getByRole('combobox', { name: 'Workflow category' })).not.toBeVisible();
+  await userEvent.setup().click(screen.getByText('Refine this view', { exact: true }));
   expect(screen.getByRole('combobox', { name: 'Workflow category' })).toHaveValue('ALL');
   expect(screen.getByRole('combobox', { name: 'Current team' })).toHaveValue(TEAM_ID);
-  expect(screen.getByRole('combobox', { name: 'Sort by' })).toHaveValue('EMPLOYEE');
-  expect(screen.getByRole('combobox', { name: 'Sort direction' })).toHaveValue('ASC');
+  expect(screen.getByRole('combobox', { name: 'Order' })).toHaveValue('EMPLOYEE:ASC');
   expect(screen.getByLabelText('Affected from')).toHaveValue('2026-08-01');
   expect(screen.getByLabelText('Affected through')).toHaveValue('2026-08-31');
 
-  const table = screen.getByRole('table', { name: /Unified approval inbox/u });
+  const table = screen.getByRole('table', { name: 'Approval inbox results' });
   expect(within(table).getByRole('columnheader', { name: 'Employee' })).toHaveAttribute(
     'aria-sort',
     'ascending',
@@ -170,16 +177,21 @@ test('applies broad filters through the URL, resets pagination, and retains filt
   );
   const user = userEvent.setup();
 
-  await screen.findByRole('table', { name: /Unified approval inbox/u });
-  await user.selectOptions(screen.getByRole('combobox', { name: 'Queue status' }), [
-    'WAITING_ON_EMPLOYEE',
-  ]);
+  await screen.findByRole('table', { name: 'Approval inbox results' });
+  const queueView = screen.getByRole('combobox', { name: 'Queue view' });
+  await user.selectOptions(queueView, ['WAITING_ON_EMPLOYEE']);
+  await waitFor(() =>
+    expect(new URLSearchParams(router.state.location.search).get('status')).toBe(
+      'WAITING_ON_EMPLOYEE',
+    ),
+  );
+  expect(queueView).toHaveFocus();
+  await user.click(screen.getByText('Refine this view', { exact: true }));
   await user.selectOptions(screen.getByRole('combobox', { name: 'Workflow category' }), [
     'ABSENCE',
   ]);
   await user.selectOptions(screen.getByRole('combobox', { name: 'Current team' }), [TEAM_ID]);
-  await user.selectOptions(screen.getByRole('combobox', { name: 'Sort by' }), ['AFFECTED_DATE']);
-  await user.selectOptions(screen.getByRole('combobox', { name: 'Sort direction' }), ['ASC']);
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Order' }), ['AFFECTED_DATE:ASC']);
   const affectedFrom = screen.getByLabelText('Affected from');
   const affectedThrough = screen.getByLabelText('Affected through');
   fireEvent.change(affectedFrom, { target: { value: '2026-08-14' } });
@@ -194,8 +206,8 @@ test('applies broad filters through the URL, resets pagination, and retains filt
   expect(affectedThrough).toHaveAttribute('aria-invalid', 'true');
   expect(affectedFrom).toHaveAttribute('aria-describedby', rangeError.id);
   expect(affectedThrough).toHaveAttribute('aria-describedby', rangeError.id);
-  expect(new URLSearchParams(router.state.location.search).get('page')).toBe('3');
-  expect(approvalUrls).toHaveLength(1);
+  expect(new URLSearchParams(router.state.location.search).get('page')).toBe('1');
+  expect(approvalUrls).toHaveLength(2);
 
   fireEvent.change(affectedThrough, {
     target: { value: '2026-08-21' },
@@ -217,8 +229,8 @@ test('applies broad filters through the URL, resets pagination, and retains filt
     to: '2026-08-21',
     type: 'ABSENCE',
   });
-  await waitFor(() => expect(approvalUrls).toHaveLength(2));
-  expect(Object.fromEntries(approvalUrls[1]?.searchParams ?? [])).toEqual(
+  await waitFor(() => expect(approvalUrls).toHaveLength(3));
+  expect(Object.fromEntries(approvalUrls[2]?.searchParams ?? [])).toEqual(
     Object.fromEntries(applied),
   );
   expect(apply).toHaveFocus();
@@ -238,6 +250,55 @@ test('applies broad filters through the URL, resets pagination, and retains filt
     'Absence cancellation',
     'Monthly period',
   ]);
+});
+
+test('defaults to needs review and restores the originating queue control after browser back', async () => {
+  const { approvalUrls } = stubInboxFetch({
+    context: MANAGER_CONTEXT,
+    onInbox: (url) =>
+      successResponse(
+        inbox({
+          items: INBOX_ITEMS.filter((item) =>
+            url.searchParams.get('status') === 'WAITING_ON_EMPLOYEE'
+              ? item.status === 'WAITING_ON_EMPLOYEE'
+              : item.status === 'ACTION_REQUIRED',
+          ),
+          limit: 20,
+          page: 1,
+          total: url.searchParams.get('status') === 'WAITING_ON_EMPLOYEE' ? 1 : 2,
+        }),
+      ),
+  });
+  const { router } = renderApplication('/approvals');
+  const user = userEvent.setup();
+
+  expect(await screen.findByRole('heading', { name: 'Needs review: 2' })).toBeVisible();
+  const queueView = screen.getByRole('combobox', { name: 'Queue view' });
+  expect(queueView).toHaveValue('ACTION_REQUIRED');
+  expect(Object.fromEntries(approvalUrls[0]?.searchParams ?? [])).toEqual({
+    direction: 'DESC',
+    limit: '20',
+    page: '1',
+    sort: 'SUBMITTED_AT',
+    status: 'ACTION_REQUIRED',
+    type: 'ALL',
+  });
+
+  await user.selectOptions(queueView, ['WAITING_ON_EMPLOYEE']);
+  expect(await screen.findByRole('heading', { name: 'Waiting on employee: 1' })).toBeVisible();
+  expect(queueView).toHaveFocus();
+  expect(queueView).toHaveValue('WAITING_ON_EMPLOYEE');
+  expect(new URLSearchParams(router.state.location.search).get('status')).toBe(
+    'WAITING_ON_EMPLOYEE',
+  );
+
+  await act(async () => {
+    await router.navigate(-1);
+  });
+
+  expect(await screen.findByRole('heading', { name: 'Needs review: 2' })).toBeVisible();
+  expect(queueView).toHaveValue('ACTION_REQUIRED');
+  await waitFor(() => expect(queueView).toHaveFocus());
 });
 
 test('keeps pagination focus on same-path navigation and restores it after browser back', async () => {
@@ -269,8 +330,8 @@ test('keeps pagination focus on same-path navigation and restores it after brows
     expect(new URLSearchParams(router.state.location.search).get('page')).toBe('2'),
   );
   await waitFor(() => expect(approvalUrls).toHaveLength(2));
-  expect(screen.getByText(/Page 1 of 3/u)).toBeVisible();
-  expect(screen.getByRole('status')).toHaveTextContent('Updating results…');
+  expect(screen.getByText('Showing 1–20 of 41')).toBeVisible();
+  expect(screen.getByRole('status')).toHaveTextContent('Updating approval results…');
   expect(screen.getByRole('button', { name: 'Next page' })).toHaveFocus();
 
   await act(() => {
@@ -285,7 +346,7 @@ test('keeps pagination focus on same-path navigation and restores it after brows
       ),
     );
   });
-  expect(await screen.findByText(/Page 2 of 3/u)).toBeVisible();
+  expect(await screen.findByText('Showing 21–40 of 41')).toBeVisible();
   expect(screen.getByRole('button', { name: 'Next page' })).toHaveFocus();
 
   await act(async () => {
@@ -295,7 +356,7 @@ test('keeps pagination focus on same-path navigation and restores it after brows
   await waitFor(() =>
     expect(new URLSearchParams(router.state.location.search).get('page')).toBe('1'),
   );
-  expect(screen.getByText(/Page 1 of 3/u)).toBeVisible();
+  expect(screen.getByText('Showing 1–20 of 41')).toBeVisible();
   await waitFor(() => expect(screen.getByRole('button', { name: 'Next page' })).toHaveFocus());
 });
 
@@ -315,14 +376,15 @@ test('shows loading, default-empty, and filtered-empty states with a working cle
   expect(screen.getByRole('heading', { name: 'Loading approval inbox' })).toBeVisible();
   firstResponse.resolve(successResponse(inbox({ items: [], limit: 20, page: 1, total: 0 })));
   expect(await screen.findByText('No approvals currently require your action.')).toBeVisible();
-  expect(screen.queryByRole('button', { name: 'Clear approval filters' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Reset to needs review' })).not.toBeInTheDocument();
 
+  await user.click(screen.getByText('Refine this view', { exact: true }));
   await user.selectOptions(screen.getByRole('combobox', { name: 'Workflow category' }), [
     'ABSENCE',
   ]);
   await user.click(screen.getByRole('button', { name: 'Apply filters' }));
   const filteredMessage = await screen.findByText('No approvals match the applied filters.');
-  expect(screen.getByRole('button', { name: 'Clear approval filters' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Reset to needs review' })).toBeVisible();
   const results = filteredMessage.closest('section');
   expect(results).not.toBeNull();
   if (results === null) throw new Error('Expected the filtered result section.');
@@ -345,7 +407,7 @@ test('presents complete approval records and review actions without horizontal p
   const { container } = renderApplication('/approvals?status=ALL');
 
   const list = await screen.findByRole('list', { name: 'Approval inbox results' });
-  expect(screen.queryByRole('table', { name: /Unified approval inbox/u })).not.toBeInTheDocument();
+  expect(screen.queryByRole('table', { name: 'Approval inbox results' })).not.toBeInTheDocument();
   const mariaHeading = within(list).getByRole('heading', { name: 'Maria Chen' });
   const mariaRecord = mariaHeading.closest('article');
   expect(mariaRecord).not.toBeNull();
@@ -378,7 +440,7 @@ test('keeps load failures recoverable and exposes only the safe request referenc
   expect(alert).toHaveTextContent(`Request reference: ${REQUEST_ID}`);
   await user.click(within(alert).getByRole('button', { name: 'Try again' }));
 
-  expect(await screen.findByRole('table', { name: /Unified approval inbox/u })).toBeVisible();
+  expect(await screen.findByRole('table', { name: 'Approval inbox results' })).toBeVisible();
   expect(approvalUrls).toHaveLength(3);
   await expectNoAxeViolations(container);
 });
@@ -434,7 +496,7 @@ test('lets HR discover and open minimized approval records without requiring an 
   });
   renderApplication('/approvals?status=ALL');
 
-  const table = await screen.findByRole('table', { name: /Unified approval inbox/u });
+  const table = await screen.findByRole('table', { name: 'Approval inbox results' });
   expect(within(table).getByText('Maria Chen')).toBeVisible();
   expect(
     within(table).getByRole('link', { name: 'Review correction for Maria Chen' }),
