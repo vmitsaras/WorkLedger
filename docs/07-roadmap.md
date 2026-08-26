@@ -487,3 +487,64 @@ remaining product phases are known.
 - [x] Project status, roadmap, task board, release notes, screenshots, and relevant UX
   documentation are current.
 - [x] The gate advances every workspace manifest to `0.14.0` only after every Phase 13 task passes.
+
+---
+
+# Phase 14 — Internationalization and Multilingual Product Experience
+
+## Objective
+
+Provide one coherent multilingual WorkLedger experience in British English, German, and Spanish
+without weakening domain ownership, privacy language, accessibility, auditability, operational
+clarity, or self-hosting. Establish locale and message-ownership contracts before translating
+individual workflows, then release only after every shipped catalog and user-facing output passes
+the same product-quality gate.
+
+## Dependencies
+
+- Phase 13 is complete and every workspace manifest is at `0.14.0`.
+- The accepted domain, API, authorization, privacy, accessibility, route-state, and UI contracts
+  remain authoritative.
+- `D-507` fixes the product-level locale, preference, output, review, and self-hosting boundaries.
+- `docs/138-phase-14-internationalization-roadmap.md` is the implementation handoff for this phase.
+
+## Deliverables
+
+- A complete inventory of user-facing copy, API-originated presentation, formatting, and outbound
+  communication surfaces.
+- A typed local internationalization foundation for `en-GB`, `de-DE`, and `es-ES`, with `en-GB`
+  fallback and explicit bundle budgets.
+- Per-account locale persistence plus a bounded signed-out device preference and accessible
+  language controls.
+- Server-owned, language-neutral message descriptors for user-facing API presentation.
+- Translated shared, employee, manager, HR, and system workflows.
+- Localized print, clipboard, CSV labels and statuses, in-app notifications, invitations,
+  password resets, and optional email.
+- Human-reviewed German and Spanish catalogs, automated catalog enforcement, and a test-only
+  pseudo-locale.
+- Multilingual accessibility, responsive, visual, usability, security, upgrade, and release
+  evidence.
+
+## Internationalization and multilingual release gate
+
+- [ ] Every canonical route and user-facing output has catalog coverage.
+- [ ] Shipped catalogs have matching keys, interpolation parameters, and plural forms.
+- [ ] German and Spanish terminology and privacy-sensitive language have documented fluent-human
+  approval.
+- [ ] Account and signed-out locale precedence works across sign-in, sign-out, refresh, and
+  multiple devices.
+- [ ] No protected route renders briefly in the wrong language.
+- [ ] Dates, times, numbers, lists, and minute durations use the resolved locale and authoritative
+  timezone.
+- [ ] Today attention, errors, reports, and notifications remain code- or descriptor-driven.
+- [ ] CSV, print, clipboard, notification, invitation, password-reset, and optional-email output
+  preserve authorization, privacy, formula-neutralization, and data-minimization guarantees.
+- [ ] Keyboard, focus, live-region, forced-colors, reduced-motion, representative screen-reader,
+  and 320 CSS-pixel reflow checks pass for all three locales.
+- [ ] Existing non-catalog JavaScript budgets remain enforced and locale chunks pass their
+  separate budgets.
+- [ ] The full repository quality gate passes with no mixed-language workflow or open P0/P1
+  defect.
+- [ ] Project status, roadmap, task board, decisions, implementation evidence, and operations
+  documentation are current.
+- [ ] The gate advances every workspace manifest to `0.15.0` only after every Phase 14 task passes.

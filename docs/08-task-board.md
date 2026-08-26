@@ -234,3 +234,21 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 | WL-1311 | Normalize cross-route navigation, microcopy, heading focus, status semantics, card density, and table-overflow behavior | WL-1308–WL-1310 | Copy lexicon; route/nav audit; conditional overflow behavior; focus and status visual review | Done |
 | WL-1312 | Complete deterministic cross-route state, visual-regression, integration, accessibility, and usability coverage | WL-1307–WL-1311 | Story/state matrix; screenshot suite; Playwright flows; axe and manual audit report; no open P0/P1 UX defects | Done |
 | WL-1313 | Execute Phase 13 release gate, update evidence and documentation, and bump manifests to 0.14.0 | WL-1312 | Signed release checklist; updated roadmap/task/status/docs/screenshots; version consistency; clean CI | Done |
+
+---
+
+## Phase 14 — Internationalization and multilingual product experience
+
+| ID | Task | Depends on | Acceptance evidence | Status |
+|---|---|---|---|---|
+| WL-1400 | Audit every user-facing string and ratify the locale, translation-key, message-ownership, formatting, and fallback architecture | WL-1313 | Route/output inventory; accepted ADR; API-prose boundary; risk register; translation-glossary structure | Not started |
+| WL-1401 | Establish the shared typed i18n foundation, local catalog loading, locale resolution, React/React Aria integration, and bundle-budget contract | WL-1400 | Typed-key, fallback, unsupported-locale, direction, initialization, and locale-chunk tests | Not started |
+| WL-1402 | Implement per-account locale persistence, signed-out device preference, initial invitation locale, profile/auth selectors, and immediate language switching | WL-1401 | Migration, CSRF, authorization, persistence, cache, focus, and failure-recovery evidence | Not started |
+| WL-1403 | Replace user-facing API prose dependencies with bounded message descriptors and structured presentation data | WL-1401, WL-1402 | Contract and integration tests for Today attention, errors, reports, notifications, and device summaries | Not started |
+| WL-1404 | Translate shared UI, route titles and boundaries, authentication, application shell, navigation, profile, validation, dialogs, and announcements | WL-1402, WL-1403 | Shared and authenticated foundations render coherently in every locale | Not started |
+| WL-1405 | Translate employee workflows: Today, time and balances, records, corrections, absences, calendars, notifications, and monthly review | WL-1404 | Employee critical flows pass component and browser tests in all locales | Not started |
+| WL-1406 | Translate manager, HR, and system workflows, including Approvals, Team, administration, settings, reports, audit, accounts, and operations | WL-1404 | Representative manager, HR, and system workflows pass in all locales and supported layouts | Not started |
+| WL-1407 | Localize print, clipboard, CSV labels/statuses, notification email, invitations, and password-reset communication | WL-1402–WL-1404 | Output tests preserve privacy, formula neutralization, ISO dates, integer minutes, and authorization | Not started |
+| WL-1408 | Complete and human-review the `en-GB`, `de-DE`, and `es-ES` catalogs and add automated catalog enforcement plus a test-only pseudo-locale | WL-1405–WL-1407 | Complete key/interpolation/plural parity and fluent reviewer approval for German and Spanish | Not started |
+| WL-1409 | Execute multilingual integration, accessibility, responsive, visual, usability, security, and upgrade verification | WL-1408 | No mixed-language workflows or open P0/P1 defects; complete cross-role release evidence | Not started |
+| WL-1410 | Execute the Phase 14 release gate, update evidence and documentation, and bump manifests to 0.15.0 | WL-1409 | Clean full quality gate, documentation alignment, migration evidence, and version consistency | Not started |

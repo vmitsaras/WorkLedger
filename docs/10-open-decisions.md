@@ -4,6 +4,18 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-26 — Phase 14 roadmap registration preserves the completed Phase 13 gate
+
+The Phase 14 planning request was written against an earlier repository snapshot that still named
+`WL-1311` as active, expected workspace version `0.13.0`, and left `docs/135-*` available. The
+authoritative repository has since completed `WL-1311` through `WL-1313`, advanced every workspace
+manifest to `0.14.0`, and assigned `docs/135-*` through `docs/137-*` to Phase 13 evidence.
+
+The internationalization roadmap therefore preserves the signed Phase 13 gate, registers
+`WL-1400` as the next task, and uses `docs/138-phase-14-internationalization-roadmap.md`. This
+coordination-only change does not start `WL-1400`, install a dependency, add a catalog, modify a
+runtime contract, create a migration, or advance the workspace version.
+
 ### 2026-08-26 — WL-1310 employee search remains outside URL state
 
 `WL-1310` requires useful employee administration search, while ADR 0007 and the accepted privacy
@@ -636,3 +648,39 @@ regression contract for `WL-1008`.
   restored sessions and verification grants before access and then runs integrity reconciliation.
 - `WL-1007` still owns deployment-specific expiry enforcement and restored-data retention jobs;
   `WL-1004` records and rejects expiry but does not choose a universal legal duration.
+
+### D-507 — Multilingual product contract
+
+**Status:** Accepted for Phase 14; not implemented.
+
+- This is a post-MVP roadmap decision and does not rewrite `D-003`: English remains the only
+  shipped MVP locale and the only current product locale until Phase 14 passes.
+- The only supported Phase 14 production locales are `en-GB`, `de-DE`, and `es-ES`; `en-GB` is
+  the required fallback. English remains the only shipped UI locale until the `WL-1410` gate.
+- German and Spanish require documented review by a fluent human before release. Automated or
+  machine-generated output may assist drafting but cannot satisfy the catalog-review gate.
+- The authenticated account preference is authoritative. Signed-out pages use a non-sensitive
+  device preference, then a supported browser-language match, then `en-GB`. Existing accounts
+  migrate to `en-GB`; invitation creation selects an initial locale and defaults to `en-GB`.
+- Phase 14 covers all user-facing UI and accessibility text, live announcements, validation and
+  errors, print and clipboard text, CSV labels and statuses, in-app notifications, invitations,
+  password resets, and optional email. User-entered names and reasons remain verbatim. API
+  identifiers, audit codes, logs, OpenAPI descriptions, and internal diagnostics remain
+  language-neutral or technical English.
+- A dedicated internal `@workledger/i18n` package owns typed local catalogs, locale resolution,
+  message rendering, and formatting. Implementation pins supported stable `i18next` and
+  `react-i18next` releases; `@workledger/ui` remains translation-library-neutral.
+- Catalogs are bundled locally and loaded by locale. Runtime translation SaaS, external catalog
+  downloads, and user-provided translation HTML are prohibited.
+- The server continues to own Today attention and recovery meaning through bounded typed message
+  descriptors. The browser must not infer that meaning from minute totals, prose, or status
+  combinations.
+- Locale changes synchronize React, React Aria, document title, `lang`, and `dir` without resetting
+  route state or focus. Locale updates are current-account-only, CSRF-protected display preferences;
+  they grant no permission and create no domain or security audit event.
+- German and Spanish expansion must pass 320 CSS-pixel reflow, keyboard, focus, live-region,
+  forced-colors, reduced-motion, and representative screen-reader review. Existing non-catalog
+  JavaScript budgets remain enforced; locale resources receive separate budgets and are split
+  rather than eagerly bundled.
+- RTL content, translated public documentation, translation-management integrations, and
+  per-employee timezone display remain deferred.

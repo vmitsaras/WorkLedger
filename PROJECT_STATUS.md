@@ -1,21 +1,22 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 13 complete — Attendance clarity, operational trust, and workflow usability hardening
+**Current phase:** Phase 14 planned — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 14 of 14 tasks complete
+**Phase progress:** Phase 13 complete — 0 of 11 Phase 14 tasks complete
 **Current milestone:** Phase 13 release gate complete — version 0.14.0
-**Active task:** None — no later numbered roadmap task is assigned
-**Status:** WL-1313 complete — the signed Phase 13 release gate passes and every workspace manifest is 0.14.0
+**Active task:** `WL-1400` (next; not started)
+**Status:** Phase 14 roadmap registered — implementation has not started and every Phase 14 task remains unchecked
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 13 is complete at `0.14.0`. The release gate reconciles every Phase 13 criterion with its
-task evidence, retains the deterministic 19-image cross-route visual comparison, and records a
-green available local quality gate with no open P0 or P1 UX defect. The broader `D-502` retail
-browser and assistive-technology matrix remains an explicit limitation rather than a conformance
-claim. No later numbered roadmap task is assigned; the portfolio presentation scope remains an
-unnumbered draft.
+Phase 13 is complete at `0.14.0`. Phase 14 is now registered as the next numbered roadmap phase for
+British English, German, and Spanish product internationalization, but no implementation task has
+started. `WL-1400` must first inventory user-facing copy and output, ratify the architecture, and
+record the API-presentation and bundle boundaries before dependencies, catalogs, persistence,
+contracts, migrations, or UI changes are allowed. The broader `D-502` retail browser and
+assistive-technology matrix remains an explicit limitation rather than a conformance claim. The
+portfolio presentation scope remains an unnumbered draft.
 
 ## Verified decisions
 
@@ -162,6 +163,9 @@ unnumbered draft.
   `ORGANIZATION_HR`, or `SELF` authority; a linked employee identity is optional evidence, so
   HR-only accounts remain attributable without fabricated employee records (`D-352`).
 - English is the only shipped MVP locale; formatting remains locale-aware.
+- Phase 14 plans `en-GB`, `de-DE`, and `es-ES` with `en-GB` fallback, per-account preference,
+  complete user-facing-output coverage, and fluent-human German and Spanish review. It remains
+  unimplemented until its tasks complete.
 - Employee self-service profile data is read-only; HR-owned employment facts are not self-editable.
 - The self-context/profile transport exposes only active account, organization, employee summary,
   current application roles, derived navigation areas, and minimized session/device summaries; IP
@@ -2359,9 +2363,26 @@ unnumbered draft.
   contract, domain rule, API, database schema, migration, publication, deployment, or tag changed.
   See `docs/137-phase-13-gate-review.md`.
 
+**2026-08-26 — Phase 14 internationalization roadmap registration**
+
+- Registered `WL-1400` through `WL-1410` as the Phase 14 internationalization and multilingual
+  product roadmap, dependent on the completed `WL-1313` gate. All eleven tasks remain unchecked;
+  `WL-1400` is the next task and has not started.
+- Accepted `D-507`: `en-GB`, `de-DE`, and `es-ES`; `en-GB` fallback; authoritative per-account
+  preference; complete user-facing output coverage; local catalogs; typed server-owned message
+  descriptors; and fluent-human German and Spanish review.
+- Added the planning-only handoff at `docs/138-phase-14-internationalization-roadmap.md` and
+  registered `WL-1410` in the phase-version guard. The Phase 14 gate requires `0.15.0` only when it
+  is checked complete.
+- Reconciled the request's earlier Phase 13/`0.13.0`/`docs/135-*` baseline with the authoritative
+  completed Phase 13 repository. No completed task was reopened and no evidence file was
+  overwritten.
+- No dependency, catalog, runtime source, API contract, database schema, migration, lockfile,
+  manifest, workspace version, publication, deployment, or tag changed.
+
 ## Current blockers
 
-No blocker remains in the numbered roadmap. Exact partial-day work-versus-absence overlap,
+No blocker prevents the planning-first `WL-1400` inventory. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
 domain or repository facts; Today does not guess them from minute totals or an otherwise valid
 overnight session. The PostgreSQL-backed `WL-1305` correction-history case remains locally
@@ -2375,9 +2396,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-No numbered roadmap task is assigned. The portfolio presentation scope remains preserved in
-`docs/drafts/portfolio-presentation.md` and requires an explicit future scheduling decision before
-implementation.
+`WL-1400 — Audit every user-facing string and ratify the locale, translation-key,
+message-ownership, formatting, and fallback architecture.`
+
+No Phase 14 implementation has started. The portfolio presentation scope remains preserved in
+`docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 
 ## Update rules
 

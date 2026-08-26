@@ -18,12 +18,38 @@ function createState({ completedTaskIds, rootVersion, projectVersions = [] }) {
   };
 }
 
-test('uses the reconciled UI, workflow-polish, and portfolio gate sequence', () => {
-  assert.deepEqual(PHASE_GATES.slice(-3), [
+test('uses the reconciled post-MVP phase-gate sequence', () => {
+  assert.deepEqual(PHASE_GATES.slice(-4), [
     { phase: 11, taskId: 'WL-1106' },
     { phase: 12, taskId: 'WL-1206' },
     { phase: 13, taskId: 'WL-1313' },
+    { phase: 14, taskId: 'WL-1410' },
   ]);
+});
+
+test('requires version 0.15.0 when the Phase 14 gate completes', () => {
+  const completedTaskIds = PHASE_GATES.map(({ taskId }) => taskId);
+
+  assert.throws(
+    () =>
+      validatePhaseVersion(
+        createState({
+          completedTaskIds,
+          rootVersion: '0.14.0',
+        }),
+      ),
+    /15 completed phase gate\(s\) require root version 0\.15\.0; received 0\.14\.0/,
+  );
+  assert.deepEqual(
+    validatePhaseVersion(
+      createState({
+        completedTaskIds,
+        rootVersion: '0.15.0',
+        projectVersions: [{ directory: 'apps/web', version: '0.15.0' }],
+      }),
+    ),
+    { completedPhaseCount: 15, version: '0.15.0' },
+  );
 });
 
 test('accepts the version assigned to sequentially completed phase gates', () => {
