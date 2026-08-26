@@ -4,8 +4,8 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 13 complete — 4 of 11 Phase 14 tasks complete
 **Current milestone:** `WL-1403` API presentation descriptors complete
-**Active task:** `WL-1404` (next; not started)
-**Status:** Account/device locale persistence and language-neutral API presentation boundaries complete; `D-508` resolved by bounded runtime allowance
+**Active task:** `WL-1404` (in progress)
+**Status:** Shared i18n runtime activation and catalog-backed shell navigation are in progress; account/device locale persistence and language-neutral API presentation boundaries are complete; `D-508` remains resolved by bounded runtime allowance
 **Last verified:** 2026-08-26
 
 ## Current objective
@@ -2518,8 +2518,8 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Start `WL-1404`: translate shared UI, route titles and boundaries, authentication, application
-shell, navigation, profile, validation, dialogs, and announcements. The portfolio presentation
+Continue `WL-1404`: translate the remaining shared UI, route titles and boundaries,
+authentication, profile, validation, dialogs, and announcements. The portfolio presentation
 scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 

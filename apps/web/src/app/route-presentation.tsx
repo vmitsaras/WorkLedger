@@ -6,11 +6,14 @@ import {
   useMatches,
   useNavigationType,
 } from 'react-router';
+import { MESSAGE_KEYS, translate } from '@workledger/i18n';
+import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 
 type RouteHandle = Readonly<{ title?: string }>;
 const focusByLocationKey = new Map<string, string>();
 
 export function RoutePresentation() {
+  const runtime = useOptionalWorkLedgerI18n();
   const location = useLocation();
   const navigationType = useNavigationType();
   const matches = useMatches();
@@ -19,10 +22,16 @@ export function RoutePresentation() {
     .reverse()
     .map((match) => match.handle as RouteHandle | undefined)
     .find((handle) => handle?.title !== undefined)?.title;
+  const resolvedTitle =
+    runtime !== null &&
+    title !== undefined &&
+    MESSAGE_KEYS.includes(title as (typeof MESSAGE_KEYS)[number])
+      ? translate(runtime, title as (typeof MESSAGE_KEYS)[number])
+      : title;
 
   useLayoutEffect(() => {
-    document.title = title === undefined ? 'WorkLedger' : `${title} | WorkLedger`;
-  }, [title]);
+    document.title = resolvedTitle === undefined ? 'WorkLedger' : `${resolvedTitle} | WorkLedger`;
+  }, [resolvedTitle]);
 
   useEffect(() => {
     const updateRememberedFocus = (event: FocusEvent) => {

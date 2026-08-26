@@ -19,5 +19,43 @@
     "deviceSaved": "Die Sprache für den abgemeldeten Zustand wurde auf diesem Gerät aktualisiert.",
     "invitationDescription": "Die Einladung und das neue Konto starten mit dieser Sprache. Der Kontoinhaber kann sie später ändern.",
     "label": "Sprache"
+  },
+  "navigation": {
+    "account": "Konto",
+    "current": "Aktuell",
+    "menu": "Menü",
+    "mobileAccount": "Mobiles Konto",
+    "mobileWorkAreas": "Mobile Arbeitsbereiche",
+    "workAreas": "Arbeitsbereiche",
+    "workArea": {
+      "employee": "Meine Arbeit",
+      "hr": "Personen und Richtlinien",
+      "manager": "Team",
+      "system": "System"
+    }
+  },
+  "route": {
+    "title": {
+      "approvalInbox": "Freigabe-Eingang",
+      "audit": "Fachliches Audit",
+      "calendar": "Kalender",
+      "employees": "Mitarbeitende",
+      "myBalances": "Meine Salden",
+      "myTime": "Meine Zeit",
+      "notifications": "Benachrichtigungen",
+      "profile": "Profil",
+      "reports": "Berichte",
+      "requests": "Meine Anträge",
+      "settingsAbsence": "Abwesenheitseinstellungen",
+      "settingsHolidays": "Feiertagskalender",
+      "settingsTime": "Zeiteinstellungen",
+      "systemAccounts": "Konten und Sitzungen",
+      "systemAudit": "Technisches Audit",
+      "systemOperations": "Betrieb",
+      "teamCalendar": "Teamkalender",
+      "teamStatus": "Teamstatus",
+      "teams": "Teams",
+      "today": "Heute"
+    }
   }
 }

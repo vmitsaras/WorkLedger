@@ -3,11 +3,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Link, NavLink, Outlet, useLoaderData, useLocation, useNavigate } from 'react-router';
 
 import type { NavigationArea, SelfContext } from '@workledger/contracts';
+import { translate, type MessageKey } from '@workledger/i18n';
+import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 import { Alert, Button, Drawer } from '@workledger/ui';
 
 import { clearSessionMemory, signOut } from '../app/api-client.js';
 import { useOptionalWebLocale } from '../app/locale.js';
-import { canonicalRouteLabel } from '../app/route-copy.js';
+import {
+  CANONICAL_ROUTE_MESSAGE_KEYS,
+  canonicalRouteLabel,
+  canonicalRouteMessageKey,
+  type CanonicalRoutePath,
+} from '../app/route-copy.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import {
   CompanyIdentity,
@@ -17,47 +24,51 @@ import {
 
 type NavigationItem = Readonly<{
   area: NavigationArea;
-  label: string;
+  label: MessageKey;
   to: string;
 }>;
 
 const NAVIGATION_ITEMS: readonly NavigationItem[] = [
-  { area: 'EMPLOYEE', label: canonicalRouteLabel('/today'), to: '/today' },
-  { area: 'EMPLOYEE', label: canonicalRouteLabel('/my-time'), to: '/my-time' },
-  { area: 'EMPLOYEE', label: canonicalRouteLabel('/my-balances'), to: '/my-balances' },
-  { area: 'EMPLOYEE', label: canonicalRouteLabel('/requests'), to: '/requests' },
-  { area: 'EMPLOYEE', label: canonicalRouteLabel('/calendar'), to: '/calendar' },
-  { area: 'MANAGER', label: canonicalRouteLabel('/team'), to: '/team' },
-  { area: 'MANAGER', label: canonicalRouteLabel('/approvals'), to: '/approvals' },
-  { area: 'MANAGER', label: canonicalRouteLabel('/team-calendar'), to: '/team-calendar' },
-  { area: 'HR', label: canonicalRouteLabel('/employees'), to: '/employees' },
-  { area: 'HR', label: canonicalRouteLabel('/teams'), to: '/teams' },
-  { area: 'HR', label: canonicalRouteLabel('/settings/time'), to: '/settings/time' },
-  { area: 'HR', label: canonicalRouteLabel('/settings/absence'), to: '/settings/absence' },
-  { area: 'HR', label: canonicalRouteLabel('/settings/holidays'), to: '/settings/holidays' },
-  { area: 'HR', label: canonicalRouteLabel('/audit'), to: '/audit' },
-  { area: 'SYSTEM', label: canonicalRouteLabel('/system/accounts'), to: '/system/accounts' },
-  { area: 'SYSTEM', label: canonicalRouteLabel('/system/operations'), to: '/system/operations' },
-  { area: 'SYSTEM', label: canonicalRouteLabel('/system/audit'), to: '/system/audit' },
+  { area: 'EMPLOYEE', label: canonicalRouteMessageKey('/today'), to: '/today' },
+  { area: 'EMPLOYEE', label: canonicalRouteMessageKey('/my-time'), to: '/my-time' },
+  { area: 'EMPLOYEE', label: canonicalRouteMessageKey('/my-balances'), to: '/my-balances' },
+  { area: 'EMPLOYEE', label: canonicalRouteMessageKey('/requests'), to: '/requests' },
+  { area: 'EMPLOYEE', label: canonicalRouteMessageKey('/calendar'), to: '/calendar' },
+  { area: 'MANAGER', label: canonicalRouteMessageKey('/team'), to: '/team' },
+  { area: 'MANAGER', label: canonicalRouteMessageKey('/approvals'), to: '/approvals' },
+  { area: 'MANAGER', label: canonicalRouteMessageKey('/team-calendar'), to: '/team-calendar' },
+  { area: 'HR', label: canonicalRouteMessageKey('/employees'), to: '/employees' },
+  { area: 'HR', label: canonicalRouteMessageKey('/teams'), to: '/teams' },
+  { area: 'HR', label: canonicalRouteMessageKey('/settings/time'), to: '/settings/time' },
+  { area: 'HR', label: canonicalRouteMessageKey('/settings/absence'), to: '/settings/absence' },
+  { area: 'HR', label: canonicalRouteMessageKey('/settings/holidays'), to: '/settings/holidays' },
+  { area: 'HR', label: canonicalRouteMessageKey('/audit'), to: '/audit' },
+  { area: 'SYSTEM', label: canonicalRouteMessageKey('/system/accounts'), to: '/system/accounts' },
+  {
+    area: 'SYSTEM',
+    label: canonicalRouteMessageKey('/system/operations'),
+    to: '/system/operations',
+  },
+  { area: 'SYSTEM', label: canonicalRouteMessageKey('/system/audit'), to: '/system/audit' },
 ];
 
 const HR_APPROVAL_ITEM: NavigationItem = {
   area: 'HR',
-  label: canonicalRouteLabel('/approvals'),
+  label: canonicalRouteMessageKey('/approvals'),
   to: '/approvals',
 };
 
 const HR_TEAM_CALENDAR_ITEM: NavigationItem = {
   area: 'HR',
-  label: canonicalRouteLabel('/team-calendar'),
+  label: canonicalRouteMessageKey('/team-calendar'),
   to: '/team-calendar',
 };
 
-const AREA_LABELS: Readonly<Record<NavigationArea, string>> = {
-  EMPLOYEE: 'My work',
-  HR: 'People and policy',
-  MANAGER: 'Team',
-  SYSTEM: 'System',
+const AREA_LABELS: Readonly<Record<NavigationArea, MessageKey>> = {
+  EMPLOYEE: 'shared.navigation.workArea.employee',
+  HR: 'shared.navigation.workArea.hr',
+  MANAGER: 'shared.navigation.workArea.manager',
+  SYSTEM: 'shared.navigation.workArea.system',
 };
 
 const AREA_LANDING_PATHS: Readonly<Record<NavigationArea, string>> = {
@@ -69,7 +80,7 @@ const AREA_LANDING_PATHS: Readonly<Record<NavigationArea, string>> = {
 
 const REPORTS_ITEM: NavigationItem = {
   area: 'EMPLOYEE',
-  label: canonicalRouteLabel('/reports'),
+  label: canonicalRouteMessageKey('/reports'),
   to: '/reports',
 };
 
@@ -194,15 +205,24 @@ function NavigationPanel({
   onAreaChange: (area: NavigationArea) => void;
   onNavigate?: () => void;
 }>) {
+  const runtime = useOptionalWorkLedgerI18n();
+  const message = (key: MessageKey) =>
+    runtime === null ? englishNavigationMessage(key) : translate(runtime, key);
   const items = activeArea === null ? [] : navigationItemsFor(activeArea, context.navigationAreas);
-  const navigationLabel = activeArea === null ? null : AREA_LABELS[activeArea];
+  const navigationLabel = activeArea === null ? null : message(AREA_LABELS[activeArea]);
 
   return (
     <div className="wl-navigation-panel">
       <div className="wl-navigation-destinations">
         {context.navigationAreas.length <= 1 ? null : (
-          <nav aria-label={mode === 'mobile' ? 'Mobile work areas' : 'Work areas'}>
-            <p className="wl-navigation-label">Work areas</p>
+          <nav
+            aria-label={
+              mode === 'mobile'
+                ? message('shared.navigation.mobileWorkAreas')
+                : message('shared.navigation.workAreas')
+            }
+          >
+            <p className="wl-navigation-label">{message('shared.navigation.workAreas')}</p>
             <ul className="wl-work-area-list">
               {context.navigationAreas.map((area) => {
                 const isCurrent = area === activeArea;
@@ -218,10 +238,10 @@ function NavigationPanel({
                         onNavigate?.();
                       }}
                     >
-                      <span>{AREA_LABELS[area]}</span>
+                      <span>{message(AREA_LABELS[area])}</span>
                       {isCurrent ? (
                         <span aria-hidden="true" className="wl-work-area-current">
-                          Current
+                          {message('shared.navigation.current')}
                         </span>
                       ) : null}
                     </Link>
@@ -252,7 +272,7 @@ function NavigationPanel({
                       `wl-nav-link ${isActive ? 'wl-nav-link-active' : ''}`.trim()
                     }
                   >
-                    {item.label}
+                    {message(item.label)}
                   </NavLink>
                 </li>
               ))}
@@ -262,8 +282,14 @@ function NavigationPanel({
       </div>
 
       <div className="wl-navigation-utilities">
-        <nav aria-label={mode === 'mobile' ? 'Mobile account' : 'Account'}>
-          <p className="wl-navigation-label">Account</p>
+        <nav
+          aria-label={
+            mode === 'mobile'
+              ? message('shared.navigation.mobileAccount')
+              : message('shared.navigation.account')
+          }
+        >
+          <p className="wl-navigation-label">{message('shared.navigation.account')}</p>
           <ul className="m-0 mt-2 grid list-none gap-1 p-0" role="list">
             <li>
               <NavLink
@@ -274,7 +300,7 @@ function NavigationPanel({
                   `wl-nav-link ${isActive ? 'wl-nav-link-active' : ''}`.trim()
                 }
               >
-                {canonicalRouteLabel('/notifications')}
+                {message(canonicalRouteMessageKey('/notifications'))}
               </NavLink>
             </li>
             <li>
@@ -286,7 +312,7 @@ function NavigationPanel({
                   `wl-nav-link ${isActive ? 'wl-nav-link-active' : ''}`.trim()
                 }
               >
-                {canonicalRouteLabel('/profile')}
+                {message(canonicalRouteMessageKey('/profile'))}
               </NavLink>
             </li>
           </ul>
@@ -306,6 +332,23 @@ function NavigationPanel({
       </div>
     </div>
   );
+}
+
+function englishNavigationMessage(key: MessageKey): string {
+  const messages: Partial<Record<MessageKey, string>> = {
+    'shared.navigation.account': 'Account',
+    'shared.navigation.current': 'Current',
+    'shared.navigation.mobileAccount': 'Mobile account',
+    'shared.navigation.mobileWorkAreas': 'Mobile work areas',
+    'shared.navigation.workAreas': 'Work areas',
+    'shared.navigation.workArea.employee': 'My work',
+    'shared.navigation.workArea.hr': 'People and policy',
+    'shared.navigation.workArea.manager': 'Team',
+    'shared.navigation.workArea.system': 'System',
+  };
+  if (key in messages) return messages[key] ?? key;
+  const path = Object.entries(CANONICAL_ROUTE_MESSAGE_KEYS).find(([, value]) => value === key)?.[0];
+  return path === undefined ? key : canonicalRouteLabel(path as CanonicalRoutePath);
 }
 
 function areaForPath(

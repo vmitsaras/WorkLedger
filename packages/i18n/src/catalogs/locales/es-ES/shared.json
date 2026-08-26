@@ -21,5 +21,43 @@
     "deviceSaved": "Se actualizó el idioma sin sesión iniciada para este dispositivo.",
     "invitationDescription": "La invitación y la nueva cuenta empiezan con este idioma. La persona titular puede cambiarlo más adelante.",
     "label": "Idioma"
+  },
+  "navigation": {
+    "account": "Cuenta",
+    "current": "Actual",
+    "menu": "Menú",
+    "mobileAccount": "Cuenta móvil",
+    "mobileWorkAreas": "Áreas de trabajo móviles",
+    "workAreas": "Áreas de trabajo",
+    "workArea": {
+      "employee": "Mi trabajo",
+      "hr": "Personas y políticas",
+      "manager": "Equipo",
+      "system": "Sistema"
+    }
+  },
+  "route": {
+    "title": {
+      "approvalInbox": "Bandeja de aprobaciones",
+      "audit": "Auditoría de dominio",
+      "calendar": "Calendario",
+      "employees": "Empleados",
+      "myBalances": "Mis saldos",
+      "myTime": "Mi tiempo",
+      "notifications": "Notificaciones",
+      "profile": "Perfil",
+      "reports": "Informes",
+      "requests": "Mis solicitudes",
+      "settingsAbsence": "Configuración de ausencias",
+      "settingsHolidays": "Calendarios de festivos",
+      "settingsTime": "Configuración del tiempo",
+      "systemAccounts": "Cuentas y sesiones",
+      "systemAudit": "Auditoría técnica",
+      "systemOperations": "Operaciones",
+      "teamCalendar": "Calendario del equipo",
+      "teamStatus": "Estado del equipo",
+      "teams": "Equipos",
+      "today": "Hoy"
+    }
   }
 }

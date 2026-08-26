@@ -53,7 +53,7 @@ import {
   systemDiagnosticsQuery,
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
-import { canonicalRouteLabel } from './route-copy.js';
+import { canonicalRouteLabel, canonicalRouteMessageKey } from './route-copy.js';
 import { setPendingSignInNotice } from './session-notice.js';
 import type { WebLocaleController } from './locale.js';
 import { parseTeamStatusView, toTeamStatusSearchParams } from './team-status-view.js';
@@ -111,6 +111,8 @@ export function createWorkLedgerRoutes(
   localeController?: WebLocaleController,
 ): RouteObject[] {
   if (localeController !== undefined) localeControllers.set(queryClient, localeController);
+  const routeTitle = (path: Parameters<typeof canonicalRouteMessageKey>[0]) =>
+    localeController === undefined ? canonicalRouteLabel(path) : canonicalRouteMessageKey(path);
   const publicOnlyLoader = createPublicOnlyLoader(queryClient);
   const protectedLoader = createProtectedLoader(queryClient);
 
@@ -156,28 +158,28 @@ export function createWorkLedgerRoutes(
               loader: createTodayLoader(queryClient),
               element: <TodayPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/today') },
+              handle: { title: routeTitle('/today') },
             },
             {
               path: 'profile',
               loader: createProfileLoader(queryClient),
               element: <ProfilePage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/profile') },
+              handle: { title: routeTitle('/profile') },
             },
             {
               path: 'my-time',
               loader: createEmployeeTimeLoader(queryClient),
               element: <MyTimePage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/my-time') },
+              handle: { title: routeTitle('/my-time') },
             },
             {
               path: 'my-balances',
               loader: createEmployeeTimeLoader(queryClient),
               element: <MyTimePage balancesOnly />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/my-balances') },
+              handle: { title: routeTitle('/my-balances') },
             },
             {
               path: 'time-records/:recordId',
@@ -201,7 +203,7 @@ export function createWorkLedgerRoutes(
                 return { Component: RequestHistoryPage };
               },
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/requests') },
+              handle: { title: routeTitle('/requests') },
             },
             {
               path: 'requests/new',
@@ -228,7 +230,7 @@ export function createWorkLedgerRoutes(
               loader: createPersonalCalendarLoader(queryClient),
               element: <PersonalCalendarPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/calendar') },
+              handle: { title: routeTitle('/calendar') },
             },
             {
               path: 'time-records/:recordId/correction',
@@ -246,28 +248,28 @@ export function createWorkLedgerRoutes(
               loader: createTeamStatusLoader(queryClient),
               element: <TeamStatusPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/team') },
+              handle: { title: routeTitle('/team') },
             },
             {
               path: 'team-calendar',
               loader: createTeamCalendarLoader(queryClient),
               element: <TeamCalendarPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/team-calendar') },
+              handle: { title: routeTitle('/team-calendar') },
             },
             {
               path: 'notifications',
               loader: createNotificationsLoader(queryClient),
               element: <NotificationsPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/notifications') },
+              handle: { title: routeTitle('/notifications') },
             },
             {
               path: 'approvals',
               loader: createApprovalInboxLoader(queryClient),
               element: <ApprovalInboxPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/approvals') },
+              handle: { title: routeTitle('/approvals') },
             },
             {
               path: 'approvals/:approvalId',
@@ -281,7 +283,7 @@ export function createWorkLedgerRoutes(
               loader: createReportsLoader(queryClient),
               element: <ReportsPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/reports') },
+              handle: { title: routeTitle('/reports') },
             },
             {
               path: 'reports/:reportKey',
@@ -295,7 +297,7 @@ export function createWorkLedgerRoutes(
               loader: createEmployeeAdminListLoader(queryClient),
               element: <EmployeeAdministrationPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/employees') },
+              handle: { title: routeTitle('/employees') },
             },
             {
               path: 'employees/new',
@@ -316,56 +318,56 @@ export function createWorkLedgerRoutes(
               loader: createTeamAdminListLoader(queryClient),
               element: <TeamAdministrationPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/teams') },
+              handle: { title: routeTitle('/teams') },
             },
             {
               path: 'settings/time',
               loader: createTimeSettingsAdminLoader(queryClient),
               element: <TimeSettingsPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/settings/time') },
+              handle: { title: routeTitle('/settings/time') },
             },
             {
               path: 'settings/absence',
               loader: createAbsenceSettingsAdminLoader(queryClient),
               element: <AbsenceSettingsPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/settings/absence') },
+              handle: { title: routeTitle('/settings/absence') },
             },
             {
               path: 'settings/holidays',
               loader: createHolidaySettingsAdminLoader(queryClient),
               element: <HolidaySettingsPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/settings/holidays') },
+              handle: { title: routeTitle('/settings/holidays') },
             },
             {
               path: 'audit',
               loader: createDomainAuditLoader(queryClient),
               element: <AuditPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/audit') },
+              handle: { title: routeTitle('/audit') },
             },
             {
               path: 'system/accounts',
               loader: createSystemAccountAdminLoader(queryClient),
               element: <SystemAccountAdministrationPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/system/accounts') },
+              handle: { title: routeTitle('/system/accounts') },
             },
             {
               path: 'system/operations',
               loader: createSystemOperationsLoader(queryClient),
               element: <SystemOperationsPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/system/operations') },
+              handle: { title: routeTitle('/system/operations') },
             },
             {
               path: 'system/audit',
               loader: createSystemAuditLoader(queryClient),
               element: <SystemAuditPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: canonicalRouteLabel('/system/audit') },
+              handle: { title: routeTitle('/system/audit') },
             },
           ],
         },

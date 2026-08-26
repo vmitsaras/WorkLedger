@@ -1,6 +1,6 @@
 import { DEFAULT_LOCALE, type SupportedLocale } from '@workledger/contracts';
-import { initializeLocale, resolveSignedOutLocale, type LocaleRuntime } from '@workledger/i18n';
-import { synchronizeDocumentLocale, WorkLedgerLocaleProvider } from '@workledger/i18n/react';
+import { initializeI18n, resolveSignedOutLocale, type I18nRuntime } from '@workledger/i18n';
+import { synchronizeDocumentLocale, WorkLedgerI18nProvider } from '@workledger/i18n/react';
 import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 
 export const DEVICE_LOCALE_STORAGE_KEY = 'workledger.locale';
@@ -8,38 +8,38 @@ export const DEVICE_LOCALE_STORAGE_KEY = 'workledger.locale';
 type LocaleStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>;
 
 export type WebLocaleController = Readonly<{
-  activate(locale: SupportedLocale): Promise<LocaleRuntime>;
-  activateSignedOut(): Promise<LocaleRuntime>;
-  getRuntime(): LocaleRuntime;
-  restore(runtime: LocaleRuntime): void;
+  activate(locale: SupportedLocale): Promise<I18nRuntime>;
+  activateSignedOut(): Promise<I18nRuntime>;
+  getRuntime(): I18nRuntime;
+  restore(runtime: I18nRuntime): void;
   subscribe(listener: () => void): () => void;
 }>;
 
 export type WebLocaleContextValue = Readonly<{
-  activateLocale(locale: SupportedLocale): Promise<LocaleRuntime>;
-  activateSignedOutLocale(): Promise<LocaleRuntime>;
-  restoreLocale(runtime: LocaleRuntime): void;
-  runtime: LocaleRuntime;
+  activateLocale(locale: SupportedLocale): Promise<I18nRuntime>;
+  activateSignedOutLocale(): Promise<I18nRuntime>;
+  restoreLocale(runtime: I18nRuntime): void;
+  runtime: I18nRuntime;
 }>;
 
 const WebLocaleContext = createContext<WebLocaleContextValue | null>(null);
 
-export function createWebLocaleController(initialRuntime: LocaleRuntime): WebLocaleController {
+export function createWebLocaleController(initialRuntime: I18nRuntime): WebLocaleController {
   let runtime = initialRuntime;
   let revision = 0;
   const listeners = new Set<() => void>();
 
-  function commit(nextRuntime: LocaleRuntime): LocaleRuntime {
+  function commit(nextRuntime: I18nRuntime): I18nRuntime {
     runtime = nextRuntime;
     if (typeof document !== 'undefined') synchronizeDocumentLocale(runtime);
     for (const listener of listeners) listener();
     return runtime;
   }
 
-  async function activate(locale: SupportedLocale): Promise<LocaleRuntime> {
+  async function activate(locale: SupportedLocale): Promise<I18nRuntime> {
     if (runtime.locale === locale) return runtime;
     const activationRevision = ++revision;
-    const nextRuntime = await initializeLocale(locale);
+    const nextRuntime = await initializeI18n(locale);
     if (activationRevision !== revision) return runtime;
     return commit(nextRuntime);
   }
@@ -118,7 +118,7 @@ export function LocaleControllerProvider({
 
   return (
     <WebLocaleContext.Provider value={value}>
-      <WorkLedgerLocaleProvider runtime={runtime}>{children}</WorkLedgerLocaleProvider>
+      <WorkLedgerI18nProvider runtime={runtime}>{children}</WorkLedgerI18nProvider>
     </WebLocaleContext.Provider>
   );
 }

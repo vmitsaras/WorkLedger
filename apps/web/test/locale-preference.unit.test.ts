@@ -1,4 +1,4 @@
-import { initializeLocale } from '@workledger/i18n';
+import { initializeI18n } from '@workledger/i18n';
 
 import {
   createWebLocaleController,
@@ -41,7 +41,7 @@ test('treats unavailable device storage as a recoverable preference failure', ()
 });
 
 test('commits and restores one locale runtime while preserving subscribers', async () => {
-  const english = await initializeLocale('en-GB');
+  const english = await initializeI18n('en-GB');
   const controller = createWebLocaleController(english);
   const listener = vi.fn();
   const unsubscribe = controller.subscribe(listener);

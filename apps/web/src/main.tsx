@@ -1,5 +1,5 @@
 import { DEFAULT_LOCALE, type SelfContext } from '@workledger/contracts';
-import { initializeLocale } from '@workledger/i18n';
+import { initializeI18n } from '@workledger/i18n';
 import { synchronizeDocumentLocale } from '@workledger/i18n/react';
 import { Button, RouteState } from '@workledger/ui';
 import { StrictMode, useEffect } from 'react';
@@ -36,7 +36,7 @@ async function startWorkLedger() {
   try {
     const queryClient = createWorkLedgerQueryClient();
     const context = await loadInitialSelfContext(queryClient);
-    const localeRuntime = await initializeLocale(context?.locale ?? resolveDeviceLocale());
+    const localeRuntime = await initializeI18n(context?.locale ?? resolveDeviceLocale());
     const localeController = createWebLocaleController(localeRuntime);
     const router = createWorkLedgerRouter(queryClient, localeController);
     root.render(

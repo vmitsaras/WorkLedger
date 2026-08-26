@@ -1,9 +1,11 @@
-import { createContext, useContext, useLayoutEffect, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useLayoutEffect, type ReactNode } from 'react';
 import { I18nProvider as ReactAriaI18nProvider } from 'react-aria';
 import { I18nextProvider } from 'react-i18next';
 
 import { type LocaleRuntime } from './locale-runtime.js';
 import { type I18nRuntime } from './runtime.js';
+import { translate } from './runtime.js';
+import { type MessageArguments, type MessageKey } from './catalog.js';
 
 const WorkLedgerI18nContext = createContext<I18nRuntime | null>(null);
 const WorkLedgerLocaleContext = createContext<LocaleRuntime | null>(null);
@@ -57,9 +59,22 @@ export function useWorkLedgerLocale(): LocaleRuntime {
 }
 
 export function useWorkLedgerI18n(): I18nRuntime {
-  const runtime = useContext(WorkLedgerI18nContext);
+  const runtime = useOptionalWorkLedgerI18n();
   if (runtime === null) {
     throw new Error('useWorkLedgerI18n must be used inside WorkLedgerI18nProvider.');
   }
   return runtime;
+}
+
+export function useOptionalWorkLedgerI18n(): I18nRuntime | null {
+  return useContext(WorkLedgerI18nContext);
+}
+
+export function useWorkLedgerMessage() {
+  const runtime = useWorkLedgerI18n();
+  return useCallback(
+    <Key extends MessageKey>(key: Key, ...args: MessageArguments<Key>) =>
+      translate(runtime, key, ...args),
+    [runtime],
+  );
 }

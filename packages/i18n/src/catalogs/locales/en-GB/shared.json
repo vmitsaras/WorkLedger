@@ -19,5 +19,43 @@
     "deviceSaved": "The signed-out language was updated for this device.",
     "invitationDescription": "The invitation and new account start with this language. The account owner can change it later.",
     "label": "Language"
+  },
+  "navigation": {
+    "account": "Account",
+    "current": "Current",
+    "menu": "Menu",
+    "mobileAccount": "Mobile account",
+    "mobileWorkAreas": "Mobile work areas",
+    "workAreas": "Work areas",
+    "workArea": {
+      "employee": "My work",
+      "hr": "People and policy",
+      "manager": "Team",
+      "system": "System"
+    }
+  },
+  "route": {
+    "title": {
+      "approvalInbox": "Approval inbox",
+      "audit": "Domain audit",
+      "calendar": "Calendar",
+      "employees": "Employees",
+      "myBalances": "My balances",
+      "myTime": "My time",
+      "notifications": "Notifications",
+      "profile": "Profile",
+      "reports": "Reports",
+      "requests": "My requests",
+      "settingsAbsence": "Absence settings",
+      "settingsHolidays": "Holiday calendars",
+      "settingsTime": "Time settings",
+      "systemAccounts": "Accounts and sessions",
+      "systemAudit": "Technical audit",
+      "systemOperations": "Operations",
+      "teamCalendar": "Team calendar",
+      "teamStatus": "Team status",
+      "teams": "Teams",
+      "today": "Today"
+    }
   }
 }

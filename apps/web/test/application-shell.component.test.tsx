@@ -16,7 +16,7 @@ import type {
   TodayAttendance,
 } from '@workledger/contracts';
 import { COHERENT_TODAY_ATTENDANCE, expectNoAxeViolations } from '@workledger/test-utils';
-import { initializeLocale } from '@workledger/i18n';
+import { initializeI18n } from '@workledger/i18n';
 
 import {
   createWebLocaleController,
@@ -2101,7 +2101,7 @@ test('switches account locale immediately and restores runtime, cache, and focus
       throw new Error(`Unexpected test request: ${path}`);
     }),
   );
-  const runtime = await initializeLocale('en-GB');
+  const runtime = await initializeI18n('en-GB');
   const localeController = createWebLocaleController(runtime);
   const user = userEvent.setup();
   const { container } = renderApplication('/profile', localeController);
