@@ -507,6 +507,11 @@ the same product-quality gate.
   remain authoritative.
 - `D-507` fixes the product-level locale, preference, output, review, and self-hosting boundaries.
 - `docs/138-phase-14-internationalization-roadmap.md` is the implementation handoff for this phase.
+- ADR 0013 fixes the locale resolution, semantic key, package, message ownership, formatting,
+  loading, budget, and enforcement architecture accepted by `WL-1400`.
+- `docs/139-phase-14-internationalization-architecture-audit.md` and
+  `docs/140-phase-14-translation-glossary.md` are the implementation inventory, risk register, and
+  human-review structure.
 
 ## Deliverables
 

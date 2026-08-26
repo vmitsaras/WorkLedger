@@ -1,20 +1,21 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 14 planned — Internationalization and multilingual product experience
+**Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 0 of 11 Phase 14 tasks complete
-**Current milestone:** Phase 13 release gate complete — version 0.14.0
-**Active task:** `WL-1400` (next; not started)
-**Status:** Phase 14 roadmap registered — implementation has not started and every Phase 14 task remains unchecked
+**Phase progress:** Phase 13 complete — 1 of 11 Phase 14 tasks complete
+**Current milestone:** `WL-1400` internationalization architecture and inventory complete — version 0.14.0
+**Active task:** `WL-1401` (next; not started)
+**Status:** Phase 14 architecture is accepted; typed runtime foundation has not started
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 13 is complete at `0.14.0`. Phase 14 is now registered as the next numbered roadmap phase for
-British English, German, and Spanish product internationalization, but no implementation task has
-started. `WL-1400` must first inventory user-facing copy and output, ratify the architecture, and
-record the API-presentation and bundle boundaries before dependencies, catalogs, persistence,
-contracts, migrations, or UI changes are allowed. The broader `D-502` retail browser and
+Phase 13 is complete at `0.14.0`. `WL-1400` has inventoried all current route and output families,
+accepted ADR 0013, recorded the API prose boundary and risk register, and established the German
+and Spanish glossary review structure. `WL-1401` is next and owns only the typed local i18n
+foundation, locale resolution and loading, React and React Aria synchronization, and separate
+locale chunk budgets. Account persistence, API descriptor migrations, workflow translation, and
+outbound output remain gated behind their numbered tasks. The broader `D-502` retail browser and
 assistive-technology matrix remains an explicit limitation rather than a conformance claim. The
 portfolio presentation scope remains an unnumbered draft.
 
@@ -2380,27 +2381,49 @@ portfolio presentation scope remains an unnumbered draft.
 - No dependency, catalog, runtime source, API contract, database schema, migration, lockfile,
   manifest, workspace version, publication, deployment, or tag changed.
 
+**2026-08-26 — WL-1400 internationalization architecture and inventory**
+
+- Audited all 34 renderable route patterns, 30 route modules, 17 application components, 13 shared
+  UI components, route and formatting helpers, user-facing API prose, print, clipboard, five CSV
+  schemas, notifications, invitation and password-reset sender boundaries, and the machine-readable
+  self-service data export boundary.
+- Accepted ADR 0013 for exact locale resolution, local catalog namespaces, stable semantic keys,
+  the private `@workledger/i18n` package boundary, typed message descriptors, explicit locale and
+  authoritative-timezone formatting, locale chunk budgets, and automated catalog enforcement.
+- Recorded the API presentation migration map and twelve-item risk register in
+  `docs/139-phase-14-internationalization-architecture-audit.md`. Today attention, API errors,
+  report metadata, notification content, and device summaries are the bounded `WL-1403` migration
+  set; OpenAPI, logs, audit codes, and schema invariant diagnostics remain technical English.
+- Added `docs/140-phase-14-translation-glossary.md` with canonical product meanings, privacy and
+  terminology warnings, review statuses, message review fields, and separate pending fluent-human
+  approval records for German and Spanish.
+- No dependency, catalog, runtime source, API contract, database schema, migration, lockfile,
+  manifest, workspace version, publication, deployment, or tag changed. `WL-1401` remains the first
+  runtime implementation task.
+
 ## Current blockers
 
-No blocker prevents the planning-first `WL-1400` inventory. Exact partial-day work-versus-absence overlap,
-calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
-domain or repository facts; Today does not guess them from minute totals or an otherwise valid
-overnight session. The PostgreSQL-backed `WL-1305` correction-history case remains locally
-unexecuted until the Docker database service is available. The earlier Phase 12 and task-specific
-Phase 13 images remain historical and intentionally differ from the current green `WL-1312` visual
-gate. `D-502` remains the broader exact retail assistive-technology matrix rather than a
-whole-product conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for
-Testing and Safari. The temporary Astro backup is recoverable at
+No blocker prevents `WL-1401`. German and Spanish still require named fluent reviewers before
+`WL-1408`; their absence does not block the typed English-first foundation. Exact partial-day
+work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
+still require authoritative domain or repository facts; Today does not guess them from minute
+totals or an otherwise valid overnight session. The PostgreSQL-backed `WL-1305`
+correction-history case remains locally unexecuted until the Docker database service is available.
+The earlier Phase 12 and task-specific Phase 13 images remain historical and intentionally differ
+from the current green `WL-1312` visual gate. `D-502` remains the broader exact retail
+assistive-technology matrix rather than a whole-product conformance claim; `WL-1307` supplies
+bounded VoiceOver evidence in Chrome for Testing and Safari. The temporary Astro backup is
+recoverable at
 `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical and
 belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1400 — Audit every user-facing string and ratify the locale, translation-key,
-message-ownership, formatting, and fallback architecture.`
+`WL-1401 — Establish the shared typed i18n foundation, local catalog loading, locale resolution,
+React and React Aria integration, and bundle-budget contract.`
 
-No Phase 14 implementation has started. The portfolio presentation scope remains preserved in
-`docs/drafts/portfolio-presentation.md` as an unnumbered draft.
+No Phase 14 runtime implementation has started. The portfolio presentation scope remains preserved
+in `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 
 ## Update rules
 

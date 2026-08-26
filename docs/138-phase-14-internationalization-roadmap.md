@@ -1,8 +1,8 @@
 # Phase 14 Internationalization and Multilingual Product Roadmap
 
-**Status:** Planned; implementation has not started  
-**Tasks:** `WL-1400` through `WL-1410`  
-**Dependency:** Completed Phase 13 gate `WL-1313` at workspace version `0.14.0`  
+**Status:** Active; `WL-1400` complete; runtime implementation has not started
+**Tasks:** `WL-1400` through `WL-1410`
+**Dependency:** Completed Phase 13 gate `WL-1313` at workspace version `0.14.0`
 **Gate version:** `0.15.0`
 
 ## 1. Outcome
@@ -13,9 +13,9 @@ existing domain, authorization, privacy, accessibility, audit, timezone, immutab
 self-hosting contracts. Translation is presentation work; it does not authorize localized domain
 codes, jurisdiction-specific policy behavior, or duplicated sources of truth.
 
-This document is a roadmap and implementation handoff only. Registering it does not install
-dependencies, create catalogs, modify runtime code or contracts, add a database migration, or mark
-any Phase 14 task complete.
+This document began as the roadmap and implementation handoff. `WL-1400` has now accepted ADR 0013
+and recorded the route and output audit, risk register, API prose boundary, and glossary structure.
+No dependency, catalog, runtime code, contract, database migration, or manifest has changed.
 
 ## 2. Locked product and architecture instructions
 
@@ -184,10 +184,13 @@ and its own content, layout, accessibility, output, and operational evidence.
 - [ ] The complete repository quality gate passes and documentation is current.
 - [ ] `WL-1410` alone advances every workspace manifest from `0.14.0` to `0.15.0`.
 
-## 10. Start condition and next action
+## 10. Current state and next action
 
-`WL-1400` is the next numbered task, but it remains not started. Its first implementation action is
-a read-only inventory of every canonical route, shared component default, API-originated
-presentation field, formatting helper, print/clipboard/CSV output, and outbound notification or
-authentication message. No dependency, catalog, contract, schema, or UI change is authorized until
-that inventory and the required ADR are accepted.
+`WL-1400` is complete. ADR 0013 is accepted, the canonical inventory and risk register are in
+`docs/139-phase-14-internationalization-architecture-audit.md`, and the translation-review structure
+is in `docs/140-phase-14-translation-glossary.md`.
+
+`WL-1401` is next. It may create the typed `@workledger/i18n` foundation, local catalog loading,
+locale resolution, React and React Aria integration, and the separate locale-chunk budget gate. It
+must not begin account persistence or change user-facing API prose owned by `WL-1402` and
+`WL-1403`.

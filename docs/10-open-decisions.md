@@ -651,7 +651,7 @@ regression contract for `WL-1008`.
 
 ### D-507 — Multilingual product contract
 
-**Status:** Accepted for Phase 14; not implemented.
+**Status:** Accepted for Phase 14; architecture ratified by `WL-1400`; runtime not implemented.
 
 - This is a post-MVP roadmap decision and does not rewrite `D-003`: English remains the only
   shipped MVP locale and the only current product locale until Phase 14 passes.
@@ -684,3 +684,7 @@ regression contract for `WL-1008`.
   rather than eagerly bundled.
 - RTL content, translated public documentation, translation-management integrations, and
   per-employee timezone display remain deferred.
+- ADR 0013 records the accepted locale resolution, catalog namespace, semantic key, descriptor,
+  formatting, package, bundle, and enforcement architecture. The implementation inventory and risk
+  register are in `docs/139-phase-14-internationalization-architecture-audit.md`; the human-review
+  structure is in `docs/140-phase-14-translation-glossary.md`.

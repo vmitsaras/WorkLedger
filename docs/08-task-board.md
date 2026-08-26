@@ -241,7 +241,7 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-1400 | Audit every user-facing string and ratify the locale, translation-key, message-ownership, formatting, and fallback architecture | WL-1313 | Route/output inventory; accepted ADR; API-prose boundary; risk register; translation-glossary structure | Not started |
+| WL-1400 | Audit every user-facing string and ratify the locale, translation-key, message-ownership, formatting, and fallback architecture | WL-1313 | `docs/139-phase-14-internationalization-architecture-audit.md`; ADR 0013; `docs/140-phase-14-translation-glossary.md` | Complete |
 | WL-1401 | Establish the shared typed i18n foundation, local catalog loading, locale resolution, React/React Aria integration, and bundle-budget contract | WL-1400 | Typed-key, fallback, unsupported-locale, direction, initialization, and locale-chunk tests | Not started |
 | WL-1402 | Implement per-account locale persistence, signed-out device preference, initial invitation locale, profile/auth selectors, and immediate language switching | WL-1401 | Migration, CSRF, authorization, persistence, cache, focus, and failure-recovery evidence | Not started |
 | WL-1403 | Replace user-facing API prose dependencies with bounded message descriptors and structured presentation data | WL-1401, WL-1402 | Contract and integration tests for Today attention, errors, reports, notifications, and device summaries | Not started |
