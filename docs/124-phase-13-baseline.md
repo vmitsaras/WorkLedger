@@ -357,7 +357,7 @@ semantic list records, four current screenshots, keyboard focus, axe, privacy, p
 size, and overflow assertions provide the bounded acceptance evidence at 768, 390, and 320 pixels.
 Employee and team administration work moves next to `WL-1310`.
 
-## 10. Verification result
+## 10. Original `WL-1300` verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.
 
@@ -373,6 +373,6 @@ Verification results:
 - `pnpm run phase:check` reports 13 completed phase gates and version `0.13.0`.
 - `git diff --check` passed after the final project-memory update.
 
-## 11. Evidence status
+## 11. Original `WL-1300` evidence status
 
 The new baseline provides deterministic Chromium screenshot, axe, text, action, and overflow evidence for Today only. Existing Phase 12 evidence remains authoritative for Approvals, Team, Employees, navigation, tables, shared error states, and browser diversity. Manual keyboard and screen-reader verification is still required by the later route-specific tasks. No accessibility or privacy defect was silently fixed in this audit.
