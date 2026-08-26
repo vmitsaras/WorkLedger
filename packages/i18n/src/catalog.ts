@@ -16,6 +16,12 @@ export type MessageValue = string | number;
 export type MessageParameterMap = Readonly<{
   'shared.duration.hours': Readonly<{ count: number }>;
   'shared.duration.minutes': Readonly<{ count: number }>;
+  'shared.action.goHome': undefined;
+  'shared.action.reload': undefined;
+  'shared.action.returnHome': undefined;
+  'shared.action.tryAgain': undefined;
+  'shared.application.startup.description': undefined;
+  'shared.application.startup.title': undefined;
   'shared.i18n.greeting': Readonly<{ name: string }>;
   'shared.i18n.initializing': undefined;
   'shared.i18n.loadError': undefined;
@@ -28,15 +34,28 @@ export type MessageParameterMap = Readonly<{
   'shared.locale.invitationDescription': undefined;
   'shared.locale.label': undefined;
   'shared.navigation.account': undefined;
+  'shared.navigation.brandHome': Readonly<{ organizationName: string }>;
   'shared.navigation.current': undefined;
+  'shared.navigation.destination.desktop': Readonly<{ area: string }>;
+  'shared.navigation.destination.mobile': Readonly<{ area: string }>;
+  'shared.navigation.drawerTitle': undefined;
   'shared.navigation.menu': undefined;
   'shared.navigation.mobileAccount': undefined;
   'shared.navigation.mobileWorkAreas': undefined;
+  'shared.navigation.skipToContent': undefined;
   'shared.navigation.workAreas': undefined;
   'shared.navigation.workArea.employee': undefined;
   'shared.navigation.workArea.hr': undefined;
   'shared.navigation.workArea.manager': undefined;
   'shared.navigation.workArea.system': undefined;
+  'shared.route.boundary.notFound.description': undefined;
+  'shared.route.boundary.notFound.title': undefined;
+  'shared.route.boundary.permissionDenied.description': undefined;
+  'shared.route.boundary.permissionDenied.title': undefined;
+  'shared.route.boundary.unavailable.description': undefined;
+  'shared.route.boundary.unavailable.title': undefined;
+  'shared.route.boundary.rootUnavailable.description': undefined;
+  'shared.route.boundary.rootUnavailable.title': undefined;
   'shared.route.title.approvalInbox': undefined;
   'shared.route.title.audit': undefined;
   'shared.route.title.calendar': undefined;
@@ -62,6 +81,12 @@ export type MessageParameterMap = Readonly<{
 export const MESSAGE_KEYS = [
   'shared.duration.hours',
   'shared.duration.minutes',
+  'shared.action.goHome',
+  'shared.action.reload',
+  'shared.action.returnHome',
+  'shared.action.tryAgain',
+  'shared.application.startup.description',
+  'shared.application.startup.title',
   'shared.i18n.greeting',
   'shared.i18n.initializing',
   'shared.i18n.loadError',
@@ -74,15 +99,28 @@ export const MESSAGE_KEYS = [
   'shared.locale.invitationDescription',
   'shared.locale.label',
   'shared.navigation.account',
+  'shared.navigation.brandHome',
   'shared.navigation.current',
+  'shared.navigation.destination.desktop',
+  'shared.navigation.destination.mobile',
+  'shared.navigation.drawerTitle',
   'shared.navigation.menu',
   'shared.navigation.mobileAccount',
   'shared.navigation.mobileWorkAreas',
+  'shared.navigation.skipToContent',
   'shared.navigation.workAreas',
   'shared.navigation.workArea.employee',
   'shared.navigation.workArea.hr',
   'shared.navigation.workArea.manager',
   'shared.navigation.workArea.system',
+  'shared.route.boundary.notFound.description',
+  'shared.route.boundary.notFound.title',
+  'shared.route.boundary.permissionDenied.description',
+  'shared.route.boundary.permissionDenied.title',
+  'shared.route.boundary.unavailable.description',
+  'shared.route.boundary.unavailable.title',
+  'shared.route.boundary.rootUnavailable.description',
+  'shared.route.boundary.rootUnavailable.title',
   'shared.route.title.approvalInbox',
   'shared.route.title.audit',
   'shared.route.title.calendar',

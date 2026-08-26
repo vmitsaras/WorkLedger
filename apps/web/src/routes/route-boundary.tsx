@@ -1,6 +1,8 @@
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router';
 
 import { Button, buttonVariants, RouteState } from '@workledger/ui';
+import { translate, type MessageKey } from '@workledger/i18n';
+import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 
 import { ApiClientError } from '../app/api-client.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
@@ -8,8 +10,19 @@ import { useBoundaryPresentation } from '../app/route-presentation.js';
 export function RootRouteBoundary() {
   const error = useRouteError();
   const requestId = error instanceof ApiClientError ? error.requestId : undefined;
+  const runtime = useOptionalWorkLedgerI18n();
+  const title = localizedMessage(
+    runtime,
+    'shared.route.boundary.rootUnavailable.title',
+    'WorkLedger is temporarily unavailable',
+  );
+  const description = localizedMessage(
+    runtime,
+    'shared.route.boundary.rootUnavailable.description',
+    'WorkLedger could not complete the service check needed to start this page. Try again after the service is available.',
+  );
 
-  useBoundaryPresentation('WorkLedger is temporarily unavailable');
+  useBoundaryPresentation(title);
 
   return (
     <main
@@ -21,7 +34,7 @@ export function RootRouteBoundary() {
         <RouteState
           actions={
             <Button variant="secondary" onPress={() => window.location.reload()}>
-              Try again
+              {localizedMessage(runtime, 'shared.action.tryAgain', 'Try again')}
             </Button>
           }
           headingLevel="h1"
@@ -31,12 +44,9 @@ export function RootRouteBoundary() {
             tabIndex: -1,
           }}
           kind="error"
-          title="WorkLedger is temporarily unavailable"
+          title={title}
         >
-          <p className="m-0">
-            WorkLedger could not complete the service check needed to start this page. Try again
-            after the service is available.
-          </p>
+          <p className="m-0">{description}</p>
           {requestId === undefined ? null : (
             <p className="m-0 break-all text-xs">Request reference: {requestId}</p>
           )}
@@ -49,22 +59,45 @@ export function RootRouteBoundary() {
 export function RouteBoundary() {
   const error = useRouteError();
   const status = isRouteErrorResponse(error) ? error.status : 503;
+  const runtime = useOptionalWorkLedgerI18n();
   const content =
     status === 403
       ? {
-          description:
+          description: localizedMessage(
+            runtime,
+            'shared.route.boundary.permissionDenied.description',
             'Your current account does not have access to this area. No restricted record details were disclosed.',
-          title: 'Permission denied',
+          ),
+          title: localizedMessage(
+            runtime,
+            'shared.route.boundary.permissionDenied.title',
+            'Permission denied',
+          ),
         }
       : status === 404
         ? {
-            description: 'The page could not be found or is no longer available.',
-            title: 'Page not found',
+            description: localizedMessage(
+              runtime,
+              'shared.route.boundary.notFound.description',
+              'The page could not be found or is no longer available.',
+            ),
+            title: localizedMessage(
+              runtime,
+              'shared.route.boundary.notFound.title',
+              'Page not found',
+            ),
           }
         : {
-            description:
+            description: localizedMessage(
+              runtime,
+              'shared.route.boundary.unavailable.description',
               'WorkLedger could not load this page. Check the service and try again without resubmitting any form.',
-            title: 'Page unavailable',
+            ),
+            title: localizedMessage(
+              runtime,
+              'shared.route.boundary.unavailable.title',
+              'Page unavailable',
+            ),
           };
 
   useBoundaryPresentation(content.title);
@@ -74,11 +107,11 @@ export function RouteBoundary() {
       actions={
         <>
           <Link className={buttonVariants()} to="/">
-            Go to my home
+            {localizedMessage(runtime, 'shared.action.goHome', 'Go to my home')}
           </Link>
           {status >= 500 ? (
             <Button variant="secondary" onPress={() => window.location.reload()}>
-              Try again
+              {localizedMessage(runtime, 'shared.action.tryAgain', 'Try again')}
             </Button>
           ) : null}
         </>
@@ -100,7 +133,14 @@ export function RouteBoundary() {
 }
 
 export function RootNotFoundPage() {
-  useBoundaryPresentation('Page not found');
+  const runtime = useOptionalWorkLedgerI18n();
+  const title = localizedMessage(runtime, 'shared.route.boundary.notFound.title', 'Page not found');
+  const description = localizedMessage(
+    runtime,
+    'shared.route.boundary.notFound.description',
+    'The page could not be found or is no longer available.',
+  );
+  useBoundaryPresentation(title);
   return (
     <main
       id="main-content"
@@ -110,7 +150,7 @@ export function RootNotFoundPage() {
       <RouteState
         actions={
           <Link className={buttonVariants()} to="/">
-            Return to WorkLedger
+            {localizedMessage(runtime, 'shared.action.returnHome', 'Return to WorkLedger')}
           </Link>
         }
         headingLevel="h1"
@@ -120,10 +160,18 @@ export function RootNotFoundPage() {
           tabIndex: -1,
         }}
         kind="not-found"
-        title="Page not found"
+        title={title}
       >
-        <p className="m-0">The page could not be found. Return to WorkLedger to continue.</p>
+        <p className="m-0">{description}</p>
       </RouteState>
     </main>
   );
+}
+
+function localizedMessage(
+  runtime: ReturnType<typeof useOptionalWorkLedgerI18n>,
+  key: MessageKey,
+  fallback: string,
+): string {
+  return runtime === null ? fallback : translate(runtime, key);
 }

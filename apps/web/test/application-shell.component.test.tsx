@@ -2128,6 +2128,30 @@ test('switches account locale immediately and restores runtime, cache, and focus
   await expectNoAxeViolations(container);
 });
 
+test('uses the active catalog for shell navigation, route titles, and route boundaries', async () => {
+  const germanContext = { ...EMPLOYEE_CONTEXT, locale: 'de-DE' as const };
+  vi.stubGlobal('fetch', authenticatedFetch(undefined, undefined, undefined, germanContext));
+  const localeController = createWebLocaleController(await initializeI18n('de-DE'));
+  const { container, unmount } = renderApplication('/today', localeController);
+
+  await screen.findByRole('heading', { name: 'Today' });
+  expect(document.title).toBe('Heute | WorkLedger');
+  expect(screen.getByRole('link', { name: 'Zum Inhalt springen' })).toHaveAttribute(
+    'href',
+    '#main-content',
+  );
+  expect(screen.getByRole('navigation', { name: 'Navigation für Meine Arbeit' })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Heute' })).toHaveAttribute('aria-current', 'page');
+  await expectNoAxeViolations(container);
+  unmount();
+
+  renderApplication('/not-a-route', localeController);
+  const notFound = await screen.findByRole('heading', { name: 'Seite nicht gefunden' });
+  await waitFor(() => expect(notFound).toHaveFocus());
+  expect(document.title).toBe('Seite nicht gefunden | WorkLedger');
+  expect(screen.getByRole('link', { name: 'Zu WorkLedger zurückkehren' })).toBeVisible();
+});
+
 function renderApplication(initialEntry: string, localeController?: WebLocaleController) {
   const queryClient = createWorkLedgerQueryClient();
   const url = new URL(initialEntry, 'https://workledger.test');
@@ -2181,10 +2205,11 @@ function authenticatedFetch(
   today: TodayAttendance = TODAY_ATTENDANCE,
   dailyTimeRecord: DailyTimeRecord = DAILY_TIME_RECORD,
   myTime: MyTime = MY_TIME,
+  context: SelfContext = EMPLOYEE_CONTEXT,
 ) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const path = requestPath(input);
-    if (path === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+    if (path === '/v1/me/context') return successResponse(context);
     if (path === '/v1/me/attendance/today') return successResponse(today);
     if (path === '/v1/me/time') return successResponse(myTime);
     if (path === '/v1/me/calendar') return successResponse(PERSONAL_CALENDAR);

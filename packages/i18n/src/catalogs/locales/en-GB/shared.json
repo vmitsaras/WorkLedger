@@ -5,6 +5,18 @@
     "minutes_one": "{{count}} minute",
     "minutes_other": "{{count}} minutes"
   },
+  "action": {
+    "goHome": "Go to my home",
+    "reload": "Reload WorkLedger",
+    "returnHome": "Return to WorkLedger",
+    "tryAgain": "Try again"
+  },
+  "application": {
+    "startup": {
+      "description": "Checking your current session and available work areas…",
+      "title": "Loading WorkLedger"
+    }
+  },
   "i18n": {
     "greeting": "Hello, {{name}}.",
     "initializing": "Loading language settings…",
@@ -22,10 +34,17 @@
   },
   "navigation": {
     "account": "Account",
+    "brandHome": "{{organizationName}} home",
     "current": "Current",
+    "destination": {
+      "desktop": "{{area}} navigation",
+      "mobile": "Mobile {{area}} navigation"
+    },
+    "drawerTitle": "Navigation",
     "menu": "Menu",
     "mobileAccount": "Mobile account",
     "mobileWorkAreas": "Mobile work areas",
+    "skipToContent": "Skip to content",
     "workAreas": "Work areas",
     "workArea": {
       "employee": "My work",
@@ -35,6 +54,24 @@
     }
   },
   "route": {
+    "boundary": {
+      "notFound": {
+        "description": "The page could not be found or is no longer available.",
+        "title": "Page not found"
+      },
+      "permissionDenied": {
+        "description": "Your current account does not have access to this area. No restricted record details were disclosed.",
+        "title": "Permission denied"
+      },
+      "rootUnavailable": {
+        "description": "WorkLedger could not complete the service check needed to start this page. Try again after the service is available.",
+        "title": "WorkLedger is temporarily unavailable"
+      },
+      "unavailable": {
+        "description": "WorkLedger could not load this page. Check the service and try again without resubmitting any form.",
+        "title": "Page unavailable"
+      }
+    },
     "title": {
       "approvalInbox": "Approval inbox",
       "audit": "Domain audit",

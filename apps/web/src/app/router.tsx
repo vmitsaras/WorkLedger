@@ -18,6 +18,8 @@ import {
   systemAccountQuerySchema,
   teamAdminQuerySchema,
 } from '@workledger/contracts';
+import { translate } from '@workledger/i18n';
+import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 import { RouteState } from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory } from './api-client.js';
@@ -378,6 +380,16 @@ export function createWorkLedgerRoutes(
 }
 
 function InitialRouteFallback() {
+  const runtime = useOptionalWorkLedgerI18n();
+  const title =
+    runtime === null
+      ? 'Loading WorkLedger'
+      : translate(runtime, 'shared.application.startup.title');
+  const description =
+    runtime === null
+      ? 'Checking your current session and available work areas…'
+      : translate(runtime, 'shared.application.startup.description');
+
   return (
     <main
       id="main-content"
@@ -393,9 +405,9 @@ function InitialRouteFallback() {
           tabIndex: -1,
         }}
         kind="loading"
-        title="Loading WorkLedger"
+        title={title}
       >
-        <p className="m-0">Checking your current session and available work areas…</p>
+        <p className="m-0">{description}</p>
       </RouteState>
     </main>
   );

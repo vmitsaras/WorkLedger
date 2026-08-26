@@ -7,6 +7,18 @@
     "minutes_one": "{{count}} minuto",
     "minutes_other": "{{count}} minutos"
   },
+  "action": {
+    "goHome": "Ir a mi inicio",
+    "reload": "Recargar WorkLedger",
+    "returnHome": "Volver a WorkLedger",
+    "tryAgain": "Intentarlo de nuevo"
+  },
+  "application": {
+    "startup": {
+      "description": "Comprobando tu sesión actual y las áreas de trabajo disponibles…",
+      "title": "Cargando WorkLedger"
+    }
+  },
   "i18n": {
     "greeting": "Hola, {{name}}.",
     "initializing": "Cargando la configuración de idioma…",
@@ -24,10 +36,17 @@
   },
   "navigation": {
     "account": "Cuenta",
+    "brandHome": "Inicio de {{organizationName}}",
     "current": "Actual",
+    "destination": {
+      "desktop": "Navegación de {{area}}",
+      "mobile": "Navegación móvil de {{area}}"
+    },
+    "drawerTitle": "Navegación",
     "menu": "Menú",
     "mobileAccount": "Cuenta móvil",
     "mobileWorkAreas": "Áreas de trabajo móviles",
+    "skipToContent": "Saltar al contenido",
     "workAreas": "Áreas de trabajo",
     "workArea": {
       "employee": "Mi trabajo",
@@ -37,6 +56,24 @@
     }
   },
   "route": {
+    "boundary": {
+      "notFound": {
+        "description": "No se encontró la página o ya no está disponible.",
+        "title": "Página no encontrada"
+      },
+      "permissionDenied": {
+        "description": "Tu cuenta actual no tiene acceso a esta área. No se mostró ningún detalle de registro restringido.",
+        "title": "Acceso denegado"
+      },
+      "rootUnavailable": {
+        "description": "WorkLedger no pudo completar la comprobación del servicio necesaria para abrir esta página. Inténtalo de nuevo cuando el servicio esté disponible.",
+        "title": "WorkLedger no está disponible temporalmente"
+      },
+      "unavailable": {
+        "description": "WorkLedger no pudo cargar esta página. Comprueba el servicio e inténtalo de nuevo sin volver a enviar ningún formulario.",
+        "title": "Página no disponible"
+      }
+    },
     "title": {
       "approvalInbox": "Bandeja de aprobaciones",
       "audit": "Auditoría de dominio",

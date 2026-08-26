@@ -86,6 +86,7 @@ const REPORTS_ITEM: NavigationItem = {
 
 export function ApplicationShell() {
   const context = useLoaderData<SelfContext>();
+  const runtime = useOptionalWorkLedgerI18n();
   const identity = companyIdentityFromOrganization(context.organization);
   const location = useLocation();
   const shellRef = useRef<HTMLDivElement>(null);
@@ -138,7 +139,7 @@ export function ApplicationShell() {
     <div ref={shellRef} className="wl-app-shell min-h-dvh">
       <CompanyIdentityEffects identity={identity} />
       <a className="wl-skip-link" href="#main-content">
-        Skip to content
+        {runtimeMessage(runtime, 'shared.navigation.skipToContent')}
       </a>
       <header
         ref={headerRef}
@@ -146,7 +147,11 @@ export function ApplicationShell() {
       >
         <Link
           to="/"
-          aria-label={`${identity.organizationName} home`}
+          aria-label={runtimeMessage(
+            runtime,
+            'shared.navigation.brandHome',
+            identity.organizationName,
+          )}
           className="wl-brand-link min-w-0 rounded-md text-[var(--wl-text)] no-underline outline-none"
           data-route-focus-key="brand"
         >
@@ -154,7 +159,10 @@ export function ApplicationShell() {
         </Link>
         <div className="flex shrink-0 items-center gap-3">
           <div className="wl-mobile-navigation">
-            <Drawer title="Navigation" triggerLabel="Menu">
+            <Drawer
+              title={runtimeMessage(runtime, 'shared.navigation.drawerTitle')}
+              triggerLabel={runtimeMessage(runtime, 'shared.navigation.menu')}
+            >
               {(close) => (
                 <NavigationPanel
                   activeArea={activeArea}
@@ -256,8 +264,8 @@ function NavigationPanel({
           <nav
             aria-label={
               mode === 'mobile'
-                ? `Mobile ${navigationLabel} navigation`
-                : `${navigationLabel} navigation`
+                ? runtimeMessage(runtime, 'shared.navigation.destination.mobile', navigationLabel)
+                : runtimeMessage(runtime, 'shared.navigation.destination.desktop', navigationLabel)
             }
           >
             <p className="wl-navigation-label">{navigationLabel}</p>
@@ -349,6 +357,37 @@ function englishNavigationMessage(key: MessageKey): string {
   if (key in messages) return messages[key] ?? key;
   const path = Object.entries(CANONICAL_ROUTE_MESSAGE_KEYS).find(([, value]) => value === key)?.[0];
   return path === undefined ? key : canonicalRouteLabel(path as CanonicalRoutePath);
+}
+
+function runtimeMessage(
+  runtime: ReturnType<typeof useOptionalWorkLedgerI18n>,
+  key:
+    | 'shared.navigation.brandHome'
+    | 'shared.navigation.destination.desktop'
+    | 'shared.navigation.destination.mobile'
+    | 'shared.navigation.drawerTitle'
+    | 'shared.navigation.menu'
+    | 'shared.navigation.skipToContent',
+  value?: string,
+): string {
+  if (runtime !== null) {
+    if (key === 'shared.navigation.brandHome') {
+      return translate(runtime, key, { organizationName: value ?? '' });
+    }
+    if (
+      key === 'shared.navigation.destination.desktop' ||
+      key === 'shared.navigation.destination.mobile'
+    ) {
+      return translate(runtime, key, { area: value ?? '' });
+    }
+    return translate(runtime, key);
+  }
+  if (key === 'shared.navigation.brandHome') return `${value ?? ''} home`;
+  if (key === 'shared.navigation.destination.mobile') return `Mobile ${value ?? ''} navigation`;
+  if (key === 'shared.navigation.destination.desktop') return `${value ?? ''} navigation`;
+  if (key === 'shared.navigation.skipToContent') return 'Skip to content';
+  if (key === 'shared.navigation.drawerTitle') return 'Navigation';
+  return 'Menu';
 }
 
 function areaForPath(

@@ -5,7 +5,7 @@
 **Phase progress:** Phase 13 complete — 4 of 11 Phase 14 tasks complete
 **Current milestone:** `WL-1403` API presentation descriptors complete
 **Active task:** `WL-1404` (in progress)
-**Status:** Shared i18n runtime activation and catalog-backed shell navigation are in progress; account/device locale persistence and language-neutral API presentation boundaries are complete; `D-508` remains resolved by bounded runtime allowance
+**Status:** Catalog-backed shared shell, route titles, and route boundaries are complete within `WL-1404`; authentication, Profile, common validation, dialogs, and announcements remain; account/device locale persistence and language-neutral API presentation boundaries are complete; `D-508` remains resolved by bounded runtime allowance
 **Last verified:** 2026-08-26
 
 ## Current objective
@@ -20,8 +20,10 @@ translation tasks, so these selectors currently demonstrate only the locale pref
 above the preserved 910,000/246,000-byte application baseline. The current build consumes
 6,728/1,840 bytes of that allowance, and a forced full-engine measurement remains within the
 combined gates. `WL-1403` now supplies language-neutral API descriptors for its bounded migration
-set. `WL-1404` is next; workflow translation and outbound output remain gated behind their
-numbered tasks. The broader `D-502` retail browser and assistive-technology matrix remains
+set. The first `WL-1404` shared-shell and route-state slice is catalog-backed; authentication,
+Profile, shared validation, dialogs, and announcements remain before workflow translation and
+outbound output can advance through their numbered tasks. The broader `D-502` retail browser and
+assistive-technology matrix remains
 an explicit limitation rather than a conformance claim. The portfolio presentation scope remains
 an unnumbered draft.
 
@@ -2502,6 +2504,21 @@ an unnumbered draft.
 - No dependency, database schema, migration, lockfile, manifest, workspace version, phase gate,
   deployment, publication, tag, domain rule, permission, or audit policy changed.
 
+**2026-08-26 — WL-1404 shared shell and route presentation slice**
+
+- Migrated the shared shell’s skip link, organization-home name, drawer, navigation descriptions,
+  and canonical route titles into the typed local catalogs. Initial loading and route boundary
+  headings, descriptions, and recovery actions now use the active locale as well.
+- Preserved focused route headings, alert/retry semantics, real recovery links, drawer dialog naming,
+  and safe plain-text organization-name interpolation. The catalog-load-failure surface remains
+  intentionally dependency-free English because its translation resources are unavailable.
+- Added German component/axe evidence for shell navigation, titles, and not-found recovery. The
+  targeted strict TypeScript build, 50-case application-shell component suite, and catalog contract
+  check pass. See `docs/144-shared-shell-route-i18n.md`.
+- No dependency, database schema, migration, locale persistence, authorization, audit, lockfile,
+  manifest, workspace version, phase gate, deployment, publication, tag, domain rule, or security
+  policy changed.
+
 ## Current blockers
 
 German and Spanish still require named fluent reviewers before `WL-1408`; their absence does not
@@ -2518,8 +2535,8 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Continue `WL-1404`: translate the remaining shared UI, route titles and boundaries,
-authentication, profile, validation, dialogs, and announcements. The portfolio presentation
+Continue `WL-1404`: translate the remaining shared UI, authentication, profile, validation,
+dialogs, and announcements. The portfolio presentation
 scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 

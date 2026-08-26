@@ -5,6 +5,18 @@
     "minutes_one": "{{count}} Minute",
     "minutes_other": "{{count}} Minuten"
   },
+  "action": {
+    "goHome": "Zu meiner Startseite",
+    "reload": "WorkLedger neu laden",
+    "returnHome": "Zu WorkLedger zurückkehren",
+    "tryAgain": "Erneut versuchen"
+  },
+  "application": {
+    "startup": {
+      "description": "Ihre aktuelle Sitzung und verfügbaren Arbeitsbereiche werden geprüft…",
+      "title": "WorkLedger wird geladen"
+    }
+  },
   "i18n": {
     "greeting": "Hallo, {{name}}.",
     "initializing": "Spracheinstellungen werden geladen…",
@@ -22,10 +34,17 @@
   },
   "navigation": {
     "account": "Konto",
+    "brandHome": "Startseite von {{organizationName}}",
     "current": "Aktuell",
+    "destination": {
+      "desktop": "Navigation für {{area}}",
+      "mobile": "Mobile Navigation für {{area}}"
+    },
+    "drawerTitle": "Navigation",
     "menu": "Menü",
     "mobileAccount": "Mobiles Konto",
     "mobileWorkAreas": "Mobile Arbeitsbereiche",
+    "skipToContent": "Zum Inhalt springen",
     "workAreas": "Arbeitsbereiche",
     "workArea": {
       "employee": "Meine Arbeit",
@@ -35,6 +54,24 @@
     }
   },
   "route": {
+    "boundary": {
+      "notFound": {
+        "description": "Die Seite wurde nicht gefunden oder ist nicht mehr verfügbar.",
+        "title": "Seite nicht gefunden"
+      },
+      "permissionDenied": {
+        "description": "Ihr aktuelles Konto hat keinen Zugriff auf diesen Bereich. Es wurden keine eingeschränkten Datensätze offengelegt.",
+        "title": "Zugriff verweigert"
+      },
+      "rootUnavailable": {
+        "description": "WorkLedger konnte die für diese Seite erforderliche Dienstprüfung nicht abschließen. Versuchen Sie es erneut, wenn der Dienst verfügbar ist.",
+        "title": "WorkLedger ist vorübergehend nicht verfügbar"
+      },
+      "unavailable": {
+        "description": "WorkLedger konnte diese Seite nicht laden. Prüfen Sie den Dienst und versuchen Sie es erneut, ohne ein Formular noch einmal abzusenden.",
+        "title": "Seite nicht verfügbar"
+      }
+    },
     "title": {
       "approvalInbox": "Freigabe-Eingang",
       "audit": "Fachliches Audit",

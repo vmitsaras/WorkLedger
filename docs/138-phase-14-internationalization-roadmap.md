@@ -193,12 +193,14 @@ and its own content, layout, accessibility, output, and operational evidence.
 
 ## 10. Current state and next action
 
-`WL-1400` through `WL-1402` are complete. ADR 0013 is accepted and amended by the resolved `D-508`.
+`WL-1400` through `WL-1403` are complete. ADR 0013 is accepted and amended by the resolved `D-508`.
 The canonical inventory and risk register are in
 `docs/139-phase-14-internationalization-architecture-audit.md`, and the translation-review structure
 is in `docs/140-phase-14-translation-glossary.md`. The executable runtime foundation and measured
 bundle evidence are in `docs/141-shared-i18n-foundation.md`. Account, invitation, and device locale
 evidence is in `docs/142-account-locale-preferences.md`.
 
-`WL-1403` is next. It replaces user-facing API prose dependencies with bounded language-neutral
-message descriptors before shared and workflow translation begins.
+`WL-1404` is active. Its first completed slice localizes the shared shell, canonical route titles,
+and route-state boundaries while preserving the established focus and recovery contracts; see
+`docs/144-shared-shell-route-i18n.md`. Authentication, Profile, shared validation, dialogs, and
+announcements remain before employee, manager, and output workflow migration begins.
