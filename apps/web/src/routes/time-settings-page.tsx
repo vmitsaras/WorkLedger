@@ -163,7 +163,9 @@ export function TimeSettingsPage() {
           </p>
         </div>
         {query.isPending ? (
-          <RouteState kind="loading">Schedule versions are being retrieved.</RouteState>
+          <RouteState kind="loading" title="Loading information">
+            Schedule versions are being retrieved.
+          </RouteState>
         ) : query.data.scheduleVersions.length === 0 ? (
           <RouteState kind="empty" title="No schedule versions have been created">
             Create the first weekly schedule above.

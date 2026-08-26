@@ -200,7 +200,9 @@ is in `docs/140-phase-14-translation-glossary.md`. The executable runtime founda
 bundle evidence are in `docs/141-shared-i18n-foundation.md`. Account, invitation, and device locale
 evidence is in `docs/142-account-locale-preferences.md`.
 
-`WL-1404` is active. Its first completed slice localizes the shared shell, canonical route titles,
-and route-state boundaries while preserving the established focus and recovery contracts; see
-`docs/144-shared-shell-route-i18n.md`. Authentication, Profile, shared validation, dialogs, and
-announcements remain before employee, manager, and output workflow migration begins.
+`WL-1404` is complete. The shared shell, canonical route titles, route-state boundaries,
+authentication, Profile, shared validation, dialogs, pagination controls, and shell announcements
+now use typed local catalogs while preserving established focus and recovery contracts. Profile
+session instants use the authoritative organization timezone supplied by the minimized self-profile
+contract. See `docs/144-shared-shell-route-i18n.md`. `WL-1405` is next and owns employee workflow
+translation.

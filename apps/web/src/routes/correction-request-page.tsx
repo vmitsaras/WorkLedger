@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router';
 
 import { Alert, Button, RouteState, buttonVariants } from '@workledger/ui';
+import { translate, type I18nRuntime } from '@workledger/i18n';
+import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 
 import { ApiClientError, submitCorrectionRequest } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
@@ -30,6 +32,7 @@ const LOCAL_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const UTC_OFFSET_PATTERN = /^[+-](?:0\d|1\d|2[0-3]):[0-5]\d$/;
 
 export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
+  const runtime = useOptionalWorkLedgerI18n();
   const [search] = useSearchParams();
   const recordId = search.get('recordId');
   const summaryRef = useRef<HTMLElement>(null);
@@ -105,7 +108,7 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
       });
     } catch (error) {
       if (error instanceof ApiClientError && error.code === 'VALIDATION_FAILED') {
-        setFieldErrors(mapServerFieldErrors(error.fields));
+        setFieldErrors(mapServerFieldErrors(error.fields, runtime));
         setFormError('Correct the highlighted fields and submit the request again.');
       } else if (error instanceof ApiClientError && error.code === 'ROUTE_NOT_FOUND') {
         setFormError('This daily record is no longer available for a correction request.');
@@ -356,11 +359,18 @@ function validate(values: FormValues) {
 function emptyToNull(value: string) {
   return value === '' ? null : value;
 }
-function mapServerFieldErrors(fields: ApiClientError['fields']): Readonly<Record<string, string>> {
+function mapServerFieldErrors(
+  fields: ApiClientError['fields'],
+  runtime: I18nRuntime | null,
+): Readonly<Record<string, string>> {
   if (fields === undefined) return { interval: 'The proposed interval could not be accepted.' };
   const entries = Object.entries(fields).map(([field, errors]) => [
     field === 'interval' ? 'interval' : field.replace('interval.', ''),
-    errors[0] === undefined ? 'Correct this value.' : fieldErrorPresentation(errors[0].code),
+    errors[0] === undefined
+      ? runtime === null
+        ? 'Correct this value.'
+        : translate(runtime, 'shared.validation.correctValue')
+      : fieldErrorPresentation(errors[0].code, runtime),
   ]);
   return Object.fromEntries(entries);
 }

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import type { SubmitVacationRequest } from '@workledger/contracts';
+import { translate, type I18nRuntime } from '@workledger/i18n';
+import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 import { Alert, Button, buttonVariants } from '@workledger/ui';
 
 import { ApiClientError, submitVacationRequest } from '../app/api-client.js';
@@ -30,6 +32,7 @@ const EMPTY_VALUES: FormValues = Object.freeze({
 });
 
 export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
+  const runtime = useOptionalWorkLedgerI18n();
   const summaryRef = useRef<HTMLElement>(null);
   const successRef = useRef<HTMLElement>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
@@ -68,7 +71,7 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
       setSuccess(await submitVacationRequest(toRequest(values)));
     } catch (error) {
       if (error instanceof ApiClientError && error.fields !== undefined) {
-        setFieldErrors(mapServerFieldErrors(error.fields));
+        setFieldErrors(mapServerFieldErrors(error.fields, runtime));
         setFormError('Correct the highlighted fields and submit your vacation request again.');
       } else if (error instanceof ApiClientError && error.code === 'ABSENCE_OVERLAP') {
         setFormError('This coverage overlaps another absence request. Choose different coverage.');
@@ -333,11 +336,18 @@ function formatClock(value: number | null): string {
     .toString()
     .padStart(2, '0')}:${(value % 60).toString().padStart(2, '0')}`;
 }
-function mapServerFieldErrors(fields: ApiClientError['fields']): Readonly<Record<string, string>> {
+function mapServerFieldErrors(
+  fields: ApiClientError['fields'],
+  runtime: I18nRuntime | null,
+): Readonly<Record<string, string>> {
   return Object.fromEntries(
     Object.entries(fields ?? {}).map(([field, errors]) => [
       field,
-      errors[0] === undefined ? 'Correct this value.' : fieldErrorPresentation(errors[0].code),
+      errors[0] === undefined
+        ? runtime === null
+          ? 'Correct this value.'
+          : translate(runtime, 'shared.validation.correctValue')
+        : fieldErrorPresentation(errors[0].code, runtime),
     ]),
   );
 }

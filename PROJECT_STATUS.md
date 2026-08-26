@@ -2,27 +2,26 @@
 
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 4 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1403` API presentation descriptors complete
-**Active task:** `WL-1404` (in progress)
-**Status:** Catalog-backed shared shell, route titles, and route boundaries are complete within `WL-1404`; authentication, Profile, common validation, dialogs, and announcements remain; account/device locale persistence and language-neutral API presentation boundaries are complete; `D-508` remains resolved by bounded runtime allowance
+**Phase progress:** Phase 13 complete — 5 of 11 Phase 14 tasks complete
+**Current milestone:** `WL-1404` shared and authenticated foundation localization complete
+**Active task:** `WL-1405` (not started)
+**Status:** Shared UI, route titles and boundaries, authentication, application shell, navigation, Profile, common validation, dialogs, pagination, and announcements are catalog backed in all three production locales; Profile session timestamps use the authoritative organization timezone; `D-508` remains resolved through the measured localization allowance
 **Last verified:** 2026-08-26
 
 ## Current objective
 
 Phase 13 is complete at `0.14.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
 foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
-bounded signed-out device preference. Profile and authentication selectors switch
-the available catalog messages immediately with focus continuity and failure rollback; protected
-content waits for the account catalog. Most product copy remains English until its owned
-translation tasks, so these selectors currently demonstrate only the locale preference messages.
-`D-508` amended ADR 0013 through a 55,000-byte raw and 18,000-byte gzip Phase 14 runtime allowance
-above the preserved 910,000/246,000-byte application baseline. The current build consumes
-6,728/1,840 bytes of that allowance, and a forced full-engine measurement remains within the
-combined gates. `WL-1403` now supplies language-neutral API descriptors for its bounded migration
-set. The first `WL-1404` shared-shell and route-state slice is catalog-backed; authentication,
-Profile, shared validation, dialogs, and announcements remain before workflow translation and
-outbound output can advance through their numbered tasks. The broader `D-502` retail browser and
+bounded signed-out device preference. `WL-1403` supplies language-neutral API descriptors for its
+bounded migration set. Completed `WL-1404` now localizes the shared and authenticated foundation,
+including authentication, Profile, shell, route boundaries, common validation, dialogs,
+pagination, and announcements. Locale changes retain focus continuity and rollback, protected
+content waits for the account catalog, and Profile session instants use the authoritative
+organization timezone. `D-508` now bounds the completed integration through a 70,000-byte raw and
+22,000-byte gzip Phase 14 allowance above the preserved 910,000/246,000-byte application baseline;
+the measured build consumes 64,388/19,450 bytes of that allowance. Employee, manager/HR/system,
+and generated-output copy remain assigned to `WL-1405`, `WL-1406`, and `WL-1407`. The broader
+`D-502` retail browser and
 assistive-technology matrix remains
 an explicit limitation rather than a conformance claim. The portfolio presentation scope remains
 an unnumbered draft.
@@ -2504,20 +2503,29 @@ an unnumbered draft.
 - No dependency, database schema, migration, lockfile, manifest, workspace version, phase gate,
   deployment, publication, tag, domain rule, permission, or audit policy changed.
 
-**2026-08-26 — WL-1404 shared shell and route presentation slice**
+**2026-08-26 — WL-1404 shared and authenticated foundation localization**
 
-- Migrated the shared shell’s skip link, organization-home name, drawer, navigation descriptions,
-  and canonical route titles into the typed local catalogs. Initial loading and route boundary
-  headings, descriptions, and recovery actions now use the active locale as well.
-- Preserved focused route headings, alert/retry semantics, real recovery links, drawer dialog naming,
-  and safe plain-text organization-name interpolation. The catalog-load-failure surface remains
-  intentionally dependency-free English because its translation resources are unavailable.
-- Added German component/axe evidence for shell navigation, titles, and not-found recovery. The
-  targeted strict TypeScript build, 50-case application-shell component suite, and catalog contract
-  check pass. See `docs/144-shared-shell-route-i18n.md`.
-- No dependency, database schema, migration, locale persistence, authorization, audit, lockfile,
-  manifest, workspace version, phase gate, deployment, publication, tag, domain rule, or security
-  policy changed.
+- Completed typed English, German, and Spanish messages for authentication, Profile, shared
+  validation, shell sign-out feedback, pagination, dialogs, drawers, table regions, and route
+  states. Translation-neutral UI primitives now require caller-owned accessible labels.
+- Preserved focused validation and route headings, real link/button semantics, polite outcomes,
+  language-switch rollback, protected cache clearing, and safe plain-text interpolation. German
+  and Spanish authentication component coverage includes validation focus, document title, skip
+  navigation, and axe; Profile coverage verifies an immediate German account-locale switch.
+- Added the existing authoritative organization timezone to the minimized self-profile response
+  and used the shared locale-and-timezone formatter for session instants. No new private account,
+  employee, session, IP, or raw user-agent data is exposed.
+- The completed integration measures 974,388 raw and 265,450 gzip non-catalog JavaScript bytes.
+  `D-508`, ADR 0013, and executable regression tests now bound Phase 14 runtime and integration to
+  70,000/22,000 bytes while preserving the original application, largest-chunk, CSS, and locale
+  catalog limits.
+- The local completion run passes the 197-message catalog contract, formatting, lint and boundary
+  checks, strict TypeScript, 48 tooling tests, 397 unit/component tests, 13 environment-independent
+  integration tests, 39 browser scenarios with one intentional skip, and the production build.
+  The integration run skips 45 PostgreSQL-dependent cases because the opt-in database service is
+  unavailable. See `docs/144-shared-shell-route-i18n.md`.
+- No dependency, database schema, migration, lockfile, manifest, workspace version, phase gate,
+  deployment, publication, tag, domain rule, permission, or audit policy changed.
 
 ## Current blockers
 
@@ -2535,9 +2543,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Continue `WL-1404`: translate the remaining shared UI, authentication, profile, validation,
-dialogs, and announcements. The portfolio presentation
-scope remains preserved in
+Begin `WL-1405`: translate employee workflows and their required states across Today, time and
+balances, records, corrections, absences, calendars, notifications, and monthly review. The
+portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 
 ## Update rules

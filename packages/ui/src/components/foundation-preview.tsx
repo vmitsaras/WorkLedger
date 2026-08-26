@@ -33,7 +33,7 @@ export function FoundationPreview() {
         <div className="flex flex-wrap items-center gap-3">
           <Button onPress={() => undefined}>Save preference</Button>
           <Link href="#field-example">Review field guidance</Link>
-          <Dialog triggerLabel="Open dialog" title="Review before continuing">
+          <Dialog closeLabel="Close" triggerLabel="Open dialog" title="Review before continuing">
             This modal example keeps its title and explanation persistent, closes with Escape, and
             restores focus to the trigger.
           </Dialog>
@@ -78,8 +78,18 @@ export function FoundationPreview() {
             </tr>
           </tbody>
         </DataTable>
-        <Pagination currentPage={1} onPageChange={() => undefined} pageCount={2} />
-        <RouteState kind="empty">Choose a period to review its records.</RouteState>
+        <Pagination
+          ariaLabel="Pagination"
+          currentPage={1}
+          nextLabel="Next page"
+          onPageChange={() => undefined}
+          pageCount={2}
+          previousLabel="Previous page"
+          summary="Page 1 of 2"
+        />
+        <RouteState kind="empty" title="Nothing to show yet">
+          Choose a period to review its records.
+        </RouteState>
       </Panel>
     </section>
   );

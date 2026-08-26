@@ -9,7 +9,7 @@ import {
   type PersonalRequestQuery,
   type PersonalRequestType,
 } from '@workledger/contracts';
-import { Button, FilterBar, Pagination, Panel, RouteState, buttonVariants } from '@workledger/ui';
+import { Button, FilterBar, Panel, RouteState, buttonVariants } from '@workledger/ui';
 
 import { formatLocalDate } from '../app/date-time-format.js';
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
@@ -17,6 +17,7 @@ import { personalRequestHistoryQuery } from '../app/query.js';
 import { canonicalRouteLabel } from '../app/route-copy.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
+import { Pagination } from '../components/pagination.js';
 import { WorkflowStatusBadge } from '../components/workflow-status-badge.js';
 
 type FilterDraft = Readonly<{

@@ -6,9 +6,11 @@ import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
 import type { ApprovalInbox, SelfContext } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { createWebLocaleController, LocaleControllerProvider } from '../src/app/locale.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
@@ -19,6 +21,11 @@ const ABSENCE_ID = '123e4567-e89b-42d3-a456-426614174502';
 const CANCELLATION_ID = '123e4567-e89b-42d3-a456-426614174503';
 const MONTHLY_PERIOD_ID = '123e4567-e89b-42d3-a456-426614174504';
 let routerSequence = 0;
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 
 const MANAGER_CONTEXT: SelfContext = {
   account: { email: 'maja@northstar.test', name: 'Maja Novak' },
@@ -534,9 +541,13 @@ test('rejects sensitive or unknown URL filters and reloads the canonical broad d
 });
 
 function renderApplication(initialEntry: string) {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  const localeController = createWebLocaleController(defaultLocaleRuntime);
   const queryClient = createWorkLedgerQueryClient();
   const url = new URL(initialEntry, 'https://workledger.test');
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: [
       {
         key: `approval-component-test-${(routerSequence += 1).toString()}`,
@@ -546,9 +557,11 @@ function renderApplication(initialEntry: string) {
     ],
   });
   const rendered = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={localeController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
   return { ...rendered, queryClient, router };
 }

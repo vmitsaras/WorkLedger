@@ -68,6 +68,7 @@ export const selfSessionSummarySchema = z.strictObject({
 
 export const selfProfileSchema = selfContextSchema.extend({
   sessions: z.array(selfSessionSummarySchema).max(50),
+  timeZone: z.string().min(1).max(255),
 });
 
 export const csrfBootstrapSchema = z.strictObject({

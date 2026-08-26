@@ -296,7 +296,9 @@ export function AbsenceSettingsPage() {
           Version history
         </h2>
         {query.isPending ? (
-          <RouteState kind="loading">Absence type versions are being retrieved.</RouteState>
+          <RouteState kind="loading" title="Loading information">
+            Absence type versions are being retrieved.
+          </RouteState>
         ) : query.data.versions.length === 0 ? (
           <RouteState kind="empty" title="No absence type versions">
             Create the first effective dated absence type above.

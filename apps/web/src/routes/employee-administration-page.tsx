@@ -22,12 +22,12 @@ import {
   DataTable,
   FilterBar,
   linkVariants,
-  Pagination,
   Panel,
   RouteState,
   StatusBadge,
   TextField,
 } from '@workledger/ui';
+import { Pagination } from '../components/pagination.js';
 
 import {
   activateEmployeeForAdministration,
@@ -174,7 +174,9 @@ export function EmployeeAdministrationPage() {
       </FilterBar>
 
       {employeesQuery.isPending ? (
-        <RouteState kind="loading">Employee records are being retrieved.</RouteState>
+        <RouteState kind="loading" title="Loading information">
+          Employee records are being retrieved.
+        </RouteState>
       ) : employeesQuery.data.items.length === 0 ? (
         <RouteState
           kind="empty"
@@ -510,7 +512,9 @@ export function EmployeeAdministrationDetailPage() {
     return (
       <section className="grid gap-6">
         <PageHeader title="Employee" description="Loading lifecycle history…" />
-        <RouteState kind="loading">Employee administration details are being retrieved.</RouteState>
+        <RouteState kind="loading" title="Loading information">
+          Employee administration details are being retrieved.
+        </RouteState>
       </section>
     );
   }

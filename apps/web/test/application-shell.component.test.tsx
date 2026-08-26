@@ -16,10 +16,11 @@ import type {
   TodayAttendance,
 } from '@workledger/contracts';
 import { COHERENT_TODAY_ATTENDANCE, expectNoAxeViolations } from '@workledger/test-utils';
-import { initializeI18n } from '@workledger/i18n';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 
 import {
   createWebLocaleController,
+  DEVICE_LOCALE_STORAGE_KEY,
   LocaleControllerProvider,
   type WebLocaleController,
 } from '../src/app/locale.js';
@@ -33,6 +34,11 @@ const EMPTY_REQUEST_HISTORY = {
   pagination: { limit: 20, page: 1, total: 0, totalPages: 0 },
 } as const;
 let routerSequence = 0;
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 const EMPLOYEE_CONTEXT: SelfContext = {
   account: { email: 'emma@northstar.test', name: 'Emma Reed' },
   defaultPath: '/today',
@@ -246,6 +252,7 @@ const DAILY_TIME_RECORD: DailyTimeRecord = {
 
 afterEach(() => {
   clearSessionMemory();
+  globalThis.localStorage.removeItem(DEVICE_LOCALE_STORAGE_KEY);
   onlineManager.setOnline(true);
   vi.unstubAllGlobals();
 });
@@ -269,6 +276,45 @@ test('shows accessible sign-in validation without attempting authentication', as
   await waitFor(() => expect(summary).toHaveFocus());
   expect(screen.getByRole('link', { name: 'Enter your email address.' })).toBeVisible();
   expect(fetchMock).toHaveBeenCalledTimes(2);
+  await expectNoAxeViolations(container);
+});
+
+test.each([
+  {
+    email: 'E-Mail-Adresse',
+    emailError: 'Geben Sie Ihre E-Mail-Adresse ein.',
+    heading: 'Anmelden',
+    locale: 'de-DE' as const,
+    problem: 'Es gibt ein Problem',
+    skip: 'Zum Inhalt springen',
+  },
+  {
+    email: 'Correo electrónico',
+    emailError: 'Introduce tu correo electrónico.',
+    heading: 'Iniciar sesión',
+    locale: 'es-ES' as const,
+    problem: 'Hay un problema',
+    skip: 'Saltar al contenido',
+  },
+])('renders signed-out authentication and validation in $locale', async (expected) => {
+  const fetchMock = vi.fn(async () => authenticationErrorResponse('AUTH_REQUIRED'));
+  vi.stubGlobal('fetch', fetchMock);
+  const user = userEvent.setup();
+  globalThis.localStorage.setItem(DEVICE_LOCALE_STORAGE_KEY, expected.locale);
+  const localeController = createWebLocaleController(await initializeI18n(expected.locale));
+  const { container } = renderApplication('/sign-in', localeController);
+
+  const heading = await screen.findByRole('heading', { name: expected.heading });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(document.title).toBe(`${expected.heading} | WorkLedger`);
+  expect(screen.getByRole('link', { name: expected.skip })).toBeVisible();
+  expect(screen.getByRole('textbox', { name: expected.email })).toBeVisible();
+
+  await user.click(screen.getByRole('button', { name: expected.heading }));
+  const summary = screen.getByRole('alert');
+  await waitFor(() => expect(summary).toHaveFocus());
+  expect(summary).toHaveTextContent(expected.problem);
+  expect(screen.getByRole('link', { name: expected.emailError })).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -2042,6 +2088,7 @@ test('keeps profile fields read-only and clears protected state after current-se
         platform: 'MACOS',
       },
     ],
+    timeZone: 'Europe/Berlin',
   };
   vi.stubGlobal(
     'fetch',
@@ -2082,7 +2129,11 @@ test('keeps profile fields read-only and clears protected state after current-se
 });
 
 test('switches account locale immediately and restores runtime, cache, and focus on failure', async () => {
-  const profile: SelfProfile = { ...EMPLOYEE_CONTEXT, sessions: [] };
+  const profile: SelfProfile = {
+    ...EMPLOYEE_CONTEXT,
+    sessions: [],
+    timeZone: 'Europe/Berlin',
+  };
   const localeRequests: string[] = [];
   vi.stubGlobal(
     'fetch',
@@ -2111,6 +2162,10 @@ test('switches account locale immediately and restores runtime, cache, and focus
   language.focus();
   await user.selectOptions(language, 'de-DE');
   await waitFor(() => expect(document.documentElement.lang).toBe('de-DE'));
+  expect(screen.getByRole('heading', { name: 'Profil', level: 1 })).toBeVisible();
+  expect(document.title).toBe('Profil | WorkLedger');
+  expect(screen.getByText('Kontodetails')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Aktive Sitzungen' })).toBeVisible();
   expect(language).toHaveValue('de-DE');
   expect(language).toHaveFocus();
   expect(screen.getByRole('status')).toHaveTextContent('Ihre Kontosprache wurde aktualisiert.');
@@ -2153,9 +2208,14 @@ test('uses the active catalog for shell navigation, route titles, and route boun
 });
 
 function renderApplication(initialEntry: string, localeController?: WebLocaleController) {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  const activeLocaleController =
+    localeController ?? createWebLocaleController(defaultLocaleRuntime);
   const queryClient = createWorkLedgerQueryClient();
   const url = new URL(initialEntry, 'https://workledger.test');
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, activeLocaleController), {
     initialEntries: [
       {
         key: `component-test-${(routerSequence += 1).toString()}`,
@@ -2170,13 +2230,9 @@ function renderApplication(initialEntry: string, localeController?: WebLocaleCon
     </QueryClientProvider>
   );
   const rendered = render(
-    localeController === undefined ? (
-      application
-    ) : (
-      <LocaleControllerProvider controller={localeController}>
-        {application}
-      </LocaleControllerProvider>
-    ),
+    <LocaleControllerProvider controller={activeLocaleController}>
+      {application}
+    </LocaleControllerProvider>,
   );
   return { ...rendered, queryClient };
 }

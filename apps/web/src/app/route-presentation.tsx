@@ -6,11 +6,24 @@ import {
   useMatches,
   useNavigationType,
 } from 'react-router';
-import { MESSAGE_KEYS, translate } from '@workledger/i18n';
+import { translate, type MessageKey } from '@workledger/i18n';
 import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
+
+import { CANONICAL_ROUTE_MESSAGE_KEYS } from './route-copy.js';
 
 type RouteHandle = Readonly<{ title?: string }>;
 const focusByLocationKey = new Map<string, string>();
+const localizedRouteTitleKeys = new Set<MessageKey>([
+  ...Object.values(CANONICAL_ROUTE_MESSAGE_KEYS),
+  'auth.signIn.title',
+  'auth.recovery.title',
+  'auth.reset.title',
+  'auth.activation.title',
+]);
+
+function isLocalizedRouteTitle(value: string): value is MessageKey {
+  return localizedRouteTitleKeys.has(value as MessageKey);
+}
 
 export function RoutePresentation() {
   const runtime = useOptionalWorkLedgerI18n();
@@ -23,10 +36,8 @@ export function RoutePresentation() {
     .map((match) => match.handle as RouteHandle | undefined)
     .find((handle) => handle?.title !== undefined)?.title;
   const resolvedTitle =
-    runtime !== null &&
-    title !== undefined &&
-    MESSAGE_KEYS.includes(title as (typeof MESSAGE_KEYS)[number])
-      ? translate(runtime, title as (typeof MESSAGE_KEYS)[number])
+    runtime !== null && title !== undefined && isLocalizedRouteTitle(title)
+      ? translate(runtime, title)
       : title;
 
   useLayoutEffect(() => {

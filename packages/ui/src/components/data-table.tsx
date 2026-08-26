@@ -25,8 +25,6 @@ export function DataTable({
   const scrollRef = useRef<HTMLDivElement>(null);
   const hintId = useId();
   const [isOverflowing, setIsOverflowing] = useState(false);
-  const accessibleScrollLabel =
-    scrollLabel ?? (typeof caption === 'string' ? `${caption} table` : undefined);
 
   useLayoutEffect(() => {
     const scrollElement = scrollRef.current;
@@ -49,13 +47,13 @@ export function DataTable({
     return () => observer.disconnect();
   }, []);
 
-  const isNamedOverflowRegion = isOverflowing && accessibleScrollLabel !== undefined;
+  const isNamedOverflowRegion = isOverflowing && scrollLabel !== undefined;
 
   return (
     <div
       ref={scrollRef}
       aria-describedby={isOverflowing && scrollHint !== undefined ? hintId : undefined}
-      aria-label={isNamedOverflowRegion ? accessibleScrollLabel : undefined}
+      aria-label={isNamedOverflowRegion ? scrollLabel : undefined}
       className="wl-table-scroll"
       data-overflowing={isOverflowing ? 'true' : undefined}
       role={isNamedOverflowRegion ? 'region' : undefined}

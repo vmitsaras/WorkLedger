@@ -172,8 +172,10 @@ integrationTest(
           id: string;
           platform: string | null;
         }>;
+        timeZone: string;
       };
       expect(profile.locale).toBe('de-DE');
+      expect(profile.timeZone).toBe('Europe/Berlin');
       expect(profile.sessions).toHaveLength(2);
       expect(
         profile.sessions.map(({ browser, platform }) => `${browser}:${platform}`).sort(),

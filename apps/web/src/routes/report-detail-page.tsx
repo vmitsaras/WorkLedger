@@ -19,10 +19,10 @@ import {
   buttonVariants,
   DataTable,
   FilterBar,
-  Pagination,
   RouteState,
   StatusBadge,
 } from '@workledger/ui';
+import { Pagination } from '../components/pagination.js';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
@@ -654,7 +654,11 @@ function ReportPagination({
 }
 
 function ReportLoading() {
-  return <RouteState kind="loading">Running report…</RouteState>;
+  return (
+    <RouteState kind="loading" title="Loading information">
+      Running report…
+    </RouteState>
+  );
 }
 
 function ReportError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
@@ -673,6 +677,7 @@ function ReportError({ error, retry }: Readonly<{ error: unknown; retry: () => v
         )
       }
       kind={denied ? 'permission-denied' : 'error'}
+      title={denied ? 'You do not have access to this area' : 'This information is unavailable'}
     >
       <p>
         {denied

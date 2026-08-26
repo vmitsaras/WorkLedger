@@ -1,5 +1,7 @@
 import type { RefObject } from 'react';
 
+import { translate } from '@workledger/i18n';
+import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 import { Alert } from '@workledger/ui';
 
 export interface FormErrorSummaryProps {
@@ -9,6 +11,7 @@ export interface FormErrorSummaryProps {
 }
 
 export function FormErrorSummary({ fieldErrors, formError, summaryRef }: FormErrorSummaryProps) {
+  const runtime = useOptionalWorkLedgerI18n();
   const entries = Object.entries(fieldErrors);
   if (entries.length === 0 && formError === undefined) return null;
 
@@ -17,7 +20,11 @@ export function FormErrorSummary({ fieldErrors, formError, summaryRef }: FormErr
       className="outline-none"
       ref={summaryRef}
       tabIndex={-1}
-      title="There is a problem"
+      title={
+        runtime === null
+          ? 'There is a problem'
+          : translate(runtime, 'shared.validation.problemTitle')
+      }
       tone="danger"
     >
       {formError === undefined ? null : <p className="m-0 text-sm">{formError}</p>}

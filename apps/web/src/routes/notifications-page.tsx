@@ -8,15 +8,8 @@ import type {
   NotificationItem,
   NotificationQuery,
 } from '@workledger/contracts';
-import {
-  Alert,
-  Button,
-  Pagination,
-  Panel,
-  RouteState,
-  StatusBadge,
-  buttonVariants,
-} from '@workledger/ui';
+import { Alert, Button, Panel, RouteState, StatusBadge, buttonVariants } from '@workledger/ui';
+import { Pagination } from '../components/pagination.js';
 
 import { ApiClientError, clearSessionMemory, dismissNotification } from '../app/api-client.js';
 import { notificationHistoryQuery } from '../app/query.js';

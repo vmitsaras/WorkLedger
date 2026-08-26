@@ -53,17 +53,17 @@ test('adds only the measured internationalization runtime allowance to applicati
       totalJavaScriptBytes: 916_728,
       totalJavaScriptGzipBytes: 247_840,
     }),
-    { rawBytes: 6_728, rawBudget: 55_000, gzipBytes: 1_840, gzipBudget: 18_000 },
+    { rawBytes: 6_728, rawBudget: 70_000, gzipBytes: 1_840, gzipBudget: 22_000 },
   );
 });
 
 test('rejects totals above the combined application and runtime ceiling', () => {
   const entriesAtLimit = [
-    { name: 'app-a.js', bytes: 482_500, gzipBytes: 132_000 },
-    { name: 'app-b.js', bytes: 482_500, gzipBytes: 132_000 },
+    { name: 'app-a.js', bytes: 490_000, gzipBytes: 134_000 },
+    { name: 'app-b.js', bytes: 490_000, gzipBytes: 134_000 },
   ];
 
-  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 965_000);
+  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 980_000);
   assert.throws(
     () =>
       assertBundleBudget([

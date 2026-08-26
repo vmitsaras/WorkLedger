@@ -19,7 +19,9 @@ export function ReportsPage() {
         description="Review time, balance, leave, record-quality, and approval information within your current permission scope. Every result states the scope applied."
       />
       {query.isPending ? (
-        <RouteState kind="loading">The available report catalog is being retrieved.</RouteState>
+        <RouteState kind="loading" title="Loading information">
+          The available report catalog is being retrieved.
+        </RouteState>
       ) : query.isError || query.data === undefined ? (
         <RouteState
           actions={

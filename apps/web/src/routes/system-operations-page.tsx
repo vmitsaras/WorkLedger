@@ -25,7 +25,9 @@ export function SystemOperationsPage() {
       />
 
       {diagnostics === undefined ? (
-        <RouteState kind="loading">System diagnostics are being retrieved.</RouteState>
+        <RouteState kind="loading" title="Loading information">
+          System diagnostics are being retrieved.
+        </RouteState>
       ) : (
         <div className="grid gap-6">
           {diagnostics.health === 'healthy' ? null : (

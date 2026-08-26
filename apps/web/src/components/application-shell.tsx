@@ -160,6 +160,7 @@ export function ApplicationShell() {
         <div className="flex shrink-0 items-center gap-3">
           <div className="wl-mobile-navigation">
             <Drawer
+              closeLabel={runtimeMessage(runtime, 'shared.action.close')}
               title={runtimeMessage(runtime, 'shared.navigation.drawerTitle')}
               triggerLabel={runtimeMessage(runtime, 'shared.navigation.menu')}
             >
@@ -367,7 +368,8 @@ function runtimeMessage(
     | 'shared.navigation.destination.mobile'
     | 'shared.navigation.drawerTitle'
     | 'shared.navigation.menu'
-    | 'shared.navigation.skipToContent',
+    | 'shared.navigation.skipToContent'
+    | 'shared.action.close',
   value?: string,
 ): string {
   if (runtime !== null) {
@@ -387,6 +389,7 @@ function runtimeMessage(
   if (key === 'shared.navigation.destination.desktop') return `${value ?? ''} navigation`;
   if (key === 'shared.navigation.skipToContent') return 'Skip to content';
   if (key === 'shared.navigation.drawerTitle') return 'Navigation';
+  if (key === 'shared.action.close') return 'Close';
   return 'Menu';
 }
 
@@ -450,6 +453,9 @@ function navigationItemsFor(
 }
 
 function ShellSignOutButton() {
+  const runtime = useOptionalWorkLedgerI18n();
+  const message = (key: MessageKey, fallback: string) =>
+    runtime === null ? fallback : translate(runtime, key);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const locale = useOptionalWebLocale();
@@ -459,7 +465,11 @@ function ShellSignOutButton() {
   return (
     <div className="grid gap-2">
       {error === undefined ? null : (
-        <Alert headingLevel="h3" title="Sign out failed" tone="danger">
+        <Alert
+          headingLevel="h3"
+          title={message('shared.signOut.failureTitle', 'Sign out failed')}
+          tone="danger"
+        >
           <p>{error}</p>
         </Alert>
       )}
@@ -481,13 +491,17 @@ function ShellSignOutButton() {
             setPendingSignInNotice('SIGNED_OUT');
             await navigate('/sign-in', { replace: true });
           } catch {
-            setError('Could not sign out. Try again.');
+            setError(
+              message('shared.signOut.failureDescription', 'Could not sign out. Try again.'),
+            );
           } finally {
             setPending(false);
           }
         }}
       >
-        {pending ? 'Signing out…' : 'Sign out'}
+        {pending
+          ? message('shared.signOut.actionPending', 'Signing out…')
+          : message('shared.signOut.action', 'Sign out')}
       </Button>
     </div>
   );

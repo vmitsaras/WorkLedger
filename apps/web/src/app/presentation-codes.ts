@@ -7,6 +7,7 @@ import type {
   SelfSessionSummary,
   TodayAttentionRecovery,
 } from '@workledger/contracts';
+import { translate, type I18nRuntime, type MessageKey } from '@workledger/i18n';
 
 type AttentionCode = CalculationBlockerCode | CalculationWarningCode;
 
@@ -100,7 +101,16 @@ const NOTIFICATION_PRESENTATION: Readonly<
   ITEM_REJECTED: { body: 'An item you submitted was not approved.', title: 'Item not approved' },
 };
 
-const FIELD_ERROR_PRESENTATION: Readonly<Record<ApiFieldErrorCode, string>> = {
+const FIELD_ERROR_PRESENTATION: Readonly<Record<ApiFieldErrorCode, MessageKey>> = {
+  INVALID_FORMAT: 'shared.validation.invalidFormat',
+  INVALID_TYPE: 'shared.validation.invalidType',
+  INVALID_VALUE: 'shared.validation.invalidValue',
+  REQUIRED: 'shared.validation.required',
+  UNKNOWN_FIELD: 'shared.validation.unknownField',
+  VALUE_TOO_LARGE: 'shared.validation.valueTooLarge',
+  VALUE_TOO_SMALL: 'shared.validation.valueTooSmall',
+};
+const FIELD_ERROR_ENGLISH: Readonly<Record<ApiFieldErrorCode, string>> = {
   INVALID_FORMAT: 'Use the required format.',
   INVALID_TYPE: 'Use the required value type.',
   INVALID_VALUE: 'Choose an allowed value.',
@@ -131,8 +141,13 @@ export function attentionRecoveryLabel(recovery: TodayAttentionRecovery): string
   }
 }
 
-export function fieldErrorPresentation(code: ApiFieldErrorCode): string {
-  return FIELD_ERROR_PRESENTATION[code];
+export function fieldErrorPresentation(
+  code: ApiFieldErrorCode,
+  runtime: I18nRuntime | null,
+): string {
+  return runtime === null
+    ? FIELD_ERROR_ENGLISH[code]
+    : translate(runtime, FIELD_ERROR_PRESENTATION[code]);
 }
 
 export function notificationPresentation(

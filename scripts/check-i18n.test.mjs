@@ -46,7 +46,7 @@ test('accepts the repository locale, namespace, key, parameter, plural, and desc
   const values = await checkI18n();
   assert.equal(values.localeCount, 3);
   assert.equal(values.namespaceCount, 7);
-  assert.equal(values.messageCount, 13);
+  assert.equal(values.messageCount, 197);
 });
 
 test('rejects pseudo locales and a different runtime fallback', () => {

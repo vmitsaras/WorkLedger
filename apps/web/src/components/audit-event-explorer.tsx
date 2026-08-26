@@ -3,12 +3,12 @@ import type { ReactNode } from 'react';
 import {
   DataTable,
   FilterBar,
-  Pagination,
   Panel,
   RouteState,
   StatusBadge,
   type StatusBadgeProps,
 } from '@workledger/ui';
+import { Pagination } from './pagination.js';
 
 export interface AuditExplorerQuery {
   action?: string | undefined;
@@ -147,7 +147,9 @@ export function AuditEventExplorer({
           </p>
         </div>
         {page === undefined ? (
-          <RouteState kind="loading">Audit evidence is being retrieved.</RouteState>
+          <RouteState kind="loading" title="Loading information">
+            Audit evidence is being retrieved.
+          </RouteState>
         ) : page.items.length === 0 ? (
           <RouteState kind="empty" title="No matching audit events">
             Change or clear the filters to review a wider time range.

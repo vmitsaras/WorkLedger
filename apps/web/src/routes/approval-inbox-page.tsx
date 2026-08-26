@@ -17,13 +17,13 @@ import {
   Button,
   DataTable,
   FilterBar,
-  Pagination,
   Panel,
   RouteState,
   StatusBadge,
   buttonVariants,
   type StatusBadgeProps,
 } from '@workledger/ui';
+import { Pagination } from '../components/pagination.js';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatLocalDate } from '../app/date-time-format.js';

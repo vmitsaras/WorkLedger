@@ -59,7 +59,7 @@ test('opens and closes the dialog from the keyboard', async () => {
 test('moves focus into the navigation drawer and restores it to the trigger', async () => {
   const user = userEvent.setup();
   const { container } = render(
-    <Drawer title="Navigation" triggerLabel="Menu">
+    <Drawer closeLabel="Close" title="Navigation" triggerLabel="Menu">
       <a href="/today">Today</a>
     </Drawer>,
   );
@@ -100,9 +100,12 @@ test('renders shared operational patterns with textual state and native semantic
         ariaLabel="Approval pages"
         currentPage={2}
         nextFocusKey="approval-next"
+        nextLabel="Next page"
         onPageChange={() => undefined}
         pageCount={3}
         previousFocusKey="approval-previous"
+        previousLabel="Previous page"
+        summary="Page 2 of 3"
       />
       <RouteState
         actionHref="/today"
@@ -111,6 +114,7 @@ test('renders shared operational patterns with textual state and native semantic
         headingLevel="h1"
         headingProps={{ tabIndex: -1 }}
         kind="permission-denied"
+        title="You do not have access to this area"
       >
         Your current role does not grant access to this record.
       </RouteState>

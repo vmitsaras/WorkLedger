@@ -5,16 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 
 import {
   DEFAULT_COMPANY_IDENTITY,
-  DEFAULT_LOCALE,
   PASSWORD_MAXIMUM_LENGTH,
   PASSWORD_MINIMUM_LENGTH,
   type SupportedLocale,
 } from '@workledger/contracts';
-import {
-  translateStaticMessage,
-  type LocaleRuntime,
-  type StaticMessageKey,
-} from '@workledger/i18n';
+import { translateStaticMessage, type MessageArguments, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, linkVariants, TextField } from '@workledger/ui';
 
 import {
@@ -41,17 +37,22 @@ import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 import { CompanyIdentity, CompanyIdentityEffects } from '../components/company-identity.js';
 import { LanguageSelect } from '../components/language-select.js';
-import { saveDeviceLocale, useOptionalWebLocale } from '../app/locale.js';
+import { saveDeviceLocale, useWebLocale } from '../app/locale.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
+type MessageTranslator = <Key extends MessageKey>(
+  key: Key,
+  ...args: MessageArguments<Key>
+) => string;
 
 export function AuthenticationLayout() {
+  const t = useWorkLedgerMessage();
   const { data: identity = DEFAULT_COMPANY_IDENTITY } = useQuery(companyIdentityQuery());
   return (
     <div className="wl-auth-layout min-h-dvh">
       <CompanyIdentityEffects identity={identity} />
       <a className="wl-skip-link" href="#main-content">
-        Skip to content
+        {t('auth.layout.skipToContent')}
       </a>
       <main
         id="main-content"
@@ -60,15 +61,16 @@ export function AuthenticationLayout() {
       >
         <section
           className="wl-auth-introduction grid max-w-xl gap-5"
-          aria-label={`${identity.organizationName} WorkLedger introduction`}
+          aria-label={t('auth.layout.introductionLabel', {
+            organizationName: identity.organizationName,
+          })}
         >
           <CompanyIdentity identity={identity} presentation="authentication" />
           <p className="m-0 text-3xl font-bold leading-tight tracking-[-0.03em] text-[var(--wl-text)] sm:text-5xl">
-            Working time you can understand.
+            {t('auth.layout.title')}
           </p>
           <p className="m-0 max-w-lg text-base leading-7 text-[var(--wl-text-muted)]">
-            A calm, auditable place for attendance, flexible-time balances, absences, and monthly
-            records.
+            {t('auth.layout.description')}
           </p>
         </section>
         <div className="wl-auth-card rounded-3xl border border-[var(--wl-border)] bg-[var(--wl-surface-raised)] p-6 shadow-[var(--wl-shadow-card)] sm:p-8">
@@ -83,9 +85,10 @@ export function AuthenticationLayout() {
 }
 
 export function SignInPage() {
+  const t = useWorkLedgerMessage();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const locale = useOptionalWebLocale();
+  const locale = useWebLocale();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -100,7 +103,7 @@ export function SignInPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const errors = validateEmailPassword(email, password);
+    const errors = validateEmailPassword(email, password, t);
     setFieldErrors(errors);
     setFormError(undefined);
     if (Object.keys(errors).length > 0) {
@@ -114,10 +117,10 @@ export function SignInPage() {
       clearSessionMemory();
       queryClient.removeQueries({ queryKey: ['self'] });
       const context = await queryClient.fetchQuery(selfContextQuery());
-      await locale?.activateLocale(context.locale);
+      await locale.activateLocale(context.locale);
       await navigate(context.defaultPath, { replace: true });
     } catch (error) {
-      setFormError(signInErrorMessage(error));
+      setFormError(signInErrorMessage(error, t));
       focusSummary(summaryRef);
     } finally {
       setPending(false);
@@ -127,13 +130,13 @@ export function SignInPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Account access"
-        title="Sign in"
-        description="Use the email address from your WorkLedger invitation. There is no public registration."
+        eyebrow={t('auth.signIn.eyebrow')}
+        title={t('auth.signIn.title')}
+        description={t('auth.signIn.description')}
       />
       {notice === null ? null : (
-        <Alert title={noticeTitle(notice)} tone={noticeTone(notice)}>
-          <p>{noticeMessage(notice)}</p>
+        <Alert title={noticeTitle(notice, t)} tone={noticeTone(notice)}>
+          <p>{noticeMessage(notice, t)}</p>
         </Alert>
       )}
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
@@ -145,7 +148,7 @@ export function SignInPage() {
           autoComplete="username"
           isInvalid={fieldErrors['email'] !== undefined}
           errorMessage={fieldErrors['email']}
-          label="Email address"
+          label={t('auth.field.email')}
           value={email}
           onChange={setEmail}
         />
@@ -156,16 +159,16 @@ export function SignInPage() {
           autoComplete="current-password"
           isInvalid={fieldErrors['password'] !== undefined}
           errorMessage={fieldErrors['password']}
-          label="Password"
+          label={t('auth.field.password')}
           value={password}
           onChange={setPassword}
         />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link className={linkVariants({ prominence: 'quiet' })} to="/forgot-password">
-            Forgot password?
+            {t('auth.navigation.forgotPassword')}
           </Link>
           <Button type="submit" isDisabled={pending}>
-            {pending ? 'Signing in…' : 'Sign in'}
+            {pending ? t('auth.signIn.actionPending') : t('auth.signIn.action')}
           </Button>
         </div>
       </form>
@@ -174,45 +177,28 @@ export function SignInPage() {
 }
 
 function SignedOutLanguageControl() {
-  const locale = useOptionalWebLocale();
+  const t = useWorkLedgerMessage();
+  const locale = useWebLocale();
   const [pending, setPending] = useState(false);
   const [status, setStatus] = useState<string>();
-  const currentLocale = locale?.runtime.locale ?? DEFAULT_LOCALE;
+  const currentLocale = locale.runtime.locale;
 
   async function changeLocale(nextLocale: SupportedLocale) {
     if (nextLocale === currentLocale) return;
     setPending(true);
     setStatus(undefined);
-    const previousRuntime = locale?.runtime;
+    const previousRuntime = locale.runtime;
     try {
-      const nextRuntime = await locale?.activateLocale(nextLocale);
+      const nextRuntime = await locale.activateLocale(nextLocale);
       if (!saveDeviceLocale(nextLocale)) {
-        if (previousRuntime !== undefined) locale?.restoreLocale(previousRuntime);
-        setStatus(
-          message(
-            previousRuntime,
-            'shared.locale.deviceSaveFailed',
-            'Language was not changed. Device preferences are unavailable.',
-          ),
-        );
+        locale.restoreLocale(previousRuntime);
+        setStatus(translateStaticMessage(previousRuntime, 'shared.locale.deviceSaveFailed'));
         return;
       }
-      setStatus(
-        message(
-          nextRuntime,
-          'shared.locale.deviceSaved',
-          'Language preference saved for this device.',
-        ),
-      );
+      setStatus(translateStaticMessage(nextRuntime, 'shared.locale.deviceSaved'));
     } catch {
-      if (previousRuntime !== undefined) locale?.restoreLocale(previousRuntime);
-      setStatus(
-        message(
-          previousRuntime,
-          'shared.locale.deviceSaveFailed',
-          'Language was not changed. Try again.',
-        ),
-      );
+      locale.restoreLocale(previousRuntime);
+      setStatus(translateStaticMessage(previousRuntime, 'shared.locale.deviceSaveFailed'));
     } finally {
       setPending(false);
     }
@@ -221,14 +207,10 @@ function SignedOutLanguageControl() {
   return (
     <div className="grid gap-2 border-b border-[var(--wl-border)] pb-6">
       <LanguageSelect
-        description={message(
-          locale?.runtime,
-          'shared.locale.deviceDescription',
-          'Used on this device while you are signed out.',
-        )}
+        description={t('shared.locale.deviceDescription')}
         disabled={pending}
         id="signed-out-language"
-        label={message(locale?.runtime, 'shared.locale.label', 'Language')}
+        label={t('shared.locale.label')}
         restoreFocusAfterDisabled
         value={currentLocale}
         onChange={(nextLocale) => void changeLocale(nextLocale)}
@@ -242,17 +224,8 @@ function SignedOutLanguageControl() {
   );
 }
 
-function message(
-  runtime: LocaleRuntime | null | undefined,
-  key: StaticMessageKey,
-  fallback: string,
-): string {
-  return runtime === undefined || runtime === null
-    ? fallback
-    : translateStaticMessage(runtime, key);
-}
-
 export function ForgotPasswordPage() {
+  const t = useWorkLedgerMessage();
   const [email, setEmail] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
@@ -267,7 +240,7 @@ export function ForgotPasswordPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const errors = validateEmail(email);
+    const errors = validateEmail(email, t);
     setFieldErrors(errors);
     setFormError(undefined);
     if (Object.keys(errors).length > 0) {
@@ -279,7 +252,7 @@ export function ForgotPasswordPage() {
       await requestPasswordReset(email.trim().toLocaleLowerCase('en-US'));
       setComplete(true);
     } catch (error) {
-      setFormError(recoveryRequestErrorMessage(error));
+      setFormError(recoveryRequestErrorMessage(error, t));
       focusSummary(summaryRef);
     } finally {
       setPending(false);
@@ -290,15 +263,15 @@ export function ForgotPasswordPage() {
     return (
       <section className="grid gap-6">
         <PageHeader
-          eyebrow="Password recovery"
-          title="Check your email"
-          description="If an eligible WorkLedger account matches that address, recovery instructions will arrive shortly. The link expires after 30 minutes."
+          eyebrow={t('auth.recovery.eyebrow')}
+          title={t('auth.recovery.complete.title')}
+          description={t('auth.recovery.complete.description')}
         />
         <h2 ref={completionHeadingRef} tabIndex={-1} className="sr-only">
-          Recovery request complete
+          {t('auth.recovery.complete.focus')}
         </h2>
         <Link className={linkVariants({ prominence: 'default' })} to="/sign-in">
-          Return to sign in
+          {t('auth.navigation.returnToSignIn')}
         </Link>
       </section>
     );
@@ -307,9 +280,9 @@ export function ForgotPasswordPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Password recovery"
-        title="Reset your password"
-        description="Enter your account email. The completion message is the same whether or not an eligible account exists."
+        eyebrow={t('auth.recovery.eyebrow')}
+        title={t('auth.recovery.title')}
+        description={t('auth.recovery.description')}
       />
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
       <form aria-busy={pending} className="grid gap-5" noValidate onSubmit={handleSubmit}>
@@ -320,16 +293,16 @@ export function ForgotPasswordPage() {
           autoComplete="username"
           isInvalid={fieldErrors['email'] !== undefined}
           errorMessage={fieldErrors['email']}
-          label="Email address"
+          label={t('auth.field.email')}
           value={email}
           onChange={setEmail}
         />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link className={linkVariants({ prominence: 'quiet' })} to="/sign-in">
-            Back to sign in
+            {t('auth.navigation.backToSignIn')}
           </Link>
           <Button type="submit" isDisabled={pending}>
-            {pending ? 'Sending…' : 'Send recovery link'}
+            {pending ? t('auth.recovery.actionPending') : t('auth.recovery.action')}
           </Button>
         </div>
       </form>
@@ -338,6 +311,7 @@ export function ForgotPasswordPage() {
 }
 
 export function ResetPasswordPage() {
+  const t = useWorkLedgerMessage();
   const navigate = useNavigate();
   const [grant] = useState(readResetGrant);
   const [password, setPassword] = useState('');
@@ -352,7 +326,7 @@ export function ResetPasswordPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (grant === null) return;
-    const errors = validateNewPassword(password, confirmation);
+    const errors = validateNewPassword(password, confirmation, t);
     setFieldErrors(errors);
     setFormError(undefined);
     if (Object.keys(errors).length > 0) {
@@ -365,7 +339,7 @@ export function ResetPasswordPage() {
       setPendingSignInNotice('PASSWORD_RESET');
       await navigate('/sign-in', { replace: true });
     } catch (error) {
-      setFormError(resetErrorMessage(error));
+      setFormError(resetErrorMessage(error, t));
       focusSummary(summaryRef);
     } finally {
       setPending(false);
@@ -376,12 +350,12 @@ export function ResetPasswordPage() {
     return (
       <section className="grid gap-6">
         <PageHeader
-          eyebrow="Password recovery"
-          title="Recovery link unavailable"
-          description="This recovery link is invalid, expired, or already used. Request a new link to continue."
+          eyebrow={t('auth.recovery.eyebrow')}
+          title={t('auth.reset.invalid.title')}
+          description={t('auth.reset.invalid.description')}
         />
         <Link className={linkVariants({ prominence: 'default' })} to="/forgot-password">
-          Request another recovery link
+          {t('auth.navigation.requestAnotherRecovery')}
         </Link>
       </section>
     );
@@ -390,9 +364,12 @@ export function ResetPasswordPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Password recovery"
-        title="Choose a new password"
-        description={`Use ${PASSWORD_MINIMUM_LENGTH} to ${PASSWORD_MAXIMUM_LENGTH} characters. Spaces, Unicode, paste, and password managers are supported.`}
+        eyebrow={t('auth.recovery.eyebrow')}
+        title={t('auth.reset.title')}
+        description={t('auth.reset.description', {
+          maximum: PASSWORD_MAXIMUM_LENGTH,
+          minimum: PASSWORD_MINIMUM_LENGTH,
+        })}
       />
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
       <form aria-busy={pending} className="grid gap-5" noValidate onSubmit={handleSubmit}>
@@ -403,7 +380,7 @@ export function ResetPasswordPage() {
           autoComplete="new-password"
           isInvalid={fieldErrors['new-password'] !== undefined}
           errorMessage={fieldErrors['new-password']}
-          label="New password"
+          label={t('auth.field.newPassword')}
           value={password}
           onChange={setPassword}
         />
@@ -414,12 +391,12 @@ export function ResetPasswordPage() {
           autoComplete="new-password"
           isInvalid={fieldErrors['confirm-password'] !== undefined}
           errorMessage={fieldErrors['confirm-password']}
-          label="Confirm new password"
+          label={t('auth.field.confirmPassword')}
           value={confirmation}
           onChange={setConfirmation}
         />
         <Button type="submit" isDisabled={pending}>
-          {pending ? 'Updating…' : 'Update password'}
+          {pending ? t('auth.reset.actionPending') : t('auth.reset.action')}
         </Button>
       </form>
     </section>
@@ -427,6 +404,7 @@ export function ResetPasswordPage() {
 }
 
 export function ActivateAccountPage() {
+  const t = useWorkLedgerMessage();
   const navigate = useNavigate();
   const [grant] = useState(readInvitationGrant);
   const [password, setPassword] = useState('');
@@ -441,7 +419,7 @@ export function ActivateAccountPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (grant === null) return;
-    const errors = validateNewPassword(password, confirmation);
+    const errors = validateNewPassword(password, confirmation, t);
     setFieldErrors(errors);
     setFormError(undefined);
     if (Object.keys(errors).length > 0) {
@@ -454,7 +432,7 @@ export function ActivateAccountPage() {
       setPendingSignInNotice('ACCOUNT_ACTIVATED');
       await navigate('/sign-in', { replace: true });
     } catch (error) {
-      setFormError(invitationErrorMessage(error));
+      setFormError(invitationErrorMessage(error, t));
       focusSummary(summaryRef);
     } finally {
       setPending(false);
@@ -465,12 +443,12 @@ export function ActivateAccountPage() {
     return (
       <section className="grid gap-6">
         <PageHeader
-          eyebrow="Account invitation"
-          title="Invitation link unavailable"
-          description="This invitation is invalid, expired, or already used. Ask your administrator to issue a new invitation."
+          eyebrow={t('auth.activation.eyebrow')}
+          title={t('auth.activation.invalid.title')}
+          description={t('auth.activation.invalid.description')}
         />
         <Link className={linkVariants({ prominence: 'default' })} to="/sign-in">
-          Return to sign in
+          {t('auth.navigation.returnToSignIn')}
         </Link>
       </section>
     );
@@ -479,9 +457,12 @@ export function ActivateAccountPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Account invitation"
-        title="Activate your account"
-        description={`Choose a password with ${PASSWORD_MINIMUM_LENGTH} to ${PASSWORD_MAXIMUM_LENGTH} characters. Activation does not sign you in automatically.`}
+        eyebrow={t('auth.activation.eyebrow')}
+        title={t('auth.activation.title')}
+        description={t('auth.activation.description', {
+          maximum: PASSWORD_MAXIMUM_LENGTH,
+          minimum: PASSWORD_MINIMUM_LENGTH,
+        })}
       />
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
       <form aria-busy={pending} className="grid gap-5" noValidate onSubmit={handleSubmit}>
@@ -492,7 +473,7 @@ export function ActivateAccountPage() {
           autoComplete="new-password"
           isInvalid={fieldErrors['new-password'] !== undefined}
           errorMessage={fieldErrors['new-password']}
-          label="New password"
+          label={t('auth.field.newPassword')}
           value={password}
           onChange={setPassword}
         />
@@ -503,38 +484,51 @@ export function ActivateAccountPage() {
           autoComplete="new-password"
           isInvalid={fieldErrors['confirm-password'] !== undefined}
           errorMessage={fieldErrors['confirm-password']}
-          label="Confirm new password"
+          label={t('auth.field.confirmPassword')}
           value={confirmation}
           onChange={setConfirmation}
         />
         <Button type="submit" isDisabled={pending}>
-          {pending ? 'Activating…' : 'Activate account'}
+          {pending ? t('auth.activation.actionPending') : t('auth.activation.action')}
         </Button>
       </form>
     </section>
   );
 }
 
-function validateEmail(email: string): Record<string, string> {
-  if (email.trim() === '') return { email: 'Enter your email address.' };
-  return EMAIL_PATTERN.test(email.trim()) ? {} : { email: 'Enter a valid email address.' };
+function validateEmail(email: string, t: MessageTranslator): Record<string, string> {
+  if (email.trim() === '') return { email: t('auth.validation.emailRequired') };
+  return EMAIL_PATTERN.test(email.trim()) ? {} : { email: t('auth.validation.emailInvalid') };
 }
 
-function validateEmailPassword(email: string, password: string): Record<string, string> {
+function validateEmailPassword(
+  email: string,
+  password: string,
+  t: MessageTranslator,
+): Record<string, string> {
   return {
-    ...validateEmail(email),
-    ...(password === '' ? { password: 'Enter your password.' } : {}),
+    ...validateEmail(email, t),
+    ...(password === '' ? { password: t('auth.validation.passwordRequired') } : {}),
   };
 }
 
-function validateNewPassword(password: string, confirmation: string): Record<string, string> {
+function validateNewPassword(
+  password: string,
+  confirmation: string,
+  t: MessageTranslator,
+): Record<string, string> {
   const errors: Record<string, string> = {};
   if (password.length < PASSWORD_MINIMUM_LENGTH || password.length > PASSWORD_MAXIMUM_LENGTH) {
-    errors['new-password'] =
-      `Use ${PASSWORD_MINIMUM_LENGTH} to ${PASSWORD_MAXIMUM_LENGTH} characters.`;
+    errors['new-password'] = t('auth.validation.passwordLength', {
+      maximum: PASSWORD_MAXIMUM_LENGTH,
+      minimum: PASSWORD_MINIMUM_LENGTH,
+    });
   }
-  if (confirmation === '') errors['confirm-password'] = 'Confirm your new password.';
-  else if (confirmation !== password) errors['confirm-password'] = 'The passwords do not match.';
+  if (confirmation === '') {
+    errors['confirm-password'] = t('auth.validation.confirmPasswordRequired');
+  } else if (confirmation !== password) {
+    errors['confirm-password'] = t('auth.validation.passwordMismatch');
+  }
   return errors;
 }
 
@@ -542,56 +536,60 @@ function focusSummary(summaryRef: { current: HTMLDivElement | null }): void {
   window.requestAnimationFrame(() => summaryRef.current?.focus());
 }
 
-function signInErrorMessage(error: unknown): string {
+function signInErrorMessage(error: unknown, t: MessageTranslator): string {
   if (error instanceof ApiClientError && error.code === 'RATE_LIMITED') {
-    return 'Too many sign-in attempts. Wait a moment and try again.';
+    return t('auth.error.signIn.rateLimited');
   }
   if (error instanceof ApiClientError && error.code === 'AUTH_INVALID_CREDENTIALS') {
-    return 'The email or password is not valid, or this account cannot sign in.';
+    return t('auth.error.signIn.invalid');
   }
-  return 'WorkLedger could not sign you in. Check the service and try again.';
+  return t('auth.error.signIn.generic');
 }
 
-function recoveryRequestErrorMessage(error: unknown): string {
+function recoveryRequestErrorMessage(error: unknown, t: MessageTranslator): string {
   return error instanceof ApiClientError && error.code === 'RATE_LIMITED'
-    ? 'Too many recovery requests. Wait a moment and try again.'
-    : 'WorkLedger could not send recovery instructions. Try again later.';
+    ? t('auth.error.recovery.rateLimited')
+    : t('auth.error.recovery.generic');
 }
 
-function resetErrorMessage(error: unknown): string {
+function resetErrorMessage(error: unknown, t: MessageTranslator): string {
   if (error instanceof ApiClientError && error.code === 'RATE_LIMITED') {
-    return 'Too many reset attempts. Wait a moment and request a new link if needed.';
+    return t('auth.error.reset.rateLimited');
   }
   if (error instanceof ApiClientError && error.code === 'AUTH_PASSWORD_POLICY_REJECTED') {
-    return 'Choose a password that meets the length guidance and is not commonly used.';
+    return t('auth.error.passwordPolicy');
   }
-  return 'This recovery link is invalid, expired, or already used. Request a new link to continue.';
+  return t('auth.error.reset.invalid');
 }
 
-function invitationErrorMessage(error: unknown): string {
+function invitationErrorMessage(error: unknown, t: MessageTranslator): string {
   if (error instanceof ApiClientError && error.code === 'RATE_LIMITED') {
-    return 'Too many activation attempts. Wait a moment and try again.';
+    return t('auth.error.activation.rateLimited');
   }
   if (error instanceof ApiClientError && error.code === 'VALIDATION_FAILED') {
-    return 'Choose a password that meets the length guidance and is not commonly used.';
+    return t('auth.error.passwordPolicy');
   }
-  return 'This invitation is invalid, expired, or already used. Ask your administrator to issue a new invitation.';
+  return t('auth.error.activation.invalid');
 }
 
-function noticeMessage(notice: ReturnType<typeof readPendingSignInNotice>): string {
-  if (notice === 'SESSION_EXPIRED') return 'Your session expired. Sign in again to continue.';
-  if (notice === 'ACCOUNT_ACTIVATED')
-    return 'Your account is active. Sign in with your new password.';
-  if (notice === 'PASSWORD_RESET')
-    return 'Your password was updated. Sign in with the new password.';
-  return 'You have signed out.';
+function noticeMessage(
+  notice: ReturnType<typeof readPendingSignInNotice>,
+  t: MessageTranslator,
+): string {
+  if (notice === 'SESSION_EXPIRED') return t('auth.notice.sessionExpired.message');
+  if (notice === 'ACCOUNT_ACTIVATED') return t('auth.notice.accountActivated.message');
+  if (notice === 'PASSWORD_RESET') return t('auth.notice.passwordReset.message');
+  return t('auth.notice.signedOut.message');
 }
 
-function noticeTitle(notice: NonNullable<ReturnType<typeof readPendingSignInNotice>>): string {
-  if (notice === 'SESSION_EXPIRED') return 'Session expired';
-  if (notice === 'ACCOUNT_ACTIVATED') return 'Account activated';
-  if (notice === 'PASSWORD_RESET') return 'Password updated';
-  return 'Signed out';
+function noticeTitle(
+  notice: NonNullable<ReturnType<typeof readPendingSignInNotice>>,
+  t: MessageTranslator,
+): string {
+  if (notice === 'SESSION_EXPIRED') return t('auth.notice.sessionExpired.title');
+  if (notice === 'ACCOUNT_ACTIVATED') return t('auth.notice.accountActivated.title');
+  if (notice === 'PASSWORD_RESET') return t('auth.notice.passwordReset.title');
+  return t('auth.notice.signedOut.title');
 }
 
 function noticeTone(

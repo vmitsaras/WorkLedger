@@ -18,7 +18,7 @@ import {
   systemAccountQuerySchema,
   teamAdminQuerySchema,
 } from '@workledger/contracts';
-import { translate } from '@workledger/i18n';
+import { translate, type MessageKey } from '@workledger/i18n';
 import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 import { RouteState } from '@workledger/ui';
 
@@ -128,22 +128,22 @@ export function createWorkLedgerRoutes(
         {
           element: <AuthenticationLayout />,
           children: [
-            authRoute('sign-in', 'Sign in', <SignInPage />, publicOnlyLoader),
+            authRoute('sign-in', 'auth.signIn.title', <SignInPage />, publicOnlyLoader),
             authRoute(
               'forgot-password',
-              'Reset your password',
+              'auth.recovery.title',
               <ForgotPasswordPage />,
               publicOnlyLoader,
             ),
             authRoute(
               'reset-password',
-              'Choose a new password',
+              'auth.reset.title',
               <ResetPasswordPage />,
               publicOnlyLoader,
             ),
             authRoute(
               'activate-account',
-              'Activate your account',
+              'auth.activation.title',
               <ActivateAccountPage />,
               publicOnlyLoader,
             ),
@@ -415,7 +415,7 @@ function InitialRouteFallback() {
 
 function authRoute(
   path: string,
-  title: string,
+  title: MessageKey,
   element: ReactNode,
   loader: LoaderFunction,
 ): RouteObject {

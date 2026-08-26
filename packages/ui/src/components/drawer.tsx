@@ -11,11 +11,12 @@ import { Button } from './button.js';
 
 export interface DrawerProps {
   children: ReactNode | ((close: () => void) => ReactNode);
+  closeLabel: ReactNode;
   title: ReactNode;
   triggerLabel: ReactNode;
 }
 
-export function Drawer({ children, title, triggerLabel }: DrawerProps) {
+export function Drawer({ children, closeLabel, title, triggerLabel }: DrawerProps) {
   return (
     <DialogTrigger>
       <Button variant="secondary">{triggerLabel}</Button>
@@ -32,7 +33,7 @@ export function Drawer({ children, title, triggerLabel }: DrawerProps) {
                     {title}
                   </Heading>
                   <Button variant="quiet" onPress={close}>
-                    Close
+                    {closeLabel}
                   </Button>
                 </div>
                 {typeof children === 'function' ? children(close) : children}

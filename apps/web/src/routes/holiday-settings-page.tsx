@@ -138,7 +138,9 @@ export function HolidaySettingsPage() {
           Configured holidays
         </h2>
         {query.isPending ? (
-          <RouteState kind="loading">Configured holidays are being retrieved.</RouteState>
+          <RouteState kind="loading" title="Loading information">
+            Configured holidays are being retrieved.
+          </RouteState>
         ) : query.data.holidays.length === 0 ? (
           <RouteState kind="empty" title="No holidays have been configured">
             Add the first date only holiday above after reviewing its impact.

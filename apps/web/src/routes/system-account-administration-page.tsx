@@ -173,7 +173,9 @@ export function SystemAccountAdministrationPage() {
           </p>
         </div>
         {accountsQuery.isPending ? (
-          <RouteState kind="loading">Technical account records are being retrieved.</RouteState>
+          <RouteState kind="loading" title="Loading information">
+            Technical account records are being retrieved.
+          </RouteState>
         ) : accountsQuery.data.items.length === 0 ? (
           <RouteState kind="empty" title="No accounts are associated with this installation">
             Invite the first technical administrator above.

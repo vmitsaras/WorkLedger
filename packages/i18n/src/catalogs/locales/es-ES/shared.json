@@ -8,6 +8,7 @@
     "minutes_other": "{{count}} minutos"
   },
   "action": {
+    "close": "Cerrar",
     "goHome": "Ir a mi inicio",
     "reload": "Recargar WorkLedger",
     "returnHome": "Volver a WorkLedger",
@@ -27,12 +28,97 @@
   "locale": {
     "accountDescription": "Este idioma se guarda en tu cuenta y se usa también en tus otros dispositivos.",
     "accountSaveFailed": "No se pudo guardar el idioma. WorkLedger restauró el idioma anterior.",
+    "accountSaveFailedTitle": "El idioma no ha cambiado",
     "accountSaved": "Se actualizó el idioma de tu cuenta.",
+    "accountSavedTitle": "Idioma cambiado",
     "deviceDescription": "Esta preferencia no sensible solo se usa mientras no has iniciado sesión en este dispositivo.",
     "deviceSaveFailed": "No se pudo guardar el idioma en este dispositivo. WorkLedger restauró el idioma anterior.",
     "deviceSaved": "Se actualizó el idioma sin sesión iniciada para este dispositivo.",
     "invitationDescription": "La invitación y la nueva cuenta empiezan con este idioma. La persona titular puede cambiarlo más adelante.",
     "label": "Idioma"
+  },
+  "profile": {
+    "account": {
+      "details": "Datos de la cuenta",
+      "readOnlyHelp": "Los datos de la cuenta, los roles y el empleo no se pueden editar desde el perfil. Contacta con la administración correspondiente si necesitas algún cambio."
+    },
+    "description": "Revisa el contexto de tu cuenta y las sesiones activas. La información de empleo y roles es de solo lectura aquí.",
+    "employee": {
+      "details": "Resumen del empleo",
+      "notLinked": "No hay un perfil de empleo vinculado",
+      "technicalAccount": "Esta cuenta técnica no tiene un perfil de autoservicio de empleo."
+    },
+    "field": {
+      "applicationRoles": "Roles de la aplicación",
+      "email": "Correo electrónico",
+      "employeeNumber": "Número de empleado",
+      "employmentStatus": "Estado del empleo",
+      "organization": "Organización"
+    },
+    "loading": {
+      "description": "Comprobando la información de la cuenta, el empleo, los roles y las sesiones.",
+      "title": "Cargando tu perfil"
+    },
+    "noneAssigned": "Sin asignar",
+    "preference": {
+      "eyebrow": "Preferencia de la cuenta",
+      "title": "Idioma y región"
+    },
+    "role": {
+      "employee": "Empleado",
+      "hrAdministrator": "Administración de RR. HH.",
+      "manager": "Responsable",
+      "systemAdministrator": "Administración del sistema"
+    },
+    "session": {
+      "current": "Sesión actual",
+      "device": "{{browser}} en {{platform}}",
+      "deviceLabels": {
+        "browser": "Navegador",
+        "chrome": "Chrome",
+        "edge": "Edge",
+        "firefox": "Firefox",
+        "safari": "Safari",
+        "unrecognized": "Dispositivo no reconocido"
+      },
+      "expires": "Caduca el {{value}}",
+      "lastActive": "Última actividad: {{value}}",
+      "platform": {
+        "android": "Android",
+        "ios": "iOS",
+        "linux": "Linux",
+        "macos": "macOS",
+        "windows": "Windows"
+      },
+      "revoke": "Revocar sesión",
+      "revoked": "Se ha cerrado la sesión de {{device}}.",
+      "signOutCurrent": "Cerrar esta sesión",
+      "signingOut": "Cerrando sesión…"
+    },
+    "sessions": {
+      "description": "Las etiquetas de los dispositivos son aproximadas a propósito. WorkLedger no muestra aquí las cabeceras completas del navegador ni las direcciones IP.",
+      "empty": {
+        "description": "No hay ningún registro de sesión disponible para esta cuenta.",
+        "title": "No hay sesiones activas"
+      },
+      "title": "Sesiones activas"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "sessionNotRevoked": {
+        "description": "WorkLedger no ha podido revocar esa sesión. Actualiza el perfil e inténtalo de nuevo.",
+        "freshSession": "Cierra la sesión y vuelve a iniciarla antes de revocar otra sesión.",
+        "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.",
+        "title": "La sesión no se ha revocado"
+      },
+      "sessionRevoked": { "title": "Sesión revocada" }
+    },
+    "title": "Perfil",
+    "unavailable": {
+      "description": "No se ha mostrado información de la cuenta ni de las sesiones. Intenta cargar el perfil de nuevo.",
+      "title": "Tu perfil no está disponible"
+    }
   },
   "navigation": {
     "account": "Cuenta",
@@ -54,6 +140,29 @@
       "manager": "Equipo",
       "system": "Sistema"
     }
+  },
+  "pagination": {
+    "label": "Paginación",
+    "next": "Página siguiente",
+    "previous": "Página anterior",
+    "summary": "Página {{current}} de {{total}}"
+  },
+  "validation": {
+    "correctValue": "Corrige este valor.",
+    "invalidFormat": "Usa el formato requerido.",
+    "invalidType": "Usa el tipo de valor requerido.",
+    "invalidValue": "Elige un valor permitido.",
+    "problemTitle": "Hay un problema",
+    "required": "Introduce un valor.",
+    "unknownField": "Elimina los campos no admitidos.",
+    "valueTooLarge": "Usa un valor menor.",
+    "valueTooSmall": "Usa un valor mayor."
+  },
+  "signOut": {
+    "action": "Cerrar sesión",
+    "actionPending": "Cerrando sesión…",
+    "failureDescription": "No se ha podido cerrar la sesión. Inténtalo de nuevo.",
+    "failureTitle": "No se ha podido cerrar la sesión"
   },
   "route": {
     "boundary": {

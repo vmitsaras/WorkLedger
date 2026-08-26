@@ -3,13 +3,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 
 import type {
-  ApplicationRole,
   SelfContext,
   SelfProfile,
   SelfSessionSummary,
   SupportedLocale,
 } from '@workledger/contracts';
-import { translateStaticMessage } from '@workledger/i18n';
+import {
+  formatInstant,
+  formatList,
+  translateStaticMessage,
+  type MessageArguments,
+  type MessageKey,
+} from '@workledger/i18n';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
 import {
@@ -18,30 +24,23 @@ import {
   revokeSelfSession,
   updateSelfLocale,
 } from '../app/api-client.js';
-import { useOptionalWebLocale } from '../app/locale.js';
-import { sessionDevicePresentation } from '../app/presentation-codes.js';
+import { useWebLocale } from '../app/locale.js';
 import { selfContextQuery, selfProfileQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
 import { LanguageSelect } from '../components/language-select.js';
 
-const ROLE_LABELS: Readonly<Record<ApplicationRole, string>> = {
-  EMPLOYEE: 'Employee',
-  HR_ADMINISTRATOR: 'HR administrator',
-  MANAGER: 'Manager',
-  SYSTEM_ADMINISTRATOR: 'System administrator',
-};
-
-const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
+type MessageTranslator = <Key extends MessageKey>(
+  key: Key,
+  ...args: MessageArguments<Key>
+) => string;
 
 export function ProfilePage() {
+  const t = useWorkLedgerMessage();
   const profileQuery = useQuery(selfProfileQuery());
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const locale = useOptionalWebLocale();
+  const locale = useWebLocale();
   const [status, setStatus] =
     useState<Readonly<{ kind: 'error' | 'success'; message: string; title: string }>>();
   const revokeMutation = useMutation({ mutationFn: revokeSelfSession });
@@ -51,11 +50,11 @@ export function ProfilePage() {
     return (
       <section className="grid gap-6" aria-busy="true">
         <PageHeader
-          title="Profile"
-          description="Review your account context and active sessions."
+          title={t('shared.profile.title')}
+          description={t('shared.profile.description')}
         />
-        <RouteState kind="loading" title="Loading your profile">
-          <p>Checking account, employee, role, and session information.</p>
+        <RouteState kind="loading" title={t('shared.profile.loading.title')}>
+          <p>{t('shared.profile.loading.description')}</p>
         </RouteState>
       </section>
     );
@@ -65,19 +64,19 @@ export function ProfilePage() {
     return (
       <section className="grid gap-6">
         <PageHeader
-          title="Profile"
-          description="Review your account context and active sessions."
+          title={t('shared.profile.title')}
+          description={t('shared.profile.description')}
         />
         <RouteState
           actions={
             <Button variant="secondary" onPress={() => void profileQuery.refetch()}>
-              Try again
+              {t('shared.action.tryAgain')}
             </Button>
           }
           kind="error"
-          title="Your profile is unavailable"
+          title={t('shared.profile.unavailable.title')}
         >
-          <p>No account or session information was displayed. Try loading the profile again.</p>
+          <p>{t('shared.profile.unavailable.description')}</p>
         </RouteState>
       </section>
     );
@@ -92,7 +91,7 @@ export function ProfilePage() {
         clearSessionMemory();
         queryClient.clear();
         try {
-          await locale?.activateSignedOutLocale();
+          await locale.activateSignedOutLocale();
         } catch {
           // Session revocation remains authoritative if a signed-out catalog cannot load.
         }
@@ -101,16 +100,17 @@ export function ProfilePage() {
         return;
       }
       await queryClient.invalidateQueries({ queryKey: ['self', 'profile'] });
+      const device = sessionDevicePresentation(session, t);
       setStatus({
         kind: 'success',
-        message: `${sessionDevicePresentation(session)} was signed out.`,
-        title: 'Session revoked',
+        message: t('shared.profile.session.revoked', { device }),
+        title: t('shared.profile.status.sessionRevoked.title'),
       });
     } catch (error) {
       setStatus({
         kind: 'error',
-        message: revokeErrorMessage(error),
-        title: 'Session not revoked',
+        message: revokeErrorMessage(error, t),
+        title: t('shared.profile.status.sessionNotRevoked.title'),
       });
     }
   }
@@ -118,14 +118,14 @@ export function ProfilePage() {
   async function handleLocaleChange(nextLocale: SupportedLocale) {
     if (nextLocale === profile.locale) return;
     setStatus(undefined);
-    const previousRuntime = locale?.runtime;
+    const previousRuntime = locale.runtime;
     const contextKey = selfContextQuery().queryKey;
     const profileKey = selfProfileQuery().queryKey;
     const previousContext = queryClient.getQueryData<SelfContext>(contextKey);
     const previousProfile = queryClient.getQueryData<SelfProfile>(profileKey);
 
     try {
-      const nextRuntime = await locale?.activateLocale(nextLocale);
+      const nextRuntime = await locale.activateLocale(nextLocale);
       queryClient.setQueryData<SelfContext>(contextKey, (current) =>
         current === undefined ? current : { ...current, locale: nextLocale },
       );
@@ -135,23 +135,17 @@ export function ProfilePage() {
       await localeMutation.mutateAsync(nextLocale);
       setStatus({
         kind: 'success',
-        message:
-          nextRuntime === undefined
-            ? 'Your account language was saved.'
-            : translateStaticMessage(nextRuntime, 'shared.locale.accountSaved'),
-        title: 'Language changed',
+        message: translateStaticMessage(nextRuntime, 'shared.locale.accountSaved'),
+        title: translateStaticMessage(nextRuntime, 'shared.locale.accountSavedTitle'),
       });
     } catch {
-      if (previousRuntime !== undefined) locale?.restoreLocale(previousRuntime);
+      locale.restoreLocale(previousRuntime);
       queryClient.setQueryData(contextKey, previousContext);
       queryClient.setQueryData(profileKey, previousProfile);
       setStatus({
         kind: 'error',
-        message:
-          previousRuntime === undefined
-            ? 'Your account language was not changed. Try again.'
-            : translateStaticMessage(previousRuntime, 'shared.locale.accountSaveFailed'),
-        title: 'Language not changed',
+        message: translateStaticMessage(previousRuntime, 'shared.locale.accountSaveFailed'),
+        title: translateStaticMessage(previousRuntime, 'shared.locale.accountSaveFailedTitle'),
       });
     }
   }
@@ -159,9 +153,9 @@ export function ProfilePage() {
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="Account"
-        title="Profile"
-        description="Review your account context and active sessions. Employment and role information is read-only here."
+        eyebrow={t('shared.navigation.account')}
+        title={t('shared.profile.title')}
+        description={t('shared.profile.description')}
       />
 
       {status === undefined ? null : (
@@ -180,7 +174,7 @@ export function ProfilePage() {
         <Panel className="grid content-start gap-5" aria-labelledby="account-details-title">
           <div>
             <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
-              Account details
+              {t('shared.profile.account.details')}
             </p>
             <h2 id="account-details-title" className="m-0 mt-1 text-2xl font-bold">
               {profile.account.name}
@@ -188,36 +182,46 @@ export function ProfilePage() {
           </div>
           <DescriptionList
             entries={[
-              ['Email address', profile.account.email],
-              ['Organization', profile.organization.name],
-              ['Application roles', profile.roles.map((role) => ROLE_LABELS[role]).join(', ')],
+              [t('shared.profile.field.email'), profile.account.email],
+              [t('shared.profile.field.organization'), profile.organization.name],
+              [
+                t('shared.profile.field.applicationRoles'),
+                formatList(
+                  profile.locale,
+                  profile.roles.map((role) => rolePresentation(role, t)),
+                ),
+              ],
             ]}
+            noneAssignedLabel={t('shared.profile.noneAssigned')}
           />
           <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-            Account, role, and employee details cannot be edited from Profile. Contact the relevant
-            administrator if something needs to change.
+            {t('shared.profile.account.readOnlyHelp')}
           </p>
         </Panel>
 
         <Panel className="grid content-start gap-5" aria-labelledby="employee-summary-title">
           <div>
             <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
-              Employee summary
+              {t('shared.profile.employee.details')}
             </p>
             <h2 id="employee-summary-title" className="m-0 mt-1 text-2xl font-bold">
-              {profile.employee?.displayName ?? 'No employee profile linked'}
+              {profile.employee?.displayName ?? t('shared.profile.employee.notLinked')}
             </h2>
           </div>
           {profile.employee === null ? (
             <p className="m-0 text-sm leading-6 text-[var(--wl-text-muted)]">
-              This technical account has no employee self-service profile.
+              {t('shared.profile.employee.technicalAccount')}
             </p>
           ) : (
             <DescriptionList
               entries={[
-                ['Employee number', profile.employee.employeeNumber],
-                ['Employment status', titleCase(profile.employee.status)],
+                [t('shared.profile.field.employeeNumber'), profile.employee.employeeNumber],
+                [
+                  t('shared.profile.field.employmentStatus'),
+                  employeeStatus(profile.employee.status, t),
+                ],
               ]}
+              noneAssignedLabel={t('shared.profile.noneAssigned')}
             />
           )}
         </Panel>
@@ -228,26 +232,21 @@ export function ProfilePage() {
         >
           <div>
             <p className="m-0 text-sm font-bold uppercase tracking-[0.1em] text-[var(--wl-text-muted)]">
-              Account preference
+              {t('shared.profile.preference.eyebrow')}
             </p>
             <h2 id="language-preference-title" className="m-0 mt-1 text-2xl font-bold">
-              Language and region
+              {t('shared.profile.preference.title')}
             </h2>
           </div>
           <div className="max-w-md">
             <LanguageSelect
-              description={
-                locale === null
-                  ? 'Used for your account on every device after you sign in.'
-                  : translateStaticMessage(locale.runtime, 'shared.locale.accountDescription')
-              }
+              description={translateStaticMessage(
+                locale.runtime,
+                'shared.locale.accountDescription',
+              )}
               disabled={localeMutation.isPending}
               id="account-language"
-              label={
-                locale === null
-                  ? 'Language'
-                  : translateStaticMessage(locale.runtime, 'shared.locale.label')
-              }
+              label={translateStaticMessage(locale.runtime, 'shared.locale.label')}
               restoreFocusAfterDisabled
               value={profile.locale}
               onChange={(nextLocale) => void handleLocaleChange(nextLocale)}
@@ -259,16 +258,15 @@ export function ProfilePage() {
       <section className="grid gap-5" aria-labelledby="active-sessions-title">
         <div className="grid gap-2">
           <h2 id="active-sessions-title" className="m-0 text-2xl font-bold">
-            Active sessions
+            {t('shared.profile.sessions.title')}
           </h2>
           <p className="m-0 max-w-2xl text-sm leading-6 text-[var(--wl-text-muted)]">
-            Device labels are deliberately approximate. WorkLedger does not expose complete browser
-            headers or IP addresses here.
+            {t('shared.profile.sessions.description')}
           </p>
         </div>
         {profile.sessions.length === 0 ? (
-          <RouteState kind="empty" title="No active sessions">
-            <p>No session record is available for this account.</p>
+          <RouteState kind="empty" title={t('shared.profile.sessions.empty.title')}>
+            <p>{t('shared.profile.sessions.empty.description')}</p>
           </RouteState>
         ) : (
           <ul className="m-0 grid list-none gap-4 p-0" role="list">
@@ -281,17 +279,25 @@ export function ProfilePage() {
                   <div className="grid gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="m-0 text-lg font-bold">
-                        {sessionDevicePresentation(session)}
+                        {sessionDevicePresentation(session, t)}
                       </h3>
                       {session.current ? (
-                        <StatusBadge tone="info">Current session</StatusBadge>
+                        <StatusBadge tone="info">{t('shared.profile.session.current')}</StatusBadge>
                       ) : null}
                     </div>
                     <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                      Last active {formatDateTime(session.lastActiveAt)}
+                      {t('shared.profile.session.lastActive', {
+                        value: formatInstant(
+                          profile.locale,
+                          session.lastActiveAt,
+                          profile.timeZone,
+                        ),
+                      })}
                     </p>
                     <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                      Expires {formatDateTime(session.expiresAt)}
+                      {t('shared.profile.session.expires', {
+                        value: formatInstant(profile.locale, session.expiresAt, profile.timeZone),
+                      })}
                     </p>
                   </div>
                   <Button
@@ -300,10 +306,10 @@ export function ProfilePage() {
                     onPress={() => void handleRevoke(session)}
                   >
                     {revokeMutation.isPending && revokeMutation.variables === session.id
-                      ? 'Signing out…'
+                      ? t('shared.profile.session.signingOut')
                       : session.current
-                        ? 'Sign out this session'
-                        : 'Revoke session'}
+                        ? t('shared.profile.session.signOutCurrent')
+                        : t('shared.profile.session.revoke')}
                   </Button>
                 </Panel>
               </li>
@@ -317,7 +323,11 @@ export function ProfilePage() {
 
 function DescriptionList({
   entries,
-}: Readonly<{ entries: readonly (readonly [string, string])[] }>) {
+  noneAssignedLabel,
+}: Readonly<{
+  entries: readonly (readonly [string, string])[];
+  noneAssignedLabel: string;
+}>) {
   return (
     <dl className="m-0 grid gap-4">
       {entries.map(([term, description]) => (
@@ -327,7 +337,7 @@ function DescriptionList({
         >
           <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">{term}</dt>
           <dd className="m-0 break-words text-base text-[var(--wl-text)]">
-            {description || 'None assigned'}
+            {description || noneAssignedLabel}
           </dd>
         </div>
       ))}
@@ -335,25 +345,66 @@ function DescriptionList({
   );
 }
 
-function formatDateTime(value: string): string {
-  return dateTimeFormatter.format(new Date(value));
+function rolePresentation(role: SelfContext['roles'][number], t: MessageTranslator): string {
+  switch (role) {
+    case 'EMPLOYEE':
+      return t('shared.profile.role.employee');
+    case 'HR_ADMINISTRATOR':
+      return t('shared.profile.role.hrAdministrator');
+    case 'MANAGER':
+      return t('shared.profile.role.manager');
+    case 'SYSTEM_ADMINISTRATOR':
+      return t('shared.profile.role.systemAdministrator');
+  }
 }
 
-function titleCase(value: string): string {
-  return value.charAt(0) + value.slice(1).toLocaleLowerCase('en-US');
+function employeeStatus(
+  status: NonNullable<SelfContext['employee']>['status'],
+  t: MessageTranslator,
+): string {
+  return status === 'ACTIVE'
+    ? t('shared.profile.status.active')
+    : t('shared.profile.status.inactive');
 }
 
-function revokeErrorMessage(error: unknown): string {
+function sessionDevicePresentation(
+  session: Pick<SelfSessionSummary, 'browser' | 'platform'>,
+  t: MessageTranslator,
+): string {
+  const browserKey = {
+    BROWSER: 'shared.profile.session.deviceLabels.browser',
+    CHROME: 'shared.profile.session.deviceLabels.chrome',
+    EDGE: 'shared.profile.session.deviceLabels.edge',
+    FIREFOX: 'shared.profile.session.deviceLabels.firefox',
+    SAFARI: 'shared.profile.session.deviceLabels.safari',
+    UNRECOGNIZED: 'shared.profile.session.deviceLabels.unrecognized',
+  } as const satisfies Readonly<Record<SelfSessionSummary['browser'], MessageKey>>;
+  const browser = t(browserKey[session.browser]);
+  if (session.browser === 'UNRECOGNIZED' || session.platform === null) return browser;
+  const platformKey = {
+    ANDROID: 'shared.profile.session.platform.android',
+    IOS: 'shared.profile.session.platform.ios',
+    LINUX: 'shared.profile.session.platform.linux',
+    MACOS: 'shared.profile.session.platform.macos',
+    WINDOWS: 'shared.profile.session.platform.windows',
+  } as const satisfies Readonly<Record<NonNullable<SelfSessionSummary['platform']>, MessageKey>>;
+  return t('shared.profile.session.device', {
+    browser,
+    platform: t(platformKey[session.platform]),
+  });
+}
+
+function revokeErrorMessage(error: unknown, t: MessageTranslator): string {
   if (error instanceof ApiClientError && error.code === 'AUTH_SESSION_NOT_FRESH') {
-    return 'Sign out and sign in again before revoking another session.';
+    return t('shared.profile.status.sessionNotRevoked.freshSession');
   }
   if (
     error instanceof ApiClientError &&
     ['AUTH_REQUIRED', 'AUTH_SESSION_EXPIRED'].includes(error.code)
   ) {
-    return 'Your session expired. Sign in again to continue.';
+    return t('shared.profile.status.sessionNotRevoked.sessionExpired');
   }
-  return 'WorkLedger could not revoke that session. Refresh the profile and try again.';
+  return t('shared.profile.status.sessionNotRevoked.description');
 }
 
 function isAuthenticationError(error: unknown): error is ApiClientError {

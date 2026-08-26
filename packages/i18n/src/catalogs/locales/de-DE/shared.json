@@ -6,6 +6,7 @@
     "minutes_other": "{{count}} Minuten"
   },
   "action": {
+    "close": "Schließen",
     "goHome": "Zu meiner Startseite",
     "reload": "WorkLedger neu laden",
     "returnHome": "Zu WorkLedger zurückkehren",
@@ -25,12 +26,97 @@
   "locale": {
     "accountDescription": "Diese Sprache wird in Ihrem Konto gespeichert und auf Ihren anderen Geräten verwendet.",
     "accountSaveFailed": "Ihre Sprache konnte nicht gespeichert werden. WorkLedger hat die vorherige Sprache wiederhergestellt.",
+    "accountSaveFailedTitle": "Sprache nicht geändert",
     "accountSaved": "Ihre Kontosprache wurde aktualisiert.",
+    "accountSavedTitle": "Sprache geändert",
     "deviceDescription": "Diese nicht sensible Einstellung wird nur verwendet, während Sie auf diesem Gerät abgemeldet sind.",
     "deviceSaveFailed": "Die Sprache konnte auf diesem Gerät nicht gespeichert werden. WorkLedger hat die vorherige Sprache wiederhergestellt.",
     "deviceSaved": "Die Sprache für den abgemeldeten Zustand wurde auf diesem Gerät aktualisiert.",
     "invitationDescription": "Die Einladung und das neue Konto starten mit dieser Sprache. Der Kontoinhaber kann sie später ändern.",
     "label": "Sprache"
+  },
+  "profile": {
+    "account": {
+      "details": "Kontodetails",
+      "readOnlyHelp": "Konto-, Rollen- und Beschäftigungsdaten können im Profil nicht bearbeitet werden. Wenden Sie sich an die zuständige Administration, wenn etwas geändert werden muss."
+    },
+    "description": "Prüfen Sie Ihren Kontokontext und Ihre aktiven Sitzungen. Beschäftigungs- und Rolleninformationen sind hier schreibgeschützt.",
+    "employee": {
+      "details": "Beschäftigtenübersicht",
+      "notLinked": "Kein Beschäftigtenprofil verknüpft",
+      "technicalAccount": "Dieses technische Konto hat kein Beschäftigtenprofil für die Selbstverwaltung."
+    },
+    "field": {
+      "applicationRoles": "Anwendungsrollen",
+      "email": "E-Mail-Adresse",
+      "employeeNumber": "Personalnummer",
+      "employmentStatus": "Beschäftigungsstatus",
+      "organization": "Organisation"
+    },
+    "loading": {
+      "description": "Konto-, Beschäftigten-, Rollen- und Sitzungsinformationen werden geprüft.",
+      "title": "Profil wird geladen"
+    },
+    "noneAssigned": "Nicht zugewiesen",
+    "preference": {
+      "eyebrow": "Kontoeinstellung",
+      "title": "Sprache und Region"
+    },
+    "role": {
+      "employee": "Beschäftigte Person",
+      "hrAdministrator": "Personaladministration",
+      "manager": "Führungskraft",
+      "systemAdministrator": "Systemadministration"
+    },
+    "session": {
+      "current": "Aktuelle Sitzung",
+      "device": "{{browser}} unter {{platform}}",
+      "deviceLabels": {
+        "browser": "Browser",
+        "chrome": "Chrome",
+        "edge": "Edge",
+        "firefox": "Firefox",
+        "safari": "Safari",
+        "unrecognized": "Unbekanntes Gerät"
+      },
+      "expires": "Läuft ab: {{value}}",
+      "lastActive": "Zuletzt aktiv: {{value}}",
+      "platform": {
+        "android": "Android",
+        "ios": "iOS",
+        "linux": "Linux",
+        "macos": "macOS",
+        "windows": "Windows"
+      },
+      "revoke": "Sitzung widerrufen",
+      "revoked": "{{device}} wurde abgemeldet.",
+      "signOutCurrent": "Diese Sitzung abmelden",
+      "signingOut": "Abmeldung läuft…"
+    },
+    "sessions": {
+      "description": "Gerätebezeichnungen sind bewusst nur Näherungswerte. WorkLedger zeigt hier weder vollständige Browserinformationen noch IP-Adressen an.",
+      "empty": {
+        "description": "Für dieses Konto ist kein Sitzungsdatensatz verfügbar.",
+        "title": "Keine aktiven Sitzungen"
+      },
+      "title": "Aktive Sitzungen"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "sessionNotRevoked": {
+        "description": "WorkLedger konnte diese Sitzung nicht widerrufen. Aktualisieren Sie das Profil und versuchen Sie es erneut.",
+        "freshSession": "Melden Sie sich ab und erneut an, bevor Sie eine weitere Sitzung widerrufen.",
+        "sessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um fortzufahren.",
+        "title": "Sitzung nicht widerrufen"
+      },
+      "sessionRevoked": { "title": "Sitzung widerrufen" }
+    },
+    "title": "Profil",
+    "unavailable": {
+      "description": "Es wurden keine Konto- oder Sitzungsinformationen angezeigt. Laden Sie das Profil erneut.",
+      "title": "Ihr Profil ist nicht verfügbar"
+    }
   },
   "navigation": {
     "account": "Konto",
@@ -52,6 +138,29 @@
       "manager": "Team",
       "system": "System"
     }
+  },
+  "pagination": {
+    "label": "Seitennavigation",
+    "next": "Nächste Seite",
+    "previous": "Vorherige Seite",
+    "summary": "Seite {{current}} von {{total}}"
+  },
+  "validation": {
+    "correctValue": "Korrigieren Sie diesen Wert.",
+    "invalidFormat": "Verwenden Sie das erforderliche Format.",
+    "invalidType": "Verwenden Sie den erforderlichen Werttyp.",
+    "invalidValue": "Wählen Sie einen zulässigen Wert.",
+    "problemTitle": "Es gibt ein Problem",
+    "required": "Geben Sie einen Wert ein.",
+    "unknownField": "Entfernen Sie nicht unterstützte Felder.",
+    "valueTooLarge": "Verwenden Sie einen kleineren Wert.",
+    "valueTooSmall": "Verwenden Sie einen größeren Wert."
+  },
+  "signOut": {
+    "action": "Abmelden",
+    "actionPending": "Abmeldung läuft…",
+    "failureDescription": "Die Abmeldung ist fehlgeschlagen. Versuchen Sie es erneut.",
+    "failureTitle": "Abmeldung fehlgeschlagen"
   },
   "route": {
     "boundary": {

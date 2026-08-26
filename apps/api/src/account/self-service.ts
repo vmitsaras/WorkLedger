@@ -68,6 +68,7 @@ export function createAccountSelfService(
         return Object.freeze({
           ...mapSelfContext(context, companyIdentity),
           sessions: sessions.map((session) => mapSession(session, identity.currentSessionId)),
+          timeZone: context.organization.timeZone,
         });
       });
     },

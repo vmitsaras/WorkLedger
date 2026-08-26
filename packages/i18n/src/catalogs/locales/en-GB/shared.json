@@ -6,6 +6,7 @@
     "minutes_other": "{{count}} minutes"
   },
   "action": {
+    "close": "Close",
     "goHome": "Go to my home",
     "reload": "Reload WorkLedger",
     "returnHome": "Return to WorkLedger",
@@ -25,12 +26,97 @@
   "locale": {
     "accountDescription": "This language is saved to your account and follows you to other devices.",
     "accountSaveFailed": "Your language could not be saved. WorkLedger restored the previous language.",
+    "accountSaveFailedTitle": "Language not changed",
     "accountSaved": "Your account language was updated.",
+    "accountSavedTitle": "Language changed",
     "deviceDescription": "This non-sensitive preference is used only while you are signed out on this device.",
     "deviceSaveFailed": "The language could not be saved on this device. WorkLedger restored the previous language.",
     "deviceSaved": "The signed-out language was updated for this device.",
     "invitationDescription": "The invitation and new account start with this language. The account owner can change it later.",
     "label": "Language"
+  },
+  "profile": {
+    "account": {
+      "details": "Account details",
+      "readOnlyHelp": "Account, role, and employee details cannot be edited from Profile. Contact the relevant administrator if something needs to change."
+    },
+    "description": "Review your account context and active sessions. Employment and role information is read-only here.",
+    "employee": {
+      "details": "Employee summary",
+      "notLinked": "No employee profile linked",
+      "technicalAccount": "This technical account has no employee self-service profile."
+    },
+    "field": {
+      "applicationRoles": "Application roles",
+      "email": "Email address",
+      "employeeNumber": "Employee number",
+      "employmentStatus": "Employment status",
+      "organization": "Organization"
+    },
+    "loading": {
+      "description": "Checking account, employee, role, and session information.",
+      "title": "Loading your profile"
+    },
+    "noneAssigned": "None assigned",
+    "preference": {
+      "eyebrow": "Account preference",
+      "title": "Language and region"
+    },
+    "role": {
+      "employee": "Employee",
+      "hrAdministrator": "HR administrator",
+      "manager": "Manager",
+      "systemAdministrator": "System administrator"
+    },
+    "session": {
+      "current": "Current session",
+      "device": "{{browser}} on {{platform}}",
+      "deviceLabels": {
+        "browser": "Browser",
+        "chrome": "Chrome",
+        "edge": "Edge",
+        "firefox": "Firefox",
+        "safari": "Safari",
+        "unrecognized": "Unrecognized device"
+      },
+      "expires": "Expires {{value}}",
+      "lastActive": "Last active {{value}}",
+      "platform": {
+        "android": "Android",
+        "ios": "iOS",
+        "linux": "Linux",
+        "macos": "macOS",
+        "windows": "Windows"
+      },
+      "revoke": "Revoke session",
+      "revoked": "{{device}} was signed out.",
+      "signOutCurrent": "Sign out this session",
+      "signingOut": "Signing out…"
+    },
+    "sessions": {
+      "description": "Device labels are deliberately approximate. WorkLedger does not expose complete browser headers or IP addresses here.",
+      "empty": {
+        "description": "No session record is available for this account.",
+        "title": "No active sessions"
+      },
+      "title": "Active sessions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "sessionNotRevoked": {
+        "description": "WorkLedger could not revoke that session. Refresh the profile and try again.",
+        "freshSession": "Sign out and sign in again before revoking another session.",
+        "sessionExpired": "Your session expired. Sign in again to continue.",
+        "title": "Session not revoked"
+      },
+      "sessionRevoked": { "title": "Session revoked" }
+    },
+    "title": "Profile",
+    "unavailable": {
+      "description": "No account or session information was displayed. Try loading the profile again.",
+      "title": "Your profile is unavailable"
+    }
   },
   "navigation": {
     "account": "Account",
@@ -52,6 +138,29 @@
       "manager": "Team",
       "system": "System"
     }
+  },
+  "pagination": {
+    "label": "Pagination",
+    "next": "Next page",
+    "previous": "Previous page",
+    "summary": "Page {{current}} of {{total}}"
+  },
+  "validation": {
+    "correctValue": "Correct this value.",
+    "invalidFormat": "Use the required format.",
+    "invalidType": "Use the required value type.",
+    "invalidValue": "Choose an allowed value.",
+    "problemTitle": "There is a problem",
+    "required": "Enter a value.",
+    "unknownField": "Remove fields that are not supported.",
+    "valueTooLarge": "Use a smaller value.",
+    "valueTooSmall": "Use a larger value."
+  },
+  "signOut": {
+    "action": "Sign out",
+    "actionPending": "Signing out…",
+    "failureDescription": "Could not sign out. Try again.",
+    "failureTitle": "Sign out failed"
   },
   "route": {
     "boundary": {

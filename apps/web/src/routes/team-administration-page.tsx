@@ -13,12 +13,12 @@ import {
   DataTable,
   FilterBar,
   linkVariants,
-  Pagination,
   Panel,
   RouteState,
   StatusBadge,
   TextField,
 } from '@workledger/ui';
+import { Pagination } from '../components/pagination.js';
 
 import {
   ApiClientError,
@@ -155,7 +155,9 @@ export function TeamAdministrationPage() {
       </FilterBar>
 
       {teamsQuery.isPending ? (
-        <RouteState kind="loading">Team records are being retrieved.</RouteState>
+        <RouteState kind="loading" title="Loading information">
+          Team records are being retrieved.
+        </RouteState>
       ) : teamsQuery.data.items.length === 0 ? (
         <RouteState kind="empty" title="No teams in this view">
           Change the team status or create a team for a new orientation group.

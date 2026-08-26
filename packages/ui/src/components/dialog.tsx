@@ -11,8 +11,7 @@ import { Button, type ButtonProps } from './button.js';
 
 export type DialogActions = Readonly<{ close: () => void }>;
 
-export interface DialogProps {
-  actions?: (actions: DialogActions) => ReactNode;
+type DialogBaseProps = Readonly<{
   children: ReactNode;
   isDismissable?: boolean;
   isOpen?: boolean;
@@ -21,11 +20,18 @@ export interface DialogProps {
   triggerIsDisabled?: boolean;
   triggerLabel: ReactNode;
   triggerVariant?: ButtonProps['variant'];
-}
+}>;
+
+export type DialogProps = DialogBaseProps &
+  (
+    | Readonly<{ actions: (actions: DialogActions) => ReactNode; closeLabel?: never }>
+    | Readonly<{ actions?: undefined; closeLabel: ReactNode }>
+  );
 
 export function Dialog({
   actions,
   children,
+  closeLabel,
   isDismissable = true,
   isOpen,
   onOpenChange,
@@ -60,7 +66,7 @@ export function Dialog({
                 </div>
                 <div className="flex flex-wrap justify-end gap-3">
                   {actions === undefined ? (
-                    <Button onPress={close}>Close</Button>
+                    <Button onPress={close}>{closeLabel}</Button>
                   ) : (
                     actions({ close })
                   )}

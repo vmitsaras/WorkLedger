@@ -8,12 +8,12 @@ import {
   Button,
   DataTable,
   FilterBar,
-  Pagination,
   Panel,
   RouteState,
   StatusBadge,
   buttonVariants,
 } from '@workledger/ui';
+import { Pagination } from '../components/pagination.js';
 
 import { ApiClientError } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';

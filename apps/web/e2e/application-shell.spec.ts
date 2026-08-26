@@ -245,18 +245,13 @@ const PHASE_13_TODAY_WARNING: TodayAttendance = {
       {
         affectedDate: '2026-08-10',
         blocksSubmission: false,
-        code: 'FLEX_POSITIVE_THRESHOLD_EXCEEDED',
-        reason: 'Your posted flexible-time balance is above the configured warning threshold.',
+        message: { code: 'FLEX_POSITIVE_THRESHOLD_EXCEEDED', parameters: {} },
         recovery: {
           action: 'REVIEW_BALANCE_HISTORY',
           destination: 'MY_BALANCES',
-          label: 'View balance history',
-          statusAfterAction:
-            'The warning clears only after posted ledger entries bring the balance back within the configured threshold.',
         },
         severity: 'WARNING',
         source: 'POSTED_FLEX_BALANCE',
-        title: 'Positive flexible-time threshold reached',
       },
     ],
   },
@@ -547,7 +542,7 @@ test('prioritizes needs-review approvals with URL views, concise filters, pagina
 
   await page.goto('/approvals');
   await expect(page).toHaveTitle('Approval inbox | WorkLedger');
-  await expect(page.getByRole('heading', { name: 'Approval inbox' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Approval inbox', exact: true })).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Needs review: 41' })).toBeVisible();
   const queueView = page.getByRole('combobox', { name: 'Queue view' });
   await expect(queueView).toHaveValue('ACTION_REQUIRED');
@@ -796,9 +791,7 @@ test('opens an authorized report, applies URL filters, and contains its table at
           {
             availableSorts: ['EMPLOYEE', 'VALUE'],
             defaultSort: 'EMPLOYEE',
-            description: 'Opening, in-range change, and closing flexible-time balances.',
             key: 'flexible-time',
-            title: 'Flexible time',
           },
         ],
         timeZone: 'Europe/Berlin',
@@ -1036,15 +1029,14 @@ test('reviews and dismisses generic notification history without losing keyboard
       json: success({
         items: [
           {
-            body: 'An item you submitted needs changes.',
             deliveryStatus: 'FAILED',
             destinationPath: '/requests',
             dismissedAt,
             event: 'ITEM_CHANGES_REQUESTED',
             id: notificationId,
             occurredAt: '2026-08-14T09:30:00Z',
+            parameters: {},
             status: dismissedAt === null ? 'ACTIVE' : 'DISMISSED',
-            title: 'Changes requested',
           },
         ],
         pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
@@ -1352,7 +1344,6 @@ test('recovers a stale clock intent from the authoritative device state without 
             currentState: attendanceState,
             validActions: ['START_BREAK', 'CLOCK_OUT'],
           },
-          message: 'The request could not be completed.',
           requestId: REQUEST_ID,
         },
       },
@@ -1385,7 +1376,6 @@ test('clears protected Today state when the attendance session expires', async (
             json: {
               error: {
                 code: 'AUTH_SESSION_EXPIRED',
-                message: 'Your session has expired.',
                 requestId: REQUEST_ID,
               },
             },
@@ -1408,7 +1398,6 @@ test('clears protected Today state when the attendance session expires', async (
       json: {
         error: {
           code: 'AUTH_SESSION_EXPIRED',
-          message: 'Your session has expired.',
           requestId: REQUEST_ID,
         },
       },
@@ -1520,32 +1509,24 @@ test('keeps the calculation explanation and event history readable at 320px', as
             {
               affectedDate: TODAY_ATTENDANCE.localDate,
               blocksSubmission: false,
-              code: 'WORK_ON_HOLIDAY',
-              reason: 'Work is recorded on a public holiday.',
+              message: { code: 'WORK_ON_HOLIDAY', parameters: {} },
               recovery: {
                 action: 'REVIEW_CALCULATION',
                 destination: 'TODAY_CALCULATION',
-                label: 'Review calculation',
-                statusAfterAction: 'Reviewing the explanation does not change the record.',
               },
               severity: 'WARNING',
               source: 'CURRENT_DAY_CALCULATION',
-              title: 'Work recorded on a public holiday',
             },
             {
               affectedDate: TODAY_ATTENDANCE.localDate,
               blocksSubmission: false,
-              code: 'WORK_ON_ZERO_EXPECTED_DAY',
-              reason: 'Work is recorded on a day with no expected working time.',
+              message: { code: 'WORK_ON_ZERO_EXPECTED_DAY', parameters: {} },
               recovery: {
                 action: 'REVIEW_CALCULATION',
                 destination: 'TODAY_CALCULATION',
-                label: 'Review calculation',
-                statusAfterAction: 'Reviewing the explanation does not change the record.',
               },
               severity: 'WARNING',
               source: 'CURRENT_DAY_CALCULATION',
-              title: 'Work recorded on a zero-expected day',
             },
           ],
           estimatedFinishAt: null,
@@ -2230,9 +2211,7 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
           {
             availableSorts: ['EMPLOYEE'],
             defaultSort: 'EMPLOYEE',
-            description: 'Monthly time records in the current permission scope.',
             key: 'monthly-time',
-            title: 'Monthly time',
           },
         ],
         timeZone: 'Europe/Berlin',
@@ -2599,7 +2578,6 @@ test('keeps route boundaries focused, recoverable, and purpose-minimized', async
             json: {
               error: {
                 code: 'DATABASE_UNAVAILABLE',
-                message: 'Database connection failed with private infrastructure details.',
                 requestId: REQUEST_ID,
               },
             },
@@ -2612,7 +2590,6 @@ test('keeps route boundaries focused, recoverable, and purpose-minimized', async
       json: {
         error: {
           code: 'DATABASE_UNAVAILABLE',
-          message: 'The requested operation is unavailable.',
           requestId: REQUEST_ID,
         },
       },
@@ -2951,14 +2928,16 @@ test('revokes the current session and removes protected profile data before sign
         ...EMPLOYEE_CONTEXT,
         sessions: [
           {
+            browser: 'CHROME',
             createdAt: '2026-08-11T08:00:00Z',
             current: true,
-            deviceSummary: 'Chrome on macOS',
             expiresAt: '2026-08-11T20:00:00Z',
             id: '123e4567-e89b-42d3-a456-426614174111',
             lastActiveAt: '2026-08-11T09:00:00Z',
+            platform: 'MACOS',
           },
         ],
+        timeZone: 'Europe/Berlin',
       }),
     });
   });
@@ -3441,7 +3420,7 @@ test('captures, cleans, and consumes an invitation grant without automatic sign-
   await page.route('**/v1/me/context', async (route) => {
     await route.fulfill({
       json: {
-        error: { code: 'AUTH_REQUIRED', message: 'Sign in to continue.', requestId: REQUEST_ID },
+        error: { code: 'AUTH_REQUIRED', requestId: REQUEST_ID },
       },
       status: 401,
     });
@@ -3565,7 +3544,6 @@ async function mockContext(page: Page, isAuthenticated: () => boolean): Promise<
             json: {
               error: {
                 code: 'AUTH_REQUIRED',
-                message: 'Sign in to continue.',
                 requestId: REQUEST_ID,
               },
             },

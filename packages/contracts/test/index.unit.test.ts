@@ -865,6 +865,7 @@ test('keeps self-profile and session transport fields purpose-minimized', () => 
           platform: 'MACOS',
         },
       ],
+      timeZone: 'Europe/Berlin',
     },
     meta: { requestId: randomUUID() },
   };

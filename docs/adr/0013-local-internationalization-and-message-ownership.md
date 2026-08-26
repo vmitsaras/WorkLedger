@@ -1,6 +1,6 @@
 # ADR 0013: Local Internationalization and Message Ownership
 
-**Status:** Accepted by `WL-1400`; bundle accounting amended by `WL-1402` / `D-508`
+**Status:** Accepted by `WL-1400`; bundle accounting amended by `WL-1402`, `WL-1404`, and `D-508`
 
 ## Context
 
@@ -138,8 +138,8 @@ cannot contain executable or user supplied HTML.
 Only the resolved locale is loaded. The pre-internationalization application baseline remains
 910,000 bytes raw and 246,000 bytes gzip for total non-catalog JavaScript, with the existing
 500,000-byte largest-chunk and 51,000-byte CSS ceilings unchanged. Phase 14 has a separate bounded
-internationalization-runtime allowance of 55,000 bytes raw and 18,000 bytes gzip, producing
-combined non-catalog gates of 965,000 bytes raw and 264,000 bytes gzip. The allowance covers only
+internationalization-runtime allowance of 70,000 bytes raw and 22,000 bytes gzip, producing
+combined non-catalog gates of 980,000 bytes raw and 268,000 bytes gzip. The allowance covers only
 localization runtime and integration behavior; it is not general application headroom and it does
 not classify runtime code as catalog data.
 
@@ -148,7 +148,10 @@ raw and 247,840 bytes gzip under the pinned toolchain. A forced production activ
 already-pinned i18next/react-i18next bridge measured 961,249 bytes raw and 261,327 bytes gzip. Both
 fit the bounded allowance while leaving unrelated largest-chunk and CSS limits unchanged. The
 budget checker reports allowance consumption explicitly and regression tests keep the baseline,
-allowance, and combined ceilings linked.
+allowance, and combined ceilings linked. `WL-1404` amended the provisional allowance after the
+complete authenticated/shared integration measured 974,388 bytes raw and 265,450 bytes gzip. The
+15,000-byte raw and 4,000-byte gzip extension is bounded to the same localization ownership; it
+does not change the application baseline or create general feature headroom.
 
 Each locale chunk is limited to 150 KiB raw and 50 KiB gzip. All three locale chunks together are
 limited to 450 KiB raw and 150 KiB gzip.

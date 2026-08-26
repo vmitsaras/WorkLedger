@@ -64865,7 +64865,8 @@
                           },
                           "maxItems": 50,
                           "type": "array"
-                        }
+                        },
+                        "timeZone": { "maxLength": 255, "minLength": 1, "type": "string" }
                       },
                       "required": [
                         "account",
@@ -64875,7 +64876,8 @@
                         "navigationAreas",
                         "organization",
                         "roles",
-                        "sessions"
+                        "sessions",
+                        "timeZone"
                       ],
                       "type": "object"
                     },

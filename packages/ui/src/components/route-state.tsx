@@ -5,14 +5,6 @@ import { Panel } from './panel.js';
 
 export type RouteStateKind = 'empty' | 'error' | 'loading' | 'not-found' | 'permission-denied';
 
-const defaultTitle: Record<RouteStateKind, string> = {
-  empty: 'Nothing to show yet',
-  error: 'This information is unavailable',
-  loading: 'Loading information',
-  'not-found': 'This record is unavailable',
-  'permission-denied': 'You do not have access to this area',
-};
-
 export interface RouteStateProps {
   actionHref?: string;
   actionLabel?: string;
@@ -24,7 +16,7 @@ export interface RouteStateProps {
     'data-route-heading'?: boolean;
   };
   kind: RouteStateKind;
-  title?: string;
+  title: string;
 }
 
 export function RouteState({
@@ -54,7 +46,7 @@ export function RouteState({
           .filter(Boolean)
           .join(' ')}
       >
-        {title ?? defaultTitle[kind]}
+        {title}
       </Heading>
       {children === undefined ? null : <div className="wl-route-state__body">{children}</div>}
       {actionLink === null && actions === undefined ? null : (
