@@ -166,7 +166,7 @@ and its own content, layout, accessibility, output, and operational evidence.
 - Verify localized invitation, password-reset, notification-email, print, clipboard, and CSV output
   while preserving existing security and data-shape invariants.
 - Preserve the 910,000-byte raw and 246,000-byte gzip application baseline and enforce `D-508`'s
-  separate 55,000-byte raw and 18,000-byte gzip internationalization-runtime allowance. Keep the
+  separate 76,000-byte raw and 22,000-byte gzip internationalization-runtime allowance. Keep the
   existing largest-chunk and CSS ceilings. Budget each locale chunk at no more than 150 KiB raw
   and 50 KiB gzip, with no more than 450 KiB raw and 150 KiB gzip across the three locale chunks.
   Split catalogs instead of eagerly bundling them.
@@ -193,7 +193,7 @@ and its own content, layout, accessibility, output, and operational evidence.
 
 ## 10. Current state and next action
 
-`WL-1400` through `WL-1403` are complete. ADR 0013 is accepted and amended by the resolved `D-508`.
+`WL-1400` through `WL-1405` are complete. ADR 0013 is accepted and amended by the resolved `D-508`.
 The canonical inventory and risk register are in
 `docs/139-phase-14-internationalization-architecture-audit.md`, and the translation-review structure
 is in `docs/140-phase-14-translation-glossary.md`. The executable runtime foundation and measured
@@ -204,5 +204,10 @@ evidence is in `docs/142-account-locale-preferences.md`.
 authentication, Profile, shared validation, dialogs, pagination controls, and shell announcements
 now use typed local catalogs while preserving established focus and recovery contracts. Profile
 session instants use the authoritative organization timezone supplied by the minimized self-profile
-contract. See `docs/144-shared-shell-route-i18n.md`. `WL-1405` is next and owns employee workflow
-translation.
+contract. See `docs/144-shared-shell-route-i18n.md`.
+
+Employee Today, time and balances, daily records, requests and absences, personal calendar,
+notifications, monthly review, and its integrated print view now use the typed local catalogs.
+Critical German and Spanish employee flows have component, axe, focused-heading, document-language,
+and browser coverage. See `docs/145-employee-workflow-i18n.md`. `WL-1406` is next and owns manager,
+HR, and system workflow translation.

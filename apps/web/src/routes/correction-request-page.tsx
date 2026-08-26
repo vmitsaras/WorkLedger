@@ -2,12 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router';
 
+import type { DailyTimeRecord } from '@workledger/contracts';
+import {
+  formatCompactDuration,
+  formatDateOnly,
+  formatInstant,
+  translate,
+  type I18nRuntime,
+  type MessageKey,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, RouteState, buttonVariants } from '@workledger/ui';
-import { translate, type I18nRuntime } from '@workledger/i18n';
-import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 
 import { ApiClientError, submitCorrectionRequest } from '../app/api-client.js';
-import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
 import { fieldErrorPresentation } from '../app/presentation-codes.js';
 import { dailyTimeRecordQuery } from '../app/query.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
@@ -31,8 +38,16 @@ const EMPTY_VALUES: FormValues = Object.freeze({
 const LOCAL_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const UTC_OFFSET_PATTERN = /^[+-](?:0\d|1\d|2[0-3]):[0-5]\d$/;
 
+const EVENT_LABEL_KEYS = {
+  BREAK_END: 'employee.records.event.breakEnd',
+  BREAK_START: 'employee.records.event.breakStart',
+  CLOCK_IN: 'employee.records.event.clockIn',
+  CLOCK_OUT: 'employee.records.event.clockOut',
+} as const satisfies Readonly<Record<DailyTimeRecord['events'][number]['type'], MessageKey>>;
+
 export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
-  const runtime = useOptionalWorkLedgerI18n();
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const [search] = useSearchParams();
   const recordId = search.get('recordId');
   const summaryRef = useRef<HTMLElement>(null);
@@ -80,10 +95,10 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const errors = validate(values);
+    const errors = validate(values, t);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      setFormError('Correct the highlighted fields and submit the request again.');
+      setFormError(t('employee.correction.error.correct'));
       return;
     }
     setIsSubmitting(true);
@@ -108,14 +123,12 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
       });
     } catch (error) {
       if (error instanceof ApiClientError && error.code === 'VALIDATION_FAILED') {
-        setFieldErrors(mapServerFieldErrors(error.fields, runtime));
-        setFormError('Correct the highlighted fields and submit the request again.');
+        setFieldErrors(mapServerFieldErrors(error.fields, runtime, t));
+        setFormError(t('employee.correction.error.correct'));
       } else if (error instanceof ApiClientError && error.code === 'ROUTE_NOT_FOUND') {
-        setFormError('This daily record is no longer available for a correction request.');
+        setFormError(t('employee.correction.error.notFound'));
       } else {
-        setFormError(
-          'WorkLedger could not submit the correction request. Your recorded events were not changed. Try again.',
-        );
+        setFormError(t('employee.correction.error.unavailable'));
       }
     } finally {
       setIsSubmitting(false);
@@ -126,15 +139,18 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
     <section className="grid max-w-4xl gap-8">
       {embedded ? null : (
         <PageHeader
-          eyebrow="Requests"
-          title="Request a time correction"
-          description={`Propose one replacement work interval for ${formatLocalDate(record.localDate)}. It will be reviewed before it can affect your record.`}
+          eyebrow={t('employee.correction.eyebrow')}
+          title={t('employee.correction.title')}
+          description={t('employee.correction.description', {
+            date: formatDateOnly(runtime.locale, record.localDate),
+          })}
         />
       )}
       {embedded ? (
         <p className="m-0 text-[var(--wl-text-muted)]">
-          Propose one replacement work interval for {formatLocalDate(record.localDate)}. It will be
-          reviewed before it can affect your record.
+          {t('employee.correction.description', {
+            date: formatDateOnly(runtime.locale, record.localDate),
+          })}
         </p>
       ) : null}
       <section
@@ -142,27 +158,30 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
         className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4"
       >
         <h2 id="original-record-heading" className="m-0 text-lg font-bold">
-          Current recorded facts
+          {t('employee.correction.original.heading')}
         </h2>
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          These original events stay available alongside your proposed correction.
+          {t('employee.correction.original.description')}
         </p>
         {record.events.length === 0 ? (
-          <p className="m-0">No event was recorded on this date.</p>
+          <p className="m-0">{t('employee.correction.original.empty')}</p>
         ) : (
           <ul className="m-0 grid gap-1 pl-5">
             {record.events.map((event) => (
               <li key={event.sequence}>
-                {event.type.replace('_', ' ').toLowerCase()} at{' '}
-                {formatTimeWithOffset(event.occurredAt, record.timeZone)}
+                {t('employee.correction.original.event', {
+                  event: t(EVENT_LABEL_KEYS[event.type]),
+                  time: formatClockTimeWithOffset(runtime, event.occurredAt, record.timeZone),
+                })}
               </li>
             ))}
           </ul>
         )}
         {record.calculation === null ? null : (
           <p className="m-0 text-sm">
-            Current worked time: <strong>{formatDuration(record.calculation.workedMinutes)}</strong>
-            .
+            {t('employee.correction.original.currentWorked', {
+              duration: formatCompactDuration(runtime, record.calculation.workedMinutes),
+            })}
           </p>
         )}
       </section>
@@ -177,35 +196,36 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
             id="interval"
             className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4"
           >
-            <legend className="px-1 text-lg font-bold">Proposed work interval</legend>
+            <legend className="px-1 text-lg font-bold">
+              {t('employee.correction.form.legend')}
+            </legend>
             <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-              Enter local time in 24-hour format. If this date contains a repeated daylight-saving
-              time, provide the displayed UTC offset.
+              {t('employee.correction.form.help')}
             </p>
             <TimeField
               id="startsAtLocalTime"
-              label="Start time"
+              label={t('employee.correction.form.field.startTime')}
               value={values.startsAtLocalTime}
               error={fieldErrors['startsAtLocalTime']}
               onChange={(value) => updateValue('startsAtLocalTime', value)}
             />
             <OffsetField
               id="startsAtUtcOffset"
-              label="Start UTC offset (only for repeated local times)"
+              label={t('employee.correction.form.field.startOffset')}
               value={values.startsAtUtcOffset}
               error={fieldErrors['startsAtUtcOffset']}
               onChange={(value) => updateValue('startsAtUtcOffset', value)}
             />
             <TimeField
               id="endsAtLocalTime"
-              label="End time"
+              label={t('employee.correction.form.field.endTime')}
               value={values.endsAtLocalTime}
               error={fieldErrors['endsAtLocalTime']}
               onChange={(value) => updateValue('endsAtLocalTime', value)}
             />
             <OffsetField
               id="endsAtUtcOffset"
-              label="End UTC offset (only for repeated local times)"
+              label={t('employee.correction.form.field.endOffset')}
               value={values.endsAtUtcOffset}
               error={fieldErrors['endsAtUtcOffset']}
               onChange={(value) => updateValue('endsAtUtcOffset', value)}
@@ -216,7 +236,7 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
           </fieldset>
           <div className="grid gap-2">
             <label htmlFor="reason" className="font-semibold">
-              Why does this need correcting?
+              {t('employee.correction.form.field.reason')}
             </label>
             <textarea
               id="reason"
@@ -230,8 +250,7 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
               maxLength={1000}
             />
             <p id="reason-hint" className="m-0 text-sm text-[var(--wl-text-muted)]">
-              Give a short, factual reason (10–1,000 characters). Do not include sensitive health
-              information.
+              {t('employee.correction.form.reasonHelp')}
             </p>
             {fieldErrors['reason'] === undefined ? null : (
               <p id="reason-error" className="m-0 text-sm text-[var(--wl-danger)]">
@@ -241,13 +260,15 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
           </div>
           <div className="flex flex-wrap gap-3">
             <Button type="submit" isDisabled={isSubmitting}>
-              {isSubmitting ? 'Submitting request…' : 'Submit correction request'}
+              {isSubmitting
+                ? t('employee.correction.form.submitting')
+                : t('employee.correction.form.submit')}
             </Button>
             <Link
               className={buttonVariants({ variant: 'secondary' })}
               to={`/time-records/${encodeURIComponent(recordId)}`}
             >
-              Cancel
+              {t('employee.correction.action.cancel')}
             </Link>
           </div>
         </form>
@@ -256,22 +277,23 @@ export function CorrectionRequestPage({ embedded = false }: Readonly<{ embedded?
           className="outline-none"
           ref={successRef}
           tabIndex={-1}
-          title="Correction request submitted"
+          title={t('employee.correction.success.title')}
           tone="success"
         >
           <p className="m-0">
-            Your proposed {formatDuration(success.minutes)} interval for{' '}
-            {formatLocalDate(success.localDate)} is awaiting review. Your recorded events and
-            calculation have not changed.{' '}
+            {t('employee.correction.success.description', {
+              date: formatDateOnly(runtime.locale, success.localDate),
+              duration: formatCompactDuration(runtime, success.minutes),
+            })}{' '}
             {success.applicationMode === 'POST_LOCK_ADJUSTMENT'
-              ? 'Because this month is locked, approval will append an adjustment while preserving the approved monthly record.'
-              : 'If approved and applied, the unlocked daily calculation will be replaced.'}
+              ? t('employee.correction.success.locked')
+              : t('employee.correction.success.ordinary')}
           </p>
           <Link
             className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
             to={`/requests/${success.id}`}
           >
-            View request details
+            {t('employee.absence.action.viewDetails')}
           </Link>
         </Alert>
       )}
@@ -298,7 +320,7 @@ function TimeField(
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
         inputMode="numeric"
-        placeholder="09:00"
+        placeholder={'09:00'}
         aria-describedby={props.error === undefined ? undefined : `${props.id}-error`}
         aria-invalid={props.error === undefined ? undefined : true}
         className="max-w-48 rounded-lg border border-[var(--wl-border)] bg-[var(--wl-surface)] p-3"
@@ -329,7 +351,7 @@ function OffsetField(
         id={props.id}
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
-        placeholder="+01:00"
+        placeholder={'+01:00'}
         aria-describedby={props.error === undefined ? undefined : `${props.id}-error`}
         aria-invalid={props.error === undefined ? undefined : true}
         className="max-w-48 rounded-lg border border-[var(--wl-border)] bg-[var(--wl-surface)] p-3"
@@ -342,18 +364,18 @@ function OffsetField(
     </div>
   );
 }
-function validate(values: FormValues) {
+function validate(values: FormValues, t: ReturnType<typeof useWorkLedgerMessage>) {
   const errors: Record<string, string> = {};
   if (!LOCAL_TIME_PATTERN.test(values.startsAtLocalTime))
-    errors['startsAtLocalTime'] = 'Enter a start time in HH:MM format.';
+    errors['startsAtLocalTime'] = t('employee.correction.validation.startTime');
   if (!LOCAL_TIME_PATTERN.test(values.endsAtLocalTime))
-    errors['endsAtLocalTime'] = 'Enter an end time in HH:MM format.';
+    errors['endsAtLocalTime'] = t('employee.correction.validation.endTime');
   if (values.startsAtUtcOffset !== '' && !UTC_OFFSET_PATTERN.test(values.startsAtUtcOffset))
-    errors['startsAtUtcOffset'] = 'Enter a UTC offset such as +01:00.';
+    errors['startsAtUtcOffset'] = t('employee.correction.validation.startOffset');
   if (values.endsAtUtcOffset !== '' && !UTC_OFFSET_PATTERN.test(values.endsAtUtcOffset))
-    errors['endsAtUtcOffset'] = 'Enter a UTC offset such as +01:00.';
+    errors['endsAtUtcOffset'] = t('employee.correction.validation.endOffset');
   if (values.reason.trim().length < 10)
-    errors['reason'] = 'Enter at least 10 characters explaining the correction.';
+    errors['reason'] = t('employee.correction.validation.reason');
   return errors;
 }
 function emptyToNull(value: string) {
@@ -361,85 +383,97 @@ function emptyToNull(value: string) {
 }
 function mapServerFieldErrors(
   fields: ApiClientError['fields'],
-  runtime: I18nRuntime | null,
+  runtime: I18nRuntime,
+  t: ReturnType<typeof useWorkLedgerMessage>,
 ): Readonly<Record<string, string>> {
-  if (fields === undefined) return { interval: 'The proposed interval could not be accepted.' };
+  if (fields === undefined) return { interval: t('employee.correction.error.interval') };
   const entries = Object.entries(fields).map(([field, errors]) => [
     field === 'interval' ? 'interval' : field.replace('interval.', ''),
     errors[0] === undefined
-      ? runtime === null
-        ? 'Correct this value.'
-        : translate(runtime, 'shared.validation.correctValue')
+      ? translate(runtime, 'shared.validation.correctValue')
       : fieldErrorPresentation(errors[0].code, runtime),
   ]);
   return Object.fromEntries(entries);
 }
 function LoadingCorrectionRequest({ embedded }: Readonly<{ embedded: boolean }>) {
+  const t = useWorkLedgerMessage();
   return (
     <section className="grid max-w-4xl gap-6">
       {embedded ? (
-        <h2 className="m-0 text-xl font-bold">Loading the daily record…</h2>
+        <h2 className="m-0 text-xl font-bold">{t('employee.correction.loading.heading')}</h2>
       ) : (
         <PageHeader
-          eyebrow="Requests"
-          title="Request a time correction"
-          description="Loading the daily record…"
+          eyebrow={t('employee.correction.eyebrow')}
+          title={t('employee.correction.title')}
+          description={t('employee.correction.loading.heading')}
         />
       )}
-      <RouteState kind="loading" title="Loading the daily record">
-        <p>Preparing the current record and correction form.</p>
+      <RouteState kind="loading" title={t('employee.correction.loading.title')}>
+        <p>{t('employee.correction.loading.description')}</p>
       </RouteState>
     </section>
   );
 }
 function MissingRecordTarget({ embedded }: Readonly<{ embedded: boolean }>) {
+  const t = useWorkLedgerMessage();
   return (
     <section className="grid max-w-4xl gap-6">
       {embedded ? null : (
         <PageHeader
-          eyebrow="Requests"
-          title="Choose a daily record"
-          description="Open the daily record you want to correct, then choose Request a correction."
+          eyebrow={t('employee.correction.eyebrow')}
+          title={t('employee.correction.missing.title')}
+          description={t('employee.correction.missing.description')}
         />
       )}
       <RouteState
         actionHref="/my-time"
-        actionLabel="Go to My time"
+        actionLabel={t('employee.correction.action.backToTime')}
         kind="empty"
-        title="Choose a daily record"
+        title={t('employee.correction.missing.title')}
       >
-        <p>Open the daily record you want to correct, then choose Request a correction.</p>
+        <p>{t('employee.correction.missing.description')}</p>
       </RouteState>
     </section>
   );
 }
 function UnavailableRecord({ embedded, error }: Readonly<{ embedded: boolean; error: unknown }>) {
+  const t = useWorkLedgerMessage();
   const denied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
+  const title = denied
+    ? t('employee.correction.unavailable.denied.title')
+    : t('employee.correction.unavailable.record.title');
+  const description = denied
+    ? t('employee.correction.unavailable.denied.description')
+    : t('employee.correction.unavailable.record.description');
   return (
     <section className="grid max-w-4xl gap-6">
       {embedded ? null : (
         <PageHeader
-          eyebrow="Requests"
-          title={denied ? 'Permission denied' : 'Daily record unavailable'}
-          description={
-            denied
-              ? 'You do not have access to this daily record.'
-              : 'WorkLedger could not load the daily record for this correction request.'
-          }
+          eyebrow={t('employee.correction.eyebrow')}
+          title={title}
+          description={description}
         />
       )}
       <RouteState
         actionHref="/my-time"
-        actionLabel="Back to My time"
+        actionLabel={t('employee.correction.action.backToTime')}
         kind={denied ? 'permission-denied' : 'error'}
-        title={denied ? 'Permission denied' : 'Daily record unavailable'}
+        title={title}
       >
-        <p>
-          {denied
-            ? 'You do not have access to this daily record.'
-            : 'WorkLedger could not load the daily record for this correction request.'}
-        </p>
+        <p>{description}</p>
       </RouteState>
     </section>
   );
+}
+
+function formatClockTimeWithOffset(
+  runtime: I18nRuntime,
+  instant: string,
+  timeZone: string,
+): string {
+  return formatInstant(runtime.locale, instant, timeZone, {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'shortOffset',
+  });
 }

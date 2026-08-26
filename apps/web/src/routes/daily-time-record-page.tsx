@@ -1,22 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
 
+import type { DailyTimeRecord } from '@workledger/contracts';
+import {
+  formatCompactDuration,
+  formatDateOnly,
+  formatInstant,
+  type I18nRuntime,
+  type MessageKey,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, Panel, RouteState, StatusBadge, buttonVariants } from '@workledger/ui';
 
 import { ApiClientError } from '../app/api-client.js';
-import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
 import { dailyTimeRecordQuery } from '../app/query.js';
 import { CalculationAttention } from '../components/calculation-attention.js';
 import { PageHeader } from '../components/page-header.js';
 
-const EVENT_LABELS = {
-  BREAK_END: 'Break ended',
-  BREAK_START: 'Break started',
-  CLOCK_IN: 'Clocked in',
-  CLOCK_OUT: 'Clocked out',
-} as const;
+const EVENT_LABEL_KEYS = {
+  BREAK_END: 'employee.records.event.breakEnd',
+  BREAK_START: 'employee.records.event.breakStart',
+  CLOCK_IN: 'employee.records.event.clockIn',
+  CLOCK_OUT: 'employee.records.event.clockOut',
+} as const satisfies Readonly<Record<DailyTimeRecord['events'][number]['type'], MessageKey>>;
+
+const RECORD_STATUS_KEYS = {
+  COMPLETE: 'employee.time.records.status.complete',
+  INCOMPLETE: 'employee.time.records.status.incomplete',
+  NO_RECORD: 'employee.time.records.status.noRecord',
+  PROVISIONAL: 'employee.time.records.status.provisional',
+} as const satisfies Readonly<Record<DailyTimeRecord['status'], MessageKey>>;
 
 export function DailyTimeRecordPage() {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const { recordId } = useParams();
   if (recordId === undefined) return <DailyTimeRecordError error={null} retry={null} />;
   const query = useQuery(dailyTimeRecordQuery(recordId));
@@ -25,12 +42,12 @@ export function DailyTimeRecordPage() {
     return (
       <section className="grid max-w-4xl gap-6" aria-busy="true">
         <PageHeader
-          eyebrow="Time records"
-          title="Daily record"
-          description="Review the day’s calculation, work sessions, issues, and recorded event history."
+          eyebrow={t('employee.records.eyebrow')}
+          title={t('shared.route.title.myTime')}
+          description={t('employee.records.description')}
         />
-        <RouteState kind="loading" title="Loading the daily record">
-          <p>Checking the calculation and its source events.</p>
+        <RouteState kind="loading" title={t('employee.records.loading.title')}>
+          <p>{t('employee.records.loading.description')}</p>
         </RouteState>
       </section>
     );
@@ -44,33 +61,35 @@ export function DailyTimeRecordPage() {
   return (
     <section className="grid max-w-4xl gap-8">
       <PageHeader
-        eyebrow="Time records"
-        title={formatLocalDate(record.localDate)}
-        description={`Daily attendance record in ${record.timeZone}.`}
+        eyebrow={t('employee.records.eyebrow')}
+        title={formatDateOnly(runtime.locale, record.localDate)}
+        description={t('employee.records.timeZoneDescription', { timeZone: record.timeZone })}
       />
       <Panel aria-labelledby="daily-record-summary-heading" className="grid gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Current state</p>
+            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">
+              {t('employee.records.state.current')}
+            </p>
             <h2 id="daily-record-summary-heading" className="m-0 mt-1 text-2xl font-bold">
-              {incomplete ? 'Needs review' : 'Complete record'}
+              {incomplete
+                ? t('employee.records.state.needsReview')
+                : t('employee.records.state.complete')}
             </h2>
           </div>
           <StatusBadge tone={incomplete ? 'warning' : 'success'}>
-            {record.status.replaceAll('_', ' ').toLowerCase()}
+            {t(RECORD_STATUS_KEYS[record.status])}
           </StatusBadge>
         </div>
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
           {incomplete
-            ? 'This calculation is not a final posted result.'
-            : 'The calculation uses recorded events and exact elapsed intervals.'}
+            ? t('employee.records.state.provisionalDescription')
+            : t('employee.records.state.completeDescription')}
         </p>
       </Panel>
       {incomplete ? (
-        <Alert announce={false} title="This record is incomplete" tone="warning">
-          <p className="m-0">
-            Review the attention items and recorded events before relying on its balance.
-          </p>
+        <Alert announce={false} title={t('employee.records.incomplete.title')} tone="warning">
+          <p className="m-0">{t('employee.records.incomplete.description')}</p>
         </Alert>
       ) : null}
       <CalculationAttention
@@ -82,25 +101,45 @@ export function DailyTimeRecordPage() {
         requestHref="/requests"
       />
       {record.calculation === null ? (
-        <Alert announce={false} title="Calculation unavailable" tone="danger">
-          <p className="m-0">
-            This record’s attendance events cannot be reconstructed, so no calculated total is
-            shown. Review the events below and request a correction if needed.
-          </p>
+        <Alert
+          announce={false}
+          title={t('employee.records.calculation.unavailable.title')}
+          tone="danger"
+        >
+          <p className="m-0">{t('employee.records.calculation.unavailable.description')}</p>
         </Alert>
       ) : (
         <section aria-labelledby="daily-calculation-heading" className="grid gap-3">
           <h2 id="daily-calculation-heading" className="m-0 text-xl font-bold">
-            Calculation
+            {t('employee.records.calculation.heading')}
           </h2>
           <Panel density="balanced">
             <dl className="grid gap-4 sm:grid-cols-2">
-              <Value label="Expected time" value={record.calculation.expectedMinutes} />
-              <Value label="Worked time" value={record.calculation.workedMinutes} />
-              <Value label="Break time" value={record.calculation.breakMinutes} />
-              <Value label="Absence credit" value={record.calculation.absenceCreditMinutes} />
-              <Value label="Credited time" value={record.calculation.creditedMinutes} />
-              <Value label="Balance" value={record.calculation.balanceMinutes} signed />
+              <Value
+                label={t('employee.records.calculation.expectedTime')}
+                value={record.calculation.expectedMinutes}
+              />
+              <Value
+                label={t('employee.records.calculation.workedTime')}
+                value={record.calculation.workedMinutes}
+              />
+              <Value
+                label={t('employee.records.calculation.breakTime')}
+                value={record.calculation.breakMinutes}
+              />
+              <Value
+                label={t('employee.records.calculation.absenceCredit')}
+                value={record.calculation.absenceCreditMinutes}
+              />
+              <Value
+                label={t('employee.records.calculation.creditedTime')}
+                value={record.calculation.creditedMinutes}
+              />
+              <Value
+                label={t('employee.records.calculation.balance')}
+                value={record.calculation.balanceMinutes}
+                signed
+              />
             </dl>
           </Panel>
         </section>
@@ -109,37 +148,41 @@ export function DailyTimeRecordPage() {
         className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
         to={`/requests/new?recordId=${encodeURIComponent(recordId)}`}
       >
-        Request a correction
+        {t('employee.records.requestCorrection')}
       </Link>
       <section aria-labelledby="sessions-heading" className="grid gap-3">
         <h2 id="sessions-heading" className="m-0 text-xl font-bold">
-          Work sessions and breaks
+          {t('employee.records.sessions.heading')}
         </h2>
         {record.sessions.length === 0 ? (
-          <RouteState kind="empty" title="No completed intervals">
-            <p>No completed work or break interval falls within this local date.</p>
+          <RouteState kind="empty" title={t('employee.records.sessions.empty.title')}>
+            <p>{t('employee.records.sessions.empty.description')}</p>
           </RouteState>
         ) : (
           <ol className="m-0 grid list-none gap-4 p-0">
             {record.sessions.map((session, index) => (
               <li key={index}>
                 <Panel as="article" className="grid gap-4" density="balanced">
-                  <h3 className="m-0 text-base font-bold">Session {index + 1}</h3>
+                  <h3 className="m-0 text-base font-bold">
+                    {t('employee.records.sessions.session', { number: index + 1 })}
+                  </h3>
                   {session.continuesFromPreviousDate || session.continuesToNextDate ? (
                     <p className="m-0 text-sm text-[var(--wl-text-muted)]">
                       {session.continuesFromPreviousDate
-                        ? 'Continues from the previous local date. '
+                        ? `${t('employee.records.sessions.continuesPrevious')} `
                         : ''}
-                      {session.continuesToNextDate ? 'Continues into the next local date.' : ''}
+                      {session.continuesToNextDate
+                        ? t('employee.records.sessions.continuesNext')
+                        : ''}
                     </p>
                   ) : null}
                   <IntervalList
-                    label="Work intervals"
+                    label={t('employee.records.sessions.workIntervals')}
                     intervals={session.workIntervals}
                     timeZone={record.timeZone}
                   />
                   <IntervalList
-                    label="Break intervals"
+                    label={t('employee.records.sessions.breakIntervals')}
                     intervals={session.breaks}
                     timeZone={record.timeZone}
                   />
@@ -149,27 +192,26 @@ export function DailyTimeRecordPage() {
           </ol>
         )}
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          Intervals that cross midnight are split at the organization-local date boundary. Durations
-          use the recorded instants, including daylight-saving changes.
+          {t('employee.records.sessions.note')}
         </p>
       </section>
       <section aria-labelledby="events-heading" className="grid gap-3">
         <h2 id="events-heading" className="m-0 text-xl font-bold">
-          Recorded events
+          {t('employee.records.events.heading')}
         </h2>
         {record.events.length === 0 ? (
-          <RouteState kind="empty" title="No attendance events">
-            <p>No attendance event was recorded on this local date.</p>
+          <RouteState kind="empty" title={t('employee.records.events.empty.title')}>
+            <p>{t('employee.records.events.empty.description')}</p>
           </RouteState>
         ) : (
           <ol className="m-0 grid list-none gap-3 p-0">
             {record.events.map((event) => (
               <li key={event.sequence}>
                 <Panel as="article" density="balanced">
-                  <strong>{EVENT_LABELS[event.type]}</strong>
+                  <strong>{t(EVENT_LABEL_KEYS[event.type])}</strong>
                   <div className="text-sm text-[var(--wl-text-muted)]">
-                    {formatTimeWithOffset(event.occurredAt, record.timeZone)} · Recorded order{' '}
-                    {event.sequence}
+                    {formatClockTimeWithOffset(runtime, event.occurredAt, record.timeZone)} {'·'}{' '}
+                    {t('employee.records.events.recordedOrder', { sequence: event.sequence })}
                   </div>
                 </Panel>
               </li>
@@ -177,11 +219,11 @@ export function DailyTimeRecordPage() {
           </ol>
         )}
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          Times include the UTC offset so repeated local times remain distinguishable.
+          {t('employee.records.events.note')}
         </p>
       </section>
       <Link className={buttonVariants({ variant: 'secondary', className: 'w-fit' })} to="/my-time">
-        Back to My time
+        {t('employee.records.backToTime')}
       </Link>
     </section>
   );
@@ -192,10 +234,13 @@ function Value({
   signed = false,
   value,
 }: Readonly<{ label: string; signed?: boolean; value: number }>) {
+  const runtime = useWorkLedgerI18n();
   return (
     <div className="grid gap-1">
       <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">{label}</dt>
-      <dd className="m-0 text-xl font-bold tabular-nums">{formatDuration(value, signed)}</dd>
+      <dd className="m-0 text-xl font-bold tabular-nums">
+        {formatCompactDuration(runtime, value, signed)}
+      </dd>
     </div>
   );
 }
@@ -209,18 +254,24 @@ function IntervalList({
   label: string;
   timeZone: string;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   return (
     <div className="grid gap-2">
       <h4 className="m-0 text-sm font-semibold">{label}</h4>
       {intervals.length === 0 ? (
-        <p className="m-0 text-sm text-[var(--wl-text-muted)]">None</p>
+        <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+          {t('employee.records.sessions.none')}
+        </p>
       ) : (
         <ul className="m-0 grid gap-1 pl-5">
           {intervals.map((interval) => (
             <li key={`${interval.startsAt}-${interval.endsAt}`}>
-              {formatTimeWithOffset(interval.startsAt, timeZone)} to{' '}
-              {formatTimeWithOffset(interval.endsAt, timeZone)} ·{' '}
-              {formatDuration(interval.durationMinutes)}
+              {t('employee.records.sessions.range', {
+                duration: formatCompactDuration(runtime, interval.durationMinutes),
+                end: formatClockTimeWithOffset(runtime, interval.endsAt, timeZone),
+                start: formatClockTimeWithOffset(runtime, interval.startsAt, timeZone),
+              })}
             </li>
           ))}
         </ul>
@@ -233,44 +284,58 @@ function DailyTimeRecordError({
   error,
   retry,
 }: Readonly<{ error: unknown; retry: (() => void) | null }>) {
+  const t = useWorkLedgerMessage();
   const notFound = error instanceof ApiClientError && error.code === 'ROUTE_NOT_FOUND';
   const denied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
+  const title = notFound
+    ? t('employee.records.error.notFound.title')
+    : denied
+      ? t('shared.route.boundary.permissionDenied.title')
+      : t('employee.records.error.unavailable.title');
   return (
     <section className="grid max-w-4xl gap-6">
       <PageHeader
-        eyebrow="Time records"
-        title={
-          notFound ? 'Record not found' : denied ? 'Permission denied' : 'Daily record unavailable'
-        }
+        eyebrow={t('employee.records.eyebrow')}
+        title={title}
         description={
           notFound
-            ? 'This daily record is not available.'
+            ? t('employee.records.error.notFound.description')
             : denied
-              ? 'You do not have access to this daily record.'
-              : 'WorkLedger could not load this daily record.'
+              ? t('employee.records.error.denied.description')
+              : t('employee.records.error.unavailable.description')
         }
       />
       <RouteState
         actions={
           retry === null || notFound || denied ? undefined : (
             <Button variant="secondary" onPress={retry}>
-              Try again
+              {t('shared.action.tryAgain')}
             </Button>
           )
         }
         kind={notFound ? 'not-found' : denied ? 'permission-denied' : 'error'}
-        title={
-          notFound ? 'Record not found' : denied ? 'Permission denied' : 'Daily record unavailable'
-        }
+        title={title}
       >
         <p>
           {notFound
-            ? 'This record may no longer be available in the current scope.'
+            ? t('employee.records.error.notFound.message')
             : denied
-              ? 'Your current account cannot view this record.'
-              : 'No calculation or attendance history was displayed. Try again.'}
+              ? t('employee.records.error.denied.message')
+              : t('employee.records.error.unavailable.message')}
         </p>
       </RouteState>
     </section>
   );
+}
+
+function formatClockTimeWithOffset(
+  runtime: I18nRuntime,
+  instant: string,
+  timeZone: string,
+): string {
+  return formatInstant(runtime.locale, instant, timeZone, {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'shortOffset',
+  });
 }

@@ -1,15 +1,24 @@
 import type { RefObject } from 'react';
 
 import type { AttendanceCommand, TodayAttendance } from '@workledger/contracts';
+import type { MessageKey } from '@workledger/i18n';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, Dialog } from '@workledger/ui';
 
 import { ApiClientError, type AttendanceCommandIntent } from '../app/api-client.js';
 
-export const ATTENDANCE_ACTION_LABELS: Readonly<Record<AttendanceCommand, string>> = {
-  CLOCK_IN: 'Clock in',
-  CLOCK_OUT: 'Clock out',
-  RESUME: 'Resume work',
-  START_BREAK: 'Start break',
+const ATTENDANCE_ACTION_KEYS: Readonly<Record<AttendanceCommand, MessageKey>> = {
+  CLOCK_IN: 'employee.today.attendance.action.clockIn',
+  CLOCK_OUT: 'employee.today.attendance.action.clockOut',
+  RESUME: 'employee.today.attendance.action.resume',
+  START_BREAK: 'employee.today.attendance.action.startBreak',
+};
+
+const ATTENDANCE_PENDING_KEYS: Readonly<Record<AttendanceCommand, MessageKey>> = {
+  CLOCK_IN: 'employee.today.attendance.pending.clockIn',
+  CLOCK_OUT: 'employee.today.attendance.pending.clockOut',
+  RESUME: 'employee.today.attendance.pending.resume',
+  START_BREAK: 'employee.today.attendance.pending.startBreak',
 };
 
 export type AttendanceRecoveryMode = 'DEPENDENCY' | 'OFFLINE' | 'RECONNECTING' | null;
@@ -37,18 +46,19 @@ export function TodayAttendanceControls({
   pendingIntent: AttendanceCommandIntent | null;
   setClockOutConfirmationOpen: (isOpen: boolean) => void;
 }>) {
+  const t = useWorkLedgerMessage();
   return (
     <div
       ref={controlsRef}
-      aria-label="Attendance actions"
+      aria-label={t('employee.today.attendance.actionsLabel')}
       className="grid max-w-md gap-3 sm:grid-cols-2"
       role="group"
     >
       {attendance.validActions.map((action, index) => {
         const isPendingAction = pendingIntent?.command === action;
-        const label = isPendingAction
-          ? pendingActionLabel(action)
-          : ATTENDANCE_ACTION_LABELS[action];
+        const label = t(
+          isPendingAction ? ATTENDANCE_PENDING_KEYS[action] : ATTENDANCE_ACTION_KEYS[action],
+        );
         const variant = index === 0 ? 'primary' : 'secondary';
 
         if (action === 'CLOCK_OUT' && attendance.state === 'ON_BREAK') {
@@ -58,7 +68,7 @@ export function TodayAttendanceControls({
                 actions={({ close }) => (
                   <>
                     <Button variant="secondary" isDisabled={pendingIntent !== null} onPress={close}>
-                      Cancel
+                      {t('employee.today.attendance.confirm.cancel')}
                     </Button>
                     <Button
                       isDisabled={pendingIntent !== null}
@@ -66,7 +76,9 @@ export function TodayAttendanceControls({
                         onAttendanceCommand('CLOCK_OUT', attendance.attendanceRevision, true)
                       }
                     >
-                      {isPendingAction ? 'Clocking out…' : 'Close break and clock out'}
+                      {isPendingAction
+                        ? t('employee.today.attendance.pending.clockOut')
+                        : t('employee.today.attendance.confirm.submit')}
                     </Button>
                   </>
                 )}
@@ -75,15 +87,12 @@ export function TodayAttendanceControls({
                 onOpenChange={(isOpen) => {
                   if (pendingIntent === null || isOpen) setClockOutConfirmationOpen(isOpen);
                 }}
-                title="Clock out while on break?"
+                title={t('employee.today.attendance.confirm.title')}
                 triggerIsDisabled={pendingIntent !== null || controlsDisabled}
                 triggerLabel={label}
                 triggerVariant={variant}
               >
-                <p className="m-0">
-                  WorkLedger will close your active break and clock you out at the same recorded
-                  instant. Cancel to leave your attendance unchanged.
-                </p>
+                <p className="m-0">{t('employee.today.attendance.confirm.description')}</p>
               </Dialog>
             </div>
           );
@@ -126,53 +135,54 @@ export function AttendanceRecovery({
   mode: AttendanceRecoveryMode;
   retry: () => void;
 }>) {
+  const t = useWorkLedgerMessage();
   if (mode === null) return null;
   if (mode === 'RECONNECTING') {
     return (
-      <Alert headingLevel="h3" title="Connection restored" tone="info">
+      <Alert
+        headingLevel="h3"
+        title={t('employee.today.attendance.recovery.reconnecting.title')}
+        tone="info"
+      >
         <p className="m-0 text-sm font-semibold">
-          Refreshing current attendance before enabling actions…
+          {t('employee.today.attendance.recovery.reconnecting.description')}
         </p>
       </Alert>
     );
   }
   if (mode === 'OFFLINE') {
     return (
-      <Alert headingLevel="h3" title="You’re offline" tone="danger">
+      <Alert
+        headingLevel="h3"
+        title={t('employee.today.attendance.recovery.offline.title')}
+        tone="danger"
+      >
         <p className="m-0 text-sm leading-6">
-          Attendance actions are disabled and will not be queued. Reconnect to refresh your current
-          status.
+          {t('employee.today.attendance.recovery.offline.description')}
         </p>
       </Alert>
     );
   }
   const requestId = error instanceof ApiClientError ? error.requestId : undefined;
   return (
-    <Alert headingLevel="h3" title="Attendance is unavailable" tone="danger">
+    <Alert
+      headingLevel="h3"
+      title={t('employee.today.attendance.recovery.dependency.title')}
+      tone="danger"
+    >
       <p className="m-0 text-sm font-semibold">
-        WorkLedger could not refresh your current attendance. Actions remain disabled.
+        {t('employee.today.attendance.recovery.dependency.description')}
       </p>
       {requestId === undefined ? null : (
-        <p className="m-0 break-all text-xs">Request reference: {requestId}</p>
+        <p className="m-0 break-all text-xs">
+          {t('employee.today.page.requestReference', { requestId })}
+        </p>
       )}
       <div>
         <Button variant="secondary" onPress={retry}>
-          Try again
+          {t('shared.action.tryAgain')}
         </Button>
       </div>
     </Alert>
   );
-}
-
-function pendingActionLabel(command: AttendanceCommand): string {
-  switch (command) {
-    case 'CLOCK_IN':
-      return 'Clocking in…';
-    case 'START_BREAK':
-      return 'Starting break…';
-    case 'RESUME':
-      return 'Resuming work…';
-    case 'CLOCK_OUT':
-      return 'Clocking out…';
-  }
 }

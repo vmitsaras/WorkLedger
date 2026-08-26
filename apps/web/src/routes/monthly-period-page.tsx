@@ -4,6 +4,14 @@ import { flushSync } from 'react-dom';
 import { Link, useParams } from 'react-router';
 
 import type { MonthlyPeriod } from '@workledger/contracts';
+import {
+  formatCompactDuration,
+  formatDateOnly,
+  formatInstant,
+  type MessageArguments,
+  type MessageKey,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, DataTable, Dialog, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
 import {
@@ -12,16 +20,25 @@ import {
   reviewMonthlyPeriod,
   submitMonthlyPeriod,
 } from '../app/api-client.js';
-import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
+import { attentionPresentation } from '../app/presentation-codes.js';
 import { monthlyPeriodQuery } from '../app/query.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
+import { workflowStatusMessageKey } from '../app/workflow-status-presentation.js';
 import { MonthlyPeriodPrintView } from '../components/monthly-period-print.js';
 import { PageHeader } from '../components/page-header.js';
 
+type MessageTranslator = <Key extends MessageKey>(
+  key: Key,
+  ...args: MessageArguments<Key>
+) => string;
+
 export function MonthlyPeriodPage() {
+  const t = useWorkLedgerMessage();
   const periodId = useParams()['periodId'];
   const query = useQuery(monthlyPeriodQuery(periodId ?? ''));
-  useBoundaryPresentation(query.isError ? monthlyErrorTitle(query.error) : 'Monthly period');
+  useBoundaryPresentation(
+    query.isError ? t(monthlyErrorTitleKey(query.error)) : t('employee.monthly.frame.title'),
+  );
   const queryClient = useQueryClient();
   const statusHeadingRef = useRef<HTMLHeadingElement>(null);
   const submissionErrorRef = useRef<HTMLElement>(null);
@@ -55,7 +72,7 @@ export function MonthlyPeriodPage() {
     onSuccess: (period) => {
       queryClient.setQueryData(monthlyPeriodQuery(period.id).queryKey, period);
       setWarningAcknowledged(false);
-      setSuccessMessage('Monthly period submitted for review.');
+      setSuccessMessage(t('employee.monthly.submission.success'));
     },
   });
   const review = useMutation({
@@ -91,8 +108,8 @@ export function MonthlyPeriodPage() {
       setReviewReasonError(null);
       setReviewSuccessMessage(
         variables.action === 'APPROVE'
-          ? 'Monthly period approved. The approved baseline is ready for a separate lock.'
-          : 'Changes requested. The employee can now correct and resubmit the month.',
+          ? t('employee.monthly.reviewer.success.approved')
+          : t('employee.monthly.reviewer.success.changesRequested'),
       );
     },
   });
@@ -112,9 +129,7 @@ export function MonthlyPeriodPage() {
     onSuccess: (period) => {
       queryClient.setQueryData(monthlyPeriodQuery(period.id).queryKey, period);
       setLockConfirmationOpen(false);
-      setReviewSuccessMessage(
-        'Monthly period locked. Its approved record is permanent; later changes require an adjustment.',
-      );
+      setReviewSuccessMessage(t('employee.monthly.reviewer.success.locked'));
     },
   });
   const resetSubmission = submission.reset;
@@ -177,9 +192,9 @@ export function MonthlyPeriodPage() {
             }
             flushSync(() => setPrintPeriod(refreshed.data));
             window.print();
-            setPrintStatus('Print dialog opened with the latest monthly record.');
+            setPrintStatus(t('employee.monthly.print.opened'));
           } catch (error) {
-            setPrintStatus(printErrorMessage(error));
+            setPrintStatus(printErrorMessage(error, t));
           } finally {
             setPrintPending(false);
           }
@@ -197,24 +212,26 @@ export function MonthlyPeriodPage() {
                 ref={statusHeadingRef}
                 tabIndex={-1}
               >
-                {workflowLabel(period.workflow.status)}
+                {t(workflowStatusMessageKey(period.workflow.status))}
               </h2>
               <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-                Review version {period.workflow.periodVersion.toString()}
+                {t('employee.monthly.readiness.reviewVersion', {
+                  version: period.workflow.periodVersion,
+                })}
               </p>
             </div>
             <StatusBadge
               tone={period.readiness.status === 'READY_FOR_SUBMISSION' ? 'success' : 'warning'}
             >
-              {readinessLabel(period)}
+              {readinessLabel(period, t)}
             </StatusBadge>
           </div>
-          <p className="m-0">{readinessExplanation(period)}</p>
+          <p className="m-0">{readinessExplanation(period, t)}</p>
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            {period.readiness.completeDateCount.toString()} of{' '}
-            {period.readiness.coveredDateCount.toString()} covered employment dates have complete
-            daily calculations. If a source record changes, review the updated month before taking
-            the next action.
+            {t('employee.monthly.readiness.completeDates', {
+              complete: period.readiness.completeDateCount,
+              covered: period.readiness.coveredDateCount,
+            })}
           </p>
         </Panel>
 
@@ -256,7 +273,7 @@ export function MonthlyPeriodPage() {
           }}
           onRequestChanges={() => {
             if (reviewReason.trim().length < 10) {
-              setReviewReasonError('Enter a reason of at least 10 characters.');
+              setReviewReasonError(t('employee.monthly.reviewer.reason.error'));
               return;
             }
             setReviewReasonError(null);
@@ -288,16 +305,23 @@ function MonthlyPeriodFrame({
     status: string | null;
   }>;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   return (
     <section className="grid max-w-6xl gap-8">
       <div className="wl-screen-only">
         <PageHeader
-          eyebrow="Monthly record"
-          title="Monthly period"
+          eyebrow={t('employee.monthly.frame.eyebrow')}
+          title={t('employee.monthly.frame.title')}
           description={
             period === undefined
-              ? 'Review the month’s status, totals, issues, and available decisions.'
-              : `${period.employeeDisplayName} · ${formatLocalDate(period.monthStart)} to ${formatLocalDate(period.monthEnd)} · ${period.timeZone}`
+              ? t('employee.monthly.frame.description')
+              : t('employee.monthly.frame.periodDescription', {
+                  employee: period.employeeDisplayName,
+                  end: formatDateOnly(runtime.locale, period.monthEnd),
+                  start: formatDateOnly(runtime.locale, period.monthStart),
+                  timeZone: period.timeZone,
+                })
           }
         >
           {printAction === undefined ? null : (
@@ -308,15 +332,16 @@ function MonthlyPeriodFrame({
                 onPress={() => void printAction.onPrint()}
                 variant="secondary"
               >
-                {printAction.isPending ? 'Preparing print…' : 'Print monthly record'}
+                {printAction.isPending
+                  ? t('employee.monthly.action.preparePrint')
+                  : t('employee.monthly.action.print')}
               </Button>
               <p className="m-0 max-w-2xl text-sm text-[var(--wl-text-muted)]">
-                The print uses the latest monthly status, totals, daily values, approved baseline,
-                and later adjustments. Private absence details and decision reasons are omitted.
+                {t('employee.monthly.frame.printHelp')}
               </p>
               {printAction.status === null ? null : (
                 <p
-                  aria-label="Monthly print status"
+                  aria-label={t('employee.monthly.frame.printStatusLabel')}
                   aria-atomic="true"
                   aria-live="polite"
                   className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]"
@@ -335,43 +360,51 @@ function MonthlyPeriodFrame({
 }
 
 function AttentionSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const { blockers, warnings } = period.attention;
   return (
     <section aria-labelledby="monthly-attention-heading" className="grid gap-4">
       <div>
         <h2 id="monthly-attention-heading" className="m-0 text-xl font-bold">
-          Review attention
+          {t('employee.monthly.attention.heading')}
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Blockers prevent submission. Warnings preserve calculated values but must be reviewed in
-          the submission step.
+          {t('employee.monthly.attention.description')}
         </p>
       </div>
       {blockers.length === 0 ? (
-        <Alert announce={false} headingLevel="h3" title="No blockers" tone="success">
-          <p>This review version has no issue that prevents submission.</p>
+        <Alert
+          announce={false}
+          headingLevel="h3"
+          title={t('employee.monthly.attention.noBlockers.title')}
+          tone="success"
+        >
+          <p>{t('employee.monthly.attention.noBlockers.description')}</p>
         </Alert>
       ) : (
         <Alert
           announce={false}
           headingLevel="h3"
-          title={`${blockers.length.toString()} blocker${blockers.length === 1 ? '' : 's'}`}
+          title={t('employee.monthly.attention.blockers', { count: blockers.length })}
           tone="danger"
         >
           <ul className="mb-0 mt-3 grid gap-2 pl-5">
             {blockers.map((blocker, index) => (
               <li key={`${blocker.localDate ?? 'period'}-${blocker.code}-${index.toString()}`}>
-                <strong>{attentionLabel(blocker.code)}</strong>
+                <strong>{attentionPresentation(blocker.code, t).title}</strong>
                 {blocker.localDate === null ? (
-                  ' — whole-period reconciliation'
+                  ` — ${t('employee.monthly.attention.wholePeriod')}`
                 ) : (
                   <>
                     {' — '}
                     {blocker.recordId === null ? (
-                      formatLocalDate(blocker.localDate)
+                      formatDateOnly(runtime.locale, blocker.localDate)
                     ) : (
                       <Link to={`/time-records/${encodeURIComponent(blocker.recordId)}`}>
-                        {formatLocalDate(blocker.localDate)} — review daily record
+                        {t('employee.monthly.attention.reviewDaily', {
+                          date: formatDateOnly(runtime.locale, blocker.localDate),
+                        })}
                       </Link>
                     )}
                   </>
@@ -383,22 +416,24 @@ function AttentionSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
       )}
       {warnings.length === 0 ? (
         <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-          No non-blocking warning is present in this review version.
+          {t('employee.monthly.attention.noWarnings')}
         </p>
       ) : (
         <Alert
           announce={false}
           headingLevel="h3"
-          title={`${warnings.length.toString()} warning${warnings.length === 1 ? '' : 's'}`}
+          title={t('employee.monthly.attention.warnings', { count: warnings.length })}
           tone="warning"
         >
           <ul className="mb-0 mt-3 grid gap-2 pl-5">
             {warnings.map((warning) => (
               <li key={`${warning.localDate}-${warning.code}-${warning.recordId}`}>
-                <strong>{attentionLabel(warning.code)}</strong>
+                <strong>{attentionPresentation(warning.code, t).title}</strong>
                 {' — '}
                 <Link to={`/time-records/${encodeURIComponent(warning.recordId)}`}>
-                  {formatLocalDate(warning.localDate)} — review daily record
+                  {t('employee.monthly.attention.reviewDaily', {
+                    date: formatDateOnly(runtime.locale, warning.localDate),
+                  })}
                 </Link>
               </li>
             ))}
@@ -428,21 +463,26 @@ function SubmissionSection({
   successMessage: string | null;
   warningAcknowledged: boolean;
 }>) {
+  const t = useWorkLedgerMessage();
   const canSubmit = period.availableActions.includes('SUBMIT');
   const hasWarnings = period.attention.warnings.length > 0;
   return (
     <section aria-labelledby="monthly-submission-heading" className="grid gap-4">
       <div>
         <h2 id="monthly-submission-heading" className="m-0 text-xl font-bold">
-          Submission
+          {t('employee.monthly.submission.heading')}
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Submission freezes ordinary edits until an eligible reviewer requests changes.
+          {t('employee.monthly.submission.description')}
         </p>
       </div>
 
       {successMessage === null ? null : (
-        <Alert headingLevel="h3" title="Month submitted" tone="success">
+        <Alert
+          headingLevel="h3"
+          title={t('employee.monthly.submission.successTitle')}
+          tone="success"
+        >
           <p>{successMessage}</p>
         </Alert>
       )}
@@ -452,10 +492,10 @@ function SubmissionSection({
           headingLevel="h3"
           ref={errorRef}
           tabIndex={-1}
-          title="The month was not submitted"
+          title={t('employee.monthly.submission.error.title')}
           tone="danger"
         >
-          <p className="m-0">{submissionErrorMessage(error)}</p>
+          <p className="m-0">{submissionErrorMessage(error, t)}</p>
         </Alert>
       )}
 
@@ -474,29 +514,32 @@ function SubmissionSection({
                 type="checkbox"
               />
               <span>
-                I reviewed all {period.attention.warnings.length.toString()} warning
-                {period.attention.warnings.length === 1 ? '' : 's'} in this monthly source version.
+                {t('employee.monthly.submission.acknowledgement', {
+                  count: period.attention.warnings.length,
+                })}
               </span>
             </label>
           ) : (
-            <p className="m-0">No warning acknowledgement is required for this source version.</p>
+            <p className="m-0">{t('employee.monthly.submission.noAcknowledgement')}</p>
           )}
           <Button
             className="w-fit"
             isDisabled={isPending || (hasWarnings && !warningAcknowledged)}
             type="submit"
           >
-            {isPending ? 'Submitting…' : 'Submit month'}
+            {isPending
+              ? t('employee.monthly.action.submitting')
+              : t('employee.monthly.action.submit')}
           </Button>
           {hasWarnings && !warningAcknowledged ? (
             <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-              Review and acknowledge the current warnings to enable submission.
+              {t('employee.monthly.submission.enableHint')}
             </p>
           ) : null}
         </form>
       ) : (
         <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-          {submissionAvailabilityMessage(period)}
+          {submissionAvailabilityMessage(period, t)}
         </p>
       )}
     </section>
@@ -532,6 +575,7 @@ function ReviewerSection({
   reasonError: string | null;
   successMessage: string | null;
 }>) {
+  const t = useWorkLedgerMessage();
   const canRequestChanges = period.availableActions.includes('REQUEST_CHANGES');
   const canApprove = period.availableActions.includes('APPROVE');
   const canLock = period.availableActions.includes('LOCK');
@@ -540,14 +584,18 @@ function ReviewerSection({
     <section aria-labelledby="monthly-reviewer-heading" className="grid gap-4">
       <div>
         <h2 id="monthly-reviewer-heading" className="m-0 text-xl font-bold">
-          Reviewer decision
+          {t('employee.monthly.reviewer.heading')}
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Approve when the month is ready. Lock month is a separate permanent action.
+          {t('employee.monthly.reviewer.description')}
         </p>
       </div>
       {successMessage === null ? null : (
-        <Alert headingLevel="h3" title="Monthly record updated" tone="success">
+        <Alert
+          headingLevel="h3"
+          title={t('employee.monthly.reviewer.success.title')}
+          tone="success"
+        >
           <p>{successMessage}</p>
         </Alert>
       )}
@@ -557,15 +605,15 @@ function ReviewerSection({
           headingLevel="h3"
           ref={errorRef}
           tabIndex={-1}
-          title="No reviewer action was recorded"
+          title={t('employee.monthly.reviewer.error.noAction')}
           tone="danger"
         >
           <p className="m-0">
-            {reasonError ?? reviewErrorMessage(error)}
+            {reasonError ?? reviewErrorMessage(error, t)}
             {reasonError === null ? null : (
               <>
                 {' '}
-                <a href="#monthly-review-reason">Go to decision reason.</a>
+                <a href="#monthly-review-reason">{t('employee.monthly.reviewer.reason.goTo')}</a>
               </>
             )}
           </p>
@@ -576,7 +624,7 @@ function ReviewerSection({
           {canRequestChanges ? (
             <div className="grid gap-3">
               <label className="grid gap-2 font-semibold" htmlFor="monthly-review-reason">
-                Reason for requesting changes
+                {t('employee.monthly.reviewer.reason.label')}
                 <textarea
                   aria-describedby="monthly-review-reason-help"
                   aria-invalid={reasonError === null ? undefined : true}
@@ -592,8 +640,7 @@ function ReviewerSection({
                 className="m-0 text-sm text-[var(--wl-text-muted)]"
                 id="monthly-review-reason-help"
               >
-                At least 10 characters. The employee can read this reason on their monthly detail;
-                it is omitted from notifications and the approval inbox.
+                {t('employee.monthly.reviewer.reason.help')}
               </p>
               <Button
                 className="w-fit"
@@ -601,14 +648,18 @@ function ReviewerSection({
                 onPress={onRequestChanges}
                 variant="secondary"
               >
-                {isPending ? 'Recording…' : 'Request changes'}
+                {isPending
+                  ? t('employee.monthly.action.recording')
+                  : t('employee.monthly.action.requestChanges')}
               </Button>
             </div>
           ) : null}
           <div className="flex flex-wrap gap-3">
             {canApprove ? (
               <Button isDisabled={isPending} onPress={onApprove}>
-                {isPending ? 'Recording…' : 'Approve month'}
+                {isPending
+                  ? t('employee.monthly.action.recording')
+                  : t('employee.monthly.action.approve')}
               </Button>
             ) : null}
             {canLock && period.approvedRecord !== null ? (
@@ -616,10 +667,12 @@ function ReviewerSection({
                 actions={({ close }) => (
                   <>
                     <Button isDisabled={isPending} onPress={close} variant="secondary">
-                      Cancel
+                      {t('employee.monthly.action.cancel')}
                     </Button>
                     <Button isDisabled={isPending} onPress={onLock}>
-                      {isPending ? 'Locking…' : 'Permanently lock month'}
+                      {isPending
+                        ? t('employee.monthly.action.locking')
+                        : t('employee.monthly.action.permanentlyLock')}
                     </Button>
                   </>
                 )}
@@ -628,15 +681,15 @@ function ReviewerSection({
                 onOpenChange={(open) => {
                   if (!isPending || open) onLockConfirmationChange(open);
                 }}
-                title="Permanently lock this month?"
+                title={t('employee.monthly.reviewer.lock.title')}
                 triggerIsDisabled={isPending}
-                triggerLabel="Lock month"
+                triggerLabel={t('employee.monthly.action.lock')}
                 triggerVariant="primary"
               >
                 <p className="m-0">
-                  Locking preserves approval cycle {period.approvedRecord.approvalCycle.toString()}{' '}
-                  as the permanent baseline. There is no ordinary unlock; later accepted changes use
-                  the post-lock adjustment path. Cancel to leave the month approved.
+                  {t('employee.monthly.reviewer.lock.description', {
+                    cycle: period.approvedRecord.approvalCycle,
+                  })}
                 </p>
               </Dialog>
             ) : null}
@@ -644,7 +697,7 @@ function ReviewerSection({
         </div>
       ) : (
         <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-          {reviewerAvailabilityMessage(period)}
+          {reviewerAvailabilityMessage(period, t)}
         </p>
       )}
     </section>
@@ -652,46 +705,66 @@ function ReviewerSection({
 }
 
 function ApprovedRecordSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const record = period.approvedRecord;
   if (record === null && period.reviewHistory.length === 0) return null;
   return (
     <section aria-labelledby="monthly-approved-record-heading" className="grid gap-4">
       <div>
         <h2 id="monthly-approved-record-heading" className="m-0 text-xl font-bold">
-          Approved record
+          {t('employee.monthly.approved.heading')}
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          This approved baseline stays available if changes are requested later.
+          {t('employee.monthly.approved.description')}
         </p>
       </div>
       {record === null ? (
         <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-          No approval snapshot has been created for the current review cycle.
+          {t('employee.monthly.approved.empty')}
         </p>
       ) : (
         <Panel className="grid gap-4" density="balanced">
           <p className="m-0">
-            <strong>Approval cycle {record.approvalCycle.toString()}</strong> · workflow version{' '}
-            {record.periodVersion.toString()} · schema {record.schemaVersion.toString()} · engine{' '}
-            {record.calculationEngineVersion}
+            <strong>
+              {t('employee.monthly.approved.metadata', {
+                cycle: record.approvalCycle,
+                engine: record.calculationEngineVersion,
+                schemaVersion: record.schemaVersion,
+                workflowVersion: record.periodVersion,
+              })}
+            </strong>
           </p>
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            Approved {formatInstant(record.approvedAt, period.timeZone)}. Snapshot totals: expected{' '}
-            {formatDuration(record.totals.expectedMinutes)}, credited{' '}
-            {formatDuration(record.totals.creditedMinutes)}, balance{' '}
-            {formatDuration(record.totals.balanceMinutes, true)}, closing posted balance{' '}
-            {formatDuration(record.totals.ledgerClosingBalanceMinutes, true)}.
+            {t('employee.monthly.approved.summary', {
+              approvedAt: formatInstant(runtime.locale, record.approvedAt, period.timeZone),
+              balance: formatCompactDuration(runtime, record.totals.balanceMinutes, true),
+              closing: formatCompactDuration(
+                runtime,
+                record.totals.ledgerClosingBalanceMinutes,
+                true,
+              ),
+              credited: formatCompactDuration(runtime, record.totals.creditedMinutes),
+              expected: formatCompactDuration(runtime, record.totals.expectedMinutes),
+            })}
           </p>
         </Panel>
       )}
       {period.reviewHistory.length === 0 ? null : (
-        <ol className="m-0 grid gap-3 pl-5" aria-label="Monthly reviewer history">
+        <ol
+          className="m-0 grid gap-3 pl-5"
+          aria-label={t('employee.monthly.approved.historyLabel')}
+        >
           {period.reviewHistory.map((decision) => (
             <li key={`${decision.version.toString()}-${decision.action}`}>
-              <strong>{reviewActionLabel(decision.action)}</strong> ·{' '}
-              {authorityLabel(decision.actorAuthority)} ·{' '}
-              {formatInstant(decision.decidedAt, period.timeZone)} · version{' '}
-              {decision.version.toString()}
+              <strong>
+                {t('employee.monthly.approved.historyItem', {
+                  action: reviewActionLabel(decision.action, t),
+                  authority: authorityLabel(decision.actorAuthority, t),
+                  date: formatInstant(runtime.locale, decision.decidedAt, period.timeZone),
+                  version: decision.version,
+                })}
+              </strong>
               {decision.reason === null ? null : <p className="mb-0 mt-1">{decision.reason}</p>}
             </li>
           ))}
@@ -702,38 +775,43 @@ function ApprovedRecordSection({ period }: Readonly<{ period: MonthlyPeriod }>) 
 }
 
 function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const view = period.postLockView;
   if (view === null) return null;
   return (
     <section aria-labelledby="monthly-adjusted-view-heading" className="grid gap-4">
       <div>
         <h2 id="monthly-adjusted-view-heading" className="m-0 text-xl font-bold">
-          Current adjusted view
+          {t('employee.monthly.adjustments.heading')}
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          The approved baseline above stays unchanged. This view adds the accepted corrections and
-          absence cancellations in order.
+          {t('employee.monthly.adjustments.description')}
         </p>
       </div>
       <Panel density="balanced">
         <dl
-          aria-label="Post-lock balance reconciliation"
+          aria-label={t('employee.monthly.adjustments.ariaLabel')}
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           <Total
-            label="Original closing balance"
+            label={t('employee.monthly.adjustments.metric.originalClosing')}
             value={view.originalClosingBalanceMinutes}
             signed
           />
-          <Total label="Cumulative post-lock delta" value={view.cumulativeDeltaMinutes} signed />
           <Total
-            label="Adjusted closing balance"
+            label={t('employee.monthly.adjustments.metric.cumulativeDelta')}
+            value={view.cumulativeDeltaMinutes}
+            signed
+          />
+          <Total
+            label={t('employee.monthly.adjustments.metric.adjustedClosing')}
             value={view.adjustedClosingBalanceMinutes}
             signed
           />
           <div>
             <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">
-              Current view version
+              {t('employee.monthly.adjustments.metric.viewVersion')}
             </dt>
             <dd className="m-0 mt-1 text-xl font-bold tabular-nums">
               {view.currentViewVersion.toString()}
@@ -743,18 +821,18 @@ function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod
       </Panel>
       {view.adjustments.length === 0 ? (
         <p className="m-0 rounded-xl border border-[var(--wl-border)] p-4">
-          No post-lock adjustment has been accepted. The current view equals the approved baseline.
+          {t('employee.monthly.adjustments.empty')}
         </p>
       ) : (
         <DataTable
-          caption="Ordered post-lock corrections and absence cancellations applied to the approved monthly baseline"
+          caption={t('employee.monthly.adjustments.caption')}
           className="min-w-[52rem]"
-          scrollHint="Scroll horizontally to review every adjustment column."
-          scrollLabel="Scrollable post-lock adjustment history"
+          scrollHint={t('employee.monthly.adjustments.scrollHint')}
+          scrollLabel={t('employee.monthly.adjustments.scrollLabel')}
         >
           <thead>
             <tr className="border-b border-[var(--wl-border)] text-sm">
-              {['Version', 'Date', 'Source', 'Effect', 'Balance delta', 'Link'].map((label) => (
+              {adjustmentColumnLabels(t).map((label) => (
                 <th className="p-3" key={label} scope="col">
                   {label}
                 </th>
@@ -767,26 +845,49 @@ function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod
                 <th className="p-3" scope="row">
                   {adjustment.adjustmentVersion.toString()}
                 </th>
-                <td className="p-3">{formatLocalDate(adjustment.localDate)}</td>
+                <td className="p-3">{formatDateOnly(runtime.locale, adjustment.localDate)}</td>
                 <td className="p-3">
-                  {adjustment.kind === 'CORRECTION' ? 'Time correction' : 'Absence cancellation'}
+                  {adjustment.kind === 'CORRECTION'
+                    ? t('employee.monthly.adjustments.source.correction')
+                    : t('employee.monthly.adjustments.source.absenceCancellation')}
                 </td>
                 <td className="p-3 tabular-nums">
                   {adjustment.kind === 'CORRECTION'
-                    ? `${formatDuration(adjustment.previousAdjustedWorkedMinutes)} → ${formatDuration(adjustment.proposedWorkedMinutes)} worked`
-                    : `Absence credit ${formatDuration(adjustment.absenceCreditMinutesDelta, true)}; expected ${formatDuration(adjustment.expectedMinutesDelta, true)}`}
+                    ? t('employee.monthly.adjustments.correctionEffect', {
+                        previous: formatCompactDuration(
+                          runtime,
+                          adjustment.previousAdjustedWorkedMinutes,
+                        ),
+                        proposed: formatCompactDuration(runtime, adjustment.proposedWorkedMinutes),
+                      })
+                    : t('employee.monthly.adjustments.absenceEffect', {
+                        credit: formatCompactDuration(
+                          runtime,
+                          adjustment.absenceCreditMinutesDelta,
+                          true,
+                        ),
+                        expected: formatCompactDuration(
+                          runtime,
+                          adjustment.expectedMinutesDelta,
+                          true,
+                        ),
+                      })}
                 </td>
-                <td className="p-3 tabular-nums">{formatDuration(adjustment.minutes, true)}</td>
+                <td className="p-3 tabular-nums">
+                  {formatCompactDuration(runtime, adjustment.minutes, true)}
+                </td>
                 <td className="p-3">
                   {adjustment.kind === 'ABSENCE_CANCELLATION'
                     ? adjustment.minutes === 0
-                      ? 'Zero-delta cancellation evidence'
-                      : 'Cancellation adjustment'
+                      ? t('employee.monthly.adjustments.link.zeroCancellation')
+                      : t('employee.monthly.adjustments.link.cancellation')
                     : adjustment.reversesAdjustmentId === null
                       ? adjustment.minutes === 0
-                        ? 'Zero-delta evidence'
-                        : 'Correction adjustment'
-                      : `Reverses version ${reversedVersion(view, adjustment.reversesAdjustmentId)}`}
+                        ? t('employee.monthly.adjustments.link.zeroCorrection')
+                        : t('employee.monthly.adjustments.link.correction')
+                      : t('employee.monthly.adjustments.link.reverses', {
+                          version: reversedVersion(view, adjustment.reversesAdjustmentId, t),
+                        })}
                 </td>
               </tr>
             ))}
@@ -797,43 +898,71 @@ function PostLockAdjustmentsSection({ period }: Readonly<{ period: MonthlyPeriod
   );
 }
 
-function reversedVersion(view: NonNullable<MonthlyPeriod['postLockView']>, adjustmentId: string) {
+function reversedVersion(
+  view: NonNullable<MonthlyPeriod['postLockView']>,
+  adjustmentId: string,
+  t: MessageTranslator,
+): string {
   return (
     view.adjustments.find(({ id }) => id === adjustmentId)?.adjustmentVersion.toString() ??
-    'unknown'
+    t('employee.monthly.adjustments.link.unknownVersion')
   );
 }
 
 function TotalsSection({ totals }: Readonly<{ totals: MonthlyPeriod['totals'] }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   return (
     <section aria-labelledby="monthly-totals-heading" className="grid gap-4">
       <div>
         <h2 id="monthly-totals-heading" className="m-0 text-xl font-bold">
-          Complete-date totals
+          {t('employee.monthly.totals.heading')}
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Incomplete and missing dates are excluded. Posted ledger balances remain separately
-          labelled.
+          {t('employee.monthly.totals.description')}
         </p>
       </div>
       <Panel density="balanced">
         <dl
-          aria-label="Monthly calculated totals"
+          aria-label={t('employee.monthly.totals.ariaLabel')}
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
-          <Total label="Expected" value={totals.expectedMinutes} />
-          <Total label="Worked" value={totals.workedMinutes} />
-          <Total label="Break" value={totals.breakMinutes} />
-          <Total label="Absence credit" value={totals.absenceCreditMinutes} />
-          <Total label="Adjustment" value={totals.adjustmentMinutes} signed />
-          <Total label="Credited" value={totals.creditedMinutes} />
-          <Total label="Calculated balance" value={totals.balanceMinutes} signed />
-          <Total label="Posted period delta" value={totals.ledgerPeriodDeltaMinutes} signed />
+          <Total
+            label={t('employee.monthly.daily.column.expected')}
+            value={totals.expectedMinutes}
+          />
+          <Total label={t('employee.monthly.daily.column.worked')} value={totals.workedMinutes} />
+          <Total label={t('employee.monthly.daily.column.break')} value={totals.breakMinutes} />
+          <Total
+            label={t('employee.monthly.daily.column.absenceCredit')}
+            value={totals.absenceCreditMinutes}
+          />
+          <Total
+            label={t('employee.monthly.daily.column.adjustment')}
+            value={totals.adjustmentMinutes}
+            signed
+          />
+          <Total
+            label={t('employee.monthly.daily.column.credited')}
+            value={totals.creditedMinutes}
+          />
+          <Total
+            label={t('employee.monthly.totals.metric.calculatedBalance')}
+            value={totals.balanceMinutes}
+            signed
+          />
+          <Total
+            label={t('employee.monthly.totals.metric.postedPeriodDelta')}
+            value={totals.ledgerPeriodDeltaMinutes}
+            signed
+          />
         </dl>
       </Panel>
       <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-        Posted opening balance {formatDuration(totals.ledgerOpeningBalanceMinutes, true)}; posted
-        closing balance {formatDuration(totals.ledgerClosingBalanceMinutes, true)}.
+        {t('employee.monthly.totals.postedBalances', {
+          closing: formatCompactDuration(runtime, totals.ledgerClosingBalanceMinutes, true),
+          opening: formatCompactDuration(runtime, totals.ledgerOpeningBalanceMinutes, true),
+        })}
       </p>
     </section>
   );
@@ -843,34 +972,29 @@ function DailyRows({
   monthStart,
   rows,
 }: Readonly<{ monthStart: string; rows: MonthlyPeriod['rows'] }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   return (
     <section aria-labelledby="monthly-dates-heading" className="grid gap-4">
       <div>
         <h2 id="monthly-dates-heading" className="m-0 text-xl font-bold">
-          Daily review
+          {t('employee.monthly.daily.heading')}
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Final amounts appear only for complete dates. A dash means the date is not final.
+          {t('employee.monthly.daily.description')}
         </p>
       </div>
       <DataTable
-        caption={`Per-date monthly calculation for ${formatLocalDate(monthStart)}`}
+        caption={t('employee.monthly.daily.caption', {
+          month: formatDateOnly(runtime.locale, monthStart),
+        })}
         className="min-w-[58rem]"
-        scrollHint="Scroll horizontally to review all daily calculation columns."
-        scrollLabel="Scrollable monthly daily review"
+        scrollHint={t('employee.monthly.daily.scrollHint')}
+        scrollLabel={t('employee.monthly.daily.scrollLabel')}
       >
         <thead>
           <tr className="border-b border-[var(--wl-border)] text-sm">
-            {[
-              'Date',
-              'Status',
-              'Expected',
-              'Worked',
-              'Absence credit',
-              'Adjustment',
-              'Credited',
-              'Balance',
-            ].map((label) => (
+            {dailyColumnLabels(t, false).map((label) => (
               <th key={label} scope="col" className="p-3">
                 {label}
               </th>
@@ -882,16 +1006,16 @@ function DailyRows({
             <tr key={row.localDate} className="border-b border-[var(--wl-border)] last:border-0">
               <th scope="row" className="p-3 font-medium">
                 {row.recordId === null ? (
-                  formatLocalDate(row.localDate)
+                  formatDateOnly(runtime.locale, row.localDate)
                 ) : (
                   <Link to={`/time-records/${encodeURIComponent(row.recordId)}`}>
-                    {formatLocalDate(row.localDate)}
+                    {formatDateOnly(runtime.locale, row.localDate)}
                   </Link>
                 )}
               </th>
               <td className="p-3">
                 <StatusBadge tone={row.status === 'COMPLETE' ? 'success' : 'warning'}>
-                  {dailyStatusLabel(row.status)}
+                  {dailyStatusLabel(row.status, t)}
                 </StatusBadge>
               </td>
               <MinuteCell value={row.expectedMinutes} />
@@ -913,10 +1037,13 @@ function Total({
   signed = false,
   value,
 }: Readonly<{ label: string; signed?: boolean; value: number }>) {
+  const runtime = useWorkLedgerI18n();
   return (
     <div>
       <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">{label}</dt>
-      <dd className="m-0 mt-1 text-xl font-bold tabular-nums">{formatDuration(value, signed)}</dd>
+      <dd className="m-0 mt-1 text-xl font-bold tabular-nums">
+        {formatCompactDuration(runtime, value, signed)}
+      </dd>
     </div>
   );
 }
@@ -925,39 +1052,44 @@ function MinuteCell({
   value,
   signed = false,
 }: Readonly<{ signed?: boolean; value: number | null }>) {
+  const runtime = useWorkLedgerI18n();
   return (
-    <td className="p-3 tabular-nums">{value === null ? '—' : formatDuration(value, signed)}</td>
+    <td className="p-3 tabular-nums">
+      {value === null ? '—' : formatCompactDuration(runtime, value, signed)}
+    </td>
   );
 }
 
 function MonthlyLoading() {
+  const t = useWorkLedgerMessage();
   return (
-    <RouteState kind="loading" title="Loading monthly period">
-      <p>Preparing the current status, totals, issues, and available actions.</p>
+    <RouteState kind="loading" title={t('employee.monthly.loading.title')}>
+      <p>{t('employee.monthly.loading.description')}</p>
     </RouteState>
   );
 }
 
 function MonthlyError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
+  const t = useWorkLedgerMessage();
   const code = error instanceof ApiClientError ? error.code : null;
-  const title = monthlyErrorTitle(error);
+  const title = t(monthlyErrorTitleKey(error));
   const message =
     code === 'ACCESS_DENIED'
-      ? 'Your current role or reporting scope cannot view this monthly period.'
+      ? t('employee.monthly.error.load.denied')
       : code === 'ROUTE_NOT_FOUND'
-        ? 'This monthly period is unavailable.'
-        : 'The monthly period could not be loaded. Check your connection and try again.';
+        ? t('employee.monthly.error.load.missing')
+        : t('employee.monthly.error.load.unavailable');
   const state = (
     <RouteState
       actions={
         code !== 'ACCESS_DENIED' && code !== 'ROUTE_NOT_FOUND' ? (
           <Button type="button" onPress={retry} variant="secondary">
-            Try again
+            {t('employee.monthly.action.retry')}
           </Button>
         ) : undefined
       }
       actionHref="/my-time"
-      actionLabel="Return to My time"
+      actionLabel={t('employee.records.backToTime')}
       kind={
         code === 'ACCESS_DENIED'
           ? 'permission-denied'
@@ -967,10 +1099,10 @@ function MonthlyError({ error, retry }: Readonly<{ error: unknown; retry: () => 
       }
       title={
         code === 'ACCESS_DENIED'
-          ? 'This monthly record is outside your review scope'
+          ? t('employee.monthly.error.state.denied')
           : code === 'ROUTE_NOT_FOUND'
-            ? 'This monthly record is not available'
-            : 'The monthly record could not be loaded'
+            ? t('employee.monthly.error.state.missing')
+            : t('employee.monthly.error.state.unavailable')
       }
     >
       <p className="m-0">{message}</p>
@@ -979,12 +1111,12 @@ function MonthlyError({ error, retry }: Readonly<{ error: unknown; retry: () => 
   return (
     <section className="grid max-w-2xl gap-6">
       <PageHeader
-        eyebrow="Route status"
+        eyebrow={t('employee.monthly.frame.eyebrow')}
         title={title}
         description={
           code === 'ACCESS_DENIED'
-            ? 'This monthly record is outside your current review scope.'
-            : 'Choose a recovery action to continue your monthly work.'
+            ? t('employee.monthly.error.description.denied')
+            : t('employee.monthly.error.description.recovery')
         }
       />
       {code === 'ACCESS_DENIED' || code === 'ROUTE_NOT_FOUND' ? (
@@ -996,91 +1128,94 @@ function MonthlyError({ error, retry }: Readonly<{ error: unknown; retry: () => 
   );
 }
 
-function monthlyErrorTitle(error: unknown): string {
+function monthlyErrorTitleKey(error: unknown): MessageKey {
   const code = error instanceof ApiClientError ? error.code : null;
-  if (code === 'ACCESS_DENIED') return 'Permission denied';
-  if (code === 'ROUTE_NOT_FOUND') return 'Monthly period not found';
-  return 'Monthly period unavailable';
+  if (code === 'ACCESS_DENIED') return 'employee.monthly.error.boundary.denied';
+  if (code === 'ROUTE_NOT_FOUND') return 'employee.monthly.error.boundary.missing';
+  return 'employee.monthly.error.boundary.unavailable';
 }
 
-function printErrorMessage(error: unknown): string {
+function printErrorMessage(error: unknown, t: MessageTranslator): string {
   if (error instanceof ApiClientError) {
     if (error.code === 'ACCESS_DENIED') {
-      return 'Your reporting scope changed. The print dialog was not opened.';
+      return t('employee.monthly.error.print.denied');
     }
     if (error.code === 'AUTH_REQUIRED' || error.code === 'AUTH_SESSION_EXPIRED') {
-      return 'Your session ended. The print dialog was not opened.';
+      return t('employee.monthly.error.print.session');
     }
   }
-  return 'The monthly record could not be refreshed. The print dialog was not opened.';
+  return t('employee.monthly.error.print.unavailable');
 }
 
-function workflowLabel(status: MonthlyPeriod['workflow']['status']): string {
-  return status
-    .replaceAll('_', ' ')
-    .toLowerCase()
-    .replace(/^./u, (value) => value.toUpperCase());
-}
-
-function readinessLabel(period: MonthlyPeriod): string {
-  if (period.readiness.status === 'READY_FOR_SUBMISSION') return 'Ready for submission';
-  if (period.readiness.status === 'INCOMPLETE') return 'Not ready';
-  return workflowLabel(period.workflow.status);
-}
-
-function readinessExplanation(period: MonthlyPeriod): string {
-  if (!period.readiness.monthEnded) {
-    return 'This month is still in progress. Readiness can only become final after the organization-local month ends.';
-  }
+function readinessLabel(period: MonthlyPeriod, t: MessageTranslator): string {
   if (period.readiness.status === 'READY_FOR_SUBMISSION') {
-    return 'Every covered date is complete, posted, and reconciled, with no submission blocker.';
+    return t('employee.monthly.readiness.label.ready');
   }
   if (period.readiness.status === 'INCOMPLETE') {
-    return 'Resolve every listed blocker and complete every covered date before submission.';
+    return t('employee.monthly.readiness.label.notReady');
+  }
+  return t(workflowStatusMessageKey(period.workflow.status));
+}
+
+function readinessExplanation(period: MonthlyPeriod, t: MessageTranslator): string {
+  if (!period.readiness.monthEnded) {
+    return t('employee.monthly.readiness.explanation.inProgress');
+  }
+  if (period.readiness.status === 'READY_FOR_SUBMISSION') {
+    return t('employee.monthly.readiness.explanation.ready');
+  }
+  if (period.readiness.status === 'INCOMPLETE') {
+    return t('employee.monthly.readiness.explanation.incomplete');
   }
   if (period.workflow.status === 'SUBMITTED') {
-    return 'This period was submitted and is read-only while it waits for reviewer action.';
+    return t('employee.monthly.readiness.explanation.submitted');
   }
   if (period.workflow.status === 'APPROVED') {
-    return 'This period is approved and remains read-only before its separate lock action.';
+    return t('employee.monthly.readiness.explanation.approved');
   }
   if (period.workflow.status === 'LOCKED') {
     return period.postLockView?.status === 'ADJUSTED_AFTER_LOCK'
-      ? 'This period is locked and has accepted post-lock adjustments. The approved record remains unchanged; current totals include the ordered adjustment chain.'
-      : 'This period is locked. Ordinary edits cannot change its approved record.';
+      ? t('employee.monthly.readiness.explanation.lockedAdjusted')
+      : t('employee.monthly.readiness.explanation.locked');
   }
-  return 'This period is read-only in its current workflow state.';
+  return t('employee.monthly.readiness.explanation.readOnly');
 }
 
-function submissionAvailabilityMessage(period: MonthlyPeriod): string {
-  if (period.workflow.status === 'SUBMITTED') return 'Submitted for reviewer action.';
-  if (period.workflow.status === 'APPROVED') return 'Approved; submission is already complete.';
-  if (period.workflow.status === 'LOCKED') return 'Locked; submission is already complete.';
+function submissionAvailabilityMessage(period: MonthlyPeriod, t: MessageTranslator): string {
+  if (period.workflow.status === 'SUBMITTED') {
+    return t('employee.monthly.submission.availability.submitted');
+  }
+  if (period.workflow.status === 'APPROVED') {
+    return t('employee.monthly.submission.availability.approved');
+  }
+  if (period.workflow.status === 'LOCKED') {
+    return t('employee.monthly.submission.availability.locked');
+  }
   if (period.readiness.status === 'INCOMPLETE') {
-    return 'Submission is unavailable until every blocker is resolved and every covered date is complete.';
+    return t('employee.monthly.submission.availability.incomplete');
   }
-  return 'Only the employee who owns this monthly period can submit it.';
+  return t('employee.monthly.submission.availability.ownerOnly');
 }
 
-function submissionErrorMessage(error: unknown): string {
+function submissionErrorMessage(error: unknown, t: MessageTranslator): string {
   const code = error instanceof ApiClientError ? error.code : null;
   switch (code) {
     case 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED':
-      return 'The reviewed source changed. Review the refreshed warnings and acknowledge the current version before trying again.';
+      return t('employee.monthly.submission.error.warningsChanged');
     case 'PERIOD_NOT_READY':
     case 'PERIOD_LEDGER_MISMATCH':
-      return 'The refreshed period is not ready. Resolve its current blockers before trying again.';
+      return t('employee.monthly.submission.error.notReady');
     case 'PERIOD_VERSION_CONFLICT':
-      return 'The workflow changed while you were reviewing it. Review the refreshed period before trying again.';
+      return t('employee.monthly.submission.error.versionChanged');
     case 'PERIOD_ALREADY_SUBMITTED':
-      return 'This period has already been submitted.';
+      return t('employee.monthly.submission.error.alreadySubmitted');
     case 'PERIOD_LOCKED':
     case 'PERIOD_STATE_CONFLICT':
-      return 'Submission is no longer available in the current workflow state.';
+      return t('employee.monthly.submission.error.stateChanged');
     case 'ACCESS_DENIED':
-      return 'Your current account cannot submit this monthly period.';
+      return t('employee.monthly.submission.error.denied');
     default:
-      return 'The monthly period could not be submitted. Check your connection and try again.';
+      return t('employee.monthly.submission.error.generic');
   }
 }
 
@@ -1099,40 +1234,40 @@ function isSubmissionConflict(error: unknown): boolean {
   );
 }
 
-function reviewerAvailabilityMessage(period: MonthlyPeriod): string {
+function reviewerAvailabilityMessage(period: MonthlyPeriod, t: MessageTranslator): string {
   if (period.workflow.status === 'SUBMITTED') {
-    return 'Waiting for an eligible current manager or organization HR reviewer.';
+    return t('employee.monthly.reviewer.availability.submitted');
   }
   if (period.workflow.status === 'CHANGES_REQUESTED') {
-    return 'Changes were requested. The employee must correct and resubmit before another approval.';
+    return t('employee.monthly.reviewer.availability.changesRequested');
   }
   if (period.workflow.status === 'APPROVED') {
-    return 'This month is approved. Only a currently eligible non-self reviewer can request changes or lock it.';
+    return t('employee.monthly.reviewer.availability.approved');
   }
   if (period.workflow.status === 'LOCKED') {
-    return 'This month is permanently locked. Later accepted changes use post-lock adjustments.';
+    return t('employee.monthly.reviewer.availability.locked');
   }
-  return 'Reviewer actions become available after employee submission.';
+  return t('employee.monthly.reviewer.availability.open');
 }
 
-function reviewErrorMessage(error: unknown): string {
+function reviewErrorMessage(error: unknown, t: MessageTranslator): string {
   const code = error instanceof ApiClientError ? error.code : null;
   switch (code) {
     case 'PERIOD_SOURCE_CHANGED':
-      return 'The monthly sources changed. Review the refreshed period; no decision was recorded.';
+      return t('employee.monthly.reviewer.error.sourceChanged');
     case 'PERIOD_VERSION_CONFLICT':
-      return 'The workflow changed in another tab or device. Review the refreshed status; no decision was recorded.';
+      return t('employee.monthly.reviewer.error.versionChanged');
     case 'PERIOD_LEDGER_MISMATCH':
     case 'PERIOD_NOT_READY':
-      return 'The current monthly sources do not reconcile. Resolve the refreshed blockers before approval or lock.';
+      return t('employee.monthly.reviewer.error.notReady');
     case 'PERIOD_STATE_CONFLICT':
-      return 'This reviewer action is no longer available in the refreshed workflow state.';
+      return t('employee.monthly.reviewer.error.stateChanged');
     case 'APPROVAL_SELF_NOT_ALLOWED':
-      return 'You cannot review or lock your own monthly period.';
+      return t('employee.monthly.reviewer.error.self');
     case 'ACCESS_DENIED':
-      return 'Your current role or reporting scope cannot perform this reviewer action.';
+      return t('employee.monthly.reviewer.error.denied');
     default:
-      return 'The reviewer action could not be recorded. Check your connection and try again.';
+      return t('employee.monthly.reviewer.error.generic');
   }
 }
 
@@ -1149,50 +1284,58 @@ function isReviewConflict(error: unknown): boolean {
   );
 }
 
-function reviewActionLabel(action: MonthlyPeriod['reviewHistory'][number]['action']): string {
-  if (action === 'REQUEST_CHANGES') return 'Changes requested';
-  if (action === 'APPROVE') return 'Approved';
-  return 'Locked';
+function reviewActionLabel(
+  action: MonthlyPeriod['reviewHistory'][number]['action'],
+  t: MessageTranslator,
+): string {
+  if (action === 'REQUEST_CHANGES') return t('employee.monthly.approved.action.requestChanges');
+  if (action === 'APPROVE') return t('employee.monthly.approved.action.approve');
+  return t('employee.monthly.approved.action.lock');
 }
 
 function authorityLabel(
   authority: MonthlyPeriod['reviewHistory'][number]['actorAuthority'],
+  t: MessageTranslator,
 ): string {
-  return authority === 'CURRENT_MANAGER' ? 'Current manager' : 'Organization HR';
+  return authority === 'CURRENT_MANAGER'
+    ? t('employee.monthly.approved.authority.manager')
+    : t('employee.monthly.approved.authority.hr');
 }
 
-function formatInstant(value: string, timeZone: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone,
-  }).format(new Date(value));
+function adjustmentColumnLabels(t: MessageTranslator): readonly string[] {
+  return [
+    t('employee.monthly.adjustments.column.version'),
+    t('employee.monthly.adjustments.column.date'),
+    t('employee.monthly.adjustments.column.source'),
+    t('employee.monthly.adjustments.column.effect'),
+    t('employee.monthly.adjustments.column.balanceDelta'),
+    t('employee.monthly.adjustments.column.link'),
+  ];
 }
 
-function attentionLabel(code: string): string {
-  const labels: Readonly<Record<string, string>> = {
-    ABSENCE_APPROVAL_PENDING: 'Absence approval pending',
-    ATTENDANCE_INCOMPLETE: 'Attendance is incomplete',
-    ATTENDANCE_INVALID_EVENT_ORDER: 'Attendance event order is invalid',
-    ATTENDANCE_INVALID_EVENT_PRECISION: 'Attendance event precision is invalid',
-    ATTENDANCE_OVERLAP: 'Attendance intervals overlap',
-    CORRECTION_UNRESOLVED: 'Correction request unresolved',
-    FLEX_NEGATIVE_THRESHOLD_EXCEEDED: 'Negative flexible-time threshold exceeded',
-    FLEX_POSITIVE_THRESHOLD_EXCEEDED: 'Positive flexible-time threshold exceeded',
-    LEDGER_SOURCE_MISMATCH: 'Calculated and posted time do not reconcile',
-    POLICY_ASSIGNMENT_OVERLAP: 'Time policy assignments overlap',
-    POLICY_CONFIGURATION_INVALID: 'Time policy configuration is invalid',
-    POLICY_NOT_ASSIGNED: 'Time policy is missing',
-    SCHEDULE_ASSIGNMENT_OVERLAP: 'Schedule assignments overlap',
-    SCHEDULE_NOT_ASSIGNED: 'Schedule is missing',
-    WORK_DURING_ABSENCE: 'Work overlaps approved absence',
-    WORK_ON_HOLIDAY: 'Work was recorded on a holiday',
-    WORK_ON_ZERO_EXPECTED_DAY: 'Work was recorded on a zero-expected day',
-  };
-  return labels[code] ?? code.replaceAll('_', ' ').toLowerCase();
+function dailyColumnLabels(t: MessageTranslator, includeBreak: boolean): readonly string[] {
+  return [
+    t('employee.monthly.daily.column.date'),
+    t('employee.monthly.daily.column.status'),
+    t('employee.monthly.daily.column.expected'),
+    t('employee.monthly.daily.column.worked'),
+    ...(includeBreak ? [t('employee.monthly.daily.column.break')] : []),
+    t('employee.monthly.daily.column.absenceCredit'),
+    t('employee.monthly.daily.column.adjustment'),
+    t('employee.monthly.daily.column.credited'),
+    t('employee.monthly.daily.column.balance'),
+  ];
 }
 
-function dailyStatusLabel(status: MonthlyPeriod['rows'][number]['status']): string {
-  if (status === 'MISSING') return 'Missing daily result';
-  return status.toLowerCase().replace(/^./u, (value) => value.toUpperCase());
+function dailyStatusLabel(
+  status: MonthlyPeriod['rows'][number]['status'],
+  t: MessageTranslator,
+): string {
+  const keys = {
+    COMPLETE: 'employee.monthly.daily.status.complete',
+    INCOMPLETE: 'employee.monthly.daily.status.incomplete',
+    MISSING: 'employee.monthly.daily.status.missing',
+    PROVISIONAL: 'employee.monthly.daily.status.provisional',
+  } as const satisfies Readonly<Record<MonthlyPeriod['rows'][number]['status'], MessageKey>>;
+  return t(keys[status]);
 }

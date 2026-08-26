@@ -2,9 +2,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 
 import type { TodayAttentionItem } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
+import { WorkLedgerI18nProvider } from '@workledger/i18n/react';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { TodayAttention } from '../src/components/today-attention.js';
+
+let englishRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  englishRuntime = await initializeI18n('en-GB');
+});
 
 const thresholdWarning: TodayAttentionItem = {
   affectedDate: '2026-08-10',
@@ -58,16 +66,20 @@ test('hides empty attention and announces only a newly appearing blocker', async
   expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
 
   view.rerender(
-    <MemoryRouter>
-      <TodayAttention items={[thresholdWarning]} />
-    </MemoryRouter>,
+    <WorkLedgerI18nProvider runtime={requireEnglishRuntime()}>
+      <MemoryRouter>
+        <TodayAttention items={[thresholdWarning]} />
+      </MemoryRouter>
+    </WorkLedgerI18nProvider>,
   );
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
   view.rerender(
-    <MemoryRouter>
-      <TodayAttention items={[thresholdWarning, incompleteRecord]} />
-    </MemoryRouter>,
+    <WorkLedgerI18nProvider runtime={requireEnglishRuntime()}>
+      <MemoryRouter>
+        <TodayAttention items={[thresholdWarning, incompleteRecord]} />
+      </MemoryRouter>
+    </WorkLedgerI18nProvider>,
   );
   await waitFor(() =>
     expect(screen.getByRole('alert')).toHaveTextContent(
@@ -78,8 +90,15 @@ test('hides empty attention and announces only a newly appearing blocker', async
 
 function renderAttention(items: readonly TodayAttentionItem[]) {
   return render(
-    <MemoryRouter>
-      <TodayAttention items={items} />
-    </MemoryRouter>,
+    <WorkLedgerI18nProvider runtime={requireEnglishRuntime()}>
+      <MemoryRouter>
+        <TodayAttention items={items} />
+      </MemoryRouter>
+    </WorkLedgerI18nProvider>,
   );
+}
+
+function requireEnglishRuntime(): I18nRuntime {
+  if (englishRuntime === undefined) throw new Error('English i18n runtime was not initialized.');
+  return englishRuntime;
 }

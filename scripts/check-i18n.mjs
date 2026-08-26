@@ -12,7 +12,28 @@ const descriptorMapPath = path.join(
   repositoryRoot,
   'packages/i18n/src/catalogs/descriptor-map.json',
 );
-const governedSourcePaths = [path.join(repositoryRoot, 'packages/i18n/src/react.tsx')];
+const governedSourcePaths = [
+  path.join(repositoryRoot, 'packages/i18n/src/react.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/today-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/daily-time-breakdown.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/today-attendance-controls.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/today-attendance-overview.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/today-attendance-timeline.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/today-attention.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/my-time-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/daily-time-record-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/request-history-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/request-new-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/notifications-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/vacation-request-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/sickness-report-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/correction-request-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/request-detail-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/personal-calendar-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/monthly-period-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/monthly-period-print.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/workflow-status-badge.tsx'),
+];
 const PLURAL_SUFFIX_PATTERN = /_(zero|one|two|few|many|other)$/u;
 const INTERPOLATION_PATTERN = /\{\{\s*([A-Za-z][A-Za-z0-9]*)\s*\}\}/gu;
 const SEMANTIC_KEY_PATTERN = /^[a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*){2,}$/u;

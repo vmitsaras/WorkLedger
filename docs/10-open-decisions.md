@@ -691,7 +691,7 @@ regression contract for `WL-1008`.
 
 ### D-508 — Non-catalog budget ownership for locale runtime behavior
 
-**Status:** Resolved by Option B in `WL-1402` and empirically amended by `WL-1404`; no longer blocking.
+**Status:** Resolved by Option B in `WL-1402` and empirically amended by `WL-1404` and `WL-1405`; no longer blocking.
 
 - ADR 0013 and the Phase 14 roadmap require the existing 910,000-byte raw and 246,000-byte gzip
   non-catalog JavaScript budgets to remain unchanged. The verified `WL-1401` graph measured 909,306
@@ -709,7 +709,7 @@ regression contract for `WL-1008`.
   unsafe minification policy, neither of which is justified by `WL-1402`.
 - Option B is accepted. The original 910,000-byte raw and 246,000-byte gzip application ceilings
   remain the named baseline. A separately named Phase 14 internationalization-runtime allowance
-  adds 70,000 raw and 22,000 gzip bytes, so the enforced combined non-catalog limits are 980,000
+  adds 76,000 raw and 22,000 gzip bytes, so the enforced combined non-catalog limits are 986,000
   raw and 268,000 gzip bytes. Largest-chunk, CSS, and locale-catalog limits do not change, and the
   allowance is not general-purpose application headroom.
 - The pinned-toolchain `WL-1402` build is 916,728 raw and 247,840 gzip bytes. A forced production
@@ -725,3 +725,7 @@ regression contract for `WL-1008`.
   validation, announcement, and shared-component integration. The allowance therefore moved by a
   bounded 15,000 raw and 4,000 gzip bytes while the original application baseline, largest chunk,
   CSS, and catalog limits remain unchanged.
+- The completed `WL-1405` employee workflow integration measures 985,603 raw and 260,782 gzip
+  non-catalog bytes. Its required source-localization behavior exceeded the previous raw ceiling
+  by 5,603 bytes, so the narrowly owned raw allowance moved by 6,000 bytes. The gzip allowance and
+  every unrelated budget remain unchanged.

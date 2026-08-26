@@ -1,5 +1,6 @@
 import {
   UnsupportedLocaleError,
+  formatCompactDuration,
   formatDateOnly,
   formatDuration,
   formatInstant,
@@ -108,8 +109,13 @@ test('formats dates with explicit locale and authoritative timezone inputs', () 
 test('formats integer-minute durations through locale plural messages', async () => {
   const english = await initializeI18n('en-GB');
   const german = await initializeI18n('de-DE');
+  const spanish = await initializeI18n('es-ES');
   expect(formatDuration(english, 61)).toBe('1 hour and 1 minute');
   expect(formatDuration(english, -120)).toBe('−2 hours and 0 minutes');
   expect(formatDuration(german, 122, true)).toBe('+2 Stunden und 2 Minuten');
+  expect(formatCompactDuration(english, -120)).toBe('−2h 00m');
+  expect(formatCompactDuration(german, 122, true)).toBe('+2 Std. 02 Min.');
+  expect(formatCompactDuration(spanish, 61)).toBe('1 h 01 min');
   expect(() => formatDuration(english, 1.5)).toThrow(RangeError);
+  expect(() => formatCompactDuration(english, 1.5)).toThrow(RangeError);
 });

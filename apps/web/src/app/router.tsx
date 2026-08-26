@@ -115,6 +115,8 @@ export function createWorkLedgerRoutes(
   if (localeController !== undefined) localeControllers.set(queryClient, localeController);
   const routeTitle = (path: Parameters<typeof canonicalRouteMessageKey>[0]) =>
     localeController === undefined ? canonicalRouteLabel(path) : canonicalRouteMessageKey(path);
+  const workflowTitle = (key: MessageKey, fallback: string) =>
+    localeController === undefined ? fallback : key;
   const publicOnlyLoader = createPublicOnlyLoader(queryClient);
   const protectedLoader = createProtectedLoader(queryClient);
 
@@ -188,14 +190,16 @@ export function createWorkLedgerRoutes(
               loader: createEmployeeTimeLoader(queryClient),
               element: <DailyTimeRecordPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: 'Daily record' },
+              handle: { title: workflowTitle('employee.records.pageTitle', 'Daily record') },
             },
             {
               path: 'monthly-periods/:periodId',
               loader: createMonthlyPeriodLoader(queryClient),
               element: <MonthlyPeriodPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: 'Monthly period' },
+              handle: {
+                title: workflowTitle('employee.monthly.frame.title', 'Monthly period'),
+              },
             },
             {
               path: 'requests',
@@ -215,7 +219,9 @@ export function createWorkLedgerRoutes(
                 return { Component: RequestNewPage };
               },
               errorElement: <RouteBoundary />,
-              handle: { title: 'New request' },
+              handle: {
+                title: workflowTitle('employee.requests.history.new', 'New request'),
+              },
             },
             {
               path: 'requests/:requestId',
@@ -225,7 +231,9 @@ export function createWorkLedgerRoutes(
                 return { Component: RequestDetailPage };
               },
               errorElement: <RouteBoundary />,
-              handle: { title: 'Request details' },
+              handle: {
+                title: workflowTitle('employee.requests.detail.pageTitle', 'Request details'),
+              },
             },
             {
               path: 'calendar',
@@ -237,13 +245,11 @@ export function createWorkLedgerRoutes(
             {
               path: 'time-records/:recordId/correction',
               loader: createCorrectionRequestRedirectLoader(queryClient),
-              element: (
-                <RouteState kind="loading" title="Opening correction request">
-                  <p>WorkLedger is opening the request chooser.</p>
-                </RouteState>
-              ),
+              element: <CorrectionRequestRedirect />,
               errorElement: <RouteBoundary />,
-              handle: { title: 'Request a time correction' },
+              handle: {
+                title: workflowTitle('employee.correction.title', 'Request a time correction'),
+              },
             },
             {
               path: 'team',
@@ -377,6 +383,24 @@ export function createWorkLedgerRoutes(
       ],
     },
   ];
+}
+
+function CorrectionRequestRedirect() {
+  const runtime = useOptionalWorkLedgerI18n();
+  const title =
+    runtime === null
+      ? 'Loading the daily record'
+      : translate(runtime, 'employee.correction.loading.title');
+  const description =
+    runtime === null
+      ? 'Preparing the current record and correction form.'
+      : translate(runtime, 'employee.correction.loading.description');
+
+  return (
+    <RouteState kind="loading" title={title}>
+      <p>{description}</p>
+    </RouteState>
+  );
 }
 
 function InitialRouteFallback() {

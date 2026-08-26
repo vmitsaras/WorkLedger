@@ -19,6 +19,11 @@ const localizedRouteTitleKeys = new Set<MessageKey>([
   'auth.recovery.title',
   'auth.reset.title',
   'auth.activation.title',
+  'employee.correction.title',
+  'employee.monthly.frame.title',
+  'employee.records.pageTitle',
+  'employee.requests.detail.pageTitle',
+  'employee.requests.history.new',
 ]);
 
 function isLocalizedRouteTitle(value: string): value is MessageKey {

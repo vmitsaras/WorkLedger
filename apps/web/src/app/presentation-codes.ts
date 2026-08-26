@@ -7,7 +7,12 @@ import type {
   SelfSessionSummary,
   TodayAttentionRecovery,
 } from '@workledger/contracts';
-import { translate, type I18nRuntime, type MessageKey } from '@workledger/i18n';
+import {
+  translate,
+  type I18nRuntime,
+  type MessageArguments,
+  type MessageKey,
+} from '@workledger/i18n';
 
 type AttentionCode = CalculationBlockerCode | CalculationWarningCode;
 
@@ -17,43 +22,77 @@ type AttentionPresentation = Readonly<{
   whatHappensNext: string;
 }>;
 
-const ATTENTION_PRESENTATION: Readonly<Record<AttentionCode, AttentionPresentation>> = {
+type AttentionPresentationKeys = Readonly<{
+  reason: MessageKey;
+  title: MessageKey;
+  whatHappensNext: MessageKey;
+}>;
+
+type MessageTranslator = <Key extends MessageKey>(
+  key: Key,
+  ...args: MessageArguments<Key>
+) => string;
+
+const ATTENTION_PRESENTATION: Readonly<Record<AttentionCode, AttentionPresentationKeys>> = {
   ABSENCE_APPROVAL_PENDING: {
-    reason: 'An approval-required absence may still change this calculation.',
-    title: 'Absence decision pending',
-    whatHappensNext: 'The request remains pending until an authorized reviewer records a decision.',
+    reason: 'employee.today.attention.descriptor.absenceApprovalPending.reason',
+    title: 'employee.today.attention.descriptor.absenceApprovalPending.title',
+    whatHappensNext: 'employee.today.attention.descriptor.absenceApprovalPending.next',
   },
-  ATTENDANCE_INCOMPLETE: recoveryPresentation('Attendance record incomplete'),
-  ATTENDANCE_INVALID_EVENT_ORDER: recoveryPresentation('Attendance event order needs review'),
-  ATTENDANCE_INVALID_EVENT_PRECISION: recoveryPresentation('Attendance event time needs review'),
-  ATTENDANCE_OVERLAP: recoveryPresentation('Attendance intervals overlap'),
+  ATTENDANCE_INCOMPLETE: recoveryPresentation(
+    'employee.today.attention.descriptor.attendanceIncomplete.title',
+  ),
+  ATTENDANCE_INVALID_EVENT_ORDER: recoveryPresentation(
+    'employee.today.attention.descriptor.attendanceInvalidEventOrder.title',
+  ),
+  ATTENDANCE_INVALID_EVENT_PRECISION: recoveryPresentation(
+    'employee.today.attention.descriptor.attendanceInvalidEventPrecision.title',
+  ),
+  ATTENDANCE_OVERLAP: recoveryPresentation(
+    'employee.today.attention.descriptor.attendanceOverlap.title',
+  ),
   CORRECTION_UNRESOLVED: {
-    reason: 'A submitted correction may still change this calculation.',
-    title: 'Correction request needs review',
-    whatHappensNext:
-      'The request page shows whether review or employee changes are next; original events stay unchanged until an approved correction is applied.',
+    reason: 'employee.today.attention.descriptor.correctionUnresolved.reason',
+    title: 'employee.today.attention.descriptor.correctionUnresolved.title',
+    whatHappensNext: 'employee.today.attention.descriptor.correctionUnresolved.next',
   },
   FLEX_NEGATIVE_THRESHOLD_EXCEEDED: {
-    reason: 'The posted flexible-time balance is below the configured warning threshold.',
-    title: 'Negative flexible-time threshold reached',
-    whatHappensNext:
-      'The warning clears only after posted ledger entries bring the balance back within the configured threshold.',
+    reason: 'employee.today.attention.descriptor.flexNegative.reason',
+    title: 'employee.today.attention.descriptor.flexNegative.title',
+    whatHappensNext: 'employee.today.attention.descriptor.flexNegative.next',
   },
   FLEX_POSITIVE_THRESHOLD_EXCEEDED: {
-    reason: 'The posted flexible-time balance is above the configured warning threshold.',
-    title: 'Positive flexible-time threshold reached',
-    whatHappensNext:
-      'The warning clears only after posted ledger entries bring the balance back within the configured threshold.',
+    reason: 'employee.today.attention.descriptor.flexPositive.reason',
+    title: 'employee.today.attention.descriptor.flexPositive.title',
+    whatHappensNext: 'employee.today.attention.descriptor.flexPositive.next',
   },
-  LEDGER_SOURCE_MISMATCH: administratorPresentation('Ledger reconciliation needed'),
-  POLICY_ASSIGNMENT_OVERLAP: administratorPresentation('Time-policy assignment overlap'),
-  POLICY_CONFIGURATION_INVALID: administratorPresentation('Time-policy configuration needs review'),
-  POLICY_NOT_ASSIGNED: administratorPresentation('Time policy missing'),
-  SCHEDULE_ASSIGNMENT_OVERLAP: administratorPresentation('Work-schedule assignment overlap'),
-  SCHEDULE_NOT_ASSIGNED: administratorPresentation('Work schedule missing'),
-  WORK_DURING_ABSENCE: recoveryPresentation('Work overlaps credited absence'),
-  WORK_ON_HOLIDAY: calculationPresentation('Work recorded on a public holiday'),
-  WORK_ON_ZERO_EXPECTED_DAY: calculationPresentation('Work recorded on a zero-expected day'),
+  LEDGER_SOURCE_MISMATCH: administratorPresentation(
+    'employee.today.attention.descriptor.ledgerSourceMismatch.title',
+  ),
+  POLICY_ASSIGNMENT_OVERLAP: administratorPresentation(
+    'employee.today.attention.descriptor.policyAssignmentOverlap.title',
+  ),
+  POLICY_CONFIGURATION_INVALID: administratorPresentation(
+    'employee.today.attention.descriptor.policyConfigurationInvalid.title',
+  ),
+  POLICY_NOT_ASSIGNED: administratorPresentation(
+    'employee.today.attention.descriptor.policyNotAssigned.title',
+  ),
+  SCHEDULE_ASSIGNMENT_OVERLAP: administratorPresentation(
+    'employee.today.attention.descriptor.scheduleAssignmentOverlap.title',
+  ),
+  SCHEDULE_NOT_ASSIGNED: administratorPresentation(
+    'employee.today.attention.descriptor.scheduleNotAssigned.title',
+  ),
+  WORK_DURING_ABSENCE: recoveryPresentation(
+    'employee.today.attention.descriptor.workDuringAbsence.title',
+  ),
+  WORK_ON_HOLIDAY: calculationPresentation(
+    'employee.today.attention.descriptor.workOnHoliday.title',
+  ),
+  WORK_ON_ZERO_EXPECTED_DAY: calculationPresentation(
+    'employee.today.attention.descriptor.workOnZeroExpectedDay.title',
+  ),
 };
 
 const REPORT_PRESENTATION: Readonly<
@@ -87,18 +126,24 @@ const REPORT_PRESENTATION: Readonly<
 };
 
 const NOTIFICATION_PRESENTATION: Readonly<
-  Record<NotificationEvent, Readonly<{ body: string; title: string }>>
+  Record<NotificationEvent, Readonly<{ body: MessageKey; title: MessageKey }>>
 > = {
   ITEM_ACKNOWLEDGED: {
-    body: 'An item you submitted was acknowledged.',
-    title: 'Item acknowledged',
+    body: 'employee.notifications.presentation.acknowledged.body',
+    title: 'employee.notifications.presentation.acknowledged.title',
   },
-  ITEM_APPROVED: { body: 'An item you submitted was approved.', title: 'Item approved' },
+  ITEM_APPROVED: {
+    body: 'employee.notifications.presentation.approved.body',
+    title: 'employee.notifications.presentation.approved.title',
+  },
   ITEM_CHANGES_REQUESTED: {
-    body: 'An item you submitted needs changes.',
-    title: 'Changes requested',
+    body: 'employee.notifications.presentation.changesRequested.body',
+    title: 'employee.notifications.presentation.changesRequested.title',
   },
-  ITEM_REJECTED: { body: 'An item you submitted was not approved.', title: 'Item not approved' },
+  ITEM_REJECTED: {
+    body: 'employee.notifications.presentation.rejected.body',
+    title: 'employee.notifications.presentation.rejected.title',
+  },
 };
 
 const FIELD_ERROR_PRESENTATION: Readonly<Record<ApiFieldErrorCode, MessageKey>> = {
@@ -120,24 +165,35 @@ const FIELD_ERROR_ENGLISH: Readonly<Record<ApiFieldErrorCode, string>> = {
   VALUE_TOO_SMALL: 'Use a larger value.',
 };
 
-export function attentionPresentation(code: AttentionCode): AttentionPresentation {
-  return ATTENTION_PRESENTATION[code];
+export function attentionPresentation(
+  code: AttentionCode,
+  t: MessageTranslator,
+): AttentionPresentation {
+  const presentation = ATTENTION_PRESENTATION[code];
+  return {
+    reason: t(presentation.reason),
+    title: t(presentation.title),
+    whatHappensNext: t(presentation.whatHappensNext),
+  };
 }
 
-export function attentionRecoveryLabel(recovery: TodayAttentionRecovery): string {
+export function attentionRecoveryLabel(
+  recovery: TodayAttentionRecovery,
+  t: MessageTranslator,
+): string {
   switch (recovery.action) {
     case 'FIX_ENTRY':
-      return 'Fix entry';
+      return t('employee.today.attention.recovery.fixEntry');
     case 'REVIEW_BALANCE_HISTORY':
-      return 'View balance history';
+      return t('employee.today.attention.recovery.reviewBalanceHistory');
     case 'REVIEW_CALCULATION':
-      return 'Review calculation';
+      return t('employee.today.attention.recovery.reviewCalculation');
     case 'REVIEW_RECORD':
-      return 'Review affected day';
+      return t('employee.today.attention.recovery.reviewRecord');
     case 'REVIEW_REQUEST':
-      return 'Review request';
+      return t('employee.today.attention.recovery.reviewRequest');
     case 'REVIEW_TIMELINE':
-      return 'Review timeline';
+      return t('employee.today.attention.recovery.reviewTimeline');
   }
 }
 
@@ -152,8 +208,10 @@ export function fieldErrorPresentation(
 
 export function notificationPresentation(
   event: NotificationEvent,
+  t: MessageTranslator,
 ): Readonly<{ body: string; title: string }> {
-  return NOTIFICATION_PRESENTATION[event];
+  const presentation = NOTIFICATION_PRESENTATION[event];
+  return { body: t(presentation.body), title: t(presentation.title) };
 }
 
 export function reportPresentation(
@@ -181,28 +239,26 @@ export function sessionDevicePresentation(
   return `${browser} on ${platform}`;
 }
 
-function administratorPresentation(title: string): AttentionPresentation {
+function administratorPresentation(title: MessageKey): AttentionPresentationKeys {
   return {
-    reason: 'The assigned configuration cannot produce a reliable calculation.',
+    reason: 'employee.today.attention.descriptor.administrator.reason',
     title,
-    whatHappensNext:
-      'The record remains blocked until an authorized administrator resolves the configuration issue.',
+    whatHappensNext: 'employee.today.attention.descriptor.administrator.next',
   };
 }
 
-function calculationPresentation(title: string): AttentionPresentation {
+function calculationPresentation(title: MessageKey): AttentionPresentationKeys {
   return {
-    reason: 'Work is recorded on a day with no expected working time.',
+    reason: 'employee.today.attention.descriptor.calculation.reason',
     title,
-    whatHappensNext: 'The calculation explanation confirms why this record needs review.',
+    whatHappensNext: 'employee.today.attention.descriptor.calculation.next',
   };
 }
 
-function recoveryPresentation(title: string): AttentionPresentation {
+function recoveryPresentation(title: MessageKey): AttentionPresentationKeys {
   return {
-    reason: 'This attendance record needs correction before it can be relied on.',
+    reason: 'employee.today.attention.descriptor.recovery.reason',
     title,
-    whatHappensNext:
-      'Choose the affected day and submit a correction. Original events remain unchanged while the request is reviewed.',
+    whatHappensNext: 'employee.today.attention.descriptor.recovery.next',
   };
 }

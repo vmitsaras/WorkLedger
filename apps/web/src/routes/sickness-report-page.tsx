@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import type { SubmitSicknessReport } from '@workledger/contracts';
-import { translate, type I18nRuntime } from '@workledger/i18n';
-import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
+import {
+  formatCompactDuration,
+  formatDateOnly,
+  translate,
+  type I18nRuntime,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, buttonVariants } from '@workledger/ui';
 
 import {
@@ -11,7 +16,6 @@ import {
   submitAbsenceCancellation,
   submitSicknessReport,
 } from '../app/api-client.js';
-import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { fieldErrorPresentation } from '../app/presentation-codes.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
@@ -35,7 +39,8 @@ const EMPTY_VALUES: FormValues = Object.freeze({
 });
 
 export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
-  const runtime = useOptionalWorkLedgerI18n();
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const summaryRef = useRef<HTMLElement>(null);
   const successRef = useRef<HTMLElement>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
@@ -71,22 +76,20 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
       setCancellationRequested(true);
     } catch (error) {
       if (error instanceof ApiClientError && error.code === 'PERIOD_ADJUSTMENT_REQUIRED') {
-        setCancellationError('This report is in a locked period and needs a post-lock adjustment.');
+        setCancellationError(t('employee.absence.sickness.cancellation.locked'));
       } else if (error instanceof ApiClientError && error.code === 'ABSENCE_CANNOT_CANCEL') {
-        setCancellationError(
-          'This report can no longer be cancelled. Refresh and review its status.',
-        );
-      } else setCancellationError('WorkLedger could not request this cancellation. Try again.');
+        setCancellationError(t('employee.absence.sickness.cancellation.cannotCancel'));
+      } else setCancellationError(t('employee.absence.sickness.cancellation.error'));
     } finally {
       setCancellationPending(false);
     }
   }
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const errors = validate(values);
+    const errors = validate(values, t);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      setFormError('Correct the highlighted coverage details and report sickness again.');
+      setFormError(t('employee.absence.sickness.error.correct'));
       return;
     }
     setSubmitting(true);
@@ -96,12 +99,12 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
     } catch (error) {
       if (error instanceof ApiClientError && error.fields !== undefined) {
         setFieldErrors(mapServerFieldErrors(error.fields, runtime));
-        setFormError('Correct the highlighted coverage details and report sickness again.');
+        setFormError(t('employee.absence.sickness.error.correct'));
       } else if (error instanceof ApiClientError && error.code === 'ABSENCE_RETROACTIVE_LIMIT')
-        setFormError('This coverage is outside your organization’s sickness reporting window.');
+        setFormError(t('employee.absence.sickness.error.retroactive'));
       else if (error instanceof ApiClientError && error.code === 'ABSENCE_OVERLAP')
-        setFormError('This coverage overlaps another absence request. Choose different coverage.');
-      else setFormError('WorkLedger could not report sickness. Try again.');
+        setFormError(t('employee.absence.sickness.error.overlap'));
+      else setFormError(t('employee.absence.sickness.error.unavailable'));
     } finally {
       setSubmitting(false);
     }
@@ -110,15 +113,14 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
     <section className="grid max-w-3xl gap-6">
       {embedded ? null : (
         <PageHeader
-          eyebrow="Requests"
-          title="Report sickness"
-          description="Choose full-day, obligation-half, or exact time coverage. Do not include a diagnosis, symptoms, treatment, or other medical detail."
+          eyebrow={t('employee.absence.sickness.eyebrow')}
+          title={t('employee.absence.sickness.title')}
+          description={t('employee.absence.sickness.description')}
         />
       )}
       {embedded ? (
         <p className="m-0 text-[var(--wl-text-muted)]">
-          Choose full-day, obligation-half, or exact time coverage. Do not include a diagnosis,
-          symptoms, treatment, or other medical detail.
+          {t('employee.absence.sickness.description')}
         </p>
       ) : null}
       {success === null ? (
@@ -129,10 +131,12 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
             summaryRef={summaryRef}
           />
           <fieldset className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4">
-            <legend className="px-1 text-lg font-bold">Sickness coverage</legend>
+            <legend className="px-1 text-lg font-bold">
+              {t('employee.absence.sickness.form.legend')}
+            </legend>
             <div className="grid gap-2">
               <label htmlFor="coverage-kind" className="font-semibold">
-                Coverage
+                {t('employee.absence.coverage.label')}
               </label>
               <select
                 id="coverage-kind"
@@ -140,14 +144,21 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
                 value={values.kind}
                 onChange={(event) => update('kind', event.target.value)}
               >
-                <option value="FULL_DAY">Full day or date range</option>
-                <option value="FIRST_HALF">First half of expected work</option>
-                <option value="SECOND_HALF">Second half of expected work</option>
-                <option value="MINUTE_INTERVAL">Exact local time interval</option>
+                <option value="FULL_DAY">
+                  {t('employee.absence.coverage.option.fullDayRange')}
+                </option>
+                <option value="FIRST_HALF">
+                  {t('employee.absence.coverage.option.firstHalf')}
+                </option>
+                <option value="SECOND_HALF">
+                  {t('employee.absence.coverage.option.secondHalf')}
+                </option>
+                <option value="MINUTE_INTERVAL">
+                  {t('employee.absence.coverage.option.exact')}
+                </option>
               </select>
               <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                First and second half describe equal portions of your scheduled obligation, not
-                morning and afternoon. Choose exact time for a clock-specific absence.
+                {t('employee.absence.coverage.help')}
               </p>
             </div>
             {values.kind === 'FULL_DAY' ? (
@@ -155,14 +166,14 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
                 <DateField
                   error={fieldErrors['startDate']}
                   id="startDate"
-                  label="First day"
+                  label={t('employee.absence.coverage.field.firstDay')}
                   onChange={(value) => update('startDate', value)}
                   value={values.startDate}
                 />
                 <DateField
                   error={fieldErrors['endDate']}
                   id="endDate"
-                  label="Last day"
+                  label={t('employee.absence.coverage.field.lastDay')}
                   onChange={(value) => update('endDate', value)}
                   value={values.endDate}
                 />
@@ -172,7 +183,7 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
                 <DateField
                   error={fieldErrors['localDate']}
                   id="localDate"
-                  label="Local date"
+                  label={t('employee.absence.coverage.field.localDate')}
                   onChange={(value) => update('localDate', value)}
                   value={values.localDate}
                 />
@@ -180,7 +191,7 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
                   <TimeField
                     error={fieldErrors['startsAt']}
                     id="startsAt"
-                    label="Start time"
+                    label={t('employee.absence.coverage.field.startTime')}
                     onChange={(value) => update('startsAt', value)}
                     value={values.startsAt}
                   />
@@ -189,7 +200,7 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
                   <TimeField
                     error={fieldErrors['endsAt']}
                     id="endsAt"
-                    label="End time"
+                    label={t('employee.absence.coverage.field.endTime')}
                     onChange={(value) => update('endsAt', value)}
                     value={values.endsAt}
                   />
@@ -198,15 +209,16 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
             )}
           </fieldset>
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            Your report takes effect immediately. A manager or HR administrator may acknowledge it;
-            acknowledgement does not change the report’s effect.
+            {t('employee.absence.sickness.form.notice')}
           </p>
           <div className="flex flex-wrap gap-3">
             <Button type="submit" isDisabled={submitting}>
-              {submitting ? 'Reporting sickness…' : 'Report sickness'}
+              {submitting
+                ? t('employee.absence.sickness.form.submitting')
+                : t('employee.absence.sickness.form.submit')}
             </Button>
             <Link className={buttonVariants({ variant: 'secondary' })} to="/requests/new">
-              Cancel
+              {t('employee.absence.action.cancel')}
             </Link>
           </div>
         </form>
@@ -215,24 +227,35 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
           className="outline-none"
           ref={successRef}
           tabIndex={-1}
-          title="Sickness reported"
+          title={t('employee.absence.sickness.success.title')}
           tone="success"
         >
-          <p className="m-0">Your sickness report is effective and awaiting acknowledgement.</p>
-          <ul className="m-0 grid gap-1 pl-5 text-sm" aria-label="Reported sickness coverage">
+          <p className="m-0">{t('employee.absence.sickness.success.description')}</p>
+          <ul
+            className="m-0 grid gap-1 pl-5 text-sm"
+            aria-label={t('employee.absence.sickness.success.coverageLabel')}
+          >
             {success.coverage.map((coverage) => (
               <li key={`${coverage.localDate}-${coverage.kind}-${coverage.startsAtMinute ?? ''}`}>
-                {formatLocalDate(coverage.localDate)} —{' '}
-                {coverageLabel(coverage.kind, coverage.startsAtMinute, coverage.endsAtMinute)}:{' '}
-                {formatDuration(coverage.creditMinutes)} credited
-                {coverage.holiday ? ' (public holiday; no credit needed)' : ''}
+                {t('employee.absence.coverage.line', {
+                  coverage: coverageLabel(
+                    coverage.kind,
+                    coverage.startsAtMinute,
+                    coverage.endsAtMinute,
+                    t,
+                  ),
+                  date: formatDateOnly(runtime.locale, coverage.localDate),
+                  duration: t('employee.absence.sickness.success.credited', {
+                    duration: formatCompactDuration(runtime, coverage.creditMinutes),
+                  }),
+                  note: coverage.holiday ? t('employee.absence.sickness.success.holidayNote') : '',
+                })}
               </li>
             ))}
           </ul>
           {cancellationRequested ? (
             <p className="m-0" role="status">
-              Cancellation requested. Your report remains effective until an eligible manager or HR
-              administrator decides it.
+              {t('employee.absence.sickness.cancellation.requested')}
             </p>
           ) : (
             <div className="grid gap-2">
@@ -243,10 +266,12 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
                 onPress={() => void requestCancellation()}
                 variant="secondary"
               >
-                {cancellationPending ? 'Requesting cancellation…' : 'Request cancellation'}
+                {cancellationPending
+                  ? t('employee.absence.sickness.cancellation.pending')
+                  : t('employee.absence.sickness.cancellation.request')}
               </Button>
               <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                A cancellation does not remove your report until it is approved.
+                {t('employee.absence.sickness.cancellation.description')}
               </p>
               {cancellationError === undefined ? null : (
                 <p className="m-0 text-sm text-[var(--wl-danger)]" role="alert">
@@ -259,7 +284,7 @@ export function SicknessReportPage({ embedded = false }: Readonly<{ embedded?: b
             className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
             to={`/requests/${success.id}`}
           >
-            View request details
+            {t('employee.absence.action.viewDetails')}
           </Link>
         </Alert>
       )}
@@ -321,20 +346,28 @@ function Field(
     </div>
   );
 }
-function validate(values: FormValues): Readonly<Record<string, string>> {
+function validate(
+  values: FormValues,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): Readonly<Record<string, string>> {
   const errors: Record<string, string> = {};
   if (values.kind === 'FULL_DAY') {
-    if (values.startDate === '') errors['startDate'] = 'Choose the first sickness day.';
-    if (values.endDate === '') errors['endDate'] = 'Choose the last sickness day.';
+    if (values.startDate === '')
+      errors['startDate'] = t('employee.absence.coverage.validation.firstDay');
+    if (values.endDate === '')
+      errors['endDate'] = t('employee.absence.coverage.validation.lastDay');
     if (values.startDate !== '' && values.endDate !== '' && values.endDate < values.startDate)
-      errors['endDate'] = 'The last day must be on or after the first day.';
+      errors['endDate'] = t('employee.absence.coverage.validation.lastDayAfterFirst');
   } else {
-    if (values.localDate === '') errors['localDate'] = 'Choose the local date.';
+    if (values.localDate === '')
+      errors['localDate'] = t('employee.absence.coverage.validation.localDate');
     if (values.kind === 'MINUTE_INTERVAL') {
-      if (values.startsAt === '') errors['startsAt'] = 'Choose a start time.';
-      if (values.endsAt === '') errors['endsAt'] = 'Choose an end time.';
+      if (values.startsAt === '')
+        errors['startsAt'] = t('employee.absence.coverage.validation.startTime');
+      if (values.endsAt === '')
+        errors['endsAt'] = t('employee.absence.coverage.validation.endTime');
       if (values.startsAt !== '' && values.endsAt !== '' && values.startsAt >= values.endsAt)
-        errors['endsAt'] = 'End time must be after start time.';
+        errors['endsAt'] = t('employee.absence.coverage.validation.endAfterStart');
     }
   }
   return errors;
@@ -359,10 +392,11 @@ function coverageLabel(
   kind: CoverageKind,
   startsAtMinute: number | null,
   endsAtMinute: number | null,
+  t: ReturnType<typeof useWorkLedgerMessage>,
 ): string {
-  if (kind === 'FULL_DAY') return 'Full day';
-  if (kind === 'FIRST_HALF') return 'First half of expected work';
-  if (kind === 'SECOND_HALF') return 'Second half of expected work';
+  if (kind === 'FULL_DAY') return t('employee.absence.coverage.name.fullDay');
+  if (kind === 'FIRST_HALF') return t('employee.absence.coverage.name.firstHalf');
+  if (kind === 'SECOND_HALF') return t('employee.absence.coverage.name.secondHalf');
   return `${formatClock(startsAtMinute)}–${formatClock(endsAtMinute)}`;
 }
 function formatClock(value: number | null): string {
@@ -373,15 +407,13 @@ function formatClock(value: number | null): string {
 }
 function mapServerFieldErrors(
   fields: ApiClientError['fields'],
-  runtime: I18nRuntime | null,
+  runtime: I18nRuntime,
 ): Readonly<Record<string, string>> {
   return Object.fromEntries(
     Object.entries(fields ?? {}).map(([field, errors]) => [
       field,
       errors[0] === undefined
-        ? runtime === null
-          ? 'Correct this value.'
-          : translate(runtime, 'shared.validation.correctValue')
+        ? translate(runtime, 'shared.validation.correctValue')
         : fieldErrorPresentation(errors[0].code, runtime),
     ]),
   );

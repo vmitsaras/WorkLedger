@@ -382,7 +382,7 @@ test('renders the role-aware shell and focuses each completed route navigation',
   expect(within(progress).getByText('Estimated finish')).toBeVisible();
   expect(within(progress).getByText('Provisional difference')).toBeVisible();
   expect(within(progress).getByText('−4h 45m')).toBeVisible();
-  expect(within(progress).getByText('5:30 PM')).toBeVisible();
+  expect(within(progress).getByText('17:30')).toBeVisible();
   expect(within(progress).getByText('Assumes no additional break.')).toBeVisible();
   expect(within(progress).getByText('4h 45m')).toBeVisible();
   expect(within(progress).getByText('0h 30m')).toBeVisible();
@@ -394,7 +394,7 @@ test('renders the role-aware shell and focuses each completed route navigation',
   expect(progressbar).toHaveAttribute('aria-valuetext', '3h 15m credited of 8h 00m expected.');
   const postedBalance = screen.getByRole('region', { name: 'Posted balance' });
   expect(within(postedBalance).getByText('+6h 20m')).toBeVisible();
-  expect(postedBalance).toHaveTextContent('Posted through Monday, August 10, 2026.');
+  expect(postedBalance).toHaveTextContent('Posted through Monday, 10 August 2026.');
   expect(
     within(postedBalance).getByText(/Today is still provisional and is not included/u),
   ).toBeVisible();
@@ -599,9 +599,8 @@ test('renders self-only leave balances with an explainable source-entry list', a
   expect(await screen.findByRole('heading', { name: 'My balances' })).toBeVisible();
   expect(await screen.findByRole('heading', { name: 'Leave balances' })).toBeVisible();
   expect(screen.getByText('Vacation')).toBeVisible();
-  expect(screen.getByText('Pending reservation')).toBeVisible();
+  expect(screen.getAllByText('Pending reservation')).toHaveLength(2);
   expect(screen.getByRole('heading', { name: 'Leave entitlement source entries' })).toBeVisible();
-  expect(screen.getByText('pending reservation')).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -609,7 +608,7 @@ test('presents a daily record with calculation, exact session intervals, and off
   vi.stubGlobal('fetch', authenticatedFetch());
   const { container } = renderApplication('/time-records/123e4567-e89b-42d3-a456-426614174301');
 
-  expect(await screen.findByRole('heading', { name: /August 11, 2026/u })).toBeVisible();
+  expect(await screen.findByRole('heading', { name: /11 August 2026/u })).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Calculation' })).toBeVisible();
   expect(screen.getAllByText('8h 30m')).not.toHaveLength(0);
   expect(screen.getByRole('heading', { name: 'Work sessions and breaks' })).toBeVisible();
@@ -643,7 +642,7 @@ test('routes an incomplete session from the previous date into the correction wo
   vi.stubGlobal('fetch', authenticatedFetch(TODAY_ATTENDANCE, incompleteRecord));
   const { container } = renderApplication(`/time-records/${recordId}`);
 
-  expect(await screen.findByText('Attendance entry incomplete')).toBeVisible();
+  expect(await screen.findByText('Attendance record incomplete')).toBeVisible();
   expect(screen.getByText('Attendance intervals overlap')).toBeVisible();
   expect(screen.getByText(/Continues from the previous local date/u)).toBeVisible();
   expect(screen.getByText(/Continues into the next local date/u)).toBeVisible();
@@ -747,7 +746,7 @@ test('presents an accessible vacation-request form with a focused validation sum
   await user.selectOptions(screen.getByLabelText('Coverage'), 'FULL_DAY');
   await user.click(screen.getByRole('button', { name: 'Submit vacation request' }));
   expect(await screen.findByRole('heading', { name: 'There is a problem' })).toBeVisible();
-  expect(screen.getByRole('link', { name: /Choose the first vacation day/u })).toHaveAttribute(
+  expect(screen.getByRole('link', { name: /Choose the first day/u })).toHaveAttribute(
     'href',
     '#startDate',
   );
@@ -1007,11 +1006,11 @@ test('presents equivalent accessible personal calendar and agenda information', 
   expect(
     screen.queryByText('Scroll horizontally to review all seven days.'),
   ).not.toBeInTheDocument();
-  expect(screen.getByText('Vacation: Full day (submitted)')).toBeVisible();
+  expect(screen.getByText('Vacation: Full day (Submitted)')).toBeVisible();
   expect(screen.getByText('Public holiday: Summer holiday')).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Agenda list' }));
   expect(screen.getByRole('list', { name: /Calendar agenda for August 2026/u })).toBeVisible();
-  expect(screen.getByText('Vacation: Full day (submitted)')).toBeVisible();
+  expect(screen.getByText('Vacation: Full day (Submitted)')).toBeVisible();
   await expectNoAxeViolations(container);
 });
 
@@ -1042,7 +1041,7 @@ test('explains incomplete overnight record slices without presenting a final cal
 
   expect(await screen.findByRole('heading', { name: 'This record is incomplete' })).toBeVisible();
   expect(screen.getByText('This calculation is not a final posted result.')).toBeVisible();
-  expect(screen.getByText('Attendance entry incomplete')).toBeVisible();
+  expect(screen.getByText('Attendance record incomplete')).toBeVisible();
   expect(screen.getByRole('link', { name: 'Fix entry' })).toHaveAttribute(
     'href',
     '/requests/new?recordId=123e4567-e89b-42d3-a456-426614174302',
@@ -1122,7 +1121,7 @@ test('explains corrected and original Today evidence in a semantic calculation t
   expect(table).toBeVisible();
 
   const timeline = screen.getByRole('region', { name: 'Today’s timeline' });
-  expect(timeline).toHaveTextContent('Tuesday, August 11, 2026 in Europe/Berlin');
+  expect(timeline).toHaveTextContent('Tuesday, 11 August 2026 in Europe/Berlin');
   expect(timeline).toHaveTextContent('Events sharing one time keep their recorded order.');
   expect(within(timeline).getByRole('heading', { name: 'Approved interpretation' })).toBeVisible();
   expect(timeline).toHaveTextContent('Worked time changed from 3h 15m to 2h 45m (−0h 30m).');
@@ -1132,10 +1131,10 @@ test('explains corrected and original Today evidence in a semantic calculation t
   const events = within(originalList).getAllByRole('listitem');
   expect(events).toHaveLength(4);
   expect(events.map((event) => event.textContent)).toEqual([
-    '9:00 AMClocked in. Work session started.',
-    '10:45 AMBreak started. Working time paused.',
-    '11:15 AMBreak ended. Working time resumed.',
-    '12:45 PMClocked out. Work session ended.',
+    '9:00Clocked in. Work session started.',
+    '10:45Break started. Working time paused.',
+    '11:15Break ended. Working time resumed.',
+    '12:45Clocked out. Work session ended.',
   ]);
   await expectNoAxeViolations(container);
 });
@@ -1297,7 +1296,7 @@ test('shows an incomplete calculation without inventing an estimate', async () =
   expect(screen.getByText('Work schedule missing')).toBeVisible();
   expect(screen.getByText('Blocks month submission')).toBeVisible();
   expect(
-    screen.getByText(/authorized administrator resolves the configuration issue/u),
+    screen.getByText(/authorised administrator resolves the configuration issue/u),
   ).toBeVisible();
   expect(screen.getByRole('link', { name: 'Review affected day' })).toHaveAttribute(
     'href',
@@ -1318,7 +1317,7 @@ test.each([
   },
   {
     actions: ['Start break', 'Clock out'],
-    finish: '8:45 PM',
+    finish: '20:45',
     intervalLabel: 'Current work interval',
     intervalValue: '1h 15m',
     state: 'WORKING',
@@ -1419,7 +1418,7 @@ test('clocks in once, keeps the pending control stable, refetches authoritative 
   const workingHeading = await screen.findByRole('heading', { name: 'Working' });
   await waitFor(() => expect(workingHeading).toHaveFocus());
   expect(screen.getAllByRole('status')).toHaveLength(1);
-  expect(screen.getByRole('status')).toHaveTextContent('Clocked in at 11:30 AM.');
+  expect(screen.getByRole('status')).toHaveTextContent('Clocked in at 11:30.');
   expect(screen.queryByRole('button', { name: 'Clock in' })).not.toBeInTheDocument();
   expect(clockInRequests).toBe(1);
   await expectNoAxeViolations(container);
@@ -1491,12 +1490,12 @@ test('starts and ends breaks and confirms active-break clock-out with stable key
   await user.click(await screen.findByRole('button', { name: 'Start break' }));
   const onBreakHeading = await screen.findByRole('heading', { name: 'On break' });
   await waitFor(() => expect(onBreakHeading).toHaveFocus());
-  expect(screen.getByRole('status')).toHaveTextContent('Break started at 12:00 PM.');
+  expect(screen.getByRole('status')).toHaveTextContent('Break started at 12:00.');
 
   await user.click(screen.getByRole('button', { name: 'Resume work' }));
   const workingHeading = await screen.findByRole('heading', { name: 'Working' });
   await waitFor(() => expect(workingHeading).toHaveFocus());
-  expect(screen.getByRole('status')).toHaveTextContent('Resumed work at 12:15 PM.');
+  expect(screen.getByRole('status')).toHaveTextContent('Resumed work at 12:15.');
 
   await user.click(screen.getByRole('button', { name: 'Start break' }));
   await screen.findByRole('heading', { name: 'On break' });
@@ -1536,7 +1535,7 @@ test('starts and ends breaks and confirms active-break clock-out with stable key
 
   const offWorkHeading = await screen.findByRole('heading', { name: 'Off work' });
   await waitFor(() => expect(offWorkHeading).toHaveFocus());
-  expect(screen.getByRole('status')).toHaveTextContent('Clocked out at 12:30 PM.');
+  expect(screen.getByRole('status')).toHaveTextContent('Clocked out at 12:30.');
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(clockOutRequests).toBe(1);
   await expectNoAxeViolations(container);
@@ -1683,7 +1682,7 @@ test('retries a lost attendance response with the same key and announces the rep
   const { container } = renderApplication('/today');
 
   await user.click(await screen.findByRole('button', { name: 'Clock in' }));
-  expect(await screen.findByRole('status')).toHaveTextContent('Clocked in at 11:30 AM.');
+  expect(await screen.findByRole('status')).toHaveTextContent('Clocked in at 11:30.');
   expect(screen.getAllByRole('status')).toHaveLength(1);
   expect(submittedKeys).toHaveLength(2);
   expect(submittedKeys[0]).toMatch(/^[0-9a-f-]{36}$/u);
@@ -2189,7 +2188,7 @@ test('uses the active catalog for shell navigation, route titles, and route boun
   const localeController = createWebLocaleController(await initializeI18n('de-DE'));
   const { container, unmount } = renderApplication('/today', localeController);
 
-  await screen.findByRole('heading', { name: 'Today' });
+  await screen.findByRole('heading', { name: 'Heute' });
   expect(document.title).toBe('Heute | WorkLedger');
   expect(screen.getByRole('link', { name: 'Zum Inhalt springen' })).toHaveAttribute(
     'href',
@@ -2205,6 +2204,79 @@ test('uses the active catalog for shell navigation, route titles, and route boun
   await waitFor(() => expect(notFound).toHaveFocus());
   expect(document.title).toBe('Seite nicht gefunden | WorkLedger');
   expect(screen.getByRole('link', { name: 'Zu WorkLedger zurückkehren' })).toBeVisible();
+});
+
+test.each([
+  {
+    action: 'Pause beginnen',
+    compactCredit: '3 Std. 15 Min. angerechnet',
+    currentState: 'Bei der Arbeit',
+    locale: 'de-DE' as const,
+    progress: 'Heutiger Fortschritt',
+    title: 'Heute',
+  },
+  {
+    action: 'Iniciar descanso',
+    compactCredit: '3 h 15 min abonado',
+    currentState: 'Trabajando',
+    locale: 'es-ES' as const,
+    progress: 'Progreso de hoy',
+    title: 'Hoy',
+  },
+])('renders the critical Today workflow coherently in $locale', async (expected) => {
+  const context = { ...EMPLOYEE_CONTEXT, locale: expected.locale };
+  vi.stubGlobal('fetch', authenticatedFetch(undefined, undefined, undefined, context));
+  const localeController = createWebLocaleController(await initializeI18n(expected.locale));
+  const { container } = renderApplication('/today', localeController);
+
+  const title = await screen.findByRole('heading', { level: 1, name: expected.title });
+  await waitFor(() => expect(title).toHaveFocus());
+  expect(screen.getByRole('heading', { name: expected.currentState })).toBeVisible();
+  expect(screen.getByRole('button', { name: expected.action })).toBeVisible();
+  const progress = screen.getByRole('region', { name: expected.progress });
+  expect(within(progress).getByText(expected.compactCredit)).toBeVisible();
+  expect(document.documentElement.lang).toBe(expected.locale);
+  await expectNoAxeViolations(container);
+});
+
+test.each([
+  {
+    calendarTitle: 'Kalender',
+    calendarView: 'Monatsraster',
+    emptyRequests: 'Keine Anträge entsprechen diesen Filtern',
+    locale: 'de-DE' as const,
+    newRequest: 'Neuer Antrag',
+    requestTitle: 'Meine Anträge',
+  },
+  {
+    calendarTitle: 'Calendario',
+    calendarView: 'Cuadrícula mensual',
+    emptyRequests: 'Ninguna solicitud coincide con estos filtros',
+    locale: 'es-ES' as const,
+    newRequest: 'Nueva solicitud',
+    requestTitle: 'Mis solicitudes',
+  },
+])('localizes request history and personal calendar workflows in $locale', async (expected) => {
+  const context = { ...EMPLOYEE_CONTEXT, locale: expected.locale };
+  vi.stubGlobal('fetch', authenticatedFetch(undefined, undefined, undefined, context));
+  const localeController = createWebLocaleController(await initializeI18n(expected.locale));
+  const requests = renderApplication('/requests', localeController);
+
+  expect(
+    await screen.findByRole('heading', { level: 1, name: expected.requestTitle }),
+  ).toBeVisible();
+  expect(screen.getByRole('link', { name: expected.newRequest })).toBeVisible();
+  expect(screen.getByRole('heading', { name: expected.emptyRequests })).toBeVisible();
+  await expectNoAxeViolations(requests.container);
+  requests.unmount();
+
+  const calendar = renderApplication('/calendar?month=2026-08', localeController);
+  expect(
+    await screen.findByRole('heading', { level: 1, name: expected.calendarTitle }),
+  ).toBeVisible();
+  expect(screen.getByRole('button', { name: expected.calendarView })).toBeVisible();
+  expect(document.documentElement.lang).toBe(expected.locale);
+  await expectNoAxeViolations(calendar.container);
 });
 
 function renderApplication(initialEntry: string, localeController?: WebLocaleController) {

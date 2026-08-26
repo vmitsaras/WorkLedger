@@ -21,6 +21,7 @@ export {
   type MessageValue,
 } from './catalog.js';
 export {
+  formatCompactDuration,
   formatDateOnly,
   formatDuration,
   formatInstant,

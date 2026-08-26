@@ -6,9 +6,15 @@ import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
 import type { MonthlyPeriod, SelfContext } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import {
+  createWebLocaleController,
+  LocaleControllerProvider,
+  type WebLocaleController,
+} from '../src/app/locale.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
@@ -25,6 +31,11 @@ const EMPLOYEE_CONTEXT: SelfContext = {
   organization: { name: 'Northstar Studio' },
   roles: ['EMPLOYEE'],
 };
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 
 afterEach(() => {
   clearSessionMemory();
@@ -47,12 +58,12 @@ test('renders a ready monthly review with captioned totals and native daily rows
   expect(screen.getByLabelText('Monthly calculated totals')).toHaveTextContent('+0h 15m');
 
   const table = screen.getByRole('table', {
-    name: /Per-date monthly calculation for .*June 1, 2026/u,
+    name: /Per-date monthly calculation for .*1 June 2026/u,
   });
   expect(table.closest('.wl-table-scroll')).not.toHaveAttribute('tabindex');
   expect(within(table).getByRole('columnheader', { name: 'Absence credit' })).toBeVisible();
-  expect(within(table).getByRole('row', { name: /June 30, 2026 Complete/u })).toBeVisible();
-  expect(within(table).getByRole('link', { name: /June 30, 2026/u })).toHaveAttribute(
+  expect(within(table).getByRole('row', { name: /30 June 2026 Complete/u })).toBeVisible();
+  expect(within(table).getByRole('link', { name: /30 June 2026/u })).toHaveAttribute(
     'href',
     `/time-records/${FIRST_RECORD_ID}`,
   );
@@ -69,23 +80,25 @@ test('labels missing/incomplete dates and links actionable blockers and warnings
   renderApplication();
 
   expect(await screen.findByText('Not ready')).toBeVisible();
-  const blocker = screen.getByText('Attendance is incomplete');
+  const blocker = screen.getByText('Attendance record incomplete');
   expect(blocker).toBeVisible();
-  expect(
-    screen.getByRole('link', { name: /July 30, 2026 — review daily record/u }),
-  ).toHaveAttribute('href', `/time-records/${FIRST_RECORD_ID}`);
-  expect(screen.getByText('Absence approval pending')).toBeVisible();
-  expect(screen.getByText('Work was recorded on a holiday')).toBeVisible();
-  expect(
-    screen.getByRole('link', { name: /July 31, 2026 — review daily record/u }),
-  ).toHaveAttribute('href', `/time-records/${SECOND_RECORD_ID}`);
+  expect(screen.getByRole('link', { name: /30 July 2026 — review daily record/u })).toHaveAttribute(
+    'href',
+    `/time-records/${FIRST_RECORD_ID}`,
+  );
+  expect(screen.getByText('Absence decision pending')).toBeVisible();
+  expect(screen.getByText('Work recorded on a public holiday')).toBeVisible();
+  expect(screen.getByRole('link', { name: /31 July 2026 — review daily record/u })).toHaveAttribute(
+    'href',
+    `/time-records/${SECOND_RECORD_ID}`,
+  );
   const table = screen.getByRole('table', {
-    name: /Per-date monthly calculation for .*July 1, 2026/u,
+    name: /Per-date monthly calculation for .*1 July 2026/u,
   });
   expect(
-    within(table).getByRole('row', { name: /July 29, 2026 Missing daily result/u }),
+    within(table).getByRole('row', { name: /29 July 2026 Missing daily result/u }),
   ).toBeVisible();
-  expect(within(table).getByRole('row', { name: /July 30, 2026 Incomplete/u })).toHaveTextContent(
+  expect(within(table).getByRole('row', { name: /30 July 2026 Incomplete/u })).toHaveTextContent(
     '—',
   );
 });
@@ -516,15 +529,64 @@ test('recovers from a dependency failure with an explicit retry', async () => {
   expect(attempts).toBe(3);
 });
 
-function renderApplication() {
+test.each([
+  {
+    compactBalance: '+0 Std. 15 Min.',
+    locale: 'de-DE' as const,
+    ready: 'Bereit zur Einreichung',
+    submit: 'Monat einreichen',
+    title: 'Monatszeitraum',
+    totals: 'Summen vollständiger Tage',
+  },
+  {
+    compactBalance: '+0 h 15 min',
+    locale: 'es-ES' as const,
+    ready: 'Listo para enviar',
+    submit: 'Enviar mes',
+    title: 'Periodo mensual',
+    totals: 'Totales de fechas completas',
+  },
+])('renders the critical monthly review coherently in $locale', async (expected) => {
+  const context = { ...EMPLOYEE_CONTEXT, locale: expected.locale };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestUrl(input).pathname;
+      if (path === '/v1/me/context') return successResponse(context);
+      if (path === `/v1/monthly-periods/${PERIOD_ID}`) return successResponse(readyPeriod());
+      throw new Error(`Unexpected request: ${path}`);
+    }),
+  );
+  const localeController = createWebLocaleController(await initializeI18n(expected.locale));
+  const { container } = renderApplication(localeController);
+
+  expect(await screen.findByRole('heading', { level: 1, name: expected.title })).toBeVisible();
+  expect(screen.getByText(expected.ready)).toBeVisible();
+  expect(screen.getByRole('heading', { name: expected.totals })).toBeVisible();
+  expect(screen.getByRole('button', { name: expected.submit })).toBeVisible();
+  expect(screen.getByLabelText(/Monatssummen|Totales mensuales/u)).toHaveTextContent(
+    expected.compactBalance,
+  );
+  expect(document.documentElement.lang).toBe(expected.locale);
+  await expectNoAxeViolations(container);
+});
+
+function renderApplication(localeController?: WebLocaleController) {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  const activeLocaleController =
+    localeController ?? createWebLocaleController(defaultLocaleRuntime);
   const queryClient = createWorkLedgerQueryClient();
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, activeLocaleController), {
     initialEntries: [`/monthly-periods/${PERIOD_ID}`],
   });
   const rendered = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={activeLocaleController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
   return { ...rendered, queryClient, router };
 }

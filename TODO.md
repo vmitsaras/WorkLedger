@@ -181,7 +181,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1402` Implement per-account locale persistence, signed-out device preference, initial invitation locale, profile/auth selectors, and immediate language switching.
 - [x] `WL-1403` Replace user-facing API prose dependencies with bounded message descriptors and structured presentation data.
 - [x] `WL-1404` Translate shared UI, route titles and boundaries, authentication, application shell, navigation, profile, validation, dialogs, and announcements.
-- [ ] `WL-1405` Translate employee workflows: Today, time and balances, records, corrections, absences, calendars, notifications, and monthly review.
+- [x] `WL-1405` Translate employee workflows: Today, time and balances, records, corrections, absences, calendars, notifications, and monthly review.
 - [ ] `WL-1406` Translate manager, HR, and system workflows, including Approvals, Team, administration, settings, reports, audit, accounts, and operations.
 - [ ] `WL-1407` Localize print, clipboard, CSV labels/statuses, notification email, invitations, and password-reset communication.
 - [ ] `WL-1408` Complete and human-review the `en-GB`, `de-DE`, and `es-ES` catalogs and add automated catalog enforcement plus a test-only pseudo-locale.

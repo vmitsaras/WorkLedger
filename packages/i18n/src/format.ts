@@ -80,3 +80,25 @@ export function formatDuration(
   const sign = minutes < 0 ? '−' : showPositiveSign && minutes > 0 ? '+' : '';
   return `${sign}${formatted}`;
 }
+
+export function formatCompactDuration(
+  runtime: I18nRuntime,
+  minutes: number,
+  showPositiveSign = false,
+): string {
+  if (!Number.isSafeInteger(minutes)) {
+    throw new RangeError('A duration must use integer minutes.');
+  }
+
+  const absoluteMinutes = Math.abs(minutes);
+  const hours = Math.floor(absoluteMinutes / 60);
+  const remainder = absoluteMinutes % 60;
+  const sign = minutes < 0 ? '−' : showPositiveSign && minutes > 0 ? '+' : '';
+  return `${sign}${translate(runtime, 'shared.duration.compact', {
+    hours: formatNumber(runtime.locale, hours),
+    minutes: formatNumber(runtime.locale, remainder, {
+      minimumIntegerDigits: 2,
+      useGrouping: false,
+    }),
+  })}`;
+}

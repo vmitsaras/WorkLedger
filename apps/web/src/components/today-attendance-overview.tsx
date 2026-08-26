@@ -1,9 +1,16 @@
 import type { RefObject } from 'react';
 
 import type { AttendanceCommand, AttendanceState, TodayAttendance } from '@workledger/contracts';
+import {
+  formatCompactDuration,
+  formatDateOnly,
+  formatInstant,
+  type I18nRuntime,
+  type MessageKey,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Panel, StatusBadge, type AlertProps } from '@workledger/ui';
 
-import { formatDuration, formatLocalDate, formatTime } from '../app/date-time-format.js';
 import type { AttendanceCommandIntent } from '../app/api-client.js';
 import {
   AttendanceRecovery,
@@ -11,19 +18,19 @@ import {
   type AttendanceRecoveryMode,
 } from './today-attendance-controls.js';
 
-const STATE_LABELS: Readonly<Record<AttendanceState, string>> = {
-  OFF_WORK: 'Off work',
-  ON_BREAK: 'On break',
-  WORKING: 'Working',
-};
+const STATE_LABEL_KEYS = {
+  OFF_WORK: 'employee.today.attendance.state.offWork',
+  ON_BREAK: 'employee.today.attendance.state.onBreak',
+  WORKING: 'employee.today.attendance.state.working',
+} as const satisfies Readonly<Record<AttendanceState, MessageKey>>;
 
-const FINISH_UNAVAILABLE_LABELS = {
-  CALCULATION_INCOMPLETE: 'Calculation incomplete',
-  CALCULATION_UNAVAILABLE: 'Calculation unavailable',
-  NOT_WORKING: 'Start work to estimate',
-  NO_REMAINING_EXPECTATION: 'Expectation met',
-  ON_BREAK: 'Resume work to estimate',
-} as const;
+const FINISH_UNAVAILABLE_KEYS = {
+  CALCULATION_INCOMPLETE: 'employee.today.overview.finish.calculationIncomplete',
+  CALCULATION_UNAVAILABLE: 'employee.today.overview.finish.calculationUnavailable',
+  NOT_WORKING: 'employee.today.overview.finish.startToEstimate',
+  NO_REMAINING_EXPECTATION: 'employee.today.overview.finish.expectationMet',
+  ON_BREAK: 'employee.today.overview.finish.resumeToEstimate',
+} as const satisfies Readonly<Record<string, MessageKey>>;
 
 export type TodayAttendanceFeedback = Readonly<{
   command: AttendanceCommand;
@@ -68,6 +75,8 @@ export function TodayAttendanceOverview({
   statusHeadingRef: RefObject<HTMLHeadingElement | null>;
   today: TodayAttendance;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const { attendance, calculation, postedFlexBalanceMinutes, postedThroughDate, timeZone } = today;
   const { activeElapsedMinutes, activeSince, state } = attendance;
   const {
@@ -79,43 +88,56 @@ export function TodayAttendanceOverview({
   const estimatedFinishLabel =
     estimatedFinishAt === null
       ? estimatedFinishUnavailableReason === null
-        ? 'Not available'
-        : FINISH_UNAVAILABLE_LABELS[estimatedFinishUnavailableReason]
-      : formatTime(estimatedFinishAt, timeZone);
+        ? t('employee.today.overview.finish.notAvailable')
+        : t(FINISH_UNAVAILABLE_KEYS[estimatedFinishUnavailableReason])
+      : formatClockTime(runtime, estimatedFinishAt, timeZone);
   const progressDescription =
     provisional === null
-      ? 'Today’s credited progress is unavailable. Resolve the blockers below before relying on today’s calculation.'
+      ? t('employee.today.overview.progressUnavailableDescription')
       : provisional.expectedMinutesToday === 0
-        ? `${formatDuration(provisional.creditedMinutesToday)} credited with no scheduled expectation today.`
-        : `${formatDuration(provisional.creditedMinutesToday)} credited of ${formatDuration(provisional.expectedMinutesToday)} expected.`;
+        ? t('employee.today.overview.progressWithoutExpectation', {
+            credited: formatCompactDuration(runtime, provisional.creditedMinutesToday),
+          })
+        : t('employee.today.overview.progressDescription', {
+            credited: formatCompactDuration(runtime, provisional.creditedMinutesToday),
+            expected: formatCompactDuration(runtime, provisional.expectedMinutesToday),
+          });
 
   return (
     <Panel
-      aria-label="Today attendance summary"
+      aria-label={t('employee.today.overview.ariaLabel')}
       className="wl-today-overview"
       density="comfortable"
     >
       <div className="wl-today-summary-grid grid">
         <div className="wl-today-status-task grid content-start gap-3">
           <section className="wl-today-status" aria-labelledby="current-status-title">
-            <p className="wl-today-eyebrow">Current status</p>
+            <p className="wl-today-eyebrow">{t('employee.today.attendance.currentStatus')}</p>
             <h2
               ref={statusHeadingRef}
               id="current-status-title"
               className="wl-today-status-heading outline-none"
               tabIndex={-1}
             >
-              {STATE_LABELS[state]}
+              {t(STATE_LABEL_KEYS[state])}
             </h2>
             {activeSince === null || activeElapsedMinutes === null ? (
-              <p className="wl-today-copy-muted">No active work interval.</p>
+              <p className="wl-today-copy-muted">
+                {t('employee.today.attendance.noActiveInterval')}
+              </p>
             ) : (
               metricList('m-0 grid gap-3', [
                 [
-                  state === 'ON_BREAK' ? 'Current break' : 'Current work interval',
-                  formatDuration(activeElapsedMinutes),
+                  state === 'ON_BREAK'
+                    ? t('employee.today.attendance.currentBreak')
+                    : t('employee.today.attendance.currentWorkInterval'),
+                  formatCompactDuration(runtime, activeElapsedMinutes),
                 ],
-                ['Since', formatTime(activeSince, timeZone), activeSince],
+                [
+                  t('employee.today.attendance.since'),
+                  formatClockTime(runtime, activeSince, timeZone),
+                  activeSince,
+                ],
               ])
             )}
           </section>
@@ -136,12 +158,16 @@ export function TodayAttendanceOverview({
               <Alert
                 announce={feedback.kind !== 'ERROR' || recoveryMode === null}
                 headingLevel="h3"
-                title={feedbackTitle(feedback.kind)}
+                title={feedbackTitle(feedback.kind, t)}
                 tone={feedbackTone(feedback.kind)}
               >
                 <p className="m-0 text-sm font-semibold">{feedback.message}</p>
                 {feedback.requestId === undefined ? null : (
-                  <p className="m-0 break-all text-xs">Request reference: {feedback.requestId}</p>
+                  <p className="m-0 break-all text-xs">
+                    {t('employee.today.page.requestReference', {
+                      requestId: feedback.requestId,
+                    })}
+                  </p>
                 )}
               </Alert>
             )}
@@ -151,23 +177,25 @@ export function TodayAttendanceOverview({
         <section className="wl-today-progress-summary" aria-labelledby="today-progress-title">
           <div className="wl-today-heading-row">
             <h2 id="today-progress-title" className="wl-today-section-heading">
-              Today’s progress
+              {t('employee.today.overview.title')}
             </h2>
             <StatusBadge tone={calculation.status === 'PROVISIONAL' ? 'info' : 'danger'}>
               {calculation.status === 'PROVISIONAL'
-                ? 'Provisional today'
-                : 'Calculation incomplete'}
+                ? t('employee.today.overview.statusProvisional')
+                : t('employee.today.overview.statusIncomplete')}
             </StatusBadge>
           </div>
           <div className="grid gap-2">
             <p className="wl-today-prominent-value">
               {provisional === null
-                ? 'Progress unavailable'
-                : `${formatDuration(provisional.creditedMinutesToday)} credited`}
+                ? t('employee.today.overview.progressUnavailable')
+                : t('employee.today.overview.progressCredited', {
+                    credited: formatCompactDuration(runtime, provisional.creditedMinutesToday),
+                  })}
             </p>
             {provisional !== null && provisional.expectedMinutesToday > 0 ? (
               <progress
-                aria-label="Today’s credited progress"
+                aria-label={t('employee.today.overview.progressAriaLabel')}
                 aria-valuetext={progressDescription}
                 className="wl-today-progress"
                 max={provisional.expectedMinutesToday}
@@ -180,54 +208,61 @@ export function TodayAttendanceOverview({
           {provisional === null
             ? null
             : metricList('wl-today-metric-grid m-0 grid', [
-                ['Worked today', formatDuration(provisional.calculationSources.workedMinutesToday)],
-                ['Breaks', formatDuration(provisional.calculationSources.breakMinutesToday)],
                 [
-                  'Remaining today',
-                  remainingExpectedMinutes === null
-                    ? 'Not available'
-                    : formatDuration(remainingExpectedMinutes),
+                  t('employee.today.overview.workedToday'),
+                  formatCompactDuration(runtime, provisional.calculationSources.workedMinutesToday),
                 ],
                 [
-                  'Estimated finish',
+                  t('employee.today.overview.breaks'),
+                  formatCompactDuration(runtime, provisional.calculationSources.breakMinutesToday),
+                ],
+                [
+                  t('employee.today.overview.remainingToday'),
+                  remainingExpectedMinutes === null
+                    ? t('employee.today.overview.finish.notAvailable')
+                    : formatCompactDuration(runtime, remainingExpectedMinutes),
+                ],
+                [
+                  t('employee.today.overview.estimatedFinish'),
                   estimatedFinishLabel,
                   estimatedFinishAt ?? undefined,
-                  estimatedFinishAt === null ? undefined : 'Assumes no additional break.',
+                  estimatedFinishAt === null
+                    ? undefined
+                    : t('employee.today.overview.estimatedFinishAssumption'),
                 ],
                 [
-                  'Provisional difference',
-                  formatDuration(provisional.provisionalDifferenceMinutes, true),
+                  t('employee.today.overview.provisionalDifference'),
+                  formatCompactDuration(runtime, provisional.provisionalDifferenceMinutes, true),
                 ],
               ])}
           {calculation.holidayName === null ? null : (
             <p className="m-0 min-w-0 [overflow-wrap:anywhere] border-t border-[var(--wl-border)] pt-4 text-sm font-semibold">
-              Public holiday: {calculation.holidayName}
+              {t('employee.today.overview.holiday', {
+                holidayName: calculation.holidayName,
+              })}
             </p>
           )}
         </section>
 
         <section className="wl-today-posted-balance" aria-labelledby="posted-balance-title">
           <div className="grid gap-2">
-            <p className="wl-today-eyebrow">Flexible time</p>
+            <p className="wl-today-eyebrow">{t('employee.today.overview.flexibleTime')}</p>
             <h2 id="posted-balance-title" className="wl-today-section-heading">
-              Posted balance
+              {t('employee.today.overview.postedBalance')}
             </h2>
           </div>
           <p className="wl-today-prominent-value">
-            {formatDuration(postedFlexBalanceMinutes, true)}
+            {formatCompactDuration(runtime, postedFlexBalanceMinutes, true)}
           </p>
           <p className="wl-today-helper-strong">
-            {postedThroughDate === null ? (
-              'No entries posted before today.'
-            ) : (
-              <>
-                Posted through{' '}
-                <time dateTime={postedThroughDate}>{formatLocalDate(postedThroughDate)}</time>.
-              </>
-            )}
+            {postedThroughDate === null
+              ? t('employee.today.overview.noPostedEntries')
+              : t('employee.today.overview.postedThrough', {
+                  date: formatDateOnly(runtime.locale, postedThroughDate),
+                })}
           </p>
           <p className="wl-today-copy-muted">
-            Today is still provisional and is not included in this balance.
+            {t('employee.today.overview.todayExcludedFromPosted')}
           </p>
         </section>
       </div>
@@ -265,8 +300,18 @@ function feedbackTone(kind: TodayAttendanceFeedback['kind']): NonNullable<AlertP
   }
 }
 
-function feedbackTitle(kind: TodayAttendanceFeedback['kind']): string {
-  if (kind === 'ERROR') return 'Attendance not changed';
-  if (kind === 'INFO') return 'Attendance refreshed';
-  return 'Attendance updated';
+function feedbackTitle(
+  kind: TodayAttendanceFeedback['kind'],
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
+  if (kind === 'ERROR') return t('employee.today.attendance.feedback.errorTitle');
+  if (kind === 'INFO') return t('employee.today.attendance.feedback.infoTitle');
+  return t('employee.today.attendance.feedback.successTitle');
+}
+
+function formatClockTime(runtime: I18nRuntime, value: string, timeZone: string): string {
+  return formatInstant(runtime.locale, value, timeZone, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }

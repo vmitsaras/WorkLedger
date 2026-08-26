@@ -6,8 +6,17 @@ import type {
   AttendanceCommand,
   AttendanceCommandResult,
   AttendanceState,
+  SupportedLocale,
   TodayAttendance,
 } from '@workledger/contracts';
+import {
+  formatDateOnly,
+  formatInstant,
+  type I18nRuntime,
+  type MessageArguments,
+  type MessageKey,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, RouteState, buttonVariants } from '@workledger/ui';
 
 import {
@@ -17,7 +26,6 @@ import {
   executeAttendanceCommand,
   type AttendanceCommandIntent,
 } from '../app/api-client.js';
-import { formatLocalDate, formatTime } from '../app/date-time-format.js';
 import { todayAttendanceQuery } from '../app/query.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
@@ -31,17 +39,24 @@ import {
 } from '../components/today-attendance-overview.js';
 import { TodayAttendanceTimeline } from '../components/today-attendance-timeline.js';
 
-const STATE_LABELS: Readonly<Record<AttendanceState, string>> = {
-  OFF_WORK: 'Off work',
-  ON_BREAK: 'On break',
-  WORKING: 'Working',
-};
+type MessageTranslator = <Key extends MessageKey>(
+  key: Key,
+  ...args: MessageArguments<Key>
+) => string;
+
+const STATE_LABEL_KEYS = {
+  OFF_WORK: 'employee.today.attendance.state.offWork',
+  ON_BREAK: 'employee.today.attendance.state.onBreak',
+  WORKING: 'employee.today.attendance.state.working',
+} as const satisfies Readonly<Record<AttendanceState, MessageKey>>;
 
 const ATTENDANCE_AUTOMATIC_RETRY_LIMIT = 2;
 const ATTENDANCE_RETRY_BASE_DELAY_MS = 250;
 const ATTENDANCE_RETRY_MAX_DELAY_MS = 1_000;
 
 export function TodayPage() {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const [permissionDenied, setPermissionDenied] = useState(false);
   const query = useQuery({ ...todayAttendanceQuery(), enabled: !permissionDenied });
   const queryClient = useQueryClient();
@@ -64,7 +79,7 @@ export function TodayPage() {
     onError: async (error, variables) => {
       setClockOutConfirmationOpen(false);
       if (isAuthenticationError(error)) return;
-      setAttendanceFeedback(attendanceErrorFeedback(error, variables));
+      setAttendanceFeedback(attendanceErrorFeedback(error, variables, runtime.locale, t));
       await queryClient.invalidateQueries({ queryKey: todayAttendanceQuery().queryKey });
     },
     onSuccess: async (result, variables) => {
@@ -76,7 +91,8 @@ export function TodayPage() {
           kind: 'SUCCESS',
           message: attendanceSuccessMessage(
             result,
-            formatTime(result.occurredAt, query.data?.timeZone ?? 'UTC'),
+            formatClockTime(runtime, result.occurredAt, query.data?.timeZone ?? 'UTC'),
+            t,
           ),
           resultingRevision: result.attendanceRevision,
           shouldFocusStatus: true,
@@ -179,13 +195,21 @@ export function TodayPage() {
         command: focusedAction ?? previousAttendance.validActions[0] ?? 'CLOCK_IN',
         intentKey: `attendance-refresh-${nextAttendance.attendanceRevision.toString()}`,
         kind: 'INFO',
-        message: `Attendance changed in another tab or device. Current status: ${STATE_LABELS[nextAttendance.state].toLowerCase()}.`,
+        message: t('employee.today.attendance.remoteChanged', {
+          state: t(STATE_LABEL_KEYS[nextAttendance.state]).toLocaleLowerCase(runtime.locale),
+        }),
         resultingRevision: nextAttendance.attendanceRevision,
         shouldFocusStatus,
       }),
     );
     if (shouldFocusStatus) focusedActionRef.current = null;
-  }, [attendanceFeedback?.resultingRevision, attendanceMutation.isPending, query.data?.attendance]);
+  }, [
+    attendanceFeedback?.resultingRevision,
+    attendanceMutation.isPending,
+    query.data?.attendance,
+    runtime.locale,
+    t,
+  ]);
 
   useEffect(() => {
     if (
@@ -216,10 +240,10 @@ export function TodayPage() {
   }, [attendanceFeedback, query.data]);
 
   if (accessDenied) return <TodayPermissionDenied />;
-  if ((query.isPending && isOnline) || authenticationError) return renderTodayLoading();
-  if (query.isPending) return renderTodayOffline();
+  if ((query.isPending && isOnline) || authenticationError) return renderTodayLoading(t);
+  if (query.isPending) return renderTodayOffline(t);
   if (query.isError && query.data === undefined) {
-    return renderTodayLoadError({ error: query.error, retry: () => void query.refetch() });
+    return renderTodayLoadError({ error: query.error, retry: () => void query.refetch(), t });
   }
 
   const retryToday = () => {
@@ -271,85 +295,89 @@ export function TodayPage() {
     pendingIntent: attendanceMutation.isPending ? attendanceMutation.variables : null,
     recoveryMode,
     retryToday,
+    runtime,
     setCalculationDetailsOpen,
     setClockOutConfirmationOpen,
     statusHeadingRef,
     today: query.data,
+    t,
     updating: query.isFetching,
   });
 }
 
-function renderTodayOffline() {
+function renderTodayOffline(t: MessageTranslator) {
   return (
     <section className="grid max-w-3xl gap-6">
       <PageHeader
-        eyebrow="Attendance"
-        title="Today"
-        description="Reconnect to load your current attendance state. No clock action can be sent or queued while you are offline."
+        eyebrow={t('employee.today.page.eyebrow')}
+        title={t('employee.today.page.title')}
+        description={t('employee.today.page.offline.description')}
       />
-      <Alert title="You’re offline" tone="danger">
-        <p className="m-0 text-sm leading-6">
-          WorkLedger will refresh your status after the connection returns before enabling any
-          attendance action.
-        </p>
+      <Alert title={t('employee.today.attendance.recovery.offline.title')} tone="danger">
+        <p className="m-0 text-sm leading-6">{t('employee.today.page.offline.message')}</p>
       </Alert>
     </section>
   );
 }
 
 function TodayPermissionDenied() {
-  useBoundaryPresentation('Permission denied');
+  const t = useWorkLedgerMessage();
+  const title = t('shared.route.boundary.permissionDenied.title');
+  useBoundaryPresentation(title);
   return (
     <section className="grid max-w-2xl gap-6">
       <PageHeader
-        eyebrow="Route status"
-        title="Permission denied"
-        description="Your current account cannot use employee attendance. No attendance details or actions are available."
+        eyebrow={t('employee.today.page.eyebrow')}
+        title={title}
+        description={t('employee.today.page.permission.description')}
       />
       <Link className={buttonVariants({ variant: 'secondary' })} to="/">
-        Go to my home
+        {t('shared.action.goHome')}
       </Link>
     </section>
   );
 }
 
-function renderTodayLoading() {
+function renderTodayLoading(t: MessageTranslator) {
   return (
     <section className="grid max-w-3xl gap-6">
       <PageHeader
-        eyebrow="Attendance"
-        title="Today"
-        description="Loading your current attendance state and calculation…"
+        eyebrow={t('employee.today.page.eyebrow')}
+        title={t('employee.today.page.title')}
+        description={t('employee.today.page.loading.description')}
       />
-      <RouteState kind="loading" title="Loading today’s attendance">
-        <p>Preparing your current status, valid actions, and calculation.</p>
+      <RouteState kind="loading" title={t('employee.today.page.loading.title')}>
+        <p>{t('employee.today.page.loading.message')}</p>
       </RouteState>
     </section>
   );
 }
 
-function renderTodayLoadError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
+function renderTodayLoadError({
+  error,
+  retry,
+  t,
+}: Readonly<{ error: unknown; retry: () => void; t: MessageTranslator }>) {
   const requestId = error instanceof ApiClientError ? error.requestId : undefined;
   return (
     <section className="grid max-w-3xl gap-6">
       <PageHeader
-        eyebrow="Attendance"
-        title="Today"
-        description="Your attendance information could not be loaded. No clock action was submitted."
+        eyebrow={t('employee.today.page.eyebrow')}
+        title={t('employee.today.page.title')}
+        description={t('employee.today.page.loadError.description')}
       />
-      <Alert title="Today is temporarily unavailable" tone="danger">
+      <Alert title={t('employee.today.page.loadError.title')} tone="danger">
         <div className="grid gap-1">
-          <p className="m-0 text-sm leading-6">
-            Try again. If the problem continues, share the request reference with your
-            administrator.
-          </p>
+          <p className="m-0 text-sm leading-6">{t('employee.today.page.loadError.message')}</p>
           {requestId === undefined ? null : (
-            <p className="m-0 break-all text-xs">Request reference: {requestId}</p>
+            <p className="m-0 break-all text-xs">
+              {t('employee.today.page.requestReference', { requestId })}
+            </p>
           )}
         </div>
         <div>
           <Button variant="secondary" onPress={retry}>
-            Try again
+            {t('shared.action.tryAgain')}
           </Button>
         </div>
       </Alert>
@@ -369,10 +397,12 @@ function renderTodayReady({
   pendingIntent,
   recoveryMode,
   retryToday,
+  runtime,
   setCalculationDetailsOpen,
   setClockOutConfirmationOpen,
   statusHeadingRef,
   today,
+  t,
   updating,
 }: Readonly<{
   attendanceFeedback: TodayAttendanceFeedback | null;
@@ -390,10 +420,12 @@ function renderTodayReady({
   pendingIntent: AttendanceCommandIntent | null;
   recoveryMode: AttendanceRecoveryMode;
   retryToday: () => void;
+  runtime: I18nRuntime;
   setCalculationDetailsOpen: (isOpen: boolean) => void;
   setClockOutConfirmationOpen: (isOpen: boolean) => void;
   statusHeadingRef: RefObject<HTMLHeadingElement | null>;
   today: TodayAttendance;
+  t: MessageTranslator;
   updating: boolean;
 }>) {
   const calculation = today.calculation;
@@ -401,15 +433,19 @@ function renderTodayReady({
   return (
     <section className="wl-today-layout grid max-w-6xl gap-8">
       <PageHeader
-        eyebrow={formatLocalDate(today.localDate)}
-        title="Today"
-        description="Record your workday and review today’s time."
+        eyebrow={formatDateOnly(runtime.locale, today.localDate)}
+        title={t('employee.today.page.title')}
+        description={t('employee.today.page.description')}
       >
         {updating ? (
-          <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Updating…</p>
+          <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">
+            {t('employee.today.page.updating')}
+          </p>
         ) : (
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            Estimate updated {formatTime(today.asOf, today.timeZone)}
+            {t('employee.today.page.estimateUpdated', {
+              time: formatClockTime(runtime, today.asOf, today.timeZone),
+            })}
           </p>
         )}
       </PageHeader>
@@ -449,9 +485,9 @@ function renderTodayReady({
             onToggle={(event) => setCalculationDetailsOpen(event.currentTarget.open)}
           >
             <summary className="min-h-[var(--wl-control-min-block-size)] cursor-pointer rounded-[var(--wl-radius-control)] outline-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-3 focus-visible:outline-[var(--wl-focus-ring)]">
-              <span className="font-bold">Calculation details</span>
+              <span className="font-bold">{t('employee.today.calculation.detailsTitle')}</span>
               <span className="mt-1 block text-sm text-[var(--wl-text-muted)]">
-                See evidence behind today’s estimate.
+                {t('employee.today.calculation.detailsDescription')}
               </span>
             </summary>
             <div className="border-t border-[var(--wl-border)] pt-5">
@@ -496,22 +532,28 @@ function shouldRetryAttendanceCommand(failureCount: number, error: unknown): boo
   );
 }
 
-function attendanceSuccessMessage(result: AttendanceCommandResult, formattedTime: string): string {
+function attendanceSuccessMessage(
+  result: AttendanceCommandResult,
+  formattedTime: string,
+  t: MessageTranslator,
+): string {
   switch (result.command) {
     case 'CLOCK_IN':
-      return `Clocked in at ${formattedTime}.`;
+      return t('employee.today.attendance.success.clockIn', { time: formattedTime });
     case 'START_BREAK':
-      return `Break started at ${formattedTime}.`;
+      return t('employee.today.attendance.success.startBreak', { time: formattedTime });
     case 'RESUME':
-      return `Resumed work at ${formattedTime}.`;
+      return t('employee.today.attendance.success.resume', { time: formattedTime });
     case 'CLOCK_OUT':
-      return `Clocked out at ${formattedTime}.`;
+      return t('employee.today.attendance.success.clockOut', { time: formattedTime });
   }
 }
 
 function attendanceErrorFeedback(
   error: unknown,
   intent: AttendanceCommandIntent,
+  locale: SupportedLocale,
+  t: MessageTranslator,
 ): TodayAttendanceFeedback {
   const base = {
     command: intent.command,
@@ -519,70 +561,76 @@ function attendanceErrorFeedback(
     kind: 'ERROR',
     shouldFocusStatus: true,
   } as const;
-  const outcome = attendanceOutcomeNoun(intent.command);
+  const outcome = attendanceOutcomeNoun(intent.command, t);
   if (error instanceof ApiClientError) {
     if (error.code === 'ATTENDANCE_STATE_CHANGED') {
       const currentState = error.context?.['currentState'];
       const stateLabel =
-        typeof currentState === 'string' && currentState in STATE_LABELS
-          ? STATE_LABELS[currentState as AttendanceState].toLowerCase()
-          : 'updated';
+        typeof currentState === 'string' && currentState in STATE_LABEL_KEYS
+          ? t(STATE_LABEL_KEYS[currentState as AttendanceState]).toLocaleLowerCase(locale)
+          : t('employee.today.attendance.feedback.infoTitle').toLocaleLowerCase(locale);
       return Object.freeze({
         ...base,
-        message: `No ${outcome} was recorded. Attendance changed in another tab or device. Current status: ${stateLabel}.`,
+        message: t('employee.today.attendance.error.stateChanged', { outcome, state: stateLabel }),
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
     if (error.code === 'ATTENDANCE_BREAK_CONFIRMATION_REQUIRED') {
       return Object.freeze({
         ...base,
-        message:
-          'No clock-out was recorded. Confirm that the active break should close before clocking out.',
+        message: t('employee.today.attendance.error.breakConfirmation'),
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
     if (error.code.startsWith('ATTENDANCE_')) {
       return Object.freeze({
         ...base,
-        message: `No ${outcome} was recorded because that action is not valid for the current attendance state.`,
+        message: t('employee.today.attendance.error.invalidState', { outcome }),
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
     if (error.code === 'IDEMPOTENCY_KEY_CONFLICT') {
       return Object.freeze({
         ...base,
-        message: `No ${outcome} was recorded because this request could not be matched safely. Review the current status before trying again.`,
+        message: t('employee.today.attendance.error.conflict', { outcome }),
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
     if (error.code === 'RATE_LIMITED') {
       return Object.freeze({
         ...base,
-        message: `No ${outcome} was recorded because attendance actions are temporarily limited. Review the current status and try again later.`,
+        message: t('employee.today.attendance.error.rateLimited', { outcome }),
         ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
       });
     }
     return Object.freeze({
       ...base,
-      message: `WorkLedger could not confirm whether ${outcome} was recorded. Review the refreshed current status before trying again.`,
+      message: t('employee.today.attendance.error.uncertain', { outcome }),
       ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
     });
   }
   return Object.freeze({
     ...base,
-    message: `WorkLedger could not confirm whether ${outcome} was recorded. Review the refreshed current status before trying again.`,
+    message: t('employee.today.attendance.error.uncertain', { outcome }),
   });
 }
 
-function attendanceOutcomeNoun(command: AttendanceCommand): string {
+function attendanceOutcomeNoun(command: AttendanceCommand, t: MessageTranslator): string {
   switch (command) {
     case 'CLOCK_IN':
-      return 'clock-in';
+      return t('employee.today.attendance.outcome.clockIn');
     case 'START_BREAK':
-      return 'break start';
+      return t('employee.today.attendance.outcome.startBreak');
     case 'RESUME':
-      return 'resume';
+      return t('employee.today.attendance.outcome.resume');
     case 'CLOCK_OUT':
-      return 'clock-out';
+      return t('employee.today.attendance.outcome.clockOut');
   }
+}
+
+function formatClockTime(runtime: I18nRuntime, value: string, timeZone: string): string {
+  return formatInstant(runtime.locale, value, timeZone, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }

@@ -2,7 +2,21 @@ import { useQuery } from '@tanstack/react-query';
 import { type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
-import { myTimeQuerySchema, type MyTime, type MyTimeQuery } from '@workledger/contracts';
+import {
+  myTimeQuerySchema,
+  type LeaveEntitlementLedgerEntry,
+  type MyTime,
+  type MyTimeQuery,
+  type TimeAccountLedgerEntry,
+} from '@workledger/contracts';
+import {
+  formatCompactDuration,
+  formatDateOnly,
+  formatList,
+  type MessageArguments,
+  type MessageKey,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import {
   Alert,
   Button,
@@ -16,7 +30,6 @@ import {
 import { Pagination } from '../components/pagination.js';
 
 import { ApiClientError } from '../app/api-client.js';
-import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { myTimeQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -24,7 +37,40 @@ type MyTimePageProps = Readonly<{ balancesOnly?: boolean }>;
 
 const DEFAULT_LEDGER_LIMIT = 20;
 
+type MessageTranslator = <Key extends MessageKey>(
+  key: Key,
+  ...args: MessageArguments<Key>
+) => string;
+
+const RECORD_STATUS_KEYS = {
+  COMPLETE: 'employee.time.records.status.complete',
+  INCOMPLETE: 'employee.time.records.status.incomplete',
+  NO_RECORD: 'employee.time.records.status.noRecord',
+  PROVISIONAL: 'employee.time.records.status.provisional',
+} as const satisfies Readonly<Record<MyTime['records'][number]['status'], MessageKey>>;
+
+const TIME_ENTRY_TYPE_KEYS = {
+  DAILY_DELTA: 'employee.time.entryType.dailyDelta',
+  DAILY_RECALCULATION_DELTA: 'employee.time.entryType.dailyRecalculationDelta',
+  MANUAL_ADMINISTRATIVE_ADJUSTMENT: 'employee.time.entryType.manualAdministrativeAdjustment',
+  OPENING_BALANCE: 'employee.time.entryType.openingBalance',
+  POST_LOCK_ADJUSTMENT: 'employee.time.entryType.postLockAdjustment',
+} as const satisfies Readonly<Record<TimeAccountLedgerEntry['entryType'], MessageKey>>;
+
+const LEAVE_ENTRY_TYPE_KEYS = {
+  ALLOCATION: 'employee.time.entryType.allocation',
+  APPROVED_DEDUCTION: 'employee.time.entryType.approvedDeduction',
+  CANCELLATION_RESTORATION: 'employee.time.entryType.cancellationRestoration',
+  CARRYOVER: 'employee.time.entryType.carryover',
+  EXPIRY: 'employee.time.entryType.expiry',
+  MANUAL_ADJUSTMENT: 'employee.time.entryType.manualAdjustment',
+  PENDING_RESERVATION: 'employee.time.entryType.pendingReservation',
+  RESERVATION_RELEASE: 'employee.time.entryType.reservationRelease',
+} as const satisfies Readonly<Record<LeaveEntitlementLedgerEntry['entryType'], MessageKey>>;
+
 export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryInput = readQuery(searchParams);
   const query = useQuery(myTimeQuery(queryInput));
@@ -39,7 +85,7 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
     });
   };
 
-  const title = balancesOnly ? 'My balances' : 'My time';
+  const title = balancesOnly ? t('employee.time.balancesTitle') : t('employee.time.title');
   if (query.isPending) {
     return (
       <MyTimeFrame balancesOnly={balancesOnly} title={title}>
@@ -66,16 +112,33 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">
-              {period.view === 'WEEK' ? 'Selected week' : 'Selected month'}
+              {period.view === 'WEEK'
+                ? t('employee.time.period.week')
+                : t('employee.time.period.month')}
             </p>
             <h2 id="personal-time-summary-heading" className="m-0 mt-1 text-2xl font-bold">
-              {formatLocalDate(period.startDate)} to {formatLocalDate(period.endDate)}
+              {t('employee.time.period.range', {
+                end: formatDateOnly(runtime.locale, period.endDate),
+                start: formatDateOnly(runtime.locale, period.startDate),
+              })}
             </h2>
             {!balancesOnly ? (
               <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
-                {summary.recordedDayCount} recorded day{summary.recordedDayCount === 1 ? '' : 's'} ·{' '}
-                {summary.incompleteRecordCount} incomplete · complete-record balance{' '}
-                {formatDuration(summary.completeBalanceMinutes, true)}
+                {formatList(
+                  runtime.locale,
+                  [
+                    t('employee.time.period.summary.recordedDays', {
+                      count: summary.recordedDayCount,
+                    }),
+                    t('employee.time.period.summary.incomplete', {
+                      count: summary.incompleteRecordCount,
+                    }),
+                    t('employee.time.period.summary.balance', {
+                      balance: formatCompactDuration(runtime, summary.completeBalanceMinutes, true),
+                    }),
+                  ],
+                  { style: 'long', type: 'unit' },
+                )}
               </p>
             ) : null}
           </div>
@@ -84,39 +147,45 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
               className={buttonVariants({ variant: 'secondary', className: 'inline-flex' })}
               to={`/monthly-periods/${encodeURIComponent(period.monthlyPeriodId)}`}
             >
-              Review monthly period
+              {t('employee.time.period.reviewMonthly')}
             </Link>
           ) : null}
         </div>
         <section aria-labelledby="flexible-time-heading" className="grid gap-3">
           <div>
             <h3 id="flexible-time-heading" className="m-0 text-lg font-bold">
-              Flexible-time balance
+              {t('employee.time.balance.heading')}
             </h3>
             <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-              Posted entries are final. Eligible complete records not yet posted remain separate.
+              {t('employee.time.balance.help')}
             </p>
           </div>
           <dl className="grid gap-4 sm:grid-cols-3">
-            <BalanceValue label="Posted balance" value={balance.postedBalanceMinutes} />
             <BalanceValue
-              label="Eligible projection"
+              label={t('employee.time.balance.posted')}
+              value={balance.postedBalanceMinutes}
+            />
+            <BalanceValue
+              label={t('employee.time.balance.eligibleProjection')}
               value={balance.eligibleProjectedMinutes}
               signed
             />
-            <BalanceValue label="Projected balance" value={balance.projectedBalanceMinutes} />
+            <BalanceValue
+              label={t('employee.time.balance.projected')}
+              value={balance.projectedBalanceMinutes}
+            />
           </dl>
         </section>
       </Panel>
 
       <FilterBar
         onSubmit={(event) => event.preventDefault()}
-        title="Choose time period"
-        description="Choose a weekly or monthly view and the date you want to review."
+        title={t('employee.time.filter.title')}
+        description={t('employee.time.filter.description')}
       >
         <div className="grid gap-2">
-          <span className="text-sm font-semibold">View</span>
-          <div className="flex flex-wrap gap-2" aria-label="Time record view">
+          <span className="text-sm font-semibold">{t('employee.time.filter.view')}</span>
+          <div className="flex flex-wrap gap-2" aria-label={t('employee.time.filter.viewLabel')}>
             {(['WEEK', 'MONTH'] as const).map((view) => (
               <Button
                 key={view}
@@ -125,13 +194,13 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                 variant="secondary"
                 onPress={() => setQuery({ page: 1, view })}
               >
-                {view === 'WEEK' ? 'Week' : 'Month'}
+                {view === 'WEEK' ? t('employee.time.filter.week') : t('employee.time.filter.month')}
               </Button>
             ))}
           </div>
         </div>
         <label className="grid gap-1 text-sm font-semibold">
-          Date in period
+          {t('employee.time.filter.date')}
           <input
             className="wl-text-field"
             type="date"
@@ -142,14 +211,14 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
       </FilterBar>
 
       {balance.excludedIncompleteDates.length > 0 ? (
-        <Alert
-          announce={false}
-          title="Projected balance excludes incomplete records"
-          tone="warning"
-        >
+        <Alert announce={false} title={t('employee.time.balance.excluded.title')} tone="warning">
           <p className="m-0">
-            Review {balance.excludedIncompleteDates.map(formatLocalDate).join(', ')} before relying
-            on the projected total.
+            {t('employee.time.balance.excluded.description', {
+              dates: formatList(
+                runtime.locale,
+                balance.excludedIncompleteDates.map((date) => formatDateOnly(runtime.locale, date)),
+              ),
+            })}
           </p>
         </Alert>
       ) : null}
@@ -158,26 +227,25 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
         <section aria-labelledby="time-records-heading" className="grid gap-4">
           <div>
             <h2 id="time-records-heading" className="m-0 text-xl font-bold">
-              Daily records
+              {t('employee.time.records.heading')}
             </h2>
             <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-              Open a recorded date for its calculation, work sessions, events, and recovery
-              guidance.
+              {t('employee.time.records.description')}
             </p>
           </div>
           <div className="hidden md:block">
             <DataTable
-              caption="Daily time record summaries for the selected period"
-              scrollLabel="Daily time records table"
+              caption={t('employee.time.records.caption')}
+              scrollLabel={t('employee.time.records.scrollLabel')}
             >
               <thead>
                 <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Expected</th>
-                  <th scope="col">Credited</th>
-                  <th scope="col">Balance</th>
-                  <th scope="col">Attention</th>
+                  <th scope="col">{t('employee.time.records.column.date')}</th>
+                  <th scope="col">{t('employee.time.records.column.status')}</th>
+                  <th scope="col">{t('employee.time.records.column.expected')}</th>
+                  <th scope="col">{t('employee.time.records.column.credited')}</th>
+                  <th scope="col">{t('employee.time.records.column.balance')}</th>
+                  <th scope="col">{t('employee.time.records.column.attention')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,10 +253,10 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                   <tr key={record.localDate}>
                     <th scope="row">
                       {record.recordId === null ? (
-                        formatLocalDate(record.localDate)
+                        formatDateOnly(runtime.locale, record.localDate)
                       ) : (
                         <Link to={`/time-records/${encodeURIComponent(record.recordId)}`}>
-                          {formatLocalDate(record.localDate)}
+                          {formatDateOnly(runtime.locale, record.localDate)}
                         </Link>
                       )}
                     </th>
@@ -198,19 +266,19 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                     <td>
                       {record.expectedMinutes === null
                         ? '—'
-                        : formatDuration(record.expectedMinutes)}
+                        : formatCompactDuration(runtime, record.expectedMinutes)}
                     </td>
                     <td>
                       {record.creditedMinutes === null
                         ? '—'
-                        : formatDuration(record.creditedMinutes)}
+                        : formatCompactDuration(runtime, record.creditedMinutes)}
                     </td>
                     <td>
                       {record.balanceMinutes === null
                         ? '—'
-                        : formatDuration(record.balanceMinutes, true)}
+                        : formatCompactDuration(runtime, record.balanceMinutes, true)}
                     </td>
-                    <td>{recordAttention(record)}</td>
+                    <td>{recordAttention(record, t)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -218,7 +286,7 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
           </div>
           <ol
             className="m-0 grid list-none gap-3 p-0 md:hidden"
-            aria-label="Daily time record summaries for the selected period"
+            aria-label={t('employee.time.records.caption')}
           >
             {records.map((record) => (
               <li key={record.localDate}>
@@ -226,22 +294,32 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <h3 className="m-0 text-lg font-bold">
                       {record.recordId === null ? (
-                        formatLocalDate(record.localDate)
+                        formatDateOnly(runtime.locale, record.localDate)
                       ) : (
                         <Link to={`/time-records/${encodeURIComponent(record.recordId)}`}>
-                          {formatLocalDate(record.localDate)}
+                          {formatDateOnly(runtime.locale, record.localDate)}
                         </Link>
                       )}
                     </h3>
                     <RecordStatus status={record.status} />
                   </div>
                   <dl className="grid grid-cols-3 gap-3">
-                    <CompactRecordValue label="Expected" value={record.expectedMinutes} />
-                    <CompactRecordValue label="Credited" value={record.creditedMinutes} />
-                    <CompactRecordValue label="Balance" signed value={record.balanceMinutes} />
+                    <CompactRecordValue
+                      label={t('employee.time.records.column.expected')}
+                      value={record.expectedMinutes}
+                    />
+                    <CompactRecordValue
+                      label={t('employee.time.records.column.credited')}
+                      value={record.creditedMinutes}
+                    />
+                    <CompactRecordValue
+                      label={t('employee.time.records.column.balance')}
+                      signed
+                      value={record.balanceMinutes}
+                    />
                   </dl>
                   <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                    {recordAttention(record)}
+                    {recordAttention(record, t)}
                   </p>
                 </Panel>
               </li>
@@ -253,15 +331,15 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
       <section aria-labelledby="ledger-heading" className="grid gap-4">
         <div>
           <h2 id="ledger-heading" className="m-0 text-xl font-bold">
-            Posted ledger entries
+            {t('employee.time.ledger.heading')}
           </h2>
           <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-            Every entry shows its effect and the resulting posted balance.
+            {t('employee.time.ledger.description')}
           </p>
         </div>
         {ledger.entries.length === 0 ? (
-          <RouteState kind="empty" title="No posted flexible-time entries">
-            <p>No final ledger entries exist through this period.</p>
+          <RouteState kind="empty" title={t('employee.time.ledger.empty.title')}>
+            <p>{t('employee.time.ledger.empty.description')}</p>
           </RouteState>
         ) : (
           <ol className="m-0 grid list-none gap-3 p-0">
@@ -273,16 +351,19 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
                   density="balanced"
                 >
                   <div>
-                    <strong>{entry.entryType.replaceAll('_', ' ').toLowerCase()}</strong>
+                    <strong>{t(TIME_ENTRY_TYPE_KEYS[entry.entryType])}</strong>
                     <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                      Effective {formatLocalDate(entry.effectiveDate)} ·{' '}
-                      {entry.explanationCode.replaceAll('_', ' ').toLowerCase()}
+                      {t('employee.time.ledger.effective', {
+                        date: formatDateOnly(runtime.locale, entry.effectiveDate),
+                      })}
                     </p>
                   </div>
                   <div className="text-sm tabular-nums sm:text-right">
-                    <div>{formatDuration(entry.minutes, true)}</div>
+                    <div>{formatCompactDuration(runtime, entry.minutes, true)}</div>
                     <div className="text-[var(--wl-text-muted)]">
-                      Balance after: {formatDuration(entry.balanceAfterMinutes, true)}
+                      {t('employee.time.ledger.balanceAfter', {
+                        balance: formatCompactDuration(runtime, entry.balanceAfterMinutes, true),
+                      })}
                     </div>
                   </div>
                 </Panel>
@@ -294,7 +375,10 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
           currentPage={ledger.page}
           onPageChange={(page) => setQuery({ page })}
           pageCount={Math.max(1, Math.ceil(ledger.total / ledger.limit))}
-          summary={`Flexible-time ledger page ${ledger.page} of ${Math.max(1, Math.ceil(ledger.total / ledger.limit))}`}
+          summary={t('employee.time.ledger.pagination', {
+            current: ledger.page,
+            total: Math.max(1, Math.ceil(ledger.total / ledger.limit)),
+          })}
         />
       </section>
 
@@ -309,19 +393,21 @@ function LeaveBalanceSection({
   leave,
   onPage,
 }: Readonly<{ leave: MyTime['leave']; onPage: (page: number) => void }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   return (
     <section aria-labelledby="leave-balance-heading" className="grid gap-4">
       <div>
         <h2 id="leave-balance-heading" className="m-0 text-xl font-bold">
-          Leave balances
+          {t('employee.time.leave.heading')}
         </h2>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Available minutes exclude pending reservations. Projected remaining includes them.
+          {t('employee.time.leave.description')}
         </p>
       </div>
       {leave.accounts.length === 0 ? (
-        <RouteState kind="empty" title="No leave entitlement accounts">
-          <p>No leave allocation has been posted yet.</p>
+        <RouteState kind="empty" title={t('employee.time.leave.empty.title')}>
+          <p>{t('employee.time.leave.empty.description')}</p>
         </RouteState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-3">
@@ -329,13 +415,21 @@ function LeaveBalanceSection({
             <Panel as="article" density="balanced" key={account.name}>
               <dl className="grid gap-3">
                 <div>
-                  <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">Account</dt>
+                  <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">
+                    {t('employee.time.leave.account')}
+                  </dt>
                   <dd className="m-0 text-lg font-bold">{account.name}</dd>
                 </div>
-                <BalanceValue label="Available" value={account.availableMinutes} />
-                <BalanceValue label="Pending reservation" value={account.reservedMinutes} />
                 <BalanceValue
-                  label="Projected remaining"
+                  label={t('employee.time.leave.available')}
+                  value={account.availableMinutes}
+                />
+                <BalanceValue
+                  label={t('employee.time.leave.pendingReservation')}
+                  value={account.reservedMinutes}
+                />
+                <BalanceValue
+                  label={t('employee.time.leave.projectedRemaining')}
                   value={account.projectedRemainingMinutes}
                 />
               </dl>
@@ -344,15 +438,14 @@ function LeaveBalanceSection({
         </div>
       )}
       <div>
-        <h3 className="m-0 text-lg font-bold">Leave entitlement source entries</h3>
+        <h3 className="m-0 text-lg font-bold">{t('employee.time.leave.ledger.heading')}</h3>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          Every entry shows its exact effect and the resulting available, reserved, and projected
-          amounts.
+          {t('employee.time.leave.ledger.description')}
         </p>
       </div>
       {leave.ledger.entries.length === 0 ? (
-        <RouteState kind="empty" title="No leave source entries">
-          <p>No entitlement, reservation, or adjustment entry exists yet.</p>
+        <RouteState kind="empty" title={t('employee.time.leave.ledger.empty.title')}>
+          <p>{t('employee.time.leave.ledger.empty.description')}</p>
         </RouteState>
       ) : (
         <ol className="m-0 grid list-none gap-3 p-0">
@@ -360,16 +453,32 @@ function LeaveBalanceSection({
             <li key={`${entry.postedAt}-${entry.entryType}-${index.toString()}`}>
               <Panel as="article" className="grid gap-3" density="balanced">
                 <div>
-                  <strong>{entry.entryType.replaceAll('_', ' ').toLowerCase()}</strong>
+                  <strong>{t(LEAVE_ENTRY_TYPE_KEYS[entry.entryType])}</strong>
                   <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                    {entry.absenceTypeName} · effective {formatLocalDate(entry.effectiveOn)}
+                    {entry.absenceTypeName} {'·'}{' '}
+                    {t('employee.time.ledger.effective', {
+                      date: formatDateOnly(runtime.locale, entry.effectiveOn),
+                    })}
                   </p>
                 </div>
                 <dl className="grid gap-2 text-sm sm:grid-cols-4">
-                  <BalanceValue label="Entry" value={entry.minutes} signed />
-                  <BalanceValue label="Available after" value={entry.availableAfterMinutes} />
-                  <BalanceValue label="Reserved after" value={entry.reservedAfterMinutes} />
-                  <BalanceValue label="Projected after" value={entry.projectedAfterMinutes} />
+                  <BalanceValue
+                    label={t('employee.time.leave.entry')}
+                    value={entry.minutes}
+                    signed
+                  />
+                  <BalanceValue
+                    label={t('employee.time.leave.availableAfter')}
+                    value={entry.availableAfterMinutes}
+                  />
+                  <BalanceValue
+                    label={t('employee.time.leave.reservedAfter')}
+                    value={entry.reservedAfterMinutes}
+                  />
+                  <BalanceValue
+                    label={t('employee.time.leave.projectedAfter')}
+                    value={entry.projectedAfterMinutes}
+                  />
                 </dl>
               </Panel>
             </li>
@@ -380,7 +489,10 @@ function LeaveBalanceSection({
         currentPage={leave.ledger.page}
         onPageChange={onPage}
         pageCount={Math.max(1, Math.ceil(leave.ledger.total / leave.ledger.limit))}
-        summary={`Leave ledger page ${leave.ledger.page} of ${Math.max(1, Math.ceil(leave.ledger.total / leave.ledger.limit))}`}
+        summary={t('employee.time.leave.ledger.pagination', {
+          current: leave.ledger.page,
+          total: Math.max(1, Math.ceil(leave.ledger.total / leave.ledger.limit)),
+        })}
       />
     </section>
   );
@@ -391,15 +503,14 @@ function MyTimeFrame({
   children,
   title,
 }: Readonly<{ balancesOnly: boolean; children: ReactNode; title: string }>) {
+  const t = useWorkLedgerMessage();
   return (
     <section className="grid max-w-5xl gap-8">
       <PageHeader
-        eyebrow="Time records"
+        eyebrow={t('employee.time.eyebrow')}
         title={title}
         description={
-          balancesOnly
-            ? 'Your flexible-time and leave balances, with clearly identified projections and source entries.'
-            : 'Review your weekly or monthly record summaries and the flexible-time balance they explain.'
+          balancesOnly ? t('employee.time.balancesDescription') : t('employee.time.description')
         }
       />
       {children}
@@ -412,10 +523,13 @@ function BalanceValue({
   signed = false,
   value,
 }: Readonly<{ label: string; signed?: boolean; value: number }>) {
+  const runtime = useWorkLedgerI18n();
   return (
     <div className="grid gap-1">
       <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">{label}</dt>
-      <dd className="m-0 text-2xl font-bold tabular-nums">{formatDuration(value, signed)}</dd>
+      <dd className="m-0 text-2xl font-bold tabular-nums">
+        {formatCompactDuration(runtime, value, signed)}
+      </dd>
     </div>
   );
 }
@@ -425,60 +539,74 @@ function CompactRecordValue({
   signed = false,
   value,
 }: Readonly<{ label: string; signed?: boolean; value: number | null }>) {
+  const runtime = useWorkLedgerI18n();
   return (
     <div className="grid gap-1">
       <dt className="text-xs font-semibold text-[var(--wl-text-muted)]">{label}</dt>
       <dd className="m-0 text-sm font-bold tabular-nums">
-        {value === null ? '—' : formatDuration(value, signed)}
+        {value === null ? '—' : formatCompactDuration(runtime, value, signed)}
       </dd>
     </div>
   );
 }
 
 function RecordStatus({ status }: Readonly<{ status: MyTime['records'][number]['status'] }>) {
+  const t = useWorkLedgerMessage();
   const tone = status === 'COMPLETE' ? 'success' : status === 'INCOMPLETE' ? 'warning' : 'info';
-  return <StatusBadge tone={tone}>{status.replaceAll('_', ' ').toLowerCase()}</StatusBadge>;
+  return <StatusBadge tone={tone}>{t(RECORD_STATUS_KEYS[status])}</StatusBadge>;
 }
 
-function recordAttention(record: MyTime['records'][number]): ReactNode {
+function recordAttention(record: MyTime['records'][number], t: MessageTranslator): ReactNode {
   if (record.attention.warnings.length === 0) {
-    return record.status === 'INCOMPLETE' ? 'Review incomplete record' : 'No attention needed';
+    return record.status === 'INCOMPLETE'
+      ? t('employee.time.records.attention.incomplete')
+      : t('employee.time.records.attention.none');
   }
-  const label = `${record.attention.warnings.length.toString()} warning${record.attention.warnings.length === 1 ? '' : 's'}`;
+  const label = t('employee.time.records.attention.warnings', {
+    count: record.attention.warnings.length,
+  });
   if (record.recordId === null) return label;
   return (
     <Link to={`/time-records/${encodeURIComponent(record.recordId)}`}>
-      {label} · review details
+      {t('employee.time.records.attention.review', {
+        count: record.attention.warnings.length,
+      })}
     </Link>
   );
 }
 
 function MyTimeLoading() {
+  const t = useWorkLedgerMessage();
   return (
-    <RouteState kind="loading" title="Loading your records">
-      <p>Checking the selected period, balances, and source entries.</p>
+    <RouteState kind="loading" title={t('employee.time.loading.title')}>
+      <p>{t('employee.time.loading.description')}</p>
     </RouteState>
   );
 }
 
 function MyTimeError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
+  const t = useWorkLedgerMessage();
   const permissionDenied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
   return (
     <RouteState
       actions={
         permissionDenied ? undefined : (
           <Button variant="secondary" onPress={retry}>
-            Try again
+            {t('shared.action.tryAgain')}
           </Button>
         )
       }
       kind={permissionDenied ? 'permission-denied' : 'error'}
-      title={permissionDenied ? 'You cannot view these records' : 'Your records are unavailable'}
+      title={
+        permissionDenied
+          ? t('employee.time.error.denied.title')
+          : t('employee.time.error.unavailable.title')
+      }
     >
       <p className="m-0">
         {permissionDenied
-          ? 'Your current account does not have employee self-service access.'
-          : 'No time, balance, or ledger values were displayed. Check your connection and try again.'}
+          ? t('employee.time.error.denied.description')
+          : t('employee.time.error.unavailable.description')}
       </p>
     </RouteState>
   );

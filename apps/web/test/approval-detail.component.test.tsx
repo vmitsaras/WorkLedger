@@ -6,14 +6,22 @@ import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
 import type { ApprovalDetail, SelfContext } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { createWebLocaleController, LocaleControllerProvider } from '../src/app/locale.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
 const APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174701';
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174702';
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
+
 const HR_CONTEXT: SelfContext = {
   account: { email: 'hr@northstar.test', name: 'Alex Morgan' },
   defaultPath: '/employees',
@@ -220,14 +228,20 @@ test('labels locked correction approval as an immediate post-lock adjustment', a
 });
 
 function renderApplication() {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  const localeController = createWebLocaleController(defaultLocaleRuntime);
   const queryClient = createWorkLedgerQueryClient();
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: [`/approvals/${APPROVAL_ID}`],
   });
   const rendered = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={localeController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
   return { ...rendered, queryClient, router };
 }

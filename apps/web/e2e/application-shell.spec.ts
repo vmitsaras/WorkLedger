@@ -2,7 +2,7 @@ import { mkdir } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import type { TodayAttendance } from '@workledger/contracts';
+import type { MonthlyPeriod, TodayAttendance } from '@workledger/contracts';
 import { COHERENT_TODAY_ATTENDANCE, expectPageToHaveNoAxeViolations } from '@workledger/test-utils';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
@@ -330,6 +330,59 @@ const PERSONAL_CALENDAR = {
   leadingEmptyDays: 5,
   month: '2026-08',
 };
+const MONTHLY_PERIOD_ID = '50000000-0000-7000-8000-000000000001';
+const READY_MONTHLY_PERIOD = {
+  approvedRecord: null,
+  availableActions: ['SUBMIT'],
+  attention: { blockers: [], warnings: [] },
+  employeeDisplayName: 'Emma Reed',
+  id: MONTHLY_PERIOD_ID,
+  monthEnd: '2026-08-31',
+  monthStart: '2026-08-01',
+  postLockView: null,
+  readiness: {
+    completeDateCount: 1,
+    coveredDateCount: 1,
+    monthEnded: true,
+    status: 'READY_FOR_SUBMISSION',
+  },
+  reviewHistory: [],
+  rows: [
+    {
+      absenceCreditMinutes: 0,
+      adjustmentMinutes: 0,
+      balanceMinutes: 15,
+      breakMinutes: 30,
+      creditedMinutes: 495,
+      expectedMinutes: 480,
+      localDate: '2026-08-31',
+      recordId: '47000000-0000-7000-8000-000000000001',
+      status: 'COMPLETE',
+      workedMinutes: 495,
+    },
+  ],
+  snapshotVersion: { schemaVersion: 1, sourceFingerprint: 'a'.repeat(64) },
+  timeZone: 'Europe/Berlin',
+  totals: {
+    absenceCreditMinutes: 0,
+    adjustmentMinutes: 0,
+    balanceMinutes: 15,
+    breakMinutes: 30,
+    creditedMinutes: 495,
+    expectedMinutes: 480,
+    ledgerClosingBalanceMinutes: 615,
+    ledgerOpeningBalanceMinutes: 600,
+    ledgerPeriodDeltaMinutes: 15,
+    workedMinutes: 495,
+  },
+  workflow: {
+    approvedAt: null,
+    lockedAt: null,
+    periodVersion: 1,
+    status: 'OPEN',
+    submittedAt: null,
+  },
+} as const satisfies MonthlyPeriod;
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/v1/identity', async (route) => {
@@ -1656,7 +1709,7 @@ test('preserves the Today task order, target sizes, and reflow across supported 
   await expect(progress).toHaveAttribute('max', '480');
   await expect(progress).toHaveAttribute('aria-valuetext', '3h 15m credited of 8h 00m expected.');
   await expect(page.getByRole('region', { name: 'Posted balance' })).toContainText(
-    'Posted through Monday, August 10, 2026',
+    'Posted through Monday, 10 August 2026',
   );
   expect(
     await page.evaluate(() => {
@@ -1711,19 +1764,19 @@ test('captures the WL-1305 Today timeline and calculation evidence @phase13-base
       const currentStatus = page.getByRole('region', { name: 'Working' });
       await expect(currentStatus.getByText('Current work interval')).toBeVisible();
       await expect(currentStatus.getByText('1h 30m', { exact: true })).toBeVisible();
-      await expect(currentStatus.getByText('11:15 AM', { exact: true })).toBeVisible();
-      await expect(page.getByText('Estimate updated 12:45 PM')).toBeVisible();
+      await expect(currentStatus.getByText('11:15', { exact: true })).toBeVisible();
+      await expect(page.getByText('Estimate updated 12:45')).toBeVisible();
       const progress = page.getByRole('region', { name: 'Today’s progress' });
       await expect(progress.getByText('3h 30m credited', { exact: true })).toBeVisible();
       await expect(progress.getByText('4h 30m', { exact: true })).toBeVisible();
-      await expect(progress.getByText('5:15 PM', { exact: true })).toBeVisible();
+      await expect(progress.getByText('17:15', { exact: true })).toBeVisible();
       await expect(progress.getByText('−4h 30m', { exact: true })).toBeVisible();
       await expect(
         progress.getByRole('progressbar', { name: 'Today’s credited progress' }),
       ).toHaveAttribute('value', '210');
       const posted = page.getByRole('region', { name: 'Posted balance' });
       await expect(posted.getByText('+6h 20m', { exact: true })).toBeVisible();
-      await expect(posted).toContainText('Posted through Monday, August 10, 2026');
+      await expect(posted).toContainText('Posted through Monday, 10 August 2026');
       await expect(page.getByRole('button', { name: 'Start break' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Clock out', exact: true })).toBeVisible();
       const timeline = page.getByRole('region', { name: 'Today’s timeline' });
@@ -1839,7 +1892,7 @@ test('passes the WL-1307 Today responsive, accessibility, and usability sub-gate
   }
 
   const currentStatus = page.getByRole('region', { name: 'Working' });
-  await expect(currentStatus.getByText('11:15 AM', { exact: true })).toBeVisible();
+  await expect(currentStatus.getByText('11:15', { exact: true })).toBeVisible();
   const progress = page.getByRole('region', { name: 'Today’s progress' });
   await expect(progress.getByText('3h 15m', { exact: true })).toBeVisible();
   await expect(progress.getByText('4h 30m', { exact: true })).toBeVisible();
@@ -2660,10 +2713,96 @@ test('blocks protected rendering until the authoritative account locale is ready
   releaseContext?.();
   await navigation;
   await expect(page.locator('html')).toHaveAttribute('lang', 'de-DE');
-  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Heute', exact: true })).toBeFocused();
   expect(await page.evaluate(() => localStorage.getItem('workledger.locale'))).toBe('es-ES');
   await expectPageToHaveNoAxeViolations(page);
 });
+
+for (const scenario of [
+  {
+    calendar: 'Kalender',
+    calendarView: 'Monatsraster',
+    locale: 'de-DE' as const,
+    monthly: 'Monatszeitraum',
+    monthlyReady: 'Bereit zur Einreichung',
+    monthlySubmit: 'Monat einreichen',
+    myTime: 'Meine Zeit',
+    postedBalance: 'Gebuchter Saldo',
+    requestEmpty: 'Keine Anträge entsprechen diesen Filtern',
+    requests: 'Meine Anträge',
+    today: 'Heute',
+    todayAction: 'Pause beginnen',
+    todayState: 'Bei der Arbeit',
+  },
+  {
+    calendar: 'Calendario',
+    calendarView: 'Cuadrícula mensual',
+    locale: 'es-ES' as const,
+    monthly: 'Periodo mensual',
+    monthlyReady: 'Listo para enviar',
+    monthlySubmit: 'Enviar mes',
+    myTime: 'Mi tiempo',
+    postedBalance: 'Saldo contabilizado',
+    requestEmpty: 'Ninguna solicitud coincide con estos filtros',
+    requests: 'Mis solicitudes',
+    today: 'Hoy',
+    todayAction: 'Iniciar descanso',
+    todayState: 'Trabajando',
+  },
+]) {
+  test(`renders critical employee routes coherently in ${scenario.locale}`, async ({ page }) => {
+    await page.route('**/v1/me/context', async (route) => {
+      await route.fulfill({
+        json: success({ ...EMPLOYEE_CONTEXT, locale: scenario.locale }),
+        status: 200,
+      });
+    });
+    await mockToday(page);
+    await page.route('**/v1/me/time?*', async (route) => {
+      await route.fulfill({ json: success(PERSONAL_TIME), status: 200 });
+    });
+    await page.route('**/v1/me/requests?*', async (route) => {
+      await route.fulfill({
+        json: success({
+          items: [],
+          pagination: { limit: 20, page: 1, total: 0, totalPages: 0 },
+        }),
+        status: 200,
+      });
+    });
+    await page.route('**/v1/me/calendar*', async (route) => {
+      await route.fulfill({ json: success(PERSONAL_CALENDAR), status: 200 });
+    });
+    await page.route(`**/v1/monthly-periods/${MONTHLY_PERIOD_ID}`, async (route) => {
+      await route.fulfill({ json: success(READY_MONTHLY_PERIOD), status: 200 });
+    });
+
+    await page.goto('/today');
+    await expect(page.getByRole('heading', { level: 1, name: scenario.today })).toBeFocused();
+    await expect(page.getByRole('heading', { name: scenario.todayState })).toBeVisible();
+    await expect(page.getByRole('button', { name: scenario.todayAction })).toBeVisible();
+    await expectPageToHaveNoAxeViolations(page);
+
+    await page.goto('/my-time?date=2026-08-11&view=WEEK&page=1&limit=20');
+    await expect(page.getByRole('heading', { level: 1, name: scenario.myTime })).toBeFocused();
+    await expect(page.getByText(scenario.postedBalance, { exact: true })).toBeVisible();
+
+    await page.goto('/requests');
+    await expect(page.getByRole('heading', { level: 1, name: scenario.requests })).toBeFocused();
+    await expect(page.getByRole('heading', { name: scenario.requestEmpty })).toBeVisible();
+
+    await page.goto('/calendar?month=2026-08');
+    await expect(page.getByRole('heading', { level: 1, name: scenario.calendar })).toBeFocused();
+    await expect(page.getByRole('button', { name: scenario.calendarView })).toBeVisible();
+
+    await page.goto(`/monthly-periods/${MONTHLY_PERIOD_ID}`);
+    await expect(page.getByRole('heading', { level: 1, name: scenario.monthly })).toBeFocused();
+    await expect(page.getByText(scenario.monthlyReady, { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: scenario.monthlySubmit })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', scenario.locale);
+    await expectPageToHaveNoAxeViolations(page);
+  });
+}
 
 test('uses responsive personal records and an agenda-first personal calendar', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });

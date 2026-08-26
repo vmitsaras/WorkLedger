@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import type { SubmitVacationRequest } from '@workledger/contracts';
-import { translate, type I18nRuntime } from '@workledger/i18n';
-import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
+import {
+  formatCompactDuration,
+  formatDateOnly,
+  translate,
+  type I18nRuntime,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, buttonVariants } from '@workledger/ui';
 
 import { ApiClientError, submitVacationRequest } from '../app/api-client.js';
-import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 import { fieldErrorPresentation } from '../app/presentation-codes.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
@@ -32,7 +36,8 @@ const EMPTY_VALUES: FormValues = Object.freeze({
 });
 
 export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: boolean }>) {
-  const runtime = useOptionalWorkLedgerI18n();
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const summaryRef = useRef<HTMLElement>(null);
   const successRef = useRef<HTMLElement>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
@@ -59,10 +64,10 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const errors = validate(values);
+    const errors = validate(values, t);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      setFormError('Correct the highlighted fields and submit your vacation request again.');
+      setFormError(t('employee.absence.vacation.error.correct'));
       return;
     }
     setIsSubmitting(true);
@@ -72,15 +77,13 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
     } catch (error) {
       if (error instanceof ApiClientError && error.fields !== undefined) {
         setFieldErrors(mapServerFieldErrors(error.fields, runtime));
-        setFormError('Correct the highlighted fields and submit your vacation request again.');
+        setFormError(t('employee.absence.vacation.error.correct'));
       } else if (error instanceof ApiClientError && error.code === 'ABSENCE_OVERLAP') {
-        setFormError('This coverage overlaps another absence request. Choose different coverage.');
+        setFormError(t('employee.absence.vacation.error.overlap'));
       } else if (error instanceof ApiClientError && error.code === 'SCHEDULE_NOT_ASSIGNED') {
-        setFormError(
-          'WorkLedger cannot calculate this request because a work schedule is missing.',
-        );
+        setFormError(t('employee.absence.vacation.error.scheduleMissing'));
       } else {
-        setFormError('WorkLedger could not submit your vacation request. Try again.');
+        setFormError(t('employee.absence.vacation.error.unavailable'));
       }
     } finally {
       setIsSubmitting(false);
@@ -91,15 +94,14 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
     <section className="grid max-w-3xl gap-6">
       {embedded ? null : (
         <PageHeader
-          eyebrow="Requests"
-          title="Request vacation"
-          description="Choose full-day, obligation-half, or exact time coverage. Weekends, public holidays, and zero-hour days remain visible but use no vacation entitlement."
+          eyebrow={t('employee.absence.vacation.eyebrow')}
+          title={t('employee.absence.vacation.title')}
+          description={t('employee.absence.vacation.description')}
         />
       )}
       {embedded ? (
         <p className="m-0 text-[var(--wl-text-muted)]">
-          Choose full-day, obligation-half, or exact time coverage. Weekends, public holidays, and
-          zero-hour days remain visible but use no vacation entitlement.
+          {t('employee.absence.vacation.description')}
         </p>
       ) : null}
       {success === null ? (
@@ -110,10 +112,12 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
             summaryRef={summaryRef}
           />
           <fieldset className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4">
-            <legend className="px-1 text-lg font-bold">Vacation coverage</legend>
+            <legend className="px-1 text-lg font-bold">
+              {t('employee.absence.vacation.form.legend')}
+            </legend>
             <div className="grid gap-2">
               <label htmlFor="coverage-kind" className="font-semibold">
-                Coverage
+                {t('employee.absence.coverage.label')}
               </label>
               <select
                 id="coverage-kind"
@@ -121,14 +125,21 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
                 value={values.kind}
                 onChange={(event) => updateValue('kind', event.target.value)}
               >
-                <option value="FULL_DAY">Full day or date range</option>
-                <option value="FIRST_HALF">First half of expected work</option>
-                <option value="SECOND_HALF">Second half of expected work</option>
-                <option value="MINUTE_INTERVAL">Exact local time interval</option>
+                <option value="FULL_DAY">
+                  {t('employee.absence.coverage.option.fullDayRange')}
+                </option>
+                <option value="FIRST_HALF">
+                  {t('employee.absence.coverage.option.firstHalf')}
+                </option>
+                <option value="SECOND_HALF">
+                  {t('employee.absence.coverage.option.secondHalf')}
+                </option>
+                <option value="MINUTE_INTERVAL">
+                  {t('employee.absence.coverage.option.exact')}
+                </option>
               </select>
               <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                First and second half describe equal portions of your scheduled obligation, not
-                morning and afternoon. Choose exact time for a clock-specific absence.
+                {t('employee.absence.coverage.help')}
               </p>
             </div>
             {values.kind === 'FULL_DAY' ? (
@@ -136,14 +147,14 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
                 <DateField
                   error={fieldErrors['startDate']}
                   id="startDate"
-                  label="First day"
+                  label={t('employee.absence.coverage.field.firstDay')}
                   onChange={(value) => updateValue('startDate', value)}
                   value={values.startDate}
                 />
                 <DateField
                   error={fieldErrors['endDate']}
                   id="endDate"
-                  label="Last day"
+                  label={t('employee.absence.coverage.field.lastDay')}
                   onChange={(value) => updateValue('endDate', value)}
                   value={values.endDate}
                 />
@@ -153,7 +164,7 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
                 <DateField
                   error={fieldErrors['localDate']}
                   id="localDate"
-                  label="Local date"
+                  label={t('employee.absence.coverage.field.localDate')}
                   onChange={(value) => updateValue('localDate', value)}
                   value={values.localDate}
                 />
@@ -161,7 +172,7 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
                   <TimeField
                     error={fieldErrors['startsAt']}
                     id="startsAt"
-                    label="Start time"
+                    label={t('employee.absence.coverage.field.startTime')}
                     onChange={(value) => updateValue('startsAt', value)}
                     value={values.startsAt}
                   />
@@ -170,7 +181,7 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
                   <TimeField
                     error={fieldErrors['endsAt']}
                     id="endsAt"
-                    label="End time"
+                    label={t('employee.absence.coverage.field.endTime')}
                     onChange={(value) => updateValue('endsAt', value)}
                     value={values.endsAt}
                   />
@@ -179,15 +190,16 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
             )}
           </fieldset>
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            Submitting reserves the calculated entitlement while your request awaits approval. It
-            does not change your daily time calculation yet.
+            {t('employee.absence.vacation.form.notice')}
           </p>
           <div className="flex flex-wrap gap-3">
             <Button type="submit" isDisabled={isSubmitting}>
-              {isSubmitting ? 'Submitting request…' : 'Submit vacation request'}
+              {isSubmitting
+                ? t('employee.absence.vacation.form.submitting')
+                : t('employee.absence.vacation.form.submit')}
             </Button>
             <Link className={buttonVariants({ variant: 'secondary' })} to="/requests">
-              Cancel
+              {t('employee.absence.action.cancel')}
             </Link>
           </div>
         </form>
@@ -196,26 +208,37 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
           className="outline-none"
           ref={successRef}
           tabIndex={-1}
-          title="Vacation request submitted"
+          title={t('employee.absence.vacation.success.title')}
           tone="success"
         >
           <p className="m-0">
-            Your request covers {success.coverage.length.toString()} segment
-            {success.coverage.length === 1 ? '' : 's'} and reserves{' '}
-            {formatDuration(success.entitlementMinutes)}. Your projected remaining vacation balance
-            is {formatDuration(success.projectedRemainingMinutes, true)}.
+            {t('employee.absence.vacation.success.summary', {
+              count: success.coverage.length,
+              projected: formatCompactDuration(runtime, success.projectedRemainingMinutes, true),
+              reserved: formatCompactDuration(runtime, success.entitlementMinutes),
+            })}
           </p>
-          <ul className="m-0 grid gap-1 pl-5 text-sm" aria-label="Vacation coverage">
+          <ul
+            className="m-0 grid gap-1 pl-5 text-sm"
+            aria-label={t('employee.absence.vacation.success.coverageLabel')}
+          >
             {success.coverage.map((coverage) => (
               <li key={`${coverage.localDate}-${coverage.kind}-${coverage.startsAtMinute ?? ''}`}>
-                {formatLocalDate(coverage.localDate)} —{' '}
-                {coverageLabel(coverage.kind, coverage.startsAtMinute, coverage.endsAtMinute)}:{' '}
-                {formatDuration(coverage.entitlementMinutes)}
-                {coverage.holiday
-                  ? ' (public holiday; no entitlement used)'
-                  : coverage.scheduledMinutes === 0
-                    ? ' (zero-hour day; no entitlement used)'
-                    : ''}
+                {t('employee.absence.coverage.line', {
+                  coverage: coverageLabel(
+                    coverage.kind,
+                    coverage.startsAtMinute,
+                    coverage.endsAtMinute,
+                    t,
+                  ),
+                  date: formatDateOnly(runtime.locale, coverage.localDate),
+                  duration: formatCompactDuration(runtime, coverage.entitlementMinutes),
+                  note: coverage.holiday
+                    ? t('employee.absence.vacation.success.holidayNote')
+                    : coverage.scheduledMinutes === 0
+                      ? t('employee.absence.vacation.success.zeroHourNote')
+                      : '',
+                })}
               </li>
             ))}
           </ul>
@@ -223,7 +246,7 @@ export function VacationRequestPage({ embedded = false }: Readonly<{ embedded?: 
             className={buttonVariants({ variant: 'secondary', className: 'w-fit' })}
             to={`/requests/${success.id}`}
           >
-            View request details
+            {t('employee.absence.action.viewDetails')}
           </Link>
         </Alert>
       )}
@@ -286,20 +309,28 @@ function Field(
   );
 }
 
-function validate(values: FormValues): Readonly<Record<string, string>> {
+function validate(
+  values: FormValues,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): Readonly<Record<string, string>> {
   const errors: Record<string, string> = {};
   if (values.kind === 'FULL_DAY') {
-    if (values.startDate === '') errors['startDate'] = 'Choose the first vacation day.';
-    if (values.endDate === '') errors['endDate'] = 'Choose the last vacation day.';
+    if (values.startDate === '')
+      errors['startDate'] = t('employee.absence.coverage.validation.firstDay');
+    if (values.endDate === '')
+      errors['endDate'] = t('employee.absence.coverage.validation.lastDay');
     if (values.startDate !== '' && values.endDate !== '' && values.endDate < values.startDate)
-      errors['endDate'] = 'The last day must be on or after the first day.';
+      errors['endDate'] = t('employee.absence.coverage.validation.lastDayAfterFirst');
   } else {
-    if (values.localDate === '') errors['localDate'] = 'Choose the local date.';
+    if (values.localDate === '')
+      errors['localDate'] = t('employee.absence.coverage.validation.localDate');
     if (values.kind === 'MINUTE_INTERVAL') {
-      if (values.startsAt === '') errors['startsAt'] = 'Choose a start time.';
-      if (values.endsAt === '') errors['endsAt'] = 'Choose an end time.';
+      if (values.startsAt === '')
+        errors['startsAt'] = t('employee.absence.coverage.validation.startTime');
+      if (values.endsAt === '')
+        errors['endsAt'] = t('employee.absence.coverage.validation.endTime');
       if (values.startsAt !== '' && values.endsAt !== '' && values.startsAt >= values.endsAt)
-        errors['endsAt'] = 'End time must be after start time.';
+        errors['endsAt'] = t('employee.absence.coverage.validation.endAfterStart');
     }
   }
   return errors;
@@ -324,10 +355,11 @@ function coverageLabel(
   kind: CoverageKind,
   startsAtMinute: number | null,
   endsAtMinute: number | null,
+  t: ReturnType<typeof useWorkLedgerMessage>,
 ): string {
-  if (kind === 'FULL_DAY') return 'Full day';
-  if (kind === 'FIRST_HALF') return 'First half of expected work';
-  if (kind === 'SECOND_HALF') return 'Second half of expected work';
+  if (kind === 'FULL_DAY') return t('employee.absence.coverage.name.fullDay');
+  if (kind === 'FIRST_HALF') return t('employee.absence.coverage.name.firstHalf');
+  if (kind === 'SECOND_HALF') return t('employee.absence.coverage.name.secondHalf');
   return `${formatClock(startsAtMinute)}–${formatClock(endsAtMinute)}`;
 }
 function formatClock(value: number | null): string {
@@ -338,15 +370,13 @@ function formatClock(value: number | null): string {
 }
 function mapServerFieldErrors(
   fields: ApiClientError['fields'],
-  runtime: I18nRuntime | null,
+  runtime: I18nRuntime,
 ): Readonly<Record<string, string>> {
   return Object.fromEntries(
     Object.entries(fields ?? {}).map(([field, errors]) => [
       field,
       errors[0] === undefined
-        ? runtime === null
-          ? 'Correct this value.'
-          : translate(runtime, 'shared.validation.correctValue')
+        ? translate(runtime, 'shared.validation.correctValue')
         : fieldErrorPresentation(errors[0].code, runtime),
     ]),
   );

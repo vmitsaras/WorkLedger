@@ -3,16 +3,29 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import type { PersonalCalendar } from '@workledger/contracts';
+import {
+  formatDateOnly,
+  formatNumber,
+  type MessageArguments,
+  type MessageKey,
+} from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Button, DataTable, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
 import { ApiClientError } from '../app/api-client.js';
-import { formatLocalDate } from '../app/date-time-format.js';
 import { personalCalendarQuery } from '../app/query.js';
+import { workflowStatusMessageKey } from '../app/workflow-status-presentation.js';
 import { PageHeader } from '../components/page-header.js';
 
 type CalendarView = 'AGENDA' | 'MONTH';
+type MessageTranslator = <Key extends MessageKey>(
+  key: Key,
+  ...args: MessageArguments<Key>
+) => string;
 
 export function PersonalCalendarPage() {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedMonth = searchParams.get('month') ?? undefined;
   const query = useQuery(
@@ -35,8 +48,8 @@ export function PersonalCalendarPage() {
   if (query.isPending)
     return (
       <CalendarFrame>
-        <RouteState kind="loading" title="Loading your calendar">
-          <p>Checking public holidays and your own absence coverage.</p>
+        <RouteState kind="loading" title={t('employee.calendar.loading.title')}>
+          <p>{t('employee.calendar.loading.description')}</p>
         </RouteState>
       </CalendarFrame>
     );
@@ -57,26 +70,28 @@ export function PersonalCalendarPage() {
       <Panel aria-labelledby="personal-calendar-month" className="grid gap-4" density="balanced">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Selected month</p>
+            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">
+              {t('employee.calendar.selectedMonth')}
+            </p>
             <h2
               id="personal-calendar-month"
               className="m-0 mt-1 text-2xl font-bold"
               aria-live="polite"
             >
-              {formatMonth(calendar.month)}
+              {formatMonth(runtime.locale, calendar.month)}
             </h2>
           </div>
           <StatusBadge tone="info">
-            {calendar.holidays.length + calendar.absences.length} calendar{' '}
-            {calendar.holidays.length + calendar.absences.length === 1 ? 'entry' : 'entries'}
+            {t('employee.calendar.entries', {
+              count: calendar.holidays.length + calendar.absences.length,
+            })}
           </StatusBadge>
         </div>
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          Public holidays and your own absence coverage. The agenda and month grid contain the same
-          dates and details.
+          {t('employee.calendar.description')}
         </p>
       </Panel>
-      <div className="flex flex-wrap gap-2" aria-label="Calendar view">
+      <div className="flex flex-wrap gap-2" aria-label={t('employee.calendar.view.label')}>
         <Button
           type="button"
           aria-pressed={view === 'MONTH'}
@@ -86,7 +101,7 @@ export function PersonalCalendarPage() {
             setView('MONTH');
           }}
         >
-          Month grid
+          {t('employee.calendar.view.month')}
         </Button>
         <Button
           type="button"
@@ -97,16 +112,16 @@ export function PersonalCalendarPage() {
             setView('AGENDA');
           }}
         >
-          Agenda list
+          {t('employee.calendar.view.agenda')}
         </Button>
       </div>
       {view === 'MONTH' ? <MonthGrid calendar={calendar} /> : <Agenda calendar={calendar} />}
-      <nav className="flex flex-wrap gap-2" aria-label="Calendar month">
+      <nav className="flex flex-wrap gap-2" aria-label={t('employee.calendar.navigation.label')}>
         <Button type="button" variant="secondary" onPress={() => changeMonth(-1)}>
-          Previous month
+          {t('employee.calendar.navigation.previous')}
         </Button>
         <Button type="button" variant="secondary" onPress={() => changeMonth(1)}>
-          Next month
+          {t('employee.calendar.navigation.next')}
         </Button>
       </nav>
     </CalendarFrame>
@@ -114,12 +129,13 @@ export function PersonalCalendarPage() {
 }
 
 function CalendarFrame({ children }: Readonly<{ children: React.ReactNode }>) {
+  const t = useWorkLedgerMessage();
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="My work"
-        title="Calendar"
-        description="Review your public holidays and absence coverage by month."
+        eyebrow={t('employee.calendar.eyebrow')}
+        title={t('employee.calendar.title')}
+        description={t('employee.calendar.description')}
       />
       {children}
     </section>
@@ -127,6 +143,8 @@ function CalendarFrame({ children }: Readonly<{ children: React.ReactNode }>) {
 }
 
 function MonthGrid({ calendar }: Readonly<{ calendar: PersonalCalendar }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const dates = useMemo(
     () =>
       Object.freeze([
@@ -136,23 +154,22 @@ function MonthGrid({ calendar }: Readonly<{ calendar: PersonalCalendar }>) {
       ]),
     [calendar.days, calendar.leadingEmptyDays],
   );
-  const details = useMemo(() => detailsByDate(calendar), [calendar]);
+  const details = useMemo(() => detailsByDate(calendar, t), [calendar, t]);
+  const formattedMonth = formatMonth(runtime.locale, calendar.month);
   return (
     <DataTable
-      caption={`Personal holidays and absence coverage for ${formatMonth(calendar.month)}`}
+      caption={t('employee.calendar.grid.caption', { month: formattedMonth })}
       className="min-w-[46rem]"
-      scrollHint="Scroll horizontally to review all seven days."
-      scrollLabel="Personal calendar month grid"
+      scrollHint={t('employee.calendar.grid.scrollHint')}
+      scrollLabel={t('employee.calendar.grid.scrollLabel')}
     >
       <thead>
         <tr>
-          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
-            (day) => (
-              <th key={day} scope="col">
-                {day}
-              </th>
-            ),
-          )}
+          {weekdays(runtime.locale).map((day) => (
+            <th key={day} scope="col">
+              {day}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
@@ -173,23 +190,27 @@ function MonthGrid({ calendar }: Readonly<{ calendar: PersonalCalendar }>) {
 }
 
 function Agenda({ calendar }: Readonly<{ calendar: PersonalCalendar }>) {
-  const details = detailsByDate(calendar);
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const details = detailsByDate(calendar, t);
   const items = [...details.entries()].sort(([first], [second]) => first.localeCompare(second));
   if (items.length === 0)
     return (
-      <RouteState kind="empty" title="Nothing scheduled this month">
-        <p>No public holidays or personal absence coverage appears in this month.</p>
+      <RouteState kind="empty" title={t('employee.calendar.empty.title')}>
+        <p>{t('employee.calendar.empty.description')}</p>
       </RouteState>
     );
   return (
     <ol
       className="m-0 grid gap-3 p-0"
-      aria-label={`Calendar agenda for ${formatMonth(calendar.month)}`}
+      aria-label={t('employee.calendar.agenda.label', {
+        month: formatMonth(runtime.locale, calendar.month),
+      })}
     >
       {items.map(([date, entries]) => (
         <li key={date} className="list-none">
           <Panel as="article" className="grid gap-2" density="balanced">
-            <h2 className="m-0 text-lg font-bold">{formatLocalDate(date)}</h2>
+            <h2 className="m-0 text-lg font-bold">{formatDateOnly(runtime.locale, date)}</h2>
             <ul className="m-0 grid gap-1 pl-5">
               {entries.map((entry) => (
                 <li key={entry.key}>{entry.label}</li>
@@ -207,9 +228,10 @@ function DayContent({
   date,
   details,
 }: Readonly<{ date: string; details: readonly CalendarDetail[] }>) {
+  const runtime = useWorkLedgerI18n();
   return (
     <div className="grid gap-1">
-      <span className="font-semibold">{date.slice(-2).replace(/^0/u, '')}</span>
+      <span className="font-semibold">{formatNumber(runtime.locale, Number(date.slice(-2)))}</span>
       {details.map((detail) => (
         <p key={detail.key} className="m-0 text-xs leading-5">
           {detail.label}
@@ -219,7 +241,10 @@ function DayContent({
   );
 }
 
-function detailsByDate(calendar: PersonalCalendar): ReadonlyMap<string, readonly CalendarDetail[]> {
+function detailsByDate(
+  calendar: PersonalCalendar,
+  t: MessageTranslator,
+): ReadonlyMap<string, readonly CalendarDetail[]> {
   const details = new Map<string, CalendarDetail[]>();
   const add = (date: string, detail: CalendarDetail) => {
     const current = details.get(date) ?? [];
@@ -229,12 +254,16 @@ function detailsByDate(calendar: PersonalCalendar): ReadonlyMap<string, readonly
   for (const holiday of calendar.holidays)
     add(holiday.localDate, {
       key: `holiday-${holiday.localDate}-${holiday.name}`,
-      label: `Public holiday: ${holiday.name}`,
+      label: t('employee.calendar.detail.holiday', { name: holiday.name }),
     });
   for (const absence of calendar.absences)
     add(absence.localDate, {
       key: `absence-${absence.localDate}-${absence.kind}-${absence.startsAtMinute ?? ''}-${absence.status}`,
-      label: `${absence.absenceTypeName}: ${coverageLabel(absence.kind, absence.startsAtMinute, absence.endsAtMinute)} (${statusLabel(absence.status)})`,
+      label: t('employee.calendar.detail.absence', {
+        coverage: coverageLabel(absence.kind, absence.startsAtMinute, absence.endsAtMinute, t),
+        status: t(workflowStatusMessageKey(absence.status)),
+        type: absence.absenceTypeName,
+      }),
     });
   return new Map([...details.entries()].map(([date, entries]) => [date, Object.freeze(entries)]));
 }
@@ -252,32 +281,18 @@ function shiftMonth(month: string, direction: -1 | 1): string {
   if (monthNumber === 13) return `${year + 1}-01`;
   return `${year}-${monthNumber.toString().padStart(2, '0')}`;
 }
-function formatMonth(month: string): string {
-  const names = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  const [year = '', number = ''] = month.split('-');
-  return `${names[Number(number) - 1] ?? month} ${year}`;
+function formatMonth(locale: Parameters<typeof formatDateOnly>[0], month: string): string {
+  return formatDateOnly(locale, `${month}-01`, { month: 'long', year: 'numeric' });
 }
 function coverageLabel(
   kind: PersonalCalendar['absences'][number]['kind'],
   startsAtMinute: number | null,
   endsAtMinute: number | null,
+  t: MessageTranslator,
 ): string {
-  if (kind === 'FULL_DAY') return 'Full day';
-  if (kind === 'FIRST_HALF') return 'First half of expected work';
-  if (kind === 'SECOND_HALF') return 'Second half of expected work';
+  if (kind === 'FULL_DAY') return t('employee.absence.coverage.name.fullDay');
+  if (kind === 'FIRST_HALF') return t('employee.absence.coverage.name.firstHalf');
+  if (kind === 'SECOND_HALF') return t('employee.absence.coverage.name.secondHalf');
   return `${formatClock(startsAtMinute)}–${formatClock(endsAtMinute)}`;
 }
 function formatClock(value: number | null): string {
@@ -286,32 +301,41 @@ function formatClock(value: number | null): string {
     .toString()
     .padStart(2, '0')}:${(value % 60).toString().padStart(2, '0')}`;
 }
-function statusLabel(status: PersonalCalendar['absences'][number]['status']): string {
-  return status.replaceAll('_', ' ').toLowerCase();
-}
 function initialCalendarView(): CalendarView {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'MONTH';
   return window.matchMedia('(max-width: 47.999rem)').matches ? 'AGENDA' : 'MONTH';
 }
 function CalendarError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
+  const t = useWorkLedgerMessage();
   const denied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
   return (
     <RouteState
       actions={
         denied ? undefined : (
           <Button variant="secondary" onPress={retry}>
-            Try again
+            {t('shared.action.tryAgain')}
           </Button>
         )
       }
       kind={denied ? 'permission-denied' : 'error'}
-      title={denied ? 'You cannot view this calendar' : 'Your calendar is unavailable'}
+      title={
+        denied
+          ? t('employee.calendar.error.denied.title')
+          : t('employee.calendar.error.unavailable.title')
+      }
     >
       <p>
         {denied
-          ? 'Your current account does not have employee calendar access.'
-          : 'No holiday or absence information was displayed. Try again.'}
+          ? t('employee.calendar.error.denied.description')
+          : t('employee.calendar.error.unavailable.description')}
       </p>
     </RouteState>
+  );
+}
+
+function weekdays(locale: Parameters<typeof formatDateOnly>[0]): readonly string[] {
+  const formatter = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', weekday: 'long' });
+  return Array.from({ length: 7 }, (_, index) =>
+    formatter.format(new Date(Date.UTC(2024, 0, index + 1))),
   );
 }

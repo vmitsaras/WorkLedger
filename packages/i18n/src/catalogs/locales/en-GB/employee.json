@@ -1,1 +1,1247 @@
-{}
+{
+  "absence": {
+    "action": { "cancel": "Cancel", "viewDetails": "View request details" },
+    "coverage": {
+      "field": {
+        "endTime": "End time",
+        "firstDay": "First day",
+        "lastDay": "Last day",
+        "localDate": "Local date",
+        "startTime": "Start time"
+      },
+      "help": "First and second half describe equal portions of your scheduled obligation, not morning and afternoon. Choose exact time for a clock-specific absence.",
+      "label": "Coverage",
+      "line": "{{date}} — {{coverage}}: {{duration}}{{note}}",
+      "name": {
+        "firstHalf": "First half of expected work",
+        "fullDay": "Full day",
+        "secondHalf": "Second half of expected work"
+      },
+      "option": {
+        "exact": "Exact local time interval",
+        "firstHalf": "First half of expected work",
+        "fullDayRange": "Full day or date range",
+        "secondHalf": "Second half of expected work"
+      },
+      "validation": {
+        "endAfterStart": "End time must be after start time.",
+        "endTime": "Choose an end time.",
+        "firstDay": "Choose the first day.",
+        "lastDay": "Choose the last day.",
+        "lastDayAfterFirst": "The last day must be on or after the first day.",
+        "localDate": "Choose the local date.",
+        "startTime": "Choose a start time."
+      }
+    },
+    "sickness": {
+      "cancellation": {
+        "cannotCancel": "This report can no longer be cancelled. Refresh and review its status.",
+        "description": "A cancellation does not remove your report until it is approved.",
+        "error": "WorkLedger could not request this cancellation. Try again.",
+        "locked": "This report is in a locked period and needs a post-lock adjustment.",
+        "pending": "Requesting cancellation…",
+        "request": "Request cancellation",
+        "requested": "Cancellation requested. Your report remains effective until an eligible manager or HR administrator decides it."
+      },
+      "description": "Choose full-day, obligation-half, or exact time coverage. Do not include a diagnosis, symptoms, treatment, or other medical detail.",
+      "error": {
+        "correct": "Correct the highlighted coverage details and report sickness again.",
+        "overlap": "This coverage overlaps another absence request. Choose different coverage.",
+        "retroactive": "This coverage is outside your organization’s sickness reporting window.",
+        "unavailable": "WorkLedger could not report sickness. Try again."
+      },
+      "eyebrow": "Requests",
+      "form": {
+        "legend": "Sickness coverage",
+        "notice": "Your report takes effect immediately. A manager or HR administrator may acknowledge it; acknowledgement does not change the report’s effect.",
+        "submit": "Report sickness",
+        "submitting": "Reporting sickness…"
+      },
+      "success": {
+        "coverageLabel": "Reported sickness coverage",
+        "credited": "{{duration}} credited",
+        "description": "Your sickness report is effective and awaiting acknowledgement.",
+        "holidayNote": " (public holiday; no credit needed)",
+        "title": "Sickness reported"
+      },
+      "title": "Report sickness"
+    },
+    "vacation": {
+      "description": "Choose full-day, obligation-half, or exact time coverage. Weekends, public holidays, and zero-hour days remain visible but use no vacation entitlement.",
+      "error": {
+        "correct": "Correct the highlighted fields and submit your vacation request again.",
+        "overlap": "This coverage overlaps another absence request. Choose different coverage.",
+        "scheduleMissing": "WorkLedger cannot calculate this request because a work schedule is missing.",
+        "unavailable": "WorkLedger could not submit your vacation request. Try again."
+      },
+      "eyebrow": "Requests",
+      "form": {
+        "legend": "Vacation coverage",
+        "notice": "Submitting reserves the calculated entitlement while your request awaits approval. It does not change your daily time calculation yet.",
+        "submit": "Submit vacation request",
+        "submitting": "Submitting request…"
+      },
+      "success": {
+        "coverageLabel": "Vacation coverage",
+        "holidayNote": " (public holiday; no entitlement used)",
+        "summary_one": "Your request covers {{count}} segment and reserves {{reserved}}. Your projected remaining vacation balance is {{projected}}.",
+        "summary_other": "Your request covers {{count}} segments and reserves {{reserved}}. Your projected remaining vacation balance is {{projected}}.",
+        "title": "Vacation request submitted",
+        "zeroHourNote": " (zero-hour day; no entitlement used)"
+      },
+      "title": "Request vacation"
+    }
+  },
+  "calendar": {
+    "agenda": { "label": "Calendar agenda for {{month}}" },
+    "description": "Review your public holidays and absence coverage by month.",
+    "detail": {
+      "absence": "{{type}}: {{coverage}} ({{status}})",
+      "holiday": "Public holiday: {{name}}"
+    },
+    "empty": {
+      "description": "No public holidays or personal absence coverage appears in this month.",
+      "title": "Nothing scheduled this month"
+    },
+    "entries_one": "{{count}} calendar entry",
+    "entries_other": "{{count}} calendar entries",
+    "error": {
+      "denied": {
+        "description": "Your current account does not have employee calendar access.",
+        "title": "You cannot view this calendar"
+      },
+      "unavailable": {
+        "description": "No holiday or absence information was displayed. Try again.",
+        "title": "Your calendar is unavailable"
+      }
+    },
+    "eyebrow": "My work",
+    "grid": {
+      "caption": "Personal holidays and absence coverage for {{month}}",
+      "scrollHint": "Scroll horizontally to review all seven days.",
+      "scrollLabel": "Personal calendar month grid"
+    },
+    "loading": {
+      "description": "Checking public holidays and your own absence coverage.",
+      "title": "Loading your calendar"
+    },
+    "navigation": {
+      "label": "Calendar month",
+      "next": "Next month",
+      "previous": "Previous month"
+    },
+    "selectedMonth": "Selected month",
+    "title": "Calendar",
+    "view": { "agenda": "Agenda list", "label": "Calendar view", "month": "Month grid" }
+  },
+  "correction": {
+    "action": { "backToTime": "Back to My time", "cancel": "Cancel" },
+    "description": "Propose one replacement work interval for {{date}}. It will be reviewed before it can affect your record.",
+    "error": {
+      "correct": "Correct the highlighted fields and submit the request again.",
+      "interval": "The proposed interval could not be accepted.",
+      "notFound": "This daily record is no longer available for a correction request.",
+      "unavailable": "WorkLedger could not submit the correction request. Your recorded events were not changed. Try again."
+    },
+    "eyebrow": "Requests",
+    "form": {
+      "field": {
+        "endOffset": "End UTC offset (only for repeated local times)",
+        "endTime": "End time",
+        "reason": "Why does this need correcting?",
+        "startOffset": "Start UTC offset (only for repeated local times)",
+        "startTime": "Start time"
+      },
+      "help": "Enter local time in 24-hour format. If this date contains a repeated daylight-saving time, provide the displayed UTC offset.",
+      "legend": "Proposed work interval",
+      "reasonHelp": "Give a short, factual reason (10–1,000 characters). Do not include sensitive health information.",
+      "submit": "Submit correction request",
+      "submitting": "Submitting request…"
+    },
+    "loading": {
+      "description": "Preparing the current record and correction form.",
+      "heading": "Loading the daily record…",
+      "title": "Loading the daily record"
+    },
+    "missing": {
+      "description": "Open the daily record you want to correct, then choose Request a correction.",
+      "title": "Choose a daily record"
+    },
+    "original": {
+      "currentWorked": "Current worked time: {{duration}}.",
+      "description": "These original events stay available alongside your proposed correction.",
+      "empty": "No event was recorded on this date.",
+      "event": "{{event}} at {{time}}",
+      "heading": "Current recorded facts"
+    },
+    "success": {
+      "description": "Your proposed {{duration}} interval for {{date}} is awaiting review. Your recorded events and calculation have not changed.",
+      "locked": "Because this month is locked, approval will append an adjustment while preserving the approved monthly record.",
+      "ordinary": "If approved and applied, the unlocked daily calculation will be replaced.",
+      "title": "Correction request submitted"
+    },
+    "title": "Request a time correction",
+    "unavailable": {
+      "denied": {
+        "description": "You do not have access to this daily record.",
+        "title": "Permission denied"
+      },
+      "record": {
+        "description": "WorkLedger could not load the daily record for this correction request.",
+        "title": "Daily record unavailable"
+      }
+    },
+    "validation": {
+      "endOffset": "Enter a UTC offset such as +01:00.",
+      "endTime": "Enter an end time in HH:MM format.",
+      "reason": "Enter at least 10 characters explaining the correction.",
+      "startOffset": "Enter a UTC offset such as +01:00.",
+      "startTime": "Enter a start time in HH:MM format."
+    }
+  },
+  "monthly": {
+    "action": {
+      "approve": "Approve month",
+      "cancel": "Cancel",
+      "lock": "Lock month",
+      "locking": "Locking…",
+      "permanentlyLock": "Permanently lock month",
+      "preparePrint": "Preparing print…",
+      "print": "Print monthly record",
+      "recording": "Recording…",
+      "requestChanges": "Request changes",
+      "retry": "Try again",
+      "submit": "Submit month",
+      "submitting": "Submitting…"
+    },
+    "adjustments": {
+      "absenceEffect": "Absence credit {{credit}}; expected {{expected}}",
+      "ariaLabel": "Post-lock balance reconciliation",
+      "caption": "Ordered post-lock corrections and absence cancellations applied to the approved monthly baseline",
+      "column": {
+        "balanceDelta": "Balance delta",
+        "date": "Date",
+        "effect": "Effect",
+        "link": "Link",
+        "source": "Source",
+        "version": "Version"
+      },
+      "correctionEffect": "{{previous}} → {{proposed}} worked",
+      "description": "The approved baseline above stays unchanged. This view adds the accepted corrections and absence cancellations in order.",
+      "empty": "No post-lock adjustment has been accepted. The current view equals the approved baseline.",
+      "heading": "Current adjusted view",
+      "link": {
+        "cancellation": "Cancellation adjustment",
+        "correction": "Correction adjustment",
+        "reverses": "Reverses version {{version}}",
+        "unknownVersion": "unknown",
+        "zeroCancellation": "Zero-delta cancellation evidence",
+        "zeroCorrection": "Zero-delta evidence"
+      },
+      "metric": {
+        "adjustedClosing": "Adjusted closing balance",
+        "cumulativeDelta": "Cumulative post-lock delta",
+        "originalClosing": "Original closing balance",
+        "viewVersion": "Current view version"
+      },
+      "scrollHint": "Scroll horizontally to review every adjustment column.",
+      "scrollLabel": "Scrollable post-lock adjustment history",
+      "source": {
+        "absenceCancellation": "Absence cancellation",
+        "correction": "Time correction"
+      }
+    },
+    "approved": {
+      "action": {
+        "approve": "Approved",
+        "lock": "Locked",
+        "requestChanges": "Changes requested"
+      },
+      "authority": {
+        "hr": "Organization HR",
+        "manager": "Current manager"
+      },
+      "description": "This approved baseline stays available if changes are requested later.",
+      "empty": "No approval snapshot has been created for the current review cycle.",
+      "heading": "Approved record",
+      "historyItem": "{{action}} · {{authority}} · {{date}} · version {{version}}",
+      "historyLabel": "Monthly reviewer history",
+      "metadata": "Approval cycle {{cycle}} · workflow version {{workflowVersion}} · schema {{schemaVersion}} · engine {{engine}}",
+      "summary": "Approved {{approvedAt}}. Snapshot totals: expected {{expected}}, credited {{credited}}, balance {{balance}}, closing posted balance {{closing}}."
+    },
+    "attention": {
+      "blockers_one": "{{count}} blocker",
+      "blockers_other": "{{count}} blockers",
+      "description": "Blockers prevent submission. Warnings preserve calculated values but must be reviewed in the submission step.",
+      "heading": "Review attention",
+      "noBlockers": {
+        "description": "This review version has no issue that prevents submission.",
+        "title": "No blockers"
+      },
+      "noWarnings": "No non-blocking warning is present in this review version.",
+      "reviewDaily": "{{date}} — review daily record",
+      "warnings_one": "{{count}} warning",
+      "warnings_other": "{{count}} warnings",
+      "wholePeriod": "whole-period reconciliation"
+    },
+    "daily": {
+      "caption": "Per-date monthly calculation for {{month}}",
+      "column": {
+        "absenceCredit": "Absence credit",
+        "adjustment": "Adjustment",
+        "balance": "Balance",
+        "break": "Break",
+        "credited": "Credited",
+        "date": "Date",
+        "expected": "Expected",
+        "status": "Status",
+        "worked": "Worked"
+      },
+      "description": "Final amounts appear only for complete dates. A dash means the date is not final.",
+      "heading": "Daily review",
+      "scrollHint": "Scroll horizontally to review all daily calculation columns.",
+      "scrollLabel": "Scrollable monthly daily review",
+      "status": {
+        "complete": "Complete",
+        "incomplete": "Incomplete",
+        "missing": "Missing daily result",
+        "provisional": "Provisional"
+      }
+    },
+    "error": {
+      "boundary": {
+        "denied": "Permission denied",
+        "missing": "Monthly period not found",
+        "unavailable": "Monthly period unavailable"
+      },
+      "description": {
+        "denied": "This monthly record is outside your current review scope.",
+        "recovery": "Choose a recovery action to continue your monthly work."
+      },
+      "load": {
+        "denied": "Your current role or reporting scope cannot view this monthly period.",
+        "missing": "This monthly period is unavailable.",
+        "unavailable": "The monthly period could not be loaded. Check your connection and try again."
+      },
+      "print": {
+        "denied": "Your reporting scope changed. The print dialog was not opened.",
+        "session": "Your session ended. The print dialog was not opened.",
+        "unavailable": "The monthly record could not be refreshed. The print dialog was not opened."
+      },
+      "state": {
+        "denied": "This monthly record is outside your review scope",
+        "missing": "This monthly record is not available",
+        "unavailable": "The monthly record could not be loaded"
+      }
+    },
+    "frame": {
+      "description": "Review the month’s status, totals, issues, and available decisions.",
+      "eyebrow": "Monthly record",
+      "periodDescription": "{{employee}} · {{start}} to {{end}} · {{timeZone}}",
+      "printHelp": "The print uses the latest monthly status, totals, daily values, approved baseline, and later adjustments. Private absence details and decision reasons are omitted.",
+      "printStatusLabel": "Monthly print status",
+      "title": "Monthly period"
+    },
+    "loading": {
+      "description": "Preparing the current status, totals, issues, and available actions.",
+      "title": "Loading monthly period"
+    },
+    "print": {
+      "adjustedHeading": "Current adjusted record",
+      "adjustedTotals": "Approved closing balance {{closing}} · cumulative post-lock delta {{delta}} · adjusted closing balance {{adjusted}}",
+      "adjustmentCaption": "Purpose-minimized post-lock adjustment chain",
+      "approvedMetadata": "Approved cycle {{cycle}} · approved {{date}}",
+      "approvedTotals": "Expected {{expected}} · credited {{credited}} · balance {{balance}} · posted closing {{closing}}",
+      "dailyCaption": "Purpose-minimized daily monthly record for {{employee}}",
+      "dateRange": "{{employee}} · {{start}} through {{end}} · {{timeZone}}",
+      "footer": "This print contains the visible monthly status, totals, daily values, approved baseline, and post-lock deltas where present. It contains no internal identifiers, source fingerprints, sickness classification, notes, decision reasons, or reviewer comments.",
+      "opened": "Print dialog opened with the latest monthly record.",
+      "readiness": {
+        "notReady": "not ready",
+        "ready": "ready for submission",
+        "workflow": "workflow record"
+      },
+      "statusLine": "Status: {{status}} · {{readiness}}",
+      "title": "Monthly record"
+    },
+    "readiness": {
+      "completeDates": "{{complete}} of {{covered}} covered employment dates have complete daily calculations. If a source record changes, review the updated month before taking the next action.",
+      "explanation": {
+        "approved": "This period is approved and remains read-only before its separate lock action.",
+        "incomplete": "Resolve every listed blocker and complete every covered date before submission.",
+        "inProgress": "This month is still in progress. Readiness can only become final after the organization-local month ends.",
+        "locked": "This period is locked. Ordinary edits cannot change its approved record.",
+        "lockedAdjusted": "This period is locked and has accepted post-lock adjustments. The approved record remains unchanged; current totals include the ordered adjustment chain.",
+        "readOnly": "This period is read-only in its current workflow state.",
+        "ready": "Every covered date is complete, posted, and reconciled, with no submission blocker.",
+        "submitted": "This period was submitted and is read-only while it waits for reviewer action."
+      },
+      "label": {
+        "notReady": "Not ready",
+        "ready": "Ready for submission"
+      },
+      "reviewVersion": "Review version {{version}}"
+    },
+    "reviewer": {
+      "availability": {
+        "approved": "This month is approved. Only a currently eligible non-self reviewer can request changes or lock it.",
+        "changesRequested": "Changes were requested. The employee must correct and resubmit before another approval.",
+        "locked": "This month is permanently locked. Later accepted changes use post-lock adjustments.",
+        "open": "Reviewer actions become available after employee submission.",
+        "submitted": "Waiting for an eligible current manager or organization HR reviewer."
+      },
+      "description": "Approve when the month is ready. Lock month is a separate permanent action.",
+      "error": {
+        "denied": "Your current role or reporting scope cannot perform this reviewer action.",
+        "generic": "The reviewer action could not be recorded. Check your connection and try again.",
+        "noAction": "No reviewer action was recorded",
+        "notReady": "The current monthly sources do not reconcile. Resolve the refreshed blockers before approval or lock.",
+        "self": "You cannot review or lock your own monthly period.",
+        "sourceChanged": "The monthly sources changed. Review the refreshed period; no decision was recorded.",
+        "stateChanged": "This reviewer action is no longer available in the refreshed workflow state.",
+        "versionChanged": "The workflow changed in another tab or device. Review the refreshed status; no decision was recorded."
+      },
+      "heading": "Reviewer decision",
+      "lock": {
+        "description": "Locking preserves approval cycle {{cycle}} as the permanent baseline. There is no ordinary unlock; later accepted changes use the post-lock adjustment path. Cancel to leave the month approved.",
+        "title": "Permanently lock this month?"
+      },
+      "reason": {
+        "error": "Enter a reason of at least 10 characters.",
+        "goTo": "Go to decision reason.",
+        "help": "At least 10 characters. The employee can read this reason on their monthly detail; it is omitted from notifications and the approval inbox.",
+        "label": "Reason for requesting changes"
+      },
+      "success": {
+        "approved": "Monthly period approved. The approved baseline is ready for a separate lock.",
+        "changesRequested": "Changes requested. The employee can now correct and resubmit the month.",
+        "locked": "Monthly period locked. Its approved record is permanent; later changes require an adjustment.",
+        "title": "Monthly record updated"
+      }
+    },
+    "submission": {
+      "acknowledgement_one": "I reviewed all {{count}} warning in this monthly source version.",
+      "acknowledgement_other": "I reviewed all {{count}} warnings in this monthly source version.",
+      "availability": {
+        "approved": "Approved; submission is already complete.",
+        "incomplete": "Submission is unavailable until every blocker is resolved and every covered date is complete.",
+        "locked": "Locked; submission is already complete.",
+        "ownerOnly": "Only the employee who owns this monthly period can submit it.",
+        "submitted": "Submitted for reviewer action."
+      },
+      "description": "Submission freezes ordinary edits until an eligible reviewer requests changes.",
+      "enableHint": "Review and acknowledge the current warnings to enable submission.",
+      "error": {
+        "alreadySubmitted": "This period has already been submitted.",
+        "denied": "Your current account cannot submit this monthly period.",
+        "generic": "The monthly period could not be submitted. Check your connection and try again.",
+        "notReady": "The refreshed period is not ready. Resolve its current blockers before trying again.",
+        "stateChanged": "Submission is no longer available in the current workflow state.",
+        "title": "The month was not submitted",
+        "versionChanged": "The workflow changed while you were reviewing it. Review the refreshed period before trying again.",
+        "warningsChanged": "The reviewed source changed. Review the refreshed warnings and acknowledge the current version before trying again."
+      },
+      "heading": "Submission",
+      "noAcknowledgement": "No warning acknowledgement is required for this source version.",
+      "success": "Monthly period submitted for review.",
+      "successTitle": "Month submitted"
+    },
+    "totals": {
+      "ariaLabel": "Monthly calculated totals",
+      "description": "Incomplete and missing dates are excluded. Posted ledger balances remain separately labelled.",
+      "heading": "Complete-date totals",
+      "metric": {
+        "calculatedBalance": "Calculated balance",
+        "postedClosing": "Posted closing balance",
+        "postedOpening": "Posted opening balance",
+        "postedPeriodDelta": "Posted period delta"
+      },
+      "postedBalances": "Posted opening balance {{opening}}; posted closing balance {{closing}}."
+    }
+  },
+  "notifications": {
+    "actionStatus": "Notification action status",
+    "card": {
+      "dismiss": "Dismiss notification",
+      "dismissed": "Dismissed",
+      "dismissing": "Dismissing…",
+      "emailDelivery": "Email delivery",
+      "openMonthlyPeriod": "Open monthly period",
+      "openRequests": "Open requests",
+      "recorded": "Recorded"
+    },
+    "delivery": {
+      "delivered": "Delivered",
+      "failed": "Delivery failed; in-app record unaffected",
+      "notConfigured": "Email not configured; in-app record available",
+      "pending": "Email attempt pending; in-app record available"
+    },
+    "dismiss": {
+      "error": "The notification could not be dismissed. Try again.",
+      "errorTitle": "Notification not dismissed",
+      "success": "Notification dismissed. It remains in your history."
+    },
+    "empty": {
+      "description": "Account outcomes will appear here after a request or monthly-period decision.",
+      "title": "No notification history"
+    },
+    "error": {
+      "description": "No notification content was displayed. Try loading your history again.",
+      "title": "Notification history is unavailable"
+    },
+    "history": {
+      "current_one": "History current with {{count}} notification.",
+      "current_other": "History current with {{count}} notifications.",
+      "heading": "Outcome history",
+      "listLabel": "Generic notification history",
+      "refreshing": "Refreshing history…",
+      "status": "Notification history status",
+      "total_one": "{{count}} notification.",
+      "total_other": "{{count}} notifications."
+    },
+    "loading": {
+      "description": "Checking your account outcome records.",
+      "title": "Loading notification history"
+    },
+    "page": {
+      "description": "Review account outcomes and open the related record when you need details.",
+      "eyebrow": "Account"
+    },
+    "pagination": "Notification history page {{current}} of {{total}}",
+    "presentation": {
+      "acknowledged": {
+        "body": "An item you submitted was acknowledged.",
+        "title": "Item acknowledged"
+      },
+      "approved": {
+        "body": "An item you submitted was approved.",
+        "title": "Item approved"
+      },
+      "changesRequested": {
+        "body": "An item you submitted needs changes.",
+        "title": "Changes requested"
+      },
+      "rejected": {
+        "body": "An item you submitted was not approved.",
+        "title": "Item not approved"
+      }
+    },
+    "status": { "active": "Active", "dismissed": "Dismissed" }
+  },
+  "today": {
+    "attendance": {
+      "action": {
+        "clockIn": "Clock in",
+        "clockOut": "Clock out",
+        "resume": "Resume work",
+        "startBreak": "Start break"
+      },
+      "actionsLabel": "Attendance actions",
+      "confirm": {
+        "cancel": "Cancel",
+        "description": "WorkLedger will close your active break and clock you out at the same recorded instant. Cancel to leave your attendance unchanged.",
+        "submit": "Close break and clock out",
+        "title": "Clock out while on break?"
+      },
+      "currentBreak": "Current break",
+      "currentStatus": "Current status",
+      "currentWorkInterval": "Current work interval",
+      "error": {
+        "breakConfirmation": "No clock-out was recorded. Confirm that the active break should close before clocking out.",
+        "conflict": "No {{outcome}} was recorded because this request could not be matched safely. Review the current status before trying again.",
+        "invalidState": "No {{outcome}} was recorded because that action is not valid for the current attendance state.",
+        "rateLimited": "No {{outcome}} was recorded because attendance actions are temporarily limited. Review the current status and try again later.",
+        "stateChanged": "No {{outcome}} was recorded. Attendance changed in another tab or device. Current status: {{state}}.",
+        "uncertain": "WorkLedger could not confirm whether {{outcome}} was recorded. Review the refreshed current status before trying again."
+      },
+      "feedback": {
+        "errorTitle": "Attendance not changed",
+        "infoTitle": "Attendance refreshed",
+        "successTitle": "Attendance updated"
+      },
+      "noActiveInterval": "No active work interval.",
+      "outcome": {
+        "clockIn": "clock-in",
+        "clockOut": "clock-out",
+        "resume": "resume",
+        "startBreak": "break start"
+      },
+      "pending": {
+        "clockIn": "Clocking in…",
+        "clockOut": "Clocking out…",
+        "resume": "Resuming work…",
+        "startBreak": "Starting break…"
+      },
+      "recovery": {
+        "dependency": {
+          "description": "WorkLedger could not refresh your current attendance. Actions remain disabled.",
+          "title": "Attendance is unavailable"
+        },
+        "offline": {
+          "description": "Attendance actions are disabled and will not be queued. Reconnect to refresh your current status.",
+          "title": "You’re offline"
+        },
+        "reconnecting": {
+          "description": "Refreshing current attendance before enabling actions…",
+          "title": "Connection restored"
+        }
+      },
+      "remoteChanged": "Attendance changed in another tab or device. Current status: {{state}}.",
+      "since": "Since",
+      "state": {
+        "offWork": "Off work",
+        "onBreak": "On break",
+        "working": "Working"
+      },
+      "success": {
+        "clockIn": "Clocked in at {{time}}.",
+        "clockOut": "Clocked out at {{time}}.",
+        "resume": "Resumed work at {{time}}.",
+        "startBreak": "Break started at {{time}}."
+      }
+    },
+    "attention": {
+      "affectedDate": "Affected date",
+      "blockingIssues": "Blocking issues",
+      "blocksSubmission": "Blocks month submission",
+      "descriptor": {
+        "absenceApprovalPending": {
+          "next": "The request remains pending until an authorised reviewer records a decision.",
+          "reason": "An approval-required absence may still change this calculation.",
+          "title": "Absence decision pending"
+        },
+        "attendanceIncomplete": { "title": "Attendance record incomplete" },
+        "attendanceInvalidEventOrder": { "title": "Attendance event order needs review" },
+        "attendanceInvalidEventPrecision": { "title": "Attendance event time needs review" },
+        "attendanceOverlap": { "title": "Attendance intervals overlap" },
+        "calculation": {
+          "next": "The calculation explanation confirms why this record needs review.",
+          "reason": "Work is recorded on a day with no expected working time."
+        },
+        "correctionUnresolved": {
+          "next": "The request page shows whether review or employee changes are next; original events stay unchanged until an approved correction is applied.",
+          "reason": "A submitted correction may still change this calculation.",
+          "title": "Correction request needs review"
+        },
+        "flexNegative": {
+          "next": "The warning clears only after posted ledger entries bring the balance back within the configured threshold.",
+          "reason": "The posted flexible-time balance is below the configured warning threshold.",
+          "title": "Negative flexible-time threshold reached"
+        },
+        "flexPositive": {
+          "next": "The warning clears only after posted ledger entries bring the balance back within the configured threshold.",
+          "reason": "The posted flexible-time balance is above the configured warning threshold.",
+          "title": "Positive flexible-time threshold reached"
+        },
+        "ledgerSourceMismatch": { "title": "Ledger reconciliation needed" },
+        "policyAssignmentOverlap": { "title": "Time-policy assignment overlap" },
+        "policyConfigurationInvalid": { "title": "Time-policy configuration needs review" },
+        "policyNotAssigned": { "title": "Time policy missing" },
+        "recovery": {
+          "next": "Choose the affected day and submit a correction. Original events remain unchanged while the request is reviewed.",
+          "reason": "This attendance record needs correction before it can be relied on."
+        },
+        "scheduleAssignmentOverlap": { "title": "Work-schedule assignment overlap" },
+        "scheduleNotAssigned": { "title": "Work schedule missing" },
+        "administrator": {
+          "next": "The record remains blocked until an authorised administrator resolves the configuration issue.",
+          "reason": "The assigned configuration cannot produce a reliable calculation."
+        },
+        "workDuringAbsence": { "title": "Work overlaps credited absence" },
+        "workOnHoliday": { "title": "Work recorded on a public holiday" },
+        "workOnZeroExpectedDay": { "title": "Work recorded on a zero-expected day" }
+      },
+      "doesNotBlockSubmission": "Does not block submission",
+      "newUrgent": "New urgent issue: {{titles}}.",
+      "next": "What happens next",
+      "postedBalanceThrough": "Posted balance through",
+      "recovery": {
+        "fixEntry": "Fix entry",
+        "reviewBalanceHistory": "View balance history",
+        "reviewCalculation": "Review calculation",
+        "reviewRecord": "Review affected day",
+        "reviewRequest": "Review request",
+        "reviewTimeline": "Review timeline"
+      },
+      "title": "Needs attention",
+      "warnings": "Warnings"
+    },
+    "calculation": {
+      "caption": "Source amounts and server-calculated results for today",
+      "detailsDescription": "See evidence behind today’s estimate.",
+      "detailsTitle": "Calculation details",
+      "footnote": "Breaks are already excluded from recorded work. Corrections preserve original punch events.",
+      "group": {
+        "credited": "Credited time",
+        "expected": "Expected time",
+        "result": "Today’s result"
+      },
+      "heading": "How today is calculated",
+      "row": {
+        "absenceCredit": "Absence credit",
+        "absenceReduction": "Absence reduction",
+        "approvedCorrections": "Approved corrections",
+        "breaksExcluded": "Breaks already excluded",
+        "creditedToday": "Credited today",
+        "expectedToday": "Expected today",
+        "holidayReduction": "Public holiday reduction",
+        "otherAdjustments": "Other approved adjustments",
+        "provisionalDifference": "Provisional difference",
+        "recordedWork": "Recorded work",
+        "scheduledTime": "Scheduled time"
+      },
+      "source": "Source",
+      "statusIncomplete": "Incomplete. Resolve every blocker before relying on this result.",
+      "statusProvisional": "Provisional, not posted, and still changing.",
+      "time": "Time",
+      "zeroExpected": {
+        "generic": "Today’s schedule and reductions result in zero expected time.",
+        "heading": "Why expected time is zero",
+        "holiday": "{{holidayName}} reduces today’s scheduled expectation to zero.",
+        "workCredit": "Recorded work remains credited separately and is not labelled as payroll overtime."
+      }
+    },
+    "overview": {
+      "ariaLabel": "Today attendance summary",
+      "breaks": "Breaks",
+      "estimatedFinish": "Estimated finish",
+      "estimatedFinishAssumption": "Assumes no additional break.",
+      "finish": {
+        "calculationIncomplete": "Calculation incomplete",
+        "calculationUnavailable": "Calculation unavailable",
+        "expectationMet": "Expectation met",
+        "notAvailable": "Not available",
+        "resumeToEstimate": "Resume work to estimate",
+        "startToEstimate": "Start work to estimate"
+      },
+      "flexibleTime": "Flexible time",
+      "holiday": "Public holiday: {{holidayName}}",
+      "noPostedEntries": "No entries posted before today.",
+      "postedBalance": "Posted balance",
+      "postedThrough": "Posted through {{date}}.",
+      "progressAriaLabel": "Today’s credited progress",
+      "progressCredited": "{{credited}} credited",
+      "progressDescription": "{{credited}} credited of {{expected}} expected.",
+      "progressUnavailable": "Progress unavailable",
+      "progressUnavailableDescription": "Today’s credited progress is unavailable. Resolve the blockers below before relying on today’s calculation.",
+      "progressWithoutExpectation": "{{credited}} credited with no scheduled expectation today.",
+      "provisionalDifference": "Provisional difference",
+      "remainingToday": "Remaining today",
+      "statusIncomplete": "Calculation incomplete",
+      "statusProvisional": "Provisional today",
+      "todayExcludedFromPosted": "Today is still provisional and is not included in this balance.",
+      "title": "Today’s progress",
+      "workedToday": "Worked today"
+    },
+    "page": {
+      "description": "Record your workday and review today’s time.",
+      "estimateUpdated": "Estimate updated {{time}}",
+      "eyebrow": "Attendance",
+      "loadError": {
+        "description": "Your attendance information could not be loaded. No clock action was submitted.",
+        "message": "Try again. If the problem continues, share the request reference with your administrator.",
+        "title": "Today is temporarily unavailable"
+      },
+      "loading": {
+        "description": "Loading your current attendance state and calculation…",
+        "message": "Preparing your current status, valid actions, and calculation.",
+        "title": "Loading today’s attendance"
+      },
+      "offline": {
+        "description": "Reconnect to load your current attendance state. No clock action can be sent or queued while you are offline.",
+        "message": "WorkLedger will refresh your status after the connection returns before enabling any attendance action."
+      },
+      "permission": {
+        "description": "Your current account cannot use employee attendance. No attendance details or actions are available."
+      },
+      "requestReference": "Request reference: {{requestId}}",
+      "title": "Today",
+      "updating": "Updating…"
+    },
+    "timeline": {
+      "approvedInterpretation": "Approved interpretation",
+      "correction": "Worked time changed from {{before}} to {{after}} ({{difference}}).",
+      "description": {
+        "empty": "{{date}} in {{timeZone}}. No original attendance events are recorded. Events sharing one time keep their recorded order.",
+        "events_one": "{{date}} in {{timeZone}}. {{count}} original event in recorded order. Events sharing one time keep their recorded order.",
+        "events_other": "{{date}} in {{timeZone}}. {{count}} original events in recorded order. Events sharing one time keep their recorded order."
+      },
+      "empty": "No attendance events have been recorded today.",
+      "event": {
+        "breakEnd": { "description": "Working time resumed.", "label": "Break ended" },
+        "breakStart": { "description": "Working time paused.", "label": "Break started" },
+        "clockIn": { "description": "Work session started.", "label": "Clocked in" },
+        "clockOut": { "description": "Work session ended.", "label": "Clocked out" }
+      },
+      "incomplete": {
+        "description": "The timeline is too long to show completely. The calculation is marked incomplete.",
+        "title": "Timeline incomplete"
+      },
+      "originalEvents": "Original recorded events",
+      "title": "Today’s timeline"
+    }
+  },
+  "records": {
+    "pageTitle": "Daily record",
+    "attention": {
+      "action": { "reviewPeriod": "Review affected period" },
+      "blockers": "Calculation blockers",
+      "description": {
+        "absenceApprovalPending": "An approval-required absence may still change this day’s calculation.",
+        "attendanceIncomplete": "One or more attendance intervals touching this date have not been completed.",
+        "attendanceInvalidEventOrder": "The recorded attendance events cannot be reconstructed in a valid order.",
+        "attendanceInvalidEventPrecision": "A recorded attendance event is not aligned to a whole minute.",
+        "attendanceOverlap": "The derived attendance intervals overlap and cannot form a reliable calculation.",
+        "correctionUnresolved": "A submitted correction can still change this day’s calculation.",
+        "flexNegativeDaily": "The daily balance is below your configured flexible-time warning threshold.",
+        "flexNegativePosted": "The posted flexible-time balance is below your configured warning threshold.",
+        "flexPositiveDaily": "The daily balance is above your configured flexible-time warning threshold.",
+        "flexPositivePosted": "The posted flexible-time balance is above your configured warning threshold.",
+        "ledgerSourceMismatch": "The calculation source does not match its posted ledger evidence.",
+        "policyAssignmentOverlap": "More than one time policy applies to this date.",
+        "policyConfigurationInvalid": "The assigned time policy cannot produce a reliable calculation.",
+        "policyNotAssigned": "No time policy applies to this date.",
+        "scheduleAssignmentOverlap": "More than one work schedule applies to this date.",
+        "scheduleNotAssigned": "No work schedule applies to this date.",
+        "workDuringAbsence": "Recorded work overlaps credited absence time. No absence category is shown here.",
+        "workOnHoliday": "Work is recorded on a public holiday and remains credited separately.",
+        "workOnZeroExpectedDay": "Work is recorded on a day with no expected working time."
+      }
+    },
+    "backToTime": "Back to My time",
+    "calculation": {
+      "absenceCredit": "Absence credit",
+      "balance": "Balance",
+      "breakTime": "Break time",
+      "creditedTime": "Credited time",
+      "expectedTime": "Expected time",
+      "heading": "Calculation",
+      "unavailable": {
+        "description": "This record’s attendance events cannot be reconstructed, so no calculated total is shown. Review the events below and request a correction if needed.",
+        "title": "Calculation unavailable"
+      },
+      "workedTime": "Worked time"
+    },
+    "description": "Review the day’s calculation, work sessions, issues, and recorded event history.",
+    "error": {
+      "denied": {
+        "description": "You do not have access to this daily record.",
+        "message": "Your current account cannot view this record."
+      },
+      "notFound": {
+        "description": "This daily record is not available.",
+        "message": "This record may no longer be available in the current scope.",
+        "title": "Record not found"
+      },
+      "unavailable": {
+        "description": "WorkLedger could not load this daily record.",
+        "message": "No calculation or attendance history was displayed. Try again.",
+        "title": "Daily record unavailable"
+      }
+    },
+    "event": {
+      "breakEnd": "Break ended",
+      "breakStart": "Break started",
+      "clockIn": "Clocked in",
+      "clockOut": "Clocked out"
+    },
+    "events": {
+      "empty": {
+        "description": "No attendance event was recorded on this local date.",
+        "title": "No attendance events"
+      },
+      "heading": "Recorded events",
+      "note": "Times include the UTC offset so repeated local times remain distinguishable.",
+      "recordedOrder": "Recorded order {{sequence}}"
+    },
+    "eyebrow": "Time records",
+    "incomplete": {
+      "description": "Review the attention items and recorded events before relying on its balance.",
+      "title": "This record is incomplete"
+    },
+    "loading": {
+      "description": "Checking the calculation and its source events.",
+      "title": "Loading the daily record"
+    },
+    "requestCorrection": "Request a correction",
+    "sessions": {
+      "breakIntervals": "Break intervals",
+      "continuesNext": "Continues into the next local date.",
+      "continuesPrevious": "Continues from the previous local date.",
+      "empty": {
+        "description": "No completed work or break interval falls within this local date.",
+        "title": "No completed intervals"
+      },
+      "heading": "Work sessions and breaks",
+      "none": "None",
+      "note": "Intervals that cross midnight are split at the organization-local date boundary. Durations use the recorded instants, including daylight-saving changes.",
+      "range": "{{start}} to {{end}} · {{duration}}",
+      "session": "Session {{number}}",
+      "workIntervals": "Work intervals"
+    },
+    "state": {
+      "complete": "Complete record",
+      "completeDescription": "The calculation uses recorded events and exact elapsed intervals.",
+      "current": "Current state",
+      "needsReview": "Needs review",
+      "provisionalDescription": "This calculation is not a final posted result."
+    },
+    "timeZoneDescription": "Daily attendance record in {{timeZone}}."
+  },
+  "requests": {
+    "detail": {
+      "absence": {
+        "cancellationLink": "{{status}} cancellation request submitted {{date}}",
+        "cancellations": "Cancellation requests",
+        "description": "These absence details are available here so you can review your own request and its current effect.",
+        "heading": "Coverage and effect",
+        "type": "Absence type",
+        "workflowLabel": "Workflow",
+        "workflow": {
+          "approval": "Effective after approval",
+          "report": "Effective when reported"
+        }
+      },
+      "action": {
+        "available": "Available action",
+        "effect": {
+          "cancel": "Requesting cancellation starts a separate review. This absence remains effective until that request is approved.",
+          "withdraw": "Withdrawing ends this cancellation workflow. It does not remove or change the original absence."
+        },
+        "error": {
+          "changed": "The request changed before this action completed. Refresh the record and review its current state.",
+          "generic": "Your record was not changed. Try again.",
+          "locked": "This record is in a locked period. A post-lock adjustment is required."
+        },
+        "errorTitle": "The request could not be updated",
+        "label": {
+          "cancel": "Request cancellation",
+          "withdraw": "Withdraw cancellation request"
+        },
+        "pending": "Updating request…",
+        "success": {
+          "cancel": "Cancellation requested. The absence remains effective until the request is approved.",
+          "withdraw": "Cancellation request withdrawn. The original absence remains unchanged."
+        },
+        "successTitle": "Request updated"
+      },
+      "back": "Back to My requests",
+      "cancellation": {
+        "absenceType": "Absence type: {{type}}",
+        "description": "Approval changes only the covered absence segments. The original absence history remains.",
+        "heading": "Requested cancellation",
+        "viewOriginal": "View original absence request"
+      },
+      "correction": {
+        "applicationLabel": "Application",
+        "application": {
+          "ordinary": "Ordinary correction",
+          "postLock": "Post-lock adjustment"
+        },
+        "description": "Original punch events remain preserved. The proposal is a reviewed version, not a rewrite.",
+        "ends": "Ends",
+        "events": {
+          "empty": "No punch event was recorded for this daily record.",
+          "event": "Attendance event",
+          "heading": "Preserved attendance events"
+        },
+        "heading": "Recorded facts and proposal",
+        "original": "Original calculation",
+        "proposed": "Proposed interval",
+        "reason": "Reason provided",
+        "starts": "Starts"
+      },
+      "currentState": "Current state",
+      "error": {
+        "denied": { "description": "You cannot view this request.", "title": "Permission denied" },
+        "missing": {
+          "description": "This request does not exist or is no longer available.",
+          "title": "Request not found"
+        },
+        "unavailable": {
+          "description": "WorkLedger could not load this request. Your record was not changed.",
+          "title": "Request unavailable"
+        }
+      },
+      "event": "{{event}} at {{time}}",
+      "history": {
+        "action": {
+          "acknowledge": "Acknowledged",
+          "apply": "Applied",
+          "approve": "Approved",
+          "cancel": "Cancelled",
+          "reject": "Rejected",
+          "reported": "Reported",
+          "requestChanges": "Changes requested",
+          "submitted": "Submitted",
+          "withdraw": "Withdrawn"
+        },
+        "actor": { "reviewer": "a reviewer", "self": "you", "system": "WorkLedger" },
+        "by": "By {{actor}}",
+        "description": "Actions are shown in recorded order with their actor and reason when one was required.",
+        "heading": "Decision history",
+        "reason": "Reason: {{reason}}"
+      },
+      "loading": {
+        "description": "Loading the current status, request details, and decision history.",
+        "message": "WorkLedger is loading the current state and evidence.",
+        "title": "Loading request record"
+      },
+      "metric": {
+        "balance": "Balance",
+        "break": "Break",
+        "credited": "Credited",
+        "expected": "Expected",
+        "worked": "Worked"
+      },
+      "missingIdentifier": {
+        "description": "The request identifier is missing. No record details were loaded."
+      },
+      "state": {
+        "absence": {
+          "approved": "Approved coverage contributes according to the preserved schedule and policy versions.",
+          "cancelled": "All covered segments were cancelled. The original request remains in history.",
+          "changesRequested": "A reviewer requested changes. The requested coverage is not yet approved.",
+          "complete": "This workflow is complete and does not add absence credit.",
+          "pending": "The request awaits a decision. Its calculated coverage is shown below.",
+          "reported": "This report is effective. Acknowledgement records review but does not change its effect."
+        },
+        "cancellation": {
+          "approved": "The covered absence segments were cancelled and the original request remains in history.",
+          "changesRequested": "A reviewer requested changes. The original absence remains effective.",
+          "pending": "The cancellation awaits a decision. The original absence remains effective.",
+          "rejected": "The cancellation was rejected. The original absence remains effective.",
+          "withdrawn": "The cancellation workflow ended without changing the original absence."
+        },
+        "correction": {
+          "applied": "The approved version has been applied while the original facts remain preserved.",
+          "approved": "The correction is approved and awaits its recorded application step.",
+          "changesRequested": "A reviewer requested changes. The current daily record remains unchanged.",
+          "complete": "This workflow is complete. The current daily record remains unchanged.",
+          "pending": "The proposal awaits review. The current daily record remains unchanged."
+        }
+      },
+      "submitted": "Submitted {{date}}",
+      "timeRange": "{{start}} to {{end}}",
+      "pageTitle": "Request details",
+      "title": { "cancellation": "Cancellation request", "correction": "Time correction" },
+      "unknownTime": "unknown time"
+    },
+    "history": {
+      "dateRange": "{{start}} through {{end}}",
+      "description": "Review corrections, absence requests, and cancellation requests in one history. Sensitive absence details appear only after you open your record.",
+      "empty": {
+        "action": "Create a request",
+        "description": "Clear the filters to review other records, or start a new request.",
+        "title": "No requests match these filters"
+      },
+      "error": {
+        "description": "Your records were not changed. Try loading the history again.",
+        "title": "Request history unavailable"
+      },
+      "eyebrow": "Requests",
+      "filter": {
+        "action": { "apply": "Apply filters", "clear": "Clear filters" },
+        "description": "Narrow your request history by workflow or current status.",
+        "status": {
+          "all": "All statuses",
+          "completed": "Completed",
+          "inProgress": "In progress",
+          "label": "Status"
+        },
+        "title": "Filter request history",
+        "workflow": {
+          "absence": "Absence requests",
+          "all": "All workflows",
+          "cancellation": "Cancellation requests",
+          "correction": "Corrections",
+          "label": "Workflow"
+        }
+      },
+      "kind": {
+        "absence": "Absence request",
+        "cancellation": "Cancellation request",
+        "correction": "Time correction"
+      },
+      "loading": {
+        "description": "Your request records are being loaded.",
+        "title": "Loading request history"
+      },
+      "new": "New request",
+      "results": {
+        "count_one": "{{count}} record",
+        "count_other": "{{count}} records",
+        "heading": "Request history",
+        "pagination": "Page {{current}} of {{pages}}. {{total}} total records.",
+        "refreshing": "Refreshing results."
+      },
+      "submitted": "Submitted {{date}}",
+      "viewDetails": "View request details"
+    },
+    "new": {
+      "description": "Choose the workflow that matches what happened, then review its effect before submitting.",
+      "eyebrow": "Requests",
+      "selection": {
+        "change": "Choose a different workflow",
+        "description": "Each workflow explains its effect before you submit.",
+        "heading": "What do you need to record?",
+        "selected": "Selected workflow"
+      },
+      "workflow": {
+        "correction": {
+          "action": "Choose time correction",
+          "description": "Propose a replacement interval while preserving the original attendance events.",
+          "title": "Time correction"
+        },
+        "sickness": {
+          "action": "Choose sickness",
+          "description": "Record sickness coverage without entering medical details.",
+          "title": "Sickness"
+        },
+        "vacation": {
+          "action": "Choose vacation",
+          "description": "Reserve vacation entitlement for full days, part days, or an exact interval.",
+          "title": "Vacation"
+        }
+      },
+      "workflowTitle": {
+        "correction": "Time correction",
+        "sickness": "Sickness report",
+        "vacation": "Vacation request"
+      }
+    }
+  },
+  "time": {
+    "balance": {
+      "eligibleProjection": "Eligible projection",
+      "excluded": {
+        "description": "Review {{dates}} before relying on the projected total.",
+        "title": "Projected balance excludes incomplete records"
+      },
+      "heading": "Flexible-time balance",
+      "help": "Posted entries are final. Eligible complete records not yet posted remain separate.",
+      "posted": "Posted balance",
+      "projected": "Projected balance"
+    },
+    "balancesDescription": "Your flexible-time and leave balances, with clearly identified projections and source entries.",
+    "balancesTitle": "My balances",
+    "description": "Review your weekly or monthly record summaries and the flexible-time balance they explain.",
+    "entryType": {
+      "allocation": "Allocation",
+      "approvedDeduction": "Approved deduction",
+      "cancellationRestoration": "Cancellation restoration",
+      "carryover": "Carryover",
+      "dailyDelta": "Daily balance change",
+      "dailyRecalculationDelta": "Daily recalculation change",
+      "expiry": "Expiry",
+      "manualAdjustment": "Manual adjustment",
+      "manualAdministrativeAdjustment": "Manual administrative adjustment",
+      "openingBalance": "Opening balance",
+      "pendingReservation": "Pending reservation",
+      "postLockAdjustment": "Post-lock adjustment",
+      "reservationRelease": "Reservation release"
+    },
+    "error": {
+      "denied": {
+        "description": "Your current account does not have employee self-service access.",
+        "title": "You cannot view these records"
+      },
+      "unavailable": {
+        "description": "No time, balance, or ledger values were displayed. Check your connection and try again.",
+        "title": "Your records are unavailable"
+      }
+    },
+    "eyebrow": "Time records",
+    "filter": {
+      "date": "Date in period",
+      "description": "Choose a weekly or monthly view and the date you want to review.",
+      "month": "Month",
+      "title": "Choose time period",
+      "view": "View",
+      "viewLabel": "Time record view",
+      "week": "Week"
+    },
+    "leave": {
+      "account": "Account",
+      "available": "Available",
+      "availableAfter": "Available after",
+      "description": "Available minutes exclude pending reservations. Projected remaining includes them.",
+      "empty": {
+        "description": "No leave allocation has been posted yet.",
+        "title": "No leave entitlement accounts"
+      },
+      "entry": "Entry",
+      "heading": "Leave balances",
+      "ledger": {
+        "description": "Every entry shows its exact effect and the resulting available, reserved, and projected amounts.",
+        "empty": {
+          "description": "No entitlement, reservation, or adjustment entry exists yet.",
+          "title": "No leave source entries"
+        },
+        "heading": "Leave entitlement source entries",
+        "pagination": "Leave ledger page {{current}} of {{total}}"
+      },
+      "pendingReservation": "Pending reservation",
+      "projectedAfter": "Projected after",
+      "projectedRemaining": "Projected remaining",
+      "reservedAfter": "Reserved after"
+    },
+    "ledger": {
+      "balanceAfter": "Balance after: {{balance}}",
+      "description": "Every entry shows its effect and the resulting posted balance.",
+      "effective": "Effective {{date}}",
+      "empty": {
+        "description": "No final ledger entries exist through this period.",
+        "title": "No posted flexible-time entries"
+      },
+      "heading": "Posted ledger entries",
+      "pagination": "Flexible-time ledger page {{current}} of {{total}}"
+    },
+    "loading": {
+      "description": "Checking the selected period, balances, and source entries.",
+      "title": "Loading your records"
+    },
+    "period": {
+      "month": "Selected month",
+      "range": "{{start}} to {{end}}",
+      "reviewMonthly": "Review monthly period",
+      "summary": {
+        "balance": "complete-record balance {{balance}}",
+        "incomplete_one": "{{count}} incomplete",
+        "incomplete_other": "{{count}} incomplete",
+        "recordedDays_one": "{{count}} recorded day",
+        "recordedDays_other": "{{count}} recorded days"
+      },
+      "week": "Selected week"
+    },
+    "records": {
+      "attention": {
+        "incomplete": "Review incomplete record",
+        "none": "No attention needed",
+        "review_one": "{{count}} warning · review details",
+        "review_other": "{{count}} warnings · review details",
+        "warnings_one": "{{count}} warning",
+        "warnings_other": "{{count}} warnings"
+      },
+      "caption": "Daily time record summaries for the selected period",
+      "column": {
+        "attention": "Attention",
+        "balance": "Balance",
+        "credited": "Credited",
+        "date": "Date",
+        "expected": "Expected",
+        "status": "Status"
+      },
+      "description": "Open a recorded date for its calculation, work sessions, events, and recovery guidance.",
+      "heading": "Daily records",
+      "scrollLabel": "Daily time records table",
+      "status": {
+        "complete": "Complete",
+        "incomplete": "Incomplete",
+        "noRecord": "No record",
+        "provisional": "Provisional"
+      }
+    },
+    "title": "My time"
+  }
+}

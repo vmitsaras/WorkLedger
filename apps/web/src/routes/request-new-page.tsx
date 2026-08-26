@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 
+import type { MessageKey } from '@workledger/i18n';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Button, Panel } from '@workledger/ui';
 
 import { PageHeader } from '../components/page-header.js';
@@ -11,28 +13,33 @@ import { VacationRequestPage } from './vacation-request-page.js';
 type RequestWorkflow = 'CORRECTION' | 'SICKNESS' | 'VACATION';
 
 const WORKFLOWS: readonly Readonly<{
-  description: string;
-  title: string;
+  action: MessageKey;
+  description: MessageKey;
+  title: MessageKey;
   value: RequestWorkflow;
 }>[] = [
   {
-    description: 'Reserve vacation entitlement for full days, part days, or an exact interval.',
-    title: 'Vacation',
+    action: 'employee.requests.new.workflow.vacation.action',
+    description: 'employee.requests.new.workflow.vacation.description',
+    title: 'employee.requests.new.workflow.vacation.title',
     value: 'VACATION',
   },
   {
-    description: 'Record sickness coverage without entering medical details.',
-    title: 'Sickness',
+    action: 'employee.requests.new.workflow.sickness.action',
+    description: 'employee.requests.new.workflow.sickness.description',
+    title: 'employee.requests.new.workflow.sickness.title',
     value: 'SICKNESS',
   },
   {
-    description: 'Propose a replacement interval while preserving the original attendance events.',
-    title: 'Time correction',
+    action: 'employee.requests.new.workflow.correction.action',
+    description: 'employee.requests.new.workflow.correction.description',
+    title: 'employee.requests.new.workflow.correction.title',
     value: 'CORRECTION',
   },
 ];
 
 export function RequestNewPage() {
+  const t = useWorkLedgerMessage();
   const [search] = useSearchParams();
   const [workflow, setWorkflow] = useState<RequestWorkflow | null>(() =>
     search.has('recordId') ? 'CORRECTION' : null,
@@ -41,29 +48,29 @@ export function RequestNewPage() {
   return (
     <section className="grid max-w-4xl gap-8">
       <PageHeader
-        eyebrow="Requests"
-        title="New request"
-        description="Choose the workflow that matches what happened, then review its effect before submitting."
+        eyebrow={t('employee.requests.new.eyebrow')}
+        title={t('employee.requests.history.new')}
+        description={t('employee.requests.new.description')}
       />
       {workflow === null ? (
         <section aria-labelledby="request-workflow-heading" className="grid gap-4">
           <div className="grid gap-1">
             <h2 id="request-workflow-heading" className="m-0 text-xl font-bold">
-              What do you need to record?
+              {t('employee.requests.new.selection.heading')}
             </h2>
             <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-              Each workflow explains its effect before you submit.
+              {t('employee.requests.new.selection.description')}
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {WORKFLOWS.map((choice) => (
               <Panel as="article" className="grid content-between gap-4" key={choice.value}>
                 <div className="grid gap-2">
-                  <h3 className="m-0 text-lg font-bold">{choice.title}</h3>
-                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">{choice.description}</p>
+                  <h3 className="m-0 text-lg font-bold">{t(choice.title)}</h3>
+                  <p className="m-0 text-sm text-[var(--wl-text-muted)]">{t(choice.description)}</p>
                 </div>
                 <Button onPress={() => setWorkflow(choice.value)} variant="secondary">
-                  Choose {choice.title.toLocaleLowerCase()}
+                  {t(choice.action)}
                 </Button>
               </Panel>
             ))}
@@ -74,14 +81,14 @@ export function RequestNewPage() {
           <Panel className="flex flex-wrap items-center justify-between gap-4" density="compact">
             <div className="grid gap-1">
               <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">
-                Selected workflow
+                {t('employee.requests.new.selection.selected')}
               </p>
               <h2 id="selected-workflow-heading" className="m-0 text-xl font-bold">
-                {workflowTitle(workflow)}
+                {workflowTitle(workflow, t)}
               </h2>
             </div>
             <Button onPress={() => setWorkflow(null)} variant="quiet">
-              Choose a different workflow
+              {t('employee.requests.new.selection.change')}
             </Button>
           </Panel>
           {workflow === 'VACATION' ? <VacationRequestPage embedded /> : null}
@@ -93,8 +100,11 @@ export function RequestNewPage() {
   );
 }
 
-function workflowTitle(workflow: RequestWorkflow): string {
-  if (workflow === 'VACATION') return 'Vacation request';
-  if (workflow === 'SICKNESS') return 'Sickness report';
-  return 'Time correction';
+function workflowTitle(
+  workflow: RequestWorkflow,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
+  if (workflow === 'VACATION') return t('employee.requests.new.workflowTitle.vacation');
+  if (workflow === 'SICKNESS') return t('employee.requests.new.workflowTitle.sickness');
+  return t('employee.requests.new.workflowTitle.correction');
 }

@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 5 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1404` shared and authenticated foundation localization complete
-**Active task:** `WL-1405` (not started)
-**Status:** Shared UI, route titles and boundaries, authentication, application shell, navigation, Profile, common validation, dialogs, pagination, and announcements are catalog backed in all three production locales; Profile session timestamps use the authoritative organization timezone; `D-508` remains resolved through the measured localization allowance
+**Phase progress:** Phase 13 complete — 6 of 11 Phase 14 tasks complete
+**Current milestone:** `WL-1405` employee workflow localization complete
+**Active task:** `WL-1406` (not started)
+**Status:** Employee Today, time, balances, daily records, requests, corrections, absences, calendar, notifications, monthly review, and integrated monthly print presentation are catalog backed in all three production locales; critical German and Spanish component/browser flows pass; `D-508` remains resolved through the measured localization allowance
 **Last verified:** 2026-08-26
 
 ## Current objective
@@ -17,10 +17,13 @@ bounded migration set. Completed `WL-1404` now localizes the shared and authenti
 including authentication, Profile, shell, route boundaries, common validation, dialogs,
 pagination, and announcements. Locale changes retain focus continuity and rollback, protected
 content waits for the account catalog, and Profile session instants use the authoritative
-organization timezone. `D-508` now bounds the completed integration through a 70,000-byte raw and
-22,000-byte gzip Phase 14 allowance above the preserved 910,000/246,000-byte application baseline;
-the measured build consumes 64,388/19,450 bytes of that allowance. Employee, manager/HR/system,
-and generated-output copy remain assigned to `WL-1405`, `WL-1406`, and `WL-1407`. The broader
+organization timezone. Completed `WL-1405` now localizes the employee workflows for Today, time
+and balances, daily records, requests, corrections, absences, calendar, notifications, and monthly
+review, including the integrated monthly print view. `D-508` bounds the completed integration
+through a 76,000-byte raw and 22,000-byte gzip Phase 14 allowance above the preserved
+910,000/246,000-byte application baseline; the measured build consumes 75,603/14,782 bytes of that
+allowance. Manager/HR/system and remaining generated-output copy remain assigned to `WL-1406` and
+`WL-1407`. The broader
 `D-502` retail browser and
 assistive-technology matrix remains
 an explicit limitation rather than a conformance claim. The portfolio presentation scope remains
@@ -2527,6 +2530,34 @@ an unnumbered draft.
 - No dependency, database schema, migration, lockfile, manifest, workspace version, phase gate,
   deployment, publication, tag, domain rule, permission, or audit policy changed.
 
+**2026-08-26 — WL-1405 employee workflow localization**
+
+- Completed typed English, German, and Spanish presentation for Today, time and balances, daily
+  records, corrections, vacation, sickness, request history/detail, personal calendar,
+  notifications, and monthly review plus its integrated print view. Employee detail-route document
+  titles now use the same active runtime as headings and workflow content.
+- Added exhaustive localized presentation maps for workflow states and event/decision codes,
+  locale-aware date, instant, and compact integer-minute formatting, and automated hard-coded-copy
+  governance across 20 employee source files. Catalog parity now covers 1,043 messages.
+- Preserved focused headings, semantic tables/lists, real link/button behavior, error-summary and
+  dialog focus, polite announcements, text-visible states, privacy-minimized sickness and
+  notification presentation, and plain-text user-value interpolation.
+- Added German and Spanish component coverage for Today, request/calendar, and monthly review plus
+  browser traversal of Today, My time, requests, calendar, and monthly review. The full local run
+  passes 48 tooling tests, 403 unit/component tests, 13 environment-independent integration tests,
+  and 41 browser scenarios across the configured desktop/mobile engines with one intentional skip.
+  Existing non-failing React test-harness warnings remain; 45 opt-in PostgreSQL cases are
+  unavailable in this environment.
+- The production graph passes at 416,536 largest-chunk bytes, 985,603 total raw JavaScript bytes,
+  260,782 gzip JavaScript bytes, and 50,219 CSS bytes outside separately bounded catalogs. ADR 0013
+  and `D-508` narrowly move only the Phase 14 raw localization allowance from 70,000 to 76,000
+  bytes; the application baseline and all gzip, chunk, CSS, and catalog budgets remain unchanged.
+- No dependency, database schema, migration, lockfile, manifest, workspace version, phase gate,
+  deployment, publication, tag, domain rule, permission, or audit policy changed. Request history
+  and non-correction request-detail instants retain their existing client-timezone fallback pending
+  the end-to-end `WL-1409` authoritative-timezone contract review. See
+  `docs/145-employee-workflow-i18n.md`.
+
 ## Current blockers
 
 German and Spanish still require named fluent reviewers before `WL-1408`; their absence does not
@@ -2543,8 +2574,8 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Begin `WL-1405`: translate employee workflows and their required states across Today, time and
-balances, records, corrections, absences, calendars, notifications, and monthly review. The
+Begin `WL-1406`: translate manager, HR, and system workflows, including Approvals, Team,
+administration, settings, reports, audit, accounts, and operations. The
 portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 

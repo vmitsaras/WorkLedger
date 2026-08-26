@@ -9,12 +9,12 @@ import {
   type PersonalRequestQuery,
   type PersonalRequestType,
 } from '@workledger/contracts';
+import { formatDateOnly, formatInstant, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Button, FilterBar, Panel, RouteState, buttonVariants } from '@workledger/ui';
 
-import { formatLocalDate } from '../app/date-time-format.js';
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { personalRequestHistoryQuery } from '../app/query.js';
-import { canonicalRouteLabel } from '../app/route-copy.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
 import { Pagination } from '../components/pagination.js';
@@ -25,7 +25,14 @@ type FilterDraft = Readonly<{
   type: PersonalRequestType;
 }>;
 
+const REQUEST_KIND_KEYS = {
+  ABSENCE: 'employee.requests.history.kind.absence',
+  CANCELLATION: 'employee.requests.history.kind.cancellation',
+  CORRECTION: 'employee.requests.history.kind.correction',
+} as const satisfies Readonly<Record<PersonalRequestListItem['kind'], MessageKey>>;
+
 export function RequestHistoryPage() {
+  const t = useWorkLedgerMessage();
   const queryInput = useLoaderData<PersonalRequestQuery>();
   const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -66,21 +73,21 @@ export function RequestHistoryPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Requests"
-        title={canonicalRouteLabel('/requests')}
-        description="Review corrections, absence requests, and cancellation requests in one history. Sensitive absence details appear only after you open your record."
+        eyebrow={t('employee.requests.history.eyebrow')}
+        title={t('shared.route.title.requests')}
+        description={t('employee.requests.history.description')}
       >
         <Link className={`${buttonVariants()} w-fit`} to="/requests/new">
-          New request
+          {t('employee.requests.history.new')}
         </Link>
       </PageHeader>
       <FilterBar
-        title="Filter request history"
-        description="Narrow your request history by workflow or current status."
+        title={t('employee.requests.history.filter.title')}
+        description={t('employee.requests.history.filter.description')}
         onSubmit={applyFilters}
       >
         <label className="grid gap-2 text-sm font-semibold" htmlFor="request-status-filter">
-          Status
+          {t('employee.requests.history.filter.status.label')}
           <select
             className="wl-text-field"
             id="request-status-filter"
@@ -89,13 +96,17 @@ export function RequestHistoryPage() {
               setDraft({ ...draft, status: event.target.value as PersonalRequestFilterStatus })
             }
           >
-            <option value="ALL">All statuses</option>
-            <option value="IN_PROGRESS">In progress</option>
-            <option value="COMPLETED">Completed</option>
+            <option value="ALL">{t('employee.requests.history.filter.status.all')}</option>
+            <option value="IN_PROGRESS">
+              {t('employee.requests.history.filter.status.inProgress')}
+            </option>
+            <option value="COMPLETED">
+              {t('employee.requests.history.filter.status.completed')}
+            </option>
           </select>
         </label>
         <label className="grid gap-2 text-sm font-semibold" htmlFor="request-type-filter">
-          Workflow
+          {t('employee.requests.history.filter.workflow.label')}
           <select
             className="wl-text-field"
             id="request-type-filter"
@@ -104,37 +115,45 @@ export function RequestHistoryPage() {
               setDraft({ ...draft, type: event.target.value as PersonalRequestType })
             }
           >
-            <option value="ALL">All workflows</option>
-            <option value="CORRECTION">Corrections</option>
-            <option value="ABSENCE">Absence requests</option>
-            <option value="CANCELLATION">Cancellation requests</option>
+            <option value="ALL">{t('employee.requests.history.filter.workflow.all')}</option>
+            <option value="CORRECTION">
+              {t('employee.requests.history.filter.workflow.correction')}
+            </option>
+            <option value="ABSENCE">
+              {t('employee.requests.history.filter.workflow.absence')}
+            </option>
+            <option value="CANCELLATION">
+              {t('employee.requests.history.filter.workflow.cancellation')}
+            </option>
           </select>
         </label>
-        <Button type="submit">Apply filters</Button>
+        <Button type="submit">{t('employee.requests.history.filter.action.apply')}</Button>
         <Button type="button" variant="quiet" onPress={clearFilters}>
-          Clear filters
+          {t('employee.requests.history.filter.action.clear')}
         </Button>
       </FilterBar>
       {query.isPending ? (
-        <RouteState kind="loading" title="Loading request history">
-          <p>Your request records are being loaded.</p>
+        <RouteState kind="loading" title={t('employee.requests.history.loading.title')}>
+          <p>{t('employee.requests.history.loading.description')}</p>
         </RouteState>
       ) : query.isError || query.data === undefined ? (
         <RouteState
-          actions={<Button onPress={() => void query.refetch()}>Try again</Button>}
+          actions={
+            <Button onPress={() => void query.refetch()}>{t('shared.action.tryAgain')}</Button>
+          }
           kind="error"
-          title="Request history unavailable"
+          title={t('employee.requests.history.error.title')}
         >
-          <p>Your records were not changed. Try loading the history again.</p>
+          <p>{t('employee.requests.history.error.description')}</p>
         </RouteState>
       ) : query.data.items.length === 0 ? (
         <RouteState
           actionHref="/requests/new"
-          actionLabel="Create a request"
+          actionLabel={t('employee.requests.history.empty.action')}
           kind="empty"
-          title="No requests match these filters"
+          title={t('employee.requests.history.empty.title')}
         >
-          <p>Clear the filters to review other records, or start a new request.</p>
+          <p>{t('employee.requests.history.empty.description')}</p>
         </RouteState>
       ) : (
         <RequestResults
@@ -159,15 +178,18 @@ function RequestResults({
   onPage: (page: number) => void;
   pagination: Readonly<{ page: number; total: number; totalPages: number }>;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const clientTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   return (
     <section aria-labelledby="request-results-heading" className="grid gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="request-results-heading" className="m-0 text-xl font-bold">
-          Request history
+          {t('employee.requests.history.results.heading')}
         </h2>
         <p className="m-0 text-sm text-[var(--wl-text-muted)]" aria-live="polite">
-          {pagination.total} record{pagination.total === 1 ? '' : 's'}
-          {fetching ? '. Refreshing results.' : ''}
+          {t('employee.requests.history.results.count', { count: pagination.total })}
+          {fetching ? ` ${t('employee.requests.history.results.refreshing')}` : ''}
         </p>
       </div>
       <ol className="m-0 grid list-none gap-3 p-0">
@@ -176,18 +198,25 @@ function RequestResults({
             <Panel as="article" className="grid gap-3" density="balanced">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="grid gap-1">
-                  <h3 className="m-0 text-lg font-bold">{kindLabel(request.kind)}</h3>
+                  <h3 className="m-0 text-lg font-bold">{t(REQUEST_KIND_KEYS[request.kind])}</h3>
                   <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                    {dateRange(request.affectedStartDate, request.affectedEndDate)}
+                    {dateRange(
+                      runtime.locale,
+                      request.affectedStartDate,
+                      request.affectedEndDate,
+                      t,
+                    )}
                   </p>
                 </div>
                 <WorkflowStatusBadge status={request.status} />
               </div>
               <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                Submitted {formatSubmittedAt(request.submittedAt)}
+                {t('employee.requests.history.submitted', {
+                  date: formatInstant(runtime.locale, request.submittedAt, clientTimeZone),
+                })}
               </p>
               <Link className="w-fit font-semibold" to={`/requests/${request.id}`}>
-                View request details
+                {t('employee.requests.history.viewDetails')}
               </Link>
             </Panel>
           </li>
@@ -197,7 +226,11 @@ function RequestResults({
         currentPage={pagination.page}
         onPageChange={onPage}
         pageCount={pagination.totalPages}
-        summary={`Page ${pagination.page} of ${pagination.totalPages}. ${pagination.total} total records.`}
+        summary={t('employee.requests.history.results.pagination', {
+          current: pagination.page,
+          pages: pagination.totalPages,
+          total: pagination.total,
+        })}
       />
     </section>
   );
@@ -220,21 +253,18 @@ function toSearchParams(query: PersonalRequestQuery): URLSearchParams {
   });
 }
 
-function kindLabel(kind: PersonalRequestListItem['kind']): string {
-  if (kind === 'CORRECTION') return 'Time correction';
-  if (kind === 'ABSENCE') return 'Absence request';
-  return 'Cancellation request';
-}
-
-function dateRange(start: string, end: string): string {
-  if (start === end) return formatLocalDate(start);
-  return `${formatLocalDate(start)} through ${formatLocalDate(end)}`;
-}
-
-function formatSubmittedAt(value: string): string {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(value),
-  );
+function dateRange(
+  locale: Parameters<typeof formatDateOnly>[0],
+  start: string,
+  end: string,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
+  const formattedStart = formatDateOnly(locale, start);
+  if (start === end) return formattedStart;
+  return t('employee.requests.history.dateRange', {
+    end: formatDateOnly(locale, end),
+    start: formattedStart,
+  });
 }
 
 function isAuthenticationError(error: unknown): error is ApiClientError {

@@ -1,1 +1,1272 @@
-{}
+{
+  "absence": {
+    "action": { "cancel": "Cancelar", "viewDetails": "Ver detalles de la solicitud" },
+    "coverage": {
+      "field": {
+        "endTime": "Hora de fin",
+        "firstDay": "Primer día",
+        "lastDay": "Último día",
+        "localDate": "Fecha local",
+        "startTime": "Hora de inicio"
+      },
+      "help": "La primera y la segunda mitad describen partes iguales de tu obligación programada, no la mañana y la tarde. Elige una hora exacta para una ausencia con horario específico.",
+      "label": "Cobertura",
+      "line": "{{date}} — {{coverage}}: {{duration}}{{note}}",
+      "name": {
+        "firstHalf": "Primera mitad del trabajo previsto",
+        "fullDay": "Día completo",
+        "secondHalf": "Segunda mitad del trabajo previsto"
+      },
+      "option": {
+        "exact": "Intervalo de hora local exacto",
+        "firstHalf": "Primera mitad del trabajo previsto",
+        "fullDayRange": "Día completo o intervalo de fechas",
+        "secondHalf": "Segunda mitad del trabajo previsto"
+      },
+      "validation": {
+        "endAfterStart": "La hora de fin debe ser posterior a la de inicio.",
+        "endTime": "Elige una hora de fin.",
+        "firstDay": "Elige el primer día.",
+        "lastDay": "Elige el último día.",
+        "lastDayAfterFirst": "El último día debe coincidir con el primero o ser posterior.",
+        "localDate": "Elige la fecha local.",
+        "startTime": "Elige una hora de inicio."
+      }
+    },
+    "sickness": {
+      "cancellation": {
+        "cannotCancel": "Este parte ya no se puede cancelar. Actualiza la página y revisa su estado.",
+        "description": "Una cancelación no elimina tu parte hasta que se aprueba.",
+        "error": "WorkLedger no ha podido solicitar esta cancelación. Inténtalo de nuevo.",
+        "locked": "Este parte pertenece a un periodo bloqueado y necesita un ajuste posterior al bloqueo.",
+        "pending": "Solicitando cancelación…",
+        "request": "Solicitar cancelación",
+        "requested": "Cancelación solicitada. Tu parte sigue vigente hasta que lo decida una persona gestora o administradora de RR. HH. autorizada."
+      },
+      "description": "Elige una cobertura de día completo, media obligación o un intervalo exacto. No incluyas diagnósticos, síntomas, tratamientos ni otros datos médicos.",
+      "error": {
+        "correct": "Corrige los datos de cobertura resaltados y vuelve a notificar la enfermedad.",
+        "overlap": "Esta cobertura se solapa con otra solicitud de ausencia. Elige una cobertura distinta.",
+        "retroactive": "Esta cobertura queda fuera del plazo de notificación de enfermedad de tu organización.",
+        "unavailable": "WorkLedger no ha podido notificar la enfermedad. Inténtalo de nuevo."
+      },
+      "eyebrow": "Solicitudes",
+      "form": {
+        "legend": "Cobertura por enfermedad",
+        "notice": "Tu parte entra en vigor de inmediato. Una persona gestora o administradora de RR. HH. puede confirmarlo; la confirmación no cambia su efecto.",
+        "submit": "Notificar enfermedad",
+        "submitting": "Notificando enfermedad…"
+      },
+      "success": {
+        "coverageLabel": "Cobertura por enfermedad notificada",
+        "credited": "{{duration}} acreditado",
+        "description": "Tu parte de enfermedad está vigente y pendiente de confirmación.",
+        "holidayNote": " (festivo; no se necesita crédito)",
+        "title": "Enfermedad notificada"
+      },
+      "title": "Notificar enfermedad"
+    },
+    "vacation": {
+      "description": "Elige una cobertura de día completo, media obligación o un intervalo exacto. Los fines de semana, festivos y días sin horas previstas siguen visibles, pero no consumen vacaciones.",
+      "error": {
+        "correct": "Corrige los campos resaltados y vuelve a enviar tu solicitud de vacaciones.",
+        "overlap": "Esta cobertura se solapa con otra solicitud de ausencia. Elige una cobertura distinta.",
+        "scheduleMissing": "WorkLedger no puede calcular esta solicitud porque falta un horario de trabajo.",
+        "unavailable": "WorkLedger no ha podido enviar tu solicitud de vacaciones. Inténtalo de nuevo."
+      },
+      "eyebrow": "Solicitudes",
+      "form": {
+        "legend": "Cobertura de vacaciones",
+        "notice": "El envío reserva el derecho calculado mientras la solicitud espera aprobación. Aún no cambia tu cálculo de tiempo diario.",
+        "submit": "Enviar solicitud de vacaciones",
+        "submitting": "Enviando solicitud…"
+      },
+      "success": {
+        "coverageLabel": "Cobertura de vacaciones",
+        "holidayNote": " (festivo; no se consume el derecho)",
+        "summary_one": "Tu solicitud abarca {{count}} segmento y reserva {{reserved}}. Tu saldo de vacaciones restante previsto es {{projected}}.",
+        "summary_many": "Tu solicitud abarca {{count}} segmentos y reserva {{reserved}}. Tu saldo de vacaciones restante previsto es {{projected}}.",
+        "summary_other": "Tu solicitud abarca {{count}} segmentos y reserva {{reserved}}. Tu saldo de vacaciones restante previsto es {{projected}}.",
+        "title": "Solicitud de vacaciones enviada",
+        "zeroHourNote": " (día sin horas previstas; no se consume el derecho)"
+      },
+      "title": "Solicitar vacaciones"
+    }
+  },
+  "calendar": {
+    "agenda": { "label": "Agenda del calendario de {{month}}" },
+    "description": "Revisa tus festivos y cobertura de ausencia por mes.",
+    "detail": {
+      "absence": "{{type}}: {{coverage}} ({{status}})",
+      "holiday": "Festivo: {{name}}"
+    },
+    "empty": {
+      "description": "Este mes no contiene festivos ni cobertura de ausencia personal.",
+      "title": "Nada programado este mes"
+    },
+    "entries_one": "{{count}} entrada de calendario",
+    "entries_many": "{{count}} entradas de calendario",
+    "entries_other": "{{count}} entradas de calendario",
+    "error": {
+      "denied": {
+        "description": "Tu cuenta actual no tiene acceso al calendario de empleados.",
+        "title": "No puedes ver este calendario"
+      },
+      "unavailable": {
+        "description": "No se ha mostrado información de festivos ni ausencias. Inténtalo de nuevo.",
+        "title": "Tu calendario no está disponible"
+      }
+    },
+    "eyebrow": "Mi trabajo",
+    "grid": {
+      "caption": "Festivos personales y cobertura de ausencia de {{month}}",
+      "scrollHint": "Desplázate horizontalmente para revisar los siete días.",
+      "scrollLabel": "Cuadrícula mensual del calendario personal"
+    },
+    "loading": {
+      "description": "Comprobando los festivos y tu propia cobertura de ausencia.",
+      "title": "Cargando tu calendario"
+    },
+    "navigation": {
+      "label": "Mes del calendario",
+      "next": "Mes siguiente",
+      "previous": "Mes anterior"
+    },
+    "selectedMonth": "Mes seleccionado",
+    "title": "Calendario",
+    "view": {
+      "agenda": "Lista de agenda",
+      "label": "Vista del calendario",
+      "month": "Cuadrícula mensual"
+    }
+  },
+  "correction": {
+    "action": { "backToTime": "Volver a Mi tiempo", "cancel": "Cancelar" },
+    "description": "Propón un intervalo de trabajo de sustitución para el {{date}}. Se revisará antes de que pueda afectar a tu registro.",
+    "error": {
+      "correct": "Corrige los campos resaltados y vuelve a enviar la solicitud.",
+      "interval": "No se ha podido aceptar el intervalo propuesto.",
+      "notFound": "Este registro diario ya no está disponible para una solicitud de corrección.",
+      "unavailable": "WorkLedger no ha podido enviar la solicitud de corrección. Tus eventos registrados no han cambiado. Inténtalo de nuevo."
+    },
+    "eyebrow": "Solicitudes",
+    "form": {
+      "field": {
+        "endOffset": "Desfase UTC final (solo para horas locales repetidas)",
+        "endTime": "Hora de fin",
+        "reason": "¿Por qué es necesaria esta corrección?",
+        "startOffset": "Desfase UTC inicial (solo para horas locales repetidas)",
+        "startTime": "Hora de inicio"
+      },
+      "help": "Introduce la hora local en formato de 24 horas. Si esta fecha contiene una hora repetida por el cambio horario, indica el desfase UTC mostrado.",
+      "legend": "Intervalo de trabajo propuesto",
+      "reasonHelp": "Da un motivo breve y objetivo (entre 10 y 1.000 caracteres). No incluyas información médica sensible.",
+      "submit": "Enviar solicitud de corrección",
+      "submitting": "Enviando solicitud…"
+    },
+    "loading": {
+      "description": "Preparando el registro actual y el formulario de corrección.",
+      "heading": "Cargando el registro diario…",
+      "title": "Cargando el registro diario"
+    },
+    "missing": {
+      "description": "Abre el registro diario que quieras corregir y elige Solicitar una corrección.",
+      "title": "Elige un registro diario"
+    },
+    "original": {
+      "currentWorked": "Tiempo trabajado actual: {{duration}}.",
+      "description": "Estos eventos originales siguen disponibles junto a la corrección propuesta.",
+      "empty": "No se registró ningún evento en esta fecha.",
+      "event": "{{event}} a las {{time}}",
+      "heading": "Datos registrados actuales"
+    },
+    "success": {
+      "description": "El intervalo propuesto de {{duration}} para el {{date}} está pendiente de revisión. Tus eventos registrados y el cálculo no han cambiado.",
+      "locked": "Como este mes está bloqueado, la aprobación añadirá un ajuste y conservará el registro mensual aprobado.",
+      "ordinary": "Si se aprueba y aplica, se sustituirá el cálculo diario no bloqueado.",
+      "title": "Solicitud de corrección enviada"
+    },
+    "title": "Solicitar una corrección de tiempo",
+    "unavailable": {
+      "denied": {
+        "description": "No tienes acceso a este registro diario.",
+        "title": "Acceso denegado"
+      },
+      "record": {
+        "description": "WorkLedger no ha podido cargar el registro diario para esta solicitud de corrección.",
+        "title": "Registro diario no disponible"
+      }
+    },
+    "validation": {
+      "endOffset": "Introduce un desfase UTC como +01:00.",
+      "endTime": "Introduce una hora de fin con formato HH:MM.",
+      "reason": "Introduce al menos 10 caracteres para explicar la corrección.",
+      "startOffset": "Introduce un desfase UTC como +01:00.",
+      "startTime": "Introduce una hora de inicio con formato HH:MM."
+    }
+  },
+  "monthly": {
+    "action": {
+      "approve": "Aprobar mes",
+      "cancel": "Cancelar",
+      "lock": "Bloquear mes",
+      "locking": "Bloqueando…",
+      "permanentlyLock": "Bloquear mes permanentemente",
+      "preparePrint": "Preparando impresión…",
+      "print": "Imprimir registro mensual",
+      "recording": "Registrando…",
+      "requestChanges": "Solicitar cambios",
+      "retry": "Intentar de nuevo",
+      "submit": "Enviar mes",
+      "submitting": "Enviando…"
+    },
+    "adjustments": {
+      "absenceEffect": "Crédito de ausencia {{credit}}; previsto {{expected}}",
+      "ariaLabel": "Conciliación del saldo posterior al bloqueo",
+      "caption": "Correcciones y cancelaciones de ausencias posteriores al bloqueo aplicadas en orden a la base mensual aprobada",
+      "column": {
+        "balanceDelta": "Cambio de saldo",
+        "date": "Fecha",
+        "effect": "Efecto",
+        "link": "Vínculo",
+        "source": "Origen",
+        "version": "Versión"
+      },
+      "correctionEffect": "{{previous}} → {{proposed}} trabajado",
+      "description": "La base aprobada anterior permanece sin cambios. Esta vista añade en orden las correcciones y cancelaciones de ausencias aceptadas.",
+      "empty": "No se ha aceptado ningún ajuste posterior al bloqueo. La vista actual coincide con la base aprobada.",
+      "heading": "Vista ajustada actual",
+      "link": {
+        "cancellation": "Ajuste de cancelación",
+        "correction": "Ajuste de corrección",
+        "reverses": "Revierte la versión {{version}}",
+        "unknownVersion": "desconocida",
+        "zeroCancellation": "Evidencia de cancelación sin cambio de saldo",
+        "zeroCorrection": "Evidencia sin cambio de saldo"
+      },
+      "metric": {
+        "adjustedClosing": "Saldo de cierre ajustado",
+        "cumulativeDelta": "Cambio acumulado posterior al bloqueo",
+        "originalClosing": "Saldo de cierre original",
+        "viewVersion": "Versión de vista actual"
+      },
+      "scrollHint": "Desplázate horizontalmente para revisar todas las columnas de ajuste.",
+      "scrollLabel": "Historial desplazable de ajustes posteriores al bloqueo",
+      "source": {
+        "absenceCancellation": "Cancelación de ausencia",
+        "correction": "Corrección de tiempo"
+      }
+    },
+    "approved": {
+      "action": {
+        "approve": "Aprobado",
+        "lock": "Bloqueado",
+        "requestChanges": "Cambios solicitados"
+      },
+      "authority": { "hr": "RR. HH. de la organización", "manager": "Responsable actual" },
+      "description": "Esta base aprobada permanece disponible si se solicitan cambios más adelante.",
+      "empty": "No se ha creado una instantánea de aprobación para el ciclo de revisión actual.",
+      "heading": "Registro aprobado",
+      "historyItem": "{{action}} · {{authority}} · {{date}} · versión {{version}}",
+      "historyLabel": "Historial de revisión mensual",
+      "metadata": "Ciclo de aprobación {{cycle}} · versión de flujo {{workflowVersion}} · esquema {{schemaVersion}} · motor {{engine}}",
+      "summary": "Aprobado el {{approvedAt}}. Totales de la instantánea: previsto {{expected}}, acreditado {{credited}}, saldo {{balance}}, saldo de cierre contabilizado {{closing}}."
+    },
+    "attention": {
+      "blockers_one": "{{count}} bloqueo",
+      "blockers_many": "{{count}} bloqueos",
+      "blockers_other": "{{count}} bloqueos",
+      "description": "Los bloqueos impiden el envío. Las advertencias conservan los valores calculados, pero deben revisarse en el paso de envío.",
+      "heading": "Puntos de revisión",
+      "noBlockers": {
+        "description": "Esta versión de revisión no tiene ningún problema que impida el envío.",
+        "title": "Sin bloqueos"
+      },
+      "noWarnings": "No hay ninguna advertencia no bloqueante en esta versión de revisión.",
+      "reviewDaily": "{{date}} — revisar registro diario",
+      "warnings_one": "{{count}} advertencia",
+      "warnings_many": "{{count}} advertencias",
+      "warnings_other": "{{count}} advertencias",
+      "wholePeriod": "conciliación del periodo completo"
+    },
+    "daily": {
+      "caption": "Cálculo mensual por fecha para {{month}}",
+      "column": {
+        "absenceCredit": "Crédito de ausencia",
+        "adjustment": "Ajuste",
+        "balance": "Saldo",
+        "break": "Pausa",
+        "credited": "Acreditado",
+        "date": "Fecha",
+        "expected": "Previsto",
+        "status": "Estado",
+        "worked": "Trabajado"
+      },
+      "description": "Los importes finales solo aparecen para fechas completas. Un guion indica que la fecha no es definitiva.",
+      "heading": "Revisión diaria",
+      "scrollHint": "Desplázate horizontalmente para revisar todas las columnas del cálculo diario.",
+      "scrollLabel": "Revisión diaria mensual desplazable",
+      "status": {
+        "complete": "Completo",
+        "incomplete": "Incompleto",
+        "missing": "Falta el resultado diario",
+        "provisional": "Provisional"
+      }
+    },
+    "error": {
+      "boundary": {
+        "denied": "Permiso denegado",
+        "missing": "Periodo mensual no encontrado",
+        "unavailable": "Periodo mensual no disponible"
+      },
+      "description": {
+        "denied": "Este registro mensual está fuera de tu ámbito de revisión actual.",
+        "recovery": "Elige una acción de recuperación para continuar con tu trabajo mensual."
+      },
+      "load": {
+        "denied": "Tu función o ámbito de responsabilidad actual no permite ver este periodo mensual.",
+        "missing": "Este periodo mensual no está disponible.",
+        "unavailable": "No se pudo cargar el periodo mensual. Comprueba la conexión e inténtalo de nuevo."
+      },
+      "print": {
+        "denied": "Tu ámbito de responsabilidad ha cambiado. No se abrió el diálogo de impresión.",
+        "session": "Tu sesión ha terminado. No se abrió el diálogo de impresión.",
+        "unavailable": "No se pudo actualizar el registro mensual. No se abrió el diálogo de impresión."
+      },
+      "state": {
+        "denied": "Este registro mensual está fuera de tu ámbito de revisión",
+        "missing": "Este registro mensual no está disponible",
+        "unavailable": "No se pudo cargar el registro mensual"
+      }
+    },
+    "frame": {
+      "description": "Revisa el estado, los totales, los problemas y las decisiones disponibles del mes.",
+      "eyebrow": "Registro mensual",
+      "periodDescription": "{{employee}} · {{start}} a {{end}} · {{timeZone}}",
+      "printHelp": "La impresión usa el estado mensual más reciente, los totales, los valores diarios, la base aprobada y los ajustes posteriores. Se omiten los detalles privados de ausencias y los motivos de las decisiones.",
+      "printStatusLabel": "Estado de impresión mensual",
+      "title": "Periodo mensual"
+    },
+    "loading": {
+      "description": "Preparando el estado actual, los totales, los problemas y las acciones disponibles.",
+      "title": "Cargando periodo mensual"
+    },
+    "print": {
+      "adjustedHeading": "Registro ajustado actual",
+      "adjustedTotals": "Saldo de cierre aprobado {{closing}} · cambio acumulado posterior al bloqueo {{delta}} · saldo de cierre ajustado {{adjusted}}",
+      "adjustmentCaption": "Cadena de ajustes posteriores al bloqueo con datos minimizados",
+      "approvedMetadata": "Ciclo aprobado {{cycle}} · aprobado el {{date}}",
+      "approvedTotals": "Previsto {{expected}} · acreditado {{credited}} · saldo {{balance}} · cierre contabilizado {{closing}}",
+      "dailyCaption": "Registro mensual diario con datos minimizados para {{employee}}",
+      "dateRange": "{{employee}} · {{start}} a {{end}} · {{timeZone}}",
+      "footer": "Esta impresión contiene el estado mensual visible, los totales, los valores diarios, la base aprobada y, cuando existen, los cambios posteriores al bloqueo. No contiene identificadores internos, huellas de origen, clasificación de enfermedad, notas, motivos de decisiones ni comentarios de revisión.",
+      "opened": "Se abrió el diálogo de impresión con el registro mensual más reciente.",
+      "readiness": {
+        "notReady": "no está listo",
+        "ready": "listo para enviar",
+        "workflow": "registro de flujo"
+      },
+      "statusLine": "Estado: {{status}} · {{readiness}}",
+      "title": "Registro mensual"
+    },
+    "readiness": {
+      "completeDates": "{{complete}} de {{covered}} fechas de empleo cubiertas tienen cálculos diarios completos. Si cambia un registro de origen, revisa el mes actualizado antes de realizar la siguiente acción.",
+      "explanation": {
+        "approved": "Este periodo está aprobado y permanece en modo de solo lectura antes de su acción de bloqueo independiente.",
+        "incomplete": "Resuelve todos los bloqueos indicados y completa cada fecha cubierta antes del envío.",
+        "inProgress": "Este mes aún está en curso. La preparación solo puede ser definitiva cuando termine el mes en la hora local de la organización.",
+        "locked": "Este periodo está bloqueado. Las ediciones ordinarias no pueden cambiar su registro aprobado.",
+        "lockedAdjusted": "Este periodo está bloqueado y tiene ajustes posteriores al bloqueo aceptados. El registro aprobado permanece sin cambios; los totales actuales incluyen la cadena de ajustes ordenada.",
+        "readOnly": "Este periodo está en modo de solo lectura en su estado de flujo actual.",
+        "ready": "Cada fecha cubierta está completa, contabilizada y conciliada, sin bloqueos para el envío.",
+        "submitted": "Este periodo se ha enviado y está en modo de solo lectura mientras espera una acción de revisión."
+      },
+      "label": { "notReady": "No está listo", "ready": "Listo para enviar" },
+      "reviewVersion": "Versión de revisión {{version}}"
+    },
+    "reviewer": {
+      "availability": {
+        "approved": "Este mes está aprobado. Solo una persona revisora actualmente elegible que no sea la propia persona puede solicitar cambios o bloquearlo.",
+        "changesRequested": "Se solicitaron cambios. La persona empleada debe corregir y volver a enviar antes de otra aprobación.",
+        "locked": "Este mes está bloqueado permanentemente. Los cambios aceptados más adelante usan ajustes posteriores al bloqueo.",
+        "open": "Las acciones de revisión estarán disponibles después del envío de la persona empleada.",
+        "submitted": "Esperando a un responsable actual elegible o a RR. HH. de la organización."
+      },
+      "description": "Aprueba cuando el mes esté listo. Bloquear el mes es una acción permanente e independiente.",
+      "error": {
+        "denied": "Tu función o ámbito de responsabilidad actual no permite realizar esta acción de revisión.",
+        "generic": "No se pudo registrar la acción de revisión. Comprueba la conexión e inténtalo de nuevo.",
+        "noAction": "No se registró ninguna acción de revisión",
+        "notReady": "Los orígenes mensuales actuales no se concilian. Resuelve los bloqueos actualizados antes de aprobar o bloquear.",
+        "self": "No puedes revisar ni bloquear tu propio periodo mensual.",
+        "sourceChanged": "Los orígenes mensuales han cambiado. Revisa el periodo actualizado; no se registró ninguna decisión.",
+        "stateChanged": "Esta acción de revisión ya no está disponible en el estado de flujo actualizado.",
+        "versionChanged": "El flujo cambió en otra pestaña o dispositivo. Revisa el estado actualizado; no se registró ninguna decisión."
+      },
+      "heading": "Decisión de revisión",
+      "lock": {
+        "description": "El bloqueo conserva el ciclo de aprobación {{cycle}} como base permanente. No hay un desbloqueo ordinario; los cambios aceptados más adelante usan la ruta de ajuste posterior al bloqueo. Cancela para dejar el mes aprobado.",
+        "title": "¿Bloquear este mes permanentemente?"
+      },
+      "reason": {
+        "error": "Introduce un motivo de al menos 10 caracteres.",
+        "goTo": "Ir al motivo de la decisión.",
+        "help": "Al menos 10 caracteres. La persona empleada puede leer este motivo en su detalle mensual; se omite en las notificaciones y en la bandeja de aprobaciones.",
+        "label": "Motivo para solicitar cambios"
+      },
+      "success": {
+        "approved": "El periodo mensual se ha aprobado. La base aprobada está lista para un bloqueo independiente.",
+        "changesRequested": "Se solicitaron cambios. La persona empleada puede corregir y volver a enviar el mes.",
+        "locked": "El periodo mensual se ha bloqueado. Su registro aprobado es permanente; los cambios posteriores requieren un ajuste.",
+        "title": "Registro mensual actualizado"
+      }
+    },
+    "submission": {
+      "acknowledgement_one": "He revisado la {{count}} advertencia de esta versión de origen mensual.",
+      "acknowledgement_many": "He revisado las {{count}} advertencias de esta versión de origen mensual.",
+      "acknowledgement_other": "He revisado las {{count}} advertencias de esta versión de origen mensual.",
+      "availability": {
+        "approved": "Aprobado; el envío ya está completo.",
+        "incomplete": "El envío no está disponible hasta que se resuelvan todos los bloqueos y se completen todas las fechas cubiertas.",
+        "locked": "Bloqueado; el envío ya está completo.",
+        "ownerOnly": "Solo la persona empleada propietaria de este periodo mensual puede enviarlo.",
+        "submitted": "Enviado para revisión."
+      },
+      "description": "El envío impide las ediciones ordinarias hasta que una persona revisora elegible solicite cambios.",
+      "enableHint": "Revisa y confirma las advertencias actuales para habilitar el envío.",
+      "error": {
+        "alreadySubmitted": "Este periodo ya se ha enviado.",
+        "denied": "Tu cuenta actual no puede enviar este periodo mensual.",
+        "generic": "No se pudo enviar el periodo mensual. Comprueba la conexión e inténtalo de nuevo.",
+        "notReady": "El periodo actualizado no está listo. Resuelve sus bloqueos actuales antes de volver a intentarlo.",
+        "stateChanged": "El envío ya no está disponible en el estado de flujo actual.",
+        "title": "El mes no se envió",
+        "versionChanged": "El flujo cambió mientras lo revisabas. Revisa el periodo actualizado antes de volver a intentarlo.",
+        "warningsChanged": "El origen revisado ha cambiado. Revisa las advertencias actualizadas y confirma la versión actual antes de volver a intentarlo."
+      },
+      "heading": "Envío",
+      "noAcknowledgement": "No se requiere confirmar advertencias para esta versión de origen.",
+      "success": "El periodo mensual se ha enviado para revisión.",
+      "successTitle": "Mes enviado"
+    },
+    "totals": {
+      "ariaLabel": "Totales mensuales calculados",
+      "description": "Se excluyen las fechas incompletas y ausentes. Los saldos contables se etiquetan por separado.",
+      "heading": "Totales de fechas completas",
+      "metric": {
+        "calculatedBalance": "Saldo calculado",
+        "postedClosing": "Saldo final contabilizado",
+        "postedOpening": "Saldo inicial contabilizado",
+        "postedPeriodDelta": "Cambio contabilizado del periodo"
+      },
+      "postedBalances": "Saldo inicial contabilizado {{opening}}; saldo final contabilizado {{closing}}."
+    }
+  },
+  "notifications": {
+    "actionStatus": "Estado de la acción de notificación",
+    "card": {
+      "dismiss": "Descartar notificación",
+      "dismissed": "Descartada",
+      "dismissing": "Descartando…",
+      "emailDelivery": "Entrega por correo electrónico",
+      "openMonthlyPeriod": "Abrir periodo mensual",
+      "openRequests": "Abrir solicitudes",
+      "recorded": "Registrada"
+    },
+    "delivery": {
+      "delivered": "Entregado",
+      "failed": "La entrega ha fallado; el registro en la aplicación no se ha visto afectado",
+      "notConfigured": "Correo no configurado; el registro está disponible en la aplicación",
+      "pending": "Intento de correo pendiente; el registro está disponible en la aplicación"
+    },
+    "dismiss": {
+      "error": "No se ha podido descartar la notificación. Inténtalo de nuevo.",
+      "errorTitle": "Notificación no descartada",
+      "success": "Notificación descartada. Permanece en tu historial."
+    },
+    "empty": {
+      "description": "Los resultados de la cuenta aparecerán aquí después de una decisión sobre una solicitud o un periodo mensual.",
+      "title": "No hay historial de notificaciones"
+    },
+    "error": {
+      "description": "No se ha mostrado contenido de notificaciones. Intenta cargar el historial de nuevo.",
+      "title": "El historial de notificaciones no está disponible"
+    },
+    "history": {
+      "current_one": "El historial está actualizado con {{count}} notificación.",
+      "current_many": "El historial está actualizado con {{count}} notificaciones.",
+      "current_other": "El historial está actualizado con {{count}} notificaciones.",
+      "heading": "Historial de resultados",
+      "listLabel": "Historial genérico de notificaciones",
+      "refreshing": "Actualizando el historial…",
+      "status": "Estado del historial de notificaciones",
+      "total_one": "{{count}} notificación.",
+      "total_many": "{{count}} notificaciones.",
+      "total_other": "{{count}} notificaciones."
+    },
+    "loading": {
+      "description": "Comprobando los registros de resultados de tu cuenta.",
+      "title": "Cargando el historial de notificaciones"
+    },
+    "page": {
+      "description": "Revisa los resultados de la cuenta y abre el registro relacionado cuando necesites detalles.",
+      "eyebrow": "Cuenta"
+    },
+    "pagination": "Historial de notificaciones: página {{current}} de {{total}}",
+    "presentation": {
+      "acknowledged": {
+        "body": "Se ha confirmado un elemento que enviaste.",
+        "title": "Elemento confirmado"
+      },
+      "approved": {
+        "body": "Se ha aprobado un elemento que enviaste.",
+        "title": "Elemento aprobado"
+      },
+      "changesRequested": {
+        "body": "Un elemento que enviaste necesita cambios.",
+        "title": "Cambios solicitados"
+      },
+      "rejected": {
+        "body": "No se ha aprobado un elemento que enviaste.",
+        "title": "Elemento no aprobado"
+      }
+    },
+    "status": { "active": "Activa", "dismissed": "Descartada" }
+  },
+  "today": {
+    "attendance": {
+      "action": {
+        "clockIn": "Fichar entrada",
+        "clockOut": "Fichar salida",
+        "resume": "Reanudar el trabajo",
+        "startBreak": "Iniciar descanso"
+      },
+      "actionsLabel": "Acciones del registro horario",
+      "confirm": {
+        "cancel": "Cancelar",
+        "description": "WorkLedger cerrará el descanso activo y fichará tu salida en el mismo instante registrado. Cancela para mantener el registro horario sin cambios.",
+        "submit": "Cerrar el descanso y fichar salida",
+        "title": "¿Fichar la salida durante el descanso?"
+      },
+      "currentBreak": "Descanso actual",
+      "currentStatus": "Estado actual",
+      "currentWorkInterval": "Intervalo de trabajo actual",
+      "error": {
+        "breakConfirmation": "No se registró la salida. Confirma que el descanso activo debe cerrarse antes de fichar la salida.",
+        "conflict": "No se registró {{outcome}} porque esta solicitud no pudo asociarse de forma segura. Revisa el estado actual antes de intentarlo de nuevo.",
+        "invalidState": "No se registró {{outcome}} porque esa acción no es válida para el estado actual del registro horario.",
+        "rateLimited": "No se registró {{outcome}} porque las acciones del registro horario están limitadas temporalmente. Revisa el estado actual e inténtalo de nuevo más tarde.",
+        "stateChanged": "No se registró {{outcome}}. El registro horario cambió en otra pestaña o dispositivo. Estado actual: {{state}}.",
+        "uncertain": "WorkLedger no pudo confirmar si se registró {{outcome}}. Revisa el estado actual actualizado antes de intentarlo de nuevo."
+      },
+      "feedback": {
+        "errorTitle": "Registro horario sin cambios",
+        "infoTitle": "Registro horario actualizado",
+        "successTitle": "Registro horario modificado"
+      },
+      "noActiveInterval": "No hay ningún intervalo de trabajo activo.",
+      "outcome": {
+        "clockIn": "la entrada",
+        "clockOut": "la salida",
+        "resume": "la reanudación del trabajo",
+        "startBreak": "el inicio del descanso"
+      },
+      "pending": {
+        "clockIn": "Fichando entrada…",
+        "clockOut": "Fichando salida…",
+        "resume": "Reanudando el trabajo…",
+        "startBreak": "Iniciando el descanso…"
+      },
+      "recovery": {
+        "dependency": {
+          "description": "WorkLedger no pudo actualizar tu registro horario actual. Las acciones siguen desactivadas.",
+          "title": "El registro horario no está disponible"
+        },
+        "offline": {
+          "description": "Las acciones del registro horario están desactivadas y no se pondrán en cola. Vuelve a conectarte para actualizar el estado actual.",
+          "title": "No tienes conexión"
+        },
+        "reconnecting": {
+          "description": "Actualizando el registro horario antes de activar las acciones…",
+          "title": "Conexión restablecida"
+        }
+      },
+      "remoteChanged": "El registro horario cambió en otra pestaña o dispositivo. Estado actual: {{state}}.",
+      "since": "Desde",
+      "state": {
+        "offWork": "Fuera del trabajo",
+        "onBreak": "En descanso",
+        "working": "Trabajando"
+      },
+      "success": {
+        "clockIn": "Entrada fichada a las {{time}}.",
+        "clockOut": "Salida fichada a las {{time}}.",
+        "resume": "Trabajo reanudado a las {{time}}.",
+        "startBreak": "Descanso iniciado a las {{time}}."
+      }
+    },
+    "attention": {
+      "affectedDate": "Fecha afectada",
+      "blockingIssues": "Problemas bloqueantes",
+      "blocksSubmission": "Bloquea el envío mensual",
+      "descriptor": {
+        "absenceApprovalPending": {
+          "next": "La solicitud seguirá pendiente hasta que una persona revisora autorizada registre una decisión.",
+          "reason": "Una ausencia que requiere aprobación todavía puede cambiar este cálculo.",
+          "title": "Decisión de ausencia pendiente"
+        },
+        "attendanceIncomplete": { "title": "Registro horario incompleto" },
+        "attendanceInvalidEventOrder": {
+          "title": "Hay que revisar el orden de los eventos del registro horario"
+        },
+        "attendanceInvalidEventPrecision": {
+          "title": "Hay que revisar la hora del evento del registro horario"
+        },
+        "attendanceOverlap": { "title": "Los intervalos del registro horario se solapan" },
+        "calculation": {
+          "next": "La explicación del cálculo confirma por qué hay que revisar este registro.",
+          "reason": "Se ha registrado trabajo en un día sin tiempo de trabajo previsto."
+        },
+        "correctionUnresolved": {
+          "next": "La página de la solicitud indica si el siguiente paso es una revisión o cambios de la persona empleada; los eventos originales permanecen sin cambios hasta que se aplica una corrección aprobada.",
+          "reason": "Una corrección enviada todavía puede cambiar este cálculo.",
+          "title": "La solicitud de corrección requiere revisión"
+        },
+        "flexNegative": {
+          "next": "El aviso solo desaparece cuando las entradas contabilizadas llevan el saldo de nuevo al intervalo configurado.",
+          "reason": "El saldo de horario flexible contabilizado está por debajo del umbral de aviso configurado.",
+          "title": "Se alcanzó el umbral negativo de horario flexible"
+        },
+        "flexPositive": {
+          "next": "El aviso solo desaparece cuando las entradas contabilizadas llevan el saldo de nuevo al intervalo configurado.",
+          "reason": "El saldo de horario flexible contabilizado está por encima del umbral de aviso configurado.",
+          "title": "Se alcanzó el umbral positivo de horario flexible"
+        },
+        "ledgerSourceMismatch": { "title": "Se necesita conciliar el registro contable" },
+        "policyAssignmentOverlap": { "title": "Las asignaciones de políticas horarias se solapan" },
+        "policyConfigurationInvalid": {
+          "title": "Hay que revisar la configuración de la política horaria"
+        },
+        "policyNotAssigned": { "title": "Falta la política horaria" },
+        "recovery": {
+          "next": "Elige el día afectado y envía una corrección. Los eventos originales permanecen sin cambios durante la revisión.",
+          "reason": "Este registro horario debe corregirse antes de poder considerarlo fiable."
+        },
+        "scheduleAssignmentOverlap": {
+          "title": "Las asignaciones de horarios de trabajo se solapan"
+        },
+        "scheduleNotAssigned": { "title": "Falta el horario de trabajo" },
+        "administrator": {
+          "next": "El registro seguirá bloqueado hasta que una persona administradora autorizada resuelva el problema de configuración.",
+          "reason": "La configuración asignada no permite producir un cálculo fiable."
+        },
+        "workDuringAbsence": { "title": "El trabajo se solapa con una ausencia abonada" },
+        "workOnHoliday": { "title": "Trabajo registrado en un día festivo" },
+        "workOnZeroExpectedDay": { "title": "Trabajo registrado en un día sin tiempo previsto" }
+      },
+      "doesNotBlockSubmission": "No bloquea el envío",
+      "newUrgent": "Nuevo problema urgente: {{titles}}.",
+      "next": "Qué ocurrirá después",
+      "postedBalanceThrough": "Saldo contabilizado hasta",
+      "recovery": {
+        "fixEntry": "Corregir entrada",
+        "reviewBalanceHistory": "Ver historial del saldo",
+        "reviewCalculation": "Revisar cálculo",
+        "reviewRecord": "Revisar el día afectado",
+        "reviewRequest": "Revisar solicitud",
+        "reviewTimeline": "Revisar cronología"
+      },
+      "title": "Requiere atención",
+      "warnings": "Avisos"
+    },
+    "calculation": {
+      "caption": "Importes de origen y resultados calculados por el servidor para hoy",
+      "detailsDescription": "Consulta los datos que respaldan la estimación de hoy.",
+      "detailsTitle": "Detalles del cálculo",
+      "footnote": "Los descansos ya están excluidos del trabajo registrado. Las correcciones conservan los fichajes originales.",
+      "group": {
+        "credited": "Tiempo abonado",
+        "expected": "Tiempo previsto",
+        "result": "Resultado de hoy"
+      },
+      "heading": "Cómo se calcula el día de hoy",
+      "row": {
+        "absenceCredit": "Abono por ausencia",
+        "absenceReduction": "Reducción por ausencia",
+        "approvedCorrections": "Correcciones aprobadas",
+        "breaksExcluded": "Descansos ya excluidos",
+        "creditedToday": "Abonado hoy",
+        "expectedToday": "Previsto hoy",
+        "holidayReduction": "Reducción por día festivo",
+        "otherAdjustments": "Otros ajustes aprobados",
+        "provisionalDifference": "Diferencia provisional",
+        "recordedWork": "Trabajo registrado",
+        "scheduledTime": "Tiempo programado"
+      },
+      "source": "Origen",
+      "statusIncomplete": "Incompleto. Resuelve todos los problemas bloqueantes antes de confiar en este resultado.",
+      "statusProvisional": "Provisional, sin contabilizar y todavía sujeto a cambios.",
+      "time": "Tiempo",
+      "zeroExpected": {
+        "generic": "El horario y las reducciones de hoy dan como resultado un tiempo previsto de cero.",
+        "heading": "Por qué el tiempo previsto es cero",
+        "holiday": "{{holidayName}} reduce a cero el tiempo programado previsto para hoy.",
+        "workCredit": "El trabajo registrado se abona por separado y no se identifica como horas extra de nómina."
+      }
+    },
+    "overview": {
+      "ariaLabel": "Resumen del registro horario de hoy",
+      "breaks": "Descansos",
+      "estimatedFinish": "Fin estimado",
+      "estimatedFinishAssumption": "Supone que no habrá otro descanso.",
+      "finish": {
+        "calculationIncomplete": "Cálculo incompleto",
+        "calculationUnavailable": "Cálculo no disponible",
+        "expectationMet": "Tiempo previsto completado",
+        "notAvailable": "No disponible",
+        "resumeToEstimate": "Reanuda el trabajo para calcularlo",
+        "startToEstimate": "Empieza a trabajar para calcularlo"
+      },
+      "flexibleTime": "Horario flexible",
+      "holiday": "Día festivo: {{holidayName}}",
+      "noPostedEntries": "No hay entradas contabilizadas antes de hoy.",
+      "postedBalance": "Saldo contabilizado",
+      "postedThrough": "Contabilizado hasta {{date}}.",
+      "progressAriaLabel": "Progreso abonado de hoy",
+      "progressCredited": "{{credited}} abonado",
+      "progressDescription": "{{credited}} abonado de {{expected}} previsto.",
+      "progressUnavailable": "Progreso no disponible",
+      "progressUnavailableDescription": "El progreso abonado de hoy no está disponible. Resuelve los problemas bloqueantes que aparecen abajo antes de confiar en el cálculo de hoy.",
+      "progressWithoutExpectation": "{{credited}} abonado sin tiempo programado previsto para hoy.",
+      "provisionalDifference": "Diferencia provisional",
+      "remainingToday": "Restante hoy",
+      "statusIncomplete": "Cálculo incompleto",
+      "statusProvisional": "Hoy provisional",
+      "todayExcludedFromPosted": "El día de hoy todavía es provisional y no está incluido en este saldo.",
+      "title": "Progreso de hoy",
+      "workedToday": "Trabajado hoy"
+    },
+    "page": {
+      "description": "Registra tu jornada y revisa el tiempo de hoy.",
+      "estimateUpdated": "Estimación actualizada a las {{time}}",
+      "eyebrow": "Registro horario",
+      "loadError": {
+        "description": "No se pudo cargar la información del registro horario. No se envió ninguna acción de fichaje.",
+        "message": "Inténtalo de nuevo. Si el problema continúa, comparte la referencia de la solicitud con la administración.",
+        "title": "La información de hoy no está disponible temporalmente"
+      },
+      "loading": {
+        "description": "Cargando el estado actual del registro horario y el cálculo…",
+        "message": "Preparando el estado actual, las acciones válidas y el cálculo.",
+        "title": "Cargando el registro horario de hoy"
+      },
+      "offline": {
+        "description": "Vuelve a conectarte para cargar el estado actual del registro horario. Sin conexión no se pueden enviar ni poner en cola acciones de fichaje.",
+        "message": "WorkLedger actualizará el estado cuando vuelva la conexión antes de activar cualquier acción del registro horario."
+      },
+      "permission": {
+        "description": "Tu cuenta actual no puede utilizar el registro horario de empleados. No hay datos ni acciones del registro horario disponibles."
+      },
+      "requestReference": "Referencia de la solicitud: {{requestId}}",
+      "title": "Hoy",
+      "updating": "Actualizando…"
+    },
+    "timeline": {
+      "approvedInterpretation": "Interpretación aprobada",
+      "correction": "El tiempo trabajado cambió de {{before}} a {{after}} ({{difference}}).",
+      "description": {
+        "empty": "{{date}} en {{timeZone}}. No hay eventos originales del registro horario. Los eventos con la misma hora mantienen el orden en que se registraron.",
+        "events_one": "{{date}} en {{timeZone}}. {{count}} evento original en el orden registrado. Los eventos con la misma hora mantienen el orden en que se registraron.",
+        "events_many": "{{date}} en {{timeZone}}. {{count}} eventos originales en el orden registrado. Los eventos con la misma hora mantienen el orden en que se registraron.",
+        "events_other": "{{date}} en {{timeZone}}. {{count}} eventos originales en el orden registrado. Los eventos con la misma hora mantienen el orden en que se registraron."
+      },
+      "empty": "Hoy no se ha registrado ningún evento horario.",
+      "event": {
+        "breakEnd": {
+          "description": "Se reanudó el tiempo de trabajo.",
+          "label": "Descanso finalizado"
+        },
+        "breakStart": {
+          "description": "Se pausó el tiempo de trabajo.",
+          "label": "Descanso iniciado"
+        },
+        "clockIn": { "description": "Comenzó la sesión de trabajo.", "label": "Entrada fichada" },
+        "clockOut": { "description": "Finalizó la sesión de trabajo.", "label": "Salida fichada" }
+      },
+      "incomplete": {
+        "description": "La cronología es demasiado larga para mostrarla completa. El cálculo está marcado como incompleto.",
+        "title": "Cronología incompleta"
+      },
+      "originalEvents": "Eventos originales registrados",
+      "title": "Cronología de hoy"
+    }
+  },
+  "records": {
+    "pageTitle": "Registro diario",
+    "attention": {
+      "action": { "reviewPeriod": "Revisar el periodo afectado" },
+      "blockers": "Problemas que bloquean el cálculo",
+      "description": {
+        "absenceApprovalPending": "Una ausencia que requiere aprobación todavía puede cambiar el cálculo de este día.",
+        "attendanceIncomplete": "Uno o varios intervalos del registro horario que afectan a esta fecha no están completos.",
+        "attendanceInvalidEventOrder": "Los eventos registrados no se pueden reconstruir en un orden válido.",
+        "attendanceInvalidEventPrecision": "Un evento registrado no está alineado con un minuto completo.",
+        "attendanceOverlap": "Los intervalos derivados se solapan y no permiten obtener un cálculo fiable.",
+        "correctionUnresolved": "Una corrección enviada todavía puede cambiar el cálculo de este día.",
+        "flexNegativeDaily": "El saldo diario está por debajo del umbral de aviso de horario flexible configurado.",
+        "flexNegativePosted": "El saldo de horario flexible contabilizado está por debajo del umbral de aviso configurado.",
+        "flexPositiveDaily": "El saldo diario está por encima del umbral de aviso de horario flexible configurado.",
+        "flexPositivePosted": "El saldo de horario flexible contabilizado está por encima del umbral de aviso configurado.",
+        "ledgerSourceMismatch": "El origen del cálculo no coincide con los datos contabilizados que lo respaldan.",
+        "policyAssignmentOverlap": "Hay más de una política horaria aplicable a esta fecha.",
+        "policyConfigurationInvalid": "La política horaria asignada no permite producir un cálculo fiable.",
+        "policyNotAssigned": "No hay ninguna política horaria aplicable a esta fecha.",
+        "scheduleAssignmentOverlap": "Hay más de un horario de trabajo aplicable a esta fecha.",
+        "scheduleNotAssigned": "No hay ningún horario de trabajo aplicable a esta fecha.",
+        "workDuringAbsence": "El trabajo registrado se solapa con tiempo de ausencia abonado. Aquí no se muestra ninguna categoría de ausencia.",
+        "workOnHoliday": "Se ha registrado trabajo en un día festivo y se abona por separado.",
+        "workOnZeroExpectedDay": "Se ha registrado trabajo en un día sin tiempo previsto."
+      }
+    },
+    "backToTime": "Volver a Mi tiempo",
+    "calculation": {
+      "absenceCredit": "Abono por ausencia",
+      "balance": "Saldo",
+      "breakTime": "Tiempo de descanso",
+      "creditedTime": "Tiempo abonado",
+      "expectedTime": "Tiempo previsto",
+      "heading": "Cálculo",
+      "unavailable": {
+        "description": "Los eventos del registro horario no se pueden reconstruir, por lo que no se muestra ningún total calculado. Revisa los eventos de abajo y solicita una corrección si es necesario.",
+        "title": "Cálculo no disponible"
+      },
+      "workedTime": "Tiempo trabajado"
+    },
+    "description": "Revisa el cálculo del día, las sesiones de trabajo, los problemas y el historial de eventos registrados.",
+    "error": {
+      "denied": {
+        "description": "No tienes acceso a este registro diario.",
+        "message": "Tu cuenta actual no puede ver este registro."
+      },
+      "notFound": {
+        "description": "Este registro diario no está disponible.",
+        "message": "Puede que este registro ya no esté disponible en el ámbito actual.",
+        "title": "Registro no encontrado"
+      },
+      "unavailable": {
+        "description": "WorkLedger no pudo cargar este registro diario.",
+        "message": "No se mostró ningún cálculo ni historial del registro horario. Inténtalo de nuevo.",
+        "title": "Registro diario no disponible"
+      }
+    },
+    "event": {
+      "breakEnd": "Descanso finalizado",
+      "breakStart": "Descanso iniciado",
+      "clockIn": "Entrada fichada",
+      "clockOut": "Salida fichada"
+    },
+    "events": {
+      "empty": {
+        "description": "No se registró ningún evento horario en esta fecha local.",
+        "title": "Sin eventos del registro horario"
+      },
+      "heading": "Eventos registrados",
+      "note": "Las horas incluyen el desplazamiento UTC para que las horas locales repetidas se puedan distinguir.",
+      "recordedOrder": "Orden registrado {{sequence}}"
+    },
+    "eyebrow": "Registros de tiempo",
+    "incomplete": {
+      "description": "Revisa los elementos que requieren atención y los eventos registrados antes de confiar en el saldo.",
+      "title": "Este registro está incompleto"
+    },
+    "loading": {
+      "description": "Comprobando el cálculo y sus eventos de origen.",
+      "title": "Cargando el registro diario"
+    },
+    "requestCorrection": "Solicitar una corrección",
+    "sessions": {
+      "breakIntervals": "Intervalos de descanso",
+      "continuesNext": "Continúa en la siguiente fecha local.",
+      "continuesPrevious": "Continúa desde la fecha local anterior.",
+      "empty": {
+        "description": "No hay ningún intervalo de trabajo o descanso completo dentro de esta fecha local.",
+        "title": "Sin intervalos completos"
+      },
+      "heading": "Sesiones de trabajo y descansos",
+      "none": "Ninguno",
+      "note": "Los intervalos que cruzan la medianoche se dividen en el límite de fecha local de la organización. Las duraciones usan los instantes registrados, incluidos los cambios de horario de verano.",
+      "range": "De {{start}} a {{end}} · {{duration}}",
+      "session": "Sesión {{number}}",
+      "workIntervals": "Intervalos de trabajo"
+    },
+    "state": {
+      "complete": "Registro completo",
+      "completeDescription": "El cálculo usa los eventos registrados y los intervalos de tiempo transcurrido exactos.",
+      "current": "Estado actual",
+      "needsReview": "Requiere revisión",
+      "provisionalDescription": "Este cálculo no es un resultado final contabilizado."
+    },
+    "timeZoneDescription": "Registro horario diario en {{timeZone}}."
+  },
+  "requests": {
+    "detail": {
+      "absence": {
+        "cancellationLink": "Solicitud de cancelación {{status}} enviada el {{date}}",
+        "cancellations": "Solicitudes de cancelación",
+        "description": "Estos detalles de ausencia están disponibles para que revises tu propia solicitud y su efecto actual.",
+        "heading": "Cobertura y efecto",
+        "type": "Tipo de ausencia",
+        "workflowLabel": "Flujo",
+        "workflow": {
+          "approval": "Efectiva tras la aprobación",
+          "report": "Efectiva al notificarse"
+        }
+      },
+      "action": {
+        "available": "Acción disponible",
+        "effect": {
+          "cancel": "Solicitar la cancelación inicia una revisión separada. Esta ausencia sigue vigente hasta que se apruebe la solicitud.",
+          "withdraw": "Retirar la solicitud finaliza este flujo de cancelación. No elimina ni cambia la ausencia original."
+        },
+        "error": {
+          "changed": "La solicitud cambió antes de completar esta acción. Actualiza el registro y revisa su estado actual.",
+          "generic": "Tu registro no ha cambiado. Inténtalo de nuevo.",
+          "locked": "Este registro pertenece a un periodo bloqueado. Se necesita un ajuste posterior al bloqueo."
+        },
+        "errorTitle": "No se ha podido actualizar la solicitud",
+        "label": {
+          "cancel": "Solicitar cancelación",
+          "withdraw": "Retirar solicitud de cancelación"
+        },
+        "pending": "Actualizando solicitud…",
+        "success": {
+          "cancel": "Cancelación solicitada. La ausencia sigue vigente hasta que se apruebe la solicitud.",
+          "withdraw": "Solicitud de cancelación retirada. La ausencia original no ha cambiado."
+        },
+        "successTitle": "Solicitud actualizada"
+      },
+      "back": "Volver a Mis solicitudes",
+      "cancellation": {
+        "absenceType": "Tipo de ausencia: {{type}}",
+        "description": "La aprobación cambia únicamente los segmentos de ausencia incluidos. El historial de ausencia original permanece.",
+        "heading": "Cancelación solicitada",
+        "viewOriginal": "Ver solicitud de ausencia original"
+      },
+      "correction": {
+        "applicationLabel": "Aplicación",
+        "application": {
+          "ordinary": "Corrección ordinaria",
+          "postLock": "Ajuste posterior al bloqueo"
+        },
+        "description": "Los eventos de fichaje originales se conservan. La propuesta es una versión revisada, no una reescritura.",
+        "ends": "Finaliza",
+        "events": {
+          "empty": "No se registró ningún evento de fichaje para este registro diario.",
+          "event": "Evento de asistencia",
+          "heading": "Eventos de asistencia conservados"
+        },
+        "heading": "Datos registrados y propuesta",
+        "original": "Cálculo original",
+        "proposed": "Intervalo propuesto",
+        "reason": "Motivo indicado",
+        "starts": "Comienza"
+      },
+      "currentState": "Estado actual",
+      "error": {
+        "denied": { "description": "No puedes ver esta solicitud.", "title": "Acceso denegado" },
+        "missing": {
+          "description": "Esta solicitud no existe o ya no está disponible.",
+          "title": "Solicitud no encontrada"
+        },
+        "unavailable": {
+          "description": "WorkLedger no ha podido cargar esta solicitud. Tu registro no ha cambiado.",
+          "title": "Solicitud no disponible"
+        }
+      },
+      "event": "{{event}} a las {{time}}",
+      "history": {
+        "action": {
+          "acknowledge": "Confirmada",
+          "apply": "Aplicada",
+          "approve": "Aprobada",
+          "cancel": "Cancelada",
+          "reject": "Rechazada",
+          "reported": "Notificada",
+          "requestChanges": "Cambios solicitados",
+          "submitted": "Enviada",
+          "withdraw": "Retirada"
+        },
+        "actor": { "reviewer": "una persona revisora", "self": "ti", "system": "WorkLedger" },
+        "by": "Por {{actor}}",
+        "description": "Las acciones se muestran en el orden registrado, con su actor y el motivo cuando era obligatorio.",
+        "heading": "Historial de decisiones",
+        "reason": "Motivo: {{reason}}"
+      },
+      "loading": {
+        "description": "Cargando el estado actual, los detalles de la solicitud y el historial de decisiones.",
+        "message": "WorkLedger está cargando el estado actual y las pruebas.",
+        "title": "Cargando el registro de la solicitud"
+      },
+      "metric": {
+        "balance": "Saldo",
+        "break": "Pausa",
+        "credited": "Acreditado",
+        "expected": "Previsto",
+        "worked": "Trabajado"
+      },
+      "missingIdentifier": {
+        "description": "Falta el identificador de la solicitud. No se han cargado detalles del registro."
+      },
+      "state": {
+        "absence": {
+          "approved": "La cobertura aprobada se aplica según las versiones de horario y política conservadas.",
+          "cancelled": "Se han cancelado todos los segmentos cubiertos. La solicitud original permanece en el historial.",
+          "changesRequested": "Una persona revisora ha solicitado cambios. La cobertura solicitada aún no está aprobada.",
+          "complete": "Este flujo ha terminado y no añade crédito por ausencia.",
+          "pending": "La solicitud espera una decisión. Su cobertura calculada se muestra a continuación.",
+          "reported": "Este parte está vigente. La confirmación registra la revisión, pero no cambia su efecto."
+        },
+        "cancellation": {
+          "approved": "Se han cancelado los segmentos de ausencia cubiertos y la solicitud original permanece en el historial.",
+          "changesRequested": "Una persona revisora ha solicitado cambios. La ausencia original sigue vigente.",
+          "pending": "La cancelación espera una decisión. La ausencia original sigue vigente.",
+          "rejected": "La cancelación fue rechazada. La ausencia original sigue vigente.",
+          "withdrawn": "El flujo de cancelación terminó sin cambiar la ausencia original."
+        },
+        "correction": {
+          "applied": "Se ha aplicado la versión aprobada y se conservan los datos originales.",
+          "approved": "La corrección está aprobada y espera el paso de aplicación registrado.",
+          "changesRequested": "Una persona revisora ha solicitado cambios. El registro diario actual no ha cambiado.",
+          "complete": "Este flujo ha terminado. El registro diario actual no ha cambiado.",
+          "pending": "La propuesta está pendiente de revisión. El registro diario actual no ha cambiado."
+        }
+      },
+      "submitted": "Enviada el {{date}}",
+      "timeRange": "De {{start}} a {{end}}",
+      "pageTitle": "Detalles de la solicitud",
+      "title": { "cancellation": "Solicitud de cancelación", "correction": "Corrección de tiempo" },
+      "unknownTime": "hora desconocida"
+    },
+    "history": {
+      "dateRange": "Del {{start}} al {{end}}",
+      "description": "Revisa correcciones, solicitudes de ausencia y solicitudes de cancelación en un solo historial. Los detalles sensibles de ausencia solo aparecen al abrir tu registro.",
+      "empty": {
+        "action": "Crear una solicitud",
+        "description": "Borra los filtros para revisar otros registros o inicia una solicitud nueva.",
+        "title": "Ninguna solicitud coincide con estos filtros"
+      },
+      "error": {
+        "description": "Tus registros no han cambiado. Intenta cargar el historial de nuevo.",
+        "title": "El historial de solicitudes no está disponible"
+      },
+      "eyebrow": "Solicitudes",
+      "filter": {
+        "action": { "apply": "Aplicar filtros", "clear": "Borrar filtros" },
+        "description": "Limita tu historial de solicitudes por flujo o estado actual.",
+        "status": {
+          "all": "Todos los estados",
+          "completed": "Completadas",
+          "inProgress": "En curso",
+          "label": "Estado"
+        },
+        "title": "Filtrar el historial de solicitudes",
+        "workflow": {
+          "absence": "Solicitudes de ausencia",
+          "all": "Todos los flujos",
+          "cancellation": "Solicitudes de cancelación",
+          "correction": "Correcciones",
+          "label": "Flujo"
+        }
+      },
+      "kind": {
+        "absence": "Solicitud de ausencia",
+        "cancellation": "Solicitud de cancelación",
+        "correction": "Corrección de tiempo"
+      },
+      "loading": {
+        "description": "Se están cargando los registros de tus solicitudes.",
+        "title": "Cargando el historial de solicitudes"
+      },
+      "new": "Nueva solicitud",
+      "results": {
+        "count_one": "{{count}} registro",
+        "count_many": "{{count}} registros",
+        "count_other": "{{count}} registros",
+        "heading": "Historial de solicitudes",
+        "pagination": "Página {{current}} de {{pages}}. {{total}} registros en total.",
+        "refreshing": "Actualizando resultados."
+      },
+      "submitted": "Enviada el {{date}}",
+      "viewDetails": "Ver detalles de la solicitud"
+    },
+    "new": {
+      "description": "Elige el flujo que corresponda con lo ocurrido y revisa su efecto antes de enviarlo.",
+      "eyebrow": "Solicitudes",
+      "selection": {
+        "change": "Elegir otro flujo",
+        "description": "Cada flujo explica su efecto antes del envío.",
+        "heading": "¿Qué necesitas registrar?",
+        "selected": "Flujo seleccionado"
+      },
+      "workflow": {
+        "correction": {
+          "action": "Elegir corrección de tiempo",
+          "description": "Propón un intervalo de sustitución conservando los eventos de asistencia originales.",
+          "title": "Corrección de tiempo"
+        },
+        "sickness": {
+          "action": "Elegir enfermedad",
+          "description": "Registra la cobertura por enfermedad sin introducir detalles médicos.",
+          "title": "Enfermedad"
+        },
+        "vacation": {
+          "action": "Elegir vacaciones",
+          "description": "Reserva el derecho a vacaciones para días completos, días parciales o un intervalo exacto.",
+          "title": "Vacaciones"
+        }
+      },
+      "workflowTitle": {
+        "correction": "Corrección de tiempo",
+        "sickness": "Parte de enfermedad",
+        "vacation": "Solicitud de vacaciones"
+      }
+    }
+  },
+  "time": {
+    "balance": {
+      "eligibleProjection": "Proyección admisible",
+      "excluded": {
+        "description": "Revisa {{dates}} antes de confiar en el total proyectado.",
+        "title": "El saldo proyectado excluye registros incompletos"
+      },
+      "heading": "Saldo de horario flexible",
+      "help": "Las entradas contabilizadas son definitivas. Los registros completos admisibles que todavía no se han contabilizado permanecen separados.",
+      "posted": "Saldo contabilizado",
+      "projected": "Saldo proyectado"
+    },
+    "balancesDescription": "Tus saldos de horario flexible y permisos, con proyecciones y entradas de origen claramente identificadas.",
+    "balancesTitle": "Mis saldos",
+    "description": "Revisa los resúmenes semanales o mensuales y el saldo de horario flexible que explican.",
+    "entryType": {
+      "allocation": "Asignación",
+      "approvedDeduction": "Deducción aprobada",
+      "cancellationRestoration": "Restitución por cancelación",
+      "carryover": "Traspaso",
+      "dailyDelta": "Cambio diario del saldo",
+      "dailyRecalculationDelta": "Cambio por recálculo diario",
+      "expiry": "Caducidad",
+      "manualAdjustment": "Ajuste manual",
+      "manualAdministrativeAdjustment": "Ajuste administrativo manual",
+      "openingBalance": "Saldo inicial",
+      "pendingReservation": "Reserva pendiente",
+      "postLockAdjustment": "Ajuste posterior al bloqueo",
+      "reservationRelease": "Liberación de la reserva"
+    },
+    "error": {
+      "denied": {
+        "description": "Tu cuenta actual no tiene acceso al autoservicio de empleados.",
+        "title": "No puedes ver estos registros"
+      },
+      "unavailable": {
+        "description": "No se mostraron valores de tiempo, saldo ni registro contable. Comprueba la conexión e inténtalo de nuevo.",
+        "title": "Tus registros no están disponibles"
+      }
+    },
+    "eyebrow": "Registros de tiempo",
+    "filter": {
+      "date": "Fecha del periodo",
+      "description": "Elige una vista semanal o mensual y la fecha que quieres revisar.",
+      "month": "Mes",
+      "title": "Elegir periodo",
+      "view": "Vista",
+      "viewLabel": "Vista de registros de tiempo",
+      "week": "Semana"
+    },
+    "leave": {
+      "account": "Cuenta",
+      "available": "Disponible",
+      "availableAfter": "Disponible después",
+      "description": "Los minutos disponibles excluyen las reservas pendientes. El restante proyectado las incluye.",
+      "empty": {
+        "description": "Todavía no se ha contabilizado ninguna asignación de permisos.",
+        "title": "Sin cuentas de derecho a permisos"
+      },
+      "entry": "Entrada",
+      "heading": "Saldos de permisos",
+      "ledger": {
+        "description": "Cada entrada muestra su efecto exacto y los importes disponibles, reservados y proyectados resultantes.",
+        "empty": {
+          "description": "Todavía no existe ninguna entrada de derecho, reserva o ajuste.",
+          "title": "Sin entradas de origen de permisos"
+        },
+        "heading": "Entradas de origen de derechos a permisos",
+        "pagination": "Página {{current}} de {{total}} del registro de permisos"
+      },
+      "pendingReservation": "Reserva pendiente",
+      "projectedAfter": "Proyectado después",
+      "projectedRemaining": "Restante proyectado",
+      "reservedAfter": "Reservado después"
+    },
+    "ledger": {
+      "balanceAfter": "Saldo después: {{balance}}",
+      "description": "Cada entrada muestra su efecto y el saldo contabilizado resultante.",
+      "effective": "Efectivo el {{date}}",
+      "empty": {
+        "description": "No hay entradas definitivas del registro contable hasta este periodo.",
+        "title": "Sin entradas contabilizadas de horario flexible"
+      },
+      "heading": "Entradas contabilizadas",
+      "pagination": "Página {{current}} de {{total}} del registro de horario flexible"
+    },
+    "loading": {
+      "description": "Comprobando el periodo seleccionado, los saldos y las entradas de origen.",
+      "title": "Cargando tus registros"
+    },
+    "period": {
+      "month": "Mes seleccionado",
+      "range": "Del {{start}} al {{end}}",
+      "reviewMonthly": "Revisar periodo mensual",
+      "summary": {
+        "balance": "saldo de registros completos {{balance}}",
+        "incomplete_one": "{{count}} incompleto",
+        "incomplete_many": "{{count}} incompletos",
+        "incomplete_other": "{{count}} incompletos",
+        "recordedDays_one": "{{count}} día registrado",
+        "recordedDays_many": "{{count}} días registrados",
+        "recordedDays_other": "{{count}} días registrados"
+      },
+      "week": "Semana seleccionada"
+    },
+    "records": {
+      "attention": {
+        "incomplete": "Revisar registro incompleto",
+        "none": "No requiere atención",
+        "review_one": "{{count}} aviso · revisar detalles",
+        "review_many": "{{count}} avisos · revisar detalles",
+        "review_other": "{{count}} avisos · revisar detalles",
+        "warnings_one": "{{count}} aviso",
+        "warnings_many": "{{count}} avisos",
+        "warnings_other": "{{count}} avisos"
+      },
+      "caption": "Resúmenes de registros diarios del periodo seleccionado",
+      "column": {
+        "attention": "Atención",
+        "balance": "Saldo",
+        "credited": "Abonado",
+        "date": "Fecha",
+        "expected": "Previsto",
+        "status": "Estado"
+      },
+      "description": "Abre una fecha registrada para consultar el cálculo, las sesiones de trabajo, los eventos y las indicaciones de recuperación.",
+      "heading": "Registros diarios",
+      "scrollLabel": "Tabla de registros diarios",
+      "status": {
+        "complete": "Completo",
+        "incomplete": "Incompleto",
+        "noRecord": "Sin registro",
+        "provisional": "Provisional"
+      }
+    },
+    "title": "Mi tiempo"
+  }
+}

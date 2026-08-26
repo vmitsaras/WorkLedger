@@ -1,1 +1,1257 @@
-{}
+{
+  "absence": {
+    "action": { "cancel": "Abbrechen", "viewDetails": "Antragsdetails anzeigen" },
+    "coverage": {
+      "field": {
+        "endTime": "Endzeit",
+        "firstDay": "Erster Tag",
+        "lastDay": "Letzter Tag",
+        "localDate": "Lokales Datum",
+        "startTime": "Startzeit"
+      },
+      "help": "Erste und zweite Hälfte bezeichnen gleiche Teile Ihrer geplanten Verpflichtung, nicht Vormittag und Nachmittag. Wählen Sie für eine uhrzeitbezogene Abwesenheit ein genaues Intervall.",
+      "label": "Zeitraum",
+      "line": "{{date}} — {{coverage}}: {{duration}}{{note}}",
+      "name": {
+        "firstHalf": "Erste Hälfte der Sollarbeitszeit",
+        "fullDay": "Ganzer Tag",
+        "secondHalf": "Zweite Hälfte der Sollarbeitszeit"
+      },
+      "option": {
+        "exact": "Genaues lokales Zeitintervall",
+        "firstHalf": "Erste Hälfte der Sollarbeitszeit",
+        "fullDayRange": "Ganzer Tag oder Datumsbereich",
+        "secondHalf": "Zweite Hälfte der Sollarbeitszeit"
+      },
+      "validation": {
+        "endAfterStart": "Die Endzeit muss nach der Startzeit liegen.",
+        "endTime": "Wählen Sie eine Endzeit.",
+        "firstDay": "Wählen Sie den ersten Tag.",
+        "lastDay": "Wählen Sie den letzten Tag.",
+        "lastDayAfterFirst": "Der letzte Tag muss am oder nach dem ersten Tag liegen.",
+        "localDate": "Wählen Sie das lokale Datum.",
+        "startTime": "Wählen Sie eine Startzeit."
+      }
+    },
+    "sickness": {
+      "cancellation": {
+        "cannotCancel": "Diese Meldung kann nicht mehr storniert werden. Aktualisieren Sie die Seite und prüfen Sie den Status.",
+        "description": "Eine Stornierung entfernt Ihre Meldung erst nach der Genehmigung.",
+        "error": "WorkLedger konnte diese Stornierung nicht anfordern. Versuchen Sie es erneut.",
+        "locked": "Diese Meldung liegt in einem gesperrten Zeitraum und benötigt eine nachträgliche Anpassung.",
+        "pending": "Stornierung wird angefordert…",
+        "request": "Stornierung anfordern",
+        "requested": "Stornierung angefordert. Ihre Meldung bleibt wirksam, bis eine berechtigte Führungskraft oder die Personaladministration entscheidet."
+      },
+      "description": "Wählen Sie einen ganzen Tag, eine Verpflichtungshälfte oder ein genaues Zeitintervall. Geben Sie keine Diagnose, Symptome, Behandlung oder andere medizinische Details an.",
+      "error": {
+        "correct": "Korrigieren Sie die markierten Angaben und melden Sie die Krankheit erneut.",
+        "overlap": "Dieser Zeitraum überschneidet sich mit einem anderen Abwesenheitsantrag. Wählen Sie einen anderen Zeitraum.",
+        "retroactive": "Dieser Zeitraum liegt außerhalb des Meldefensters Ihrer Organisation.",
+        "unavailable": "WorkLedger konnte die Krankheit nicht melden. Versuchen Sie es erneut."
+      },
+      "eyebrow": "Anträge",
+      "form": {
+        "legend": "Krankheitszeitraum",
+        "notice": "Ihre Meldung wird sofort wirksam. Eine Führungskraft oder die Personaladministration kann sie bestätigen; die Bestätigung ändert ihre Wirkung nicht.",
+        "submit": "Krankheit melden",
+        "submitting": "Krankheit wird gemeldet…"
+      },
+      "success": {
+        "coverageLabel": "Gemeldeter Krankheitszeitraum",
+        "credited": "{{duration}} gutgeschrieben",
+        "description": "Ihre Krankmeldung ist wirksam und wartet auf Bestätigung.",
+        "holidayNote": " (Feiertag; keine Gutschrift erforderlich)",
+        "title": "Krankheit gemeldet"
+      },
+      "title": "Krankheit melden"
+    },
+    "vacation": {
+      "description": "Wählen Sie einen ganzen Tag, eine Verpflichtungshälfte oder ein genaues Zeitintervall. Wochenenden, Feiertage und Null-Stunden-Tage bleiben sichtbar, verbrauchen aber keinen Urlaubsanspruch.",
+      "error": {
+        "correct": "Korrigieren Sie die markierten Felder und reichen Sie Ihren Urlaubsantrag erneut ein.",
+        "overlap": "Dieser Zeitraum überschneidet sich mit einem anderen Abwesenheitsantrag. Wählen Sie einen anderen Zeitraum.",
+        "scheduleMissing": "WorkLedger kann diesen Antrag nicht berechnen, weil ein Arbeitsplan fehlt.",
+        "unavailable": "WorkLedger konnte Ihren Urlaubsantrag nicht einreichen. Versuchen Sie es erneut."
+      },
+      "eyebrow": "Anträge",
+      "form": {
+        "legend": "Urlaubszeitraum",
+        "notice": "Das Einreichen reserviert den berechneten Anspruch, während der Antrag auf Genehmigung wartet. Ihre tägliche Zeitberechnung ändert sich noch nicht.",
+        "submit": "Urlaubsantrag einreichen",
+        "submitting": "Antrag wird eingereicht…"
+      },
+      "success": {
+        "coverageLabel": "Urlaubszeitraum",
+        "holidayNote": " (Feiertag; kein Anspruch verbraucht)",
+        "summary_one": "Ihr Antrag umfasst {{count}} Segment und reserviert {{reserved}}. Ihr voraussichtlicher verbleibender Urlaubssaldo beträgt {{projected}}.",
+        "summary_other": "Ihr Antrag umfasst {{count}} Segmente und reserviert {{reserved}}. Ihr voraussichtlicher verbleibender Urlaubssaldo beträgt {{projected}}.",
+        "title": "Urlaubsantrag eingereicht",
+        "zeroHourNote": " (Null-Stunden-Tag; kein Anspruch verbraucht)"
+      },
+      "title": "Urlaub beantragen"
+    }
+  },
+  "calendar": {
+    "agenda": { "label": "Kalenderagenda für {{month}}" },
+    "description": "Prüfen Sie Ihre Feiertage und Abwesenheitszeiträume nach Monat.",
+    "detail": {
+      "absence": "{{type}}: {{coverage}} ({{status}})",
+      "holiday": "Feiertag: {{name}}"
+    },
+    "empty": {
+      "description": "In diesem Monat gibt es keine Feiertage oder persönlichen Abwesenheitszeiträume.",
+      "title": "In diesem Monat ist nichts geplant"
+    },
+    "entries_one": "{{count}} Kalendereintrag",
+    "entries_other": "{{count}} Kalendereinträge",
+    "error": {
+      "denied": {
+        "description": "Ihr aktuelles Konto hat keinen Zugriff auf den persönlichen Kalender.",
+        "title": "Sie können diesen Kalender nicht anzeigen"
+      },
+      "unavailable": {
+        "description": "Es wurden keine Feiertags- oder Abwesenheitsinformationen angezeigt. Versuchen Sie es erneut.",
+        "title": "Ihr Kalender ist nicht verfügbar"
+      }
+    },
+    "eyebrow": "Meine Arbeit",
+    "grid": {
+      "caption": "Persönliche Feiertage und Abwesenheitszeiträume für {{month}}",
+      "scrollHint": "Scrollen Sie horizontal, um alle sieben Tage zu prüfen.",
+      "scrollLabel": "Monatsraster des persönlichen Kalenders"
+    },
+    "loading": {
+      "description": "Feiertage und Ihre eigenen Abwesenheitszeiträume werden geprüft.",
+      "title": "Ihr Kalender wird geladen"
+    },
+    "navigation": {
+      "label": "Kalendermonat",
+      "next": "Nächster Monat",
+      "previous": "Vorheriger Monat"
+    },
+    "selectedMonth": "Ausgewählter Monat",
+    "title": "Kalender",
+    "view": { "agenda": "Agendaliste", "label": "Kalenderansicht", "month": "Monatsraster" }
+  },
+  "correction": {
+    "action": { "backToTime": "Zurück zu Meine Zeit", "cancel": "Abbrechen" },
+    "description": "Schlagen Sie für {{date}} ein Ersatzarbeitsintervall vor. Es wird geprüft, bevor es Ihren Datensatz beeinflussen kann.",
+    "error": {
+      "correct": "Korrigieren Sie die markierten Felder und reichen Sie den Antrag erneut ein.",
+      "interval": "Das vorgeschlagene Intervall konnte nicht akzeptiert werden.",
+      "notFound": "Dieser Tagesdatensatz ist für einen Korrekturantrag nicht mehr verfügbar.",
+      "unavailable": "WorkLedger konnte den Korrekturantrag nicht einreichen. Ihre erfassten Ereignisse wurden nicht geändert. Versuchen Sie es erneut."
+    },
+    "eyebrow": "Anträge",
+    "form": {
+      "field": {
+        "endOffset": "UTC-Abweichung am Ende (nur bei wiederholten lokalen Zeiten)",
+        "endTime": "Endzeit",
+        "reason": "Warum ist diese Korrektur erforderlich?",
+        "startOffset": "UTC-Abweichung am Start (nur bei wiederholten lokalen Zeiten)",
+        "startTime": "Startzeit"
+      },
+      "help": "Geben Sie die lokale Zeit im 24-Stunden-Format ein. Wenn an diesem Datum eine Sommerzeitstunde wiederholt wird, geben Sie die angezeigte UTC-Abweichung an.",
+      "legend": "Vorgeschlagenes Arbeitsintervall",
+      "reasonHelp": "Nennen Sie einen kurzen, sachlichen Grund (10–1.000 Zeichen). Geben Sie keine vertraulichen Gesundheitsinformationen an.",
+      "submit": "Korrekturantrag einreichen",
+      "submitting": "Antrag wird eingereicht…"
+    },
+    "loading": {
+      "description": "Der aktuelle Datensatz und das Korrekturformular werden vorbereitet.",
+      "heading": "Tagesdatensatz wird geladen…",
+      "title": "Tagesdatensatz wird geladen"
+    },
+    "missing": {
+      "description": "Öffnen Sie den Tagesdatensatz, den Sie korrigieren möchten, und wählen Sie dann Korrektur anfordern.",
+      "title": "Tagesdatensatz auswählen"
+    },
+    "original": {
+      "currentWorked": "Aktuelle Arbeitszeit: {{duration}}.",
+      "description": "Diese ursprünglichen Ereignisse bleiben zusammen mit Ihrer vorgeschlagenen Korrektur verfügbar.",
+      "empty": "An diesem Datum wurde kein Ereignis erfasst.",
+      "event": "{{event}} um {{time}}",
+      "heading": "Aktuell erfasste Fakten"
+    },
+    "success": {
+      "description": "Ihr vorgeschlagenes Intervall von {{duration}} für {{date}} wartet auf Prüfung. Ihre erfassten Ereignisse und die Berechnung wurden nicht geändert.",
+      "locked": "Da dieser Monat gesperrt ist, fügt eine Genehmigung eine Anpassung hinzu und erhält den genehmigten Monatsdatensatz.",
+      "ordinary": "Nach Genehmigung und Anwendung wird die entsperrte Tagesberechnung ersetzt.",
+      "title": "Korrekturantrag eingereicht"
+    },
+    "title": "Zeitkorrektur anfordern",
+    "unavailable": {
+      "denied": {
+        "description": "Sie haben keinen Zugriff auf diesen Tagesdatensatz.",
+        "title": "Zugriff verweigert"
+      },
+      "record": {
+        "description": "WorkLedger konnte den Tagesdatensatz für diesen Korrekturantrag nicht laden.",
+        "title": "Tagesdatensatz nicht verfügbar"
+      }
+    },
+    "validation": {
+      "endOffset": "Geben Sie eine UTC-Abweichung wie +01:00 ein.",
+      "endTime": "Geben Sie eine Endzeit im Format HH:MM ein.",
+      "reason": "Geben Sie mindestens 10 Zeichen zur Erklärung der Korrektur ein.",
+      "startOffset": "Geben Sie eine UTC-Abweichung wie +01:00 ein.",
+      "startTime": "Geben Sie eine Startzeit im Format HH:MM ein."
+    }
+  },
+  "monthly": {
+    "action": {
+      "approve": "Monat genehmigen",
+      "cancel": "Abbrechen",
+      "lock": "Monat sperren",
+      "locking": "Wird gesperrt…",
+      "permanentlyLock": "Monat dauerhaft sperren",
+      "preparePrint": "Druck wird vorbereitet…",
+      "print": "Monatsnachweis drucken",
+      "recording": "Wird gespeichert…",
+      "requestChanges": "Änderungen anfordern",
+      "retry": "Erneut versuchen",
+      "submit": "Monat einreichen",
+      "submitting": "Wird eingereicht…"
+    },
+    "adjustments": {
+      "absenceEffect": "Abwesenheitsgutschrift {{credit}}; Sollzeit {{expected}}",
+      "ariaLabel": "Abgleich des Saldos nach der Sperrung",
+      "caption": "Geordnete Korrekturen und Abwesenheitsstornierungen nach der Sperrung, die auf den genehmigten Monatsstand angewendet wurden",
+      "column": {
+        "balanceDelta": "Saldoänderung",
+        "date": "Datum",
+        "effect": "Auswirkung",
+        "link": "Verknüpfung",
+        "source": "Quelle",
+        "version": "Version"
+      },
+      "correctionEffect": "{{previous}} → {{proposed}} gearbeitet",
+      "description": "Der genehmigte Ausgangsstand oben bleibt unverändert. Diese Ansicht ergänzt die akzeptierten Korrekturen und Abwesenheitsstornierungen in ihrer Reihenfolge.",
+      "empty": "Es wurde keine Anpassung nach der Sperrung akzeptiert. Die aktuelle Ansicht entspricht dem genehmigten Ausgangsstand.",
+      "heading": "Aktuell angepasste Ansicht",
+      "link": {
+        "cancellation": "Stornierungsanpassung",
+        "correction": "Zeitkorrektur",
+        "reverses": "Kehrt Version {{version}} um",
+        "unknownVersion": "unbekannt",
+        "zeroCancellation": "Stornierungsnachweis ohne Saldoänderung",
+        "zeroCorrection": "Nachweis ohne Saldoänderung"
+      },
+      "metric": {
+        "adjustedClosing": "Angepasster Endsaldo",
+        "cumulativeDelta": "Kumulierte Änderung nach Sperrung",
+        "originalClosing": "Ursprünglicher Endsaldo",
+        "viewVersion": "Aktuelle Ansichtsversion"
+      },
+      "scrollHint": "Horizontal scrollen, um alle Anpassungsspalten zu prüfen.",
+      "scrollLabel": "Scrollbarer Verlauf der Anpassungen nach der Sperrung",
+      "source": { "absenceCancellation": "Abwesenheitsstornierung", "correction": "Zeitkorrektur" }
+    },
+    "approved": {
+      "action": {
+        "approve": "Genehmigt",
+        "lock": "Gesperrt",
+        "requestChanges": "Änderungen angefordert"
+      },
+      "authority": {
+        "hr": "Personalabteilung der Organisation",
+        "manager": "Aktuelle Führungskraft"
+      },
+      "description": "Dieser genehmigte Ausgangsstand bleibt verfügbar, wenn später Änderungen angefordert werden.",
+      "empty": "Für den aktuellen Prüfzyklus wurde noch kein Genehmigungsstand erstellt.",
+      "heading": "Genehmigter Nachweis",
+      "historyItem": "{{action}} · {{authority}} · {{date}} · Version {{version}}",
+      "historyLabel": "Verlauf der Monatsprüfung",
+      "metadata": "Genehmigungszyklus {{cycle}} · Workflow-Version {{workflowVersion}} · Schema {{schemaVersion}} · Engine {{engine}}",
+      "summary": "Genehmigt am {{approvedAt}}. Summen des gespeicherten Stands: Soll {{expected}}, angerechnet {{credited}}, Saldo {{balance}}, gebuchter Endsaldo {{closing}}."
+    },
+    "attention": {
+      "blockers_one": "{{count}} Blocker",
+      "blockers_other": "{{count}} Blocker",
+      "description": "Blocker verhindern die Einreichung. Warnungen lassen die berechneten Werte bestehen, müssen aber bei der Einreichung geprüft werden.",
+      "heading": "Prüfbedarf",
+      "noBlockers": {
+        "description": "Diese Prüfungsversion enthält kein Problem, das die Einreichung verhindert.",
+        "title": "Keine Blocker"
+      },
+      "noWarnings": "Diese Prüfungsversion enthält keine nicht blockierende Warnung.",
+      "reviewDaily": "{{date}} — Tagesnachweis prüfen",
+      "warnings_one": "{{count}} Warnung",
+      "warnings_other": "{{count}} Warnungen",
+      "wholePeriod": "Abgleich des gesamten Zeitraums"
+    },
+    "daily": {
+      "caption": "Monatliche Berechnung je Datum für {{month}}",
+      "column": {
+        "absenceCredit": "Abwesenheitsgutschrift",
+        "adjustment": "Anpassung",
+        "balance": "Saldo",
+        "break": "Pause",
+        "credited": "Angerechnet",
+        "date": "Datum",
+        "expected": "Soll",
+        "status": "Status",
+        "worked": "Gearbeitet"
+      },
+      "description": "Endgültige Beträge erscheinen nur für vollständige Tage. Ein Gedankenstrich bedeutet, dass der Tag noch nicht abgeschlossen ist.",
+      "heading": "Tagesprüfung",
+      "scrollHint": "Horizontal scrollen, um alle Spalten der Tagesberechnung zu prüfen.",
+      "scrollLabel": "Scrollbare monatliche Tagesprüfung",
+      "status": {
+        "complete": "Vollständig",
+        "incomplete": "Unvollständig",
+        "missing": "Tagesergebnis fehlt",
+        "provisional": "Vorläufig"
+      }
+    },
+    "error": {
+      "boundary": {
+        "denied": "Zugriff verweigert",
+        "missing": "Monatszeitraum nicht gefunden",
+        "unavailable": "Monatszeitraum nicht verfügbar"
+      },
+      "description": {
+        "denied": "Dieser Monatsnachweis liegt außerhalb Ihres aktuellen Prüfbereichs.",
+        "recovery": "Wählen Sie eine Wiederherstellungsaktion, um Ihre Monatsarbeit fortzusetzen."
+      },
+      "load": {
+        "denied": "Ihre aktuelle Rolle oder Ihr Zuständigkeitsbereich darf diesen Monatszeitraum nicht anzeigen.",
+        "missing": "Dieser Monatszeitraum ist nicht verfügbar.",
+        "unavailable": "Der Monatszeitraum konnte nicht geladen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+      },
+      "print": {
+        "denied": "Ihr Zuständigkeitsbereich hat sich geändert. Der Druckdialog wurde nicht geöffnet.",
+        "session": "Ihre Sitzung ist beendet. Der Druckdialog wurde nicht geöffnet.",
+        "unavailable": "Der Monatsnachweis konnte nicht aktualisiert werden. Der Druckdialog wurde nicht geöffnet."
+      },
+      "state": {
+        "denied": "Dieser Monatsnachweis liegt außerhalb Ihres Prüfbereichs",
+        "missing": "Dieser Monatsnachweis ist nicht verfügbar",
+        "unavailable": "Der Monatsnachweis konnte nicht geladen werden"
+      }
+    },
+    "frame": {
+      "description": "Prüfen Sie Status, Summen, Probleme und verfügbare Entscheidungen des Monats.",
+      "eyebrow": "Monatsnachweis",
+      "periodDescription": "{{employee}} · {{start}} bis {{end}} · {{timeZone}}",
+      "printHelp": "Der Ausdruck verwendet den neuesten Monatsstatus, die Summen, Tageswerte, den genehmigten Ausgangsstand und spätere Anpassungen. Private Abwesenheitsdetails und Entscheidungsgründe werden ausgelassen.",
+      "printStatusLabel": "Status des Monatsdrucks",
+      "title": "Monatszeitraum"
+    },
+    "loading": {
+      "description": "Aktueller Status, Summen, Probleme und verfügbare Aktionen werden vorbereitet.",
+      "title": "Monatszeitraum wird geladen"
+    },
+    "print": {
+      "adjustedHeading": "Aktuell angepasster Nachweis",
+      "adjustedTotals": "Genehmigter Endsaldo {{closing}} · kumulierte Änderung nach Sperrung {{delta}} · angepasster Endsaldo {{adjusted}}",
+      "adjustmentCaption": "Datensparsame Kette der Anpassungen nach der Sperrung",
+      "approvedMetadata": "Genehmigungszyklus {{cycle}} · genehmigt am {{date}}",
+      "approvedTotals": "Soll {{expected}} · angerechnet {{credited}} · Saldo {{balance}} · gebuchter Endsaldo {{closing}}",
+      "dailyCaption": "Datensparsamer täglicher Monatsnachweis für {{employee}}",
+      "dateRange": "{{employee}} · {{start}} bis {{end}} · {{timeZone}}",
+      "footer": "Dieser Ausdruck enthält den sichtbaren Monatsstatus, Summen, Tageswerte, den genehmigten Ausgangsstand und gegebenenfalls Saldoänderungen nach der Sperrung. Er enthält keine internen Kennungen, Quellfingerabdrücke, Krankheitsklassifizierung, Notizen, Entscheidungsgründe oder Kommentare von Prüfenden.",
+      "opened": "Der Druckdialog wurde mit dem neuesten Monatsnachweis geöffnet.",
+      "readiness": {
+        "notReady": "nicht bereit",
+        "ready": "bereit zur Einreichung",
+        "workflow": "Workflow-Nachweis"
+      },
+      "statusLine": "Status: {{status}} · {{readiness}}",
+      "title": "Monatsnachweis"
+    },
+    "readiness": {
+      "completeDates": "{{complete}} von {{covered}} abgedeckten Beschäftigungstagen haben vollständige Tagesberechnungen. Wenn sich ein Quelldatensatz ändert, prüfen Sie den aktualisierten Monat vor der nächsten Aktion.",
+      "explanation": {
+        "approved": "Dieser Zeitraum ist genehmigt und bleibt vor der separaten Sperraktion schreibgeschützt.",
+        "incomplete": "Beheben Sie alle aufgeführten Blocker und vervollständigen Sie jeden abgedeckten Tag vor der Einreichung.",
+        "inProgress": "Dieser Monat läuft noch. Die Bereitschaft kann erst nach dem Ende des Monats in der lokalen Organisationszeit endgültig werden.",
+        "locked": "Dieser Zeitraum ist gesperrt. Gewöhnliche Änderungen können den genehmigten Nachweis nicht verändern.",
+        "lockedAdjusted": "Dieser Zeitraum ist gesperrt und enthält akzeptierte Anpassungen nach der Sperrung. Der genehmigte Nachweis bleibt unverändert; die aktuellen Summen enthalten die geordnete Anpassungskette.",
+        "readOnly": "Dieser Zeitraum ist in seinem aktuellen Workflow-Status schreibgeschützt.",
+        "ready": "Jeder abgedeckte Tag ist vollständig, gebucht und abgeglichen; es gibt keinen Einreichungsblocker.",
+        "submitted": "Dieser Zeitraum wurde eingereicht und ist schreibgeschützt, während er auf eine Prüfentscheidung wartet."
+      },
+      "label": { "notReady": "Nicht bereit", "ready": "Bereit zur Einreichung" },
+      "reviewVersion": "Prüfungsversion {{version}}"
+    },
+    "reviewer": {
+      "availability": {
+        "approved": "Dieser Monat ist genehmigt. Nur aktuell berechtigte Prüfende, die nicht selbst betroffen sind, können Änderungen anfordern oder ihn sperren.",
+        "changesRequested": "Änderungen wurden angefordert. Die beschäftigte Person muss korrigieren und erneut einreichen, bevor eine weitere Genehmigung möglich ist.",
+        "locked": "Dieser Monat ist dauerhaft gesperrt. Später akzeptierte Änderungen werden als Anpassungen nach der Sperrung geführt.",
+        "open": "Prüfaktionen werden nach der Einreichung durch die beschäftigte Person verfügbar.",
+        "submitted": "Warten auf eine berechtigte aktuelle Führungskraft oder die Personalabteilung der Organisation."
+      },
+      "description": "Genehmigen Sie den Monat, wenn er bereit ist. Die Sperrung ist eine separate dauerhafte Aktion.",
+      "error": {
+        "denied": "Ihre aktuelle Rolle oder Ihr Zuständigkeitsbereich darf diese Prüfaktion nicht ausführen.",
+        "generic": "Die Prüfaktion konnte nicht gespeichert werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "noAction": "Keine Prüfaktion wurde gespeichert",
+        "notReady": "Die aktuellen Monatsquellen stimmen nicht überein. Beheben Sie die aktualisierten Blocker vor Genehmigung oder Sperrung.",
+        "self": "Sie können Ihren eigenen Monatszeitraum nicht prüfen oder sperren.",
+        "sourceChanged": "Die Monatsquellen haben sich geändert. Prüfen Sie den aktualisierten Zeitraum; es wurde keine Entscheidung gespeichert.",
+        "stateChanged": "Diese Prüfaktion ist im aktualisierten Workflow-Status nicht mehr verfügbar.",
+        "versionChanged": "Der Workflow wurde in einem anderen Tab oder Gerät geändert. Prüfen Sie den aktualisierten Status; es wurde keine Entscheidung gespeichert."
+      },
+      "heading": "Prüfentscheidung",
+      "lock": {
+        "description": "Durch die Sperrung wird Genehmigungszyklus {{cycle}} als dauerhafter Ausgangsstand erhalten. Es gibt keine reguläre Entsperrung; später akzeptierte Änderungen verwenden den Anpassungspfad nach der Sperrung. Brechen Sie ab, um den Monat genehmigt zu lassen.",
+        "title": "Diesen Monat dauerhaft sperren?"
+      },
+      "reason": {
+        "error": "Geben Sie einen Grund mit mindestens 10 Zeichen ein.",
+        "goTo": "Zum Entscheidungsgrund.",
+        "help": "Mindestens 10 Zeichen. Die beschäftigte Person kann diesen Grund in ihren Monatsdetails lesen; in Benachrichtigungen und im Genehmigungseingang wird er ausgelassen.",
+        "label": "Grund für die Änderungsanforderung"
+      },
+      "success": {
+        "approved": "Der Monatszeitraum wurde genehmigt. Der genehmigte Ausgangsstand kann nun separat gesperrt werden.",
+        "changesRequested": "Änderungen wurden angefordert. Die beschäftigte Person kann den Monat jetzt korrigieren und erneut einreichen.",
+        "locked": "Der Monatszeitraum wurde gesperrt. Sein genehmigter Nachweis ist dauerhaft; spätere Änderungen erfordern eine Anpassung.",
+        "title": "Monatsnachweis aktualisiert"
+      }
+    },
+    "submission": {
+      "acknowledgement_one": "Ich habe alle {{count}} Warnungen in dieser Monatsquellversion geprüft.",
+      "acknowledgement_other": "Ich habe alle {{count}} Warnungen in dieser Monatsquellversion geprüft.",
+      "availability": {
+        "approved": "Genehmigt; die Einreichung ist bereits abgeschlossen.",
+        "incomplete": "Die Einreichung ist nicht verfügbar, bis alle Blocker behoben und alle abgedeckten Tage vollständig sind.",
+        "locked": "Gesperrt; die Einreichung ist bereits abgeschlossen.",
+        "ownerOnly": "Nur die beschäftigte Person, der dieser Monatszeitraum gehört, kann ihn einreichen.",
+        "submitted": "Zur Prüfung eingereicht."
+      },
+      "description": "Die Einreichung sperrt reguläre Änderungen, bis eine berechtigte prüfende Person Änderungen anfordert.",
+      "enableHint": "Prüfen und bestätigen Sie die aktuellen Warnungen, um die Einreichung zu aktivieren.",
+      "error": {
+        "alreadySubmitted": "Dieser Zeitraum wurde bereits eingereicht.",
+        "denied": "Ihr aktuelles Konto kann diesen Monatszeitraum nicht einreichen.",
+        "generic": "Der Monatszeitraum konnte nicht eingereicht werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "notReady": "Der aktualisierte Zeitraum ist nicht bereit. Beheben Sie die aktuellen Blocker und versuchen Sie es erneut.",
+        "stateChanged": "Die Einreichung ist im aktuellen Workflow-Status nicht mehr verfügbar.",
+        "title": "Der Monat wurde nicht eingereicht",
+        "versionChanged": "Der Workflow hat sich während Ihrer Prüfung geändert. Prüfen Sie den aktualisierten Zeitraum und versuchen Sie es erneut.",
+        "warningsChanged": "Die geprüfte Quelle hat sich geändert. Prüfen Sie die aktualisierten Warnungen und bestätigen Sie die aktuelle Version, bevor Sie es erneut versuchen."
+      },
+      "heading": "Einreichung",
+      "noAcknowledgement": "Für diese Quellversion ist keine Warnungsbestätigung erforderlich.",
+      "success": "Der Monatszeitraum wurde zur Prüfung eingereicht.",
+      "successTitle": "Monat eingereicht"
+    },
+    "totals": {
+      "ariaLabel": "Berechnete Monatssummen",
+      "description": "Unvollständige und fehlende Tage sind ausgeschlossen. Gebuchte Kontosalden bleiben separat gekennzeichnet.",
+      "heading": "Summen vollständiger Tage",
+      "metric": {
+        "calculatedBalance": "Berechneter Saldo",
+        "postedClosing": "Gebuchter Endsaldo",
+        "postedOpening": "Gebuchter Anfangssaldo",
+        "postedPeriodDelta": "Gebuchte Periodenänderung"
+      },
+      "postedBalances": "Gebuchter Anfangssaldo {{opening}}; gebuchter Endsaldo {{closing}}."
+    }
+  },
+  "notifications": {
+    "actionStatus": "Status der Benachrichtigungsaktion",
+    "card": {
+      "dismiss": "Benachrichtigung ausblenden",
+      "dismissed": "Ausgeblendet",
+      "dismissing": "Wird ausgeblendet…",
+      "emailDelivery": "E-Mail-Zustellung",
+      "openMonthlyPeriod": "Monatszeitraum öffnen",
+      "openRequests": "Anträge öffnen",
+      "recorded": "Erfasst"
+    },
+    "delivery": {
+      "delivered": "Zugestellt",
+      "failed": "Zustellung fehlgeschlagen; der Eintrag in der Anwendung bleibt erhalten",
+      "notConfigured": "E-Mail nicht konfiguriert; der Eintrag ist in der Anwendung verfügbar",
+      "pending": "E-Mail-Versand ausstehend; der Eintrag ist in der Anwendung verfügbar"
+    },
+    "dismiss": {
+      "error": "Die Benachrichtigung konnte nicht ausgeblendet werden. Versuchen Sie es erneut.",
+      "errorTitle": "Benachrichtigung nicht ausgeblendet",
+      "success": "Benachrichtigung ausgeblendet. Sie bleibt im Verlauf erhalten."
+    },
+    "empty": {
+      "description": "Kontovorgänge erscheinen hier nach einer Antrags- oder Monatsentscheidung.",
+      "title": "Kein Benachrichtigungsverlauf"
+    },
+    "error": {
+      "description": "Es wurden keine Benachrichtigungen angezeigt. Laden Sie den Verlauf erneut.",
+      "title": "Benachrichtigungsverlauf nicht verfügbar"
+    },
+    "history": {
+      "current_one": "Der Verlauf ist aktuell und enthält {{count}} Benachrichtigung.",
+      "current_other": "Der Verlauf ist aktuell und enthält {{count}} Benachrichtigungen.",
+      "heading": "Ergebnisverlauf",
+      "listLabel": "Allgemeiner Benachrichtigungsverlauf",
+      "refreshing": "Verlauf wird aktualisiert…",
+      "status": "Status des Benachrichtigungsverlaufs",
+      "total_one": "{{count}} Benachrichtigung.",
+      "total_other": "{{count}} Benachrichtigungen."
+    },
+    "loading": {
+      "description": "Ihre Kontoergebnisse werden geprüft.",
+      "title": "Benachrichtigungsverlauf wird geladen"
+    },
+    "page": {
+      "description": "Prüfen Sie Kontoergebnisse und öffnen Sie bei Bedarf den zugehörigen Datensatz.",
+      "eyebrow": "Konto"
+    },
+    "pagination": "Benachrichtigungsverlauf: Seite {{current}} von {{total}}",
+    "presentation": {
+      "acknowledged": {
+        "body": "Ein von Ihnen eingereichter Eintrag wurde bestätigt.",
+        "title": "Eintrag bestätigt"
+      },
+      "approved": {
+        "body": "Ein von Ihnen eingereichter Eintrag wurde genehmigt.",
+        "title": "Eintrag genehmigt"
+      },
+      "changesRequested": {
+        "body": "Ein von Ihnen eingereichter Eintrag muss geändert werden.",
+        "title": "Änderungen angefordert"
+      },
+      "rejected": {
+        "body": "Ein von Ihnen eingereichter Eintrag wurde nicht genehmigt.",
+        "title": "Eintrag nicht genehmigt"
+      }
+    },
+    "status": { "active": "Aktiv", "dismissed": "Ausgeblendet" }
+  },
+  "today": {
+    "attendance": {
+      "action": {
+        "clockIn": "Einstempeln",
+        "clockOut": "Ausstempeln",
+        "resume": "Arbeit fortsetzen",
+        "startBreak": "Pause beginnen"
+      },
+      "actionsLabel": "Aktionen der Zeiterfassung",
+      "confirm": {
+        "cancel": "Abbrechen",
+        "description": "WorkLedger beendet Ihre aktive Pause und stempelt Sie zum selben erfassten Zeitpunkt aus. Mit Abbrechen bleibt Ihre Zeiterfassung unverändert.",
+        "submit": "Pause beenden und ausstempeln",
+        "title": "Während der Pause ausstempeln?"
+      },
+      "currentBreak": "Aktuelle Pause",
+      "currentStatus": "Aktueller Status",
+      "currentWorkInterval": "Aktuelles Arbeitsintervall",
+      "error": {
+        "breakConfirmation": "Es wurde kein Ausstempeln erfasst. Bestätigen Sie, dass die aktive Pause vor dem Ausstempeln beendet werden soll.",
+        "conflict": "{{outcome}} wurde nicht erfasst, da diese Anfrage nicht sicher zugeordnet werden konnte. Prüfen Sie den aktuellen Status, bevor Sie es erneut versuchen.",
+        "invalidState": "{{outcome}} wurde nicht erfasst, da diese Aktion für den aktuellen Zeiterfassungsstatus nicht zulässig ist.",
+        "rateLimited": "{{outcome}} wurde nicht erfasst, da Aktionen der Zeiterfassung vorübergehend begrenzt sind. Prüfen Sie den aktuellen Status und versuchen Sie es später erneut.",
+        "stateChanged": "{{outcome}} wurde nicht erfasst. Die Zeiterfassung wurde in einem anderen Tab oder auf einem anderen Gerät geändert. Aktueller Status: {{state}}.",
+        "uncertain": "WorkLedger konnte nicht bestätigen, ob {{outcome}} erfasst wurde. Prüfen Sie den aktualisierten Status, bevor Sie es erneut versuchen."
+      },
+      "feedback": {
+        "errorTitle": "Zeiterfassung nicht geändert",
+        "infoTitle": "Zeiterfassung aktualisiert",
+        "successTitle": "Zeiterfassung geändert"
+      },
+      "noActiveInterval": "Kein aktives Arbeitsintervall.",
+      "outcome": {
+        "clockIn": "der Arbeitsbeginn",
+        "clockOut": "das Arbeitsende",
+        "resume": "die Fortsetzung der Arbeit",
+        "startBreak": "der Pausenbeginn"
+      },
+      "pending": {
+        "clockIn": "Arbeitsbeginn wird erfasst…",
+        "clockOut": "Arbeitsende wird erfasst…",
+        "resume": "Arbeit wird fortgesetzt…",
+        "startBreak": "Pause wird begonnen…"
+      },
+      "recovery": {
+        "dependency": {
+          "description": "WorkLedger konnte Ihre aktuelle Zeiterfassung nicht aktualisieren. Die Aktionen bleiben deaktiviert.",
+          "title": "Zeiterfassung ist nicht verfügbar"
+        },
+        "offline": {
+          "description": "Aktionen der Zeiterfassung sind deaktiviert und werden nicht vorgemerkt. Stellen Sie die Verbindung wieder her, um den aktuellen Status zu laden.",
+          "title": "Sie sind offline"
+        },
+        "reconnecting": {
+          "description": "Die aktuelle Zeiterfassung wird aktualisiert, bevor Aktionen wieder aktiviert werden…",
+          "title": "Verbindung wiederhergestellt"
+        }
+      },
+      "remoteChanged": "Die Zeiterfassung wurde in einem anderen Tab oder auf einem anderen Gerät geändert. Aktueller Status: {{state}}.",
+      "since": "Seit",
+      "state": {
+        "offWork": "Nicht bei der Arbeit",
+        "onBreak": "In Pause",
+        "working": "Bei der Arbeit"
+      },
+      "success": {
+        "clockIn": "Um {{time}} eingestempelt.",
+        "clockOut": "Um {{time}} ausgestempelt.",
+        "resume": "Arbeit um {{time}} fortgesetzt.",
+        "startBreak": "Pause um {{time}} begonnen."
+      }
+    },
+    "attention": {
+      "affectedDate": "Betroffener Tag",
+      "blockingIssues": "Blockierende Probleme",
+      "blocksSubmission": "Blockiert die Monatseinreichung",
+      "descriptor": {
+        "absenceApprovalPending": {
+          "next": "Der Antrag bleibt ausstehend, bis eine berechtigte prüfende Person eine Entscheidung erfasst.",
+          "reason": "Eine genehmigungspflichtige Abwesenheit kann diese Berechnung noch ändern.",
+          "title": "Abwesenheitsentscheidung ausstehend"
+        },
+        "attendanceIncomplete": { "title": "Zeiterfassung unvollständig" },
+        "attendanceInvalidEventOrder": {
+          "title": "Reihenfolge der Zeiterfassungsereignisse prüfen"
+        },
+        "attendanceInvalidEventPrecision": {
+          "title": "Zeitpunkt des Zeiterfassungsereignisses prüfen"
+        },
+        "attendanceOverlap": { "title": "Zeiterfassungsintervalle überschneiden sich" },
+        "calculation": {
+          "next": "Die Berechnungserläuterung zeigt, warum dieser Datensatz geprüft werden muss.",
+          "reason": "An einem Tag ohne erwartete Arbeitszeit wurde Arbeit erfasst."
+        },
+        "correctionUnresolved": {
+          "next": "Auf der Antragsseite sehen Sie, ob eine Prüfung oder Änderungen durch die beschäftigte Person folgen; ursprüngliche Ereignisse bleiben unverändert, bis eine genehmigte Korrektur angewendet wird.",
+          "reason": "Eine eingereichte Korrektur kann diese Berechnung noch ändern.",
+          "title": "Korrekturantrag muss geprüft werden"
+        },
+        "flexNegative": {
+          "next": "Die Warnung verschwindet erst, wenn gebuchte Kontoeinträge den Saldo wieder innerhalb des festgelegten Schwellenwerts bringen.",
+          "reason": "Der gebuchte Gleitzeitsaldo liegt unter dem festgelegten Warnschwellenwert.",
+          "title": "Negativer Gleitzeit-Schwellenwert erreicht"
+        },
+        "flexPositive": {
+          "next": "Die Warnung verschwindet erst, wenn gebuchte Kontoeinträge den Saldo wieder innerhalb des festgelegten Schwellenwerts bringen.",
+          "reason": "Der gebuchte Gleitzeitsaldo liegt über dem festgelegten Warnschwellenwert.",
+          "title": "Positiver Gleitzeit-Schwellenwert erreicht"
+        },
+        "ledgerSourceMismatch": { "title": "Kontenabgleich erforderlich" },
+        "policyAssignmentOverlap": { "title": "Überschneidung bei Zeitregelzuweisungen" },
+        "policyConfigurationInvalid": { "title": "Zeitregelkonfiguration muss geprüft werden" },
+        "policyNotAssigned": { "title": "Zeitregel fehlt" },
+        "recovery": {
+          "next": "Wählen Sie den betroffenen Tag und reichen Sie eine Korrektur ein. Ursprüngliche Ereignisse bleiben während der Prüfung unverändert.",
+          "reason": "Diese Zeiterfassung muss korrigiert werden, bevor sie als verlässlich gelten kann."
+        },
+        "scheduleAssignmentOverlap": { "title": "Überschneidung bei Arbeitsplan-Zuweisungen" },
+        "scheduleNotAssigned": { "title": "Arbeitsplan fehlt" },
+        "administrator": {
+          "next": "Der Datensatz bleibt blockiert, bis eine berechtigte Administration das Konfigurationsproblem behebt.",
+          "reason": "Mit der zugewiesenen Konfiguration ist keine verlässliche Berechnung möglich."
+        },
+        "workDuringAbsence": { "title": "Arbeit überschneidet sich mit angerechneter Abwesenheit" },
+        "workOnHoliday": { "title": "Arbeit an einem Feiertag erfasst" },
+        "workOnZeroExpectedDay": { "title": "Arbeit an einem Tag ohne Sollzeit erfasst" }
+      },
+      "doesNotBlockSubmission": "Blockiert die Einreichung nicht",
+      "newUrgent": "Neues dringendes Problem: {{titles}}.",
+      "next": "Wie geht es weiter?",
+      "postedBalanceThrough": "Gebuchter Saldo bis",
+      "recovery": {
+        "fixEntry": "Eintrag korrigieren",
+        "reviewBalanceHistory": "Saldoverlauf anzeigen",
+        "reviewCalculation": "Berechnung prüfen",
+        "reviewRecord": "Betroffenen Tag prüfen",
+        "reviewRequest": "Antrag prüfen",
+        "reviewTimeline": "Zeitverlauf prüfen"
+      },
+      "title": "Handlungsbedarf",
+      "warnings": "Warnungen"
+    },
+    "calculation": {
+      "caption": "Quellwerte und serverseitig berechnete Ergebnisse für heute",
+      "detailsDescription": "Nachweise für die heutige Schätzung anzeigen.",
+      "detailsTitle": "Berechnungsdetails",
+      "footnote": "Pausen sind bereits von der erfassten Arbeitszeit abgezogen. Korrekturen erhalten die ursprünglichen Stempelereignisse.",
+      "group": {
+        "credited": "Angerechnete Zeit",
+        "expected": "Sollzeit",
+        "result": "Heutiges Ergebnis"
+      },
+      "heading": "So wird der heutige Tag berechnet",
+      "row": {
+        "absenceCredit": "Abwesenheitsgutschrift",
+        "absenceReduction": "Abwesenheitsbedingte Reduzierung",
+        "approvedCorrections": "Genehmigte Korrekturen",
+        "breaksExcluded": "Bereits abgezogene Pausen",
+        "creditedToday": "Heute angerechnet",
+        "expectedToday": "Heutige Sollzeit",
+        "holidayReduction": "Feiertagsbedingte Reduzierung",
+        "otherAdjustments": "Weitere genehmigte Anpassungen",
+        "provisionalDifference": "Vorläufige Differenz",
+        "recordedWork": "Erfasste Arbeit",
+        "scheduledTime": "Planmäßige Zeit"
+      },
+      "source": "Quelle",
+      "statusIncomplete": "Unvollständig. Beheben Sie alle blockierenden Probleme, bevor Sie sich auf dieses Ergebnis verlassen.",
+      "statusProvisional": "Vorläufig, nicht gebucht und noch veränderlich.",
+      "time": "Zeit",
+      "zeroExpected": {
+        "generic": "Der heutige Arbeitsplan und die Reduzierungen ergeben eine Sollzeit von null.",
+        "heading": "Warum die Sollzeit null ist",
+        "holiday": "{{holidayName}} reduziert die heutige planmäßige Sollzeit auf null.",
+        "workCredit": "Erfasste Arbeit wird separat angerechnet und nicht als abrechnungsrelevante Mehrarbeit bezeichnet."
+      }
+    },
+    "overview": {
+      "ariaLabel": "Zusammenfassung der heutigen Zeiterfassung",
+      "breaks": "Pausen",
+      "estimatedFinish": "Geschätztes Arbeitsende",
+      "estimatedFinishAssumption": "Gilt unter der Annahme, dass keine weitere Pause folgt.",
+      "finish": {
+        "calculationIncomplete": "Berechnung unvollständig",
+        "calculationUnavailable": "Berechnung nicht verfügbar",
+        "expectationMet": "Sollzeit erreicht",
+        "notAvailable": "Nicht verfügbar",
+        "resumeToEstimate": "Arbeit fortsetzen, um zu schätzen",
+        "startToEstimate": "Arbeit beginnen, um zu schätzen"
+      },
+      "flexibleTime": "Gleitzeit",
+      "holiday": "Feiertag: {{holidayName}}",
+      "noPostedEntries": "Vor heute wurden keine Einträge gebucht.",
+      "postedBalance": "Gebuchter Saldo",
+      "postedThrough": "Gebucht bis {{date}}.",
+      "progressAriaLabel": "Heute angerechneter Fortschritt",
+      "progressCredited": "{{credited}} angerechnet",
+      "progressDescription": "{{credited}} von {{expected}} Sollzeit angerechnet.",
+      "progressUnavailable": "Fortschritt nicht verfügbar",
+      "progressUnavailableDescription": "Der heute angerechnete Fortschritt ist nicht verfügbar. Beheben Sie die unten stehenden blockierenden Probleme, bevor Sie sich auf die heutige Berechnung verlassen.",
+      "progressWithoutExpectation": "{{credited}} angerechnet, obwohl heute keine Sollzeit geplant ist.",
+      "provisionalDifference": "Vorläufige Differenz",
+      "remainingToday": "Heute verbleibend",
+      "statusIncomplete": "Berechnung unvollständig",
+      "statusProvisional": "Heute vorläufig",
+      "todayExcludedFromPosted": "Der heutige Tag ist noch vorläufig und in diesem Saldo nicht enthalten.",
+      "title": "Heutiger Fortschritt",
+      "workedToday": "Heute gearbeitet"
+    },
+    "page": {
+      "description": "Erfassen Sie Ihren Arbeitstag und prüfen Sie die heutige Zeit.",
+      "estimateUpdated": "Schätzung aktualisiert um {{time}}",
+      "eyebrow": "Zeiterfassung",
+      "loadError": {
+        "description": "Ihre Zeiterfassungsdaten konnten nicht geladen werden. Es wurde keine Stempelaktion übermittelt.",
+        "message": "Versuchen Sie es erneut. Wenn das Problem bestehen bleibt, geben Sie der Administration die Anfragereferenz weiter.",
+        "title": "Heute ist vorübergehend nicht verfügbar"
+      },
+      "loading": {
+        "description": "Ihr aktueller Zeiterfassungsstatus und die Berechnung werden geladen…",
+        "message": "Aktueller Status, zulässige Aktionen und Berechnung werden vorbereitet.",
+        "title": "Heutige Zeiterfassung wird geladen"
+      },
+      "offline": {
+        "description": "Stellen Sie die Verbindung wieder her, um Ihren aktuellen Zeiterfassungsstatus zu laden. Offline können keine Stempelaktionen gesendet oder vorgemerkt werden.",
+        "message": "WorkLedger aktualisiert Ihren Status nach Wiederherstellung der Verbindung, bevor eine Zeiterfassungsaktion aktiviert wird."
+      },
+      "permission": {
+        "description": "Ihr aktuelles Konto darf die Zeiterfassung für Beschäftigte nicht verwenden. Es sind keine Zeiterfassungsdaten oder Aktionen verfügbar."
+      },
+      "requestReference": "Anfragereferenz: {{requestId}}",
+      "title": "Heute",
+      "updating": "Wird aktualisiert…"
+    },
+    "timeline": {
+      "approvedInterpretation": "Genehmigte Auslegung",
+      "correction": "Die Arbeitszeit wurde von {{before}} auf {{after}} geändert ({{difference}}).",
+      "description": {
+        "empty": "{{date}} in {{timeZone}}. Es sind keine ursprünglichen Zeiterfassungsereignisse erfasst. Ereignisse mit derselben Uhrzeit behalten ihre erfasste Reihenfolge.",
+        "events_one": "{{date}} in {{timeZone}}. {{count}} ursprüngliches Ereignis in erfasster Reihenfolge. Ereignisse mit derselben Uhrzeit behalten ihre erfasste Reihenfolge.",
+        "events_other": "{{date}} in {{timeZone}}. {{count}} ursprüngliche Ereignisse in erfasster Reihenfolge. Ereignisse mit derselben Uhrzeit behalten ihre erfasste Reihenfolge."
+      },
+      "empty": "Heute wurden keine Zeiterfassungsereignisse erfasst.",
+      "event": {
+        "breakEnd": {
+          "description": "Die Arbeitszeit wurde fortgesetzt.",
+          "label": "Pause beendet"
+        },
+        "breakStart": {
+          "description": "Die Arbeitszeit wurde unterbrochen.",
+          "label": "Pause begonnen"
+        },
+        "clockIn": {
+          "description": "Die Arbeitssitzung wurde begonnen.",
+          "label": "Eingestempelt"
+        },
+        "clockOut": { "description": "Die Arbeitssitzung wurde beendet.", "label": "Ausgestempelt" }
+      },
+      "incomplete": {
+        "description": "Der Zeitverlauf ist zu lang, um vollständig angezeigt zu werden. Die Berechnung ist als unvollständig markiert.",
+        "title": "Zeitverlauf unvollständig"
+      },
+      "originalEvents": "Ursprünglich erfasste Ereignisse",
+      "title": "Heutiger Zeitverlauf"
+    }
+  },
+  "records": {
+    "pageTitle": "Tagesdatensatz",
+    "attention": {
+      "action": { "reviewPeriod": "Betroffenen Zeitraum prüfen" },
+      "blockers": "Blockierende Berechnungsprobleme",
+      "description": {
+        "absenceApprovalPending": "Eine genehmigungspflichtige Abwesenheit kann die Berechnung dieses Tages noch ändern.",
+        "attendanceIncomplete": "Mindestens ein Zeiterfassungsintervall, das diesen Tag berührt, ist nicht abgeschlossen.",
+        "attendanceInvalidEventOrder": "Die erfassten Zeiterfassungsereignisse lassen sich nicht in einer gültigen Reihenfolge rekonstruieren.",
+        "attendanceInvalidEventPrecision": "Ein erfasstes Zeiterfassungsereignis liegt nicht auf einer vollen Minute.",
+        "attendanceOverlap": "Die abgeleiteten Zeiterfassungsintervalle überschneiden sich und ergeben keine verlässliche Berechnung.",
+        "correctionUnresolved": "Eine eingereichte Korrektur kann die Berechnung dieses Tages noch ändern.",
+        "flexNegativeDaily": "Der Tagessaldo liegt unter dem festgelegten Gleitzeit-Warnschwellenwert.",
+        "flexNegativePosted": "Der gebuchte Gleitzeitsaldo liegt unter dem festgelegten Warnschwellenwert.",
+        "flexPositiveDaily": "Der Tagessaldo liegt über dem festgelegten Gleitzeit-Warnschwellenwert.",
+        "flexPositivePosted": "Der gebuchte Gleitzeitsaldo liegt über dem festgelegten Warnschwellenwert.",
+        "ledgerSourceMismatch": "Die Berechnungsquelle stimmt nicht mit dem gebuchten Kontennachweis überein.",
+        "policyAssignmentOverlap": "Für diesen Tag gilt mehr als eine Zeitregel.",
+        "policyConfigurationInvalid": "Mit der zugewiesenen Zeitregel ist keine verlässliche Berechnung möglich.",
+        "policyNotAssigned": "Für diesen Tag gilt keine Zeitregel.",
+        "scheduleAssignmentOverlap": "Für diesen Tag gilt mehr als ein Arbeitsplan.",
+        "scheduleNotAssigned": "Für diesen Tag gilt kein Arbeitsplan.",
+        "workDuringAbsence": "Erfasste Arbeit überschneidet sich mit angerechneter Abwesenheitszeit. Hier wird keine Abwesenheitsart angezeigt.",
+        "workOnHoliday": "An einem Feiertag wurde Arbeit erfasst und separat angerechnet.",
+        "workOnZeroExpectedDay": "An einem Tag ohne Sollzeit wurde Arbeit erfasst."
+      }
+    },
+    "backToTime": "Zurück zu Meine Zeit",
+    "calculation": {
+      "absenceCredit": "Abwesenheitsgutschrift",
+      "balance": "Saldo",
+      "breakTime": "Pausenzeit",
+      "creditedTime": "Angerechnete Zeit",
+      "expectedTime": "Sollzeit",
+      "heading": "Berechnung",
+      "unavailable": {
+        "description": "Die Zeiterfassungsereignisse dieses Datensatzes können nicht rekonstruiert werden. Daher wird kein berechneter Gesamtwert angezeigt. Prüfen Sie die Ereignisse unten und beantragen Sie bei Bedarf eine Korrektur.",
+        "title": "Berechnung nicht verfügbar"
+      },
+      "workedTime": "Arbeitszeit"
+    },
+    "description": "Prüfen Sie die Berechnung, Arbeitssitzungen, Probleme und den erfassten Ereignisverlauf des Tages.",
+    "error": {
+      "denied": {
+        "description": "Sie haben keinen Zugriff auf diesen Tagesdatensatz.",
+        "message": "Ihr aktuelles Konto darf diesen Datensatz nicht anzeigen."
+      },
+      "notFound": {
+        "description": "Dieser Tagesdatensatz ist nicht verfügbar.",
+        "message": "Dieser Datensatz ist im aktuellen Zugriffsbereich möglicherweise nicht mehr verfügbar.",
+        "title": "Datensatz nicht gefunden"
+      },
+      "unavailable": {
+        "description": "WorkLedger konnte diesen Tagesdatensatz nicht laden.",
+        "message": "Es wurden keine Berechnung oder Zeiterfassungshistorie angezeigt. Versuchen Sie es erneut.",
+        "title": "Tagesdatensatz nicht verfügbar"
+      }
+    },
+    "event": {
+      "breakEnd": "Pause beendet",
+      "breakStart": "Pause begonnen",
+      "clockIn": "Eingestempelt",
+      "clockOut": "Ausgestempelt"
+    },
+    "events": {
+      "empty": {
+        "description": "An diesem lokalen Tag wurde kein Zeiterfassungsereignis erfasst.",
+        "title": "Keine Zeiterfassungsereignisse"
+      },
+      "heading": "Erfasste Ereignisse",
+      "note": "Die Uhrzeiten enthalten den UTC-Versatz, damit wiederholte lokale Zeiten unterscheidbar bleiben.",
+      "recordedOrder": "Erfasste Reihenfolge {{sequence}}"
+    },
+    "eyebrow": "Zeitdatensätze",
+    "incomplete": {
+      "description": "Prüfen Sie die Hinweise und erfassten Ereignisse, bevor Sie sich auf den Saldo verlassen.",
+      "title": "Dieser Datensatz ist unvollständig"
+    },
+    "loading": {
+      "description": "Berechnung und Quellereignisse werden geprüft.",
+      "title": "Tagesdatensatz wird geladen"
+    },
+    "requestCorrection": "Korrektur beantragen",
+    "sessions": {
+      "breakIntervals": "Pausenintervalle",
+      "continuesNext": "Wird am nächsten lokalen Tag fortgesetzt.",
+      "continuesPrevious": "Wird vom vorherigen lokalen Tag fortgesetzt.",
+      "empty": {
+        "description": "In diesen lokalen Tag fällt kein abgeschlossenes Arbeits- oder Pausenintervall.",
+        "title": "Keine abgeschlossenen Intervalle"
+      },
+      "heading": "Arbeitssitzungen und Pausen",
+      "none": "Keine",
+      "note": "Intervalle über Mitternacht werden an der lokalen Datumsgrenze der Organisation geteilt. Dauern verwenden die erfassten Zeitpunkte einschließlich Zeitumstellungen.",
+      "range": "{{start}} bis {{end}} · {{duration}}",
+      "session": "Sitzung {{number}}",
+      "workIntervals": "Arbeitsintervalle"
+    },
+    "state": {
+      "complete": "Vollständiger Datensatz",
+      "completeDescription": "Die Berechnung verwendet erfasste Ereignisse und exakte verstrichene Intervalle.",
+      "current": "Aktueller Zustand",
+      "needsReview": "Prüfung erforderlich",
+      "provisionalDescription": "Diese Berechnung ist kein endgültig gebuchtes Ergebnis."
+    },
+    "timeZoneDescription": "Tagesdatensatz der Zeiterfassung in {{timeZone}}."
+  },
+  "requests": {
+    "detail": {
+      "absence": {
+        "cancellationLink": "{{status}}er Stornierungsantrag, eingereicht am {{date}}",
+        "cancellations": "Stornierungsanträge",
+        "description": "Diese Abwesenheitsdetails sind hier verfügbar, damit Sie Ihren eigenen Antrag und seine aktuelle Wirkung prüfen können.",
+        "heading": "Zeitraum und Wirkung",
+        "type": "Abwesenheitsart",
+        "workflowLabel": "Ablauf",
+        "workflow": {
+          "approval": "Wirksam nach Genehmigung",
+          "report": "Wirksam bei Meldung"
+        }
+      },
+      "action": {
+        "available": "Verfügbare Aktion",
+        "effect": {
+          "cancel": "Die Stornierungsanforderung beginnt eine separate Prüfung. Diese Abwesenheit bleibt wirksam, bis der Antrag genehmigt wird.",
+          "withdraw": "Das Zurückziehen beendet diesen Stornierungsablauf. Die ursprüngliche Abwesenheit wird weder entfernt noch geändert."
+        },
+        "error": {
+          "changed": "Der Antrag hat sich geändert, bevor die Aktion abgeschlossen war. Aktualisieren Sie den Datensatz und prüfen Sie den aktuellen Status.",
+          "generic": "Ihr Datensatz wurde nicht geändert. Versuchen Sie es erneut.",
+          "locked": "Dieser Datensatz liegt in einem gesperrten Zeitraum. Eine nachträgliche Anpassung ist erforderlich."
+        },
+        "errorTitle": "Der Antrag konnte nicht aktualisiert werden",
+        "label": {
+          "cancel": "Stornierung anfordern",
+          "withdraw": "Stornierungsantrag zurückziehen"
+        },
+        "pending": "Antrag wird aktualisiert…",
+        "success": {
+          "cancel": "Stornierung angefordert. Die Abwesenheit bleibt wirksam, bis der Antrag genehmigt wird.",
+          "withdraw": "Stornierungsantrag zurückgezogen. Die ursprüngliche Abwesenheit bleibt unverändert."
+        },
+        "successTitle": "Antrag aktualisiert"
+      },
+      "back": "Zurück zu Meine Anträge",
+      "cancellation": {
+        "absenceType": "Abwesenheitsart: {{type}}",
+        "description": "Eine Genehmigung ändert nur die betroffenen Abwesenheitssegmente. Der ursprüngliche Abwesenheitsverlauf bleibt erhalten.",
+        "heading": "Beantragte Stornierung",
+        "viewOriginal": "Ursprünglichen Abwesenheitsantrag anzeigen"
+      },
+      "correction": {
+        "applicationLabel": "Anwendung",
+        "application": {
+          "ordinary": "Gewöhnliche Korrektur",
+          "postLock": "Nachträgliche Anpassung"
+        },
+        "description": "Ursprüngliche Buchungsereignisse bleiben erhalten. Der Vorschlag ist eine geprüfte Version, keine Umschreibung.",
+        "ends": "Endet",
+        "events": {
+          "empty": "Für diesen Tagesdatensatz wurde kein Buchungsereignis erfasst.",
+          "event": "Anwesenheitsereignis",
+          "heading": "Erhaltene Anwesenheitsereignisse"
+        },
+        "heading": "Erfasste Fakten und Vorschlag",
+        "original": "Ursprüngliche Berechnung",
+        "proposed": "Vorgeschlagenes Intervall",
+        "reason": "Angegebener Grund",
+        "starts": "Beginnt"
+      },
+      "currentState": "Aktueller Status",
+      "error": {
+        "denied": {
+          "description": "Sie können diesen Antrag nicht anzeigen.",
+          "title": "Zugriff verweigert"
+        },
+        "missing": {
+          "description": "Dieser Antrag existiert nicht oder ist nicht mehr verfügbar.",
+          "title": "Antrag nicht gefunden"
+        },
+        "unavailable": {
+          "description": "WorkLedger konnte diesen Antrag nicht laden. Ihr Datensatz wurde nicht geändert.",
+          "title": "Antrag nicht verfügbar"
+        }
+      },
+      "event": "{{event}} um {{time}}",
+      "history": {
+        "action": {
+          "acknowledge": "Bestätigt",
+          "apply": "Angewendet",
+          "approve": "Genehmigt",
+          "cancel": "Storniert",
+          "reject": "Abgelehnt",
+          "reported": "Gemeldet",
+          "requestChanges": "Änderungen angefordert",
+          "submitted": "Eingereicht",
+          "withdraw": "Zurückgezogen"
+        },
+        "actor": { "reviewer": "einer prüfenden Person", "self": "Ihnen", "system": "WorkLedger" },
+        "by": "Von {{actor}}",
+        "description": "Aktionen werden in erfasster Reihenfolge mit handelnder Person und, falls erforderlich, Begründung angezeigt.",
+        "heading": "Entscheidungsverlauf",
+        "reason": "Grund: {{reason}}"
+      },
+      "loading": {
+        "description": "Aktueller Status, Antragsdetails und Entscheidungsverlauf werden geladen.",
+        "message": "WorkLedger lädt den aktuellen Status und die Nachweise.",
+        "title": "Antragsdatensatz wird geladen"
+      },
+      "metric": {
+        "balance": "Saldo",
+        "break": "Pause",
+        "credited": "Gutgeschrieben",
+        "expected": "Erwartet",
+        "worked": "Gearbeitet"
+      },
+      "missingIdentifier": {
+        "description": "Die Antragskennung fehlt. Es wurden keine Datensatzdetails geladen."
+      },
+      "state": {
+        "absence": {
+          "approved": "Genehmigte Zeiträume werden gemäß den erhaltenen Arbeitsplan- und Richtlinienversionen berücksichtigt.",
+          "cancelled": "Alle betroffenen Segmente wurden storniert. Der ursprüngliche Antrag bleibt im Verlauf.",
+          "changesRequested": "Eine prüfende Person hat Änderungen angefordert. Der beantragte Zeitraum ist noch nicht genehmigt.",
+          "complete": "Dieser Ablauf ist abgeschlossen und fügt keine Abwesenheitsgutschrift hinzu.",
+          "pending": "Der Antrag wartet auf eine Entscheidung. Sein berechneter Zeitraum wird unten angezeigt.",
+          "reported": "Diese Meldung ist wirksam. Die Bestätigung dokumentiert die Prüfung, ändert aber nicht ihre Wirkung."
+        },
+        "cancellation": {
+          "approved": "Die betroffenen Abwesenheitssegmente wurden storniert und der ursprüngliche Antrag bleibt im Verlauf.",
+          "changesRequested": "Eine prüfende Person hat Änderungen angefordert. Die ursprüngliche Abwesenheit bleibt wirksam.",
+          "pending": "Die Stornierung wartet auf eine Entscheidung. Die ursprüngliche Abwesenheit bleibt wirksam.",
+          "rejected": "Die Stornierung wurde abgelehnt. Die ursprüngliche Abwesenheit bleibt wirksam.",
+          "withdrawn": "Der Stornierungsablauf endete ohne Änderung der ursprünglichen Abwesenheit."
+        },
+        "correction": {
+          "applied": "Die genehmigte Version wurde angewendet, während die ursprünglichen Fakten erhalten bleiben.",
+          "approved": "Die Korrektur ist genehmigt und wartet auf den erfassten Anwendungsschritt.",
+          "changesRequested": "Eine prüfende Person hat Änderungen angefordert. Der aktuelle Tagesdatensatz bleibt unverändert.",
+          "complete": "Dieser Ablauf ist abgeschlossen. Der aktuelle Tagesdatensatz bleibt unverändert.",
+          "pending": "Der Vorschlag wartet auf Prüfung. Der aktuelle Tagesdatensatz bleibt unverändert."
+        }
+      },
+      "submitted": "Eingereicht am {{date}}",
+      "timeRange": "{{start}} bis {{end}}",
+      "pageTitle": "Antragsdetails",
+      "title": { "cancellation": "Stornierungsantrag", "correction": "Zeitkorrektur" },
+      "unknownTime": "unbekannte Zeit"
+    },
+    "history": {
+      "dateRange": "{{start}} bis {{end}}",
+      "description": "Prüfen Sie Korrekturen, Abwesenheitsanträge und Stornierungsanträge in einem Verlauf. Vertrauliche Abwesenheitsdetails erscheinen erst, nachdem Sie Ihren Datensatz öffnen.",
+      "empty": {
+        "action": "Antrag erstellen",
+        "description": "Löschen Sie die Filter, um andere Datensätze zu prüfen, oder beginnen Sie einen neuen Antrag.",
+        "title": "Keine Anträge entsprechen diesen Filtern"
+      },
+      "error": {
+        "description": "Ihre Datensätze wurden nicht geändert. Laden Sie den Verlauf erneut.",
+        "title": "Antragsverlauf nicht verfügbar"
+      },
+      "eyebrow": "Anträge",
+      "filter": {
+        "action": { "apply": "Filter anwenden", "clear": "Filter löschen" },
+        "description": "Grenzen Sie Ihren Antragsverlauf nach Ablauf oder aktuellem Status ein.",
+        "status": {
+          "all": "Alle Status",
+          "completed": "Abgeschlossen",
+          "inProgress": "In Bearbeitung",
+          "label": "Status"
+        },
+        "title": "Antragsverlauf filtern",
+        "workflow": {
+          "absence": "Abwesenheitsanträge",
+          "all": "Alle Abläufe",
+          "cancellation": "Stornierungsanträge",
+          "correction": "Korrekturen",
+          "label": "Ablauf"
+        }
+      },
+      "kind": {
+        "absence": "Abwesenheitsantrag",
+        "cancellation": "Stornierungsantrag",
+        "correction": "Zeitkorrektur"
+      },
+      "loading": {
+        "description": "Ihre Antragsdatensätze werden geladen.",
+        "title": "Antragsverlauf wird geladen"
+      },
+      "new": "Neuer Antrag",
+      "results": {
+        "count_one": "{{count}} Datensatz",
+        "count_other": "{{count}} Datensätze",
+        "heading": "Antragsverlauf",
+        "pagination": "Seite {{current}} von {{pages}}. Insgesamt {{total}} Datensätze.",
+        "refreshing": "Ergebnisse werden aktualisiert."
+      },
+      "submitted": "Eingereicht am {{date}}",
+      "viewDetails": "Antragsdetails anzeigen"
+    },
+    "new": {
+      "description": "Wählen Sie den Ablauf, der zum Ereignis passt, und prüfen Sie vor dem Einreichen seine Auswirkung.",
+      "eyebrow": "Anträge",
+      "selection": {
+        "change": "Anderen Ablauf wählen",
+        "description": "Jeder Ablauf erklärt vor dem Einreichen seine Auswirkung.",
+        "heading": "Was möchten Sie erfassen?",
+        "selected": "Ausgewählter Ablauf"
+      },
+      "workflow": {
+        "correction": {
+          "action": "Zeitkorrektur wählen",
+          "description": "Schlagen Sie ein Ersatzintervall vor; die ursprünglichen Anwesenheitsereignisse bleiben erhalten.",
+          "title": "Zeitkorrektur"
+        },
+        "sickness": {
+          "action": "Krankheit wählen",
+          "description": "Erfassen Sie eine Krankheitsabwesenheit, ohne medizinische Details einzugeben.",
+          "title": "Krankheit"
+        },
+        "vacation": {
+          "action": "Urlaub wählen",
+          "description": "Reservieren Sie Urlaubsanspruch für ganze Tage, Teiltage oder ein genaues Intervall.",
+          "title": "Urlaub"
+        }
+      },
+      "workflowTitle": {
+        "correction": "Zeitkorrektur",
+        "sickness": "Krankmeldung",
+        "vacation": "Urlaubsantrag"
+      }
+    }
+  },
+  "time": {
+    "balance": {
+      "eligibleProjection": "Anrechenbare Projektion",
+      "excluded": {
+        "description": "Prüfen Sie {{dates}}, bevor Sie sich auf den projizierten Gesamtwert verlassen.",
+        "title": "Projizierter Saldo schließt unvollständige Datensätze aus"
+      },
+      "heading": "Gleitzeitsaldo",
+      "help": "Gebuchte Einträge sind endgültig. Anrechenbare vollständige, noch nicht gebuchte Datensätze bleiben separat.",
+      "posted": "Gebuchter Saldo",
+      "projected": "Projizierter Saldo"
+    },
+    "balancesDescription": "Ihre Gleitzeit- und Urlaubssalden mit klar gekennzeichneten Projektionen und Quelleinträgen.",
+    "balancesTitle": "Meine Salden",
+    "description": "Prüfen Sie Ihre wöchentlichen oder monatlichen Datensätze und den dadurch erklärten Gleitzeitsaldo.",
+    "entryType": {
+      "allocation": "Zuteilung",
+      "approvedDeduction": "Genehmigte Abbuchung",
+      "cancellationRestoration": "Wiederherstellung nach Stornierung",
+      "carryover": "Übertrag",
+      "dailyDelta": "Tägliche Saldoänderung",
+      "dailyRecalculationDelta": "Änderung durch tägliche Neuberechnung",
+      "expiry": "Verfall",
+      "manualAdjustment": "Manuelle Anpassung",
+      "manualAdministrativeAdjustment": "Manuelle administrative Anpassung",
+      "openingBalance": "Anfangssaldo",
+      "pendingReservation": "Ausstehende Reservierung",
+      "postLockAdjustment": "Anpassung nach Sperrung",
+      "reservationRelease": "Freigabe der Reservierung"
+    },
+    "error": {
+      "denied": {
+        "description": "Ihr aktuelles Konto hat keinen Zugriff auf die Selbstbedienung für Beschäftigte.",
+        "title": "Sie können diese Datensätze nicht anzeigen"
+      },
+      "unavailable": {
+        "description": "Es wurden keine Zeit-, Saldo- oder Kontenwerte angezeigt. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "title": "Ihre Datensätze sind nicht verfügbar"
+      }
+    },
+    "eyebrow": "Zeitdatensätze",
+    "filter": {
+      "date": "Datum im Zeitraum",
+      "description": "Wählen Sie eine Wochen- oder Monatsansicht und das zu prüfende Datum.",
+      "month": "Monat",
+      "title": "Zeitraum auswählen",
+      "view": "Ansicht",
+      "viewLabel": "Ansicht der Zeitdatensätze",
+      "week": "Woche"
+    },
+    "leave": {
+      "account": "Konto",
+      "available": "Verfügbar",
+      "availableAfter": "Danach verfügbar",
+      "description": "Verfügbare Minuten schließen ausstehende Reservierungen aus. Der projizierte Rest berücksichtigt sie.",
+      "empty": {
+        "description": "Es wurde noch kein Urlaubsanspruch gebucht.",
+        "title": "Keine Urlaubskonten"
+      },
+      "entry": "Eintrag",
+      "heading": "Urlaubssalden",
+      "ledger": {
+        "description": "Jeder Eintrag zeigt seine genaue Wirkung und die danach verfügbaren, reservierten und projizierten Werte.",
+        "empty": {
+          "description": "Es ist noch kein Anspruchs-, Reservierungs- oder Anpassungseintrag vorhanden.",
+          "title": "Keine Urlaubs-Quelleinträge"
+        },
+        "heading": "Quelleinträge des Urlaubsanspruchs",
+        "pagination": "Seite {{current}} von {{total}} im Urlaubskonto"
+      },
+      "pendingReservation": "Ausstehende Reservierung",
+      "projectedAfter": "Danach projiziert",
+      "projectedRemaining": "Projizierter Rest",
+      "reservedAfter": "Danach reserviert"
+    },
+    "ledger": {
+      "balanceAfter": "Saldo danach: {{balance}}",
+      "description": "Jeder Eintrag zeigt seine Wirkung und den daraus resultierenden gebuchten Saldo.",
+      "effective": "Wirksam am {{date}}",
+      "empty": {
+        "description": "Bis zu diesem Zeitraum sind keine endgültigen Konteneinträge vorhanden.",
+        "title": "Keine gebuchten Gleitzeiteinträge"
+      },
+      "heading": "Gebuchte Konteneinträge",
+      "pagination": "Seite {{current}} von {{total}} im Gleitzeitkonto"
+    },
+    "loading": {
+      "description": "Ausgewählter Zeitraum, Salden und Quelleinträge werden geprüft.",
+      "title": "Ihre Datensätze werden geladen"
+    },
+    "period": {
+      "month": "Ausgewählter Monat",
+      "range": "{{start}} bis {{end}}",
+      "reviewMonthly": "Monatszeitraum prüfen",
+      "summary": {
+        "balance": "Saldo vollständiger Datensätze {{balance}}",
+        "incomplete_one": "{{count}} unvollständig",
+        "incomplete_other": "{{count}} unvollständig",
+        "recordedDays_one": "{{count}} erfasster Tag",
+        "recordedDays_other": "{{count}} erfasste Tage"
+      },
+      "week": "Ausgewählte Woche"
+    },
+    "records": {
+      "attention": {
+        "incomplete": "Unvollständigen Datensatz prüfen",
+        "none": "Kein Handlungsbedarf",
+        "review_one": "{{count}} Warnung · Details prüfen",
+        "review_other": "{{count}} Warnungen · Details prüfen",
+        "warnings_one": "{{count}} Warnung",
+        "warnings_other": "{{count}} Warnungen"
+      },
+      "caption": "Zusammenfassungen der Tagesdatensätze für den ausgewählten Zeitraum",
+      "column": {
+        "attention": "Hinweise",
+        "balance": "Saldo",
+        "credited": "Angerechnet",
+        "date": "Datum",
+        "expected": "Sollzeit",
+        "status": "Status"
+      },
+      "description": "Öffnen Sie einen erfassten Tag, um Berechnung, Arbeitssitzungen, Ereignisse und Hinweise zur Behebung anzuzeigen.",
+      "heading": "Tagesdatensätze",
+      "scrollLabel": "Tabelle der Tagesdatensätze",
+      "status": {
+        "complete": "Vollständig",
+        "incomplete": "Unvollständig",
+        "noRecord": "Kein Datensatz",
+        "provisional": "Vorläufig"
+      }
+    },
+    "title": "Meine Zeit"
+  }
+}

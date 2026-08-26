@@ -3,120 +3,122 @@ import type {
   CalculationWarningCode,
   DailyTimeAttention,
 } from '@workledger/contracts';
+import type { MessageKey } from '@workledger/i18n';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert } from '@workledger/ui';
 
 type AttentionItem = Readonly<{
-  action: string;
-  description: string;
+  action: MessageKey;
+  description: MessageKey;
   href: 'BALANCE' | 'CALCULATION' | 'FIX_ENTRY' | 'MY_TIME' | 'REQUESTS';
-  title: string;
+  title: MessageKey;
 }>;
 
 const BLOCKER_ATTENTION: Readonly<Record<CalculationBlockerCode, AttentionItem>> = {
   ABSENCE_APPROVAL_PENDING: {
-    action: 'Review request',
-    description: 'An approval-required absence may still change this day’s calculation.',
+    action: 'employee.today.attention.recovery.reviewRequest',
+    description: 'employee.records.attention.description.absenceApprovalPending',
     href: 'REQUESTS',
-    title: 'Absence decision pending',
+    title: 'employee.today.attention.descriptor.absenceApprovalPending.title',
   },
   ATTENDANCE_INCOMPLETE: {
-    action: 'Fix entry',
-    description: 'One or more attendance intervals touching this date have not been completed.',
+    action: 'employee.today.attention.recovery.fixEntry',
+    description: 'employee.records.attention.description.attendanceIncomplete',
     href: 'FIX_ENTRY',
-    title: 'Attendance entry incomplete',
+    title: 'employee.today.attention.descriptor.attendanceIncomplete.title',
   },
   ATTENDANCE_INVALID_EVENT_ORDER: {
-    action: 'Fix entry',
-    description: 'The recorded attendance events cannot be reconstructed in a valid order.',
+    action: 'employee.today.attention.recovery.fixEntry',
+    description: 'employee.records.attention.description.attendanceInvalidEventOrder',
     href: 'FIX_ENTRY',
-    title: 'Attendance event order needs review',
+    title: 'employee.today.attention.descriptor.attendanceInvalidEventOrder.title',
   },
   ATTENDANCE_INVALID_EVENT_PRECISION: {
-    action: 'Fix entry',
-    description: 'A recorded attendance event is not aligned to a whole minute.',
+    action: 'employee.today.attention.recovery.fixEntry',
+    description: 'employee.records.attention.description.attendanceInvalidEventPrecision',
     href: 'FIX_ENTRY',
-    title: 'Attendance event time needs review',
+    title: 'employee.today.attention.descriptor.attendanceInvalidEventPrecision.title',
   },
   ATTENDANCE_OVERLAP: {
-    action: 'Fix entry',
-    description: 'The derived attendance intervals overlap and cannot form a reliable calculation.',
+    action: 'employee.today.attention.recovery.fixEntry',
+    description: 'employee.records.attention.description.attendanceOverlap',
     href: 'FIX_ENTRY',
-    title: 'Attendance intervals overlap',
+    title: 'employee.today.attention.descriptor.attendanceOverlap.title',
   },
   CORRECTION_UNRESOLVED: {
-    action: 'Review request',
-    description: 'A submitted correction can still change this day’s calculation.',
+    action: 'employee.today.attention.recovery.reviewRequest',
+    description: 'employee.records.attention.description.correctionUnresolved',
     href: 'REQUESTS',
-    title: 'Correction decision pending',
+    title: 'employee.today.attention.descriptor.correctionUnresolved.title',
   },
   LEDGER_SOURCE_MISMATCH: {
-    action: 'Review affected period',
-    description: 'The calculation source does not match its posted ledger evidence.',
+    action: 'employee.records.attention.action.reviewPeriod',
+    description: 'employee.records.attention.description.ledgerSourceMismatch',
     href: 'MY_TIME',
-    title: 'Ledger reconciliation needed',
+    title: 'employee.today.attention.descriptor.ledgerSourceMismatch.title',
   },
   POLICY_ASSIGNMENT_OVERLAP: {
-    action: 'Review affected period',
-    description: 'More than one time policy applies to this date.',
+    action: 'employee.records.attention.action.reviewPeriod',
+    description: 'employee.records.attention.description.policyAssignmentOverlap',
     href: 'MY_TIME',
-    title: 'Time-policy assignment overlap',
+    title: 'employee.today.attention.descriptor.policyAssignmentOverlap.title',
   },
   POLICY_CONFIGURATION_INVALID: {
-    action: 'Review affected period',
-    description: 'The assigned time policy cannot produce a reliable calculation.',
+    action: 'employee.records.attention.action.reviewPeriod',
+    description: 'employee.records.attention.description.policyConfigurationInvalid',
     href: 'MY_TIME',
-    title: 'Time-policy configuration needs review',
+    title: 'employee.today.attention.descriptor.policyConfigurationInvalid.title',
   },
   POLICY_NOT_ASSIGNED: {
-    action: 'Review affected period',
-    description: 'No time policy applies to this date.',
+    action: 'employee.records.attention.action.reviewPeriod',
+    description: 'employee.records.attention.description.policyNotAssigned',
     href: 'MY_TIME',
-    title: 'Time policy missing',
+    title: 'employee.today.attention.descriptor.policyNotAssigned.title',
   },
   SCHEDULE_ASSIGNMENT_OVERLAP: {
-    action: 'Review affected period',
-    description: 'More than one work schedule applies to this date.',
+    action: 'employee.records.attention.action.reviewPeriod',
+    description: 'employee.records.attention.description.scheduleAssignmentOverlap',
     href: 'MY_TIME',
-    title: 'Work-schedule assignment overlap',
+    title: 'employee.today.attention.descriptor.scheduleAssignmentOverlap.title',
   },
   SCHEDULE_NOT_ASSIGNED: {
-    action: 'Review affected period',
-    description: 'No work schedule applies to this date.',
+    action: 'employee.records.attention.action.reviewPeriod',
+    description: 'employee.records.attention.description.scheduleNotAssigned',
     href: 'MY_TIME',
-    title: 'Work schedule missing',
+    title: 'employee.today.attention.descriptor.scheduleNotAssigned.title',
   },
 };
 
 const WARNING_ATTENTION: Readonly<Record<CalculationWarningCode, AttentionItem>> = {
   FLEX_NEGATIVE_THRESHOLD_EXCEEDED: {
-    action: 'View balance history',
-    description: 'The daily balance is below your configured flexible-time warning threshold.',
+    action: 'employee.today.attention.recovery.reviewBalanceHistory',
+    description: 'employee.records.attention.description.flexNegativeDaily',
     href: 'BALANCE',
-    title: 'Negative flexible-time threshold reached',
+    title: 'employee.today.attention.descriptor.flexNegative.title',
   },
   FLEX_POSITIVE_THRESHOLD_EXCEEDED: {
-    action: 'View balance history',
-    description: 'The daily balance is above your configured flexible-time warning threshold.',
+    action: 'employee.today.attention.recovery.reviewBalanceHistory',
+    description: 'employee.records.attention.description.flexPositiveDaily',
     href: 'BALANCE',
-    title: 'Positive flexible-time threshold reached',
+    title: 'employee.today.attention.descriptor.flexPositive.title',
   },
   WORK_DURING_ABSENCE: {
-    action: 'Fix entry',
-    description: 'Recorded work overlaps credited absence time. No absence category is shown here.',
+    action: 'employee.today.attention.recovery.fixEntry',
+    description: 'employee.records.attention.description.workDuringAbsence',
     href: 'FIX_ENTRY',
-    title: 'Work overlaps credited absence',
+    title: 'employee.today.attention.descriptor.workDuringAbsence.title',
   },
   WORK_ON_HOLIDAY: {
-    action: 'Review calculation',
-    description: 'Work is recorded on a public holiday and remains credited separately.',
+    action: 'employee.today.attention.recovery.reviewCalculation',
+    description: 'employee.records.attention.description.workOnHoliday',
     href: 'CALCULATION',
-    title: 'Work recorded on a public holiday',
+    title: 'employee.today.attention.descriptor.workOnHoliday.title',
   },
   WORK_ON_ZERO_EXPECTED_DAY: {
-    action: 'Review calculation',
-    description: 'Work is recorded on a day with no expected working time.',
+    action: 'employee.today.attention.recovery.reviewCalculation',
+    description: 'employee.records.attention.description.workOnZeroExpectedDay',
     href: 'CALCULATION',
-    title: 'Work recorded on a zero-expected day',
+    title: 'employee.today.attention.descriptor.workOnZeroExpectedDay.title',
   },
 };
 
@@ -139,11 +141,12 @@ export function CalculationAttention({
   requestHref: string;
   thresholdBasis?: 'DAILY_BALANCE' | 'POSTED_BALANCE';
 }>) {
+  const t = useWorkLedgerMessage();
   if (attention.blockers.length === 0 && attention.warnings.length === 0) return null;
   return (
     <section className="grid gap-4" aria-labelledby="calculation-attention-title">
       <h2 id="calculation-attention-title" className="m-0 text-2xl font-bold">
-        Needs attention
+        {t('employee.today.attention.title')}
       </h2>
       {attention.blockers.length === 0 ? null : (
         <AttentionGroup
@@ -151,7 +154,7 @@ export function CalculationAttention({
           kind="blocker"
           links={{ balanceHref, calculationHref, fixEntryHref, myTimeHref, requestHref }}
           {...(onCalculationDetailsRequest === undefined ? {} : { onCalculationDetailsRequest })}
-          title="Calculation blockers"
+          title={t('employee.records.attention.blockers')}
         />
       )}
       {attention.warnings.length === 0 ? null : (
@@ -160,7 +163,7 @@ export function CalculationAttention({
           kind="warning"
           links={{ balanceHref, calculationHref, fixEntryHref, myTimeHref, requestHref }}
           {...(onCalculationDetailsRequest === undefined ? {} : { onCalculationDetailsRequest })}
-          title="Warnings"
+          title={t('employee.today.attention.warnings')}
         />
       )}
     </section>
@@ -182,8 +185,8 @@ function warningAttention(
     ...item,
     description:
       code === 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED'
-        ? 'The posted flexible-time balance is below your configured warning threshold.'
-        : 'The posted flexible-time balance is above your configured warning threshold.',
+        ? 'employee.records.attention.description.flexNegativePosted'
+        : 'employee.records.attention.description.flexPositivePosted',
   };
 }
 
@@ -206,6 +209,7 @@ function AttentionGroup({
   onCalculationDetailsRequest?: () => void;
   title: string;
 }>) {
+  const t = useWorkLedgerMessage();
   return (
     <Alert
       announce={false}
@@ -216,13 +220,13 @@ function AttentionGroup({
       <ul className="mb-0 mt-3 grid gap-3 pl-5">
         {items.map((item) => (
           <li key={item.title} className="grid gap-1">
-            <strong>{item.title}</strong>
-            <span>{item.description}</span>
+            <strong>{t(item.title)}</strong>
+            <span>{t(item.description)}</span>
             <a
               href={links[actionHrefKey(item.href)]}
               onClick={item.href === 'CALCULATION' ? onCalculationDetailsRequest : undefined}
             >
-              {item.action}
+              {t(item.action)}
             </a>
           </li>
         ))}

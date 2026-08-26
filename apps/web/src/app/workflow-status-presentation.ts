@@ -5,6 +5,7 @@ import {
   type PersonalRequestItemStatus,
 } from '@workledger/contracts';
 import type { StatusBadgeProps } from '@workledger/ui';
+import type { MessageKey } from '@workledger/i18n';
 
 export type WorkflowStatus = MonthlyPeriodStatus | PersonalRequestItemStatus;
 
@@ -29,6 +30,22 @@ const WORKFLOW_STATUS_PRESENTATIONS = Object.freeze({
   WITHDRAWN: { label: 'Withdrawn', tone: 'neutral' },
 } as const satisfies Readonly<Record<WorkflowStatus, WorkflowStatusPresentation>>);
 
+const WORKFLOW_STATUS_MESSAGE_KEYS = Object.freeze({
+  ACKNOWLEDGED: 'shared.workflow.status.acknowledged',
+  APPLIED: 'shared.workflow.status.applied',
+  APPROVED: 'shared.workflow.status.approved',
+  CANCELLED: 'shared.workflow.status.cancelled',
+  CHANGES_REQUESTED: 'shared.workflow.status.changesRequested',
+  LOCKED: 'shared.workflow.status.locked',
+  OPEN: 'shared.workflow.status.open',
+  PARTIALLY_CANCELLED: 'shared.workflow.status.partiallyCancelled',
+  PENDING_DECISION: 'shared.workflow.status.pendingDecision',
+  REJECTED: 'shared.workflow.status.rejected',
+  REPORTED: 'shared.workflow.status.reported',
+  SUBMITTED: 'shared.workflow.status.submitted',
+  WITHDRAWN: 'shared.workflow.status.withdrawn',
+} as const satisfies Readonly<Record<WorkflowStatus, MessageKey>>);
+
 export const WORKFLOW_STATUSES = Object.freeze([
   ...new Set([...PERSONAL_REQUEST_ITEM_STATUSES, ...MONTHLY_PERIOD_STATUSES]),
 ] as WorkflowStatus[]);
@@ -39,4 +56,8 @@ export function workflowStatusPresentation(status: WorkflowStatus): WorkflowStat
 
 export function workflowStatusLabel(status: WorkflowStatus): string {
   return workflowStatusPresentation(status).label;
+}
+
+export function workflowStatusMessageKey(status: WorkflowStatus): MessageKey {
+  return WORKFLOW_STATUS_MESSAGE_KEYS[status];
 }

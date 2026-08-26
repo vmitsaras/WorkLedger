@@ -2,13 +2,20 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import type { TodayAttentionItem } from '@workledger/contracts';
+import { formatDateOnly, type MessageArguments, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerLocale, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, StatusBadge } from '@workledger/ui';
 
-import { formatLocalDate } from '../app/date-time-format.js';
 import { attentionPresentation, attentionRecoveryLabel } from '../app/presentation-codes.js';
 
+type MessageTranslator = <Key extends MessageKey>(
+  key: Key,
+  ...args: MessageArguments<Key>
+) => string;
+
 export function TodayAttention({ items }: Readonly<{ items: readonly TodayAttentionItem[] }>) {
-  const urgentAnnouncement = useNewUrgentAttentionAnnouncement(items);
+  const t = useWorkLedgerMessage();
+  const urgentAnnouncement = useNewUrgentAttentionAnnouncement(items, t);
   if (items.length === 0) return null;
 
   const blockers = items.filter((item) => item.blocksSubmission);
@@ -17,7 +24,7 @@ export function TodayAttention({ items }: Readonly<{ items: readonly TodayAttent
   return (
     <section className="grid gap-4" aria-labelledby="today-attention-title">
       <h2 id="today-attention-title" className="m-0 text-2xl font-bold">
-        Needs attention
+        {t('employee.today.attention.title')}
       </h2>
       {urgentAnnouncement === null ? null : (
         <p className="sr-only" role="alert">
@@ -25,10 +32,18 @@ export function TodayAttention({ items }: Readonly<{ items: readonly TodayAttent
         </p>
       )}
       {blockers.length === 0 ? null : (
-        <AttentionGroup items={blockers} title="Blocking issues" tone="danger" />
+        <AttentionGroup
+          items={blockers}
+          title={t('employee.today.attention.blockingIssues')}
+          tone="danger"
+        />
       )}
       {warnings.length === 0 ? null : (
-        <AttentionGroup items={warnings} title="Warnings" tone="warning" />
+        <AttentionGroup
+          items={warnings}
+          title={t('employee.today.attention.warnings')}
+          tone="warning"
+        />
       )}
     </section>
   );
@@ -43,24 +58,34 @@ function AttentionGroup({
   title: string;
   tone: 'danger' | 'warning';
 }>) {
+  const locale = useWorkLedgerLocale();
+  const t = useWorkLedgerMessage();
   return (
     <Alert announce={false} headingLevel="h3" title={title} tone={tone}>
       <ul className="mb-0 mt-3 grid gap-4 pl-5">
         {items.map((item) => (
           <li key={item.message.code} className="grid gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <strong>{attentionPresentation(item.message.code).title}</strong>
+              <strong>{attentionPresentation(item.message.code, t).title}</strong>
               <StatusBadge tone={item.blocksSubmission ? 'danger' : 'warning'}>
-                {item.blocksSubmission ? 'Blocks month submission' : 'Does not block submission'}
+                {item.blocksSubmission
+                  ? t('employee.today.attention.blocksSubmission')
+                  : t('employee.today.attention.doesNotBlockSubmission')}
               </StatusBadge>
             </div>
             <span className="text-sm text-[var(--wl-text-muted)]">
-              {item.source === 'POSTED_FLEX_BALANCE' ? 'Posted balance through' : 'Affected date'}:{' '}
-              {formatLocalDate(item.affectedDate)}
+              {item.source === 'POSTED_FLEX_BALANCE'
+                ? t('employee.today.attention.postedBalanceThrough')
+                : t('employee.today.attention.affectedDate')}
+              {':'}{' '}
+              <time dateTime={item.affectedDate}>
+                {formatDateOnly(locale.locale, item.affectedDate)}
+              </time>
             </span>
-            <span>{attentionPresentation(item.message.code).reason}</span>
+            <span>{attentionPresentation(item.message.code, t).reason}</span>
             <span className="text-sm text-[var(--wl-text-muted)]">
-              What happens next: {attentionPresentation(item.message.code).whatHappensNext}
+              {t('employee.today.attention.next')}
+              {':'} {attentionPresentation(item.message.code, t).whatHappensNext}
             </span>
             <AttentionDestination item={item} />
           </li>
@@ -71,6 +96,7 @@ function AttentionGroup({
 }
 
 function AttentionDestination({ item }: Readonly<{ item: TodayAttentionItem }>) {
+  const t = useWorkLedgerMessage();
   const href = destinationHref(item);
   if (item.recovery.destination === 'TODAY_CALCULATION') {
     return (
@@ -81,14 +107,14 @@ function AttentionDestination({ item }: Readonly<{ item: TodayAttentionItem }>) 
           if (details !== null) details.open = true;
         }}
       >
-        {attentionRecoveryLabel(item.recovery)}
+        {attentionRecoveryLabel(item.recovery, t)}
       </a>
     );
   }
   if (item.recovery.destination === 'TODAY_TIMELINE') {
-    return <a href={href}>{attentionRecoveryLabel(item.recovery)}</a>;
+    return <a href={href}>{attentionRecoveryLabel(item.recovery, t)}</a>;
   }
-  return <Link to={href}>{attentionRecoveryLabel(item.recovery)}</Link>;
+  return <Link to={href}>{attentionRecoveryLabel(item.recovery, t)}</Link>;
 }
 
 function destinationHref(item: TodayAttentionItem): string {
@@ -106,7 +132,10 @@ function destinationHref(item: TodayAttentionItem): string {
   }
 }
 
-function useNewUrgentAttentionAnnouncement(items: readonly TodayAttentionItem[]): string | null {
+function useNewUrgentAttentionAnnouncement(
+  items: readonly TodayAttentionItem[],
+  t: MessageTranslator,
+): string | null {
   const previousCodesRef = useRef<ReadonlySet<string> | null>(null);
   const [announcement, setAnnouncement] = useState<string | null>(null);
 
@@ -122,11 +151,13 @@ function useNewUrgentAttentionAnnouncement(items: readonly TodayAttentionItem[])
     setAnnouncement(
       newBlockers.length === 0
         ? null
-        : `New urgent issue: ${newBlockers
-            .map(({ message }) => attentionPresentation(message.code).title)
-            .join('; ')}.`,
+        : t('employee.today.attention.newUrgent', {
+            titles: newBlockers
+              .map(({ message }) => attentionPresentation(message.code, t).title)
+              .join('; '),
+          }),
     );
-  }, [items]);
+  }, [items, t]);
 
   return announcement;
 }

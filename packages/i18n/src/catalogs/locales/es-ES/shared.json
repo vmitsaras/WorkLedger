@@ -1,5 +1,6 @@
 {
   "duration": {
+    "compact": "{{hours}} h {{minutes}} min",
     "hours_many": "{{count}} horas",
     "hours_one": "{{count}} hora",
     "hours_other": "{{count}} horas",
@@ -204,6 +205,23 @@
       "teamStatus": "Estado del equipo",
       "teams": "Equipos",
       "today": "Hoy"
+    }
+  },
+  "workflow": {
+    "status": {
+      "acknowledged": "Confirmada",
+      "applied": "Aplicada",
+      "approved": "Aprobada",
+      "cancelled": "Cancelada",
+      "changesRequested": "Cambios solicitados",
+      "locked": "Bloqueada",
+      "open": "Abierta",
+      "partiallyCancelled": "Parcialmente cancelada",
+      "pendingDecision": "Decisión pendiente",
+      "rejected": "Rechazada",
+      "reported": "Notificada",
+      "submitted": "Enviada",
+      "withdrawn": "Retirada"
     }
   }
 }
