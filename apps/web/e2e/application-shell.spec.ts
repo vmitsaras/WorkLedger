@@ -520,7 +520,7 @@ test('prioritizes needs-review approvals with URL views, concise filters, pagina
   });
 
   await page.goto('/approvals');
-  await expect(page).toHaveTitle('Approvals | WorkLedger');
+  await expect(page).toHaveTitle('Approval inbox | WorkLedger');
   await expect(page.getByRole('heading', { name: 'Approval inbox' })).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Needs review: 41' })).toBeVisible();
   const queueView = page.getByRole('combobox', { name: 'Queue view' });
@@ -2271,7 +2271,7 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
       name: /Cleo Away.*No current team.*Unavailable today/u,
     }),
   ).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Team status table' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Team status table' })).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
   const menuButton = page.getByRole('button', { name: 'Menu' });
@@ -2475,7 +2475,7 @@ test('keeps combined-role work areas and account utilities reachable in a short 
     ['Time settings', '/settings/time'],
     ['Absence settings', '/settings/absence'],
     ['Holiday calendars', '/settings/holidays'],
-    ['Audit', '/audit'],
+    ['Domain audit', '/audit'],
     ['Reports', '/reports'],
   ]) {
     await expect(peopleNavigation.getByRole('link', { name, exact: true })).toHaveAttribute(
@@ -3370,6 +3370,11 @@ test('keeps employee, team, and technical audit administration usable from reflo
   await expect(page.getByRole('heading', { name: 'Technical audit', exact: true })).toBeFocused();
   await expect(page.getByText('AUTHORIZATION_SCOPE_DENIED')).toBeVisible();
   const auditRegion = page.getByRole('region', { name: 'Technical audit results' });
+  const auditTable = page.getByRole('table', {
+    name: 'Redacted security and technical audit events, newest first',
+  });
+  const auditWrapper = auditTable.locator('..');
+  await expect(auditRegion).toHaveAttribute('tabindex', '0');
   await expect(auditRegion).toContainText(/scroll this results region horizontally/iu);
   await capturePhase12Administration(page, 'technical-audit-reflow-320x900');
   await page.getByLabel('Target type').selectOption('AUTHORIZATION');
@@ -3383,6 +3388,10 @@ test('keeps employee, team, and technical audit administration usable from reflo
     element.scrollLeft = element.scrollWidth;
   });
   await capturePhase12Administration(page, 'technical-audit-detail-reflow-320x900');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(auditRegion).toHaveCount(0);
+  await expect(auditWrapper).not.toHaveAttribute('tabindex');
+  await expect(auditWrapper).not.toContainText(/scroll this results region horizontally/iu);
   await page.emulateMedia({ forcedColors: 'active' });
   await expectPageToHaveNoAxeViolations(page);
 });

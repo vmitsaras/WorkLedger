@@ -2,21 +2,19 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 11 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 12 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1311` (next)
-**Status:** WL-1310 complete — employee search is private and scoped, Teams has a separate route, and both catalogs have explicit actions and responsive layouts
+**Active task:** `WL-1312` (next)
+**Status:** WL-1311 complete — destination copy, workflow status presentation, route focus, panel density, and table overflow now follow shared cross-route contracts
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1310` gives HR a bounded display-name, employee-number, or
-current-email search without placing identifying text in URL or persistent browser state. Employee
-and orientation-team administration now use separate canonical routes, clear primary and
-per-record actions, complete narrow lists, and wide comparison tables while preserving the
-effective-dated history and direct-manager authorization boundary. The next bounded slice is
-`WL-1311`: normalize cross-route navigation, microcopy, heading focus, status semantics, card
-density, and table-overflow behavior.
+Phase 12 is complete at `0.13.0`. `WL-1311` establishes one authenticated destination lexicon and
+one typed workflow-status presentation matrix, keeps route-heading focus visually proportionate,
+applies responsive panel density, and exposes named keyboard-scrollable table regions only while
+content actually overflows. The next bounded slice is `WL-1312`: complete deterministic
+cross-route state, visual-regression, integration, accessibility, and usability coverage.
 
 ## Verified decisions
 
@@ -77,6 +75,10 @@ density, and table-overflow behavior.
   policy, or System—while ordinary router links expose every authorized area landing and Reports
   appears once in the active non-system area. Current-area presentation remains memory-only and is
   never authorization evidence.
+- Authenticated shell destinations and landing-route document titles consume one canonical label
+  lexicon. My requests, Approval inbox, and Domain audit are not shortened or renamed differently
+  between navigation, title, and landing heading; workflow-family eyebrows remain orientation
+  copy rather than destinations.
 - The Team workspace uses explicit destination labels: Team status, Approval inbox, and Team
   calendar. The work-area name remains Team, and authorization continues to come from server-owned
   navigation areas rather than route labels or client state.
@@ -90,6 +92,14 @@ density, and table-overflow behavior.
 - Team results use a complete semantic record list below 72 rem and a captioned comparison table at
   wider widths. Both forms expose current team, time-bound availability, generic open-record state,
   and the same next step without page-level horizontal scrolling.
+- Personal-request, approval-detail, and monthly-period badges consume one exhaustive typed
+  text/tone presentation contract. Every state retains visible text, border, and marker; the
+  presentation does not change workflow state or available actions.
+- Shared panel density applies responsive comfortable, balanced, and compact padding without
+  reducing target size or pushing Today's first valid action below its 320×568 acceptance viewport.
+- Shared native table wrappers add their region name, keyboard tab stop, visible scroll guidance,
+  and accessible description only while measured horizontal overflow exists; fitting tables retain
+  caption/header semantics without a redundant focus stop.
 - Desktop account navigation, actor identity, and sign-out remain outside the independently
   scrolling destination inventory. The narrow shell preserves the same group order in the
   focus-managed React Aria drawer.
@@ -2275,9 +2285,33 @@ density, and table-overflow behavior.
   manifest, workspace version, publication, deployment, or tag changed. See
   `docs/134-employee-team-administration.md`.
 
+**2026-08-26 — WL-1311 cross-route presentation normalization**
+
+- Centralized the authenticated destination lexicon used by shell links and landing-route document
+  titles. My requests, Approval inbox, and Domain audit now remain consistent through navigation,
+  titles, and their landing headings; employee, team, and approval descriptions lead with the task.
+- Added one exhaustive typed presentation map for personal-request and monthly-period workflow
+  states and adopted it in request history/detail, approval detail, and monthly report rows.
+  Status remains textual and color-independent; no domain state or permitted action changed.
+- Applied responsive comfortable, balanced, and compact panel padding. The full browser gate caught
+  and closed an initial 320×568 Today regression by retaining the established 16-pixel narrow
+  floor while preserving wider density differences and 44-pixel targets.
+- Made shared native table overflow semantics conditional on rendered overflow. Resize-aware
+  component coverage proves fit → overflow → fit transitions; focused and full Chromium runs prove
+  named keyboard scroll regions at narrow widths and their removal when content fits.
+- Exact `pnpm verify` passes runtime configuration, reproducible OpenAPI, formatting, lint,
+  296-source/1,552-import boundaries, CSS ownership, strict TypeScript, all 37 tooling tests, all
+  376 unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 38
+  browser scenarios with one opt-in capture skipped, and the production/public-root build.
+- The bundle passes at 383,163 largest JavaScript bytes, 909,700 total JavaScript bytes, 245,304
+  gzip JavaScript bytes, and 50,131 CSS bytes. The gzip budget moves narrowly from 245,000 to
+  246,000 bytes; other budgets are unchanged. No domain rule, API contract, database schema,
+  migration, dependency, lockfile, manifest, workspace version, publication, deployment, or tag
+  changed. See `docs/135-cross-route-presentation-normalization.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1311`. Exact partial-day work-versus-absence overlap,
+No decision blocks `WL-1312`. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still need authoritative domain
 or repository facts; Today does not guess them from minute totals or an otherwise valid overnight
 session. The PostgreSQL-backed `WL-1305` correction-history case remains locally unexecuted until
@@ -2292,7 +2326,7 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1311 — Normalize cross-route navigation labels, microcopy, heading focus, status semantics, card density, and table-overflow behavior.`
+`WL-1312 — Complete deterministic cross-route state, visual-regression, integration, accessibility, and usability coverage.`
 
 ## Update rules
 

@@ -2,12 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
-import type {
-  PersonalRequestDetail,
-  PersonalRequestHistory,
-  PersonalRequestItemStatus,
-} from '@workledger/contracts';
-import { Alert, Button, Panel, RouteState, StatusBadge, buttonVariants } from '@workledger/ui';
+import type { PersonalRequestDetail, PersonalRequestHistory } from '@workledger/contracts';
+import { Alert, Button, Panel, RouteState, buttonVariants } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -18,7 +14,9 @@ import {
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
 import { personalRequestDetailQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
+import { workflowStatusLabel } from '../app/workflow-status-presentation.js';
 import { PageHeader } from '../components/page-header.js';
+import { WorkflowStatusBadge } from '../components/workflow-status-badge.js';
 
 type RequestCoverage = Extract<PersonalRequestDetail, { kind: 'ABSENCE' }>['coverage'];
 
@@ -124,7 +122,7 @@ export function RequestDetailPage() {
         </h2>
         <Panel className="grid gap-4" density="balanced">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <StatusBadge tone={statusTone(detail.status)}>{statusLabel(detail.status)}</StatusBadge>
+            <WorkflowStatusBadge status={detail.status} />
             <p className="m-0 text-sm text-[var(--wl-text-muted)]">
               Submitted {formatInstant(detail.submittedAt)}
             </p>
@@ -274,7 +272,8 @@ function AbsenceEvidence({
             {detail.relatedCancellations.map((cancellation) => (
               <li key={cancellation.id}>
                 <Link to={`/requests/${cancellation.id}`}>
-                  {statusLabel(cancellation.status)} cancellation request
+                  {workflowStatusLabel(cancellation.status).toLocaleLowerCase('en-US')} cancellation
+                  request
                 </Link>{' '}
                 submitted {formatInstant(cancellation.submittedAt)}
               </li>
@@ -446,23 +445,6 @@ function actionError(error: unknown): string {
   )
     return 'The request changed before this action completed. Refresh the record and review its current state.';
   return 'Your record was not changed. Try again.';
-}
-
-function statusLabel(status: PersonalRequestItemStatus): string {
-  return status
-    .replaceAll('_', ' ')
-    .toLocaleLowerCase()
-    .replace(/^./u, (value) => value.toUpperCase());
-}
-
-function statusTone(
-  status: PersonalRequestItemStatus,
-): 'danger' | 'info' | 'neutral' | 'success' | 'warning' {
-  if (['APPROVED', 'ACKNOWLEDGED', 'APPLIED'].includes(status)) return 'success';
-  if (['REJECTED', 'CANCELLED'].includes(status)) return 'danger';
-  if (['CHANGES_REQUESTED', 'PARTIALLY_CANCELLED'].includes(status)) return 'warning';
-  if (status === 'WITHDRAWN') return 'neutral';
-  return 'info';
 }
 
 function dateRange(start: string, end: string): string {

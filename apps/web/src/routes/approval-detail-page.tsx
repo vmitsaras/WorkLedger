@@ -7,16 +7,7 @@ import type {
   ApprovalDecisionRequest,
   ApprovalDetail,
 } from '@workledger/contracts';
-import {
-  Alert,
-  Button,
-  DataTable,
-  Panel,
-  RouteState,
-  StatusBadge,
-  buttonVariants,
-  type StatusBadgeProps,
-} from '@workledger/ui';
+import { Alert, Button, DataTable, Panel, RouteState, buttonVariants } from '@workledger/ui';
 
 import {
   ApiClientError,
@@ -29,6 +20,7 @@ import { approvalDetailQuery } from '../app/query.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
+import { WorkflowStatusBadge } from '../components/workflow-status-badge.js';
 
 type DecisionIntent = Readonly<{
   action: ApprovalDecisionAction;
@@ -340,9 +332,7 @@ function ApprovalSummary({ detail }: Readonly<{ detail: ApprovalDetail }>) {
               : `${formatLocalDate(detail.affectedStartDate)} to ${formatLocalDate(detail.affectedEndDate)}`}
           </p>
         </div>
-        <StatusBadge tone={approvalDetailStatusTone(detail.status)}>
-          {statusLabel(detail.status)}
-        </StatusBadge>
+        <WorkflowStatusBadge status={detail.status} />
       </div>
       <dl className="m-0 grid gap-3 sm:grid-cols-2">
         <DetailFact label="Workflow" value={workflowLabel(detail.kind)} />
@@ -536,7 +526,11 @@ function errorMessage(error: unknown): string {
 }
 
 function decisionSuccessMessage(action: ApprovalDecisionAction, status: string): string {
-  return `${actionLabel(action, 'ABSENCE')} recorded. The approval is now ${statusLabel(status)}.`;
+  return `${actionLabel(action, 'ABSENCE')} recorded. The approval is now ${decisionResultStatusLabel(status)}.`;
+}
+
+function decisionResultStatusLabel(status: string): string {
+  return status.replaceAll('_', ' ').toLocaleLowerCase('en-US');
 }
 
 function workflowLabel(kind: ApprovalDetail['kind']): string {
@@ -552,17 +546,6 @@ function actionLabel(action: ApprovalDecisionAction, kind: ApprovalDetail['kind'
   if (action === 'REQUEST_CHANGES') return 'Request changes';
   if (action === 'REJECT') return 'Reject';
   return kind === 'CORRECTION' ? 'Approve correction' : 'Approve';
-}
-
-function statusLabel(status: string): string {
-  return status.replaceAll('_', ' ').toLowerCase();
-}
-
-function approvalDetailStatusTone(status: string): NonNullable<StatusBadgeProps['tone']> {
-  if (['APPROVED', 'ACKNOWLEDGED', 'APPLIED', 'CANCELLED'].includes(status)) return 'success';
-  if (['REJECTED', 'WITHDRAWN'].includes(status)) return 'danger';
-  if (status === 'CHANGES_REQUESTED') return 'info';
-  return 'warning';
 }
 
 function formatInstant(value: string): string {

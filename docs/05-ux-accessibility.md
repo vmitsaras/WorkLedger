@@ -38,15 +38,15 @@ product-owned. Forced-colors mode replaces the accent with a system color, and l
 - Today
 - My time
 - My balances
-- Requests
+- My requests
 - Calendar
 
-Notifications and Profile are account utilities available from the application shell. Monthly periods and individual records are reached from My time, Requests, Approvals, or Reports rather than duplicated in primary navigation.
+Notifications and Profile are account utilities available from the application shell. Monthly periods and individual records are reached from My time, My requests, Approval inbox, or Reports rather than duplicated in primary navigation.
 
 ### Manager additions
 
-- Team
-- Approvals
+- Team status
+- Approval inbox
 - Team calendar
 
 ### HR additions
@@ -56,7 +56,7 @@ Notifications and Profile are account utilities available from the application s
 - Time settings
 - Absence settings
 - Holiday calendars
-- Audit
+- Domain audit
 
 ### System-administrator additions
 
@@ -327,7 +327,9 @@ Use native tables for passive summaries. Use React Aria Table when row selection
 - Row actions accessible without hover.
 - URL-owned pagination and approved non-sensitive filters only. Opaque authorized team/employee IDs and broad workflow category may be used where the route contract permits; absence subtype, sickness classification, notes/reasons, entitlement, names, email addresses, and person-identifying free-text searches never enter the URL.
 - Empty and partial-result states.
-- Horizontal scrolling with preserved focus and context where needed.
+- Horizontal scrolling with preserved focus and context where needed. The wrapper becomes a named,
+  keyboard-focusable region and exposes a visible instruction only while its content actually
+  overflows; a fitting table does not add another tab stop or permanent instruction.
 - Card transformation only when relationships remain understandable.
 
 ## 14. Responsive behavior

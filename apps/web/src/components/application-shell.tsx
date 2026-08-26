@@ -6,6 +6,7 @@ import type { NavigationArea, SelfContext } from '@workledger/contracts';
 import { Alert, Button, Drawer } from '@workledger/ui';
 
 import { clearSessionMemory, signOut } from '../app/api-client.js';
+import { canonicalRouteLabel } from '../app/route-copy.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import {
   CompanyIdentity,
@@ -20,34 +21,34 @@ type NavigationItem = Readonly<{
 }>;
 
 const NAVIGATION_ITEMS: readonly NavigationItem[] = [
-  { area: 'EMPLOYEE', label: 'Today', to: '/today' },
-  { area: 'EMPLOYEE', label: 'My time', to: '/my-time' },
-  { area: 'EMPLOYEE', label: 'My balances', to: '/my-balances' },
-  { area: 'EMPLOYEE', label: 'Requests', to: '/requests' },
-  { area: 'EMPLOYEE', label: 'Calendar', to: '/calendar' },
-  { area: 'MANAGER', label: 'Team status', to: '/team' },
-  { area: 'MANAGER', label: 'Approval inbox', to: '/approvals' },
-  { area: 'MANAGER', label: 'Team calendar', to: '/team-calendar' },
-  { area: 'HR', label: 'Employees', to: '/employees' },
-  { area: 'HR', label: 'Teams', to: '/teams' },
-  { area: 'HR', label: 'Time settings', to: '/settings/time' },
-  { area: 'HR', label: 'Absence settings', to: '/settings/absence' },
-  { area: 'HR', label: 'Holiday calendars', to: '/settings/holidays' },
-  { area: 'HR', label: 'Audit', to: '/audit' },
-  { area: 'SYSTEM', label: 'Accounts and sessions', to: '/system/accounts' },
-  { area: 'SYSTEM', label: 'Operations', to: '/system/operations' },
-  { area: 'SYSTEM', label: 'Technical audit', to: '/system/audit' },
+  { area: 'EMPLOYEE', label: canonicalRouteLabel('/today'), to: '/today' },
+  { area: 'EMPLOYEE', label: canonicalRouteLabel('/my-time'), to: '/my-time' },
+  { area: 'EMPLOYEE', label: canonicalRouteLabel('/my-balances'), to: '/my-balances' },
+  { area: 'EMPLOYEE', label: canonicalRouteLabel('/requests'), to: '/requests' },
+  { area: 'EMPLOYEE', label: canonicalRouteLabel('/calendar'), to: '/calendar' },
+  { area: 'MANAGER', label: canonicalRouteLabel('/team'), to: '/team' },
+  { area: 'MANAGER', label: canonicalRouteLabel('/approvals'), to: '/approvals' },
+  { area: 'MANAGER', label: canonicalRouteLabel('/team-calendar'), to: '/team-calendar' },
+  { area: 'HR', label: canonicalRouteLabel('/employees'), to: '/employees' },
+  { area: 'HR', label: canonicalRouteLabel('/teams'), to: '/teams' },
+  { area: 'HR', label: canonicalRouteLabel('/settings/time'), to: '/settings/time' },
+  { area: 'HR', label: canonicalRouteLabel('/settings/absence'), to: '/settings/absence' },
+  { area: 'HR', label: canonicalRouteLabel('/settings/holidays'), to: '/settings/holidays' },
+  { area: 'HR', label: canonicalRouteLabel('/audit'), to: '/audit' },
+  { area: 'SYSTEM', label: canonicalRouteLabel('/system/accounts'), to: '/system/accounts' },
+  { area: 'SYSTEM', label: canonicalRouteLabel('/system/operations'), to: '/system/operations' },
+  { area: 'SYSTEM', label: canonicalRouteLabel('/system/audit'), to: '/system/audit' },
 ];
 
 const HR_APPROVAL_ITEM: NavigationItem = {
   area: 'HR',
-  label: 'Approval inbox',
+  label: canonicalRouteLabel('/approvals'),
   to: '/approvals',
 };
 
 const HR_TEAM_CALENDAR_ITEM: NavigationItem = {
   area: 'HR',
-  label: 'Team calendar',
+  label: canonicalRouteLabel('/team-calendar'),
   to: '/team-calendar',
 };
 
@@ -65,7 +66,11 @@ const AREA_LANDING_PATHS: Readonly<Record<NavigationArea, string>> = {
   SYSTEM: '/system/operations',
 };
 
-const REPORTS_ITEM: NavigationItem = { area: 'EMPLOYEE', label: 'Reports', to: '/reports' };
+const REPORTS_ITEM: NavigationItem = {
+  area: 'EMPLOYEE',
+  label: canonicalRouteLabel('/reports'),
+  to: '/reports',
+};
 
 export function ApplicationShell() {
   const context = useLoaderData<SelfContext>();
@@ -268,7 +273,7 @@ function NavigationPanel({
                   `wl-nav-link ${isActive ? 'wl-nav-link-active' : ''}`.trim()
                 }
               >
-                Notifications
+                {canonicalRouteLabel('/notifications')}
               </NavLink>
             </li>
             <li>
@@ -280,7 +285,7 @@ function NavigationPanel({
                   `wl-nav-link ${isActive ? 'wl-nav-link-active' : ''}`.trim()
                 }
               >
-                Profile
+                {canonicalRouteLabel('/profile')}
               </NavLink>
             </li>
           </ul>

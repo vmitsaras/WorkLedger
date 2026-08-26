@@ -17,6 +17,7 @@ import {
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatLocalDate, formatTime } from '../app/date-time-format.js';
 import { teamStatusQuery } from '../app/query.js';
+import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import {
@@ -74,8 +75,8 @@ export function TeamStatusPage() {
     <section className="grid gap-6">
       <PageHeader
         eyebrow="Team workspace"
-        title="Team status"
-        description="Check current availability, focus the list, and move directly to team work that needs follow-up."
+        title={canonicalRouteLabel('/team')}
+        description="See who is working, on break, unavailable today, or has open records, then open the right follow-up."
       >
         <nav aria-label="Team workspace shortcuts" className="flex flex-wrap gap-2">
           <Link className={buttonVariants({ variant: 'secondary' })} to="/approvals">

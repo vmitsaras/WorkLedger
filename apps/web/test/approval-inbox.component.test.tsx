@@ -101,7 +101,7 @@ test('hydrates controls from the URL and renders a privacy-minimized, accessible
 
   const heading = await screen.findByRole('heading', { name: 'Approval inbox' });
   await waitFor(() => expect(heading).toHaveFocus());
-  expect(document.title).toBe('Approvals | WorkLedger');
+  expect(document.title).toBe('Approval inbox | WorkLedger');
   expect(screen.getByRole('heading', { name: 'All records: 11' })).toBeVisible();
   expect(screen.getByRole('combobox', { name: 'Queue view' })).toHaveValue('ALL');
   const appliedView = screen.getByText(/Applied view:/u).closest('p');

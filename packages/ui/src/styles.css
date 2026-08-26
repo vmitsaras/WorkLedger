@@ -87,7 +87,7 @@
     --wl-control-padding-block: var(--wl-space-2);
     --wl-control-padding-inline: var(--wl-space-4);
     --wl-control-disabled-opacity: 0.55;
-    --wl-panel-padding: clamp(var(--wl-space-4), 3vw, var(--wl-space-6));
+    --wl-panel-padding: var(--wl-density-balanced-container-padding);
     --wl-overlay-scrim: color-mix(in oklab, var(--wl-text) 35%, transparent);
     --wl-shadow-card: 0 0.5rem 1.5rem oklch(0.24 0.03 248 / 0.08);
     --wl-shadow-dialog: 0 1.5rem 5rem oklch(0.16 0.03 248 / 0.24);
@@ -194,13 +194,16 @@
   }
 
   .wl-panel--comfortable {
-    gap: var(--wl-density-comfortable-section-gap);
+    gap: var(--wl-space-5);
+    padding: clamp(var(--wl-space-4), 3vw, var(--wl-density-comfortable-container-padding));
   }
   .wl-panel--balanced {
-    gap: var(--wl-density-balanced-section-gap);
+    gap: var(--wl-space-4);
+    padding: clamp(var(--wl-space-4), 2.5vw, var(--wl-density-balanced-container-padding));
   }
   .wl-panel--compact {
-    gap: var(--wl-density-compact-section-gap);
+    gap: var(--wl-space-3);
+    padding: var(--wl-density-compact-container-padding);
   }
   .wl-panel__heading,
   .wl-filter-bar__title,

@@ -10,6 +10,12 @@ test('defines visible focus, reduced-motion, and forced-colors foundations', asy
   expect(styles).toContain(':where(.wl-control, .wl-link, .wl-field input)[data-focus-visible]');
   expect(styles).toContain('--wl-state-warning-text:');
   expect(styles).toContain('--wl-density-compact-section-gap:');
+  expect(styles).toContain('.wl-panel--comfortable {');
+  expect(styles).toContain('var(--wl-density-comfortable-container-padding)');
+  expect(styles).toContain(
+    'padding: clamp(var(--wl-space-4), 2.5vw, var(--wl-density-balanced-container-padding));',
+  );
+  expect(styles).toContain('padding: var(--wl-density-compact-container-padding);');
   expect(styles).toContain('outline-style: solid;');
   expect(styles).toContain('@keyframes wl-dialog-in');
   expect(styles).toContain('@media (prefers-reduced-motion: reduce)');

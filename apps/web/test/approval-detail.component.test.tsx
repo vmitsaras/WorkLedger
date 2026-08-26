@@ -65,7 +65,10 @@ test('requires a reason and explicit HR override before approving a negative abs
   const heading = await screen.findByRole('heading', { name: 'Review absence request' });
   await waitFor(() => expect(heading).toHaveFocus());
   expect(screen.getByText(/projected remaining −2h 00m/u)).toBeVisible();
-  expect(screen.getByRole('region', { name: 'Absence coverage' })).toHaveAttribute('tabindex', '0');
+  const coverageTable = screen.getByRole('table', {
+    name: 'Dates and minutes covered by this approval',
+  });
+  expect(coverageTable.closest('.wl-table-scroll')).not.toHaveAttribute('tabindex');
 
   await user.click(screen.getByRole('button', { name: 'Approve' }));
   let alert = screen.getByRole('alert');

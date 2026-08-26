@@ -1,6 +1,7 @@
 import { createRef } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
@@ -137,6 +138,61 @@ test('renders shared operational patterns with textual state and native semantic
   expect(screen.getByRole('link', { name: 'Return to Today' })).toHaveAttribute('href', '/today');
   expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
   await expectNoAxeViolations(container);
+});
+
+test('only names, instructs, and focuses a table wrapper while it overflows', () => {
+  let notifyResize: (() => void) | undefined;
+  class TestResizeObserver {
+    constructor(callback: ResizeObserverCallback) {
+      notifyResize = () => callback([], this as unknown as ResizeObserver);
+    }
+
+    disconnect() {}
+    observe() {}
+    unobserve() {}
+  }
+  vi.stubGlobal('ResizeObserver', TestResizeObserver);
+
+  const { container } = render(
+    <DataTable
+      caption="Daily records"
+      scrollHint="Scroll horizontally to review every column."
+      scrollLabel="Daily records comparison"
+    >
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+    </DataTable>,
+  );
+  const wrapper = container.querySelector<HTMLElement>('.wl-table-scroll');
+  if (wrapper === null) throw new Error('Expected the shared table wrapper.');
+  Object.defineProperty(wrapper, 'clientWidth', { configurable: true, value: 480 });
+  Object.defineProperty(wrapper, 'scrollWidth', { configurable: true, value: 480 });
+  act(() => notifyResize?.());
+
+  expect(wrapper).not.toHaveAttribute('role');
+  expect(wrapper).not.toHaveAttribute('tabindex');
+  expect(screen.queryByText('Scroll horizontally to review every column.')).not.toBeInTheDocument();
+
+  Object.defineProperty(wrapper, 'scrollWidth', { configurable: true, value: 720 });
+  act(() => notifyResize?.());
+
+  expect(screen.getByRole('region', { name: 'Daily records comparison' })).toBe(wrapper);
+  expect(wrapper).toHaveAttribute('tabindex', '0');
+  expect(wrapper).toHaveAttribute('data-overflowing', 'true');
+  expect(screen.getByText('Scroll horizontally to review every column.')).toBeVisible();
+  expect(wrapper).toHaveAccessibleDescription('Scroll horizontally to review every column.');
+
+  Object.defineProperty(wrapper, 'scrollWidth', { configurable: true, value: 480 });
+  act(() => notifyResize?.());
+
+  expect(wrapper).not.toHaveAttribute('role');
+  expect(wrapper).not.toHaveAttribute('tabindex');
+  expect(screen.queryByText('Scroll horizontally to review every column.')).not.toBeInTheDocument();
+  vi.unstubAllGlobals();
 });
 
 test('maps every shared alert tone to its semantic root modifier', () => {

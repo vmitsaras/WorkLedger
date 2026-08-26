@@ -481,7 +481,7 @@ remaining product phases are known.
 - [ ] Approval inbox defaults to actionable work and secondary filters no longer dominate the
   first viewport.
 - [ ] Team and employee administration rows expose clear next actions and work on narrow screens.
-- [ ] Permanent horizontal-scroll instructions are removed unless overflow is present and
+- [x] Permanent horizontal-scroll instructions are removed unless overflow is present and
   relevant.
 - [ ] Automated and manual visual, usability, accessibility, and regression gates pass.
 - [ ] Project status, roadmap, task board, release notes, screenshots, and relevant UX

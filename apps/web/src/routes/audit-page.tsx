@@ -8,6 +8,7 @@ import {
 } from '@workledger/contracts';
 
 import { domainAuditPageQuery } from '../app/query.js';
+import { canonicalRouteLabel } from '../app/route-copy.js';
 import { AuditEventExplorer, type AuditExplorerQuery } from '../components/audit-event-explorer.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -31,7 +32,7 @@ export function AuditPage() {
     <section className="grid gap-8">
       <PageHeader
         eyebrow="HR administration"
-        title="Domain audit"
+        title={canonicalRouteLabel('/audit')}
         description="Review recorded organizational changes and decisions."
       />
       <AuditEventExplorer

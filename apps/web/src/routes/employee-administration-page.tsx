@@ -45,6 +45,7 @@ import {
   employeePolicyAdminDetailQuery,
   employeeEntitlementAdminDetailQuery,
 } from '../app/query.js';
+import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useWideAdministrationLayout } from '../app/use-wide-administration-layout.js';
 import { EmployeeScheduleAdministration } from '../components/employee-schedule-administration.js';
 import { EmployeePolicyAdministration } from '../components/employee-policy-administration.js';
@@ -110,8 +111,8 @@ export function EmployeeAdministrationPage() {
     <section className="grid gap-8">
       <PageHeader
         eyebrow="People administration"
-        title="Employees"
-        description="Find lifecycle records and open the right employee workspace without rewriting employment, assignment, account, role, or attendance history."
+        title={canonicalRouteLabel('/employees')}
+        description="Find an employee, open their record, or add a new employee."
       >
         <div className="flex flex-wrap gap-3">
           <Link className={linkVariants({ prominence: 'default' })} to="/employees/new">

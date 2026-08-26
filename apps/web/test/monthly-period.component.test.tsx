@@ -31,7 +31,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test('renders a ready monthly review with captioned totals and keyboard-scrollable daily rows', async () => {
+test('renders a ready monthly review with captioned totals and native daily rows', async () => {
   stubFetch(readyPeriod());
   const { container } = renderApplication();
 
@@ -45,11 +45,10 @@ test('renders a ready monthly review with captioned totals and keyboard-scrollab
   );
   expect(screen.getByLabelText('Monthly calculated totals')).toHaveTextContent('+0h 15m');
 
-  const region = screen.getByRole('region', { name: 'Scrollable monthly daily review' });
-  expect(region).toHaveAttribute('tabindex', '0');
-  const table = within(region).getByRole('table', {
+  const table = screen.getByRole('table', {
     name: /Per-date monthly calculation for .*June 1, 2026/u,
   });
+  expect(table.closest('.wl-table-scroll')).not.toHaveAttribute('tabindex');
   expect(within(table).getByRole('columnheader', { name: 'Absence credit' })).toBeVisible();
   expect(within(table).getByRole('row', { name: /June 30, 2026 Complete/u })).toBeVisible();
   expect(within(table).getByRole('link', { name: /June 30, 2026/u })).toHaveAttribute(
@@ -79,11 +78,13 @@ test('labels missing/incomplete dates and links actionable blockers and warnings
   expect(
     screen.getByRole('link', { name: /July 31, 2026 — review daily record/u }),
   ).toHaveAttribute('href', `/time-records/${SECOND_RECORD_ID}`);
-  const region = screen.getByRole('region', { name: 'Scrollable monthly daily review' });
+  const table = screen.getByRole('table', {
+    name: /Per-date monthly calculation for .*July 1, 2026/u,
+  });
   expect(
-    within(region).getByRole('row', { name: /July 29, 2026 Missing daily result/u }),
+    within(table).getByRole('row', { name: /July 29, 2026 Missing daily result/u }),
   ).toBeVisible();
-  expect(within(region).getByRole('row', { name: /July 30, 2026 Incomplete/u })).toHaveTextContent(
+  expect(within(table).getByRole('row', { name: /July 30, 2026 Incomplete/u })).toHaveTextContent(
     '—',
   );
 });
@@ -321,11 +322,10 @@ test('separates the immutable approved baseline from an accessible adjusted view
   expect(reconciliation).toHaveTextContent('Cumulative post-lock delta0h 00m');
   expect(reconciliation).toHaveTextContent('Adjusted closing balance+10h 15m');
   expect(reconciliation).toHaveTextContent('Current view version3');
-  const region = screen.getByRole('region', { name: 'Scrollable post-lock adjustment history' });
-  expect(region).toHaveAttribute('tabindex', '0');
-  const table = within(region).getByRole('table', {
+  const table = screen.getByRole('table', {
     name: 'Ordered post-lock corrections and absence cancellations applied to the approved monthly baseline',
   });
+  expect(table.closest('.wl-table-scroll')).not.toHaveAttribute('tabindex');
   expect(within(table).getByText('Zero-delta evidence')).toBeVisible();
   expect(within(table).getByText('Reverses version 1')).toBeVisible();
   expect(screen.getByText(/closing posted balance \+10h 15m/u)).toBeVisible();

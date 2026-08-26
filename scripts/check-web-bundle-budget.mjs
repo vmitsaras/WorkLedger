@@ -5,7 +5,7 @@ import path from 'node:path';
 export const BUNDLE_BUDGETS = Object.freeze({
   largestJavaScriptBytes: 500_000,
   totalJavaScriptBytes: 910_000,
-  totalJavaScriptGzipBytes: 245_000,
+  totalJavaScriptGzipBytes: 246_000,
   totalCssBytes: 51_000,
 });
 

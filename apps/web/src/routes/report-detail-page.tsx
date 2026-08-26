@@ -30,6 +30,7 @@ import { reportResultQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
 import { ReportPortabilityActions } from '../components/report-portability-actions.js';
+import { WorkflowStatusBadge } from '../components/workflow-status-badge.js';
 
 export type ReportRouteLoaderData = Readonly<{
   catalog: ReportCatalog;
@@ -526,9 +527,7 @@ function monthlyTimeRow(row: ReportRow, index: number): ReactNode {
         </Link>
       </td>
       <td className="px-4 py-3">
-        <StatusBadge tone={workflowTone(row.workflowStatus)}>
-          {humanize(row.workflowStatus)}
-        </StatusBadge>
+        <WorkflowStatusBadge status={row.workflowStatus} />
       </td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.expectedMinutes)}</td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.workedMinutes)}</td>
@@ -680,13 +679,6 @@ function ReportError({ error, retry }: Readonly<{ error: unknown; retry: () => v
       </p>
     </RouteState>
   );
-}
-
-function workflowTone(status: string): 'info' | 'success' | 'warning' | 'neutral' {
-  if (status === 'APPROVED' || status === 'LOCKED') return 'success';
-  if (status === 'OPEN' || status === 'SUBMITTED') return 'info';
-  if (status === 'REJECTED') return 'warning';
-  return 'neutral';
 }
 
 function toDraft(query: ReportQuery): FilterDraft {

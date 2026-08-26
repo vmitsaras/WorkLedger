@@ -418,6 +418,7 @@ test('keeps combined-role work areas distinct and account utilities outside dest
   );
   expect(screen.getAllByRole('link', { name: 'Reports' })).toHaveLength(1);
   expect(screen.getByRole('navigation', { name: 'My work navigation' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'My requests' })).toHaveAttribute('href', '/requests');
   expect(screen.getByRole('navigation', { name: 'Account' })).toBeInTheDocument();
   expect(workAreas.closest('.wl-navigation-destinations')).not.toBeNull();
   expect(
@@ -504,11 +505,9 @@ test('renders URL-owned time records and keeps posted and projected balance sepa
   expect(screen.getByText('Projected balance')).toBeVisible();
   expect(screen.getByText('10h 45m')).toBeVisible();
   expect(screen.getByText(/Projected balance excludes incomplete records/u)).toBeVisible();
-  expect(screen.getByRole('table', { name: /Daily time record summaries/u })).toBeVisible();
-  expect(screen.getByRole('region', { name: 'Daily time records table' })).toHaveAttribute(
-    'tabindex',
-    '0',
-  );
+  const recordsTable = screen.getByRole('table', { name: /Daily time record summaries/u });
+  expect(recordsTable).toBeVisible();
+  expect(recordsTable.closest('.wl-table-scroll')).not.toHaveAttribute('tabindex');
   expect(
     screen.getByRole('list', { name: 'Daily time record summaries for the selected period' }),
   ).toBeInTheDocument();
@@ -949,12 +948,12 @@ test('presents equivalent accessible personal calendar and agenda information', 
   const { container } = renderApplication('/calendar?month=2026-08');
 
   expect(await screen.findByRole('heading', { name: 'Calendar' })).toBeVisible();
-  expect(screen.getByRole('table')).toHaveAccessibleName(/Personal holidays and absence coverage/u);
-  expect(screen.getByRole('region', { name: 'Personal calendar month grid' })).toHaveAttribute(
-    'tabindex',
-    '0',
-  );
-  expect(screen.getByText('Scroll horizontally to review all seven days.')).toBeVisible();
+  const calendarTable = screen.getByRole('table');
+  expect(calendarTable).toHaveAccessibleName(/Personal holidays and absence coverage/u);
+  expect(calendarTable.closest('.wl-table-scroll')).not.toHaveAttribute('tabindex');
+  expect(
+    screen.queryByText('Scroll horizontally to review all seven days.'),
+  ).not.toBeInTheDocument();
   expect(screen.getByText('Vacation: Full day (submitted)')).toBeVisible();
   expect(screen.getByText('Public holiday: Summer holiday')).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Agenda list' }));

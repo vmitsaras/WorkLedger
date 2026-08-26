@@ -28,6 +28,7 @@ import {
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatLocalDate } from '../app/date-time-format.js';
 import { approvalInboxQuery } from '../app/query.js';
+import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
@@ -112,8 +113,8 @@ export function ApprovalInboxPage() {
     <section className="grid gap-6">
       <PageHeader
         eyebrow="Approvals"
-        title="Approval inbox"
-        description="Review and decide the corrections, absence work, cancellations, and monthly periods in your scope."
+        title={canonicalRouteLabel('/approvals')}
+        description="Review the corrections, absence requests, cancellations, and monthly periods that need your decision."
       />
       {query.isPending ? (
         <ApprovalInboxLoading />

@@ -5,26 +5,19 @@ import { Link, useLoaderData, useNavigate, useSearchParams } from 'react-router'
 import {
   personalRequestQuerySchema,
   type PersonalRequestFilterStatus,
-  type PersonalRequestItemStatus,
   type PersonalRequestListItem,
   type PersonalRequestQuery,
   type PersonalRequestType,
 } from '@workledger/contracts';
-import {
-  Button,
-  FilterBar,
-  Pagination,
-  Panel,
-  RouteState,
-  StatusBadge,
-  buttonVariants,
-} from '@workledger/ui';
+import { Button, FilterBar, Pagination, Panel, RouteState, buttonVariants } from '@workledger/ui';
 
 import { formatLocalDate } from '../app/date-time-format.js';
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { personalRequestHistoryQuery } from '../app/query.js';
+import { canonicalRouteLabel } from '../app/route-copy.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
+import { WorkflowStatusBadge } from '../components/workflow-status-badge.js';
 
 type FilterDraft = Readonly<{
   status: PersonalRequestFilterStatus;
@@ -73,7 +66,7 @@ export function RequestHistoryPage() {
     <section className="grid gap-6">
       <PageHeader
         eyebrow="Requests"
-        title="My requests"
+        title={canonicalRouteLabel('/requests')}
         description="Review corrections, absence requests, and cancellation requests in one history. Sensitive absence details appear only after you open your record."
       >
         <Link className={`${buttonVariants()} w-fit`} to="/requests/new">
@@ -187,9 +180,7 @@ function RequestResults({
                     {dateRange(request.affectedStartDate, request.affectedEndDate)}
                   </p>
                 </div>
-                <StatusBadge tone={statusTone(request.status)}>
-                  {statusLabel(request.status)}
-                </StatusBadge>
+                <WorkflowStatusBadge status={request.status} />
               </div>
               <p className="m-0 text-sm text-[var(--wl-text-muted)]">
                 Submitted {formatSubmittedAt(request.submittedAt)}
@@ -232,23 +223,6 @@ function kindLabel(kind: PersonalRequestListItem['kind']): string {
   if (kind === 'CORRECTION') return 'Time correction';
   if (kind === 'ABSENCE') return 'Absence request';
   return 'Cancellation request';
-}
-
-function statusLabel(status: PersonalRequestItemStatus): string {
-  return status
-    .replaceAll('_', ' ')
-    .toLocaleLowerCase()
-    .replace(/^./u, (value) => value.toUpperCase());
-}
-
-function statusTone(
-  status: PersonalRequestItemStatus,
-): 'danger' | 'info' | 'neutral' | 'success' | 'warning' {
-  if (['APPROVED', 'ACKNOWLEDGED', 'APPLIED'].includes(status)) return 'success';
-  if (['REJECTED', 'CANCELLED'].includes(status)) return 'danger';
-  if (['CHANGES_REQUESTED', 'PARTIALLY_CANCELLED'].includes(status)) return 'warning';
-  if (status === 'WITHDRAWN') return 'neutral';
-  return 'info';
 }
 
 function dateRange(start: string, end: string): string {

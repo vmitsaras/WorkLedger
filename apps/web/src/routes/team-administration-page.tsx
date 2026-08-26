@@ -26,6 +26,7 @@ import {
   setTeamStateForAdministration,
 } from '../app/api-client.js';
 import { teamAdminPageQuery } from '../app/query.js';
+import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useWideAdministrationLayout } from '../app/use-wide-administration-layout.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -73,8 +74,8 @@ export function TeamAdministrationPage() {
     <section className="grid gap-8">
       <PageHeader
         eyebrow="People administration"
-        title="Teams"
-        description="Maintain orientation groups separately from employee records. Direct-manager assignments—not team membership—control manager access."
+        title={canonicalRouteLabel('/teams')}
+        description="Create and maintain orientation teams used to organize employee records. Manager access still follows direct-manager assignments."
       >
         <div className="flex flex-wrap gap-3">
           <a className={linkVariants({ prominence: 'default' })} href="#new-team-name">

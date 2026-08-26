@@ -288,44 +288,6 @@
     font-weight: 600;
   }
 
-  .wl-status {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--wl-space-2);
-    border: 1px solid;
-    border-radius: var(--wl-radius-status);
-    padding: var(--wl-space-1) var(--wl-space-2);
-    font-size: 0.75rem;
-    font-weight: 700;
-    line-height: 1.25;
-  }
-
-  .wl-status-success {
-    border-color: var(--wl-state-success-border);
-    background: var(--wl-state-success-surface);
-    color: var(--wl-state-success-text);
-  }
-
-  .wl-status-warning {
-    border-color: var(--wl-state-warning-border);
-    background: var(--wl-state-warning-surface);
-    color: var(--wl-state-warning-text);
-  }
-
-  .wl-status-danger {
-    border-color: var(--wl-state-danger-border);
-    background: var(--wl-state-danger-surface);
-    color: var(--wl-state-danger-text);
-  }
-
-  .wl-status-marker {
-    inline-size: var(--wl-space-2);
-    block-size: var(--wl-space-2);
-    flex: none;
-    border-radius: 999px;
-    background: currentColor;
-  }
-
   .wl-technical-error {
     border-inline-start: var(--wl-space-1) solid var(--wl-state-danger-border);
     background: var(--wl-state-danger-surface);
@@ -649,10 +611,16 @@
     background: var(--wl-surface-raised);
   }
 
+  :where([data-route-heading], #current-status-title) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
+  }
+
   :where([data-route-heading], #current-status-title):focus-visible {
     outline: 3px solid var(--wl-focus-ring);
-    outline-offset: 0.35rem;
-    border-radius: 0.2rem;
+    outline-offset: var(--wl-space-1);
+    border-radius: 0.125rem;
   }
 
   @media (min-width: 64rem) {
@@ -717,7 +685,6 @@
       .wl-approval-filter-disclosure,
       .wl-panel,
       .wl-skip-link,
-      .wl-status,
       .wl-technical-error,
       .wl-text-field,
       .wl-field-control,
