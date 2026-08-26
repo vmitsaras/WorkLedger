@@ -988,6 +988,7 @@ test('records an approval decision with field-linked errors and keyboard-scrolla
   ).toBeVisible();
   await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'reduce' });
   await capturePhase12Manager(page, 'approval-detail-mobile-320x900');
+  await capturePhase13CrossRoute(page, 'approval-detail-mobile-320x900');
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -2683,6 +2684,7 @@ test('uses responsive personal records and an agenda-first personal calendar', a
     true,
   );
   await capturePhase12Personal(page, 'my-time-mobile-390x900');
+  await capturePhase13CrossRoute(page, 'my-time-mobile-390x900');
   await expectPageToHaveNoAxeViolations(page);
 
   await page.goto('/calendar?month=2026-08');
@@ -3587,40 +3589,51 @@ async function capturePhase13Evidence(page: Page, name: string): Promise<void> {
 }
 
 async function capturePhase13TodayGate(page: Page, name: string): Promise<void> {
-  if (process.env['WORKLEDGER_ASSERT_PHASE_13_TODAY_GATE'] !== '1') return;
-
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page).toHaveScreenshot(['phase-13', 'wl1307', `${name}.png`], {
-    animations: 'disabled',
-    fullPage: true,
-  });
+  await capturePhase13Surface(page, name, 'WORKLEDGER_ASSERT_PHASE_13_TODAY_GATE', 'wl1307');
 }
 
 async function capturePhase13ApprovalInbox(page: Page, name: string): Promise<void> {
-  if (process.env['WORKLEDGER_ASSERT_PHASE_13_APPROVALS'] !== '1') return;
-
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page).toHaveScreenshot(['phase-13', 'wl1308', `${name}.png`], {
-    animations: 'disabled',
-    fullPage: true,
-  });
+  await capturePhase13Surface(page, name, 'WORKLEDGER_ASSERT_PHASE_13_APPROVALS', 'wl1308');
 }
 
 async function capturePhase13TeamStatus(page: Page, name: string): Promise<void> {
-  if (process.env['WORKLEDGER_ASSERT_PHASE_13_TEAM'] !== '1') return;
-
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page).toHaveScreenshot(['phase-13', 'wl1309', `${name}.png`], {
-    animations: 'disabled',
-    fullPage: true,
-  });
+  await capturePhase13Surface(page, name, 'WORKLEDGER_ASSERT_PHASE_13_TEAM', 'wl1309');
 }
 
 async function capturePhase13Administration(page: Page, name: string): Promise<void> {
-  if (process.env['WORKLEDGER_ASSERT_PHASE_13_ADMINISTRATION'] !== '1') return;
+  await capturePhase13Surface(page, name, 'WORKLEDGER_ASSERT_PHASE_13_ADMINISTRATION', 'wl1310');
+}
 
+async function capturePhase13CrossRoute(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_ASSERT_PHASE_13_VISUALS'] !== '1') return;
+
+  await capturePhase13Screenshot(page, 'wl1312', name);
+}
+
+async function capturePhase13Surface(
+  page: Page,
+  name: string,
+  taskEnvironmentVariable:
+    | 'WORKLEDGER_ASSERT_PHASE_13_ADMINISTRATION'
+    | 'WORKLEDGER_ASSERT_PHASE_13_APPROVALS'
+    | 'WORKLEDGER_ASSERT_PHASE_13_TEAM'
+    | 'WORKLEDGER_ASSERT_PHASE_13_TODAY_GATE',
+  historicalTask: 'wl1307' | 'wl1308' | 'wl1309' | 'wl1310',
+): Promise<void> {
+  const currentGateEnabled = process.env['WORKLEDGER_ASSERT_PHASE_13_VISUALS'] === '1';
+  const historicalGateEnabled = process.env[taskEnvironmentVariable] === '1';
+  if (!currentGateEnabled && !historicalGateEnabled) return;
+
+  await capturePhase13Screenshot(page, currentGateEnabled ? 'wl1312' : historicalTask, name);
+}
+
+async function capturePhase13Screenshot(
+  page: Page,
+  task: 'wl1307' | 'wl1308' | 'wl1309' | 'wl1310' | 'wl1312',
+  name: string,
+): Promise<void> {
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page).toHaveScreenshot(['phase-13', 'wl1310', `${name}.png`], {
+  await expect(page).toHaveScreenshot(['phase-13', task, `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

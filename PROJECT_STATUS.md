@@ -2,19 +2,19 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 12 of 14 Phase 13 tasks complete
-**Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1312` (next)
-**Status:** WL-1311 complete — destination copy, workflow status presentation, route focus, panel density, and table overflow now follow shared cross-route contracts
+**Phase progress:** Phase 12 complete — 13 of 14 Phase 13 tasks complete
+**Current milestone:** Phase 13 cross-route regression gate complete — version 0.13.0
+**Active task:** `WL-1313` (next)
+**Status:** WL-1312 complete — the deterministic current-state visual, integration, accessibility, and usability gate passes with no open P0/P1 UX defect
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1311` establishes one authenticated destination lexicon and
-one typed workflow-status presentation matrix, keeps route-heading focus visually proportionate,
-applies responsive panel density, and exposes named keyboard-scrollable table regions only while
-content actually overflows. The next bounded slice is `WL-1312`: complete deterministic
-cross-route state, visual-regression, integration, accessibility, and usability coverage.
+Phase 12 is complete at `0.13.0`. `WL-1312` promotes the cumulative Phase 13 UI into one
+deterministic 19-image cross-route visual gate, records the complete representative story/state
+matrix, and closes the bounded accessibility and usability audit with no open P0 or P1 UX defect.
+The next bounded slice is `WL-1313`: execute the Phase 13 release gate, reconcile final evidence
+and documentation, and advance every workspace manifest to `0.14.0`.
 
 ## Verified decisions
 
@@ -100,6 +100,10 @@ cross-route state, visual-regression, integration, accessibility, and usability 
 - Shared native table wrappers add their region name, keyboard tab stop, visible scroll guidance,
   and accessible description only while measured horizontal overflow exists; fitting tables retain
   caption/header semantics without a redundant focus stop.
+- `pnpm test:visual` owns the current cumulative Phase 13 baseline: 19 reviewed macOS Chromium
+  images cover Today, Approval inbox, approval detail, Team status, My time, Employees, and Teams
+  from 1440 pixels through the 320-pixel reflow boundary. Earlier Phase 12 and task-specific Phase
+  13 screenshots remain immutable historical evidence.
 - Desktop account navigation, actor identity, and sign-out remain outside the independently
   scrolling destination inventory. The narrow shell preserves the same group order in the
   focus-managed React Aria drawer.
@@ -2309,24 +2313,46 @@ cross-route state, visual-regression, integration, accessibility, and usability 
   migration, dependency, lockfile, manifest, workspace version, publication, deployment, or tag
   changed. See `docs/135-cross-route-presentation-normalization.md`.
 
+**2026-08-26 — WL-1312 cross-route regression, accessibility, and usability gate**
+
+- Promoted the cumulative Phase 13 UI into the current `pnpm test:visual` gate without rewriting
+  historical evidence. One global visual switch composes the established Today, Approval inbox,
+  Team status, and administration captures with new current approval-detail and My-time captures.
+- Added and manually inspected 19 deterministic macOS Chromium images across Today, Approval
+  inbox, approval detail, Team status, My time, Employees, and Teams at 1440, 1024, 768, 390, and
+  320 CSS-pixel evidence boundaries. An update run and a separate comparison-only run each passed.
+- Recorded the representative cross-route story/state matrix, snapshot dimensions and SHA-256
+  manifest, four historical-drift dispositions, axe/keyboard/focus/reflow evidence, privacy review,
+  manual image/usability conclusions, and the explicit assistive-technology limitation. No P0 or
+  P1 UX defect remains open in the bounded audit.
+- Exact `pnpm verify` passes runtime configuration, reproducible OpenAPI, formatting, lint,
+  296-source/1,552-import boundaries, CSS ownership, strict TypeScript, all 37 tooling tests, all
+  376 unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 38
+  browser scenarios with one opt-in capture skipped, and the production/public-root build.
+- The unchanged bundle passes at 383,163 largest JavaScript bytes, 909,700 total JavaScript bytes,
+  245,304 gzip JavaScript bytes, and 50,131 CSS bytes. No domain rule, API contract, database
+  schema, migration, dependency, lockfile, workspace version, publication, deployment, or tag
+  changed. The root manifest changes only the visual-test command from the historical Phase 12
+  comparison to the current Phase 13 suite. See
+  `docs/136-cross-route-regression-accessibility-usability-gate.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1312`. Exact partial-day work-versus-absence overlap,
+No decision blocks `WL-1313`. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still need authoritative domain
 or repository facts; Today does not guess them from minute totals or an otherwise valid overnight
 session. The PostgreSQL-backed `WL-1305` correction-history case remains locally unexecuted until
-the Docker database service is available. The preserved Phase 12 visual command currently reports
-four historical snapshot mismatches; the current Today gate passes and `WL-1312` owns cross-route
-closure. `D-502` remains the broader exact retail assistive-technology matrix rather than a
-whole-product conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for
-Testing and Safari. The
-temporary Astro backup is recoverable at
+the Docker database service is available. The earlier Phase 12 and task-specific Phase 13 images
+remain historical and intentionally differ from the current green `WL-1312` visual gate. `D-502`
+remains the broader exact retail assistive-technology matrix rather than a whole-product
+conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for Testing and Safari.
+The temporary Astro backup is recoverable at
 `/private/tmp/workledger-apps-site-phase11-backup.V4AgyX/apps-site`, but it remains noncanonical and
 belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1312 — Complete deterministic cross-route state, visual-regression, integration, accessibility, and usability coverage.`
+`WL-1313 — Execute the Phase 13 release gate, update evidence and documentation, and bump every workspace manifest to 0.14.0.`
 
 ## Update rules
 

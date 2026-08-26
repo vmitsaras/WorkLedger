@@ -133,7 +133,7 @@ unless pnpm `11.20.0` is already the active package manager.
 | `pnpm run test` | Run native repository-contract tests plus Vitest unit/component projects. |
 | `pnpm run test:integration` | Run API/database integration projects; the real PostgreSQL case is opt-in through its URL. |
 | `pnpm run test:e2e` | Run the Playwright application suite plus Firefox, WebKit, and mobile browser-matrix smoke coverage against the real Vite preview. |
-| `pnpm run test:visual` | Reproduce the reviewed macOS Chromium Phase 12 visual baseline; update snapshots only after deliberate manual verification. |
+| `pnpm run test:visual` | Reproduce the reviewed macOS Chromium Phase 13 cross-route visual baseline; update snapshots only after deliberate manual verification. |
 | `pnpm run build` | Build all typed projects and the web preview, then verify emitted public entries. |
 | `pnpm run db:up` / `db:down` | Start or stop the local PostgreSQL service; stopping preserves its volume. |
 | `pnpm run db:check` / `db:test` / `db:verify` | Check local connectivity, run the isolated lifecycle test, or run both. |
