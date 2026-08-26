@@ -18,7 +18,7 @@ import {
   validatorCompiler,
 } from 'fastify-type-provider-zod';
 
-import { FIELD_ERROR_MESSAGES, safeApiErrorMessage, WorkLedgerApiError } from './errors.js';
+import { WorkLedgerApiError } from './errors.js';
 
 const PATH_SEGMENT_PATTERN = /^(?:[A-Za-z][A-Za-z0-9_]{0,63}|\d{1,6})$/u;
 
@@ -111,7 +111,6 @@ function sendError(
       code,
       ...(options.context === undefined ? {} : { context: options.context }),
       ...(options.fields === undefined ? {} : { fields: options.fields }),
-      message: safeApiErrorMessage(code),
       requestId: request.id,
     },
     ...(options.idempotentReplay === undefined
@@ -124,7 +123,6 @@ function sendError(
   const fallbackEnvelope = {
     error: {
       code: 'INTERNAL_ERROR',
-      message: safeApiErrorMessage('INTERNAL_ERROR'),
       requestId: request.id,
     },
   } as const;
@@ -142,12 +140,12 @@ function attendanceIdempotencyHeaderError(
 }
 
 function mapValidationFields(issues: readonly ZodFastifySchemaValidationError[]): ApiFieldErrors {
-  const fields: Record<string, Array<{ code: ApiFieldErrorCode; message: string }>> = {};
+  const fields: Record<string, Array<{ code: ApiFieldErrorCode }>> = {};
 
   for (const issue of issues) {
     const code = fieldCodeForIssue(issue);
     const path = code === 'UNKNOWN_FIELD' ? '$' : safeFieldPath(issue.instancePath);
-    const item = { code, message: FIELD_ERROR_MESSAGES[code] };
+    const item = { code };
     const current = fields[path] ?? [];
     if (!current.some((candidate) => candidate.code === item.code)) current.push(item);
     fields[path] = current;

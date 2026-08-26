@@ -4,7 +4,7 @@ import type {
   WorkLedgerDatabase,
 } from '@workledger/database';
 
-import { notificationContent } from './content.js';
+import { notificationContent, type GenericNotificationContent } from './content.js';
 
 export const NOTIFICATION_DELIVERY_FAILURE_CODES = [
   'DELIVERY_DEPENDENCY_FAILED',
@@ -14,11 +14,10 @@ export const NOTIFICATION_DELIVERY_FAILURE_CODES = [
 export type NotificationDeliveryFailureCode = (typeof NOTIFICATION_DELIVERY_FAILURE_CODES)[number];
 
 export type NotificationDeliveryMessage = Readonly<{
-  body: string;
+  content: GenericNotificationContent;
   destinationPath: NotificationDestinationPath;
   notificationId: string;
   recipientEmail: string;
-  subject: string;
 }>;
 
 export type NotificationDeliveryResult =
@@ -62,11 +61,10 @@ export async function deliverCommittedNotification(
 
   for (let attemptNumber = 1; attemptNumber <= 2; attemptNumber += 1) {
     const result = await attemptDelivery(adapter, {
-      body: content.body,
+      content,
       destinationPath: notification.destinationPath,
       notificationId: notification.id,
       recipientEmail: notification.recipientEmail,
-      subject: content.emailSubject,
     });
     try {
       await database.transaction(async (transaction) => {

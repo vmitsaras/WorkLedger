@@ -63,7 +63,7 @@ export {
   parseRequestIdentifier,
   parseRequestInstant,
   parseSelfServiceIdentity,
-  summarizeUserAgent,
+  parseUserAgent,
   type AccountSelfService,
   type SelfServiceIdentity,
 } from './account/self-service.js';

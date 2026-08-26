@@ -27,6 +27,7 @@ import {
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
 import { reportResultQuery } from '../app/query.js';
+import { reportPresentation } from '../app/presentation-codes.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
 import { ReportPortabilityActions } from '../components/report-portability-actions.js';
@@ -54,6 +55,7 @@ export function ReportDetailPage() {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<FilterDraft>(() => toDraft(loaderData.query));
   const [filterError, setFilterError] = useState<string>();
+  const presentation = reportPresentation(loaderData.report.key);
 
   useEffect(() => {
     setDraft(toDraft(loaderData.query));
@@ -121,8 +123,8 @@ export function ReportDetailPage() {
         </Link>
         <PageHeader
           eyebrow="Report"
-          title={loaderData.report.title}
-          description={loaderData.report.description}
+          title={presentation.title}
+          description={presentation.description}
         />
       </div>
       <ReportFilters

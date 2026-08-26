@@ -5,6 +5,7 @@ import type { ReportCatalogItem } from '@workledger/contracts';
 import { Button, buttonVariants, Panel, RouteState } from '@workledger/ui';
 
 import { reportCatalogQuery } from '../app/query.js';
+import { reportPresentation } from '../app/presentation-codes.js';
 import { PageHeader } from '../components/page-header.js';
 
 export function ReportsPage() {
@@ -61,6 +62,7 @@ function ReportCard({
   report,
   to,
 }: Readonly<{ from: string; report: ReportCatalogItem; to: string }>) {
+  const presentation = reportPresentation(report.key);
   const search = new URLSearchParams({
     direction: 'ASC',
     from,
@@ -72,16 +74,16 @@ function ReportCard({
   return (
     <Panel as="article" className="grid h-full content-between gap-5">
       <div>
-        <h3 className="m-0 text-lg font-bold">{report.title}</h3>
+        <h3 className="m-0 text-lg font-bold">{presentation.title}</h3>
         <p className="m-0 mt-2 text-sm leading-6 text-[var(--wl-text-muted)]">
-          {report.description}
+          {presentation.description}
         </p>
       </div>
       <Link
         className={buttonVariants({ variant: 'secondary' })}
         to={`/reports/${report.key}?${search.toString()}`}
       >
-        Open {report.title.toLocaleLowerCase()}
+        Open {presentation.title.toLocaleLowerCase()}
       </Link>
     </Panel>
   );

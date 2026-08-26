@@ -325,10 +325,7 @@ function successResponse(data: unknown): Response {
 }
 
 function apiErrorResponse(code: string, status: number): Response {
-  return Response.json(
-    { error: { code, message: 'The request could not be completed.', requestId: REQUEST_ID } },
-    { status },
-  );
+  return Response.json({ error: { code, requestId: REQUEST_ID } }, { status });
 }
 
 function requestUrl(input: RequestInfo | URL): URL {

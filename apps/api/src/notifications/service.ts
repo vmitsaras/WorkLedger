@@ -89,15 +89,14 @@ export function parseNotificationIdentity(accountIdValue: string): NotificationI
 function toNotificationItem(item: NotificationListItemRecord): NotificationItem {
   const content = notificationContent(item.event);
   return Object.freeze({
-    body: content.body,
     deliveryStatus: item.deliveryStatus,
     destinationPath: item.destinationPath,
     dismissedAt: item.dismissedAt,
-    event: item.event,
+    event: content.event,
     id: item.id,
     occurredAt: item.occurredAt,
+    parameters: content.parameters,
     status: item.dismissedAt === null ? 'ACTIVE' : 'DISMISSED',
-    title: content.title,
   });
 }
 

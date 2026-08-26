@@ -179,7 +179,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1400` Audit every user-facing string and ratify the locale, translation-key, message-ownership, formatting, and fallback architecture.
 - [x] `WL-1401` Establish the shared typed i18n foundation, local catalog loading, locale resolution, React/React Aria integration, and bundle-budget contract.
 - [x] `WL-1402` Implement per-account locale persistence, signed-out device preference, initial invitation locale, profile/auth selectors, and immediate language switching.
-- [ ] `WL-1403` Replace user-facing API prose dependencies with bounded message descriptors and structured presentation data.
+- [x] `WL-1403` Replace user-facing API prose dependencies with bounded message descriptors and structured presentation data.
 - [ ] `WL-1404` Translate shared UI, route titles and boundaries, authentication, application shell, navigation, profile, validation, dialogs, and announcements.
 - [ ] `WL-1405` Translate employee workflows: Today, time and balances, records, corrections, absences, calendars, notifications, and monthly review.
 - [ ] `WL-1406` Translate manager, HR, and system workflows, including Approvals, Team, administration, settings, reports, audit, accounts, and operations.

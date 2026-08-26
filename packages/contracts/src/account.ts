@@ -57,12 +57,13 @@ export const selfContextSchema = z.strictObject({
 });
 
 export const selfSessionSummarySchema = z.strictObject({
+  browser: z.enum(['EDGE', 'FIREFOX', 'CHROME', 'SAFARI', 'BROWSER', 'UNRECOGNIZED']),
   createdAt: instantSchema,
   current: z.boolean(),
-  deviceSummary: z.string().min(1).max(96),
   expiresAt: instantSchema,
   id: opaqueIdentifierSchema,
   lastActiveAt: instantSchema,
+  platform: z.enum(['IOS', 'ANDROID', 'MACOS', 'WINDOWS', 'LINUX']).nullable(),
 });
 
 export const selfProfileSchema = selfContextSchema.extend({

@@ -39,12 +39,10 @@ test('validates requests with 422 field errors and never echoes unknown input', 
           $: [
             {
               code: 'UNKNOWN_FIELD',
-              message: 'Remove fields that are not supported.',
             },
           ],
-          displayName: [{ code: 'INVALID_TYPE', message: 'Use the required value type.' }],
+          displayName: [{ code: 'INVALID_TYPE' }],
         },
-        message: 'Correct the highlighted fields and try again.',
         requestId: response.headers['x-request-id'],
       },
     });
@@ -67,7 +65,7 @@ test('separates malformed JSON, not-found, safe application, and internal errors
     });
     expect(malformed.statusCode).toBe(400);
     expect(malformed.json()).toMatchObject({
-      error: { code: 'MALFORMED_REQUEST', message: 'The request body is not valid JSON.' },
+      error: { code: 'MALFORMED_REQUEST' },
     });
     expect(malformed.payload).not.toContain('do-not-return-this-secret');
 
@@ -92,7 +90,6 @@ test('separates malformed JSON, not-found, safe application, and internal errors
     expect(internal.json()).toMatchObject({
       error: {
         code: 'INTERNAL_ERROR',
-        message: 'The request could not be completed. Try again later.',
       },
     });
     expect(internal.payload).not.toContain('database-password');

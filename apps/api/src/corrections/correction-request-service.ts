@@ -236,19 +236,9 @@ function validationErrorForInterval(
   error: Readonly<{ code: string; validUtcOffsets?: readonly string[] }>,
 ) {
   const field = error.code === 'ATTENDANCE_AMBIGUOUS_LOCAL_TIME' ? 'interval' : 'interval';
-  const message =
-    error.code === 'ATTENDANCE_AMBIGUOUS_LOCAL_TIME'
-      ? `Choose a UTC offset for the repeated local time: ${error.validUtcOffsets?.join(' or ') ?? 'available offsets'}.`
-      : error.code === 'ATTENDANCE_NONEXISTENT_LOCAL_TIME'
-        ? 'This local time does not exist because of a daylight-saving change.'
-        : error.code === 'ATTENDANCE_FUTURE_EVENT'
-          ? 'The proposed interval cannot be in the future.'
-          : error.code === 'ATTENDANCE_INVALID_EVENT_ORDER'
-            ? 'The end time must be after the start time.'
-            : 'Use valid minute-precision local times.';
   throw new WorkLedgerApiError({
     code: 'VALIDATION_FAILED',
-    fields: { [field]: [{ code: 'INVALID_VALUE', message }] },
+    fields: { [field]: [{ code: 'INVALID_VALUE' }] },
     statusCode: 422,
   });
 }

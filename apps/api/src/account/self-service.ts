@@ -24,6 +24,8 @@ export type SelfServiceIdentity = Readonly<{
   fresh: boolean;
 }>;
 
+type DevicePresentation = Readonly<Pick<SelfProfile['sessions'][number], 'browser' | 'platform'>>;
+
 export interface AccountSelfService {
   getContext(identity: SelfServiceIdentity, at: Instant): Promise<SelfContext>;
   getProfile(identity: SelfServiceIdentity, at: Instant): Promise<SelfProfile>;
@@ -215,40 +217,42 @@ function mapSession(
   currentSessionId: DomainId<'Session'>,
 ): SelfProfile['sessions'][number] {
   return Object.freeze({
+    ...parseUserAgent(session.userAgent),
     createdAt: session.createdAt,
     current: session.id === currentSessionId,
-    deviceSummary: summarizeUserAgent(session.userAgent),
     expiresAt: session.expiresAt,
     id: session.id,
     lastActiveAt: session.lastActiveAt,
   });
 }
 
-export function summarizeUserAgent(userAgent: string | null): string {
-  if (userAgent === null || userAgent.trim() === '') return 'Unrecognized device';
+export function parseUserAgent(userAgent: string | null): DevicePresentation {
+  if (userAgent === null || userAgent.trim() === '') {
+    return Object.freeze({ browser: 'UNRECOGNIZED' as const, platform: null });
+  }
 
   const browser = /Edg\//u.test(userAgent)
-    ? 'Edge'
+    ? 'EDGE'
     : /Firefox\//u.test(userAgent)
-      ? 'Firefox'
+      ? 'FIREFOX'
       : /(?:Chrome|CriOS)\//u.test(userAgent)
-        ? 'Chrome'
+        ? 'CHROME'
         : /Safari\//u.test(userAgent)
-          ? 'Safari'
-          : 'Browser';
+          ? 'SAFARI'
+          : 'BROWSER';
   const platform = /(?:iPhone|iPad)/u.test(userAgent)
-    ? 'iOS'
+    ? 'IOS'
     : /Android/u.test(userAgent)
-      ? 'Android'
+      ? 'ANDROID'
       : /Macintosh|Mac OS X/u.test(userAgent)
-        ? 'macOS'
+        ? 'MACOS'
         : /Windows/u.test(userAgent)
-          ? 'Windows'
+          ? 'WINDOWS'
           : /Linux/u.test(userAgent)
-            ? 'Linux'
+            ? 'LINUX'
             : null;
 
-  return platform === null ? browser : `${browser} on ${platform}`;
+  return Object.freeze({ browser, platform });
 }
 
 export function parseSelfServiceIdentity(

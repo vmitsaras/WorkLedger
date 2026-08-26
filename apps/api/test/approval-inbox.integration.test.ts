@@ -400,18 +400,16 @@ integrationTest(
       expect(notificationDelivery.messages).toHaveLength(2);
       expect(notificationDelivery.messages).toEqual([
         {
-          body: 'An item you submitted was not approved.',
+          content: { event: 'ITEM_REJECTED', parameters: {} },
           destinationPath: '/requests',
           notificationId: expect.any(String),
           recipientEmail: scenario.alpha.email,
-          subject: 'A WorkLedger item was not approved',
         },
         {
-          body: 'An item you submitted was not approved.',
+          content: { event: 'ITEM_REJECTED', parameters: {} },
           destinationPath: '/requests',
           notificationId: expect.any(String),
           recipientEmail: scenario.alpha.email,
-          subject: 'A WorkLedger item was not approved',
         },
       ]);
       expect(notificationDelivery.messages[0]?.notificationId).toBe(
@@ -451,15 +449,14 @@ integrationTest(
       });
       expect(initialNotifications.items).toEqual([
         {
-          body: 'An item you submitted was not approved.',
           deliveryStatus: 'FAILED',
           destinationPath: '/requests',
           dismissedAt: null,
           event: 'ITEM_REJECTED',
           id: notificationDelivery.messages[0]?.notificationId,
           occurredAt: NOW,
+          parameters: {},
           status: 'ACTIVE',
-          title: 'Item not approved',
         },
       ]);
       assertNotificationPrivacy(initialNotifications);
@@ -565,10 +562,9 @@ integrationTest(
       const afterSickness = await parsedNotifications(app, alphaCookie);
       expect(afterSickness.pagination.total).toBe(2);
       expect(afterSickness.items[0]).toMatchObject({
-        body: 'An item you submitted was acknowledged.',
         deliveryStatus: 'FAILED',
         event: 'ITEM_ACKNOWLEDGED',
-        title: 'Item acknowledged',
+        parameters: {},
       });
       assertNotificationPrivacy(afterSickness);
 
@@ -652,10 +648,9 @@ integrationTest(
       const finalNotifications = await parsedNotifications(app, alphaCookie);
       expect(finalNotifications.pagination.total).toBe(3);
       expect(finalNotifications.items[0]).toMatchObject({
-        body: 'An item you submitted was approved.',
         deliveryStatus: 'FAILED',
         event: 'ITEM_APPROVED',
-        title: 'Item approved',
+        parameters: {},
       });
       assertNotificationPrivacy(finalNotifications);
 

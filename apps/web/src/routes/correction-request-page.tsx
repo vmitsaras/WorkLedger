@@ -6,6 +6,7 @@ import { Alert, Button, RouteState, buttonVariants } from '@workledger/ui';
 
 import { ApiClientError, submitCorrectionRequest } from '../app/api-client.js';
 import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
+import { fieldErrorPresentation } from '../app/presentation-codes.js';
 import { dailyTimeRecordQuery } from '../app/query.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
@@ -359,7 +360,7 @@ function mapServerFieldErrors(fields: ApiClientError['fields']): Readonly<Record
   if (fields === undefined) return { interval: 'The proposed interval could not be accepted.' };
   const entries = Object.entries(fields).map(([field, errors]) => [
     field === 'interval' ? 'interval' : field.replace('interval.', ''),
-    errors[0]?.message ?? 'Correct this value.',
+    errors[0] === undefined ? 'Correct this value.' : fieldErrorPresentation(errors[0].code),
   ]);
   return Object.fromEntries(entries);
 }

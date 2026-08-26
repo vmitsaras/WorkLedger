@@ -266,15 +266,13 @@ test('turns unresolved corrections and unavailable calculations into actionable 
   expect(unresolved.calculation.attentionItems).toEqual([
     expect.objectContaining({
       blocksSubmission: true,
-      code: 'CORRECTION_UNRESOLVED',
+      message: { code: 'CORRECTION_UNRESOLVED', parameters: {} },
       recovery: expect.objectContaining({
         action: 'REVIEW_REQUEST',
         destination: 'MY_REQUESTS',
-        label: 'Review request',
       }),
       severity: 'BLOCKER',
       source: 'CURRENT_DAY_CALCULATION',
-      title: 'Correction request needs review',
     }),
   ]);
 
@@ -310,46 +308,34 @@ test('assigns every emitted issue an explicit permitted action and destination',
   );
 
   expect(
-    today.calculation.attentionItems.map(({ code, recovery, title }) => ({
+    today.calculation.attentionItems.map(({ message, recovery }) => ({
       action: recovery.action,
-      code,
+      code: message.code,
       destination: recovery.destination,
-      label: recovery.label,
-      title,
     })),
   ).toEqual([
     {
       action: 'FIX_ENTRY',
       code: 'ATTENDANCE_INCOMPLETE',
       destination: 'MY_TIME',
-      label: 'Fix entry',
-      title: 'Attendance record incomplete',
     },
     {
       action: 'REVIEW_RECORD',
       code: 'SCHEDULE_NOT_ASSIGNED',
       destination: 'MY_TIME',
-      label: 'Review affected day',
-      title: 'Work schedule missing',
     },
     {
       action: 'REVIEW_REQUEST',
       code: 'CORRECTION_UNRESOLVED',
       destination: 'MY_REQUESTS',
-      label: 'Review request',
-      title: 'Correction request needs review',
     },
     {
       action: 'REVIEW_CALCULATION',
       code: 'WORK_ON_HOLIDAY',
       destination: 'TODAY_CALCULATION',
-      label: 'Review calculation',
-      title: 'Work recorded on a public holiday',
     },
   ]);
-  expect(today.calculation.attentionItems.every(({ recovery }) => recovery.statusAfterAction)).toBe(
-    true,
-  );
+  expect(today.calculation.attentionItems.every(({ message }) => message.parameters)).toBe(true);
 });
 
 test('sources threshold attention only from the posted flexible-time balance', () => {
@@ -361,15 +347,13 @@ test('sources threshold attention only from the posted flexible-time balance', (
   expect(today.calculation.attentionItems).toEqual([
     expect.objectContaining({
       blocksSubmission: false,
-      code: 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED',
+      message: { code: 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED', parameters: {} },
       recovery: expect.objectContaining({
         action: 'REVIEW_BALANCE_HISTORY',
         destination: 'MY_BALANCES',
-        label: 'View balance history',
       }),
       severity: 'WARNING',
       source: 'POSTED_FLEX_BALANCE',
-      title: 'Negative flexible-time threshold reached',
     }),
   ]);
 });

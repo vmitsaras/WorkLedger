@@ -43,7 +43,7 @@ import type {
 
 import type { WorkLedgerAuthentication } from '../auth/authentication.js';
 import { PasswordPolicyError } from '../auth/password-policy.js';
-import { summarizeUserAgent } from '../account/self-service.js';
+import { parseUserAgent } from '../account/self-service.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import { authorizeAccountTarget, authorizeEmployeeTarget } from '../authorization/policy.js';
 
@@ -158,7 +158,6 @@ export function createAdministrationService(
             password: [
               {
                 code: 'INVALID_VALUE',
-                message: 'Use a passphrase of 15–128 characters that is not commonly used.',
               },
             ],
           },
@@ -1281,7 +1280,7 @@ function mapSystemAccount(
     privilegedActionsAllowed: account.id !== actorAccountId,
     sessions: account.sessions.map((session) => ({
       createdAt: session.createdAt,
-      deviceSummary: summarizeUserAgent(session.userAgent),
+      ...parseUserAgent(session.userAgent),
       expiresAt: session.expiresAt,
       id: session.id,
       lastActiveAt: session.lastActiveAt,

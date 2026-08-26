@@ -101,10 +101,11 @@ const SYSTEM_PAGE: SystemAccountPage = {
       sessions: [
         {
           createdAt: '2026-08-14T08:00:00Z',
-          deviceSummary: 'Firefox on Linux',
+          browser: 'FIREFOX',
           expiresAt: '2026-08-14T20:00:00Z',
           id: SESSION_ID,
           lastActiveAt: '2026-08-14T10:00:00Z',
+          platform: 'LINUX',
         },
       ],
       systemAdministrator: true,

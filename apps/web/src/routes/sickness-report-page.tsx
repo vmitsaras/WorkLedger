@@ -10,6 +10,7 @@ import {
   submitSicknessReport,
 } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
+import { fieldErrorPresentation } from '../app/presentation-codes.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -371,7 +372,7 @@ function mapServerFieldErrors(fields: ApiClientError['fields']): Readonly<Record
   return Object.fromEntries(
     Object.entries(fields ?? {}).map(([field, errors]) => [
       field,
-      errors[0]?.message ?? 'Correct this value.',
+      errors[0] === undefined ? 'Correct this value.' : fieldErrorPresentation(errors[0].code),
     ]),
   );
 }

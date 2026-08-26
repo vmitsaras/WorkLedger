@@ -14,6 +14,7 @@ import {
 } from '../app/api-client.js';
 import { systemAccountPageQuery } from '../app/query.js';
 import { useOptionalWebLocale } from '../app/locale.js';
+import { sessionDevicePresentation } from '../app/presentation-codes.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 import { LanguageSelect } from '../components/language-select.js';
@@ -264,7 +265,7 @@ export function SystemAccountAdministrationPage() {
                             className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--wl-border)] p-3"
                           >
                             <span>
-                              <strong>{session.deviceSummary}</strong>
+                              <strong>{sessionDevicePresentation(session)}</strong>
                               {' — last active '}
                               {DATE_TIME_FORMATTER.format(new Date(session.lastActiveAt))}
                             </span>

@@ -10,6 +10,7 @@ import { Button } from '@workledger/ui';
 
 import { ApiClientError, exportReportCsv, type ReportCsvDownload } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
+import { reportPresentation } from '../app/presentation-codes.js';
 
 type PortabilityStatus = Readonly<{ kind: 'ERROR' | 'SUCCESS'; message: string }>;
 
@@ -54,7 +55,9 @@ export function ReportPortabilityActions({
       if (navigator.clipboard?.writeText === undefined) {
         throw new Error('Clipboard access is unavailable.');
       }
-      await navigator.clipboard.writeText(reportSummaryText(report.title, refreshed));
+      await navigator.clipboard.writeText(
+        reportSummaryText(reportPresentation(report.key).title, refreshed),
+      );
       setStatus({
         kind: 'SUCCESS',
         message: 'Report summary copied. No table rows or hidden fields were copied.',

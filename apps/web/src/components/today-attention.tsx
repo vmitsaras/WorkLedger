@@ -5,6 +5,7 @@ import type { TodayAttentionItem } from '@workledger/contracts';
 import { Alert, StatusBadge } from '@workledger/ui';
 
 import { formatLocalDate } from '../app/date-time-format.js';
+import { attentionPresentation, attentionRecoveryLabel } from '../app/presentation-codes.js';
 
 export function TodayAttention({ items }: Readonly<{ items: readonly TodayAttentionItem[] }>) {
   const urgentAnnouncement = useNewUrgentAttentionAnnouncement(items);
@@ -46,9 +47,9 @@ function AttentionGroup({
     <Alert announce={false} headingLevel="h3" title={title} tone={tone}>
       <ul className="mb-0 mt-3 grid gap-4 pl-5">
         {items.map((item) => (
-          <li key={item.code} className="grid gap-2">
+          <li key={item.message.code} className="grid gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <strong>{item.title}</strong>
+              <strong>{attentionPresentation(item.message.code).title}</strong>
               <StatusBadge tone={item.blocksSubmission ? 'danger' : 'warning'}>
                 {item.blocksSubmission ? 'Blocks month submission' : 'Does not block submission'}
               </StatusBadge>
@@ -57,9 +58,9 @@ function AttentionGroup({
               {item.source === 'POSTED_FLEX_BALANCE' ? 'Posted balance through' : 'Affected date'}:{' '}
               {formatLocalDate(item.affectedDate)}
             </span>
-            <span>{item.reason}</span>
+            <span>{attentionPresentation(item.message.code).reason}</span>
             <span className="text-sm text-[var(--wl-text-muted)]">
-              What happens next: {item.recovery.statusAfterAction}
+              What happens next: {attentionPresentation(item.message.code).whatHappensNext}
             </span>
             <AttentionDestination item={item} />
           </li>
@@ -80,14 +81,14 @@ function AttentionDestination({ item }: Readonly<{ item: TodayAttentionItem }>) 
           if (details !== null) details.open = true;
         }}
       >
-        {item.recovery.label}
+        {attentionRecoveryLabel(item.recovery)}
       </a>
     );
   }
   if (item.recovery.destination === 'TODAY_TIMELINE') {
-    return <a href={href}>{item.recovery.label}</a>;
+    return <a href={href}>{attentionRecoveryLabel(item.recovery)}</a>;
   }
-  return <Link to={href}>{item.recovery.label}</Link>;
+  return <Link to={href}>{attentionRecoveryLabel(item.recovery)}</Link>;
 }
 
 function destinationHref(item: TodayAttentionItem): string {
@@ -110,18 +111,20 @@ function useNewUrgentAttentionAnnouncement(items: readonly TodayAttentionItem[])
   const [announcement, setAnnouncement] = useState<string | null>(null);
 
   useEffect(() => {
-    const currentCodes = new Set(items.map(({ code }) => code));
+    const currentCodes = new Set(items.map(({ message }) => message.code));
     const previousCodes = previousCodesRef.current;
     previousCodesRef.current = currentCodes;
     if (previousCodes === null) return;
 
     const newBlockers = items.filter(
-      (item) => item.blocksSubmission && !previousCodes.has(item.code),
+      (item) => item.blocksSubmission && !previousCodes.has(item.message.code),
     );
     setAnnouncement(
       newBlockers.length === 0
         ? null
-        : `New urgent issue: ${newBlockers.map(({ title }) => title).join('; ')}.`,
+        : `New urgent issue: ${newBlockers
+            .map(({ message }) => attentionPresentation(message.code).title)
+            .join('; ')}.`,
     );
   }, [items]);
 

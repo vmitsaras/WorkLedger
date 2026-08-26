@@ -167,17 +167,17 @@ integrationTest(
       const profile = profileResponse.json().data as {
         locale: string;
         sessions: Array<{
+          browser: string;
           current: boolean;
-          deviceSummary: string;
           id: string;
+          platform: string | null;
         }>;
       };
       expect(profile.locale).toBe('de-DE');
       expect(profile.sessions).toHaveLength(2);
-      expect(profile.sessions.map(({ deviceSummary }) => deviceSummary).sort()).toEqual([
-        'Chrome on macOS',
-        'Firefox on Windows',
-      ]);
+      expect(
+        profile.sessions.map(({ browser, platform }) => `${browser}:${platform}`).sort(),
+      ).toEqual(['CHROME:MACOS', 'FIREFOX:WINDOWS']);
       expect(profileResponse.payload).not.toContain('ipAddress');
       expect(profileResponse.payload).not.toContain('userAgent');
       expect(profileResponse.payload).not.toContain('Mozilla');

@@ -440,7 +440,7 @@ test('keeps the print dialog closed when monthly scope is lost during refresh', 
         if (monthlyLoads === 1) return successResponse(readyPeriod());
         return new Response(
           JSON.stringify({
-            error: { code: 'ACCESS_DENIED', message: 'Access denied.', requestId: REQUEST_ID },
+            error: { code: 'ACCESS_DENIED', requestId: REQUEST_ID },
             meta: { idempotentReplay: false },
           }),
           { headers: { 'content-type': 'application/json' }, status: 403 },
@@ -471,7 +471,7 @@ test('shows a purpose-safe permission denial without retrying or rendering month
       if (path === `/v1/monthly-periods/${PERIOD_ID}`) {
         return new Response(
           JSON.stringify({
-            error: { code: 'ACCESS_DENIED', message: 'Access denied.', requestId: REQUEST_ID },
+            error: { code: 'ACCESS_DENIED', requestId: REQUEST_ID },
             meta: { idempotentReplay: false },
           }),
           { headers: { 'content-type': 'application/json' }, status: 403 },
@@ -785,7 +785,7 @@ function successResponse(data: unknown) {
 function apiErrorResponse() {
   return new Response(
     JSON.stringify({
-      error: { code: 'DATABASE_UNAVAILABLE', message: 'Unavailable.', requestId: REQUEST_ID },
+      error: { code: 'DATABASE_UNAVAILABLE', requestId: REQUEST_ID },
       meta: { idempotentReplay: false },
     }),
     { headers: { 'content-type': 'application/json' }, status: 503 },
@@ -798,7 +798,6 @@ function submissionErrorResponse(code: 'PERIOD_WARNING_ACKNOWLEDGEMENT_REQUIRED'
       error: {
         code,
         context: { periodVersion: 1, sourceChanged: true },
-        message: 'The request could not be completed.',
         requestId: REQUEST_ID,
       },
       meta: { idempotentReplay: false },

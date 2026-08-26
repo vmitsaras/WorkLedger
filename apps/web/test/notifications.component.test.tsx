@@ -29,26 +29,24 @@ const CONTEXT: SelfContext = {
 const HISTORY: NotificationHistory = {
   items: [
     {
-      body: 'An item you submitted needs changes.',
       deliveryStatus: 'FAILED',
       destinationPath: '/requests',
       dismissedAt: null,
       event: 'ITEM_CHANGES_REQUESTED',
       id: FIRST_NOTIFICATION_ID,
       occurredAt: '2026-08-14T09:30:00Z',
+      parameters: {},
       status: 'ACTIVE',
-      title: 'Changes requested',
     },
     {
-      body: 'An item you submitted was approved.',
       deliveryStatus: 'DELIVERED',
       destinationPath: '/requests',
       dismissedAt: '2026-08-13T10:00:00Z',
       event: 'ITEM_APPROVED',
       id: '123e4567-e89b-42d3-a456-426614174602',
       occurredAt: '2026-08-13T09:30:00Z',
+      parameters: {},
       status: 'DISMISSED',
-      title: 'Item approved',
     },
   ],
   pagination: { limit: 20, page: 1, total: 2, totalPages: 1 },

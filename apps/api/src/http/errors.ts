@@ -1,9 +1,4 @@
-import type {
-  ApiErrorCode,
-  ApiFieldErrorCode,
-  ApiFieldErrors,
-  ApiRecoveryContext,
-} from '@workledger/contracts';
+import type { ApiErrorCode, ApiFieldErrors, ApiRecoveryContext } from '@workledger/contracts';
 
 export const API_ERROR_STATUS_CODES = [400, 401, 403, 404, 409, 413, 415, 422, 429, 503] as const;
 
@@ -25,7 +20,7 @@ export class WorkLedgerApiError extends Error {
       statusCode: ApiErrorStatusCode;
     }>,
   ) {
-    super(safeApiErrorMessage(input.code));
+    super(input.code);
     this.name = 'WorkLedgerApiError';
     this.code = input.code;
     this.context = input.context;
@@ -34,92 +29,3 @@ export class WorkLedgerApiError extends Error {
     this.statusCode = input.statusCode;
   }
 }
-
-export function safeApiErrorMessage(code: ApiErrorCode): string {
-  switch (code) {
-    case 'ACCOUNT_EMAIL_ALREADY_EXISTS':
-      return 'An account already uses that email address.';
-    case 'ACCOUNT_STATE_CONFLICT':
-      return 'The account is already in the requested state.';
-    case 'ASSIGNMENT_EFFECTIVE_DATE_INVALID':
-      return 'Choose an effective date that preserves the existing assignment history.';
-    case 'ASSIGNMENT_STATE_CONFLICT':
-      return 'The assignment changed. Refresh and review the current history.';
-    case 'ACCESS_DENIED':
-      return 'You do not have permission to perform this action.';
-    case 'ABSENCE_TYPE_VERSION_CONFLICT':
-      return 'The absence-type version or effective-date history changed. Refresh and review it.';
-    case 'HOLIDAY_CHANGE_BLOCKED':
-      return 'The holiday date is not eligible or belongs to a protected monthly period.';
-    case 'HOLIDAY_DATE_CONFLICT':
-      return 'A holiday already exists on that date.';
-    case 'AUTH_REQUIRED':
-      return 'Sign in to continue.';
-    case 'AUTH_SESSION_EXPIRED':
-      return 'Your session has expired. Sign in again.';
-    case 'AUTH_SESSION_NOT_FRESH':
-      return 'Confirm your identity before continuing.';
-    case 'DATABASE_UNAVAILABLE':
-      return 'The service is temporarily unavailable. Try again later.';
-    case 'EMPLOYEE_NOT_FOUND':
-      return 'The requested employee was not found.';
-    case 'EXPORT_EXPIRED':
-      return 'The data export has expired. Request a new export.';
-    case 'EXPORT_NOT_FOUND':
-      return 'The requested data export was not found.';
-    case 'EMPLOYEE_NUMBER_ALREADY_EXISTS':
-      return 'An employee already uses that employee number.';
-    case 'EMPLOYEE_STATE_CONFLICT':
-      return 'The employee is already in the requested state.';
-    case 'ENTITLEMENT_ADJUSTMENT_CONFLICT':
-      return 'The employee or entitlement account is unavailable for that adjustment.';
-    case 'EMPLOYMENT_PERIOD_OVERLAP':
-      return 'The employment period overlaps existing history.';
-    case 'MALFORMED_REQUEST':
-      return 'The request body is not valid JSON.';
-    case 'MANAGER_ASSIGNMENT_CYCLE':
-      return 'That manager assignment would create a reporting cycle.';
-    case 'MANAGER_NOT_ELIGIBLE':
-      return 'Choose an active employee with current manager authority.';
-    case 'RATE_LIMITED':
-      return 'Too many requests. Try again later.';
-    case 'REQUEST_TOO_LARGE':
-      return 'The request is too large.';
-    case 'REPORT_EXPORT_TOO_LARGE':
-      return 'The report contains too many rows to export. Narrow the date range or employee scope.';
-    case 'ROUTE_NOT_FOUND':
-      return 'The requested endpoint was not found.';
-    case 'SCHEDULE_NOT_ASSIGNED':
-      return 'The change would leave employed dates without a work schedule.';
-    case 'SCHEDULE_VERSION_CONFLICT':
-      return 'The schedule versions changed. Refresh and review the current versions.';
-    case 'SCHEDULE_VERSION_NO_CHANGE':
-      return 'The latest schedule version already has those weekday minutes.';
-    case 'POLICY_VERSION_CONFLICT':
-      return 'The time-policy versions changed. Refresh and review the current versions.';
-    case 'POLICY_VERSION_NO_CHANGE':
-      return 'The latest time-policy version already has those rules.';
-    case 'TEAM_NAME_ALREADY_EXISTS':
-      return 'A team already uses that name.';
-    case 'TEAM_STATE_CONFLICT':
-      return 'The team state changed or the team still has current or scheduled assignments.';
-    case 'UNSUPPORTED_MEDIA_TYPE':
-      return 'Use a supported request content type.';
-    case 'VALIDATION_FAILED':
-      return 'Correct the highlighted fields and try again.';
-    case 'INTERNAL_ERROR':
-      return 'The request could not be completed. Try again later.';
-    default:
-      return 'The request could not be completed.';
-  }
-}
-
-export const FIELD_ERROR_MESSAGES: Readonly<Record<ApiFieldErrorCode, string>> = Object.freeze({
-  INVALID_FORMAT: 'Use the required format.',
-  INVALID_TYPE: 'Use the required value type.',
-  INVALID_VALUE: 'Choose an allowed value.',
-  REQUIRED: 'Enter a value.',
-  UNKNOWN_FIELD: 'Remove fields that are not supported.',
-  VALUE_TOO_LARGE: 'Use a smaller value.',
-  VALUE_TOO_SMALL: 'Use a larger value.',
-});

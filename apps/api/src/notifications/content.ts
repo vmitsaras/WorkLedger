@@ -1,31 +1,26 @@
 import type { NotificationEvent } from '@workledger/contracts';
 
 export type GenericNotificationContent = Readonly<{
-  body: string;
-  emailSubject: string;
-  title: string;
+  event: NotificationEvent;
+  parameters: Readonly<Record<never, never>>;
 }>;
 
 const CONTENT: Readonly<Record<NotificationEvent, GenericNotificationContent>> = Object.freeze({
   ITEM_ACKNOWLEDGED: Object.freeze({
-    body: 'An item you submitted was acknowledged.',
-    emailSubject: 'A WorkLedger item was acknowledged',
-    title: 'Item acknowledged',
+    event: 'ITEM_ACKNOWLEDGED',
+    parameters: {},
   }),
   ITEM_APPROVED: Object.freeze({
-    body: 'An item you submitted was approved.',
-    emailSubject: 'A WorkLedger item was approved',
-    title: 'Item approved',
+    event: 'ITEM_APPROVED',
+    parameters: {},
   }),
   ITEM_CHANGES_REQUESTED: Object.freeze({
-    body: 'An item you submitted needs changes.',
-    emailSubject: 'A WorkLedger item needs changes',
-    title: 'Changes requested',
+    event: 'ITEM_CHANGES_REQUESTED',
+    parameters: {},
   }),
   ITEM_REJECTED: Object.freeze({
-    body: 'An item you submitted was not approved.',
-    emailSubject: 'A WorkLedger item was not approved',
-    title: 'Item not approved',
+    event: 'ITEM_REJECTED',
+    parameters: {},
   }),
 });
 

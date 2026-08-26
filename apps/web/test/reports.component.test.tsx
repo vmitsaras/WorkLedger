@@ -32,30 +32,22 @@ const CATALOG: ReportCatalog = {
     {
       availableSorts: ['EMPLOYEE', 'DATE', 'VALUE', 'STATUS'],
       defaultSort: 'DATE',
-      description: 'Monthly expected, worked, credited, and balance minutes.',
       key: 'monthly-time',
-      title: 'Monthly time',
     },
     {
       availableSorts: ['EMPLOYEE', 'VALUE'],
       defaultSort: 'EMPLOYEE',
-      description: 'Opening, in-range change, and closing flexible-time balances.',
       key: 'flexible-time',
-      title: 'Flexible time',
     },
     {
       availableSorts: ['EMPLOYEE', 'VALUE'],
       defaultSort: 'EMPLOYEE',
-      description: 'Leave availability, reservation, and projected balances.',
       key: 'leave',
-      title: 'Leave balances',
     },
     {
       availableSorts: ['EMPLOYEE', 'DATE'],
       defaultSort: 'DATE',
-      description: 'Incomplete daily records that need attention.',
       key: 'missing-records',
-      title: 'Missing records',
     },
   ],
   timeZone: 'Europe/Berlin',
@@ -367,10 +359,7 @@ function successResponse(data: unknown): Response {
 }
 
 function apiErrorResponse(code: string, status: number): Response {
-  return Response.json(
-    { error: { code, message: 'The request could not be completed.', requestId: REQUEST_ID } },
-    { status },
-  );
+  return Response.json({ error: { code, requestId: REQUEST_ID } }, { status });
 }
 
 function requestUrl(input: RequestInfo | URL): URL {

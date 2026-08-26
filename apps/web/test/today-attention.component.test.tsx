@@ -9,35 +9,25 @@ import { TodayAttention } from '../src/components/today-attention.js';
 const thresholdWarning: TodayAttentionItem = {
   affectedDate: '2026-08-10',
   blocksSubmission: false,
-  code: 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED',
-  reason: 'The posted flexible-time balance is below the configured warning threshold.',
+  message: { code: 'FLEX_NEGATIVE_THRESHOLD_EXCEEDED', parameters: {} },
   recovery: {
     action: 'REVIEW_BALANCE_HISTORY',
     destination: 'MY_BALANCES',
-    label: 'View balance history',
-    statusAfterAction:
-      'The warning clears only after posted ledger entries bring the balance back within the configured threshold.',
   },
   severity: 'WARNING',
   source: 'POSTED_FLEX_BALANCE',
-  title: 'Negative flexible-time threshold reached',
 };
 
 const incompleteRecord: TodayAttentionItem = {
   affectedDate: '2026-08-11',
   blocksSubmission: true,
-  code: 'ATTENDANCE_INCOMPLETE',
-  reason: 'One or more attendance intervals for this date are incomplete.',
+  message: { code: 'ATTENDANCE_INCOMPLETE', parameters: {} },
   recovery: {
     action: 'FIX_ENTRY',
     destination: 'MY_TIME',
-    label: 'Fix entry',
-    statusAfterAction:
-      'Choose the affected day and submit a correction. Original events remain unchanged while the request is reviewed.',
   },
   severity: 'BLOCKER',
   source: 'CURRENT_DAY_CALCULATION',
-  title: 'Attendance record incomplete',
 };
 
 test('renders server-owned attention with explicit blocking status and real destinations', async () => {

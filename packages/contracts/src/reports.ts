@@ -93,9 +93,7 @@ export const reportCatalogItemSchema = z
   .strictObject({
     availableSorts: z.array(reportSortSchema).min(1).max(REPORT_SORTS.length),
     defaultSort: reportSortSchema,
-    description: z.string().min(1).max(320),
     key: reportKeySchema,
-    title: z.string().min(1).max(120),
   })
   .superRefine((value, context) => {
     if (!value.availableSorts.includes(value.defaultSort)) {

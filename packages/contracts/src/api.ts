@@ -120,7 +120,6 @@ export const apiErrorCodeSchema = z.enum(API_ERROR_CODES);
 export const apiFieldErrorCodeSchema = z.enum(API_FIELD_ERROR_CODES);
 export const requestIdSchema = z.uuid();
 
-const safeMessageSchema = z.string().min(1).max(256);
 const fieldPathSchema = z.string().min(1).max(256);
 const recoveryContextKeySchema = z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,63}$/u);
 const recoveryContextScalarSchema = z.union([
@@ -136,7 +135,6 @@ const recoveryContextValueSchema = z.union([
 
 export const apiFieldErrorSchema = z.strictObject({
   code: apiFieldErrorCodeSchema,
-  message: safeMessageSchema,
 });
 
 export const apiFieldErrorsSchema = z.record(
@@ -152,7 +150,6 @@ export const apiErrorSchema = z.strictObject({
   code: apiErrorCodeSchema,
   context: apiRecoveryContextSchema.optional(),
   fields: apiFieldErrorsSchema.optional(),
-  message: safeMessageSchema,
   requestId: requestIdSchema,
 });
 

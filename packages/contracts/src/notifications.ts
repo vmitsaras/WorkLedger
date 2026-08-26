@@ -33,15 +33,14 @@ export const notificationDestinationPathSchema = z.union([
 
 export const notificationItemSchema = z
   .strictObject({
-    body: z.string().min(1).max(240),
     deliveryStatus: notificationDeliveryStatusSchema,
     destinationPath: notificationDestinationPathSchema,
     dismissedAt: z.iso.datetime({ offset: true }).nullable(),
     event: notificationEventSchema,
     id: z.uuid(),
     occurredAt: z.iso.datetime({ offset: true }),
+    parameters: z.strictObject({}),
     status: z.enum(['ACTIVE', 'DISMISSED']),
-    title: z.string().min(1).max(80),
   })
   .superRefine((item, context) => {
     if ((item.status === 'ACTIVE') !== (item.dismissedAt === null)) {

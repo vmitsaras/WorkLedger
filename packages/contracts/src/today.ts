@@ -163,19 +163,20 @@ export const todayProvisionalCalculationSchema = z.strictObject({
 export const todayAttentionRecoverySchema = z.strictObject({
   action: todayAttentionActionSchema,
   destination: todayAttentionDestinationSchema,
-  label: z.string().min(1).max(80),
-  statusAfterAction: z.string().min(1).max(240),
+});
+
+export const todayAttentionMessageSchema = z.strictObject({
+  code: z.union([calculationBlockerCodeSchema, calculationWarningCodeSchema]),
+  parameters: z.strictObject({}),
 });
 
 export const todayAttentionItemSchema = z.strictObject({
   affectedDate: z.iso.date(),
   blocksSubmission: z.boolean(),
-  code: z.union([calculationBlockerCodeSchema, calculationWarningCodeSchema]),
-  reason: z.string().min(1).max(240),
+  message: todayAttentionMessageSchema,
   recovery: todayAttentionRecoverySchema,
   severity: todayAttentionSeveritySchema,
   source: todayAttentionSourceSchema,
-  title: z.string().min(1).max(100),
 });
 
 export const todayCalculationSchema = z.strictObject({
@@ -303,26 +304,26 @@ export const todayAttendanceSchema = z
     const attentionCodes = new Set<string>();
     let blockerCount = 0;
     for (const [index, item] of today.calculation.attentionItems.entries()) {
-      if (attentionCodes.has(item.code)) {
+      if (attentionCodes.has(item.message.code)) {
         context.addIssue({
           code: 'custom',
           message: 'Today attention codes must be unique.',
-          path: ['calculation', 'attentionItems', index, 'code'],
+          path: ['calculation', 'attentionItems', index, 'message', 'code'],
         });
       }
-      attentionCodes.add(item.code);
-      const isBlocker = blockerCodeSet.has(item.code);
-      const expectedAffectedDate = thresholdWarningCodeSet.has(item.code)
+      attentionCodes.add(item.message.code);
+      const isBlocker = blockerCodeSet.has(item.message.code);
+      const expectedAffectedDate = thresholdWarningCodeSet.has(item.message.code)
         ? (today.postedThroughDate ?? today.localDate)
         : today.localDate;
       if (isBlocker) blockerCount += 1;
       if (
         item.affectedDate !== expectedAffectedDate ||
         item.blocksSubmission !== isBlocker ||
-        item.recovery.action !== expectedAttentionAction[item.code] ||
+        item.recovery.action !== expectedAttentionAction[item.message.code] ||
         item.recovery.destination !== expectedAttentionDestination[item.recovery.action] ||
         item.severity !== (isBlocker ? 'BLOCKER' : 'WARNING') ||
-        (thresholdWarningCodeSet.has(item.code)
+        (thresholdWarningCodeSet.has(item.message.code)
           ? item.source !== 'POSTED_FLEX_BALANCE'
           : item.source !== 'CURRENT_DAY_CALCULATION')
       ) {
@@ -459,6 +460,7 @@ export type TodayAttendance = z.infer<typeof todayAttendanceSchema>;
 export type TodayActionAvailability = z.infer<typeof todayActionAvailabilitySchema>;
 export type TodayAppliedCorrection = z.infer<typeof todayAppliedCorrectionSchema>;
 export type TodayAttentionItem = z.infer<typeof todayAttentionItemSchema>;
+export type TodayAttentionMessage = z.infer<typeof todayAttentionMessageSchema>;
 export type TodayAttentionRecovery = z.infer<typeof todayAttentionRecoverySchema>;
 export type TodayCalculationSources = z.infer<typeof todayCalculationSourcesSchema>;
 export type TodayProvisionalCalculation = z.infer<typeof todayProvisionalCalculationSchema>;

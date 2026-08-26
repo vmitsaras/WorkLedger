@@ -20,6 +20,7 @@ import {
 
 import { ApiClientError, clearSessionMemory, dismissNotification } from '../app/api-client.js';
 import { notificationHistoryQuery } from '../app/query.js';
+import { notificationPresentation } from '../app/presentation-codes.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -190,12 +191,13 @@ function NotificationCard({
 }>) {
   const dismissed = item.status === 'DISMISSED';
   const unavailable = dismissed || pending;
+  const presentation = notificationPresentation(item.event);
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="m-0 text-lg font-bold">{item.title}</h3>
-          <p className="m-0 mt-1">{item.body}</p>
+          <h3 className="m-0 text-lg font-bold">{presentation.title}</h3>
+          <p className="m-0 mt-1">{presentation.body}</p>
         </div>
         <StatusBadge tone={dismissed ? 'neutral' : 'info'}>
           {dismissed ? 'Dismissed' : 'Active'}

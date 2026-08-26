@@ -466,9 +466,7 @@ test('preserves the selected work area when the mobile drawer remounts on a shar
             {
               availableSorts: ['EMPLOYEE'],
               defaultSort: 'EMPLOYEE',
-              description: 'Monthly time records in the current permission scope.',
               key: 'monthly-time',
-              title: 'Monthly time',
             },
           ],
           timeZone: 'Europe/Berlin',
@@ -1104,32 +1102,24 @@ test('explains zero expected time before presenting credited work', async () => 
         {
           affectedDate: TODAY_ATTENDANCE.localDate,
           blocksSubmission: false,
-          code: 'WORK_ON_HOLIDAY',
-          reason: 'Recorded work falls on a public holiday.',
+          message: { code: 'WORK_ON_HOLIDAY', parameters: {} },
           recovery: {
             action: 'REVIEW_CALCULATION',
             destination: 'TODAY_CALCULATION',
-            label: 'Review calculation',
-            statusAfterAction: 'Reviewing the explanation does not change the record.',
           },
           severity: 'WARNING',
           source: 'CURRENT_DAY_CALCULATION',
-          title: 'Work recorded on a public holiday',
         },
         {
           affectedDate: TODAY_ATTENDANCE.localDate,
           blocksSubmission: false,
-          code: 'WORK_ON_ZERO_EXPECTED_DAY',
-          reason: 'Recorded work falls on a day with no expected minutes.',
+          message: { code: 'WORK_ON_ZERO_EXPECTED_DAY', parameters: {} },
           recovery: {
             action: 'REVIEW_CALCULATION',
             destination: 'TODAY_CALCULATION',
-            label: 'Review calculation',
-            statusAfterAction: 'Reviewing the explanation does not change the record.',
           },
           severity: 'WARNING',
           source: 'CURRENT_DAY_CALCULATION',
-          title: 'Work recorded on a zero-expected day',
         },
       ],
       estimatedFinishAt: null,
@@ -1231,17 +1221,13 @@ test('shows an incomplete calculation without inventing an estimate', async () =
         {
           affectedDate: TODAY_ATTENDANCE.localDate,
           blocksSubmission: true,
-          code: 'SCHEDULE_NOT_ASSIGNED',
-          reason: 'No effective work schedule is assigned for today.',
+          message: { code: 'SCHEDULE_NOT_ASSIGNED', parameters: {} },
           recovery: {
             action: 'REVIEW_RECORD',
             destination: 'MY_TIME',
-            label: 'Review affected day',
-            statusAfterAction: 'An administrator must assign a work schedule.',
           },
           severity: 'BLOCKER',
           source: 'CURRENT_DAY_CALCULATION',
-          title: 'Work schedule missing',
         },
       ],
       estimatedFinishAt: null,
@@ -1264,7 +1250,9 @@ test('shows an incomplete calculation without inventing an estimate', async () =
   expect(screen.getByRole('region', { name: 'Posted balance' })).toBeVisible();
   expect(screen.getByText('Work schedule missing')).toBeVisible();
   expect(screen.getByText('Blocks month submission')).toBeVisible();
-  expect(screen.getByText(/An administrator must assign a work schedule/u)).toBeVisible();
+  expect(
+    screen.getByText(/authorized administrator resolves the configuration issue/u),
+  ).toBeVisible();
   expect(screen.getByRole('link', { name: 'Review affected day' })).toHaveAttribute(
     'href',
     '/my-time?date=2026-08-11&view=WEEK',
@@ -1532,7 +1520,6 @@ test('recovers from a stale clock-in with one safe alert and logical status focu
                 currentState: 'WORKING',
                 validActions: ['START_BREAK', 'CLOCK_OUT'],
               },
-              message: 'The request could not be completed.',
               requestId: REQUEST_ID,
             },
           },
@@ -2048,10 +2035,11 @@ test('keeps profile fields read-only and clears protected state after current-se
       {
         createdAt: '2026-08-11T08:00:00Z',
         current: true,
-        deviceSummary: 'Chrome on macOS',
+        browser: 'CHROME',
         expiresAt: '2026-08-11T20:00:00Z',
         id: '123e4567-e89b-42d3-a456-426614174111',
         lastActiveAt: '2026-08-11T09:00:00Z',
+        platform: 'MACOS',
       },
     ],
   };
@@ -2178,7 +2166,6 @@ function authenticationErrorResponse(code: 'AUTH_REQUIRED' | 'AUTH_SESSION_EXPIR
     {
       error: {
         code,
-        message: code === 'AUTH_REQUIRED' ? 'Sign in to continue.' : 'Your session has expired.',
         requestId: REQUEST_ID,
       },
     },
@@ -2187,10 +2174,7 @@ function authenticationErrorResponse(code: 'AUTH_REQUIRED' | 'AUTH_SESSION_EXPIR
 }
 
 function apiErrorResponse(code: string, status: number): Response {
-  return Response.json(
-    { error: { code, message: 'The request could not be completed.', requestId: REQUEST_ID } },
-    { status },
-  );
+  return Response.json({ error: { code, requestId: REQUEST_ID } }, { status });
 }
 
 function authenticatedFetch(

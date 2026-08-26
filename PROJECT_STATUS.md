@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 3 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1402` account and device locale preferences complete
-**Active task:** `WL-1403` (next; not started)
-**Status:** Account/device locale persistence and switching complete; `D-508` resolved by bounded runtime allowance
+**Phase progress:** Phase 13 complete — 4 of 11 Phase 14 tasks complete
+**Current milestone:** `WL-1403` API presentation descriptors complete
+**Active task:** `WL-1404` (next; not started)
+**Status:** Account/device locale persistence and language-neutral API presentation boundaries complete; `D-508` resolved by bounded runtime allowance
 **Last verified:** 2026-08-26
 
 ## Current objective
@@ -19,8 +19,9 @@ translation tasks, so these selectors currently demonstrate only the locale pref
 `D-508` amended ADR 0013 through a 55,000-byte raw and 18,000-byte gzip Phase 14 runtime allowance
 above the preserved 910,000/246,000-byte application baseline. The current build consumes
 6,728/1,840 bytes of that allowance, and a forced full-engine measurement remains within the
-combined gates. `WL-1403` is next; workflow translation and outbound output remain gated behind
-their numbered tasks. The broader `D-502` retail browser and assistive-technology matrix remains
+combined gates. `WL-1403` now supplies language-neutral API descriptors for its bounded migration
+set. `WL-1404` is next; workflow translation and outbound output remain gated behind their
+numbered tasks. The broader `D-502` retail browser and assistive-technology matrix remains
 an explicit limitation rather than a conformance claim. The portfolio presentation scope remains
 an unnumbered draft.
 
@@ -2481,6 +2482,26 @@ an unnumbered draft.
 - No dependency, lockfile, manifest, workspace version, phase gate, deployment, publication, tag,
   domain rule, permission, or audit policy changed. See `docs/142-account-locale-preferences.md`.
 
+**2026-08-26 — WL-1403 API presentation descriptors**
+
+- Replaced English API prose with bounded descriptors and structured values for Today attention,
+  general and field errors, report metadata, notification history/delivery, and session-device
+  presentation. Server responses now expose codes, authorized recovery metadata, and safe values;
+  they never carry title, reason, description, field-message, notification-body, email-subject, or
+  user-agent-derived device-summary prose.
+- Preserved the server as the owner of Today severity/action/destination and authorization-driven
+  report/notification meaning. The browser has an exhaustive temporary English presentation map;
+  `WL-1404` moves this map into completed typed catalogs, while `WL-1407` owns recipient-locale
+  outbound rendering.
+- Regenerated OpenAPI and added contract, display, component, and integration evidence. The local
+  completion run passes strict TypeScript, lint with 314-source/1,660-import boundaries and CSS
+  checks, 394 unit/component tests,
+  and 13 environment-independent integration tests; 45 PostgreSQL-dependent integration cases
+  remain skipped because the opt-in database service is unavailable. See
+  `docs/143-api-presentation-descriptors.md`.
+- No dependency, database schema, migration, lockfile, manifest, workspace version, phase gate,
+  deployment, publication, tag, domain rule, permission, or audit policy changed.
+
 ## Current blockers
 
 German and Spanish still require named fluent reviewers before `WL-1408`; their absence does not
@@ -2497,8 +2518,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Start `WL-1403`: replace user-facing API prose dependencies with bounded message descriptors and
-structured presentation data. The portfolio presentation scope remains preserved in
+Start `WL-1404`: translate shared UI, route titles and boundaries, authentication, application
+shell, navigation, profile, validation, dialogs, and announcements. The portfolio presentation
+scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 
 ## Update rules

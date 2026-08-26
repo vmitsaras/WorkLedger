@@ -44,42 +44,27 @@ const REPORT_CATALOG: readonly ReportCatalogItem[] = Object.freeze([
   reportCatalogItem({
     availableSorts: ['EMPLOYEE', 'DATE', 'VALUE', 'STATUS'],
     defaultSort: 'DATE',
-    description:
-      'Monthly expected, worked, credited, and balance minutes with workflow and post-lock adjustment context.',
     key: 'monthly-time',
-    title: 'Monthly time',
   }),
   reportCatalogItem({
     availableSorts: ['EMPLOYEE', 'VALUE'],
     defaultSort: 'EMPLOYEE',
-    description:
-      'Opening, in-range change, and closing flexible-time balances from the append-only time account.',
     key: 'flexible-time',
-    title: 'Flexible time',
   }),
   reportCatalogItem({
     availableSorts: ['EMPLOYEE', 'VALUE'],
     defaultSort: 'EMPLOYEE',
-    description:
-      'Leave availability, reservation, and projected balances without sickness classification or request detail.',
     key: 'leave',
-    title: 'Leave balances',
   }),
   reportCatalogItem({
     availableSorts: ['EMPLOYEE', 'DATE'],
     defaultSort: 'DATE',
-    description:
-      'Incomplete daily records that need attention in the selected range, without private workflow detail.',
     key: 'missing-records',
-    title: 'Missing records',
   }),
   reportCatalogItem({
     availableSorts: ['EMPLOYEE', 'DATE'],
     defaultSort: 'DATE',
-    description:
-      'Current actionable correction, absence, cancellation, and monthly approvals in reviewer scope.',
     key: 'pending-approvals',
-    title: 'Pending approvals',
   }),
 ]);
 

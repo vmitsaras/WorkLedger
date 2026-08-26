@@ -19,6 +19,7 @@ import {
   updateSelfLocale,
 } from '../app/api-client.js';
 import { useOptionalWebLocale } from '../app/locale.js';
+import { sessionDevicePresentation } from '../app/presentation-codes.js';
 import { selfContextQuery, selfProfileQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
@@ -102,7 +103,7 @@ export function ProfilePage() {
       await queryClient.invalidateQueries({ queryKey: ['self', 'profile'] });
       setStatus({
         kind: 'success',
-        message: `${session.deviceSummary} was signed out.`,
+        message: `${sessionDevicePresentation(session)} was signed out.`,
         title: 'Session revoked',
       });
     } catch (error) {
@@ -279,7 +280,9 @@ export function ProfilePage() {
                 >
                   <div className="grid gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="m-0 text-lg font-bold">{session.deviceSummary}</h3>
+                      <h3 className="m-0 text-lg font-bold">
+                        {sessionDevicePresentation(session)}
+                      </h3>
                       {session.current ? (
                         <StatusBadge tone="info">Current session</StatusBadge>
                       ) : null}
