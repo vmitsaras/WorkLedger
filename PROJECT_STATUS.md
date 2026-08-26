@@ -2,20 +2,21 @@
 
 **Current phase:** Phase 13 — Attendance clarity, operational trust, and workflow usability hardening
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 12 complete — 9 of 14 Phase 13 tasks complete
+**Phase progress:** Phase 12 complete — 10 of 14 Phase 13 tasks complete
 **Current milestone:** Workflow UX and product polish complete — version 0.13.0
-**Active task:** `WL-1309` (next)
-**Status:** WL-1308 complete — the Approval inbox is needs-review first with simpler URL views, filters, actions, pagination, and responsive records
+**Active task:** `WL-1310` (next)
+**Status:** WL-1309 complete — Team status has privacy-safe URL filters, clearer labels, actionable records, responsive lists, and explicit workspace navigation
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 12 is complete at `0.13.0`. `WL-1308` makes Approval inbox a needs-review-first queue with
-URL-backed state views, a concise applied-state summary, collapsed secondary filters, one
-human-readable Order field, range-based pagination, and complete record actions at 768, 390, and
-320 pixels. The server-scoped API, privacy-minimized projection, and permission boundary remain
-unchanged. The next bounded slice is `WL-1309`: improve Team status comprehension, filtering,
-actionability, labels, and workspace navigation.
+Phase 12 is complete at `0.13.0`. `WL-1309` turns the Team overview totals into keyboard-operable,
+URL-backed availability and open-record filters, clarifies time-bound status language, and gives
+each applicable result a direct next step. The comparison table is reserved for genuinely wide
+content space; complete records remain visible as semantic list articles at 768, 390, and 320
+pixels. The server-scoped API, privacy-minimized projection, and permission boundary remain
+unchanged. The next bounded slice is `WL-1310`: improve employee and team administration search,
+primary actions, route separation, dense layouts, and explanatory copy.
 
 ## Verified decisions
 
@@ -76,6 +77,19 @@ actionability, labels, and workspace navigation.
   policy, or System—while ordinary router links expose every authorized area landing and Reports
   appears once in the active non-system area. Current-area presentation remains memory-only and is
   never authorization evidence.
+- The Team workspace uses explicit destination labels: Team status, Approval inbox, and Team
+  calendar. The work-area name remains Team, and authorization continues to come from server-owned
+  navigation areas rather than route labels or client state.
+- `/team` URL state is limited to allow-listed generic `availability` and `records` values. Unknown,
+  duplicate, employee-identifying, workflow-specific, or absence-specific query state redirects to
+  the canonical default. Filtering remains a client presentation over the already authorized Team
+  response and does not widen or alter the server request.
+- Team availability totals are keyboard-operable pressed buttons. Applicable rows lead to the
+  generic employee-sorted Approval inbox or the current-month Team calendar without adding an
+  employee, request, workflow, or absence subtype to the destination URL.
+- Team results use a complete semantic record list below 72 rem and a captioned comparison table at
+  wider widths. Both forms expose current team, time-bound availability, generic open-record state,
+  and the same next step without page-level horizontal scrolling.
 - Desktop account navigation, actor identity, and sign-out remain outside the independently
   scrolling destination inventory. The narrow shell preserves the same group order in the
   focus-managed React Aria drawer.
@@ -92,7 +106,7 @@ actionability, labels, and workspace navigation.
   cancellations, and monthly periods. It exposes only generic workflow category and status,
   current-team and affected-date metadata; absence subtype, including sickness, is never a list or
   URL value.
-- `/approvals` uses a complete record list below 48 rem and a semantic comparison table at wider
+- `/approvals` uses a complete record list below 72 rem and a semantic comparison table at wider
   widths. The primary review action remains visible with employee, workflow, status, dates,
   submitted time, and current-team context; default filters do not expose a redundant clear action.
 - Approval detail follows record state, current effect, available decision, and trailing evidence
@@ -2203,9 +2217,39 @@ actionability, labels, and workspace navigation.
   workspace version, publication, deployment, or tag changed. See
   `docs/132-approval-inbox-triage.md`.
 
+**2026-08-26 — WL-1309 Team status comprehension and actionability**
+
+- Replaced static Team overview totals with keyboard-operable availability and open-record filters.
+  The filters write only generic allow-listed state to the URL, combine predictably, preserve
+  focus, provide a filtered result count, and offer an explicit all-reports recovery from a zero
+  result.
+- Clarified status and record labels as Working now, Not working now, Unavailable today, Open
+  records, and No open records. Supporting copy explains the intentionally broad record category
+  without disclosing workflow or absence subtype.
+- Added per-record next steps. Open records lead to the generic employee-sorted Approval inbox,
+  unavailable records lead to the current-month Team calendar, and all other records state that no
+  follow-up is needed. Destination URLs contain no employee or workflow identifier.
+- Renamed the Team workspace destinations to Team status, Approval inbox, and Team calendar while
+  preserving the accepted Team work-area model and existing server-owned authorization boundary.
+- Reserved the captioned comparison table for viewports at least 72 rem wide and exposed the same
+  complete records as semantic list articles at 768, 390, and 320 pixels. Four current Phase 13
+  screenshots passed comparison and original-resolution inspection with no page overflow, clipped
+  action, hidden record fact, color-only selected filter, or private data.
+- Full `pnpm verify` passed runtime configuration, reproducible OpenAPI, formatting, lint,
+  290-source/1,518-import boundaries, CSS ownership, strict TypeScript, all 37 tooling checks, all
+  371 unit/component tests, 13 available integration tests with 45 PostgreSQL-dependent skips, 38
+  browser scenarios with one opt-in capture skipped, and the production/public-root build. Bundle
+  budgets pass at 374,954 largest JavaScript bytes, 902,137 total JavaScript bytes, 243,937 gzip
+  JavaScript bytes, and 50,501 CSS bytes.
+- The measured production increase over `WL-1308` is 4,206 total JavaScript bytes, 1,070 gzip
+  JavaScript bytes, and 541 CSS bytes. The total JavaScript, gzip JavaScript, and CSS budgets moved
+  narrowly to 904,000, 245,000, and 51,000 bytes. No domain rule, API contract, database schema,
+  migration, dependency, lockfile, manifest, workspace version, publication, deployment, or tag
+  changed. See `docs/133-team-status-workspace.md`.
+
 ## Current blockers
 
-No decision blocks `WL-1309`. Exact partial-day work-versus-absence overlap,
+No decision blocks `WL-1310`. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still need authoritative domain
 or repository facts; Today does not guess them from minute totals or an otherwise valid overnight
 session. The PostgreSQL-backed `WL-1305` correction-history case remains locally unexecuted until
@@ -2220,7 +2264,7 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1309 — Improve Team status comprehension, filtering, actionability, labels, and workspace navigation.`
+`WL-1310 — Improve employee and team administration search, primary actions, route separation, dense layouts, and explanatory copy.`
 
 ## Update rules
 

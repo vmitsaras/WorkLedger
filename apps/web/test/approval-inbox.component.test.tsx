@@ -504,7 +504,10 @@ test('lets HR discover and open minimized approval records without requiring an 
   expect(
     within(table).getByRole('link', { name: 'Review absence request for Noah Williams' }),
   ).toHaveAttribute('href', `/approvals/${ABSENCE_ID}`);
-  expect(screen.getByRole('link', { name: 'Approvals' })).toHaveAttribute('aria-current', 'page');
+  expect(screen.getByRole('link', { name: 'Approval inbox' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
 });
 
 test('rejects sensitive or unknown URL filters and reloads the canonical broad defaults', async () => {

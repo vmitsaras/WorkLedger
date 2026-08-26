@@ -568,8 +568,45 @@
     }
   }
 
-  .wl-team-summary {
+  .wl-team-overview {
+    min-inline-size: 0;
+  }
+
+  .wl-team-overview__filters {
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    gap: var(--wl-space-2);
+  }
+
+  .wl-team-overview__record-filter {
+    display: grid;
+    max-inline-size: 22rem;
+  }
+
+  .wl-team-overview__filter {
+    display: grid;
+    inline-size: 100%;
+    min-inline-size: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    justify-content: stretch;
+    gap: var(--wl-space-3);
+    padding: var(--wl-space-3);
+    text-align: start;
+  }
+
+  .wl-team-overview__filter[aria-pressed='true'] {
+    border-color: var(--wl-action-primary);
+    background: var(--wl-surface-subtle);
+    box-shadow: inset var(--wl-space-1) 0 0 var(--wl-action-primary);
+  }
+
+  .wl-team-overview__filter-label {
+    min-inline-size: 0;
+  }
+
+  .wl-team-overview__filter-count {
+    color: var(--wl-text);
   }
 
   .wl-zero-expected-note {

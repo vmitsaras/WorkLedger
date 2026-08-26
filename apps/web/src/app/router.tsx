@@ -53,6 +53,7 @@ import {
 } from './query.js';
 import { RoutePresentation } from './route-presentation.js';
 import { setPendingSignInNotice } from './session-notice.js';
+import { parseTeamStatusView, toTeamStatusSearchParams } from './team-status-view.js';
 import { ApplicationShell } from '../components/application-shell.js';
 import {
   AuthenticationLayout,
@@ -232,7 +233,7 @@ export function createWorkLedgerRoutes(queryClient: QueryClient): RouteObject[] 
               loader: createTeamStatusLoader(queryClient),
               element: <TeamStatusPage />,
               errorElement: <RouteBoundary />,
-              handle: { title: 'Team' },
+              handle: { title: 'Team status' },
             },
             {
               path: 'team-calendar',
@@ -540,11 +541,18 @@ function createApprovalInboxLoader(queryClient: QueryClient): LoaderFunction {
 }
 
 function createTeamStatusLoader(queryClient: QueryClient): LoaderFunction {
-  return async () => {
+  return async ({ request }) => {
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes('MANAGER')) throw new Response(null, { status: 403 });
+    const searchParams = new URL(request.url).searchParams;
+    const view = parseTeamStatusView(searchParams);
+    if (view === null) return redirect('/team');
+    const canonicalSearch = toTeamStatusSearchParams(view).toString();
+    if (canonicalSearch !== searchParams.toString()) {
+      return redirect(canonicalSearch === '' ? '/team' : `/team?${canonicalSearch}`);
+    }
     void queryClient.prefetchQuery(teamStatusQuery());
-    return null;
+    return view;
   };
 }
 

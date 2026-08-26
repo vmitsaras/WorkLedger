@@ -52,7 +52,7 @@ const TEAM_STATUS: TeamStatus = {
     {
       availability: 'UNAVAILABLE',
       displayName: 'Cleo Away',
-      hasUnresolvedRecords: true,
+      hasUnresolvedRecords: false,
       teamName: null,
     },
     {
@@ -67,7 +67,7 @@ const TEAM_STATUS: TeamStatus = {
     onBreak: 1,
     total: 4,
     unavailable: 1,
-    unresolved: 2,
+    unresolved: 1,
     working: 1,
   },
   timeZone: 'Europe/Berlin',
@@ -78,34 +78,57 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test('renders an accessible, privacy-safe current direct-report table', async () => {
+test('renders an accessible, actionable, privacy-safe current direct-report table', async () => {
   const requestState = stubFetch(MANAGER_CONTEXT, () => successResponse(TEAM_STATUS));
   const { container } = renderApplication('/team');
 
   const heading = await screen.findByRole('heading', { name: 'Team status' });
   await waitFor(() => expect(heading).toHaveFocus());
-  expect(document.title).toBe('Team | WorkLedger');
-  expect(screen.getByText(/As of 12:30 PM on Friday, August 14, 2026/u)).toBeVisible();
+  expect(document.title).toBe('Team status | WorkLedger');
+  expect(screen.getByText(/Friday, August 14, 2026, as of 12:30 PM/u)).toBeVisible();
   expect(screen.getByRole('status', { name: 'Team refresh status' })).toHaveTextContent(
-    'Status current for 4 team members.',
+    'Status current for 4 direct reports.',
   );
-  const summary = screen.getByLabelText('Team status totals');
-  expect(summary).toHaveAccessibleName('Team status totals');
+  expect(screen.getByRole('button', { name: 'All direct reports: 4' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(screen.getByRole('button', { name: 'Working now: 1' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
+  expect(screen.getByRole('button', { name: 'People with open records: 1' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
 
   const table = screen.getByRole('table', {
-    name: 'Current availability and unresolved records for direct reports.',
+    name: 'Current availability, open record state, and next steps for direct reports.',
   });
   expect(
-    within(table).getByRole('row', { name: /Ari Working Delivery Working Unresolved record/u }),
+    within(table).getByRole('row', { name: /Ari Working Delivery Working now Open records/u }),
   ).toBeVisible();
   expect(within(table).getByRole('row', { name: /Bea Break Delivery On break/u })).toBeVisible();
   expect(
     within(table).getByRole('row', { name: /Cleo Away No current team Unavailable today/u }),
   ).toBeVisible();
   expect(
-    within(table).getByRole('row', { name: /Dara Finished Operations Not working/u }),
+    within(table).getByRole('row', { name: /Dara Finished Operations Not working now/u }),
   ).toBeVisible();
-  expect(screen.getByRole('link', { name: 'Open approval inbox' })).toHaveAttribute(
+  expect(
+    within(table).getByRole('link', {
+      name: 'Open approval inbox to find open records for Ari Working',
+    }),
+  ).toHaveAttribute('href', '/approvals?status=ALL&sort=EMPLOYEE&direction=ASC');
+  expect(
+    within(table).getByRole('link', { name: 'View team calendar for Cleo Away' }),
+  ).toHaveAttribute('href', '/team-calendar?month=2026-08');
+  const teamNavigation = screen.getByRole('navigation', { name: 'Team navigation' });
+  expect(within(teamNavigation).getByRole('link', { name: 'Team status' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  expect(within(teamNavigation).getByRole('link', { name: 'Approval inbox' })).toHaveAttribute(
     'href',
     '/approvals',
   );
@@ -116,27 +139,84 @@ test('renders an accessible, privacy-safe current direct-report table', async ()
   await expectNoAxeViolations(container);
 });
 
+test('keeps generic overview filters in the URL, combines them, and restores focus', async () => {
+  stubFetch(MANAGER_CONTEXT, () => successResponse(TEAM_STATUS));
+  const { container, router } = renderApplication('/team');
+  const user = userEvent.setup();
+
+  const working = await screen.findByRole('button', { name: 'Working now: 1' });
+  await user.click(working);
+  await waitFor(() => expect(router.state.location.search).toBe('?availability=WORKING'));
+  expect(working).toHaveFocus();
+  expect(working).toHaveAttribute('aria-pressed', 'true');
+  const table = screen.getByRole('table');
+  expect(within(table).getByText('Ari Working')).toBeVisible();
+  expect(within(table).queryByText('Bea Break')).not.toBeInTheDocument();
+
+  const openRecords = screen.getByRole('button', { name: 'People with open records: 1' });
+  await user.click(openRecords);
+  await waitFor(() =>
+    expect(router.state.location.search).toBe('?availability=WORKING&records=OPEN'),
+  );
+  expect(openRecords).toHaveFocus();
+  expect(
+    await screen.findByText('Showing 1 of 4 direct reports: working now with open records.'),
+  ).toBeVisible();
+
+  const onBreak = screen.getByRole('button', { name: 'On break: 1' });
+  await user.click(onBreak);
+  await waitFor(() =>
+    expect(router.state.location.search).toBe('?availability=ON_BREAK&records=OPEN'),
+  );
+  expect(onBreak).toHaveFocus();
+  expect(screen.getByRole('heading', { name: 'No team members match this view' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Show all direct reports' }));
+  await waitFor(() => expect(router.state.location.search).toBe(''));
+  expect(await screen.findByText('Ari Working')).toBeVisible();
+  await expectNoAxeViolations(container);
+});
+
 test('uses complete team records instead of a horizontally panned table at narrow width', async () => {
   stubNarrowLayout();
   stubFetch(MANAGER_CONTEXT, () => successResponse(TEAM_STATUS));
   const { container } = renderApplication('/team');
 
-  const list = await screen.findByRole('list', { name: 'Current direct reports' });
+  const list = await screen.findByRole('list', { name: 'Team status results' });
   expect(screen.queryByRole('table')).not.toBeInTheDocument();
   const ariHeading = within(list).getByRole('heading', { name: 'Ari Working' });
   const ariRecord = ariHeading.closest('article');
   expect(ariRecord).not.toBeNull();
   if (ariRecord === null) throw new Error('Expected Ari Working team record.');
   expect(within(ariRecord).getByText('Delivery')).toBeVisible();
-  expect(within(ariRecord).getByText('Working')).toBeVisible();
-  expect(within(ariRecord).getByText('Unresolved record')).toBeVisible();
+  expect(within(ariRecord).getByText('Working now')).toBeVisible();
+  expect(within(ariRecord).getByText('Open records')).toBeVisible();
+  expect(
+    within(ariRecord).getByRole('link', {
+      name: 'Open approval inbox to find open records for Ari Working',
+    }),
+  ).toBeVisible();
   const cleoHeading = within(list).getByRole('heading', { name: 'Cleo Away' });
   const cleoRecord = cleoHeading.closest('article');
   expect(cleoRecord).not.toBeNull();
   if (cleoRecord === null) throw new Error('Expected Cleo Away team record.');
   expect(within(cleoRecord).getByText('No current team')).toBeVisible();
   expect(within(cleoRecord).getByText('Unavailable today')).toBeVisible();
+  expect(
+    within(cleoRecord).getByRole('link', { name: 'View team calendar for Cleo Away' }),
+  ).toBeVisible();
   await expectNoAxeViolations(container);
+});
+
+test('rejects non-generic or unknown Team URL filters without disclosing data', async () => {
+  const requestState = stubFetch(MANAGER_CONTEXT, () => successResponse(TEAM_STATUS));
+  const { router } = renderApplication('/team?employee=Ari&availability=SICKNESS');
+
+  expect(await screen.findByRole('heading', { name: 'Team status' })).toBeVisible();
+  await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
+  expect(router.state.location.search).toBe('');
+  expect(screen.queryByDisplayValue('Ari')).not.toBeInTheDocument();
+  expect(screen.queryByText('SICKNESS')).not.toBeInTheDocument();
+  expect(requestState.teamRequests).toBe(1);
 });
 
 test('shows a clear empty state without inventing team records', async () => {
@@ -158,7 +238,7 @@ test('shows a clear empty state without inventing team records', async () => {
 
   expect(await screen.findByText('You have no current direct reports to show.')).toBeVisible();
   expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  expect(screen.queryByRole('link', { name: 'Open approval inbox' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('list', { name: 'Team status results' })).not.toBeInTheDocument();
 });
 
 test('recovers from a dependency error', async () => {
@@ -199,11 +279,13 @@ test('does not request or disclose team data to an employee-only route', async (
 
 function renderApplication(initialEntry: string) {
   const queryClient = createWorkLedgerQueryClient();
+  const initialUrl = new URL(initialEntry, 'https://workledger.test');
   const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
     initialEntries: [
       {
         key: `team-component-test-${(routerSequence += 1).toString()}`,
-        pathname: initialEntry,
+        pathname: initialUrl.pathname,
+        search: initialUrl.search,
       },
     ],
   });

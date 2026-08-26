@@ -168,7 +168,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1306` Replace generic warnings with actionable attention and correction-recovery workflows.
 - [x] `WL-1307` Pass the dedicated Today responsive, accessibility, usability, and visual sub-gate.
 - [x] `WL-1308` Prioritize actionable work and simplify filtering, actions, pagination, and narrow-screen behavior in Approval inbox.
-- [ ] `WL-1309` Improve Team status comprehension, filtering, actionability, labels, and workspace navigation.
+- [x] `WL-1309` Improve Team status comprehension, filtering, actionability, labels, and workspace navigation.
 - [ ] `WL-1310` Improve employee and team administration search, primary actions, route separation, dense layouts, and explanatory copy.
 - [ ] `WL-1311` Normalize cross-route navigation labels, microcopy, heading focus, status semantics, card density, and table-overflow behavior.
 - [ ] `WL-1312` Complete deterministic cross-route state, visual-regression, integration, accessibility, and usability coverage.

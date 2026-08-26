@@ -134,6 +134,45 @@ const TEAM_STATUS = {
   },
   timeZone: 'Europe/Berlin',
 };
+const PHASE_13_TEAM_STATUS = {
+  asOf: '2026-08-14T10:30:45Z',
+  localDate: '2026-08-14',
+  members: [
+    {
+      availability: 'WORKING',
+      displayName: 'Ari Working',
+      hasUnresolvedRecords: true,
+      teamName: 'Delivery',
+    },
+    {
+      availability: 'ON_BREAK',
+      displayName: 'Bea Break',
+      hasUnresolvedRecords: false,
+      teamName: 'Delivery',
+    },
+    {
+      availability: 'UNAVAILABLE',
+      displayName: 'Cleo Away',
+      hasUnresolvedRecords: false,
+      teamName: null,
+    },
+    {
+      availability: 'OFF_WORK',
+      displayName: 'Dara Finished',
+      hasUnresolvedRecords: false,
+      teamName: 'Operations',
+    },
+  ],
+  summary: {
+    offWork: 1,
+    onBreak: 1,
+    total: 4,
+    unavailable: 1,
+    unresolved: 1,
+    working: 1,
+  },
+  timeZone: 'Europe/Berlin',
+};
 const TEAM_CALENDAR = {
   days: Array.from(
     { length: 31 },
@@ -605,6 +644,110 @@ test('prioritizes needs-review approvals with URL views, concise filters, pagina
   ).toBe(true);
   await expect(scrollRegion).toHaveCount(0);
   await expectPageToHaveNoAxeViolations(page);
+});
+
+test('makes Team status filters, labels, next steps, and workspace navigation actionable', async ({
+  page,
+}) => {
+  const teamRequests: URL[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(MANAGER_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/team/status*', async (route) => {
+    const url = new URL(route.request().url());
+    teamRequests.push(url);
+    expect([...url.searchParams.keys()]).toEqual([]);
+    await route.fulfill({ json: success(PHASE_13_TEAM_STATUS), status: 200 });
+  });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/team');
+  await expect(page).toHaveTitle('Team status | WorkLedger');
+  await expect(page.getByRole('heading', { name: 'Team status', exact: true })).toBeFocused();
+  const teamNavigation = page.getByRole('navigation', { name: 'Team navigation' });
+  await expect(teamNavigation.getByRole('link', { name: 'Team status' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(teamNavigation.getByRole('link', { name: 'Approval inbox' })).toHaveAttribute(
+    'href',
+    '/approvals',
+  );
+  const allDirectReports = page.getByRole('button', { name: 'All direct reports: 4' });
+  await expect(allDirectReports).toHaveAttribute('aria-pressed', 'true');
+  const teamTable = page.getByRole('table', {
+    name: 'Current availability, open record state, and next steps for direct reports.',
+  });
+  await expect(teamTable).toBeVisible();
+  await expect(
+    teamTable.getByRole('link', {
+      name: 'Open approval inbox to find open records for Ari Working',
+    }),
+  ).toHaveAttribute('href', '/approvals?status=ALL&sort=EMPLOYEE&direction=ASC');
+  await expect(
+    teamTable.getByRole('link', { name: 'View team calendar for Cleo Away' }),
+  ).toHaveAttribute('href', '/team-calendar?month=2026-08');
+  await capturePhase13TeamStatus(page, 'team-status-1440x900');
+
+  await page.setViewportSize({ width: 768, height: 1024 });
+  const teamList = page.getByRole('list', { name: 'Team status results' });
+  await expect(teamTable).toHaveCount(0);
+  await expect(teamList).toBeVisible();
+  await capturePhase13TeamStatus(page, 'team-status-768x1024');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(teamList).toBeVisible();
+  await expect(teamList.getByRole('heading', { name: 'Ari Working' })).toBeVisible();
+  await expect(teamList.getByText('Working now', { exact: true })).toBeVisible();
+  await expect(teamList.getByText('Open records', { exact: true })).toBeVisible();
+  await capturePhase13TeamStatus(page, 'team-status-390x844');
+
+  await page.setViewportSize({ width: 320, height: 900 });
+  await expect(teamList).toBeVisible();
+  const narrowAction = teamList.getByRole('link', {
+    name: 'Open approval inbox to find open records for Ari Working',
+  });
+  await expect(narrowAction).toBeVisible();
+  const narrowActionBox = await narrowAction.boundingBox();
+  expect(narrowActionBox?.height).toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await capturePhase13TeamStatus(page, 'team-status-320x900');
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const working = page.getByRole('button', { name: 'Working now: 1', exact: true });
+  await working.click();
+  await expect(page).toHaveURL(/\/team\?availability=WORKING$/u);
+  await expect(working).toBeFocused();
+  await expect(working).toHaveAttribute('aria-pressed', 'true');
+  await expect(teamTable.getByText('Ari Working')).toBeVisible();
+  await expect(teamTable.getByText('Bea Break')).toHaveCount(0);
+
+  const openRecords = page.getByRole('button', { name: 'People with open records: 1' });
+  await openRecords.click();
+  await expect(page).toHaveURL(/availability=WORKING&records=OPEN$/u);
+  await expect(openRecords).toBeFocused();
+  await expect(
+    page.getByText('Showing 1 of 4 direct reports: working now with open records.'),
+  ).toBeVisible();
+
+  const onBreak = page.getByRole('button', { name: 'On break: 1' });
+  await onBreak.click();
+  await expect(page).toHaveURL(/availability=ON_BREAK&records=OPEN$/u);
+  await expect(onBreak).toBeFocused();
+  await expect(
+    page.getByRole('heading', { name: 'No team members match this view' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Show all direct reports' }).click();
+  await expect(page).toHaveURL(/\/team$/u);
+  await expect(teamTable.getByText('Dara Finished')).toBeVisible();
+
+  await page.goto('/team?employee=Ari&availability=SICKNESS');
+  await expect(page).toHaveURL(/\/team$/u);
+  await expect(page.getByText(/sickness|vacation|private correction/iu)).toHaveCount(0);
+  expect(teamRequests.length).toBeGreaterThanOrEqual(1);
 });
 
 test('opens an authorized report, applies URL filters, and contains its table at narrow width', async ({
@@ -2090,31 +2233,37 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
   await dialog.getByRole('link', { name: 'Team', exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Team status' })).toBeFocused();
-  await expect(page).toHaveTitle('Team | WorkLedger');
-  const teamList = page.getByRole('list', { name: 'Current direct reports' });
+  await expect(page).toHaveTitle('Team status | WorkLedger');
+  const teamList = page.getByRole('list', { name: 'Team status results' });
   await expect(teamList).toBeVisible();
   await expect(page.getByRole('table')).toHaveCount(0);
   await expect(teamList.getByRole('heading', { name: 'Ari Working' })).toBeVisible();
   await expect(teamList.getByText('Delivery')).toBeVisible();
-  await expect(teamList.getByText('Working', { exact: true })).toBeVisible();
-  await expect(teamList.getByText('Unresolved record', { exact: true })).toBeVisible();
+  await expect(teamList.getByText('Working now', { exact: true })).toBeVisible();
+  await expect(teamList.getByText('Open records', { exact: true })).toBeVisible();
   await expect(teamList.getByRole('heading', { name: 'Cleo Away' })).toBeVisible();
   await expect(teamList.getByText('No current team')).toBeVisible();
   await expect(teamList.getByText('Unavailable today', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open approval inbox' })).toBeVisible();
-  await capturePhase12Manager(page, 'team-status-mobile-390x844');
+  await expect(
+    teamList.getByRole('link', {
+      name: 'Open approval inbox to find open records for Ari Working',
+    }),
+  ).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await expect(page.getByText(/sickness|vacation/iu)).toHaveCount(0);
 
   await page.setViewportSize({ width: 1024, height: 720 });
+  await expect(teamList).toBeVisible();
+  await expect(page.getByRole('table')).toHaveCount(0);
+  await page.setViewportSize({ width: 1280, height: 720 });
   const teamTable = page.getByRole('table', {
-    name: 'Current availability and unresolved records for direct reports.',
+    name: 'Current availability, open record state, and next steps for direct reports.',
   });
   await expect(
     teamTable.getByRole('row', {
-      name: /Ari Working.*Delivery.*Working.*Unresolved record/u,
+      name: /Ari Working.*Delivery.*Working now.*Open records/u,
     }),
   ).toBeVisible();
   await expect(
@@ -2123,7 +2272,6 @@ test('uses a focus-managed responsive navigation drawer without motion dependenc
     }),
   ).toBeVisible();
   await expect(page.getByRole('region', { name: 'Team status table' })).toBeVisible();
-  await capturePhase12Manager(page, 'team-status-desktop-1024x720');
 
   await page.setViewportSize({ width: 390, height: 844 });
   const menuButton = page.getByRole('button', { name: 'Menu' });
@@ -2307,8 +2455,8 @@ test('keeps combined-role work areas and account utilities reachable in a short 
   await expect(page.getByRole('heading', { name: 'Team status', exact: true })).toBeFocused();
   const teamNavigation = page.getByRole('navigation', { name: 'Team navigation' });
   for (const [name, href] of [
-    ['Team', '/team'],
-    ['Approvals', '/approvals'],
+    ['Team status', '/team'],
+    ['Approval inbox', '/approvals'],
     ['Team calendar', '/team-calendar'],
     ['Reports', '/reports'],
   ]) {
@@ -3399,6 +3547,16 @@ async function capturePhase13ApprovalInbox(page: Page, name: string): Promise<vo
 
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page).toHaveScreenshot(['phase-13', 'wl1308', `${name}.png`], {
+    animations: 'disabled',
+    fullPage: true,
+  });
+}
+
+async function capturePhase13TeamStatus(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_ASSERT_PHASE_13_TEAM'] !== '1') return;
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page).toHaveScreenshot(['phase-13', 'wl1309', `${name}.png`], {
     animations: 'disabled',
     fullPage: true,
   });

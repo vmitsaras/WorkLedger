@@ -341,6 +341,22 @@ tests, pagination focus, permission loss, HR access, privacy-field absence, and 
 rejection provide the bounded acceptance evidence. `AUD-1300-09` is resolved; cross-route
 normalization remains assigned to `WL-1311` and `WL-1312`.
 
+### `WL-1309` follow-up
+
+`WL-1309` completes the Team status comprehension and actionability slice in
+`docs/133-team-status-workspace.md`. Current overview totals are now keyboard-operable,
+URL-backed availability filters, with a separate combinable open-record toggle and a clear
+filtered-result recovery. Time-bound availability labels and deliberately broad open-record copy
+make the visible state understandable without exposing absence or workflow detail.
+
+Applicable direct-report records now lead to the generic employee-sorted Approval inbox or the
+current-month Team calendar without placing an employee, request, workflow, or absence subtype in
+the URL. The Team workspace destinations are explicitly named Team status, Approval inbox, and
+Team calendar. The comparison table remains available at genuinely wide content widths; complete
+semantic list records, four current screenshots, keyboard focus, axe, privacy, permission, target
+size, and overflow assertions provide the bounded acceptance evidence at 768, 390, and 320 pixels.
+Employee and team administration work moves next to `WL-1310`.
+
 ## 10. Verification result
 
 The exact `pnpm verify` workflow passed under Node `24.18.0` and pnpm `11.20.0`. Because the existing `node_modules` workspace-state record predates the current workspace shape, pnpm was invoked through a temporary wrapper that changed `verify-deps-before-run` from automatic install to warning. The warning was recorded; no install, purge, registry refresh, manifest, or lockfile change was allowed.

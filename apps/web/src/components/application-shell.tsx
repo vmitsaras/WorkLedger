@@ -25,8 +25,8 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   { area: 'EMPLOYEE', label: 'My balances', to: '/my-balances' },
   { area: 'EMPLOYEE', label: 'Requests', to: '/requests' },
   { area: 'EMPLOYEE', label: 'Calendar', to: '/calendar' },
-  { area: 'MANAGER', label: 'Team', to: '/team' },
-  { area: 'MANAGER', label: 'Approvals', to: '/approvals' },
+  { area: 'MANAGER', label: 'Team status', to: '/team' },
+  { area: 'MANAGER', label: 'Approval inbox', to: '/approvals' },
   { area: 'MANAGER', label: 'Team calendar', to: '/team-calendar' },
   { area: 'HR', label: 'Employees', to: '/employees' },
   { area: 'HR', label: 'Time settings', to: '/settings/time' },
@@ -40,7 +40,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
 
 const HR_APPROVAL_ITEM: NavigationItem = {
   area: 'HR',
-  label: 'Approvals',
+  label: 'Approval inbox',
   to: '/approvals',
 };
 
