@@ -5,6 +5,14 @@ export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];
 
 export {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  isSupportedLocale,
+  supportedLocaleSchema,
+  type SupportedLocale,
+} from './locales.js';
+
+export {
   PERSONAL_REQUEST_ACTIONS,
   PERSONAL_REQUEST_FILTER_STATUSES,
   PERSONAL_REQUEST_HISTORY_ACTIONS,

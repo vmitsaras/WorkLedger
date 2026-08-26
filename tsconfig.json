@@ -4,6 +4,7 @@
   "references": [
     { "path": "packages/config" },
     { "path": "packages/contracts" },
+    { "path": "packages/i18n" },
     { "path": "packages/domain" },
     { "path": "packages/ui" },
     { "path": "packages/database" },

@@ -2,20 +2,21 @@
 
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 1 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1400` internationalization architecture and inventory complete — version 0.14.0
-**Active task:** `WL-1401` (next; not started)
-**Status:** Phase 14 architecture is accepted; typed runtime foundation has not started
+**Phase progress:** Phase 13 complete — 2 of 11 Phase 14 tasks complete
+**Current milestone:** `WL-1401` shared internationalization foundation complete — version 0.14.0
+**Active task:** `WL-1402` (next; not started)
+**Status:** Typed locale, catalog, formatting, React synchronization, and bundle contracts are executable
 **Last verified:** 2026-08-26
 
 ## Current objective
 
-Phase 13 is complete at `0.14.0`. `WL-1400` has inventoried all current route and output families,
-accepted ADR 0013, recorded the API prose boundary and risk register, and established the German
-and Spanish glossary review structure. `WL-1401` is next and owns only the typed local i18n
-foundation, locale resolution and loading, React and React Aria synchronization, and separate
-locale chunk budgets. Account persistence, API descriptor migrations, workflow translation, and
-outbound output remain gated behind their numbered tasks. The broader `D-502` retail browser and
+Phase 13 is complete at `0.14.0`. `WL-1400` accepted ADR 0013 and `WL-1401` now provides the exact
+locale contract, private typed i18n package, local catalog chunks, explicit formatters, React and
+React Aria synchronization, catalog enforcement, and separate locale budgets. The existing product
+still activates `en-GB` only so untranslated workflows do not present a mixed-language interface.
+`WL-1402` is next and owns account/invitation persistence, signed-out device preference, selectors,
+and immediate switching. API descriptor migrations, workflow translation, and outbound output
+remain gated behind their numbered tasks. The broader `D-502` retail browser and
 assistive-technology matrix remains an explicit limitation rather than a conformance claim. The
 portfolio presentation scope remains an unnumbered draft.
 
@@ -163,10 +164,12 @@ portfolio presentation scope remains an unnumbered draft.
 - Approval decisions require the authenticated account and explicit `CURRENT_MANAGER`,
   `ORGANIZATION_HR`, or `SELF` authority; a linked employee identity is optional evidence, so
   HR-only accounts remain attributable without fabricated employee records (`D-352`).
-- English is the only shipped MVP locale; formatting remains locale-aware.
-- Phase 14 plans `en-GB`, `de-DE`, and `es-ES` with `en-GB` fallback, per-account preference,
-  complete user-facing-output coverage, and fluent-human German and Spanish review. It remains
-  unimplemented until its tasks complete.
+- The typed internationalization foundation supports exactly `en-GB`, `de-DE`, and `es-ES`, with
+  `en-GB` fallback, repository-local catalog chunks, safe text interpolation, and explicit
+  locale/timezone formatting. Existing screens still activate English only until their owning
+  migration tasks complete.
+- Phase 14 still requires per-account preference, complete user-facing-output coverage, and
+  fluent-human German and Spanish review before the multilingual product can ship.
 - Employee self-service profile data is read-only; HR-owned employment facts are not self-editable.
 - The self-context/profile transport exposes only active account, organization, employee summary,
   current application roles, derived navigation areas, and minimized session/device summaries; IP
@@ -384,6 +387,14 @@ portfolio presentation scope remains an unnumbered draft.
 
 ## Work completed
 
+- [x] Exact locale contracts, the private typed `@workledger/i18n` package, local seven-namespace
+  catalogs, strict resolution, explicit formatters, React/react-i18next/React Aria adapters,
+  catalog enforcement, and separate measured locale budgets completed (`WL-1401`; see
+  `docs/141-shared-i18n-foundation.md`).
+- [x] Complete route/output string inventory, message ownership and fallback architecture, API
+  prose migration map, risk register, and German/Spanish glossary review structure accepted
+  (`WL-1400`; see `docs/139-phase-14-internationalization-architecture-audit.md`, ADR 0013, and
+  `docs/140-phase-14-translation-glossary.md`).
 - [x] Quiet Ledger design problem frame, visual foundations, content hierarchy, page archetypes,
   density system, shell/responsive rules, component/state expression, motion, accessibility,
   microcopy, implementation ownership, and validation matrix approved (`WL-1101`; see
@@ -2401,9 +2412,36 @@ portfolio presentation scope remains an unnumbered draft.
   manifest, workspace version, publication, deployment, or tag changed. `WL-1401` remains the first
   runtime implementation task.
 
+**2026-08-26 — WL-1401 shared internationalization foundation**
+
+- Added the exact contracts-owned locale allowlist and the private `@workledger/i18n` package with
+  strict resolution, all-LTR direction mapping, seven typed namespaces, local dynamic catalog
+  loaders, safe plain-text messages, explicit locale/timezone formatters, and exact stable
+  `i18next`/`react-i18next` pins.
+- Added lightweight locale plus React Aria bootstrap and a separately tested full react-i18next
+  bridge. The web currently loads only `en-GB` before router mount, avoiding mixed-language
+  workflows and keeping the translation engine out of the untranslated production graph until
+  `WL-1404`.
+- Added `pnpm i18n:check`, catalog/key/interpolation/plural/text checks, workspace/boundary coverage,
+  and locale-aware bundle assertions. All three catalog chunks are emitted separately and the
+  existing application limits remain unchanged; the measured build is 909,306 bytes raw and
+  245,662 bytes gzip outside catalogs, with 1,485 bytes raw and 993 bytes gzip across catalogs.
+- Pinned Vite's supported optional Terser minifier because the default minifier remained 2,229 raw
+  bytes over the unchanged non-catalog ceiling after architectural splitting. No budget was raised
+  and no runtime bytes were classified as catalog data.
+- Added focused locale resolution, initialization, formatting, text safety, React, React Aria,
+  catalog-check, workspace, boundary, and budget tests. No account/API/database schema, migration,
+  authorization, audit, user-content, output, workspace version, publication, deployment, or tag
+  changed. See `docs/141-shared-i18n-foundation.md`.
+- Verified runtime configuration, reproducible OpenAPI, formatting, lint with
+  310-source/1,618-import boundaries, CSS ownership, strict TypeScript, 46 tooling tests, 388
+  unit/component tests across 49 files, 13 available integration tests, 38 browser scenarios, and
+  the production/workspace build. One intentional browser capture and 45 PostgreSQL-dependent
+  integration cases remain skipped because their opt-in service/evidence is unavailable.
+
 ## Current blockers
 
-No blocker prevents `WL-1401`. German and Spanish still require named fluent reviewers before
+No blocker prevents `WL-1402`. German and Spanish still require named fluent reviewers before
 `WL-1408`; their absence does not block the typed English-first foundation. Exact partial-day
 work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
 still require authoritative domain or repository facts; Today does not guess them from minute
@@ -2419,11 +2457,12 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-`WL-1401 — Establish the shared typed i18n foundation, local catalog loading, locale resolution,
-React and React Aria integration, and bundle-budget contract.`
+`WL-1402 — Implement per-account locale persistence, signed-out device preference, initial
+invitation locale, profile/auth selectors, and immediate language switching.`
 
-No Phase 14 runtime implementation has started. The portfolio presentation scope remains preserved
-in `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
+The i18n foundation is complete, but account/device persistence and any non-English product
+activation remain unimplemented. The portfolio presentation scope remains preserved in
+`docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 
 ## Update rules
 

@@ -28,12 +28,12 @@ const negativeFixtures = [
 test('accepts every current workspace source import', async () => {
   assert.deepEqual(await checkWorkspaceBoundaries(repositoryRoot), {
     errors: [],
-    fileCount: 296,
-    importCount: 1552,
+    fileCount: 310,
+    importCount: 1618,
   });
 });
 
-test('accepts the web public-root fixture', async () => {
+test('accepts the web public-root and declared i18n React fixture', async () => {
   const result = await validateSourceImports({
     projectDirectory: 'apps/web',
     relativeFile: 'src/allowed-web.ts',
@@ -41,7 +41,7 @@ test('accepts the web public-root fixture', async () => {
     source: await readFile(path.join(fixtureDirectory, 'allowed-web.ts'), 'utf8'),
   });
 
-  assert.deepEqual(result, { errors: [], importCount: 2 });
+  assert.deepEqual(result, { errors: [], importCount: 4 });
 });
 
 for (const [fixtureName, projectDirectory, relativeFile, expectedCode] of negativeFixtures) {

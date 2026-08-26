@@ -22,6 +22,7 @@
     "toolchain:check": "node scripts/check-toolchain.mjs",
     "workspace:check": "pnpm run toolchain:check && node scripts/check-workspace.mjs && node scripts/check-phase-version.mjs",
     "phase:check": "node scripts/check-phase-version.mjs",
+    "i18n:check": "node scripts/check-i18n.mjs",
     "css:check": "node scripts/check-css-contract.mjs",
     "config:check": "pnpm run test:build && node --env-file-if-exists=.env scripts/check-api-runtime-config.mjs",
     "production:config:check": "docker compose --env-file .env.production.example -f infra/compose/production.yml config --quiet",
@@ -43,11 +44,11 @@
     "lint": "pnpm run workspace:check && eslint . --max-warnings 0 && node scripts/check-boundaries.mjs && pnpm run css:check",
     "typecheck": "pnpm run workspace:check && tsc --build --pretty false --force",
     "test:build": "tsc --build --pretty false --force",
-    "test": "pnpm run workspace:check && pnpm run test:build && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs scripts/check-phase-version.test.mjs scripts/check-css-contract.test.mjs scripts/check-web-bundle-budget.test.mjs scripts/backup-crypto.test.mjs scripts/backup-restore-contract.test.mjs && vitest run --project unit --project component",
+    "test": "pnpm run workspace:check && pnpm run test:build && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs scripts/check-phase-version.test.mjs scripts/check-css-contract.test.mjs scripts/check-i18n.test.mjs scripts/check-web-bundle-budget.test.mjs scripts/backup-crypto.test.mjs scripts/backup-restore-contract.test.mjs && vitest run --project unit --project component",
     "test:integration": "pnpm run workspace:check && pnpm run test:build && vitest run --project integration",
     "test:e2e": "pnpm run workspace:check && pnpm run test:build && playwright test",
     "test:visual": "pnpm run workspace:check && pnpm run test:build && WORKLEDGER_ASSERT_PHASE_13_VISUALS=1 playwright test apps/web/e2e/application-shell.spec.ts --project=chromium",
-    "build": "pnpm run workspace:check && tsc --build --pretty false --force && pnpm --filter @workledger/web exec vite build && node scripts/check-web-bundle-budget.mjs && node scripts/check-workspace-build.mjs",
+    "build": "pnpm run workspace:check && pnpm run i18n:check && tsc --build --pretty false --force && pnpm --filter @workledger/web exec vite build && node scripts/check-web-bundle-budget.mjs && node scripts/check-workspace-build.mjs",
     "verify": "pnpm config:check && pnpm openapi:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
   },
   "devDependencies": {
@@ -68,6 +69,7 @@
     "prettier": "3.9.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "terser": "5.50.0",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
   },

@@ -5,6 +5,7 @@ import { test } from 'node:test';
 
 import {
   EXPECTED_CONFIG_EXPORTS,
+  EXPECTED_I18N_EXPORTS,
   EXPECTED_NODE_VERSION,
   EXPECTED_PACKAGE_EXPORTS,
   EXPECTED_PACKAGE_MANAGER,
@@ -52,9 +53,11 @@ function createProject(expectedProject) {
           : structuredClone(
               expectedProject.directory === 'packages/config'
                 ? EXPECTED_CONFIG_EXPORTS
-                : expectedProject.directory === 'packages/ui'
-                  ? EXPECTED_UI_EXPORTS
-                  : EXPECTED_PACKAGE_EXPORTS,
+                : expectedProject.directory === 'packages/i18n'
+                  ? EXPECTED_I18N_EXPORTS
+                  : expectedProject.directory === 'packages/ui'
+                    ? EXPECTED_UI_EXPORTS
+                    : EXPECTED_PACKAGE_EXPORTS,
             ),
       scripts: {
         build:
@@ -106,6 +109,7 @@ function createState() {
         'toolchain:check': 'node scripts/check-toolchain.mjs',
         'workspace:check': 'node scripts/check-workspace.mjs',
         'phase:check': 'test command',
+        'i18n:check': 'test command',
         'css:check': 'test command',
         'config:check': 'test command',
         'db:up': 'test command',
@@ -143,9 +147,9 @@ function createState() {
 
 test('accepts the exact private workspace and tooling graph', () => {
   assert.deepEqual(validateWorkspace(createState()), {
-    projectCount: 8,
-    runtimeEdgeCount: 8,
-    developmentEdgeCount: 11,
+    projectCount: 9,
+    runtimeEdgeCount: 10,
+    developmentEdgeCount: 12,
   });
 });
 

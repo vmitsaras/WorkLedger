@@ -157,7 +157,9 @@ function validateInternalImport({ project, relativeFile, specifier, line }) {
       `${project.directory} must use a local relative import instead of importing itself as ${packageName}.`,
     );
   }
-  if (segments.length > 2) {
+  const isAcceptedI18nReactSurface =
+    packageName === '@workledger/i18n' && specifier === '@workledger/i18n/react';
+  if (segments.length > 2 && !isAcceptedI18nReactSurface) {
     return createError(
       'deep-import',
       relativeFile,

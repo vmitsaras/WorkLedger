@@ -1,0 +1,15 @@
+{
+  "duration": {
+    "hours_many": "{{count}} horas",
+    "hours_one": "{{count}} hora",
+    "hours_other": "{{count}} horas",
+    "minutes_many": "{{count}} minutos",
+    "minutes_one": "{{count}} minuto",
+    "minutes_other": "{{count}} minutos"
+  },
+  "i18n": {
+    "greeting": "Hola, {{name}}.",
+    "initializing": "Cargando la configuración de idioma…",
+    "loadError": "WorkLedger no pudo cargar el idioma seleccionado."
+  }
+}

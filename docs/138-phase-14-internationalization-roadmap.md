@@ -1,6 +1,6 @@
 # Phase 14 Internationalization and Multilingual Product Roadmap
 
-**Status:** Active; `WL-1400` complete; runtime implementation has not started
+**Status:** Active; `WL-1400` and `WL-1401` complete; `WL-1402` next
 **Tasks:** `WL-1400` through `WL-1410`
 **Dependency:** Completed Phase 13 gate `WL-1313` at workspace version `0.14.0`
 **Gate version:** `0.15.0`
@@ -13,9 +13,11 @@ existing domain, authorization, privacy, accessibility, audit, timezone, immutab
 self-hosting contracts. Translation is presentation work; it does not authorize localized domain
 codes, jurisdiction-specific policy behavior, or duplicated sources of truth.
 
-This document began as the roadmap and implementation handoff. `WL-1400` has now accepted ADR 0013
-and recorded the route and output audit, risk register, API prose boundary, and glossary structure.
-No dependency, catalog, runtime code, contract, database migration, or manifest has changed.
+This document began as the roadmap and implementation handoff. `WL-1400` accepted ADR 0013 and
+recorded the route and output audit, risk register, API prose boundary, and glossary structure.
+`WL-1401` has now established the typed locale contract, private i18n package, local catalogs,
+formatters, React/React Aria synchronization, automated catalog checks, and separate locale-chunk
+budgets. Account and device persistence remain `WL-1402`.
 
 ## 2. Locked product and architecture instructions
 
@@ -186,11 +188,11 @@ and its own content, layout, accessibility, output, and operational evidence.
 
 ## 10. Current state and next action
 
-`WL-1400` is complete. ADR 0013 is accepted, the canonical inventory and risk register are in
+`WL-1400` and `WL-1401` are complete. ADR 0013 is accepted, the canonical inventory and risk register are in
 `docs/139-phase-14-internationalization-architecture-audit.md`, and the translation-review structure
-is in `docs/140-phase-14-translation-glossary.md`.
+is in `docs/140-phase-14-translation-glossary.md`. The executable runtime foundation and measured
+bundle evidence are in `docs/141-shared-i18n-foundation.md`.
 
-`WL-1401` is next. It may create the typed `@workledger/i18n` foundation, local catalog loading,
-locale resolution, React and React Aria integration, and the separate locale-chunk budget gate. It
-must not begin account persistence or change user-facing API prose owned by `WL-1402` and
-`WL-1403`.
+`WL-1402` is next. It owns authenticated account and invitation locale persistence, bounded
+signed-out device preference, selectors, immediate switching, focus continuity, and failure
+recovery. It must not begin the user-facing API prose migration owned by `WL-1403`.

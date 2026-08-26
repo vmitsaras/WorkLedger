@@ -32,7 +32,7 @@ export const EXPECTED_PROJECTS = [
     directory: 'apps/web',
     name: '@workledger/web',
     kind: 'application',
-    runtimeDependencies: ['@workledger/contracts', '@workledger/ui'],
+    runtimeDependencies: ['@workledger/contracts', '@workledger/i18n', '@workledger/ui'],
     developmentDependencies: ['@workledger/config', '@workledger/test-utils'],
   },
   {
@@ -61,6 +61,13 @@ export const EXPECTED_PROJECTS = [
     name: '@workledger/domain',
     kind: 'package',
     runtimeDependencies: [],
+    developmentDependencies: ['@workledger/config'],
+  },
+  {
+    directory: 'packages/i18n',
+    name: '@workledger/i18n',
+    kind: 'package',
+    runtimeDependencies: ['@workledger/contracts'],
     developmentDependencies: ['@workledger/config'],
   },
   {
@@ -99,6 +106,14 @@ export const EXPECTED_UI_EXPORTS = {
   './styles.css': './src/styles.css',
 };
 
+export const EXPECTED_I18N_EXPORTS = {
+  ...EXPECTED_PACKAGE_EXPORTS,
+  './react': {
+    types: './dist/react.d.ts',
+    import: './dist/react.js',
+  },
+};
+
 const EXPECTED_PROJECT_SCRIPTS = {
   build: 'tsc --build tsconfig.json --pretty false',
   typecheck: 'tsc --build tsconfig.json --pretty false',
@@ -115,6 +130,7 @@ const REQUIRED_SCRIPTS = [
   'toolchain:check',
   'workspace:check',
   'phase:check',
+  'i18n:check',
   'css:check',
   'config:check',
   'db:up',
@@ -166,6 +182,7 @@ const REQUIRED_CONFIGURATION_FILES = [
   'scripts/check-postgres-dev.mjs',
   'scripts/check-api-runtime-config.mjs',
   'scripts/check-web-bundle-budget.mjs',
+  'scripts/check-i18n.mjs',
   'scripts/check-css-contract.mjs',
   'scripts/generate-openapi.mjs',
   'openapi/workledger.openapi.json',
@@ -459,7 +476,7 @@ export function validateWorkspace(state) {
     !isDeepStrictEqual(state.rootTypeScriptConfig.files, []) ||
     !isDeepStrictEqual(actualRootReferences, expectedRootReferences)
   ) {
-    errors.push('The root tsconfig.json must be a solution containing exactly the eight projects.');
+    errors.push('The root tsconfig.json must be a solution containing exactly the nine projects.');
   }
   if ('paths' in (state.rootTypeScriptConfig.compilerOptions ?? {})) {
     errors.push('The root tsconfig.json must not define path aliases.');
@@ -528,9 +545,11 @@ export function validateWorkspace(state) {
       const expectedExports =
         directory === 'packages/config'
           ? EXPECTED_CONFIG_EXPORTS
-          : directory === 'packages/ui'
-            ? EXPECTED_UI_EXPORTS
-            : EXPECTED_PACKAGE_EXPORTS;
+          : directory === 'packages/i18n'
+            ? EXPECTED_I18N_EXPORTS
+            : directory === 'packages/ui'
+              ? EXPECTED_UI_EXPORTS
+              : EXPECTED_PACKAGE_EXPORTS;
       if (!isDeepStrictEqual(manifest.exports, expectedExports)) {
         errors.push(`${directory} must expose only its accepted explicit public surfaces.`);
       }

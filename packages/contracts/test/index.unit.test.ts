@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
   approvalInboxEnvelopeSchema,
   approvalInboxItemSchema,
   approvalInboxQuerySchema,
@@ -28,6 +30,7 @@ import {
   reportQuerySchema,
   reportResultEnvelopeSchema,
   selfProfileEnvelopeSchema,
+  supportedLocaleSchema,
   startBreakEnvelopeSchema,
   teamCalendarEnvelopeSchema,
   teamCalendarQuerySchema,
@@ -795,6 +798,18 @@ test('validates the strict, paginated approval-inbox response shape', () => {
 test('exposes the contracts package boundary identity', () => {
   expect(workspacePackage).toBe('@workledger/contracts');
   expect(workspaceDependencies).toEqual([]);
+});
+
+test('allows only production locales at the transport boundary', () => {
+  expect(SUPPORTED_LOCALES).toEqual(['en-GB', 'de-DE', 'es-ES']);
+  expect(DEFAULT_LOCALE).toBe('en-GB');
+
+  for (const locale of SUPPORTED_LOCALES) {
+    expect(supportedLocaleSchema.parse(locale)).toBe(locale);
+  }
+  for (const locale of ['en-US', 'de', 'es-MX', 'en-XA', 'ar', '', null]) {
+    expect(supportedLocaleSchema.safeParse(locale).success).toBe(false);
+  }
 });
 
 test('keeps self-profile and session transport fields purpose-minimized', () => {

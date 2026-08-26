@@ -105,6 +105,24 @@ Domain and security audit persistence use separate record types, tables, reposit
 authorization paths. Audit append methods share the originating application transaction; audit is
 evidence of a source action, not a replacement for source history.
 
+### `packages/i18n`
+
+Owns:
+
+- the exact production-locale runtime contract derived from `packages/contracts`,
+- strict locale resolution and direction,
+- typed semantic message keys and repository-owned catalog loaders,
+- locale-aware presentation formatters,
+- the framework-neutral i18next runtime, and
+- the bounded React, react-i18next, and React Aria synchronization adapter.
+
+It depends on `packages/contracts` in one direction. Domain, database, contracts, and UI remain
+translation-library independent. Catalogs are loaded through literal locale-specific imports; no
+runtime catalog service or user-authored HTML translation path is permitted. Until the existing
+English UI is migrated, the web composition root mounts only the lightweight `en-GB` locale and
+React Aria provider; the complete translation bridge is implemented and tested but remains outside
+the production graph. See ADR 0013 and `docs/141-shared-i18n-foundation.md`.
+
 ### `packages/database`
 
 Owns:
@@ -144,6 +162,8 @@ Owns generic deterministic clocks, builders/factories based on public domain/con
 - Repository interfaces, implementations, and transaction adapters live in `packages/database` for the MVP. They expose narrow application-facing methods and domain/application values, never Drizzle query builders or rows.
 - `apps/web` is the browser composition root. It consumes serialized contracts and does not reimplement authoritative domain calculation or authorization.
 - `packages/contracts` owns wire schemas and DTOs independently of domain entities. The API explicitly and exhaustively maps domain results/errors to contracts; neither package imports the other.
+- `packages/i18n` owns presentation locale, catalogs, formatting, and React synchronization. It may
+  consume locale and descriptor contracts, but contracts never consume translated catalogs.
 
 ## 3. React Router and TanStack Query contract
 

@@ -177,7 +177,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 ## Phase 14 — Internationalization and multilingual product experience
 
 - [x] `WL-1400` Audit every user-facing string and ratify the locale, translation-key, message-ownership, formatting, and fallback architecture.
-- [ ] `WL-1401` Establish the shared typed i18n foundation, local catalog loading, locale resolution, React/React Aria integration, and bundle-budget contract.
+- [x] `WL-1401` Establish the shared typed i18n foundation, local catalog loading, locale resolution, React/React Aria integration, and bundle-budget contract.
 - [ ] `WL-1402` Implement per-account locale persistence, signed-out device preference, initial invitation locale, profile/auth selectors, and immediate language switching.
 - [ ] `WL-1403` Replace user-facing API prose dependencies with bounded message descriptors and structured presentation data.
 - [ ] `WL-1404` Translate shared UI, route titles and boundaries, authentication, application shell, navigation, profile, validation, dialogs, and announcements.
