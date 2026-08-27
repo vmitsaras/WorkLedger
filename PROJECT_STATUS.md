@@ -1,16 +1,26 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 14 — Internationalization and multilingual product experience
+**Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 14 complete — 11 of 11 tasks complete
-**Current milestone:** `WL-1410` Phase 14 release gate complete at `0.15.0`
-**Active task:** None scheduled
-**Status:** The full repository, multilingual, database integration, accessibility, security, migration, and prior-release upgrade gates pass with no open P0/P1 multilingual defect
+**Phase progress:** Phase 15 planned — 0 of 17 tasks complete
+**Current milestone:** Phase 15 Insights foundation sub-gate (`WL-1500`–`WL-1504`)
+**Active task:** `WL-1500` — Ratify Insights boundaries, privacy, security, evaluation, and staged gates
+**Status:** Phase 14 remains complete at `0.15.0`; Phase 15 is registered and awaits its architecture/privacy contract before implementation
 **Last verified:** 2026-08-27
 
 ## Current objective
 
-Phase 14 is complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
+Phase 15 is now registered as a staged, post-MVP extension. `WL-1500` is the only ready task and
+must ratify the product boundary, role and active-workspace scopes, prohibited uses, data flow,
+retention, egress, privacy suppression, accessibility, evaluation, operations, and release gates
+before any Insights or AI implementation begins. `WL-1501`–`WL-1504` then deliver a deterministic,
+model-independent Insights foundation. Optional local Ollama interpretation is deferred to the
+employee-only `WL-1505`–`WL-1508` pilot and remains disabled by default. Manager, report-builder,
+HR aggregate, System Insights, and optional MCP work are sequenced behind those sub-gates. General
+chat, natural-language SQL, employee scoring, illness prediction, approval recommendations,
+autonomous HR actions, and model-authored domain decisions are explicitly excluded.
+
+Phase 14 remains complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
 foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
 bounded signed-out device preference. `WL-1403` supplies language-neutral API descriptors for its
 bounded migration set. Completed `WL-1404` now localizes the shared and authenticated foundation,
@@ -2708,9 +2718,29 @@ remains an unnumbered draft.
   nine workspace manifests from `0.14.0` to `0.15.0`. This internal milestone authorizes no tag,
   publication, deployment, release, support warranty, or conformance claim.
 
+**2026-08-27 — Phase 15 WorkLedger Insights and local AI roadmap registration**
+
+- Preserved the completed Phase 14 gate and all ten manifests at `0.15.0`, then registered
+  `WL-1500` through `WL-1516` as a staged post-MVP phase. No product code, dependency, provider,
+  network path, persistence model, MCP endpoint, or HR analytics surface was added.
+- Made `WL-1500` the only ready task. It must accept an ADR and update the product, authorization,
+  accessibility, security/data-flow, retention, evaluation, and operations contracts before
+  implementation starts.
+- Split the phase into a deterministic Insights foundation sub-gate (`WL-1500`–`WL-1504`) and an
+  employee-only local AI pilot sub-gate (`WL-1505`–`WL-1508`). Manager, report-builder, HR,
+  system, and optional MCP work remain downstream and independently bounded.
+- Registered `WL-1516` in the phase-version guard. An incomplete Phase 15 keeps version `0.15.0`;
+  completing its release gate will require every workspace manifest to be `0.16.0`.
+- Recorded the interim boundary in `docs/10-open-decisions.md`: deterministic WorkLedger facts
+  remain authoritative; tools are narrow, read-only, role/workspace-scoped, and deny by default;
+  local AI is optional and disabled by default; general chat, natural-language SQL, scoring,
+  prediction, recommendations, autonomous decisions, and persistent global AI UI are excluded.
+
 ## Current blockers
 
-Phase 14 has no product blocker. Exact partial-day work-versus-absence overlap,
+Phase 15 has no scheduling blocker, but implementation is intentionally blocked on completion of
+`WL-1500` because the existing security contract requires an ADR and new data-flow/threat review
+before introducing AI or new egress. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
 domain or repository facts; Today does not guess them from minute totals or an otherwise valid
 overnight session. The earlier Phase 12 and task-specific Phase 13 images remain historical and
@@ -2723,9 +2753,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-No later numbered roadmap task is scheduled. The portfolio presentation scope remains preserved in
-`docs/drafts/portfolio-presentation.md` as an unnumbered draft and requires explicit scheduling
-before implementation.
+Execute `WL-1500`: ratify the Insights product and architecture boundary, including deterministic
+result ownership, active-workspace authorization, provider/egress configuration, prompt and trace
+retention, evaluation thresholds, HR cohort suppression, accessibility behavior, and the two
+staged sub-gates. The portfolio presentation scope remains preserved in
+`docs/drafts/portfolio-presentation.md` as a separate unnumbered draft.
 
 ## Update rules
 

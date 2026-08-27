@@ -187,3 +187,23 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1408` Complete and human-review the `en-GB`, `de-DE`, and `es-ES` catalogs and add automated catalog enforcement plus a test-only pseudo-locale.
 - [x] `WL-1409` Execute multilingual integration, accessibility, responsive, visual, usability, security, and upgrade verification.
 - [x] `WL-1410` Pass the Phase 14 release gate, update evidence and documentation, and bump all workspace manifests to `0.15.0`.
+
+## Phase 15 — WorkLedger Insights and local AI
+
+- [ ] `WL-1500` Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts.
+- [ ] `WL-1501` Implement the deterministic Insight Service and typed native-result contracts.
+- [ ] `WL-1502` Implement employee balance-change, submission-blocker, leave-projection, and Today-explanation insights.
+- [ ] `WL-1503` Build the accessible, role-scoped Insights route and native result presentation.
+- [ ] `WL-1504` Add bounded contextual entry points from Today, My Time, My Balances, Requests, and Reports, then pass the Insights foundation sub-gate.
+- [ ] `WL-1505` Implement a reusable read-only Insight tool registry with independent authorization and active-workspace scope.
+- [ ] `WL-1506` Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks.
+- [ ] `WL-1507` Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution.
+- [ ] `WL-1508` Add the employee golden-question evaluation set, bounded traces, privacy/security tests, model-failure handling, and accessibility verification, then pass the local AI pilot sub-gate.
+- [ ] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.
+- [ ] `WL-1510` Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations.
+- [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions.
+- [ ] `WL-1512` Define purpose-specific HR aggregate contracts, privacy thresholds, cohort suppression, and model-context minimization.
+- [ ] `WL-1513` Add HR aggregate Insights only after the dedicated privacy and authorization gate passes.
+- [ ] `WL-1514` Add isolated System Insights using technical diagnostics only and no employee or HR data.
+- [ ] `WL-1515` Evaluate an optional MCP adapter over explicitly allowlisted Insight tools; do not expose HR aggregate tools by default.
+- [ ] `WL-1516` Pass multilingual, accessibility, security, privacy, usability, model-failure, upgrade, and release gates and bump all workspace manifests to `0.16.0`.

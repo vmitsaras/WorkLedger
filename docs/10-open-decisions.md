@@ -4,6 +4,36 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-27 — Phase 15 registers Insights before local AI
+
+The accepted Phase 14 gate remains complete at `0.15.0`. The new roadmap direction is registered as
+Phase 15 — WorkLedger Insights and local AI, with `WL-1500` as the only ready task. This planning
+change does not accept an AI provider, create a new package, enable network egress, persist prompts
+or conversations, expose an MCP server, add HR analytics, or authorize any model-generated write,
+approval, staffing, discipline, performance, or policy decision.
+
+Until `WL-1500` resolves the architecture through an ADR and updated data-flow/threat review, use
+these planning assumptions:
+
+- WorkLedger calculations and purpose-specific read models remain authoritative; the model may
+  interpret or explain structured results but never calculate balances or invent policy.
+- Insights are role- and active-workspace-scoped, read-only, and deny by default. Combined roles do
+  not silently merge employee, manager, HR, or system contexts.
+- The deterministic foundation must work without AI. Optional local Ollama support is disabled by
+  default and may start only after the Insights foundation sub-gate passes.
+- Context is a bounded visible descriptor, never a DOM dump or bulk record export. Initial
+  conversation state is session-only, with explicit retention and trace minimization still to be
+  resolved.
+- HR aggregates require purpose-specific contracts and cohort suppression before model-context
+  creation. System Insights remain isolated from employee and HR data.
+- Tool contracts may be designed for reuse, but an MCP adapter remains a later evaluation requiring
+  its own exposure allowlist, ADR, and threat review.
+
+The roadmap deliberately rejects general-purpose chat, natural-language SQL, employee scoring,
+illness prediction, approval recommendations, autonomous HR actions, and a persistent global AI
+drawer. Those exclusions preserve the existing product, accessibility, security, and privacy
+contracts while `WL-1500` establishes the exact Phase 15 boundary.
+
 ### 2026-08-26 — Phase 14 roadmap registration preserves the completed Phase 13 gate
 
 The Phase 14 planning request was written against an earlier repository snapshot that still named

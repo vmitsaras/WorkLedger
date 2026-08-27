@@ -19,16 +19,17 @@ function createState({ completedTaskIds, rootVersion, projectVersions = [] }) {
 }
 
 test('uses the reconciled post-MVP phase-gate sequence', () => {
-  assert.deepEqual(PHASE_GATES.slice(-4), [
+  assert.deepEqual(PHASE_GATES.slice(-5), [
     { phase: 11, taskId: 'WL-1106' },
     { phase: 12, taskId: 'WL-1206' },
     { phase: 13, taskId: 'WL-1313' },
     { phase: 14, taskId: 'WL-1410' },
+    { phase: 15, taskId: 'WL-1516' },
   ]);
 });
 
 test('requires version 0.15.0 when the Phase 14 gate completes', () => {
-  const completedTaskIds = PHASE_GATES.map(({ taskId }) => taskId);
+  const completedTaskIds = PHASE_GATES.slice(0, -1).map(({ taskId }) => taskId);
 
   assert.throws(
     () =>
@@ -49,6 +50,21 @@ test('requires version 0.15.0 when the Phase 14 gate completes', () => {
       }),
     ),
     { completedPhaseCount: 15, version: '0.15.0' },
+  );
+});
+
+test('requires version 0.16.0 when the Phase 15 gate completes', () => {
+  const completedTaskIds = PHASE_GATES.map(({ taskId }) => taskId);
+
+  assert.throws(
+    () =>
+      validatePhaseVersion(
+        createState({
+          completedTaskIds,
+          rootVersion: '0.15.0',
+        }),
+      ),
+    /16 completed phase gate\(s\) require root version 0\.16\.0; received 0\.15\.0/,
   );
 });
 

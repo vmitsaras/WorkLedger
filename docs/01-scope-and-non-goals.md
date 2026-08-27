@@ -105,6 +105,9 @@ The MVP is the complete set of capabilities listed below. A capability is not co
 - Kiosk mode.
 - Organization branding.
 - Additional locales and per-employee timezone display.
+- Role-scoped, read-only WorkLedger Insights built on deterministic native results, with optional
+  local natural-language interpretation only after a dedicated architecture, privacy, security,
+  accessibility, evaluation, and operations gate.
 
 ## MVP boundary clarifications
 
