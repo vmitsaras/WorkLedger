@@ -157,9 +157,13 @@ function validateInternalImport({ project, relativeFile, specifier, line }) {
       `${project.directory} must use a local relative import instead of importing itself as ${packageName}.`,
     );
   }
-  const isAcceptedI18nReactSurface =
-    packageName === '@workledger/i18n' && specifier === '@workledger/i18n/react';
-  if (segments.length > 2 && !isAcceptedI18nReactSurface) {
+  const isTestFile = usesTestContext(relativeFile);
+  const isI18nTestingSurface =
+    packageName === '@workledger/i18n' && specifier === '@workledger/i18n/testing';
+  const isAcceptedI18nSurface =
+    packageName === '@workledger/i18n' &&
+    (specifier === '@workledger/i18n/react' || isI18nTestingSurface);
+  if (segments.length > 2 && !isAcceptedI18nSurface) {
     return createError(
       'deep-import',
       relativeFile,
@@ -169,7 +173,15 @@ function validateInternalImport({ project, relativeFile, specifier, line }) {
     );
   }
 
-  const isTestFile = usesTestContext(relativeFile);
+  if (isI18nTestingSurface && !isTestFile) {
+    return createError(
+      'production-i18n-testing-import',
+      relativeFile,
+      line,
+      specifier,
+      `${project.directory} production source must not import the test-only pseudo-locale.`,
+    );
+  }
   if (packageName === '@workledger/config' && !isTestFile) {
     return createError(
       'production-config-import',

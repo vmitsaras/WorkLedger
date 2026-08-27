@@ -532,9 +532,9 @@ the same product-quality gate.
 
 ## Internationalization and multilingual release gate
 
-- [ ] Every canonical route and user-facing output has catalog coverage.
-- [ ] Shipped catalogs have matching keys, interpolation parameters, and plural forms.
-- [ ] German and Spanish terminology and privacy-sensitive language have documented fluent-human
+- [x] Every canonical route and user-facing output has catalog coverage.
+- [x] Shipped catalogs have matching keys, interpolation parameters, and plural forms.
+- [x] German and Spanish terminology and privacy-sensitive language have documented fluent-human
   approval.
 - [ ] Account and signed-out locale precedence works across sign-in, sign-out, refresh, and
   multiple devices.

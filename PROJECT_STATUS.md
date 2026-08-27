@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 8 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1407` generated and recipient output localization complete
-**Active task:** `WL-1408` (not started)
-**Status:** Browser and generated output surfaces are catalog backed in all three production locales with locale authority, privacy, machine-value, and bundle contracts preserved; `D-508` remains resolved through the measured localization allowance
+**Phase progress:** Phase 13 complete — 9 of 11 Phase 14 tasks complete
+**Current milestone:** `WL-1408` catalog completion and fluent-human review complete
+**Active task:** `WL-1409` (not started)
+**Status:** All production catalogs pass strengthened automated enforcement, the isolated test-only pseudo-locale is available, and German and Spanish are approved by Vasileios Mitsaras and Sol respectively
 **Last verified:** 2026-08-27
 
 ## Current objective
@@ -26,8 +26,12 @@ authenticated browser locale, CSV output with the authorized actor locale, notif
 password resets with the recipient account locale, and invitations with their stored initial
 locale. `D-508` bounds the completed integration through a 96,000-byte raw and 22,000-byte gzip
 Phase 14 allowance above the preserved 910,000/246,000-byte application baseline; the measured
-build consumes 94,370/12,040 bytes of that allowance. Catalog completion, fluent review, and the
-test-only pseudo-locale are assigned to `WL-1408`. The broader
+build consumes 94,370/12,090 bytes of that allowance. `WL-1408` now provides expanded catalog
+enforcement, 39 contract descriptor mappings, an isolated `en-XA` test runtime, drafted glossary
+candidates, and the reproducible human-review guide in
+`docs/148-wl-1408-human-catalog-review.md`. German is approved by Vasileios Mitsaras and Spanish by
+Sol as of 2026-08-27 after their recorded terminology findings were resolved. `WL-1408` is complete;
+the broader
 `D-502` retail browser and
 assistive-technology matrix remains
 an explicit limitation rather than a conformance claim. The portfolio presentation scope remains
@@ -2608,10 +2612,48 @@ an unnumbered draft.
   The existing Phase 14 allowance remains unchanged at 96,000 raw and 22,000 gzip bytes. See
   `docs/147-generated-recipient-output-i18n.md`.
 
+**2026-08-27 — WL-1408 catalog completion and human review (complete)**
+
+- Strengthened `i18n:check` with non-empty text, prohibited bidirectional-control, incomplete
+  source-copy, and exact contract-descriptor coverage checks. The descriptor registry now covers
+  all 39 contract-defined Today attention codes/actions, reports, notification events, and field
+  error codes, while the existing three-locale, namespace, key, interpolation, plural, plain-text,
+  and governed JSX/ARIA checks remain intact.
+- Added the isolated `@workledger/i18n/testing` surface with an `en-XA` pseudo-locale that accents
+  and expands every English catalog leaf while preserving interpolation tokens. Production locale
+  resolution, account/device persistence, contracts, and API schemas still reject `en-XA`.
+- Populated the terminology glossary with the catalog's German and Spanish candidates and added
+  `docs/148-wl-1408-human-catalog-review.md`. Both locale columns are now approved by their named
+  fluent reviewers after the recorded findings were resolved.
+- Applied the first German terminology-review findings across the glossary and matching catalog
+  surfaces. The resolved wording now distinguishes active attendance from physical presence,
+  renders the time-account concept as `Gleitzeitsaldo`, uses natural provisional-balance and
+  session-ending language, and names administrator roles as people rather than functions. The
+  reviewer Vasileios Mitsaras approved all seven production namespaces, terminology, privacy,
+  critical workflows, and generated output on 2026-08-27 after the recorded findings were resolved.
+- Applied Sol's Spanish findings consistently across attendance states, expected and credited time,
+  time-account balances, absence terminology, generic workflow statuses, administrator roles, and
+  session-ending actions. Sol approved all seven production namespaces, terminology, privacy,
+  critical workflows, and generated output on 2026-08-27 after findings `ES-001` through `ES-014`
+  were resolved.
+- Direct installed-tool verification passes formatting, workspace/phase contracts, ESLint,
+  317-source/1,777-import boundaries, CSS, strict TypeScript, 52 tooling tests, 411 unit/component
+  tests across 50 files, 13 environment-independent integration tests, catalog enforcement for
+  2,069 messages and 39 descriptors, and production/workspace builds. The 45 opt-in
+  PostgreSQL-dependent integration cases remain skipped because the database service is
+  unavailable. Browser/assistive-technology execution is intentionally assigned to `WL-1409`
+  after fluent approval.
+- The production graph remains within every accepted budget at 435,303 largest-chunk bytes,
+  1,004,370 total raw JavaScript bytes, 258,090 gzip JavaScript bytes, and 50,242 CSS bytes outside
+  catalog chunks. The i18n runtime consumes 94,370/12,090 bytes of its 96,000/22,000-byte allowance;
+  all three locale chunks remain independently and collectively below their ceilings.
+- The standard pnpm wrapper could not run in this shell because Corepack supplied Node 24.19 while
+  the repository pins Node 24.18 and then attempted an interactive module refresh. Verification
+  used the already-installed project binaries directly; no dependency or lockfile changed.
+
 ## Current blockers
 
-German and Spanish still require named fluent reviewers before `WL-1408`; their absence does not
-block the typed English-first foundation. Exact partial-day
+`WL-1408` has no remaining blocker. Exact partial-day
 work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
 still require authoritative domain or repository facts; Today does not guess them from minute
 totals or an otherwise valid overnight session. The earlier Phase 12 and task-specific Phase 13
@@ -2624,8 +2666,8 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Begin `WL-1408`: complete and human-review the English, German, and Spanish catalogs, add the
-test-only pseudo-locale, and close catalog enforcement gaps. The
+Begin `WL-1409` multilingual integration, accessibility, responsive, visual, usability, security,
+and upgrade verification. The
 portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 

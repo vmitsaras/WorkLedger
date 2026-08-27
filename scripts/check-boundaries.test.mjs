@@ -28,8 +28,8 @@ const negativeFixtures = [
 test('accepts every current workspace source import', async () => {
   assert.deepEqual(await checkWorkspaceBoundaries(repositoryRoot), {
     errors: [],
-    fileCount: 316,
-    importCount: 1773,
+    fileCount: 317,
+    importCount: 1777,
   });
 });
 
@@ -42,6 +42,24 @@ test('accepts the web public-root and declared i18n React fixture', async () => 
   });
 
   assert.deepEqual(result, { errors: [], importCount: 4 });
+});
+
+test('allows the i18n pseudo-locale only in test source', async () => {
+  const accepted = await validateSourceImports({
+    projectDirectory: 'apps/web',
+    relativeFile: 'test/pseudo-locale.test.ts',
+    repositoryDirectory: repositoryRoot,
+    source: "import { initializePseudoI18n } from '@workledger/i18n/testing';",
+  });
+  const rejected = await validateSourceImports({
+    projectDirectory: 'apps/web',
+    relativeFile: 'src/pseudo-locale.ts',
+    repositoryDirectory: repositoryRoot,
+    source: "import { initializePseudoI18n } from '@workledger/i18n/testing';",
+  });
+
+  assert.deepEqual(accepted, { errors: [], importCount: 1 });
+  assert.equal(rejected.errors[0]?.code, 'production-i18n-testing-import');
 });
 
 for (const [fixtureName, projectDirectory, relativeFile, expectedCode] of negativeFixtures) {

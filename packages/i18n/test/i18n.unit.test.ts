@@ -13,6 +13,13 @@ import {
   translate,
   translateStaticMessage,
 } from '../src/index.js';
+import {
+  PSEUDO_LOCALE,
+  createPseudoCatalog,
+  initializePseudoI18n,
+  pseudoLocalizeMessage,
+  translatePseudo,
+} from '../src/testing.js';
 
 test('resolves an allowlisted device preference before browser languages', () => {
   expect(
@@ -56,6 +63,30 @@ test('treats an unsupported account locale and a pseudo locale as integrity fail
   expect(() => requireSupportedLocale('en-XA')).toThrow(UnsupportedLocaleError);
   expect(() => requireSupportedLocale('en-US')).toThrow(UnsupportedLocaleError);
   expect(() => requireSupportedLocale(null)).toThrow(UnsupportedLocaleError);
+});
+
+test('creates an expanded test-only pseudo locale without changing interpolation tokens', async () => {
+  const source = await loadCatalog('en-GB');
+  const pseudo = createPseudoCatalog(source);
+  const message = pseudoLocalizeMessage('Hello, {{name}}.');
+
+  expect(PSEUDO_LOCALE).toBe('en-XA');
+  expect(pseudo.locale).toBe('en-XA');
+  expect(Object.keys(pseudo.resources).sort()).toEqual(Object.keys(source.resources).sort());
+  expect(message).toContain('{{name}}');
+  expect(message).toMatch(/^⟦Ħëŀŀø/u);
+  expect(message.length).toBeGreaterThan('Hello, {{name}}.'.length * 1.3);
+  expect(() => requireSupportedLocale(pseudo.locale)).toThrow(UnsupportedLocaleError);
+});
+
+test('renders typed messages through the isolated pseudo-locale runtime', async () => {
+  const runtime = await initializePseudoI18n();
+  const message = translatePseudo(runtime, 'shared.i18n.greeting', { name: 'Jordan' });
+
+  expect(runtime.instance.options.fallbackLng).toBe(false);
+  expect(message).toContain('Jordan');
+  expect(message).toMatch(/^⟦/u);
+  expect(message).toMatch(/⟧$/u);
 });
 
 test('loads one requested local catalog with every production namespace', async () => {

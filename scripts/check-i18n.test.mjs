@@ -23,10 +23,10 @@ function createCatalogs() {
         output: {},
         shared: {
           example: {
-            ...(locale === 'es-ES' ? { count_many: '{{count}} items' } : {}),
-            count_one: '{{count}} item',
-            count_other: '{{count}} items',
-            title: 'Example for {{name}}',
+            ...(locale === 'es-ES' ? { count_many: '{{count}} elementos' } : {}),
+            count_one: locale === 'en-GB' ? '{{count}} item' : '{{count}} Element',
+            count_other: locale === 'en-GB' ? '{{count}} items' : '{{count}} Elemente',
+            title: locale === 'en-GB' ? 'Example for {{name}}' : 'Beispiel für {{name}}',
           },
         },
         system: {},
@@ -46,6 +46,7 @@ function validate(catalogs = createCatalogs(), overrides = {}) {
       ['shared.example.count', ['count']],
       ['shared.example.title', ['name']],
     ]),
+    requiredDescriptors: ['EXAMPLE'],
     supportedLocales: locales,
     ...overrides,
   });
@@ -77,6 +78,21 @@ test('rejects missing keys and mismatched interpolation parameters', () => {
   assert.throws(() => validate(mismatched), /interpolation parameters/);
 });
 
+test('rejects missing, extra, and unknown descriptor mappings', () => {
+  assert.throws(
+    () => validate(undefined, { descriptorMap: {}, requiredDescriptors: ['EXAMPLE'] }),
+    /Descriptor coverage/,
+  );
+  assert.throws(
+    () =>
+      validate(undefined, {
+        descriptorMap: { EXAMPLE: 'shared.example.missing' },
+        requiredDescriptors: ['EXAMPLE'],
+      }),
+    /does not map to a typed message key/,
+  );
+});
+
 test('reads typed interpolation parameters and rejects source messages that omit them', () => {
   const contract = readMessageParameterContract(`
     export type MessageParameterMap = Readonly<{
@@ -99,6 +115,20 @@ test('rejects incomplete locale plural forms and markup-bearing messages', () =>
   const markup = createCatalogs();
   markup['es-ES'].shared.example.title = '<strong>{{name}}</strong>';
   assert.throws(() => validate(markup), /text only/);
+
+  const empty = createCatalogs();
+  empty['de-DE'].shared.example.title = '   ';
+  assert.throws(() => validate(empty), /must not be empty/);
+
+  const bidiControl = createCatalogs();
+  bidiControl['de-DE'].shared.example.title = 'Beispiel \u202e für {{name}}';
+  assert.throws(() => validate(bidiControl), /bidi control/);
+});
+
+test('rejects a non-source catalog that is mostly copied source text', () => {
+  const copied = createCatalogs();
+  copied['de-DE'].shared.example = { ...copied['en-GB'].shared.example };
+  assert.throws(() => validate(copied), /translation appears incomplete/);
 });
 
 test('detects governed visible and accessibility JSX literals', () => {

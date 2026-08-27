@@ -65,9 +65,9 @@
     },
     "role": {
       "employee": "Beschäftigte Person",
-      "hrAdministrator": "Personaladministration",
+      "hrAdministrator": "HR-Administrator",
       "manager": "Führungskraft",
-      "systemAdministrator": "Systemadministration"
+      "systemAdministrator": "Systemadministrator"
     },
     "session": {
       "current": "Aktuelle Sitzung",
@@ -89,7 +89,7 @@
         "macos": "macOS",
         "windows": "Windows"
       },
-      "revoke": "Sitzung widerrufen",
+      "revoke": "Sitzung beenden",
       "revoked": "{{device}} wurde abgemeldet.",
       "signOutCurrent": "Diese Sitzung abmelden",
       "signingOut": "Abmeldung läuft…"
@@ -107,11 +107,11 @@
       "inactive": "Inaktiv",
       "sessionNotRevoked": {
         "description": "WorkLedger konnte diese Sitzung nicht widerrufen. Aktualisieren Sie das Profil und versuchen Sie es erneut.",
-        "freshSession": "Melden Sie sich ab und erneut an, bevor Sie eine weitere Sitzung widerrufen.",
+        "freshSession": "Melden Sie sich ab und erneut an, bevor Sie eine weitere Sitzung beenden.",
         "sessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um fortzufahren.",
         "title": "Sitzung nicht widerrufen"
       },
-      "sessionRevoked": { "title": "Sitzung widerrufen" }
+      "sessionRevoked": { "title": "Sitzung beendet" }
     },
     "title": "Profil",
     "unavailable": {

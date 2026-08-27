@@ -59,7 +59,7 @@
       },
       "success": {
         "coverageLabel": "Cobertura por enfermedad notificada",
-        "credited": "{{duration}} acreditado",
+        "credited": "{{duration}} computado",
         "description": "Tu parte de enfermedad está vigente y pendiente de confirmación.",
         "holidayNote": " (festivo; no se necesita crédito)",
         "title": "Enfermedad notificada"
@@ -270,7 +270,7 @@
       "historyItem": "{{action}} · {{authority}} · {{date}} · versión {{version}}",
       "historyLabel": "Historial de revisión mensual",
       "metadata": "Ciclo de aprobación {{cycle}} · versión de flujo {{workflowVersion}} · esquema {{schemaVersion}} · motor {{engine}}",
-      "summary": "Aprobado el {{approvedAt}}. Totales de la instantánea: previsto {{expected}}, acreditado {{credited}}, saldo {{balance}}, saldo de cierre contabilizado {{closing}}."
+      "summary": "Aprobado el {{approvedAt}}. Totales de la instantánea: objetivo {{expected}}, computado {{credited}}, saldo {{balance}}, saldo de cierre contabilizado {{closing}}."
     },
     "attention": {
       "blockers_one": "{{count}} bloqueo",
@@ -296,9 +296,9 @@
         "adjustment": "Ajuste",
         "balance": "Saldo",
         "break": "Pausa",
-        "credited": "Acreditado",
+        "credited": "Computado",
         "date": "Fecha",
-        "expected": "Previsto",
+        "expected": "Objetivo",
         "status": "Estado",
         "worked": "Trabajado"
       },
@@ -579,9 +579,9 @@
       "remoteChanged": "El registro horario cambió en otra pestaña o dispositivo. Estado actual: {{state}}.",
       "since": "Desde",
       "state": {
-        "offWork": "Fuera del trabajo",
+        "offWork": "Sin jornada activa",
         "onBreak": "En descanso",
-        "working": "Trabajando"
+        "working": "Jornada activa"
       },
       "success": {
         "clockIn": "Entrada fichada a las {{time}}.",
@@ -610,7 +610,7 @@
         "attendanceOverlap": { "title": "Los intervalos del registro horario se solapan" },
         "calculation": {
           "next": "La explicación del cálculo confirma por qué hay que revisar este registro.",
-          "reason": "Se ha registrado trabajo en un día sin tiempo de trabajo previsto."
+          "reason": "Se ha registrado trabajo en un día sin tiempo objetivo."
         },
         "correctionUnresolved": {
           "next": "La página de la solicitud indica si el siguiente paso es una revisión o cambios de la persona empleada; los eventos originales permanecen sin cambios hasta que se aplica una corrección aprobada.",
@@ -619,13 +619,13 @@
         },
         "flexNegative": {
           "next": "El aviso solo desaparece cuando las entradas contabilizadas llevan el saldo de nuevo al intervalo configurado.",
-          "reason": "El saldo de horario flexible contabilizado está por debajo del umbral de aviso configurado.",
-          "title": "Se alcanzó el umbral negativo de horario flexible"
+          "reason": "El saldo de horas contabilizado está por debajo del umbral de aviso configurado.",
+          "title": "Se alcanzó el umbral negativo del saldo de horas"
         },
         "flexPositive": {
           "next": "El aviso solo desaparece cuando las entradas contabilizadas llevan el saldo de nuevo al intervalo configurado.",
-          "reason": "El saldo de horario flexible contabilizado está por encima del umbral de aviso configurado.",
-          "title": "Se alcanzó el umbral positivo de horario flexible"
+          "reason": "El saldo de horas contabilizado está por encima del umbral de aviso configurado.",
+          "title": "Se alcanzó el umbral positivo del saldo de horas"
         },
         "ledgerSourceMismatch": { "title": "Se necesita conciliar el registro contable" },
         "policyAssignmentOverlap": { "title": "Las asignaciones de políticas horarias se solapan" },
@@ -645,9 +645,9 @@
           "next": "El registro seguirá bloqueado hasta que una persona administradora autorizada resuelva el problema de configuración.",
           "reason": "La configuración asignada no permite producir un cálculo fiable."
         },
-        "workDuringAbsence": { "title": "El trabajo se solapa con una ausencia abonada" },
+        "workDuringAbsence": { "title": "El trabajo se solapa con una ausencia computada" },
         "workOnHoliday": { "title": "Trabajo registrado en un día festivo" },
-        "workOnZeroExpectedDay": { "title": "Trabajo registrado en un día sin tiempo previsto" }
+        "workOnZeroExpectedDay": { "title": "Trabajo registrado en un día sin tiempo objetivo" }
       },
       "doesNotBlockSubmission": "No bloquea el envío",
       "newUrgent": "Nuevo problema urgente: {{titles}}.",
@@ -670,8 +670,8 @@
       "detailsTitle": "Detalles del cálculo",
       "footnote": "Los descansos ya están excluidos del trabajo registrado. Las correcciones conservan los fichajes originales.",
       "group": {
-        "credited": "Tiempo abonado",
-        "expected": "Tiempo previsto",
+        "credited": "Tiempo computado",
+        "expected": "Tiempo objetivo",
         "result": "Resultado de hoy"
       },
       "heading": "Cómo se calcula el día de hoy",
@@ -680,8 +680,8 @@
         "absenceReduction": "Reducción por ausencia",
         "approvedCorrections": "Correcciones aprobadas",
         "breaksExcluded": "Descansos ya excluidos",
-        "creditedToday": "Abonado hoy",
-        "expectedToday": "Previsto hoy",
+        "creditedToday": "Computado hoy",
+        "expectedToday": "Objetivo hoy",
         "holidayReduction": "Reducción por día festivo",
         "otherAdjustments": "Otros ajustes aprobados",
         "provisionalDifference": "Diferencia provisional",
@@ -693,10 +693,10 @@
       "statusProvisional": "Provisional, sin contabilizar y todavía sujeto a cambios.",
       "time": "Tiempo",
       "zeroExpected": {
-        "generic": "El horario y las reducciones de hoy dan como resultado un tiempo previsto de cero.",
-        "heading": "Por qué el tiempo previsto es cero",
-        "holiday": "{{holidayName}} reduce a cero el tiempo programado previsto para hoy.",
-        "workCredit": "El trabajo registrado se abona por separado y no se identifica como horas extra de nómina."
+        "generic": "El horario y las reducciones de hoy dan como resultado un tiempo objetivo de cero.",
+        "heading": "Por qué el tiempo objetivo es cero",
+        "holiday": "{{holidayName}} reduce a cero el tiempo objetivo programado para hoy.",
+        "workCredit": "El trabajo registrado se computa por separado y no se identifica como horas extra de nómina."
       }
     },
     "overview": {
@@ -707,22 +707,22 @@
       "finish": {
         "calculationIncomplete": "Cálculo incompleto",
         "calculationUnavailable": "Cálculo no disponible",
-        "expectationMet": "Tiempo previsto completado",
+        "expectationMet": "Tiempo objetivo completado",
         "notAvailable": "No disponible",
         "resumeToEstimate": "Reanuda el trabajo para calcularlo",
         "startToEstimate": "Empieza a trabajar para calcularlo"
       },
-      "flexibleTime": "Horario flexible",
+      "flexibleTime": "Saldo de horas",
       "holiday": "Día festivo: {{holidayName}}",
       "noPostedEntries": "No hay entradas contabilizadas antes de hoy.",
       "postedBalance": "Saldo contabilizado",
       "postedThrough": "Contabilizado hasta {{date}}.",
-      "progressAriaLabel": "Progreso abonado de hoy",
-      "progressCredited": "{{credited}} abonado",
-      "progressDescription": "{{credited}} abonado de {{expected}} previsto.",
+      "progressAriaLabel": "Progreso computado de hoy",
+      "progressCredited": "{{credited}} computado",
+      "progressDescription": "{{credited}} computado de {{expected}} objetivo.",
       "progressUnavailable": "Progreso no disponible",
-      "progressUnavailableDescription": "El progreso abonado de hoy no está disponible. Resuelve los problemas bloqueantes que aparecen abajo antes de confiar en el cálculo de hoy.",
-      "progressWithoutExpectation": "{{credited}} abonado sin tiempo programado previsto para hoy.",
+      "progressUnavailableDescription": "El progreso computado de hoy no está disponible. Resuelve los problemas bloqueantes que aparecen abajo antes de confiar en el cálculo de hoy.",
+      "progressWithoutExpectation": "{{credited}} computado sin tiempo objetivo programado para hoy.",
       "provisionalDifference": "Diferencia provisional",
       "remainingToday": "Restante hoy",
       "statusIncomplete": "Cálculo incompleto",
@@ -798,19 +798,19 @@
         "attendanceInvalidEventPrecision": "Un evento registrado no está alineado con un minuto completo.",
         "attendanceOverlap": "Los intervalos derivados se solapan y no permiten obtener un cálculo fiable.",
         "correctionUnresolved": "Una corrección enviada todavía puede cambiar el cálculo de este día.",
-        "flexNegativeDaily": "El saldo diario está por debajo del umbral de aviso de horario flexible configurado.",
-        "flexNegativePosted": "El saldo de horario flexible contabilizado está por debajo del umbral de aviso configurado.",
-        "flexPositiveDaily": "El saldo diario está por encima del umbral de aviso de horario flexible configurado.",
-        "flexPositivePosted": "El saldo de horario flexible contabilizado está por encima del umbral de aviso configurado.",
+        "flexNegativeDaily": "El saldo diario está por debajo del umbral de aviso del saldo de horas configurado.",
+        "flexNegativePosted": "El saldo de horas contabilizado está por debajo del umbral de aviso configurado.",
+        "flexPositiveDaily": "El saldo diario está por encima del umbral de aviso del saldo de horas configurado.",
+        "flexPositivePosted": "El saldo de horas contabilizado está por encima del umbral de aviso configurado.",
         "ledgerSourceMismatch": "El origen del cálculo no coincide con los datos contabilizados que lo respaldan.",
         "policyAssignmentOverlap": "Hay más de una política horaria aplicable a esta fecha.",
         "policyConfigurationInvalid": "La política horaria asignada no permite producir un cálculo fiable.",
         "policyNotAssigned": "No hay ninguna política horaria aplicable a esta fecha.",
         "scheduleAssignmentOverlap": "Hay más de un horario de trabajo aplicable a esta fecha.",
         "scheduleNotAssigned": "No hay ningún horario de trabajo aplicable a esta fecha.",
-        "workDuringAbsence": "El trabajo registrado se solapa con tiempo de ausencia abonado. Aquí no se muestra ninguna categoría de ausencia.",
+        "workDuringAbsence": "El trabajo registrado se solapa con tiempo de ausencia computado. Aquí no se muestra ninguna categoría de ausencia.",
         "workOnHoliday": "Se ha registrado trabajo en un día festivo y se abona por separado.",
-        "workOnZeroExpectedDay": "Se ha registrado trabajo en un día sin tiempo previsto."
+        "workOnZeroExpectedDay": "Se ha registrado trabajo en un día sin tiempo objetivo."
       }
     },
     "backToTime": "Volver a Mi tiempo",
@@ -818,8 +818,8 @@
       "absenceCredit": "Abono por ausencia",
       "balance": "Saldo",
       "breakTime": "Tiempo de descanso",
-      "creditedTime": "Tiempo abonado",
-      "expectedTime": "Tiempo previsto",
+      "creditedTime": "Tiempo computado",
+      "expectedTime": "Tiempo objetivo",
       "heading": "Cálculo",
       "unavailable": {
         "description": "Los eventos del registro horario no se pueden reconstruir, por lo que no se muestra ningún total calculado. Revisa los eventos de abajo y solicita una corrección si es necesario.",
@@ -995,8 +995,8 @@
       "metric": {
         "balance": "Saldo",
         "break": "Pausa",
-        "credited": "Acreditado",
-        "expected": "Previsto",
+        "credited": "Computado",
+        "expected": "Objetivo",
         "worked": "Trabajado"
       },
       "missingIdentifier": {
@@ -1121,23 +1121,23 @@
     "balance": {
       "eligibleProjection": "Proyección admisible",
       "excluded": {
-        "description": "Revisa {{dates}} antes de confiar en el total proyectado.",
-        "title": "El saldo proyectado excluye registros incompletos"
+        "description": "Revisa {{dates}} antes de confiar en el total estimado.",
+        "title": "El saldo estimado excluye registros incompletos"
       },
-      "heading": "Saldo de horario flexible",
+      "heading": "Saldo de horas",
       "help": "Las entradas contabilizadas son definitivas. Los registros completos admisibles que todavía no se han contabilizado permanecen separados.",
       "posted": "Saldo contabilizado",
-      "projected": "Saldo proyectado"
+      "projected": "Saldo estimado"
     },
-    "balancesDescription": "Tus saldos de horario flexible y permisos, con proyecciones y entradas de origen claramente identificadas.",
+    "balancesDescription": "Tus saldos de horas y ausencias, con estimaciones y entradas de origen claramente identificadas.",
     "balancesTitle": "Mis saldos",
-    "description": "Revisa los resúmenes semanales o mensuales y el saldo de horario flexible que explican.",
+    "description": "Revisa los resúmenes semanales o mensuales y el saldo de horas que explican.",
     "entryType": {
       "allocation": "Asignación",
       "approvedDeduction": "Deducción aprobada",
       "cancellationRestoration": "Restitución por cancelación",
       "carryover": "Traspaso",
-      "dailyDelta": "Cambio diario del saldo",
+      "dailyDelta": "Saldo diario",
       "dailyRecalculationDelta": "Cambio por recálculo diario",
       "expiry": "Caducidad",
       "manualAdjustment": "Ajuste manual",
@@ -1198,10 +1198,10 @@
       "effective": "Efectivo el {{date}}",
       "empty": {
         "description": "No hay entradas definitivas del registro contable hasta este periodo.",
-        "title": "Sin entradas contabilizadas de horario flexible"
+        "title": "Sin entradas contabilizadas del saldo de horas"
       },
       "heading": "Entradas contabilizadas",
-      "pagination": "Página {{current}} de {{total}} del registro de horario flexible"
+      "pagination": "Página {{current}} de {{total}} del registro del saldo de horas"
     },
     "loading": {
       "description": "Comprobando el periodo seleccionado, los saldos y las entradas de origen.",
@@ -1237,9 +1237,9 @@
       "column": {
         "attention": "Atención",
         "balance": "Saldo",
-        "credited": "Abonado",
+        "credited": "Computado",
         "date": "Fecha",
-        "expected": "Previsto",
+        "expected": "Objetivo",
         "status": "Estado"
       },
       "description": "Abre una fecha registrada para consultar el cálculo, las sesiones de trabajo, los eventos y las indicaciones de recuperación.",

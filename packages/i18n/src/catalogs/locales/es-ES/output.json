@@ -7,9 +7,9 @@
         "balance": "Saldo: {{value}}",
         "closingAvailable": "Disponible al cierre: {{value}}",
         "closingBalance": "Saldo de cierre: {{value}}",
-        "credited": "Acreditado: {{value}}",
+        "credited": "Computado: {{value}}",
         "dateRange": "Intervalo de fechas: del {{from}} al {{to}}",
-        "expected": "Previsto: {{value}}",
+        "expected": "Objetivo: {{value}}",
         "incompleteRecords": "Registros incompletos: {{value}}",
         "matchingRows": "Filas coincidentes: {{value}}",
         "openingAvailable": "Disponible al inicio: {{value}}",
@@ -28,7 +28,7 @@
         "selfAndDirectReports": "tus propios registros y empleados subordinados directos actuales"
       },
       "title": {
-        "flexibleTime": "Tiempo flexible",
+        "flexibleTime": "Saldo de horas",
         "leave": "Saldos de ausencias",
         "missingRecords": "Registros pendientes",
         "monthlyTime": "Tiempo mensual",
@@ -72,10 +72,10 @@
       "balanceMinutes": "saldo_minutos",
       "closingAvailableMinutes": "disponible_cierre_minutos",
       "closingBalanceMinutes": "saldo_cierre_minutos",
-      "creditedMinutes": "acreditado_minutos",
+      "creditedMinutes": "computado_minutos",
       "date": "fecha",
       "employeeName": "nombre_empleado",
-      "expectedMinutes": "previsto_minutos",
+      "expectedMinutes": "objetivo_minutos",
       "incompleteRecordCount": "cantidad_registros_incompletos",
       "leaveAccount": "cuenta_ausencia",
       "month": "mes",
@@ -99,8 +99,8 @@
       "attendanceInvalidEventPrecision": "Precisión de la hora de asistencia no válida",
       "attendanceOverlap": "Solapamiento de asistencia",
       "correctionUnresolved": "Corrección pendiente",
-      "flexNegativeThresholdExceeded": "Umbral negativo de tiempo flexible superado",
-      "flexPositiveThresholdExceeded": "Umbral positivo de tiempo flexible superado",
+      "flexNegativeThresholdExceeded": "Umbral negativo del saldo de horas superado",
+      "flexPositiveThresholdExceeded": "Umbral positivo del saldo de horas superado",
       "ledgerSourceMismatch": "La fuente del libro mayor no coincide",
       "policyAssignmentOverlap": "Solapamiento de asignaciones de política de tiempo",
       "policyConfigurationInvalid": "Configuración de política de tiempo no válida",
@@ -109,7 +109,7 @@
       "scheduleNotAssigned": "Horario de trabajo sin asignar",
       "workDuringAbsence": "Trabajo durante una ausencia",
       "workOnHoliday": "Trabajo en festivo",
-      "workOnZeroExpectedDay": "Trabajo en un día sin tiempo previsto"
+      "workOnZeroExpectedDay": "Trabajo en un día sin tiempo objetivo"
     },
     "status": {
       "approvalKind": {
@@ -133,7 +133,7 @@
     "adjustedTotals": "Saldo de cierre original {{closing}}; ajuste acumulado {{delta}}; saldo de cierre ajustado {{adjusted}}.",
     "adjustmentCaption": "Ajustes posteriores al bloqueo incluidos en este registro imprimible",
     "approvedMetadata": "Ciclo de aprobación {{cycle}}, aprobado el {{date}}.",
-    "approvedTotals": "Previsto aprobado {{expected}}, acreditado {{credited}}, saldo {{balance}} y saldo de cierre del libro mayor {{closing}}.",
+    "approvedTotals": "Objetivo aprobado {{expected}}, computado {{credited}}, saldo {{balance}} y saldo de cierre del libro mayor {{closing}}.",
     "dailyCaption": "Registro mensual diario de {{employee}}",
     "dateRange": "{{employee}}, del {{start}} al {{end}}, zona horaria de la organización: {{timeZone}}.",
     "footer": "Generado tras renovar la autorización en el momento de la acción. Los eventos de asistencia originales y las instantáneas aprobadas no cambian.",

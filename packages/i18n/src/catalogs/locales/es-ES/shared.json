@@ -67,9 +67,9 @@
     },
     "role": {
       "employee": "Empleado",
-      "hrAdministrator": "Administración de RR. HH.",
+      "hrAdministrator": "Administrador de RR. HH.",
       "manager": "Responsable",
-      "systemAdministrator": "Administración del sistema"
+      "systemAdministrator": "Administrador del sistema"
     },
     "session": {
       "current": "Sesión actual",
@@ -91,7 +91,7 @@
         "macos": "macOS",
         "windows": "Windows"
       },
-      "revoke": "Revocar sesión",
+      "revoke": "Finalizar sesión",
       "revoked": "Se ha cerrado la sesión de {{device}}.",
       "signOutCurrent": "Cerrar esta sesión",
       "signingOut": "Cerrando sesión…"
@@ -108,12 +108,12 @@
       "active": "Activo",
       "inactive": "Inactivo",
       "sessionNotRevoked": {
-        "description": "WorkLedger no ha podido revocar esa sesión. Actualiza el perfil e inténtalo de nuevo.",
-        "freshSession": "Cierra la sesión y vuelve a iniciarla antes de revocar otra sesión.",
+        "description": "WorkLedger no ha podido finalizar esa sesión. Actualiza el perfil e inténtalo de nuevo.",
+        "freshSession": "Cierra la sesión y vuelve a iniciarla antes de finalizar otra sesión.",
         "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.",
-        "title": "La sesión no se ha revocado"
+        "title": "La sesión no ha finalizado"
       },
-      "sessionRevoked": { "title": "Sesión revocada" }
+      "sessionRevoked": { "title": "Sesión finalizada" }
     },
     "title": "Perfil",
     "unavailable": {
@@ -211,16 +211,16 @@
     "status": {
       "acknowledged": "Confirmada",
       "applied": "Aplicada",
-      "approved": "Aprobada",
+      "approved": "Aprobado",
       "cancelled": "Cancelada",
       "changesRequested": "Cambios solicitados",
-      "locked": "Bloqueada",
+      "locked": "Bloqueado",
       "open": "Abierta",
       "partiallyCancelled": "Parcialmente cancelada",
       "pendingDecision": "Decisión pendiente",
-      "rejected": "Rechazada",
+      "rejected": "Rechazado",
       "reported": "Notificada",
-      "submitted": "Enviada",
+      "submitted": "Enviado",
       "withdrawn": "Retirada"
     }
   }

@@ -2732,7 +2732,7 @@ for (const scenario of [
     requests: 'Meine Anträge',
     today: 'Heute',
     todayAction: 'Pause beginnen',
-    todayState: 'Bei der Arbeit',
+    todayState: 'Arbeitszeit läuft',
   },
   {
     calendar: 'Calendario',
@@ -2747,7 +2747,7 @@ for (const scenario of [
     requests: 'Mis solicitudes',
     today: 'Hoy',
     todayAction: 'Iniciar descanso',
-    todayState: 'Trabajando',
+    todayState: 'Jornada activa',
   },
 ]) {
   test(`renders critical employee routes coherently in ${scenario.locale}`, async ({ page }) => {

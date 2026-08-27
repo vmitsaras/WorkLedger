@@ -117,6 +117,10 @@ export const EXPECTED_I18N_EXPORTS = {
     types: './dist/react.d.ts',
     import: './dist/react.js',
   },
+  './testing': {
+    types: './dist/testing.d.ts',
+    import: './dist/testing.js',
+  },
 };
 
 const EXPECTED_PROJECT_SCRIPTS = {

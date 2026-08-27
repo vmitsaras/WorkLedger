@@ -231,7 +231,7 @@ versions and makes no response-time or production-support promise.
 | [docs/96-phase-10-threat-permission-baseline.md](docs/96-phase-10-threat-permission-baseline.md) through [docs/107-retention-and-minimization.md](docs/107-retention-and-minimization.md) | Phase 10 security, production deployment, operations, retention, restore, upgrade, and release-gate evidence |
 | [docs/110-ui-ux-baseline-audit.md](docs/110-ui-ux-baseline-audit.md) through [docs/123-phase-12-gate-review.md](docs/123-phase-12-gate-review.md) | Phase 11–12 UI foundation, workflow remediation, visual regression, and release-gate evidence |
 | [docs/124-phase-13-baseline.md](docs/124-phase-13-baseline.md) through [docs/137-phase-13-gate-review.md](docs/137-phase-13-gate-review.md) | Phase 13 attendance clarity, workflow usability, cross-route regression, accessibility, visual, and release-gate evidence |
-| [docs/138-phase-14-internationalization-roadmap.md](docs/138-phase-14-internationalization-roadmap.md) through [docs/142-account-locale-preferences.md](docs/142-account-locale-preferences.md) | Phase 14 internationalization roadmap, inventory, glossary, architecture, typed runtime foundation, and locale-preference evidence |
+| [docs/138-phase-14-internationalization-roadmap.md](docs/138-phase-14-internationalization-roadmap.md) through [docs/148-wl-1408-human-catalog-review.md](docs/148-wl-1408-human-catalog-review.md) | Phase 14 internationalization roadmap, catalogs, runtime and preference foundations, workflow/output localization evidence, and fluent-human catalog review guide |
 
 ## License
 

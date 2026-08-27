@@ -1,6 +1,6 @@
 # Phase 14 Internationalization and Multilingual Product Roadmap
 
-**Status:** Active; `WL-1400` through `WL-1402` complete; `WL-1403` next
+**Status:** Active; `WL-1400` through `WL-1408` complete; `WL-1409` is next
 **Tasks:** `WL-1400` through `WL-1410`
 **Dependency:** Completed Phase 13 gate `WL-1313` at workspace version `0.14.0`
 **Gate version:** `0.15.0`
@@ -21,6 +21,9 @@ budgets. `WL-1402` adds authoritative account and invitation locale persistence,
 signed-out device preference, accessible selectors, and immediate switching with rollback.
 `D-508` resolved the measured non-catalog conflict through a separately named and tested Phase 14
 runtime allowance that anticipates activation of the already-pinned translation engine.
+`WL-1408` completes the catalogs with strengthened automated enforcement, an isolated test-only
+`en-XA` pseudo-locale, and documented fluent-human approvals for German by Vasileios Mitsaras and
+Spanish by Sol on 2026-08-27.
 
 ## 2. Locked product and architecture instructions
 

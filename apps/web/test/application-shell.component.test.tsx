@@ -2210,15 +2210,15 @@ test.each([
   {
     action: 'Pause beginnen',
     compactCredit: '3 Std. 15 Min. angerechnet',
-    currentState: 'Bei der Arbeit',
+    currentState: 'Arbeitszeit läuft',
     locale: 'de-DE' as const,
     progress: 'Heutiger Fortschritt',
     title: 'Heute',
   },
   {
     action: 'Iniciar descanso',
-    compactCredit: '3 h 15 min abonado',
-    currentState: 'Trabajando',
+    compactCredit: '3 h 15 min computado',
+    currentState: 'Jornada activa',
     locale: 'es-ES' as const,
     progress: 'Progreso de hoy',
     title: 'Hoy',

@@ -80,7 +80,7 @@
     "type": {
       "other": "Otra",
       "sickness": "Enfermedad",
-      "unpaid": "Permiso no remunerado",
+      "unpaid": "Ausencia no remunerada",
       "vacation": "Vacaciones"
     },
     "validation": {
@@ -384,7 +384,7 @@
       },
       "option": "{{name}} · versión {{version}} ({{status}})",
       "preview": {
-        "description": "Desde el {{date}}, los avisos usan un umbral de tiempo flexible de {{threshold}}. Las pausas siguen siendo manuales con avisos y el tiempo no se redondea. Las fechas anteriores permanecen sin cambios.",
+        "description": "Desde el {{date}}, los avisos usan un umbral del saldo de horas de {{threshold}}. Las pausas siguen siendo manuales con avisos y el tiempo no se redondea. Las fechas anteriores permanecen sin cambios.",
         "empty": "Elige una versión y una fecha de vigencia para previsualizar el cambio.",
         "heading": "Vista previa del impacto"
       },
@@ -591,10 +591,10 @@
       "heading": "Versiones de políticas de tiempo",
       "name": "Nombre de la política de tiempo",
       "pending": "Creando política…",
-      "preview": "Vista previa: avisar cuando la diferencia absoluta de tiempo flexible alcance {{duration}}; mantener las pausas manuales y la aritmética exacta de minutos.",
+      "preview": "Vista previa: avisar cuando la diferencia absoluta del saldo de horas alcance {{duration}}; mantener las pausas manuales y la aritmética exacta de minutos.",
       "submit": "Crear versión de política de tiempo",
       "summary": "Pausas manuales con avisos · sin redondeo",
-      "threshold": "Umbral de aviso de tiempo flexible en minutos",
+      "threshold": "Umbral de aviso del saldo de horas en minutos",
       "thresholdDescription": "Solo es una señal de aviso. Nunca limita, redondea ni descarta tiempo trabajado.",
       "thresholdValue": "Umbral de aviso de {{duration}}",
       "validation": {

@@ -221,7 +221,7 @@
     "catalog": {
       "flexibleTime": {
         "description": "Anfangssaldo, Änderung im Zeitraum und Endsaldo der Gleitzeit aus dem unveränderlich fortgeschriebenen Zeitkonto.",
-        "title": "Gleitzeit"
+        "title": "Gleitzeitsaldo"
       },
       "leave": {
         "description": "Verfügbarkeit, Reservierungen und voraussichtliche Abwesenheitssalden ohne Krankheitsklassifizierung oder Antragsdetails.",
@@ -491,7 +491,7 @@
       },
       "availability": {
         "offWork": "Arbeitet derzeit nicht",
-        "onBreak": "In Pause",
+        "onBreak": "In der Pause",
         "unavailable": "Heute nicht verfügbar",
         "working": "Arbeitet derzeit"
       },

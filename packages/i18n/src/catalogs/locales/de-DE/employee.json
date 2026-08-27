@@ -568,9 +568,9 @@
       "remoteChanged": "Die Zeiterfassung wurde in einem anderen Tab oder auf einem anderen Gerät geändert. Aktueller Status: {{state}}.",
       "since": "Seit",
       "state": {
-        "offWork": "Nicht bei der Arbeit",
-        "onBreak": "In Pause",
-        "working": "Bei der Arbeit"
+        "offWork": "Keine aktive Arbeitszeit",
+        "onBreak": "In der Pause",
+        "working": "Arbeitszeit läuft"
       },
       "success": {
         "clockIn": "Um {{time}} eingestempelt.",
@@ -697,7 +697,7 @@
         "resumeToEstimate": "Arbeit fortsetzen, um zu schätzen",
         "startToEstimate": "Arbeit beginnen, um zu schätzen"
       },
-      "flexibleTime": "Gleitzeit",
+      "flexibleTime": "Gleitzeitsaldo",
       "holiday": "Feiertag: {{holidayName}}",
       "noPostedEntries": "Vor heute wurden keine Einträge gebucht.",
       "postedBalance": "Gebuchter Saldo",
@@ -849,7 +849,7 @@
     "eyebrow": "Zeitdatensätze",
     "incomplete": {
       "description": "Prüfen Sie die Hinweise und erfassten Ereignisse, bevor Sie sich auf den Saldo verlassen.",
-      "title": "Dieser Datensatz ist unvollständig"
+      "title": "Dieser Eintrag ist unvollständig"
     },
     "loading": {
       "description": "Berechnung und Quellereignisse werden geprüft.",
@@ -872,7 +872,7 @@
       "workIntervals": "Arbeitsintervalle"
     },
     "state": {
-      "complete": "Vollständiger Datensatz",
+      "complete": "Vollständiger Eintrag",
       "completeDescription": "Die Berechnung verwendet erfasste Ereignisse und exakte verstrichene Intervalle.",
       "current": "Aktueller Zustand",
       "needsReview": "Prüfung erforderlich",
@@ -1111,12 +1111,12 @@
       "eligibleProjection": "Anrechenbare Projektion",
       "excluded": {
         "description": "Prüfen Sie {{dates}}, bevor Sie sich auf den projizierten Gesamtwert verlassen.",
-        "title": "Projizierter Saldo schließt unvollständige Datensätze aus"
+        "title": "Voraussichtlicher Saldo schließt unvollständige Datensätze aus"
       },
       "heading": "Gleitzeitsaldo",
       "help": "Gebuchte Einträge sind endgültig. Anrechenbare vollständige, noch nicht gebuchte Datensätze bleiben separat.",
       "posted": "Gebuchter Saldo",
-      "projected": "Projizierter Saldo"
+      "projected": "Voraussichtlicher Saldo"
     },
     "balancesDescription": "Ihre Gleitzeit- und Urlaubssalden mit klar gekennzeichneten Projektionen und Quelleinträgen.",
     "balancesTitle": "Meine Salden",
@@ -1126,14 +1126,14 @@
       "approvedDeduction": "Genehmigte Abbuchung",
       "cancellationRestoration": "Wiederherstellung nach Stornierung",
       "carryover": "Übertrag",
-      "dailyDelta": "Tägliche Saldoänderung",
+      "dailyDelta": "Tagessaldo",
       "dailyRecalculationDelta": "Änderung durch tägliche Neuberechnung",
       "expiry": "Verfall",
       "manualAdjustment": "Manuelle Anpassung",
       "manualAdministrativeAdjustment": "Manuelle administrative Anpassung",
       "openingBalance": "Anfangssaldo",
       "pendingReservation": "Ausstehende Reservierung",
-      "postLockAdjustment": "Anpassung nach Sperrung",
+      "postLockAdjustment": "Anpassung nach der Sperrung",
       "reservationRelease": "Freigabe der Reservierung"
     },
     "error": {

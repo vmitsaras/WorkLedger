@@ -101,7 +101,7 @@
         "entitlementValue": "Solicita {{requested}}; saldo restante previsto {{projected}}.",
         "originalBalance": "Saldo {{value}}",
         "originalCalculation": "Cálculo original",
-        "originalCredited": "Acreditado {{value}}",
+        "originalCredited": "Computado {{value}}",
         "originalWorked": "Trabajado {{value}}",
         "proposedInterval": "Intervalo propuesto",
         "submitted": "Enviado",
@@ -220,8 +220,8 @@
   "report": {
     "catalog": {
       "flexibleTime": {
-        "description": "Saldos inicial, de cambio en el intervalo y final de tiempo flexible procedentes de la cuenta de tiempo de solo adición.",
-        "title": "Tiempo flexible"
+        "description": "Saldos de horas inicial, de cambio en el intervalo y final procedentes de la cuenta de tiempo de solo adición.",
+        "title": "Saldo de horas"
       },
       "leave": {
         "description": "Disponibilidad, reservas y saldos previstos de ausencias sin clasificación de enfermedad ni detalles de solicitudes.",
@@ -232,7 +232,7 @@
         "title": "Registros ausentes"
       },
       "monthlyTime": {
-        "description": "Minutos mensuales previstos, trabajados, acreditados y de saldo, con contexto del flujo y de ajustes posteriores al bloqueo.",
+        "description": "Minutos mensuales objetivo, trabajados, computados y de saldo, con contexto del flujo y de ajustes posteriores al bloqueo.",
         "title": "Tiempo mensual"
       },
       "pendingApprovals": {
@@ -335,8 +335,8 @@
         "balance": "Saldo",
         "closingAvailable": "Disponible final",
         "closingBalance": "Saldo final",
-        "credited": "Acreditado",
-        "expected": "Previsto",
+        "credited": "Computado",
+        "expected": "Objetivo",
         "incompleteRecords": "Registros incompletos",
         "openingAvailable": "Disponible inicial",
         "openingBalance": "Saldo inicial",
@@ -392,7 +392,7 @@
         "flexibleTime": "nombre del empleado y minutos iniciales, de cambio en el intervalo y finales",
         "leave": "nombre del empleado, etiqueta de la cuenta de ausencia, cambios disponibles, reservas y minutos previstos",
         "missingRecords": "nombre del empleado, fecha, estado, minutos previstos y trabajados, y códigos de aviso",
-        "monthlyTime": "nombre del empleado, mes, estado del flujo, minutos previstos, trabajados, acreditados y de saldo, número de registros incompletos y diferencia posterior al bloqueo",
+        "monthlyTime": "nombre del empleado, mes, estado del flujo, minutos objetivo, trabajados, computados y de saldo, número de registros incompletos y diferencia posterior al bloqueo",
         "pendingApprovals": "nombre del empleado, categoría general del flujo, fechas afectadas y momento del envío"
       },
       "heading": "Exportar y copiar",
@@ -491,10 +491,10 @@
         "viewCalendarLabel": "Ver el calendario del equipo de {{employee}}"
       },
       "availability": {
-        "offWork": "No está trabajando ahora",
+        "offWork": "Sin jornada activa",
         "onBreak": "En pausa",
         "unavailable": "No disponible hoy",
-        "working": "Trabajando ahora"
+        "working": "Jornada activa"
       },
       "column": {
         "availability": "Disponibilidad",
@@ -534,7 +534,7 @@
         "showAll": "Mostrar todos los empleados subordinados directos"
       },
       "page": {
-        "description": "Consulta quién está trabajando, en pausa, no disponible hoy o tiene registros abiertos y abre después el seguimiento adecuado.",
+        "description": "Consulta quién tiene la jornada activa, está en pausa, no está disponible hoy o tiene registros abiertos y abre después el seguimiento adecuado.",
         "eyebrow": "Área de trabajo del equipo",
         "shortcuts": "Accesos directos del área de trabajo del equipo"
       },

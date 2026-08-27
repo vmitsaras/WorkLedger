@@ -6,6 +6,13 @@ import { parse } from '@babel/parser';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const contractsLocalePath = path.join(repositoryRoot, 'packages/contracts/src/locales.ts');
+const contractsApiPath = path.join(repositoryRoot, 'packages/contracts/src/api.ts');
+const contractsNotificationsPath = path.join(
+  repositoryRoot,
+  'packages/contracts/src/notifications.ts',
+);
+const contractsReportsPath = path.join(repositoryRoot, 'packages/contracts/src/reports.ts');
+const contractsTodayPath = path.join(repositoryRoot, 'packages/contracts/src/today.ts');
 const catalogContractPath = path.join(repositoryRoot, 'packages/i18n/src/catalog.ts');
 const catalogRoot = path.join(repositoryRoot, 'packages/i18n/src/catalogs/locales');
 const descriptorMapPath = path.join(
@@ -57,6 +64,8 @@ const governedSourcePaths = [
 const PLURAL_SUFFIX_PATTERN = /_(zero|one|two|few|many|other)$/u;
 const INTERPOLATION_PATTERN = /\{\{\s*([A-Za-z][A-Za-z0-9]*)\s*\}\}/gu;
 const SEMANTIC_KEY_PATTERN = /^[a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*){2,}$/u;
+const BIDI_CONTROL_PATTERN = /[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u;
+const MAX_IDENTICAL_SOURCE_RATIO = 0.05;
 
 function unwrapExpression(node) {
   if (
@@ -192,6 +201,7 @@ export function validateI18nCatalogs({
   messageKeys,
   namespaces,
   parameterContract,
+  requiredDescriptors = Object.keys(descriptorMap),
   supportedLocales,
 }) {
   assertSameValues(supportedLocales, ['en-GB', 'de-DE', 'es-ES'], 'Production locale allowlist');
@@ -212,8 +222,14 @@ export function validateI18nCatalogs({
     for (const namespace of namespaces) {
       for (const [key, message] of flattenCatalog(catalog[namespace])) {
         const fullKey = `${namespace}.${key}`;
+        if (message.trim().length === 0) {
+          throw new Error(`${locale} message ${fullKey} must not be empty.`);
+        }
         if (/[<>]/u.test(message)) {
           throw new Error(`${locale} message ${fullKey} must remain text only.`);
+        }
+        if (BIDI_CONTROL_PATTERN.test(message)) {
+          throw new Error(`${locale} message ${fullKey} contains a prohibited bidi control.`);
         }
         flattened.set(fullKey, message);
       }
@@ -281,8 +297,21 @@ export function validateI18nCatalogs({
         `${locale} plural forms for ${baseKey}`,
       );
     }
+
+    if (locale !== defaultLocale) {
+      const comparableKeys = [...messages.keys()].filter((key) => source.has(key));
+      const identicalSourceCount = comparableKeys.filter(
+        (key) => messages.get(key) === source.get(key),
+      ).length;
+      if (identicalSourceCount / comparableKeys.length > MAX_IDENTICAL_SOURCE_RATIO) {
+        throw new Error(
+          `${locale} retains ${identicalSourceCount} source-identical messages; catalog translation appears incomplete.`,
+        );
+      }
+    }
   }
 
+  assertSameValues(Object.keys(descriptorMap), requiredDescriptors, 'Descriptor coverage');
   for (const [descriptor, messageKey] of Object.entries(descriptorMap)) {
     if (typeof messageKey !== 'string' || !sourceMessageKeys.has(messageKey)) {
       throw new Error(`Descriptor ${descriptor} does not map to a typed message key.`);
@@ -337,6 +366,8 @@ export function findHardCodedJsxCopy(source, fileName = 'source.tsx') {
 }
 
 export async function checkI18n(repositoryDirectory = repositoryRoot) {
+  const readRepositoryFile = (filePath) =>
+    readFile(path.join(repositoryDirectory, path.relative(repositoryRoot, filePath)), 'utf8');
   const contractsSource = await readFile(
     path.join(repositoryDirectory, path.relative(repositoryRoot, contractsLocalePath)),
     'utf8',
@@ -350,6 +381,28 @@ export async function checkI18n(repositoryDirectory = repositoryRoot) {
   const namespaces = readStringArrayConstant(catalogContractSource, 'CATALOG_NAMESPACES');
   const messageKeys = readStringArrayConstant(catalogContractSource, 'MESSAGE_KEYS');
   const parameterContract = readMessageParameterContract(catalogContractSource);
+  const apiContractSource = await readRepositoryFile(contractsApiPath);
+  const notificationContractSource = await readRepositoryFile(contractsNotificationsPath);
+  const reportContractSource = await readRepositoryFile(contractsReportsPath);
+  const todayContractSource = await readRepositoryFile(contractsTodayPath);
+  const requiredDescriptors = [
+    ...readStringArrayConstant(todayContractSource, 'CALCULATION_WARNING_CODES').map(
+      (code) => `attention.${code}`,
+    ),
+    ...readStringArrayConstant(todayContractSource, 'CALCULATION_BLOCKER_CODES').map(
+      (code) => `attention.${code}`,
+    ),
+    ...readStringArrayConstant(todayContractSource, 'TODAY_ATTENTION_ACTIONS').map(
+      (action) => `attentionAction.${action}`,
+    ),
+    ...readStringArrayConstant(reportContractSource, 'REPORT_KEYS').map((key) => `report.${key}`),
+    ...readStringArrayConstant(notificationContractSource, 'NOTIFICATION_EVENTS').map(
+      (event) => `notification.${event}`,
+    ),
+    ...readStringArrayConstant(apiContractSource, 'API_FIELD_ERROR_CODES').map(
+      (code) => `fieldError.${code}`,
+    ),
+  ];
   const actualCatalogRoot = path.join(
     repositoryDirectory,
     path.relative(repositoryRoot, catalogRoot),
@@ -389,6 +442,7 @@ export async function checkI18n(repositoryDirectory = repositoryRoot) {
     messageKeys,
     namespaces,
     parameterContract,
+    requiredDescriptors,
     supportedLocales,
   });
 

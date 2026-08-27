@@ -114,14 +114,16 @@ Owns:
 - typed semantic message keys and repository-owned catalog loaders,
 - locale-aware presentation formatters,
 - the framework-neutral i18next runtime, and
-- the bounded React, react-i18next, and React Aria synchronization adapter.
+- the bounded React, react-i18next, and React Aria synchronization adapter, plus an explicitly
+  separate test-only pseudo-locale surface.
 
 It depends on `packages/contracts` in one direction. Domain, database, contracts, and UI remain
 translation-library independent. Catalogs are loaded through literal locale-specific imports; no
-runtime catalog service or user-authored HTML translation path is permitted. Until the existing
-English UI is migrated, the web composition root mounts only the lightweight `en-GB` locale and
-React Aria provider; the complete translation bridge is implemented and tested but remains outside
-the production graph. See ADR 0013 and `docs/141-shared-i18n-foundation.md`.
+runtime catalog service or user-authored HTML translation path is permitted. The web composition
+root loads the resolved production catalog before protected content and synchronizes i18next,
+React Aria, document language/direction, title, and route focus. The `./testing` export supplies the
+isolated `en-XA` pseudo-locale and is not imported by either production application. See ADR 0013,
+`docs/141-shared-i18n-foundation.md`, and `docs/148-wl-1408-human-catalog-review.md`.
 
 ### `packages/database`
 
