@@ -5,6 +5,7 @@ import type {
   AbsenceTypePolicyAdmin,
   CreateAbsenceTypeVersionAdminRequest,
 } from '@workledger/contracts';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, Panel, RouteState, StatusBadge, TextField } from '@workledger/ui';
 
 import { ApiClientError, createAbsenceTypeVersionForAdministration } from '../app/api-client.js';
@@ -25,6 +26,7 @@ const DEFAULT_POLICY: AbsenceTypePolicyAdmin = {
 };
 
 export function AbsenceSettingsPage() {
+  const t = useWorkLedgerMessage();
   const query = useQuery(absenceSettingsAdminDetailQuery());
   const queryClient = useQueryClient();
   const [code, setCode] = useState<CreateAbsenceTypeVersionAdminRequest['code']>('OTHER');
@@ -63,7 +65,7 @@ export function AbsenceSettingsPage() {
     event.preventDefault();
     setMessage(undefined);
     if (name.trim() === '' || effectiveFrom === '') {
-      setMessage({ kind: 'error', text: 'Enter a display name and effective date.' });
+      setMessage({ kind: 'error', text: t('admin.absenceSettings.validation.required') });
       requestAnimationFrame(() => messageRef.current?.focus());
       return;
     }
@@ -74,10 +76,10 @@ export function AbsenceSettingsPage() {
       setEffectiveFrom('');
       setMessage({
         kind: 'success',
-        text: 'The absence type version was created. Existing requests keep the version they already use.',
+        text: t('admin.absenceSettings.feedback.created'),
       });
     } catch (error) {
-      setMessage({ kind: 'error', text: mutationError(error) });
+      setMessage({ kind: 'error', text: mutationError(error, t) });
       requestAnimationFrame(() => messageRef.current?.focus());
     }
   }
@@ -85,16 +87,18 @@ export function AbsenceSettingsPage() {
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="HR administration"
-        title="Absence settings"
-        description="Create bounded, effective-dated absence-type versions without reinterpreting existing requests or exposing sickness records."
+        eyebrow={t('admin.absenceSettings.page.eyebrow')}
+        title={t('shared.route.title.settingsAbsence')}
+        description={t('admin.absenceSettings.page.description')}
       />
       {message === undefined ? null : (
         <Alert
           {...(message.kind === 'error' ? { className: 'outline-none', tabIndex: -1 } : {})}
           ref={messageRef}
           title={
-            message.kind === 'error' ? 'Absence type update failed' : 'Absence type version created'
+            message.kind === 'error'
+              ? t('admin.absenceSettings.feedback.errorTitle')
+              : t('admin.absenceSettings.feedback.successTitle')
           }
           tone={message.kind === 'error' ? 'danger' : 'success'}
         >
@@ -103,30 +107,34 @@ export function AbsenceSettingsPage() {
       )}
       <form className="wl-panel grid gap-5" onSubmit={submit} noValidate>
         <div>
-          <h2 className="m-0 text-2xl font-bold">Create absence-type version</h2>
+          <h2 className="m-0 text-2xl font-bold">{t('admin.absenceSettings.form.heading')}</h2>
           <p className="mb-0 text-sm text-[var(--wl-text-muted)]">
-            A future boundary closes only the version effective there. The configuration is
-            constrained to the accepted MVP workflow.
+            {t('admin.absenceSettings.form.description')}
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-2 text-sm font-semibold" htmlFor="absence-code">
-            Type code
+            {t('admin.absenceSettings.form.typeCode')}
             <select
               id="absence-code"
               className="min-h-11 rounded-lg border px-3"
               value={code}
               onChange={(event) => chooseCode(event.target.value as typeof code)}
             >
-              <option value="VACATION">Vacation</option>
-              <option value="SICKNESS">Sickness</option>
-              <option value="UNPAID">Unpaid leave</option>
-              <option value="OTHER">Other</option>
+              <option value="VACATION">{t('admin.absenceSettings.type.vacation')}</option>
+              <option value="SICKNESS">{t('admin.absenceSettings.type.sickness')}</option>
+              <option value="UNPAID">{t('admin.absenceSettings.type.unpaid')}</option>
+              <option value="OTHER">{t('admin.absenceSettings.type.other')}</option>
             </select>
           </label>
-          <TextField id="absence-name" label="Display name" value={name} onChange={setName} />
+          <TextField
+            id="absence-name"
+            label={t('admin.absenceSettings.form.displayName')}
+            value={name}
+            onChange={setName}
+          />
           <label className="grid gap-2 text-sm font-semibold" htmlFor="absence-effective">
-            Effective from
+            {t('admin.absenceSettings.form.effectiveFrom')}
             <input
               id="absence-effective"
               type="date"
@@ -142,11 +150,11 @@ export function AbsenceSettingsPage() {
               checked={active}
               onChange={(event) => setActive(event.target.checked)}
             />
-            Available for new requests
+            {t('admin.absenceSettings.form.active')}
           </label>
         </div>
         <fieldset className="grid gap-4 rounded-xl border p-4">
-          <legend className="px-2 font-bold">Coverage units</legend>
+          <legend className="px-2 font-bold">{t('admin.absenceSettings.coverage.heading')}</legend>
           {(['FULL_DAY', 'HALF_DAY', 'MINUTES'] as const).map((unit) => (
             <label key={unit} className="flex gap-3">
               <input
@@ -162,23 +170,23 @@ export function AbsenceSettingsPage() {
                 }
               />
               {unit === 'FULL_DAY'
-                ? 'Full day'
+                ? t('admin.absenceSettings.coverage.fullDay')
                 : unit === 'HALF_DAY'
-                  ? 'Schedule-relative half day'
-                  : 'Minute interval'}
+                  ? t('admin.absenceSettings.coverage.halfDay')
+                  : t('admin.absenceSettings.coverage.minutes')}
             </label>
           ))}
         </fieldset>
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField
             id="absence-workflow"
-            label="Workflow"
+            label={t('admin.absenceSettings.workflow.label')}
             value={policy.workflow}
             disabled={code === 'SICKNESS'}
-            disabledReason="Sickness uses the fixed report and acknowledge workflow to avoid approval decisions about medical absence."
+            disabledReason={t('admin.absenceSettings.workflow.sicknessReason')}
             options={[
-              ['APPROVAL_REQUIRED', 'Approval required'],
-              ['REPORT_AND_ACKNOWLEDGE', 'Report and acknowledge'],
+              ['APPROVAL_REQUIRED', t('admin.absenceSettings.workflow.approvalRequired')],
+              ['REPORT_AND_ACKNOWLEDGE', t('admin.absenceSettings.workflow.reportAndAcknowledge')],
             ]}
             onChange={(workflow) =>
               setPolicy((current) => ({
@@ -189,12 +197,18 @@ export function AbsenceSettingsPage() {
           />
           <SelectField
             id="absence-treatment"
-            label="Time treatment"
+            label={t('admin.absenceSettings.timeTreatment.label')}
             value={policy.timeTreatment}
             options={[
-              ['CREDIT_COVERED_EXPECTATION', 'Credit covered expectation'],
-              ['REDUCE_COVERED_EXPECTATION', 'Reduce covered expectation'],
-              ['NO_TIME_EFFECT', 'No time effect'],
+              [
+                'CREDIT_COVERED_EXPECTATION',
+                t('admin.absenceSettings.timeTreatment.creditCovered'),
+              ],
+              [
+                'REDUCE_COVERED_EXPECTATION',
+                t('admin.absenceSettings.timeTreatment.reduceCovered'),
+              ],
+              ['NO_TIME_EFFECT', t('admin.absenceSettings.timeTreatment.none')],
             ]}
             onChange={(timeTreatment) =>
               setPolicy((current) => ({
@@ -205,14 +219,14 @@ export function AbsenceSettingsPage() {
           />
           <SelectField
             id="absence-note-mode"
-            label="Request note"
+            label={t('admin.absenceSettings.requestNote.label')}
             value={policy.requestNoteMode}
             disabled={code === 'SICKNESS'}
-            disabledReason="Sickness notes are disabled to minimize medical information."
+            disabledReason={t('admin.absenceSettings.requestNote.sicknessReason')}
             options={[
-              ['DISABLED', 'Disabled'],
-              ['OPTIONAL', 'Optional'],
-              ['REQUIRED', 'Required'],
+              ['DISABLED', t('admin.absenceSettings.requestNote.disabled')],
+              ['OPTIONAL', t('admin.absenceSettings.requestNote.optional')],
+              ['REQUIRED', t('admin.absenceSettings.requestNote.required')],
             ]}
             onChange={(requestNoteMode) =>
               setPolicy((current) => ({
@@ -223,11 +237,11 @@ export function AbsenceSettingsPage() {
           />
           <TextField
             id="absence-account"
-            label="Entitlement account category"
+            label={t('admin.absenceSettings.entitlement.label')}
             description={
               code === 'SICKNESS'
-                ? 'Sickness cannot use an entitlement account because medical absence is not a leave balance.'
-                : 'Leave blank when this type has no entitlement balance.'
+                ? t('admin.absenceSettings.entitlement.sicknessReason')
+                : t('admin.absenceSettings.entitlement.description')
             }
             value={policy.entitlementAccountCategory ?? ''}
             onChange={(value) =>
@@ -241,7 +255,7 @@ export function AbsenceSettingsPage() {
           <TextField
             id="absence-lead"
             type="number"
-            label="Minimum lead days"
+            label={t('admin.absenceSettings.timing.minimumLeadDays')}
             value={String(policy.minimumLeadCalendarDays)}
             onChange={(value) =>
               setPolicy((current) => ({ ...current, minimumLeadCalendarDays: Number(value) }))
@@ -250,8 +264,8 @@ export function AbsenceSettingsPage() {
           <TextField
             id="absence-retrospective"
             type="number"
-            label="Maximum retrospective days"
-            description="Leave blank when retrospective reporting is not bounded."
+            label={t('admin.absenceSettings.timing.maximumRetrospectiveDays')}
+            description={t('admin.absenceSettings.timing.maximumRetrospectiveDescription')}
             value={
               policy.maximumRetrospectiveCalendarDays === null
                 ? ''
@@ -279,57 +293,77 @@ export function AbsenceSettingsPage() {
                 }))
               }
             />
-            Reserve entitlement while approval is pending
+            {t('admin.absenceSettings.entitlement.reservePending')}
           </label>
           {code === 'SICKNESS' ? (
             <p id="absence-reservation-reason" className="m-0 text-sm text-[var(--wl-text-muted)]">
-              Sickness has no entitlement reservation and does not enter an approval queue.
+              {t('admin.absenceSettings.entitlement.reservePendingSickness')}
             </p>
           ) : null}
         </div>
         <Button type="submit" isDisabled={mutation.isPending}>
-          {mutation.isPending ? 'Creating version…' : 'Create absence-type version'}
+          {mutation.isPending
+            ? t('admin.absenceSettings.form.pending')
+            : t('admin.absenceSettings.form.submit')}
         </Button>
       </form>
       <section className="grid gap-4" aria-labelledby="absence-version-history">
         <h2 id="absence-version-history" className="m-0 text-2xl font-bold">
-          Version history
+          {t('admin.absenceSettings.history.heading')}
         </h2>
         {query.isPending ? (
-          <RouteState kind="loading" title="Loading information">
-            Absence type versions are being retrieved.
+          <RouteState kind="loading" title={t('admin.absenceSettings.loading.title')}>
+            {t('admin.absenceSettings.loading.description')}
           </RouteState>
         ) : query.data.versions.length === 0 ? (
-          <RouteState kind="empty" title="No absence type versions">
-            Create the first effective dated absence type above.
+          <RouteState kind="empty" title={t('admin.absenceSettings.empty.title')}>
+            {t('admin.absenceSettings.empty.description')}
           </RouteState>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {query.data.versions.map((version) => (
               <Panel key={version.id} as="article">
                 <h3 className="m-0 text-xl font-bold">
-                  {version.name} · version {version.version}
+                  {t('admin.absenceSettings.history.versionLabel', {
+                    name: version.name,
+                    version: version.version,
+                  })}
                 </h3>
                 <p className="flex flex-wrap items-center gap-2 font-semibold">
                   <StatusBadge tone={version.latestVersion ? 'info' : 'neutral'}>
-                    {version.latestVersion ? 'Latest version' : 'Historical version'}
+                    {version.latestVersion
+                      ? t('admin.absenceSettings.history.latest')
+                      : t('admin.absenceSettings.history.historical')}
                   </StatusBadge>
                   <StatusBadge tone={version.active ? 'success' : 'neutral'}>
-                    {version.active ? 'Available' : 'Inactive'}
+                    {version.active
+                      ? t('admin.absenceSettings.history.available')
+                      : t('admin.absenceSettings.history.inactive')}
                   </StatusBadge>
                 </p>
                 <p>
-                  {formatLocalDate(version.validFrom)} to{' '}
-                  {version.validTo === null ? 'ongoing' : formatLocalDate(version.validTo)}
+                  {t('admin.absenceSettings.history.range', {
+                    from: formatLocalDate(version.validFrom),
+                    to:
+                      version.validTo === null
+                        ? t('admin.absenceSettings.history.ongoing')
+                        : formatLocalDate(version.validTo),
+                  })}
                 </p>
                 <p className="mb-0 text-sm">
                   {version.policy.workflow === 'APPROVAL_REQUIRED'
-                    ? 'Approval required'
-                    : 'Report and acknowledge'}{' '}
-                  · {version.policy.allowedCoverageUnits.length} coverage options ·{' '}
+                    ? t('admin.absenceSettings.workflow.approvalRequired')
+                    : t('admin.absenceSettings.workflow.reportAndAcknowledge')}
+                  {' · '}
+                  {t('admin.absenceSettings.history.coverageOptions', {
+                    count: version.policy.allowedCoverageUnits.length,
+                  })}
+                  {' · '}
                   {version.policy.entitlementAccountCategory === null
-                    ? 'No entitlement account'
-                    : `Entitlement: ${version.policy.entitlementAccountCategory}`}
+                    ? t('admin.absenceSettings.history.noEntitlement')
+                    : t('admin.absenceSettings.history.entitlement', {
+                        account: version.policy.entitlementAccountCategory,
+                      })}
                 </p>
               </Panel>
             ))}
@@ -382,14 +416,14 @@ function SelectField({
     </div>
   );
 }
-function mutationError(error: unknown): string {
+function mutationError(error: unknown, t: ReturnType<typeof useWorkLedgerMessage>): string {
   if (error instanceof ApiClientError) {
     if (error.code === 'POLICY_CONFIGURATION_INVALID')
-      return 'Review the workflow, entitlement, coverage, timing, and sickness-specific constraints.';
+      return t('admin.absenceSettings.error.configuration');
     if (error.code === 'ABSENCE_TYPE_VERSION_CONFLICT')
-      return 'That effective boundary already exists, has no configuration change, or the version history changed.';
+      return t('admin.absenceSettings.error.conflict');
     if (error.code === 'ASSIGNMENT_EFFECTIVE_DATE_INVALID')
-      return 'Choose today or a future effective date.';
+      return t('admin.absenceSettings.error.effectiveDate');
   }
-  return 'The absence-type version could not be created. Try again.';
+  return t('admin.absenceSettings.error.generic');
 }

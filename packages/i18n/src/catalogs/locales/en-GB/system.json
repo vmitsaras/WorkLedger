@@ -1,1 +1,232 @@
-{}
+{
+  "accounts": {
+    "action": {
+      "activateAccount": "Activate account",
+      "assignSystemRole": "Assign system role",
+      "deactivateAccount": "Deactivate account",
+      "revokeSystemRole": "Revoke system role"
+    },
+    "create": {
+      "accountEmail": "Account email",
+      "accountName": "Account name",
+      "action": "Create and invite technical account",
+      "description": "Technical accounts have no fabricated employee record. HR, attendance, balance, absence, and domain-audit access are not granted here.",
+      "heading": "Invite technical administrator",
+      "invitationDescription": "Sets the account language used for this invitation and the administrator's first sign-in.",
+      "invitationLanguage": "Invitation language",
+      "pending": "Creating…"
+    },
+    "directory": {
+      "activeAccount": "Active account",
+      "activeSessions": "Active sessions",
+      "currentAccount": "This is your current account. Use Profile for your own sessions; self role and account-state changes are prohibited.",
+      "description": "Employee-linked is shown only to prevent accidental technical lifecycle changes. No employee number, employment status, team, schedule, balance, request, or sickness data appears in this view.",
+      "employeeLinked": "Employee linked",
+      "heading": "Account directory",
+      "inactiveAccount": "Inactive account",
+      "invitationPending": "Invitation pending",
+      "lastActive": " — last active {{value}}",
+      "noActiveSessions": "No active sessions.",
+      "noSystemRole": "No system role",
+      "stateAndAuthority": "Account state and authority",
+      "technicalOnly": "Technical only"
+    },
+    "empty": {
+      "description": "Invite the first technical administrator above.",
+      "title": "No accounts are associated with this installation"
+    },
+    "error": {
+      "accessDenied": "You no longer have technical authority for this action, or the action targets your own account.",
+      "emailExists": "That account email is already in use.",
+      "freshSession": "Sign out and sign in again before making this privileged change.",
+      "generic": "The technical account change could not be completed. Try again.",
+      "stateConflict": "The account state changed. Refresh and review the current account."
+    },
+    "feedback": {
+      "created": "Technical account created and a 24-hour invitation was issued.",
+      "title": "Technical account updated",
+      "updated": "The technical account state was updated and affected sessions were revoked."
+    },
+    "loading": {
+      "description": "Technical account records are being retrieved.",
+      "title": "Loading information"
+    },
+    "page": {
+      "description": "Manage technical sign-in access, system administrator roles, and active sessions.",
+      "eyebrow": "System administration"
+    },
+    "validation": {
+      "accountEmail": "Enter a valid account email address.",
+      "accountName": "Enter an account name."
+    }
+  },
+  "audit": {
+    "domain": {
+      "page": {
+        "caption": "Redacted organization domain audit events, newest first",
+        "description": "Review recorded organizational changes and decisions.",
+        "eyebrow": "HR administration",
+        "filterDescription": "Dates use the organization time zone. Exact action codes can narrow a known workflow.",
+        "filterTitle": "Filter domain audit events",
+        "resultsTitle": "Domain audit events",
+        "scrollLabel": "Domain audit results"
+      }
+    },
+    "explorer": {
+      "actor": {
+        "account": "Account",
+        "systemProcess": "System Process: {{process}}",
+        "unknown": "Unknown"
+      },
+      "boolean": {
+        "no": "No",
+        "yes": "Yes"
+      },
+      "detail": {
+        "actor": "Actor",
+        "privileged": "Privileged",
+        "reasonCode": "Reason Code",
+        "safeFacts": "Safe Facts",
+        "summary": "View redacted detail",
+        "targetReference": "Target Reference"
+      },
+      "empty": {
+        "description": "Change or clear the filters to review a wider time range.",
+        "title": "No matching audit events"
+      },
+      "fact": {
+        "attendanceRevision": "Attendance revision",
+        "authenticationMethod": "Authentication method",
+        "changedRole": "Changed role",
+        "effectiveDate": "Effective date",
+        "eventCount": "Event count",
+        "failureCategory": "Failure category",
+        "httpStatus": "HTTP status",
+        "minutes": "Minutes",
+        "nextStatus": "Next status",
+        "previousStatus": "Previous status",
+        "scope": "Scope",
+        "sessionReference": "Session reference",
+        "sourceCount": "Source count",
+        "version": "Version"
+      },
+      "filter": {
+        "action": "Action",
+        "from": "From",
+        "outcome": "Outcome",
+        "outcomeAll": "All outcomes",
+        "target": "Target type",
+        "targetAll": "All target types",
+        "to": "To"
+      },
+      "loading": {
+        "description": "Audit evidence is being retrieved.",
+        "inline": "Loading audit events…",
+        "title": "Loading information"
+      },
+      "outcome": {
+        "denied": "Denied",
+        "failure": "Failure",
+        "success": "Success"
+      },
+      "pagination": {
+        "label": "Audit pagination",
+        "summary": "Page {{current}} of {{total}}"
+      },
+      "results": {
+        "count": "Events found: {{count}}"
+      },
+      "table": {
+        "column": {
+          "action": "Action",
+          "detail": "Detail",
+          "occurred": "Occurred",
+          "outcome": "Outcome",
+          "target": "Target"
+        },
+        "scrollHint": "On narrow screens, scroll this results region horizontally to compare every column."
+      },
+      "target": {
+        "absenceRequest": "Absence request",
+        "account": "Account",
+        "assignment": "Assignment",
+        "attendance": "Attendance",
+        "authentication": "Authentication",
+        "authorization": "Authorization",
+        "backup": "Backup",
+        "configuration": "Configuration",
+        "correctionRequest": "Correction request",
+        "employee": "Employee",
+        "export": "Export",
+        "invitation": "Invitation",
+        "leaveEntitlement": "Leave entitlement",
+        "monthlyPeriod": "Monthly period",
+        "notificationDelivery": "Notification delivery",
+        "operations": "Operations",
+        "recovery": "Recovery",
+        "secret": "Secret",
+        "session": "Session",
+        "team": "Team",
+        "timeAccount": "Time account"
+      }
+    },
+    "technical": {
+      "page": {
+        "caption": "Redacted security and technical audit events, newest first",
+        "description": "Review sign-in, access, session, and operational events.",
+        "eyebrow": "System administration",
+        "filterDescription": "Results contain limited technical facts. Employee records, notification content, and account identifiers are not included.",
+        "filterTitle": "Filter technical audit events",
+        "resultsTitle": "Technical audit events",
+        "scrollLabel": "Technical audit results"
+      }
+    }
+  },
+  "operations": {
+    "alert": {
+      "criticalTitle": "Service needs immediate attention",
+      "degradedTitle": "Service is degraded",
+      "description": "Review the dependency evidence below, then use the documented host operator recovery procedures. This page does not expose restart or restore controls."
+    },
+    "dependencies": {
+      "authentication": {
+        "heading": "Authentication"
+      },
+      "database": {
+        "heading": "Database"
+      },
+      "error": "Error",
+      "heading": "Dependencies",
+      "latency": "Latency",
+      "latencyValue": "{{milliseconds}} ms",
+      "status": "Status"
+    },
+    "deployment": {
+      "description": "Backup, restore, migration, and upgrade workflows are host-operator procedures and are not exposed in this interface.",
+      "documentation": "See the deployment and operations documentation for validated procedures.",
+      "heading": "Deployment procedures"
+    },
+    "health": {
+      "critical": "Critical",
+      "degraded": "Degraded",
+      "healthy": "Healthy",
+      "unavailable": "Unavailable"
+    },
+    "loading": {
+      "description": "System diagnostics are being retrieved.",
+      "title": "Loading information"
+    },
+    "page": {
+      "description": "Check service health, affected dependencies, and the next operator action.",
+      "eyebrow": "System administration"
+    },
+    "status": {
+      "environment": "Environment",
+      "heading": "Service status",
+      "overallHealth": "Overall health",
+      "service": "Service",
+      "timestamp": "Timestamp",
+      "version": "Version"
+    }
+  }
+}

@@ -1,1 +1,651 @@
-{}
+{
+  "absenceSettings": {
+    "coverage": {
+      "fullDay": "Día completo",
+      "halfDay": "Medio día relativo al horario",
+      "heading": "Unidades de cobertura",
+      "minutes": "Intervalo de minutos"
+    },
+    "empty": {
+      "description": "Crea arriba el primer tipo de ausencia con fecha de vigencia.",
+      "title": "No hay versiones de tipos de ausencia"
+    },
+    "entitlement": {
+      "description": "Déjalo en blanco cuando este tipo no tenga saldo de derecho.",
+      "label": "Categoría de la cuenta de derecho",
+      "reservePending": "Reservar el derecho mientras la aprobación esté pendiente",
+      "reservePendingSickness": "La enfermedad no reserva derechos ni entra en una cola de aprobación.",
+      "sicknessReason": "La enfermedad no puede usar una cuenta de derecho porque una ausencia médica no es un saldo de permisos."
+    },
+    "error": {
+      "configuration": "Revisa el flujo, el derecho, la cobertura, los plazos y las restricciones específicas de enfermedad.",
+      "conflict": "Ese límite de vigencia ya existe, no contiene ningún cambio de configuración o el historial de versiones ha cambiado.",
+      "effectiveDate": "Elige hoy o una fecha de vigencia futura.",
+      "generic": "No se ha podido crear la versión del tipo de ausencia. Inténtalo de nuevo."
+    },
+    "feedback": {
+      "created": "Se ha creado la versión del tipo de ausencia. Las solicitudes existentes conservan la versión que ya usan.",
+      "errorTitle": "Error al actualizar el tipo de ausencia",
+      "successTitle": "Versión del tipo de ausencia creada"
+    },
+    "form": {
+      "active": "Disponible para nuevas solicitudes",
+      "description": "Un límite futuro solo cierra la versión vigente en ese punto. La configuración se limita al flujo de MVP aceptado.",
+      "displayName": "Nombre visible",
+      "effectiveFrom": "Vigente desde",
+      "heading": "Crear versión de tipo de ausencia",
+      "pending": "Creando versión…",
+      "submit": "Crear versión de tipo de ausencia",
+      "typeCode": "Código de tipo"
+    },
+    "history": {
+      "available": "Disponible",
+      "coverageOptions": "{{count}} opciones de cobertura",
+      "entitlement": "Derecho: {{account}}",
+      "heading": "Historial de versiones",
+      "historical": "Versión histórica",
+      "inactive": "Inactivo",
+      "latest": "Versión más reciente",
+      "noEntitlement": "Sin cuenta de derecho",
+      "ongoing": "en curso",
+      "range": "Del {{from}} al {{to}}",
+      "versionLabel": "{{name}} · versión {{version}}"
+    },
+    "loading": {
+      "description": "Se están recuperando las versiones de tipos de ausencia.",
+      "title": "Cargando información"
+    },
+    "page": {
+      "description": "Crea versiones acotadas y con fecha de vigencia de tipos de ausencia sin reinterpretar solicitudes existentes ni exponer registros de enfermedad.",
+      "eyebrow": "Administración de RR. HH."
+    },
+    "requestNote": {
+      "disabled": "Desactivada",
+      "label": "Nota de la solicitud",
+      "optional": "Opcional",
+      "required": "Obligatoria",
+      "sicknessReason": "Las notas de enfermedad están desactivadas para minimizar la información médica."
+    },
+    "timeTreatment": {
+      "creditCovered": "Acreditar la obligación cubierta",
+      "label": "Tratamiento del tiempo",
+      "none": "Sin efecto en el tiempo",
+      "reduceCovered": "Reducir la obligación cubierta"
+    },
+    "timing": {
+      "maximumRetrospectiveDays": "Máximo de días retrospectivos",
+      "maximumRetrospectiveDescription": "Déjalo en blanco cuando la notificación retrospectiva no esté limitada.",
+      "minimumLeadDays": "Días mínimos de antelación"
+    },
+    "type": {
+      "other": "Otra",
+      "sickness": "Enfermedad",
+      "unpaid": "Permiso no remunerado",
+      "vacation": "Vacaciones"
+    },
+    "validation": {
+      "required": "Introduce un nombre visible y una fecha de vigencia."
+    },
+    "workflow": {
+      "approvalRequired": "Aprobación necesaria",
+      "label": "Flujo",
+      "reportAndAcknowledge": "Notificar y confirmar",
+      "sicknessReason": "La enfermedad usa el flujo fijo de notificación y confirmación para evitar decisiones de aprobación sobre ausencias médicas."
+    }
+  },
+  "employee": {
+    "assignment": {
+      "changeManager": "Cambiar responsable directo",
+      "changeTeam": "Cambiar equipo",
+      "chooseChange": "Elegir un cambio",
+      "current": "Actual: {{current}}",
+      "description": "El estado actual se resuelve para el {{date}}. Pertenecer a un equipo no concede acceso de gestión; solo lo hace la relación efectiva con el responsable directo.",
+      "feedback": {
+        "errorTitle": "Error al actualizar la asignación",
+        "managerUpdated": "Asignación de responsable directo actualizada.",
+        "successTitle": "Asignación actualizada",
+        "teamUpdated": "Asignación de equipo actualizada."
+      },
+      "heading": "Equipo y responsable directo",
+      "historyItem": "{{from}}: {{label}} hasta {{to}}",
+      "inactiveTeam": "{{team}} (equipo inactivo)",
+      "managerChange": "Cambio de responsable directo",
+      "managerHistory": "Historial de responsable directo",
+      "noCurrentManager": "Sin responsable directo actual",
+      "noCurrentTeam": "Sin equipo actual",
+      "noHistory": "No hay historial de asignaciones.",
+      "noManager": "Sin responsable directo",
+      "noTeam": "Sin equipo",
+      "saveManager": "Guardar asignación de responsable directo",
+      "saveTeam": "Guardar asignación de equipo",
+      "teamChange": "Cambio de equipo",
+      "teamHistory": "Historial de equipo",
+      "validation": {
+        "manager": "Elige un cambio de responsable directo y una fecha de vigencia.",
+        "team": "Elige un cambio de equipo y una fecha de vigencia."
+      }
+    },
+    "common": {
+      "effectiveFrom": "Vigente desde",
+      "historical": "histórica",
+      "latest": "más reciente",
+      "none": "Ninguno",
+      "ongoing": "en curso"
+    },
+    "create": {
+      "feedback": {
+        "created": "Empleado creado e invitación enviada."
+      },
+      "form": {
+        "accountEmail": "Correo electrónico de la cuenta",
+        "accountEmailDescription": "Un servicio de entrega configurado usa esta dirección para la invitación. No se utiliza como identificador laboral.",
+        "cancel": "Cancelar",
+        "displayName": "Nombre visible",
+        "employeeNumber": "Número de empleado",
+        "employmentStartsOn": "El empleo comienza el",
+        "invitationDescription": "Define el idioma de la cuenta para esta invitación y para el primer inicio de sesión del empleado.",
+        "invitationLanguage": "Idioma de la invitación",
+        "pending": "Creando…",
+        "rolesDescription": "El rol de empleado es obligatorio. La autoridad técnica del sistema se administra por separado.",
+        "rolesHeading": "Roles de la aplicación",
+        "submit": "Crear e invitar empleado"
+      },
+      "page": {
+        "description": "Crea el empleado estable y el primer periodo de empleo y envía después una invitación de cuenta válida durante 24 horas.",
+        "eyebrow": "Administración de personal",
+        "title": "Añadir empleado"
+      },
+      "validation": {
+        "accountEmail": "Introduce una dirección de correo válida para la cuenta.",
+        "displayName": "Introduce el nombre visible del empleado.",
+        "employeeNumber": "Introduce un número de empleado.",
+        "employmentStartsOn": "Elige la fecha de inicio del empleo."
+      }
+    },
+    "detail": {
+      "account": {
+        "email": "Correo electrónico",
+        "heading": "Cuenta vinculada al empleado",
+        "invitation": "Invitación",
+        "invitationPending": "Pendiente durante un máximo de 24 horas",
+        "noInvitation": "Sin invitación activa",
+        "none": "No hay ninguna cuenta vinculada.",
+        "state": "Estado de la cuenta"
+      },
+      "employment": {
+        "description": "Una recontratación añade un periodo nuevo que no se solapa. La asistencia, los saldos, las aprobaciones y la atribución de auditoría anteriores siguen vinculados a este empleado.",
+        "heading": "Historial de empleo"
+      },
+      "feedback": {
+        "errorTitle": "Error al actualizar el empleado",
+        "invitationReissued": "Se ha enviado una invitación nueva y se ha invalidado la anterior.",
+        "successTitle": "Registro del empleado actualizado",
+        "updated": "Se ha actualizado el registro del ciclo de vida del empleado."
+      },
+      "lifecycle": {
+        "activate": "Activar empleado y cuenta",
+        "deactivate": "Desactivar empleado y cuenta",
+        "endsOn": "El empleo termina el",
+        "heading": "Acciones del ciclo de vida",
+        "reinvite": "Reenviar invitación de 24 horas",
+        "startsOn": "El empleo comienza el"
+      },
+      "loading": {
+        "description": "Se están recuperando los detalles de administración del empleado.",
+        "heading": "Cargando historial del ciclo de vida…",
+        "pageDescription": "Cargando detalles de administración del empleado.",
+        "title": "Cargando información"
+      },
+      "page": {
+        "active": "Empleado activo",
+        "back": "Volver a empleados",
+        "description": "Empleado {{employeeNumber}} · {{status}}",
+        "eyebrow": "Administración de personal",
+        "inactive": "Empleado inactivo"
+      },
+      "range": "Del {{from}} al {{to}}",
+      "reviewOnly": {
+        "description": "Aquí puedes revisar tu propio registro de empleado, pero no están disponibles los controles privilegiados de autoedición. Pide a otra persona administradora de RR. HH. que realice el cambio necesario.",
+        "title": "Solo revisión"
+      },
+      "roles": {
+        "description": "Cambiar los roles revoca las sesiones de la cuenta de destino. La autoridad del sistema no está disponible en esta pantalla.",
+        "heading": "Roles gestionados por RR. HH.",
+        "submit": "Guardar roles"
+      },
+      "validation": {
+        "effectiveDate": "Elige primero la fecha de vigencia del empleo."
+      }
+    },
+    "directory": {
+      "account": {
+        "active": "Activa",
+        "inactive": "Inactiva",
+        "invitationPending": "Invitación pendiente",
+        "none": "Sin cuenta vinculada"
+      },
+      "column": {
+        "account": "Cuenta",
+        "action": "Acción",
+        "employee": "Empleado",
+        "employment": "Empleo",
+        "number": "Número",
+        "roles": "Roles"
+      },
+      "employment": {
+        "noCurrent": "{{status}}, sin periodo laboral actual",
+        "since": "{{status}} desde el {{date}}"
+      },
+      "empty": {
+        "description": "Cambia el estado laboral o crea el primer registro de empleado.",
+        "searchDescription": "Borra la búsqueda o cambia el estado laboral para ampliar los resultados del directorio.",
+        "searchTitle": "Ningún empleado coincide con esta búsqueda",
+        "title": "No hay empleados en esta vista"
+      },
+      "loading": {
+        "description": "Se están recuperando los registros de empleados.",
+        "title": "Cargando información"
+      },
+      "openRecord": "Abrir registro",
+      "openRecordLabel": "Abrir registro de {{employee}}",
+      "page": {
+        "addEmployee": "Añadir empleado",
+        "description": "Busca un empleado, abre su registro o añade uno nuevo.",
+        "eyebrow": "Administración de personal",
+        "manageTeams": "Gestionar equipos"
+      },
+      "pagination": {
+        "label": "Páginas de resultados de empleados",
+        "summary": "{{count}} empleados · página {{current}} de {{total}}"
+      },
+      "results": {
+        "caption": "Resultados del directorio de empleados para la búsqueda y el estado laboral actuales",
+        "count": "{{count}} empleados en este resultado.",
+        "scrollHint": "Desplázate horizontalmente si no caben todas las columnas de comparación de empleados.",
+        "scrollLabel": "Resultados del directorio de empleados"
+      },
+      "search": {
+        "all": "Todos los empleados",
+        "clear": "Borrar búsqueda",
+        "description": "Busca por nombre visible, número de empleado o correo electrónico de la cuenta vinculada. El texto de búsqueda permanece en esta pestaña y nunca se añade a la URL.",
+        "label": "Nombre, número de empleado o correo de la cuenta",
+        "status": "Estado laboral",
+        "submit": "Buscar en el directorio",
+        "title": "Buscar en el directorio de empleados"
+      },
+      "validation": {
+        "search": "Introduce al menos 2 caracteres o borra el campo de búsqueda para navegar por estado."
+      }
+    },
+    "entitlement": {
+      "description": "Cada ajuste registra minutos enteros. Los minutos positivos añaden derecho y los negativos lo reducen.",
+      "empty": {
+        "description": "Configura un tipo de ausencia respaldado por derechos antes de gestionar los saldos de ausencias del empleado.",
+        "entries": "No hay entradas en el libro de derechos.",
+        "title": "No hay ningún tipo de ausencia respaldado por derechos disponible"
+      },
+      "entry": {
+        "effective": "vigente el {{date}}",
+        "reason": "Motivo: {{reason}}"
+      },
+      "entryType": {
+        "allocation": "Asignación",
+        "approvedDeduction": "Deducción aprobada",
+        "cancellationRestoration": "Restauración por cancelación",
+        "carryover": "Traspaso",
+        "expiry": "Caducidad",
+        "manualAdjustment": "Ajuste manual",
+        "pendingReservation": "Reserva pendiente",
+        "reservationRelease": "Liberación de reserva"
+      },
+      "error": {
+        "conflict": "La cuenta seleccionada no está disponible o el estado del empleado ha cambiado.",
+        "effectiveDate": "Elige hoy o una fecha de vigencia futura.",
+        "generic": "No se ha podido añadir el ajuste del derecho. Inténtalo de nuevo."
+      },
+      "feedback": {
+        "added": "Se ha añadido el ajuste del derecho. Las entradas anteriores permanecen sin cambios.",
+        "errorTitle": "Error al actualizar el derecho",
+        "successTitle": "Ajuste del derecho añadido"
+      },
+      "form": {
+        "account": "Cuenta de derecho",
+        "chooseAccount": "Elegir una cuenta",
+        "description": "Los ajustes pueden entrar en vigor hoy o más adelante. El empleado puede ver el motivo en su historial de derechos y también se incluye en el registro de auditoría.",
+        "effectiveOn": "Vigente el",
+        "heading": "Añadir ajuste del derecho",
+        "minutes": "Minutos del ajuste",
+        "minutesDescription": "Usa una cantidad positiva o negativa de minutos enteros; cero no es un ajuste.",
+        "pending": "Añadiendo ajuste…",
+        "reason": "Motivo",
+        "reasonDescription": "Obligatorio. No introduzcas datos de enfermedad ni detalles médicos.",
+        "submit": "Añadir ajuste del derecho",
+        "unavailable": "Configura un tipo de ausencia activo respaldado por derechos antes de añadir un ajuste."
+      },
+      "heading": "Derecho de ausencia",
+      "validation": {
+        "required": "Elige una cuenta y una fecha de vigencia, introduce minutos enteros distintos de cero y proporciona un motivo."
+      },
+      "value": {
+        "available": "Disponible",
+        "projected": "Previsto",
+        "reserved": "Reservado"
+      }
+    },
+    "error": {
+      "accessDenied": "Ya no tienes permiso para este cambio de empleado.",
+      "assignmentConflict": "La asignación ha cambiado o ya tiene ese valor. Actualiza la página y revisa su historial.",
+      "assignmentDateInvalid": "Elige una fecha de vigencia posterior que no sustituya una asignación que comienza ese día.",
+      "emailExists": "Ese correo electrónico ya está en uso.",
+      "employeeNumberExists": "Ese número de empleado ya está en uso.",
+      "employeeStateConflict": "El estado del empleado ha cambiado. Actualiza la página y revisa el registro actual.",
+      "employmentOverlap": "El nuevo periodo de empleo se solapa con el historial existente.",
+      "freshSession": "Cierra sesión y vuelve a iniciarla antes de realizar este cambio privilegiado.",
+      "generic": "No se ha podido completar el cambio del empleado. Inténtalo de nuevo.",
+      "managerCycle": "Ese cambio de responsable directo crearía un ciclo jerárquico.",
+      "managerNotEligible": "Elige un empleado activo con una cuenta actual y rol de responsable.",
+      "teamNameExists": "Ya hay un equipo con ese nombre.",
+      "teamStateConflict": "El equipo ha cambiado o aún tiene asignaciones actuales o programadas."
+    },
+    "policy": {
+      "current": {
+        "covered": "El empleo actual y programado está cubierto.",
+        "gapsTitle": "La cobertura de la política requiere atención",
+        "heading": "Política actual",
+        "none": "No hay ninguna política de tiempo asignada actualmente."
+      },
+      "description": "El estado actual se resuelve para el {{date}}. Las versiones anteriores siguen disponibles y los cambios pueden comenzar hoy o más adelante.",
+      "error": {
+        "effectiveDate": "Elige hoy o una fecha futura que aún no sea un límite de asignación.",
+        "employeeState": "Elige una fecha dentro del periodo de empleo actual o programado.",
+        "generic": "No se ha podido actualizar la asignación de la política de tiempo. Inténtalo de nuevo.",
+        "notAssigned": "Ese cambio dejaría fechas de empleo actuales o futuras sin una política de tiempo.",
+        "stateConflict": "Esa política ya está vigente o el historial de asignaciones ha cambiado.",
+        "versionConflict": "La política o la asignación seleccionada ha cambiado. Actualiza la página y revisa el estado actual."
+      },
+      "feedback": {
+        "errorTitle": "Error al actualizar la política de tiempo",
+        "successTitle": "Política de tiempo actualizada",
+        "updated": "Se ha actualizado la asignación de la política de tiempo. Las asignaciones anteriores y los registros aprobados permanecen sin cambios."
+      },
+      "form": {
+        "chooseVersion": "Elegir una versión de la política",
+        "description": "Revisa el umbral de aviso y el límite de vigencia seleccionados antes de guardar. Las fechas registradas y bloqueadas anteriores al límite conservan la referencia de política original.",
+        "heading": "Previsualizar y cambiar la política de tiempo",
+        "pending": "Guardando política…",
+        "submit": "Guardar política de tiempo",
+        "unavailable": "Crea una versión de la política de tiempo en Ajustes de tiempo antes de asignarla aquí.",
+        "version": "Versión de la política de tiempo"
+      },
+      "heading": "Política de tiempo",
+      "history": {
+        "heading": "Historial de políticas",
+        "none": "No hay historial de asignaciones de políticas."
+      },
+      "option": "{{name}} · versión {{version}} ({{status}})",
+      "preview": {
+        "description": "Desde el {{date}}, los avisos usan un umbral de tiempo flexible de {{threshold}}. Las pausas siguen siendo manuales con avisos y el tiempo no se redondea. Las fechas anteriores permanecen sin cambios.",
+        "empty": "Elige una versión y una fecha de vigencia para previsualizar el cambio.",
+        "heading": "Vista previa del impacto"
+      },
+      "range": "Del {{from}} al {{to}}",
+      "summary": "Del {{from}} al {{to}} · umbral de aviso de {{threshold}} · sin redondeo",
+      "validation": {
+        "effectiveFrom": "Elige la fecha en la que comienza esta política.",
+        "version": "Elige una versión de la política de tiempo."
+      },
+      "versionLabel": "{{name}} · versión {{version}}"
+    },
+    "schedule": {
+      "current": {
+        "covered": "El empleo actual y programado está cubierto.",
+        "detail": "{{weeklyTotal}} por semana, vigente desde el {{effectiveFrom}}",
+        "gapsTitle": "La cobertura del horario requiere atención",
+        "heading": "Horario actual",
+        "none": "No hay ningún horario semanal asignado actualmente."
+      },
+      "description": "El estado actual se resuelve para el {{date}}. Los cambios pueden comenzar hoy o más adelante, conservan las filas anteriores y no pueden dejar fechas de empleo actuales o futuras sin horario.",
+      "error": {
+        "effectiveDate": "Elige hoy o una fecha futura que aún no sea un límite de asignación.",
+        "employeeState": "Elige una fecha dentro del periodo de empleo actual o programado.",
+        "generic": "No se ha podido actualizar la asignación del horario. Inténtalo de nuevo.",
+        "notAssigned": "Ese cambio dejaría fechas de empleo actuales o futuras sin horario.",
+        "stateConflict": "Ese horario ya está vigente o el historial de asignaciones ha cambiado.",
+        "versionConflict": "El horario o la asignación seleccionada ha cambiado. Actualiza la página y revisa el estado actual."
+      },
+      "feedback": {
+        "errorTitle": "Error al actualizar el horario",
+        "successTitle": "Horario actualizado",
+        "updated": "Se ha actualizado la asignación del horario. La asignación anterior y el historial de periodos aprobados permanecen sin cambios."
+      },
+      "form": {
+        "chooseVersion": "Elegir una versión del horario",
+        "description": "Un cambio futuro solo cierra el horario vigente en ese límite. Cualquier asignación posterior ya programada permanece en vigor.",
+        "heading": "Cambiar horario semanal",
+        "pending": "Guardando horario…",
+        "submit": "Guardar horario semanal",
+        "unavailable": "Crea una versión del horario semanal en Ajustes de tiempo antes de asignarla aquí.",
+        "version": "Versión del horario semanal"
+      },
+      "heading": "Horario semanal",
+      "history": {
+        "heading": "Historial de horarios",
+        "item": "Del {{from}} al {{to}} · {{weeklyTotal}} por semana",
+        "none": "No hay historial de asignaciones de horarios."
+      },
+      "option": "{{name}} · versión {{version}} ({{status}})",
+      "range": "Del {{from}} al {{to}}",
+      "validation": {
+        "effectiveFrom": "Elige la fecha en la que comienza este horario.",
+        "version": "Elige una versión del horario semanal."
+      },
+      "versionLabel": "{{name}} · versión {{version}}"
+    }
+  },
+  "holidaySettings": {
+    "empty": {
+      "description": "Añade arriba el primer festivo de fecha única después de revisar su impacto.",
+      "title": "No hay festivos configurados"
+    },
+    "error": {
+      "accessDenied": "No tienes permiso para gestionar festivos.",
+      "blocked": "La fecha ha quedado protegida o ya no es válida. Vuelve a previsualizar el impacto.",
+      "conflict": "Ya existe un festivo en esta fecha.",
+      "generic": "No se ha podido completar el cambio del festivo."
+    },
+    "feedback": {
+      "created": "Festivo creado. Las proyecciones existentes de esta fecha están ahora identificadas para volver a calcularse.",
+      "errorTitle": "Error al actualizar el festivo",
+      "successTitle": "Festivo creado"
+    },
+    "form": {
+      "createPending": "Creando festivo…",
+      "date": "Fecha del festivo",
+      "description": "Es obligatorio previsualizar después de cada cambio de nombre o fecha. Las fechas usan el calendario de la organización, sin conversión de hora ni zona horaria.",
+      "heading": "Añadir festivo",
+      "name": "Nombre del festivo",
+      "preview": "Previsualizar impacto",
+      "previewPending": "Comprobando impacto…",
+      "submit": "Confirmar y crear"
+    },
+    "list": {
+      "heading": "Festivos configurados"
+    },
+    "loading": {
+      "description": "Se están recuperando los festivos configurados.",
+      "title": "Cargando información"
+    },
+    "page": {
+      "description": "Añade festivos de fecha única para toda la organización después de revisar su impacto en el cálculo. Los meses enviados, aprobados y bloqueados permanecen protegidos.",
+      "eyebrow": "Administración de RR. HH."
+    },
+    "preview": {
+      "allowed": "Ningún periodo mensual enviado, aprobado o bloqueado impide este cambio.",
+      "blocked": "Este cambio no se puede guardar: la fecha está en el pasado, ya está configurada o pertenece a {{periods}} periodos mensuales protegidos.",
+      "heading": "Impacto en el cálculo",
+      "summary": "Afecta a {{employees}} empleados con horario y a {{projections}} proyecciones diarias existentes."
+    },
+    "validation": {
+      "required": "Introduce un nombre y una fecha para el festivo."
+    }
+  },
+  "team": {
+    "action": {
+      "activate": "Activar {{team}}",
+      "blocked": "Traslada todos los miembros actuales a otro equipo o finaliza sus asignaciones de equipo antes de desactivar este equipo. El historial de asignaciones existente permanece sin cambios.",
+      "deactivate": "Desactivar {{team}}"
+    },
+    "column": {
+      "action": "Acción",
+      "members": "Miembros actuales",
+      "status": "Estado",
+      "team": "Equipo"
+    },
+    "empty": {
+      "description": "Cambia el estado del equipo o crea uno para un nuevo grupo de orientación.",
+      "title": "No hay equipos en esta vista"
+    },
+    "error": {
+      "accessDenied": "Ya no tienes permiso para gestionar equipos.",
+      "generic": "No se ha podido completar el cambio del equipo. Inténtalo de nuevo.",
+      "nameExists": "Ya hay un equipo con ese nombre.",
+      "stateConflict": "El equipo ha cambiado o aún tiene asignaciones actuales o programadas. Actualiza la página y revisa el catálogo."
+    },
+    "feedback": {
+      "errorTitle": "Error al actualizar el equipo",
+      "successTitle": "Catálogo de equipos actualizado",
+      "updated": "Se ha actualizado el catálogo de equipos."
+    },
+    "filter": {
+      "all": "Todos los equipos",
+      "apply": "Aplicar filtro",
+      "description": "Muestra los equipos disponibles para nuevas asignaciones, los equipos históricos inactivos o el catálogo completo.",
+      "status": "Estado del equipo",
+      "title": "Filtrar catálogo de equipos"
+    },
+    "form": {
+      "description": "Crear un equipo no asigna empleados ni cambia el acceso de gestión. Asigna la pertenencia desde el registro de un empleado cuando el equipo ya exista.",
+      "heading": "Añadir un equipo de orientación",
+      "name": "Nombre del equipo",
+      "nameDescription": "Usa el nombre que empleados y responsables reconocen en el trabajo diario.",
+      "pending": "Actualizando…",
+      "submit": "Crear equipo"
+    },
+    "loading": {
+      "description": "Se están recuperando los registros de equipos.",
+      "title": "Cargando información"
+    },
+    "page": {
+      "create": "Crear equipo",
+      "description": "Crea y mantén equipos de orientación para organizar registros de empleados. El acceso de gestión sigue dependiendo de las asignaciones de responsable directo.",
+      "employeeDirectory": "Directorio de empleados",
+      "eyebrow": "Administración de personal"
+    },
+    "pagination": {
+      "label": "Páginas de resultados de equipos",
+      "summary": "{{count}} equipos · página {{current}} de {{total}}"
+    },
+    "results": {
+      "caption": "Equipos que coinciden con el estado seleccionado",
+      "count": "{{count}} equipos en este resultado.",
+      "members": "{{count}} miembros actuales",
+      "scrollHint": "Desplázate horizontalmente si no caben todas las columnas de comparación de equipos.",
+      "scrollLabel": "Resultados del catálogo de equipos"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "validation": {
+      "name": "Introduce un nombre de equipo."
+    }
+  },
+  "timeSettings": {
+    "common": {
+      "historical": "Versión histórica",
+      "latest": "Versión más reciente"
+    },
+    "loading": {
+      "title": "Cargando información"
+    },
+    "page": {
+      "description": "Crea versiones de horarios semanales y políticas de tiempo para futuras asignaciones de empleados.",
+      "eyebrow": "Administración de RR. HH."
+    },
+    "policy": {
+      "description": "La política del MVP está acotada deliberadamente: minutos exactos, pausas manuales con avisos y sin redondeo oculto.",
+      "empty": {
+        "description": "Crea arriba la primera política de tiempo acotada.",
+        "title": "No se han creado versiones de políticas de tiempo"
+      },
+      "error": {
+        "conflict": "Las versiones de la política de tiempo han cambiado. Actualiza la página y revísalas antes de intentarlo de nuevo.",
+        "generic": "No se ha podido crear la versión de la política de tiempo. Inténtalo de nuevo.",
+        "noChange": "La versión más reciente con este nombre ya tiene esas reglas."
+      },
+      "feedback": {
+        "created": "Se ha creado la versión de la política de tiempo. Las asignaciones de empleados permanecen sin cambios.",
+        "errorTitle": "Error al actualizar la política de tiempo",
+        "successTitle": "Política de tiempo creada"
+      },
+      "heading": "Versiones de políticas de tiempo",
+      "name": "Nombre de la política de tiempo",
+      "pending": "Creando política…",
+      "preview": "Vista previa: avisar cuando la diferencia absoluta de tiempo flexible alcance {{duration}}; mantener las pausas manuales y la aritmética exacta de minutos.",
+      "submit": "Crear versión de política de tiempo",
+      "summary": "Pausas manuales con avisos · sin redondeo",
+      "threshold": "Umbral de aviso de tiempo flexible en minutos",
+      "thresholdDescription": "Solo es una señal de aviso. Nunca limita, redondea ni descarta tiempo trabajado.",
+      "thresholdValue": "Umbral de aviso de {{duration}}",
+      "validation": {
+        "name": "Introduce un nombre para la política de tiempo.",
+        "threshold": "Introduce un umbral de aviso entre 0 y 1440 minutos."
+      },
+      "versionLabel": "{{name}} · versión {{version}}"
+    },
+    "schedule": {
+      "description": "Reutilizar el nombre de un horario crea su siguiente versión. Las versiones anteriores siguen disponibles y ningún empleado se ve afectado hasta que se asigne la versión. Introduce minutos enteros; cero indica deliberadamente un día no laborable.",
+      "empty": {
+        "description": "Crea arriba el primer horario semanal.",
+        "title": "No se han creado versiones de horarios"
+      },
+      "error": {
+        "conflict": "Las versiones del horario han cambiado. Actualiza la página y revísalas antes de intentarlo de nuevo.",
+        "generic": "No se ha podido crear la versión del horario. Inténtalo de nuevo.",
+        "noChange": "La versión más reciente con este nombre ya tiene esos minutos por día de la semana."
+      },
+      "feedback": {
+        "created": "Se ha creado la versión del horario semanal. Las asignaciones de empleados permanecen sin cambios hasta que lo asignes.",
+        "successTitle": "Versión del horario creada"
+      },
+      "heading": "Crear versión del horario",
+      "history": {
+        "description": "Las versiones anteriores siguen visibles para que las asignaciones históricas se puedan explicar.",
+        "heading": "Versiones del horario"
+      },
+      "loadingDescription": "Se están recuperando las versiones del horario.",
+      "name": "Nombre del horario",
+      "nameDescription": "Por ejemplo, Estándar 40 horas o Viernes reducido.",
+      "pending": "Creando versión…",
+      "perWeek": "{{duration}} por semana",
+      "submit": "Crear versión del horario",
+      "total": "Total semanal introducido: {{duration}}",
+      "validation": {
+        "name": "Introduce un nombre para el horario.",
+        "weekdayMinutes": "Introduce minutos programados enteros para {{day}}."
+      },
+      "versionLabel": "{{name}} · versión {{version}}",
+      "weekdayHeading": "Minutos programados por día de la semana",
+      "weekdayLabel": "Minutos programados para {{day}}"
+    },
+    "weekday": {
+      "friday": "Viernes",
+      "monday": "Lunes",
+      "saturday": "Sábado",
+      "sunday": "Domingo",
+      "thursday": "Jueves",
+      "tuesday": "Martes",
+      "wednesday": "Miércoles"
+    }
+  }
+}

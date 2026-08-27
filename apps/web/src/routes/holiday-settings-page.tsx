@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { HolidayImpactPreviewAdmin } from '@workledger/contracts';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, Panel, RouteState, TextField } from '@workledger/ui';
 
 import {
@@ -14,6 +15,7 @@ import { holidaySettingsAdminDetailQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
 
 export function HolidaySettingsPage() {
+  const t = useWorkLedgerMessage();
   const query = useQuery(holidaySettingsAdminDetailQuery());
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
@@ -39,7 +41,7 @@ export function HolidaySettingsPage() {
     event.preventDefault();
     setMessage(undefined);
     if (name.trim() === '' || holidayDate === '') {
-      showError('Enter a holiday name and date.');
+      showError(t('admin.holidaySettings.validation.required'));
       return;
     }
     try {
@@ -59,10 +61,10 @@ export function HolidaySettingsPage() {
       setPreview(undefined);
       setMessage({
         kind: 'success',
-        text: 'Holiday created. Existing projections on this date are now identified for recalculation.',
+        text: t('admin.holidaySettings.feedback.created'),
       });
     } catch (error) {
-      showError(errorMessage(error));
+      showError(errorMessage(error, t));
     }
   }
 
@@ -74,15 +76,19 @@ export function HolidaySettingsPage() {
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="HR administration"
-        title="Holiday calendars"
-        description="Add organization-wide date-only holidays after reviewing their calculation impact. Submitted, approved, and locked months remain protected."
+        eyebrow={t('admin.holidaySettings.page.eyebrow')}
+        title={t('shared.route.title.settingsHolidays')}
+        description={t('admin.holidaySettings.page.description')}
       />
       {message === undefined ? null : (
         <Alert
           {...(message.kind === 'error' ? { className: 'outline-none', tabIndex: -1 } : {})}
           ref={messageRef}
-          title={message.kind === 'error' ? 'Holiday update failed' : 'Holiday created'}
+          title={
+            message.kind === 'error'
+              ? t('admin.holidaySettings.feedback.errorTitle')
+              : t('admin.holidaySettings.feedback.successTitle')
+          }
           tone={message.kind === 'error' ? 'danger' : 'success'}
         >
           <p>{message.text}</p>
@@ -90,16 +96,20 @@ export function HolidaySettingsPage() {
       )}
       <form className="wl-panel grid gap-5" onSubmit={submit} noValidate>
         <div>
-          <h2 className="m-0 text-2xl font-bold">Add public holiday</h2>
+          <h2 className="m-0 text-2xl font-bold">{t('admin.holidaySettings.form.heading')}</h2>
           <p className="mb-0 text-sm text-[var(--wl-text-muted)]">
-            Preview is required after every name or date change. Dates use the organization
-            calendar, with no time or timezone conversion.
+            {t('admin.holidaySettings.form.description')}
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField id="holiday-name" label="Holiday name" value={name} onChange={changeName} />
+          <TextField
+            id="holiday-name"
+            label={t('admin.holidaySettings.form.name')}
+            value={name}
+            onChange={changeName}
+          />
           <label className="grid gap-2 text-sm font-semibold" htmlFor="holiday-date">
-            Holiday date
+            {t('admin.holidaySettings.form.date')}
             <input
               id="holiday-date"
               type="date"
@@ -124,26 +134,26 @@ export function HolidaySettingsPage() {
             }
           >
             {previewMutation.isPending
-              ? 'Checking impact…'
+              ? t('admin.holidaySettings.form.previewPending')
               : createMutation.isPending
-                ? 'Creating holiday…'
+                ? t('admin.holidaySettings.form.createPending')
                 : preview === undefined
-                  ? 'Preview impact'
-                  : 'Confirm and create'}
+                  ? t('admin.holidaySettings.form.preview')
+                  : t('admin.holidaySettings.form.submit')}
           </Button>
         </div>
       </form>
       <Panel className="grid gap-4" aria-labelledby="configured-holidays">
         <h2 id="configured-holidays" className="m-0 text-2xl font-bold">
-          Configured holidays
+          {t('admin.holidaySettings.list.heading')}
         </h2>
         {query.isPending ? (
-          <RouteState kind="loading" title="Loading information">
-            Configured holidays are being retrieved.
+          <RouteState kind="loading" title={t('admin.holidaySettings.loading.title')}>
+            {t('admin.holidaySettings.loading.description')}
           </RouteState>
         ) : query.data.holidays.length === 0 ? (
-          <RouteState kind="empty" title="No holidays have been configured">
-            Add the first date only holiday above after reviewing its impact.
+          <RouteState kind="empty" title={t('admin.holidaySettings.empty.title')}>
+            {t('admin.holidaySettings.empty.description')}
           </RouteState>
         ) : (
           <ul className="m-0 grid list-none gap-3 p-0">
@@ -163,32 +173,35 @@ export function HolidaySettingsPage() {
 }
 
 function ImpactPreview({ preview }: Readonly<{ preview: HolidayImpactPreviewAdmin }>) {
+  const t = useWorkLedgerMessage();
   return (
     <Panel density="compact" aria-labelledby="holiday-impact" role="status">
       <h3 id="holiday-impact" className="mt-0">
-        Calculation impact
+        {t('admin.holidaySettings.preview.heading')}
       </h3>
       <p>
-        {preview.affectedEmployeeCount} scheduled employees and {preview.affectedProjectionCount}{' '}
-        existing daily projections are affected.
+        {t('admin.holidaySettings.preview.summary', {
+          employees: preview.affectedEmployeeCount,
+          projections: preview.affectedProjectionCount,
+        })}
       </p>
       {preview.mutationAllowed ? (
-        <p className="mb-0">No submitted, approved, or locked monthly period blocks this change.</p>
+        <p className="mb-0">{t('admin.holidaySettings.preview.allowed')}</p>
       ) : (
         <p id="holiday-impact-blocked" className="wl-text-danger mb-0">
-          This change cannot be saved: the date is in the past, is already configured, or belongs to{' '}
-          {preview.blockedPeriodCount} protected monthly periods.
+          {t('admin.holidaySettings.preview.blocked', {
+            periods: preview.blockedPeriodCount,
+          })}
         </p>
       )}
     </Panel>
   );
 }
 
-function errorMessage(error: unknown): string {
-  if (!(error instanceof ApiClientError)) return 'The holiday change could not be completed.';
-  if (error.code === 'HOLIDAY_CHANGE_BLOCKED')
-    return 'The date became protected or is no longer eligible. Preview the impact again.';
-  if (error.code === 'HOLIDAY_DATE_CONFLICT') return 'A holiday already exists on this date.';
-  if (error.code === 'ACCESS_DENIED') return 'You do not have permission to manage holidays.';
-  return 'The holiday change could not be completed.';
+function errorMessage(error: unknown, t: ReturnType<typeof useWorkLedgerMessage>): string {
+  if (!(error instanceof ApiClientError)) return t('admin.holidaySettings.error.generic');
+  if (error.code === 'HOLIDAY_CHANGE_BLOCKED') return t('admin.holidaySettings.error.blocked');
+  if (error.code === 'HOLIDAY_DATE_CONFLICT') return t('admin.holidaySettings.error.conflict');
+  if (error.code === 'ACCESS_DENIED') return t('admin.holidaySettings.error.accessDenied');
+  return t('admin.holidaySettings.error.generic');
 }

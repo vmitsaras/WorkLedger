@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { EmployeeScheduleAdminDetail } from '@workledger/contracts';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, Panel } from '@workledger/ui';
 
 import { ApiClientError, replaceScheduleAssignmentForAdministration } from '../app/api-client.js';
@@ -11,6 +12,7 @@ export function EmployeeScheduleAdministration({
   employeeId,
   schedule,
 }: Readonly<{ employeeId: string; schedule: EmployeeScheduleAdminDetail }>) {
+  const t = useWorkLedgerMessage();
   const queryClient = useQueryClient();
   const [scheduleId, setScheduleId] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState('');
@@ -24,12 +26,12 @@ export function EmployeeScheduleAdministration({
     event.preventDefault();
     setMessage(undefined);
     if (scheduleId === '') {
-      setMessage({ kind: 'error', text: 'Choose a weekly schedule version.' });
+      setMessage({ kind: 'error', text: t('admin.employee.schedule.validation.version') });
       document.querySelector<HTMLElement>('#employee-schedule-choice')?.focus();
       return;
     }
     if (effectiveFrom === '') {
-      setMessage({ kind: 'error', text: 'Choose the date this schedule begins.' });
+      setMessage({ kind: 'error', text: t('admin.employee.schedule.validation.effectiveFrom') });
       document.querySelector<HTMLElement>('#employee-schedule-date')?.focus();
       return;
     }
@@ -40,10 +42,10 @@ export function EmployeeScheduleAdministration({
       setEffectiveFrom('');
       setMessage({
         kind: 'success',
-        text: 'The schedule assignment was updated. Earlier assignment and approved-period history is unchanged.',
+        text: t('admin.employee.schedule.feedback.updated'),
       });
     } catch (error) {
-      setMessage({ kind: 'error', text: scheduleAssignmentError(error) });
+      setMessage({ kind: 'error', text: scheduleAssignmentError(error, t) });
     }
   }
 
@@ -51,18 +53,22 @@ export function EmployeeScheduleAdministration({
     <section className="grid gap-6" aria-labelledby="employee-schedule-heading">
       <div>
         <h2 id="employee-schedule-heading" className="m-0 text-2xl font-bold">
-          Weekly schedule
+          {t('admin.employee.schedule.heading')}
         </h2>
         <p className="m-0 mt-2 text-sm leading-6 text-[var(--wl-text-muted)]">
-          Current state is resolved for {formatLocalDate(schedule.asOfLocalDate)}. Changes may begin
-          today or later, preserve earlier rows, and cannot leave current or future employed dates
-          without a schedule.
+          {t('admin.employee.schedule.description', {
+            date: formatLocalDate(schedule.asOfLocalDate),
+          })}
         </p>
       </div>
 
       {message === undefined ? null : (
         <Alert
-          title={message.kind === 'error' ? 'Schedule update failed' : 'Schedule updated'}
+          title={
+            message.kind === 'error'
+              ? t('admin.employee.schedule.feedback.errorTitle')
+              : t('admin.employee.schedule.feedback.successTitle')
+          }
           tone={message.kind === 'error' ? 'danger' : 'success'}
         >
           <p>{message.text}</p>
@@ -72,38 +78,49 @@ export function EmployeeScheduleAdministration({
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel className="grid content-start gap-4" aria-labelledby="schedule-current-heading">
           <h3 id="schedule-current-heading" className="m-0 text-xl font-bold">
-            Current schedule
+            {t('admin.employee.schedule.current.heading')}
           </h3>
           {schedule.currentAssignment === null ? (
-            <p className="m-0 font-semibold">No weekly schedule is currently assigned.</p>
+            <p className="m-0 font-semibold">{t('admin.employee.schedule.current.none')}</p>
           ) : (
             <div className="grid gap-2">
               <p className="m-0 text-lg font-bold">
-                {schedule.currentAssignment.schedule.name} · version{' '}
-                {schedule.currentAssignment.schedule.version}
+                {t('admin.employee.schedule.versionLabel', {
+                  name: schedule.currentAssignment.schedule.name,
+                  version: schedule.currentAssignment.schedule.version,
+                })}
               </p>
               <p className="m-0">
-                {formatDuration(schedule.currentAssignment.schedule.weeklyTotalMinutes)} per week,
-                effective {formatLocalDate(schedule.currentAssignment.startsOn)}
+                {t('admin.employee.schedule.current.detail', {
+                  effectiveFrom: formatLocalDate(schedule.currentAssignment.startsOn),
+                  weeklyTotal: formatDuration(
+                    schedule.currentAssignment.schedule.weeklyTotalMinutes,
+                  ),
+                })}
               </p>
             </div>
           )}
           {schedule.coverageGaps.length === 0 ? (
             <p className="m-0 text-sm font-semibold">
-              Current and scheduled employment is covered.
+              {t('admin.employee.schedule.current.covered')}
             </p>
           ) : (
             <Alert
               announce={false}
               headingLevel="h3"
-              title="Schedule coverage needs attention"
+              title={t('admin.employee.schedule.current.gapsTitle')}
               tone="danger"
             >
               <ul className="m-0 grid gap-1 pl-5 text-sm">
                 {schedule.coverageGaps.map((gap) => (
                   <li key={`${gap.startsOn}:${gap.endsOn ?? 'ongoing'}`}>
-                    {formatLocalDate(gap.startsOn)} to{' '}
-                    {gap.endsOn === null ? 'ongoing' : formatLocalDate(gap.endsOn)}
+                    {t('admin.employee.schedule.range', {
+                      from: formatLocalDate(gap.startsOn),
+                      to:
+                        gap.endsOn === null
+                          ? t('admin.employee.common.ongoing')
+                          : formatLocalDate(gap.endsOn),
+                    })}
                   </li>
                 ))}
               </ul>
@@ -113,21 +130,29 @@ export function EmployeeScheduleAdministration({
 
         <Panel className="grid content-start gap-4" aria-labelledby="schedule-history-heading">
           <h3 id="schedule-history-heading" className="m-0 text-xl font-bold">
-            Schedule history
+            {t('admin.employee.schedule.history.heading')}
           </h3>
           {schedule.history.length === 0 ? (
-            <p className="m-0">No schedule assignment history.</p>
+            <p className="m-0">{t('admin.employee.schedule.history.none')}</p>
           ) : (
             <ol className="m-0 grid gap-3 pl-5">
               {schedule.history.map((assignment) => (
                 <li key={assignment.id}>
                   <strong>
-                    {assignment.schedule.name} · version {assignment.schedule.version}
+                    {t('admin.employee.schedule.versionLabel', {
+                      name: assignment.schedule.name,
+                      version: assignment.schedule.version,
+                    })}
                   </strong>
                   <br />
-                  {formatLocalDate(assignment.startsOn)} to{' '}
-                  {assignment.endsOn === null ? 'ongoing' : formatLocalDate(assignment.endsOn)} ·{' '}
-                  {formatDuration(assignment.schedule.weeklyTotalMinutes)} per week
+                  {t('admin.employee.schedule.history.item', {
+                    from: formatLocalDate(assignment.startsOn),
+                    to:
+                      assignment.endsOn === null
+                        ? t('admin.employee.common.ongoing')
+                        : formatLocalDate(assignment.endsOn),
+                    weeklyTotal: formatDuration(assignment.schedule.weeklyTotalMinutes),
+                  })}
                 </li>
               ))}
             </ol>
@@ -138,31 +163,35 @@ export function EmployeeScheduleAdministration({
       {!schedule.privilegedActionsAllowed ? null : (
         <form className="wl-panel grid max-w-3xl gap-4" onSubmit={submit}>
           <div>
-            <h3 className="m-0 text-xl font-bold">Change weekly schedule</h3>
+            <h3 className="m-0 text-xl font-bold">{t('admin.employee.schedule.form.heading')}</h3>
             <p className="m-0 mt-2 text-sm leading-6 text-[var(--wl-text-muted)]">
-              A future change closes only the schedule effective at that boundary. Any already
-              scheduled later assignment remains in place.
+              {t('admin.employee.schedule.form.description')}
             </p>
           </div>
           <label className="grid gap-2 text-sm font-semibold" htmlFor="employee-schedule-choice">
-            Weekly schedule version
+            {t('admin.employee.schedule.form.version')}
             <select
               id="employee-schedule-choice"
               className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3"
               value={scheduleId}
               onChange={(event) => setScheduleId(event.target.value)}
             >
-              <option value="">Choose a schedule version</option>
+              <option value="">{t('admin.employee.schedule.form.chooseVersion')}</option>
               {schedule.assignableSchedules.map((option) => (
                 <option key={option.id} value={option.id}>
-                  {option.name} · version {option.version}
-                  {option.latestVersion ? ' (latest)' : ' (historical)'}
+                  {t('admin.employee.schedule.option', {
+                    name: option.name,
+                    status: option.latestVersion
+                      ? t('admin.employee.common.latest')
+                      : t('admin.employee.common.historical'),
+                    version: option.version,
+                  })}
                 </option>
               ))}
             </select>
           </label>
           <label className="grid gap-2 text-sm font-semibold" htmlFor="employee-schedule-date">
-            Effective from
+            {t('admin.employee.common.effectiveFrom')}
             <input
               id="employee-schedule-date"
               type="date"
@@ -179,14 +208,16 @@ export function EmployeeScheduleAdministration({
               : {})}
             isDisabled={mutation.isPending || schedule.assignableSchedules.length === 0}
           >
-            {mutation.isPending ? 'Saving schedule…' : 'Save weekly schedule'}
+            {mutation.isPending
+              ? t('admin.employee.schedule.form.pending')
+              : t('admin.employee.schedule.form.submit')}
           </Button>
           {schedule.assignableSchedules.length === 0 ? (
             <p
               id="employee-schedule-unavailable-reason"
               className="m-0 text-sm text-[var(--wl-text-muted)]"
             >
-              Create a weekly schedule version in Time settings before assigning one here.
+              {t('admin.employee.schedule.form.unavailable')}
             </p>
           ) : null}
         </form>
@@ -195,23 +226,26 @@ export function EmployeeScheduleAdministration({
   );
 }
 
-function scheduleAssignmentError(error: unknown): string {
+function scheduleAssignmentError(
+  error: unknown,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
   if (error instanceof ApiClientError) {
     if (error.code === 'SCHEDULE_NOT_ASSIGNED') {
-      return 'That change would leave current or future employed dates without a schedule.';
+      return t('admin.employee.schedule.error.notAssigned');
     }
     if (error.code === 'ASSIGNMENT_EFFECTIVE_DATE_INVALID') {
-      return 'Choose today or a future date that is not already an assignment boundary.';
+      return t('admin.employee.schedule.error.effectiveDate');
     }
     if (error.code === 'ASSIGNMENT_STATE_CONFLICT') {
-      return 'That schedule is already effective, or the assignment history changed.';
+      return t('admin.employee.schedule.error.stateConflict');
     }
     if (error.code === 'SCHEDULE_VERSION_CONFLICT') {
-      return 'The selected schedule or assignment changed. Refresh and review the current state.';
+      return t('admin.employee.schedule.error.versionConflict');
     }
     if (error.code === 'EMPLOYEE_STATE_CONFLICT') {
-      return 'Choose a date inside the employee’s current or scheduled employment period.';
+      return t('admin.employee.schedule.error.employeeState');
     }
   }
-  return 'The schedule assignment could not be updated. Try again.';
+  return t('admin.employee.schedule.error.generic');
 }

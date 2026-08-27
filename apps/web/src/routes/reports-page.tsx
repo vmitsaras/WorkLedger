@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 
 import type { ReportCatalogItem } from '@workledger/contracts';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Button, buttonVariants, Panel, RouteState } from '@workledger/ui';
 
 import { reportCatalogQuery } from '../app/query.js';
@@ -9,37 +10,38 @@ import { reportPresentation } from '../app/presentation-codes.js';
 import { PageHeader } from '../components/page-header.js';
 
 export function ReportsPage() {
+  const t = useWorkLedgerMessage();
   const query = useQuery(reportCatalogQuery());
 
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Reports"
-        description="Review time, balance, leave, record-quality, and approval information within your current permission scope. Every result states the scope applied."
+        eyebrow={t('manager.report.page.eyebrow')}
+        title={t('shared.route.title.reports')}
+        description={t('manager.report.page.description')}
       />
       {query.isPending ? (
-        <RouteState kind="loading" title="Loading information">
-          The available report catalog is being retrieved.
+        <RouteState kind="loading" title={t('manager.report.page.loading.title')}>
+          {t('manager.report.page.loading.description')}
         </RouteState>
       ) : query.isError || query.data === undefined ? (
         <RouteState
           actions={
             <Button variant="secondary" onPress={() => void query.refetch()}>
-              Try again
+              {t('shared.action.tryAgain')}
             </Button>
           }
           kind="error"
-          title="Reports are unavailable right now"
+          title={t('manager.report.page.error.title')}
         />
       ) : (
         <section className="grid gap-4" aria-labelledby="available-reports-heading">
           <div>
             <h2 id="available-reports-heading" className="m-0 text-xl font-bold">
-              Available reports
+              {t('manager.report.page.available.heading')}
             </h2>
             <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-              The catalog only lists reports your current account may run.
+              {t('manager.report.page.available.description')}
             </p>
           </div>
           <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-2" role="list">
@@ -64,7 +66,8 @@ function ReportCard({
   report,
   to,
 }: Readonly<{ from: string; report: ReportCatalogItem; to: string }>) {
-  const presentation = reportPresentation(report.key);
+  const t = useWorkLedgerMessage();
+  const presentation = reportPresentation(report.key, t);
   const search = new URLSearchParams({
     direction: 'ASC',
     from,
@@ -85,7 +88,7 @@ function ReportCard({
         className={buttonVariants({ variant: 'secondary' })}
         to={`/reports/${report.key}?${search.toString()}`}
       >
-        Open {presentation.title.toLocaleLowerCase()}
+        {t('manager.report.page.open', { report: presentation.title.toLocaleLowerCase() })}
       </Link>
     </Panel>
   );

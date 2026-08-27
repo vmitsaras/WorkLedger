@@ -1,15 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
+import { type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Panel, RouteState, StatusBadge } from '@workledger/ui';
 
 import { systemDiagnosticsQuery } from '../app/query.js';
 import { PageHeader } from '../components/page-header.js';
 
-const DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
-  dateStyle: 'medium',
-  timeStyle: 'medium',
-});
-
 export function SystemOperationsPage() {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const diagnosticsQuery = useQuery(systemDiagnosticsQuery());
 
   if (diagnosticsQuery.isError) throw diagnosticsQuery.error;
@@ -19,14 +18,14 @@ export function SystemOperationsPage() {
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="System administration"
-        title="Operations"
-        description="Check service health, affected dependencies, and the next operator action."
+        eyebrow={t('system.operations.page.eyebrow')}
+        title={t('shared.route.title.systemOperations')}
+        description={t('system.operations.page.description')}
       />
 
       {diagnostics === undefined ? (
-        <RouteState kind="loading" title="Loading information">
-          System diagnostics are being retrieved.
+        <RouteState kind="loading" title={t('system.operations.loading.title')}>
+          {t('system.operations.loading.description')}
         </RouteState>
       ) : (
         <div className="grid gap-6">
@@ -35,40 +34,50 @@ export function SystemOperationsPage() {
               announce={false}
               title={
                 diagnostics.health === 'degraded'
-                  ? 'Service is degraded'
-                  : 'Service needs immediate attention'
+                  ? t('system.operations.alert.degradedTitle')
+                  : t('system.operations.alert.criticalTitle')
               }
               tone={diagnostics.health === 'degraded' ? 'warning' : 'danger'}
             >
-              <p>
-                Review the dependency evidence below, then use the documented host operator recovery
-                procedures. This page does not expose restart or restore controls.
-              </p>
+              <p>{t('system.operations.alert.description')}</p>
             </Alert>
           )}
           <Panel>
-            <h2 className="mb-4 text-lg font-semibold">Service status</h2>
+            <h2 className="mb-4 text-lg font-semibold">{t('system.operations.status.heading')}</h2>
             <dl className="grid gap-4 sm:grid-cols-2">
               <div>
-                <dt className="text-sm text-[var(--wl-text-muted)]">Service</dt>
+                <dt className="text-sm text-[var(--wl-text-muted)]">
+                  {t('system.operations.status.service')}
+                </dt>
                 <dd className="m-0 font-medium">{diagnostics.service}</dd>
               </div>
               <div>
-                <dt className="text-sm text-[var(--wl-text-muted)]">Version</dt>
+                <dt className="text-sm text-[var(--wl-text-muted)]">
+                  {t('system.operations.status.version')}
+                </dt>
                 <dd className="m-0 font-medium">{diagnostics.version}</dd>
               </div>
               <div>
-                <dt className="text-sm text-[var(--wl-text-muted)]">Environment</dt>
+                <dt className="text-sm text-[var(--wl-text-muted)]">
+                  {t('system.operations.status.environment')}
+                </dt>
                 <dd className="m-0 font-medium">{diagnostics.environment}</dd>
               </div>
               <div>
-                <dt className="text-sm text-[var(--wl-text-muted)]">Timestamp</dt>
+                <dt className="text-sm text-[var(--wl-text-muted)]">
+                  {t('system.operations.status.timestamp')}
+                </dt>
                 <dd className="m-0 font-medium">
-                  {DATE_TIME_FORMATTER.format(new Date(diagnostics.timestamp))}
+                  {new Intl.DateTimeFormat(runtime.locale, {
+                    dateStyle: 'medium',
+                    timeStyle: 'medium',
+                  }).format(new Date(diagnostics.timestamp))}
                 </dd>
               </div>
               <div>
-                <dt className="text-sm text-[var(--wl-text-muted)]">Overall health</dt>
+                <dt className="text-sm text-[var(--wl-text-muted)]">
+                  {t('system.operations.status.overallHealth')}
+                </dt>
                 <dd className="m-0">
                   <OperationsStatusBadge status={diagnostics.health} />
                 </dd>
@@ -77,30 +86,40 @@ export function SystemOperationsPage() {
           </Panel>
 
           <Panel>
-            <h2 className="mb-4 text-lg font-semibold">Dependencies</h2>
+            <h2 className="mb-4 text-lg font-semibold">
+              {t('system.operations.dependencies.heading')}
+            </h2>
             <div className="grid gap-6">
               <section aria-labelledby="database-diagnostics-heading">
                 <h3 id="database-diagnostics-heading" className="mb-3 font-medium">
-                  Database
+                  {t('system.operations.dependencies.database.heading')}
                 </h3>
                 <dl className="grid gap-3 sm:grid-cols-3">
                   <div>
-                    <dt className="text-sm text-[var(--wl-text-muted)]">Status</dt>
+                    <dt className="text-sm text-[var(--wl-text-muted)]">
+                      {t('system.operations.dependencies.status')}
+                    </dt>
                     <dd className="m-0">
                       <OperationsStatusBadge status={diagnostics.dependencies.database.status} />
                     </dd>
                   </div>
                   {diagnostics.dependencies.database.latencyMs !== undefined && (
                     <div>
-                      <dt className="text-sm text-[var(--wl-text-muted)]">Latency</dt>
+                      <dt className="text-sm text-[var(--wl-text-muted)]">
+                        {t('system.operations.dependencies.latency')}
+                      </dt>
                       <dd className="m-0 font-medium">
-                        {diagnostics.dependencies.database.latencyMs} ms
+                        {t('system.operations.dependencies.latencyValue', {
+                          milliseconds: diagnostics.dependencies.database.latencyMs,
+                        })}
                       </dd>
                     </div>
                   )}
                   {diagnostics.dependencies.database.error !== undefined && (
                     <div className="sm:col-span-3">
-                      <dt className="text-sm text-[var(--wl-text-muted)]">Error</dt>
+                      <dt className="text-sm text-[var(--wl-text-muted)]">
+                        {t('system.operations.dependencies.error')}
+                      </dt>
                       <dd className="wl-technical-error m-0 mt-1">
                         {diagnostics.dependencies.database.error}
                       </dd>
@@ -111,11 +130,13 @@ export function SystemOperationsPage() {
 
               <section aria-labelledby="authentication-diagnostics-heading">
                 <h3 id="authentication-diagnostics-heading" className="mb-3 font-medium">
-                  Authentication
+                  {t('system.operations.dependencies.authentication.heading')}
                 </h3>
                 <dl className="grid gap-3 sm:grid-cols-3">
                   <div>
-                    <dt className="text-sm text-[var(--wl-text-muted)]">Status</dt>
+                    <dt className="text-sm text-[var(--wl-text-muted)]">
+                      {t('system.operations.dependencies.status')}
+                    </dt>
                     <dd className="m-0">
                       <OperationsStatusBadge
                         status={diagnostics.dependencies.authentication.status}
@@ -124,7 +145,9 @@ export function SystemOperationsPage() {
                   </div>
                   {diagnostics.dependencies.authentication.error !== undefined && (
                     <div className="sm:col-span-3">
-                      <dt className="text-sm text-[var(--wl-text-muted)]">Error</dt>
+                      <dt className="text-sm text-[var(--wl-text-muted)]">
+                        {t('system.operations.dependencies.error')}
+                      </dt>
                       <dd className="wl-technical-error m-0 mt-1">
                         {diagnostics.dependencies.authentication.error}
                       </dd>
@@ -136,13 +159,14 @@ export function SystemOperationsPage() {
           </Panel>
 
           <Panel>
-            <h2 className="mb-4 text-lg font-semibold">Deployment procedures</h2>
+            <h2 className="mb-4 text-lg font-semibold">
+              {t('system.operations.deployment.heading')}
+            </h2>
             <p className="mb-4 text-[var(--wl-text-muted)]">
-              Backup, restore, migration, and upgrade workflows are host-operator procedures and are
-              not exposed in this interface.
+              {t('system.operations.deployment.description')}
             </p>
             <p className="text-sm text-[var(--wl-text-muted)]">
-              See the deployment and operations documentation for validated procedures.
+              {t('system.operations.deployment.documentation')}
             </p>
           </Panel>
         </div>
@@ -154,15 +178,16 @@ export function SystemOperationsPage() {
 type OperationsStatus = 'healthy' | 'degraded' | 'critical' | 'unavailable';
 
 const STATUS_PRESENTATION: Readonly<
-  Record<OperationsStatus, Readonly<{ label: string; tone: 'danger' | 'success' | 'warning' }>>
+  Record<OperationsStatus, Readonly<{ label: MessageKey; tone: 'danger' | 'success' | 'warning' }>>
 > = {
-  healthy: { label: 'Healthy', tone: 'success' },
-  degraded: { label: 'Degraded', tone: 'warning' },
-  critical: { label: 'Critical', tone: 'danger' },
-  unavailable: { label: 'Unavailable', tone: 'danger' },
+  healthy: { label: 'system.operations.health.healthy', tone: 'success' },
+  degraded: { label: 'system.operations.health.degraded', tone: 'warning' },
+  critical: { label: 'system.operations.health.critical', tone: 'danger' },
+  unavailable: { label: 'system.operations.health.unavailable', tone: 'danger' },
 };
 
 function OperationsStatusBadge({ status }: Readonly<{ status: OperationsStatus }>) {
+  const t = useWorkLedgerMessage();
   const presentation = STATUS_PRESENTATION[status];
-  return <StatusBadge tone={presentation.tone}>{presentation.label}</StatusBadge>;
+  return <StatusBadge tone={presentation.tone}>{t(presentation.label)}</StatusBadge>;
 }

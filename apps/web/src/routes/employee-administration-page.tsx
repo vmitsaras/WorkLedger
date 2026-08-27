@@ -15,7 +15,8 @@ import {
   type EmployeeAdminSearchRequest,
   type SupportedLocale,
 } from '@workledger/contracts';
-import { translateStaticMessage } from '@workledger/i18n';
+import { formatDateOnly, translateStaticMessage, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import {
   Alert,
   Button,
@@ -48,7 +49,6 @@ import {
   employeePolicyAdminDetailQuery,
   employeeEntitlementAdminDetailQuery,
 } from '../app/query.js';
-import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useWideAdministrationLayout } from '../app/use-wide-administration-layout.js';
 import { useOptionalWebLocale } from '../app/locale.js';
 import { EmployeeScheduleAdministration } from '../components/employee-schedule-administration.js';
@@ -58,14 +58,14 @@ import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 import { LanguageSelect } from '../components/language-select.js';
 
-const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
-const ROLE_LABELS = {
-  EMPLOYEE: 'Employee',
-  HR_ADMINISTRATOR: 'HR administrator',
-  MANAGER: 'Manager',
-} as const;
+const ROLE_MESSAGE_KEYS = Object.freeze({
+  EMPLOYEE: 'shared.profile.role.employee',
+  HR_ADMINISTRATOR: 'shared.profile.role.hrAdministrator',
+  MANAGER: 'shared.profile.role.manager',
+} as const satisfies Readonly<Record<'EMPLOYEE' | 'HR_ADMINISTRATOR' | 'MANAGER', MessageKey>>);
 
 export function EmployeeAdministrationPage() {
+  const t = useWorkLedgerMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = readEmployeeQuery(searchParams);
   const [status, setStatus] = useState(query.status);
@@ -95,7 +95,7 @@ export function EmployeeAdministrationPage() {
     event.preventDefault();
     const search = searchInput.trim();
     if (search.length === 1) {
-      setSearchError('Enter at least 2 characters, or clear the search field to browse by status.');
+      setSearchError(t('admin.employee.directory.validation.search'));
       document.querySelector<HTMLElement>('#employee-directory-search')?.focus();
       return;
     }
@@ -115,29 +115,29 @@ export function EmployeeAdministrationPage() {
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="People administration"
-        title={canonicalRouteLabel('/employees')}
-        description="Find an employee, open their record, or add a new employee."
+        eyebrow={t('admin.employee.directory.page.eyebrow')}
+        title={t('shared.route.title.employees')}
+        description={t('admin.employee.directory.page.description')}
       >
         <div className="flex flex-wrap gap-3">
           <Link className={linkVariants({ prominence: 'default' })} to="/employees/new">
-            Add employee
+            {t('admin.employee.directory.page.addEmployee')}
           </Link>
           <Link className={linkVariants({ prominence: 'quiet' })} to="/teams">
-            Manage teams
+            {t('admin.employee.directory.page.manageTeams')}
           </Link>
         </div>
       </PageHeader>
 
       <FilterBar
-        description="Search by display name, employee number, or linked account email. Search text stays in this tab and is never added to the URL."
-        title="Search employee directory"
+        description={t('admin.employee.directory.search.description')}
+        title={t('admin.employee.directory.search.title')}
         onSubmit={submitDirectorySearch}
       >
         <TextField
           id="employee-directory-search"
           className="min-w-64 flex-[2_1_20rem]"
-          label="Name, employee number, or account email"
+          label={t('admin.employee.directory.search.label')}
           maxLength={320}
           name="employee-search"
           value={searchInput}
@@ -150,7 +150,7 @@ export function EmployeeAdministrationPage() {
           type="search"
         />
         <label className="grid gap-2 text-sm font-semibold" htmlFor="employee-status-filter">
-          Employment status
+          {t('admin.employee.directory.search.status')}
           <select
             id="employee-status-filter"
             className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3"
@@ -158,41 +158,44 @@ export function EmployeeAdministrationPage() {
             value={status}
             onChange={(event) => setStatus(event.target.value as EmployeeAdminQuery['status'])}
           >
-            <option value="ALL">All employees</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
+            <option value="ALL">{t('admin.employee.directory.search.all')}</option>
+            <option value="ACTIVE">{t('shared.profile.status.active')}</option>
+            <option value="INACTIVE">{t('shared.profile.status.inactive')}</option>
           </select>
         </label>
         <Button type="submit" variant="secondary">
-          Search directory
+          {t('admin.employee.directory.search.submit')}
         </Button>
         {activeSearch === null ? null : (
           <Button type="button" variant="quiet" onPress={clearDirectorySearch}>
-            Clear search
+            {t('admin.employee.directory.search.clear')}
           </Button>
         )}
       </FilterBar>
 
       {employeesQuery.isPending ? (
-        <RouteState kind="loading" title="Loading information">
-          Employee records are being retrieved.
+        <RouteState kind="loading" title={t('admin.employee.directory.loading.title')}>
+          {t('admin.employee.directory.loading.description')}
         </RouteState>
       ) : employeesQuery.data.items.length === 0 ? (
         <RouteState
           kind="empty"
           title={
-            activeSearch === null ? 'No employees in this view' : 'No employees match this search'
+            activeSearch === null
+              ? t('admin.employee.directory.empty.title')
+              : t('admin.employee.directory.empty.searchTitle')
           }
         >
           {activeSearch === null
-            ? 'Change the employment status or create the first employee record.'
-            : 'Clear the search or change the employment status to broaden the directory results.'}
+            ? t('admin.employee.directory.empty.description')
+            : t('admin.employee.directory.empty.searchDescription')}
         </RouteState>
       ) : (
         <div className="grid gap-4">
           <p className="m-0 text-sm text-[var(--wl-text-muted)]" role="status" aria-live="polite">
-            {employeesQuery.data.pagination.total}{' '}
-            {employeesQuery.data.pagination.total === 1 ? 'employee' : 'employees'} in this result.
+            {t('admin.employee.directory.results.count', {
+              count: employeesQuery.data.pagination.total,
+            })}
           </p>
           {wideLayout ? (
             <EmployeeDirectoryTable employees={employeesQuery.data} />
@@ -204,7 +207,7 @@ export function EmployeeAdministrationPage() {
 
       {employeesQuery.data === undefined ? null : (
         <Pagination
-          ariaLabel="Employee result pages"
+          ariaLabel={t('admin.employee.directory.pagination.label')}
           currentPage={activePage}
           onPageChange={(page) => {
             if (searchRequest === null) {
@@ -218,7 +221,11 @@ export function EmployeeAdministrationPage() {
             setSearchRequest({ ...searchRequest, page });
           }}
           pageCount={employeesQuery.data.pagination.totalPages}
-          summary={`Page ${activePage} of ${Math.max(1, employeesQuery.data.pagination.totalPages)}. ${employeesQuery.data.pagination.total} employees.`}
+          summary={t('admin.employee.directory.pagination.summary', {
+            count: employeesQuery.data.pagination.total,
+            current: activePage,
+            total: Math.max(1, employeesQuery.data.pagination.totalPages),
+          })}
         />
       )}
     </section>
@@ -226,21 +233,22 @@ export function EmployeeAdministrationPage() {
 }
 
 function EmployeeDirectoryTable({ employees }: Readonly<{ employees: EmployeeAdminPage }>) {
+  const t = useWorkLedgerMessage();
   return (
     <DataTable
-      caption="Employee directory results for the current search and employment status"
+      caption={t('admin.employee.directory.results.caption')}
       className="min-w-[48rem]"
-      scrollHint="Scroll horizontally if every employee comparison column does not fit."
-      scrollLabel="Employee directory results"
+      scrollHint={t('admin.employee.directory.results.scrollHint')}
+      scrollLabel={t('admin.employee.directory.results.scrollLabel')}
     >
       <thead>
         <tr>
-          <th scope="col">Employee</th>
-          <th scope="col">Number</th>
-          <th scope="col">Employment</th>
-          <th scope="col">Account</th>
-          <th scope="col">Roles</th>
-          <th scope="col">Action</th>
+          <th scope="col">{t('admin.employee.directory.column.employee')}</th>
+          <th scope="col">{t('admin.employee.directory.column.number')}</th>
+          <th scope="col">{t('admin.employee.directory.column.employment')}</th>
+          <th scope="col">{t('admin.employee.directory.column.account')}</th>
+          <th scope="col">{t('admin.employee.directory.column.roles')}</th>
+          <th scope="col">{t('admin.employee.directory.column.action')}</th>
         </tr>
       </thead>
       <tbody>
@@ -250,9 +258,12 @@ function EmployeeDirectoryTable({ employees }: Readonly<{ employees: EmployeeAdm
               {employee.displayName}
             </th>
             <td>{employee.employeeNumber}</td>
-            <td>{employmentText(employee)}</td>
-            <td>{accountText(employee)}</td>
-            <td>{employee.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'None'}</td>
+            <td>{employmentText(employee, t)}</td>
+            <td>{accountText(employee, t)}</td>
+            <td>
+              {employee.roles.map((role) => t(ROLE_MESSAGE_KEYS[role])).join(', ') ||
+                t('admin.employee.common.none')}
+            </td>
             <td>
               <EmployeeRecordLink employee={employee} />
             </td>
@@ -264,8 +275,12 @@ function EmployeeDirectoryTable({ employees }: Readonly<{ employees: EmployeeAdm
 }
 
 function EmployeeDirectoryList({ employees }: Readonly<{ employees: EmployeeAdminPage }>) {
+  const t = useWorkLedgerMessage();
   return (
-    <ol className="m-0 grid list-none gap-3 p-0" aria-label="Employee directory results">
+    <ol
+      className="m-0 grid list-none gap-3 p-0"
+      aria-label={t('admin.employee.directory.results.scrollLabel')}
+    >
       {employees.items.map((employee) => (
         <li key={employee.id}>
           <Panel as="article" className="grid gap-3" density="compact">
@@ -275,15 +290,26 @@ function EmployeeDirectoryList({ employees }: Readonly<{ employees: EmployeeAdmi
                 <p className="m-0 text-sm text-[var(--wl-text-muted)]">{employee.employeeNumber}</p>
               </div>
               <StatusBadge tone={employee.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                {employee.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                {employee.status === 'ACTIVE'
+                  ? t('shared.profile.status.active')
+                  : t('shared.profile.status.inactive')}
               </StatusBadge>
             </div>
             <dl className="m-0 grid gap-2 text-sm">
-              <EmployeeFact label="Employment" value={employmentText(employee)} />
-              <EmployeeFact label="Account" value={accountText(employee)} />
               <EmployeeFact
-                label="Roles"
-                value={employee.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'None'}
+                label={t('admin.employee.directory.column.employment')}
+                value={employmentText(employee, t)}
+              />
+              <EmployeeFact
+                label={t('admin.employee.directory.column.account')}
+                value={accountText(employee, t)}
+              />
+              <EmployeeFact
+                label={t('admin.employee.directory.column.roles')}
+                value={
+                  employee.roles.map((role) => t(ROLE_MESSAGE_KEYS[role])).join(', ') ||
+                  t('admin.employee.common.none')
+                }
               />
             </dl>
             <div>
@@ -299,13 +325,14 @@ function EmployeeDirectoryList({ employees }: Readonly<{ employees: EmployeeAdmi
 function EmployeeRecordLink({
   employee,
 }: Readonly<{ employee: EmployeeAdminPage['items'][number] }>) {
+  const t = useWorkLedgerMessage();
   return (
     <Link
-      aria-label={`Open record for ${employee.displayName}`}
+      aria-label={t('admin.employee.directory.openRecordLabel', { employee: employee.displayName })}
       className={linkVariants({ prominence: 'quiet' })}
       to={`/employees/${employee.id}`}
     >
-      Open record
+      {t('admin.employee.directory.openRecord')}
     </Link>
   );
 }
@@ -319,24 +346,37 @@ function EmployeeFact({ label, value }: Readonly<{ label: string; value: string 
   );
 }
 
-function employmentText(employee: EmployeeAdminPage['items'][number]) {
-  const status = employee.status === 'ACTIVE' ? 'Active' : 'Inactive';
+function employmentText(
+  employee: EmployeeAdminPage['items'][number],
+  t: ReturnType<typeof useWorkLedgerMessage>,
+) {
+  const status =
+    employee.status === 'ACTIVE'
+      ? t('shared.profile.status.active')
+      : t('shared.profile.status.inactive');
   return employee.currentEmployment === null
-    ? `${status}, no current period`
-    : `${status} since ${formatDate(employee.currentEmployment.startsOn)}`;
+    ? t('admin.employee.directory.employment.noCurrent', { status })
+    : t('admin.employee.directory.employment.since', {
+        date: formatDate(employee.currentEmployment.startsOn),
+        status,
+      });
 }
 
-function accountText(employee: EmployeeAdminPage['items'][number]) {
+function accountText(
+  employee: EmployeeAdminPage['items'][number],
+  t: ReturnType<typeof useWorkLedgerMessage>,
+) {
   return employee.account === null
-    ? 'No linked account'
+    ? t('admin.employee.directory.account.none')
     : employee.account.invitationPending
-      ? 'Invitation pending'
+      ? t('admin.employee.directory.account.invitationPending')
       : employee.account.active
-        ? 'Active account'
-        : 'Inactive account';
+        ? t('admin.employee.directory.account.active')
+        : t('admin.employee.directory.account.inactive');
 }
 
 export function NewEmployeeAdministrationPage() {
+  const t = useWorkLedgerMessage();
   const navigate = useNavigate();
   const accountLocale = useOptionalWebLocale();
   const [displayName, setDisplayName] = useState('');
@@ -353,7 +393,10 @@ export function NewEmployeeAdministrationPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const errors = validateEmployeeForm({ displayName, email, employeeNumber, employmentStartsOn });
+    const errors = validateEmployeeForm(
+      { displayName, email, employeeNumber, employmentStartsOn },
+      t,
+    );
     setFieldErrors(errors);
     setFormError(undefined);
     if (Object.keys(errors).length > 0) return focusSummary(summaryRef);
@@ -372,10 +415,10 @@ export function NewEmployeeAdministrationPage() {
       });
       await navigate(`/employees/${employee.id}`, {
         replace: true,
-        state: { notice: 'Employee created and invitation issued.' },
+        state: { notice: t('admin.employee.create.feedback.created') },
       });
     } catch (error) {
-      setFormError(employeeMutationError(error));
+      setFormError(employeeMutationError(error, t));
       focusSummary(summaryRef);
     }
   }
@@ -383,15 +426,15 @@ export function NewEmployeeAdministrationPage() {
   return (
     <section className="grid max-w-3xl gap-8">
       <PageHeader
-        eyebrow="People administration"
-        title="Add employee"
-        description="Create the stable employee and first employment period, then issue a 24-hour account invitation."
+        eyebrow={t('admin.employee.create.page.eyebrow')}
+        title={t('admin.employee.create.page.title')}
+        description={t('admin.employee.create.page.description')}
       />
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
       <form className="wl-panel grid gap-6" noValidate onSubmit={submit}>
         <TextField
           id="display-name"
-          label="Display name"
+          label={t('admin.employee.create.form.displayName')}
           value={displayName}
           onChange={setDisplayName}
           isInvalid={fieldErrors['display-name'] !== undefined}
@@ -400,7 +443,7 @@ export function NewEmployeeAdministrationPage() {
         />
         <TextField
           id="employee-number"
-          label="Employee number"
+          label={t('admin.employee.create.form.employeeNumber')}
           value={employeeNumber}
           onChange={setEmployeeNumber}
           isInvalid={fieldErrors['employee-number'] !== undefined}
@@ -409,8 +452,8 @@ export function NewEmployeeAdministrationPage() {
         <TextField
           id="email"
           type="email"
-          label="Account email"
-          description="A configured delivery service uses this address for the invitation. It is not used as an employment identifier."
+          label={t('admin.employee.create.form.accountEmail')}
+          description={t('admin.employee.create.form.accountEmailDescription')}
           value={email}
           onChange={setEmail}
           isInvalid={fieldErrors['email'] !== undefined}
@@ -419,7 +462,7 @@ export function NewEmployeeAdministrationPage() {
         />
         <NativeDateField
           id="employment-starts-on"
-          label="Employment starts on"
+          label={t('admin.employee.create.form.employmentStartsOn')}
           value={employmentStartsOn}
           onChange={setEmploymentStartsOn}
           {...(fieldErrors['employment-starts-on'] === undefined
@@ -429,21 +472,23 @@ export function NewEmployeeAdministrationPage() {
         <LanguageSelect
           description={
             accountLocale === null
-              ? "Sets the account language used for this invitation and the employee's first sign-in."
+              ? t('admin.employee.create.form.invitationDescription')
               : translateStaticMessage(accountLocale.runtime, 'shared.locale.invitationDescription')
           }
           id="employee-invitation-language"
-          label="Invitation language"
+          label={t('admin.employee.create.form.invitationLanguage')}
           value={locale}
           onChange={setLocale}
         />
         <fieldset className="grid gap-3 rounded-xl border border-[var(--wl-border)] p-4">
-          <legend className="px-1 text-sm font-bold">Application roles</legend>
+          <legend className="px-1 text-sm font-bold">
+            {t('admin.employee.create.form.rolesHeading')}
+          </legend>
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            Employee is required. Technical system authority is administered separately.
+            {t('admin.employee.create.form.rolesDescription')}
           </p>
           <label className="flex min-h-11 items-center gap-3">
-            <input type="checkbox" checked disabled /> Employee
+            <input type="checkbox" checked disabled /> {t('shared.profile.role.employee')}
           </label>
           <label className="flex min-h-11 items-center gap-3">
             <input
@@ -451,7 +496,7 @@ export function NewEmployeeAdministrationPage() {
               checked={manager}
               onChange={(event) => setManager(event.target.checked)}
             />
-            Manager
+            {t('shared.profile.role.manager')}
           </label>
           <label className="flex min-h-11 items-center gap-3">
             <input
@@ -459,15 +504,17 @@ export function NewEmployeeAdministrationPage() {
               checked={hrAdministrator}
               onChange={(event) => setHrAdministrator(event.target.checked)}
             />
-            HR administrator
+            {t('shared.profile.role.hrAdministrator')}
           </label>
         </fieldset>
         <div className="flex flex-wrap gap-3">
           <Button type="submit" isDisabled={mutation.isPending}>
-            {mutation.isPending ? 'Creating…' : 'Create and invite employee'}
+            {mutation.isPending
+              ? t('admin.employee.create.form.pending')
+              : t('admin.employee.create.form.submit')}
           </Button>
           <Link className={linkVariants({ prominence: 'quiet' })} to="/employees">
-            Cancel
+            {t('admin.employee.create.form.cancel')}
           </Link>
         </div>
       </form>
@@ -476,6 +523,7 @@ export function NewEmployeeAdministrationPage() {
 }
 
 export function EmployeeAdministrationDetailPage() {
+  const t = useWorkLedgerMessage();
   const employeeId = useParams()['employeeId'];
   if (employeeId === undefined) throw new Response(null, { status: 404 });
   const employeeQuery = useQuery(employeeAdminDetailQuery(employeeId));
@@ -511,9 +559,12 @@ export function EmployeeAdministrationDetailPage() {
   ) {
     return (
       <section className="grid gap-6">
-        <PageHeader title="Employee" description="Loading lifecycle history…" />
-        <RouteState kind="loading" title="Loading information">
-          Employee administration details are being retrieved.
+        <PageHeader
+          title={t('admin.employee.detail.loading.heading')}
+          description={t('admin.employee.detail.loading.pageDescription')}
+        />
+        <RouteState kind="loading" title={t('admin.employee.detail.loading.title')}>
+          {t('admin.employee.detail.loading.description')}
         </RouteState>
       </section>
     );
@@ -547,6 +598,7 @@ function EmployeeDetail({
   policy: EmployeePolicyAdminDetail;
   entitlement: EmployeeEntitlementAdminDetail;
 }>) {
+  const t = useWorkLedgerMessage();
   const queryClient = useQueryClient();
   const [manager, setManager] = useState(employee.roles.includes('MANAGER'));
   const [hrAdministrator, setHrAdministrator] = useState(
@@ -580,7 +632,7 @@ function EmployeeDetail({
   async function run(operation: 'activate' | 'deactivate' | 'invite' | 'roles') {
     setMessage(undefined);
     if ((operation === 'activate' || operation === 'deactivate') && effectiveDate === '') {
-      setMessage({ kind: 'error', text: 'Choose the effective employment date first.' });
+      setMessage({ kind: 'error', text: t('admin.employee.detail.validation.effectiveDate') });
       document.querySelector<HTMLElement>('#employment-effective-date')?.focus();
       return;
     }
@@ -591,30 +643,40 @@ function EmployeeDetail({
         kind: 'success',
         text:
           operation === 'invite'
-            ? 'A new invitation was issued and the prior invitation was invalidated.'
-            : 'The employee lifecycle record was updated.',
+            ? t('admin.employee.detail.feedback.invitationReissued')
+            : t('admin.employee.detail.feedback.updated'),
       });
     } catch (error) {
-      setMessage({ kind: 'error', text: employeeMutationError(error) });
+      setMessage({ kind: 'error', text: employeeMutationError(error, t) });
     }
   }
 
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="People administration"
+        eyebrow={t('admin.employee.detail.page.eyebrow')}
         title={employee.displayName}
-        description={`${employee.employeeNumber} — ${employee.status === 'ACTIVE' ? 'Active employee' : 'Inactive employee'}`}
+        description={t('admin.employee.detail.page.description', {
+          employeeNumber: employee.employeeNumber,
+          status:
+            employee.status === 'ACTIVE'
+              ? t('admin.employee.detail.page.active')
+              : t('admin.employee.detail.page.inactive'),
+        })}
       >
         {
           <Link className={linkVariants({ prominence: 'quiet' })} to="/employees">
-            Back to employees
+            {t('admin.employee.detail.page.back')}
           </Link>
         }
       </PageHeader>
       {message === undefined ? null : (
         <Alert
-          title={message.kind === 'error' ? 'Employee update failed' : 'Employee record updated'}
+          title={
+            message.kind === 'error'
+              ? t('admin.employee.detail.feedback.errorTitle')
+              : t('admin.employee.detail.feedback.successTitle')
+          }
           tone={message.kind === 'error' ? 'danger' : 'success'}
         >
           <p>{message.text}</p>
@@ -624,44 +686,52 @@ function EmployeeDetail({
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel className="grid content-start gap-4" aria-labelledby="employment-history-heading">
           <h2 id="employment-history-heading" className="m-0 text-xl font-bold">
-            Employment history
+            {t('admin.employee.detail.employment.heading')}
           </h2>
           <ol className="m-0 grid gap-3 pl-5">
             {employee.employmentHistory.map((period) => (
               <li key={period.id}>
-                {formatDate(period.startsOn)} to{' '}
-                {period.endsOn === null ? 'ongoing' : formatDate(period.endsOn)}
+                {t('admin.employee.detail.range', {
+                  from: formatDate(period.startsOn),
+                  to:
+                    period.endsOn === null
+                      ? t('admin.employee.common.ongoing')
+                      : formatDate(period.endsOn),
+                })}
               </li>
             ))}
           </ol>
           <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-            Re-employment adds a new non-overlapping period. Earlier attendance, balances,
-            approvals, and audit attribution remain linked to this employee.
+            {t('admin.employee.detail.employment.description')}
           </p>
         </Panel>
 
         <Panel className="grid content-start gap-4" aria-labelledby="employee-account-heading">
           <h2 id="employee-account-heading" className="m-0 text-xl font-bold">
-            Employee-linked account
+            {t('admin.employee.detail.account.heading')}
           </h2>
           {employee.account === null ? (
-            <p className="m-0">No account is linked.</p>
+            <p className="m-0">{t('admin.employee.detail.account.none')}</p>
           ) : (
             <dl className="m-0 grid gap-3">
               <div>
-                <dt className="font-semibold">Email</dt>
+                <dt className="font-semibold">{t('admin.employee.detail.account.email')}</dt>
                 <dd className="m-0 break-all">{employee.account.email}</dd>
               </div>
               <div>
-                <dt className="font-semibold">Account state</dt>
-                <dd className="m-0">{employee.account.active ? 'Active' : 'Inactive'}</dd>
+                <dt className="font-semibold">{t('admin.employee.detail.account.state')}</dt>
+                <dd className="m-0">
+                  {employee.account.active
+                    ? t('shared.profile.status.active')
+                    : t('shared.profile.status.inactive')}
+                </dd>
               </div>
               <div>
-                <dt className="font-semibold">Invitation</dt>
+                <dt className="font-semibold">{t('admin.employee.detail.account.invitation')}</dt>
                 <dd className="m-0">
                   {employee.account.invitationPending
-                    ? 'Pending for up to 24 hours'
-                    : 'No active invitation'}
+                    ? t('admin.employee.detail.account.invitationPending')
+                    : t('admin.employee.detail.account.noInvitation')}
                 </dd>
               </div>
             </dl>
@@ -676,24 +746,20 @@ function EmployeeDetail({
       <EmployeeEntitlementAdministration employeeId={employee.id} entitlement={entitlement} />
 
       {!employee.privilegedActionsAllowed ? (
-        <Alert announce={false} title="Review only" tone="info">
-          <p>
-            You may review your own employee record here, but privileged self-edit controls are
-            unavailable. Ask another HR administrator to make a required change.
-          </p>
+        <Alert announce={false} title={t('admin.employee.detail.reviewOnly.title')} tone="info">
+          <p>{t('admin.employee.detail.reviewOnly.description')}</p>
         </Alert>
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
           <Panel className="grid content-start gap-5" aria-labelledby="role-management-heading">
             <h2 id="role-management-heading" className="m-0 text-xl font-bold">
-              HR-managed roles
+              {t('admin.employee.detail.roles.heading')}
             </h2>
             <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-              Changing roles revokes the target account’s sessions. System authority is not
-              available on this surface.
+              {t('admin.employee.detail.roles.description')}
             </p>
             <label className="flex min-h-11 items-center gap-3">
-              <input type="checkbox" checked disabled /> Employee
+              <input type="checkbox" checked disabled /> {t('shared.profile.role.employee')}
             </label>
             <label className="flex min-h-11 items-center gap-3">
               <input
@@ -701,7 +767,7 @@ function EmployeeDetail({
                 checked={manager}
                 onChange={(event) => setManager(event.target.checked)}
               />{' '}
-              Manager
+              {t('shared.profile.role.manager')}
             </label>
             <label className="flex min-h-11 items-center gap-3">
               <input
@@ -709,20 +775,24 @@ function EmployeeDetail({
                 checked={hrAdministrator}
                 onChange={(event) => setHrAdministrator(event.target.checked)}
               />{' '}
-              HR administrator
+              {t('shared.profile.role.hrAdministrator')}
             </label>
             <Button isDisabled={mutation.isPending} onPress={() => void run('roles')}>
-              Save roles
+              {t('admin.employee.detail.roles.submit')}
             </Button>
           </Panel>
 
           <Panel className="grid content-start gap-5" aria-labelledby="lifecycle-actions-heading">
             <h2 id="lifecycle-actions-heading" className="m-0 text-xl font-bold">
-              Lifecycle actions
+              {t('admin.employee.detail.lifecycle.heading')}
             </h2>
             <NativeDateField
               id="employment-effective-date"
-              label={employee.status === 'ACTIVE' ? 'Employment ends on' : 'Employment starts on'}
+              label={
+                employee.status === 'ACTIVE'
+                  ? t('admin.employee.detail.lifecycle.endsOn')
+                  : t('admin.employee.detail.lifecycle.startsOn')
+              }
               value={effectiveDate}
               onChange={setEffectiveDate}
             />
@@ -732,8 +802,8 @@ function EmployeeDetail({
               onPress={() => void run(employee.status === 'ACTIVE' ? 'deactivate' : 'activate')}
             >
               {employee.status === 'ACTIVE'
-                ? 'Deactivate employee and account'
-                : 'Activate employee and account'}
+                ? t('admin.employee.detail.lifecycle.deactivate')
+                : t('admin.employee.detail.lifecycle.activate')}
             </Button>
             {employee.account === null ? null : (
               <Button
@@ -741,7 +811,7 @@ function EmployeeDetail({
                 isDisabled={mutation.isPending}
                 onPress={() => void run('invite')}
               >
-                Reissue 24-hour invitation
+                {t('admin.employee.detail.lifecycle.reinvite')}
               </Button>
             )}
           </Panel>
@@ -755,6 +825,7 @@ function AssignmentAdministration({
   assignments,
   employeeId,
 }: Readonly<{ assignments: EmployeeAssignmentAdminDetail; employeeId: string }>) {
+  const t = useWorkLedgerMessage();
   const queryClient = useQueryClient();
   const [teamChoice, setTeamChoice] = useState('__UNCHANGED');
   const [teamDate, setTeamDate] = useState('');
@@ -783,7 +854,10 @@ function AssignmentAdministration({
     if (choice === '__UNCHANGED' || date === '') {
       setMessage({
         kind: 'error',
-        text: `Choose a ${kind === 'team' ? 'team change' : 'manager change'} and effective date.`,
+        text:
+          kind === 'team'
+            ? t('admin.employee.assignment.validation.team')
+            : t('admin.employee.assignment.validation.manager'),
       });
       document
         .querySelector<HTMLElement>(
@@ -804,10 +878,13 @@ function AssignmentAdministration({
       }
       setMessage({
         kind: 'success',
-        text: `The ${kind === 'team' ? 'team' : 'direct-manager'} assignment was updated without rewriting prior history.`,
+        text:
+          kind === 'team'
+            ? t('admin.employee.assignment.feedback.teamUpdated')
+            : t('admin.employee.assignment.feedback.managerUpdated'),
       });
     } catch (error) {
-      setMessage({ kind: 'error', text: employeeMutationError(error) });
+      setMessage({ kind: 'error', text: employeeMutationError(error, t) });
     }
   }
 
@@ -815,16 +892,21 @@ function AssignmentAdministration({
     <section className="grid gap-6" aria-labelledby="organization-assignments-heading">
       <div>
         <h2 id="organization-assignments-heading" className="m-0 text-2xl font-bold">
-          Team and direct manager
+          {t('admin.employee.assignment.heading')}
         </h2>
         <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
-          Current state is resolved for {formatDate(assignments.asOfLocalDate)}. Team membership
-          does not grant manager access; only the effective direct-manager relationship does.
+          {t('admin.employee.assignment.description', {
+            date: formatDate(assignments.asOfLocalDate),
+          })}
         </p>
       </div>
       {message === undefined ? null : (
         <Alert
-          title={message.kind === 'error' ? 'Assignment update failed' : 'Assignment updated'}
+          title={
+            message.kind === 'error'
+              ? t('admin.employee.assignment.feedback.errorTitle')
+              : t('admin.employee.assignment.feedback.successTitle')
+          }
           tone={message.kind === 'error' ? 'danger' : 'success'}
         >
           <p>{message.text}</p>
@@ -832,18 +914,25 @@ function AssignmentAdministration({
       )}
       <div className="grid gap-6 xl:grid-cols-2">
         <AssignmentHistoryCard
-          heading="Team history"
-          current={assignments.currentTeam?.team.name ?? 'No current team'}
+          heading={t('admin.employee.assignment.teamHistory')}
+          current={
+            assignments.currentTeam?.team.name ?? t('admin.employee.assignment.noCurrentTeam')
+          }
           items={assignments.teamHistory.map((assignment) => ({
             endsOn: assignment.endsOn,
             id: assignment.id,
-            label: `${assignment.team.name}${assignment.team.active ? '' : ' (inactive team)'}`,
+            label: assignment.team.active
+              ? assignment.team.name
+              : t('admin.employee.assignment.inactiveTeam', { team: assignment.team.name }),
             startsOn: assignment.startsOn,
           }))}
         />
         <AssignmentHistoryCard
-          heading="Direct-manager history"
-          current={assignments.currentManager?.manager.displayName ?? 'No current direct manager'}
+          heading={t('admin.employee.assignment.managerHistory')}
+          current={
+            assignments.currentManager?.manager.displayName ??
+            t('admin.employee.assignment.noCurrentManager')
+          }
           items={assignments.managerHistory.map((assignment) => ({
             endsOn: assignment.endsOn,
             id: assignment.id,
@@ -861,17 +950,17 @@ function AssignmentAdministration({
               void save('team');
             }}
           >
-            <h3 className="m-0 text-xl font-bold">Change team</h3>
+            <h3 className="m-0 text-xl font-bold">{t('admin.employee.assignment.changeTeam')}</h3>
             <label className="grid gap-2 text-sm font-semibold" htmlFor="team-assignment-choice">
-              Team change
+              {t('admin.employee.assignment.teamChange')}
               <select
                 id="team-assignment-choice"
                 className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3"
                 value={teamChoice}
                 onChange={(event) => setTeamChoice(event.target.value)}
               >
-                <option value="__UNCHANGED">Choose a change</option>
-                <option value="__NONE">No team</option>
+                <option value="__UNCHANGED">{t('admin.employee.assignment.chooseChange')}</option>
+                <option value="__NONE">{t('admin.employee.assignment.noTeam')}</option>
                 {assignments.activeTeams.map((team) => (
                   <option key={team.id} value={team.id}>
                     {team.name}
@@ -881,13 +970,13 @@ function AssignmentAdministration({
             </label>
             <NativeDateField
               id="team-assignment-date"
-              label="Effective from"
+              label={t('admin.employee.common.effectiveFrom')}
               min={assignments.asOfLocalDate}
               value={teamDate}
               onChange={setTeamDate}
             />
             <Button type="submit" isDisabled={mutation.isPending}>
-              Save team assignment
+              {t('admin.employee.assignment.saveTeam')}
             </Button>
           </form>
           <form
@@ -897,33 +986,38 @@ function AssignmentAdministration({
               void save('manager');
             }}
           >
-            <h3 className="m-0 text-xl font-bold">Change direct manager</h3>
+            <h3 className="m-0 text-xl font-bold">
+              {t('admin.employee.assignment.changeManager')}
+            </h3>
             <label className="grid gap-2 text-sm font-semibold" htmlFor="manager-assignment-choice">
-              Direct-manager change
+              {t('admin.employee.assignment.managerChange')}
               <select
                 id="manager-assignment-choice"
                 className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3"
                 value={managerChoice}
                 onChange={(event) => setManagerChoice(event.target.value)}
               >
-                <option value="__UNCHANGED">Choose a change</option>
-                <option value="__NONE">No direct manager</option>
+                <option value="__UNCHANGED">{t('admin.employee.assignment.chooseChange')}</option>
+                <option value="__NONE">{t('admin.employee.assignment.noManager')}</option>
                 {assignments.eligibleManagers.map((manager) => (
                   <option key={manager.id} value={manager.id}>
-                    {manager.displayName} ({manager.employeeNumber})
+                    {manager.displayName}
+                    {' ('}
+                    {manager.employeeNumber}
+                    {')'}
                   </option>
                 ))}
               </select>
             </label>
             <NativeDateField
               id="manager-assignment-date"
-              label="Effective from"
+              label={t('admin.employee.common.effectiveFrom')}
               min={assignments.asOfLocalDate}
               value={managerDate}
               onChange={setManagerDate}
             />
             <Button type="submit" isDisabled={mutation.isPending}>
-              Save direct-manager assignment
+              {t('admin.employee.assignment.saveManager')}
             </Button>
           </form>
         </div>
@@ -946,18 +1040,27 @@ function AssignmentHistoryCard({
     startsOn: string;
   }>[];
 }>) {
+  const t = useWorkLedgerMessage();
   return (
     <Panel className="grid content-start gap-4">
       <h3 className="m-0 text-xl font-bold">{heading}</h3>
-      <p className="m-0 font-semibold">Current: {current}</p>
+      <p className="m-0 font-semibold">{t('admin.employee.assignment.current', { current })}</p>
       {items.length === 0 ? (
-        <p className="m-0 text-sm text-[var(--wl-text-muted)]">No assignment history.</p>
+        <p className="m-0 text-sm text-[var(--wl-text-muted)]">
+          {t('admin.employee.assignment.noHistory')}
+        </p>
       ) : (
         <ol className="m-0 grid gap-2 pl-5">
           {items.map((item) => (
             <li key={item.id}>
-              {item.label}: {formatDate(item.startsOn)} to{' '}
-              {item.endsOn === null ? 'ongoing' : formatDate(item.endsOn)}
+              {t('admin.employee.assignment.historyItem', {
+                from: formatDate(item.startsOn),
+                label: item.label,
+                to:
+                  item.endsOn === null
+                    ? t('admin.employee.common.ongoing')
+                    : formatDate(item.endsOn),
+              })}
             </li>
           ))}
         </ol>
@@ -1012,45 +1115,45 @@ function validateEmployeeForm(
   input: Readonly<
     Record<'displayName' | 'email' | 'employeeNumber' | 'employmentStartsOn', string>
   >,
+  t: ReturnType<typeof useWorkLedgerMessage>,
 ) {
   const errors: Record<string, string> = {};
-  if (input.displayName.trim() === '') errors['display-name'] = 'Enter the employee display name.';
-  if (input.employeeNumber.trim() === '') errors['employee-number'] = 'Enter an employee number.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(input.email.trim())) {
-    errors['email'] = 'Enter a valid account email address.';
+  if (input.displayName.trim() === '') {
+    errors['display-name'] = t('admin.employee.create.validation.displayName');
   }
-  if (input.employmentStartsOn === '')
-    errors['employment-starts-on'] = 'Choose the employment start date.';
+  if (input.employeeNumber.trim() === '') {
+    errors['employee-number'] = t('admin.employee.create.validation.employeeNumber');
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(input.email.trim())) {
+    errors['email'] = t('admin.employee.create.validation.accountEmail');
+  }
+  if (input.employmentStartsOn === '') {
+    errors['employment-starts-on'] = t('admin.employee.create.validation.employmentStartsOn');
+  }
   return errors;
 }
 
-function employeeMutationError(error: unknown): string {
+function employeeMutationError(error: unknown, t: ReturnType<typeof useWorkLedgerMessage>): string {
   if (error instanceof ApiClientError) {
-    if (error.code === 'AUTH_SESSION_NOT_FRESH')
-      return 'Sign out and sign in again before making this privileged change.';
-    if (error.code === 'ACCESS_DENIED')
-      return 'You no longer have permission for this employee change.';
-    if (error.code === 'ACCOUNT_EMAIL_ALREADY_EXISTS')
-      return 'That account email is already in use.';
+    if (error.code === 'AUTH_SESSION_NOT_FRESH') return t('admin.employee.error.freshSession');
+    if (error.code === 'ACCESS_DENIED') return t('admin.employee.error.accessDenied');
+    if (error.code === 'ACCOUNT_EMAIL_ALREADY_EXISTS') return t('admin.employee.error.emailExists');
     if (error.code === 'EMPLOYEE_NUMBER_ALREADY_EXISTS')
-      return 'That employee number is already in use.';
+      return t('admin.employee.error.employeeNumberExists');
     if (error.code === 'EMPLOYMENT_PERIOD_OVERLAP')
-      return 'The new employment period overlaps existing history.';
+      return t('admin.employee.error.employmentOverlap');
     if (error.code === 'ASSIGNMENT_EFFECTIVE_DATE_INVALID')
-      return 'Choose a later effective date that does not replace an assignment beginning that day.';
+      return t('admin.employee.error.assignmentDateInvalid');
     if (error.code === 'ASSIGNMENT_STATE_CONFLICT')
-      return 'The assignment changed or already has that value. Refresh and review its history.';
-    if (error.code === 'MANAGER_ASSIGNMENT_CYCLE')
-      return 'That direct-manager change would create a reporting cycle.';
-    if (error.code === 'MANAGER_NOT_ELIGIBLE')
-      return 'Choose an active employee with a current account and Manager role.';
-    if (error.code === 'TEAM_NAME_ALREADY_EXISTS') return 'A team already uses that name.';
-    if (error.code === 'TEAM_STATE_CONFLICT')
-      return 'The team changed or still has current or scheduled assignments.';
+      return t('admin.employee.error.assignmentConflict');
+    if (error.code === 'MANAGER_ASSIGNMENT_CYCLE') return t('admin.employee.error.managerCycle');
+    if (error.code === 'MANAGER_NOT_ELIGIBLE') return t('admin.employee.error.managerNotEligible');
+    if (error.code === 'TEAM_NAME_ALREADY_EXISTS') return t('admin.employee.error.teamNameExists');
+    if (error.code === 'TEAM_STATE_CONFLICT') return t('admin.employee.error.teamStateConflict');
     if (error.code === 'EMPLOYEE_STATE_CONFLICT')
-      return 'The employee state changed. Refresh and review the current record.';
+      return t('admin.employee.error.employeeStateConflict');
   }
-  return 'The employee change could not be completed. Try again.';
+  return t('admin.employee.error.generic');
 }
 
 function focusSummary(ref: { current: HTMLDivElement | null }) {
@@ -1058,5 +1161,5 @@ function focusSummary(ref: { current: HTMLDivElement | null }) {
 }
 
 function formatDate(value: string) {
-  return DATE_FORMATTER.format(new Date(`${value}T00:00:00Z`));
+  return formatDateOnly('en-GB', value, { dateStyle: 'medium' });
 }

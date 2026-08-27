@@ -16,9 +16,11 @@ import type {
   SystemAccountPage,
   TeamAdminPage,
 } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { createWebLocaleController, LocaleControllerProvider } from '../src/app/locale.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
@@ -26,6 +28,11 @@ const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 const EMPLOYEE_ID = '123e4567-e89b-42d3-a456-426614174101';
 const ACCOUNT_ID = '123e4567-e89b-42d3-a456-426614174201';
 const SESSION_ID = '123e4567-e89b-42d3-a456-426614174301';
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 
 const HR_CONTEXT: SelfContext = {
   account: { email: 'hr@example.test', name: 'HR Administrator' },
@@ -366,7 +373,7 @@ test('shows separate effective team and manager history with keyboard-focused re
   expect(screen.getByText('Current: Client Services')).toBeVisible();
   expect(screen.getByText('Current: Alex Morgan')).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Save direct-manager assignment' }));
-  expect(screen.getByRole('alert')).toHaveTextContent(/Choose a manager change/iu);
+  expect(screen.getByRole('alert')).toHaveTextContent(/Choose a direct-manager change/iu);
   expect(screen.getByLabelText('Direct-manager change')).toHaveFocus();
   expect(screen.getByRole('option', { name: 'Sam Rivera (MGR-002)' })).toBeVisible();
   expect(screen.getAllByText(/Standard 40 hours · version 1/iu).length).toBeGreaterThanOrEqual(2);
@@ -414,15 +421,63 @@ test('renders technical account and session controls without HR fields or self-p
   await expectNoAxeViolations(container);
 });
 
+test.each([
+  {
+    employeeHeading: 'Mitarbeitende',
+    locale: 'de-DE' as const,
+    searchHeading: 'Mitarbeitendenverzeichnis durchsuchen',
+    systemHeading: 'Konten und Sitzungen',
+    systemDirectory: 'Kontoverzeichnis',
+  },
+  {
+    employeeHeading: 'Empleados',
+    locale: 'es-ES' as const,
+    searchHeading: 'Buscar en el directorio de empleados',
+    systemHeading: 'Cuentas y sesiones',
+    systemDirectory: 'Directorio de cuentas',
+  },
+])('renders representative HR and system administration in $locale', async (scenario) => {
+  stubFetch({ ...HR_CONTEXT, locale: scenario.locale }, { employeePage: EMPLOYEE_PAGE });
+  const employeeView = renderApplication('/employees');
+  const employeeHeading = await screen.findByRole('heading', {
+    name: scenario.employeeHeading,
+    level: 1,
+  });
+  await waitFor(() => expect(employeeHeading).toHaveFocus());
+  expect(screen.getByRole('heading', { name: scenario.searchHeading })).toBeVisible();
+  expect(document.documentElement).toHaveAttribute('lang', scenario.locale);
+  await expectNoAxeViolations(employeeView.container);
+  employeeView.unmount();
+
+  clearSessionMemory();
+  vi.unstubAllGlobals();
+  stubFetch({ ...SYSTEM_CONTEXT, locale: scenario.locale }, { systemPage: SYSTEM_PAGE });
+  const systemView = renderApplication('/system/accounts');
+  const systemHeading = await screen.findByRole('heading', {
+    name: scenario.systemHeading,
+    level: 1,
+  });
+  await waitFor(() => expect(systemHeading).toHaveFocus());
+  expect(screen.getByRole('heading', { name: scenario.systemDirectory })).toBeVisible();
+  expect(document.documentElement).toHaveAttribute('lang', scenario.locale);
+  await expectNoAxeViolations(systemView.container);
+});
+
 function renderApplication(initialEntry: string) {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  const localeController = createWebLocaleController(defaultLocaleRuntime);
   const queryClient = createWorkLedgerQueryClient();
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: [initialEntry],
   });
   const result = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={localeController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
   return { ...result, router };
 }

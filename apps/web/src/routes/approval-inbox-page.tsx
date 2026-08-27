@@ -12,6 +12,8 @@ import {
   type ApprovalInboxStatus,
   type ApprovalInboxType,
 } from '@workledger/contracts';
+import { formatDateOnly, formatInstant, formatNumber, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import {
   Alert,
   Button,
@@ -26,9 +28,7 @@ import {
 import { Pagination } from '../components/pagination.js';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
-import { formatLocalDate } from '../app/date-time-format.js';
 import { approvalInboxQuery } from '../app/query.js';
-import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
@@ -43,7 +43,37 @@ type FilterDraft = Readonly<{
   type: ApprovalInboxType;
 }>;
 
+const WORKFLOW_MESSAGE_KEYS = Object.freeze({
+  ABSENCE: 'manager.approval.common.workflow.absenceRequest',
+  CANCELLATION: 'manager.approval.common.workflow.absenceCancellation',
+  CORRECTION: 'manager.approval.common.workflow.correction',
+  MONTHLY_PERIOD: 'manager.approval.common.workflow.monthlyPeriod',
+} as const satisfies Readonly<Record<Exclude<ApprovalInboxType, 'ALL'>, MessageKey>>);
+
+const TYPE_FILTER_MESSAGE_KEYS = Object.freeze({
+  ALL: 'manager.approval.inbox.filter.category.all',
+  ABSENCE: 'manager.approval.common.workflow.absenceRequest',
+  CANCELLATION: 'manager.approval.common.workflow.absenceCancellation',
+  CORRECTION: 'manager.approval.common.workflow.correction',
+  MONTHLY_PERIOD: 'manager.approval.common.workflow.monthlyPeriod',
+} as const satisfies Readonly<Record<ApprovalInboxType, MessageKey>>);
+
+const ITEM_STATUS_MESSAGE_KEYS = Object.freeze({
+  ACTION_REQUIRED: 'manager.approval.common.status.actionRequired',
+  ALL: 'manager.approval.common.status.allRecords',
+  COMPLETED: 'manager.approval.common.status.completed',
+  WAITING_ON_EMPLOYEE: 'manager.approval.common.status.waitingOnEmployee',
+} as const satisfies Readonly<Record<ApprovalInboxStatus, MessageKey>>);
+
+const QUEUE_STATUS_MESSAGE_KEYS = Object.freeze({
+  ACTION_REQUIRED: 'manager.approval.inbox.queue.needsReview',
+  ALL: 'manager.approval.common.status.allRecords',
+  COMPLETED: 'manager.approval.common.status.completed',
+  WAITING_ON_EMPLOYEE: 'manager.approval.common.status.waitingOnEmployee',
+} as const satisfies Readonly<Record<ApprovalInboxStatus, MessageKey>>);
+
 export function ApprovalInboxPage() {
+  const t = useWorkLedgerMessage();
   const queryInput = useLoaderData<ApprovalInboxQuery>();
   const [, setSearchParams] = useSearchParams();
   const query = useQuery(approvalInboxQuery(queryInput));
@@ -88,7 +118,7 @@ export function ApprovalInboxPage() {
       type: draft.type,
     });
     if (!parsed.success) {
-      setFilterError('Enter both dates in order and keep the range within 366 calendar days.');
+      setFilterError(t('manager.approval.inbox.filter.error'));
       return;
     }
     setFilterError(undefined);
@@ -112,9 +142,9 @@ export function ApprovalInboxPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Approvals"
-        title={canonicalRouteLabel('/approvals')}
-        description="Review the corrections, absence requests, cancellations, and monthly periods that need your decision."
+        eyebrow={t('manager.approval.inbox.page.eyebrow')}
+        title={t('shared.route.title.approvalInbox')}
+        description={t('manager.approval.inbox.page.description')}
       />
       {query.isPending ? (
         <ApprovalInboxLoading />
@@ -139,16 +169,17 @@ export function ApprovalInboxPage() {
 }
 
 function ApprovalInboxPermissionDenied() {
-  useBoundaryPresentation('Permission denied');
+  const t = useWorkLedgerMessage();
+  useBoundaryPresentation(t('shared.route.boundary.permissionDenied.title'));
   return (
     <section className="grid max-w-2xl gap-6">
       <PageHeader
-        eyebrow="Route status"
-        title="Permission denied"
-        description="Your current account cannot view the approval inbox."
+        eyebrow={t('manager.approval.inbox.permission.eyebrow')}
+        title={t('shared.route.boundary.permissionDenied.title')}
+        description={t('manager.approval.inbox.permission.description')}
       />
       <Link className={buttonVariants({ variant: 'secondary' })} to="/">
-        Go to my home
+        {t('shared.action.goHome')}
       </Link>
     </section>
   );
@@ -168,6 +199,7 @@ function ApprovalFilters({
   teams: ApprovalInbox['filterOptions']['teams'];
 }>) {
   const [open, setOpen] = useState(false);
+  const t = useWorkLedgerMessage();
 
   return (
     <div className="grid gap-3">
@@ -179,26 +211,30 @@ function ApprovalFilters({
         }}
       >
         <summary className="wl-approval-filter-summary">
-          {open ? 'Hide filters' : 'Refine this view'}
+          {open ? t('manager.approval.inbox.filter.hide') : t('manager.approval.inbox.filter.show')}
         </summary>
-        <FilterBar aria-label="Approval filters" className="border-0 p-4" onSubmit={onSubmit}>
+        <FilterBar
+          aria-label={t('manager.approval.inbox.filter.ariaLabel')}
+          className="border-0 p-4"
+          onSubmit={onSubmit}
+        >
           <div className="grid w-full gap-4">
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <SelectFilter
                 id="approval-type"
-                label="Workflow category"
+                label={t('manager.approval.inbox.filter.category.label')}
                 value={draft.type}
                 onChange={(type) => onChange({ ...draft, type: type as ApprovalInboxType })}
                 options={[
-                  ['ALL', 'All categories'],
-                  ['CORRECTION', 'Correction'],
-                  ['ABSENCE', 'Absence request'],
-                  ['CANCELLATION', 'Absence cancellation'],
-                  ['MONTHLY_PERIOD', 'Monthly period'],
+                  ['ALL', t('manager.approval.inbox.filter.category.all')],
+                  ['CORRECTION', t('manager.approval.common.workflow.correction')],
+                  ['ABSENCE', t('manager.approval.common.workflow.absenceRequest')],
+                  ['CANCELLATION', t('manager.approval.common.workflow.absenceCancellation')],
+                  ['MONTHLY_PERIOD', t('manager.approval.common.workflow.monthlyPeriod')],
                 ]}
               />
               <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-team">
-                Current team
+                {t('manager.approval.inbox.filter.team.label')}
                 <select
                   id="approval-team"
                   data-route-focus-key="approval-filter-team"
@@ -206,9 +242,11 @@ function ApprovalFilters({
                   value={draft.team}
                   onChange={(event) => onChange({ ...draft, team: event.target.value })}
                 >
-                  <option value="">All available teams</option>
+                  <option value="">{t('manager.approval.inbox.filter.team.all')}</option>
                   {draft.team !== '' && !teams.some((team) => team.id === draft.team) ? (
-                    <option value={draft.team}>Selected current team</option>
+                    <option value={draft.team}>
+                      {t('manager.approval.inbox.filter.team.selected')}
+                    </option>
                   ) : null}
                   {teams.map((team) => (
                     <option key={team.id} value={team.id}>
@@ -219,7 +257,7 @@ function ApprovalFilters({
               </label>
               <SelectFilter
                 id="approval-order"
-                label="Order"
+                label={t('manager.approval.inbox.filter.order.label')}
                 value={`${draft.sort}:${draft.direction}`}
                 onChange={(order) => {
                   const [sort, direction] = order.split(':');
@@ -230,16 +268,16 @@ function ApprovalFilters({
                   });
                 }}
                 options={[
-                  ['SUBMITTED_AT:DESC', 'Newest submitted first'],
-                  ['SUBMITTED_AT:ASC', 'Oldest submitted first'],
-                  ['AFFECTED_DATE:ASC', 'Earliest affected first'],
-                  ['AFFECTED_DATE:DESC', 'Latest affected first'],
-                  ['EMPLOYEE:ASC', 'Employee A to Z'],
-                  ['EMPLOYEE:DESC', 'Employee Z to A'],
+                  ['SUBMITTED_AT:DESC', t('manager.approval.inbox.filter.order.newestSubmitted')],
+                  ['SUBMITTED_AT:ASC', t('manager.approval.inbox.filter.order.oldestSubmitted')],
+                  ['AFFECTED_DATE:ASC', t('manager.approval.inbox.filter.order.earliestAffected')],
+                  ['AFFECTED_DATE:DESC', t('manager.approval.inbox.filter.order.latestAffected')],
+                  ['EMPLOYEE:ASC', t('manager.approval.inbox.filter.order.employeeAscending')],
+                  ['EMPLOYEE:DESC', t('manager.approval.inbox.filter.order.employeeDescending')],
                 ]}
               />
               <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-from">
-                Affected from
+                {t('manager.approval.inbox.filter.from')}
                 <input
                   id="approval-from"
                   data-route-focus-key="approval-filter-from"
@@ -252,7 +290,7 @@ function ApprovalFilters({
                 />
               </label>
               <label className="grid gap-2 text-sm font-semibold" htmlFor="approval-to">
-                Affected through
+                {t('manager.approval.inbox.filter.to')}
                 <input
                   id="approval-to"
                   data-route-focus-key="approval-filter-to"
@@ -269,14 +307,14 @@ function ApprovalFilters({
               <Alert
                 headingLevel="h3"
                 id="approval-date-range-error"
-                title="Check the date range"
+                title={t('manager.approval.inbox.filter.errorTitle')}
                 tone="danger"
               >
                 <p>{error}</p>
               </Alert>
             )}
             <Button type="submit" className="w-fit" data-route-focus-key="approval-apply-filters">
-              Apply filters
+              {t('manager.approval.inbox.filter.apply')}
             </Button>
           </div>
         </FilterBar>
@@ -360,6 +398,9 @@ function ApprovalWorkspace({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   query: ApprovalInboxQuery;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as Parameters<typeof formatDateOnly>[0];
   const { pagination } = data;
   const filtered = hasNonDefaultFilters(query);
   const wideLayout = useWideApprovalLayout();
@@ -369,36 +410,39 @@ function ApprovalWorkspace({
       <div className="grid gap-4 border-b border-[var(--wl-border)] pb-4">
         <div className="grid gap-1">
           <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[var(--wl-text-muted)]">
-            Current queue
+            {t('manager.approval.inbox.queue.label')}
           </p>
           <h2 id="approval-results-heading" className="m-0 text-2xl font-bold">
-            {query.status === 'ACTION_REQUIRED' ? 'Needs review' : statusLabel(query.status)}:{' '}
-            {pagination.total.toLocaleString()}
+            {t(QUEUE_STATUS_MESSAGE_KEYS[query.status])}
+            {': '}
+            {formatNumber(locale, pagination.total)}
           </h2>
         </div>
         <div>
           <SelectFilter
             id="approval-queue-view"
-            label="Queue view"
+            label={t('manager.approval.inbox.queue.viewLabel')}
             value={query.status}
             onChange={(status) => onQueueStatus(approvalInboxStatusSchema.parse(status))}
             options={[
-              ['ACTION_REQUIRED', 'Needs review'],
-              ['WAITING_ON_EMPLOYEE', 'Waiting on employee'],
-              ['COMPLETED', 'Completed'],
-              ['ALL', 'All records'],
+              ['ACTION_REQUIRED', t('manager.approval.inbox.queue.needsReview')],
+              ['WAITING_ON_EMPLOYEE', t('manager.approval.common.status.waitingOnEmployee')],
+              ['COMPLETED', t('manager.approval.common.status.completed')],
+              ['ALL', t('manager.approval.common.status.allRecords')],
             ]}
           />
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          <strong className="text-[var(--wl-text)]">Applied view:</strong>{' '}
-          {appliedFilterSummary(query, data.filterOptions.teams)}
+          <strong className="text-[var(--wl-text)]">
+            {t('manager.approval.inbox.applied.label')}
+          </strong>{' '}
+          {appliedFilterSummary(query, data.filterOptions.teams, locale, t)}
         </p>
         {filtered ? (
           <Button type="button" variant="quiet" className="w-fit" onPress={onClear}>
-            Reset to needs review
+            {t('manager.approval.inbox.applied.reset')}
           </Button>
         ) : null}
       </div>
@@ -412,28 +456,32 @@ function ApprovalWorkspace({
       <p
         className={isFetching ? 'm-0 text-sm font-semibold text-[var(--wl-text-muted)]' : 'sr-only'}
         role="status"
-        aria-label="Approval results status"
+        aria-label={t('manager.approval.inbox.results.statusLabel')}
         aria-live="polite"
         aria-atomic="true"
       >
-        {isFetching ? 'Updating approval results…' : ''}
+        {isFetching ? t('manager.approval.inbox.results.refreshing') : ''}
       </p>
       {data.items.length === 0 ? (
         <RouteState
           actions={
             filtered ? (
               <Button type="button" variant="secondary" className="w-fit" onPress={onClear}>
-                Clear filters
+                {t('manager.approval.inbox.results.clearFilters')}
               </Button>
             ) : undefined
           }
           kind="empty"
-          title={filtered ? 'No approvals match these filters' : 'No approvals need action'}
+          title={
+            filtered
+              ? t('manager.approval.inbox.empty.filteredTitle')
+              : t('manager.approval.inbox.empty.defaultTitle')
+          }
         >
           <p className="m-0">
             {filtered
-              ? 'No approvals match the applied filters.'
-              : 'No approvals currently require your action.'}
+              ? t('manager.approval.inbox.empty.filteredDescription')
+              : t('manager.approval.inbox.empty.defaultDescription')}
           </p>
         </RouteState>
       ) : wideLayout ? (
@@ -443,13 +491,13 @@ function ApprovalWorkspace({
       )}
       {pageCount > 1 ? (
         <Pagination
-          ariaLabel="Approval inbox pages"
+          ariaLabel={t('manager.approval.inbox.pagination.label')}
           currentPage={pagination.page}
           nextFocusKey="approval-next-page"
           onPageChange={onPage}
           pageCount={pageCount}
           previousFocusKey="approval-previous-page"
-          summary={approvalPageSummary(pagination)}
+          summary={approvalPageSummary(pagination, t)}
         />
       ) : null}
     </section>
@@ -461,26 +509,29 @@ function ApprovalResultsTable({
   isFetching,
   query,
 }: Readonly<{ data: ApprovalInbox; isFetching: boolean; query: ApprovalInboxQuery }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as Parameters<typeof formatDateOnly>[0];
   return (
     <DataTable
-      caption="Approval inbox results"
+      caption={t('manager.approval.inbox.results.caption')}
       className="min-w-[46rem]"
-      scrollLabel="Approval inbox results table"
+      scrollLabel={t('manager.approval.inbox.results.tableLabel')}
     >
       <thead>
         <tr>
           <SortHeader active={query.sort === 'EMPLOYEE'} direction={query.direction}>
-            Employee
+            {t('manager.approval.inbox.column.employee')}
           </SortHeader>
-          <th scope="col">Workflow</th>
-          <th scope="col">Status</th>
+          <th scope="col">{t('manager.approval.inbox.column.workflow')}</th>
+          <th scope="col">{t('manager.approval.inbox.column.status')}</th>
           <SortHeader active={query.sort === 'AFFECTED_DATE'} direction={query.direction}>
-            Affected dates
+            {t('manager.approval.inbox.column.affectedDates')}
           </SortHeader>
           <SortHeader active={query.sort === 'SUBMITTED_AT'} direction={query.direction}>
-            Submitted
+            {t('manager.approval.inbox.column.submitted')}
           </SortHeader>
-          <th scope="col">Action</th>
+          <th scope="col">{t('manager.approval.inbox.column.action')}</th>
         </tr>
       </thead>
       <tbody>
@@ -490,19 +541,19 @@ function ApprovalResultsTable({
               <span className="grid gap-1">
                 <span>{item.employeeDisplayName}</span>
                 <span className="text-xs font-normal text-[var(--wl-text-muted)]">
-                  {item.team?.name ?? 'No current team'}
+                  {item.team?.name ?? t('manager.approval.inbox.team.none')}
                 </span>
               </span>
             </th>
-            <td>{workflowLabel(item.kind)}</td>
+            <td>{workflowLabel(item.kind, t)}</td>
             <td>
               <StatusBadge tone={approvalStatusTone(item.status)}>
-                {statusLabel(item.status)}
+                {t(ITEM_STATUS_MESSAGE_KEYS[item.status])}
               </StatusBadge>
             </td>
-            <td>{formatAffectedDates(item)}</td>
-            <td>{formatSubmittedAt(item.submittedAt, data.timeZone)}</td>
-            <td>{approvalAction(item, isFetching, 'table')}</td>
+            <td>{formatAffectedDates(item, locale, t)}</td>
+            <td>{formatSubmittedAt(item.submittedAt, data.timeZone, locale)}</td>
+            <td>{approvalAction(item, isFetching, 'table', t)}</td>
           </tr>
         ))}
       </tbody>
@@ -514,8 +565,14 @@ function ApprovalResultsList({
   data,
   isFetching,
 }: Readonly<{ data: ApprovalInbox; isFetching: boolean }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as Parameters<typeof formatDateOnly>[0];
   return (
-    <ol className="m-0 grid list-none gap-3 p-0" aria-label="Approval inbox results">
+    <ol
+      className="m-0 grid list-none gap-3 p-0"
+      aria-label={t('manager.approval.inbox.results.listLabel')}
+    >
       {data.items.map((item) => (
         <li key={`${item.kind}-${item.id}`}>
           <Panel as="article" className="grid min-w-0 gap-3" density="compact">
@@ -523,22 +580,28 @@ function ApprovalResultsList({
               <div className="grid gap-1">
                 <h3 className="m-0 text-lg font-bold">{item.employeeDisplayName}</h3>
                 <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-                  {workflowLabel(item.kind)}
+                  {workflowLabel(item.kind, t)}
                 </p>
               </div>
               <StatusBadge tone={approvalStatusTone(item.status)}>
-                {statusLabel(item.status)}
+                {t(ITEM_STATUS_MESSAGE_KEYS[item.status])}
               </StatusBadge>
             </div>
             <dl className="m-0 grid gap-2 text-sm">
-              <ApprovalFact label="Affected dates" value={formatAffectedDates(item)} />
               <ApprovalFact
-                label="Submitted"
-                value={formatSubmittedAt(item.submittedAt, data.timeZone)}
+                label={t('manager.approval.inbox.column.affectedDates')}
+                value={formatAffectedDates(item, locale, t)}
               />
-              <ApprovalFact label="Current team" value={item.team?.name ?? 'No current team'} />
+              <ApprovalFact
+                label={t('manager.approval.inbox.column.submitted')}
+                value={formatSubmittedAt(item.submittedAt, data.timeZone, locale)}
+              />
+              <ApprovalFact
+                label={t('manager.approval.inbox.filter.team.label')}
+                value={item.team?.name ?? t('manager.approval.inbox.team.none')}
+              />
             </dl>
-            {approvalAction(item, isFetching, 'list')}
+            {approvalAction(item, isFetching, 'list', t)}
           </Panel>
         </li>
       ))}
@@ -559,15 +622,21 @@ function approvalAction(
   item: ApprovalInbox['items'][number],
   isFetching: boolean,
   presentation: 'list' | 'table',
+  t: ReturnType<typeof useWorkLedgerMessage>,
 ): ReactNode {
   if (isFetching) {
     return (
-      <span className="text-sm text-[var(--wl-text-muted)]">Review after update finishes</span>
+      <span className="text-sm text-[var(--wl-text-muted)]">
+        {t('manager.approval.inbox.action.wait')}
+      </span>
     );
   }
   return (
     <Link
-      aria-label={`Review ${workflowLabel(item.kind).toLowerCase()} for ${item.employeeDisplayName}`}
+      aria-label={t('manager.approval.inbox.action.ariaLabel', {
+        employee: item.employeeDisplayName,
+        workflow: workflowLabel(item.kind, t),
+      })}
       className={buttonVariants({
         variant: item.status === 'ACTION_REQUIRED' ? 'primary' : 'secondary',
         className: presentation === 'list' ? 'w-full' : 'w-fit',
@@ -579,10 +648,10 @@ function approvalAction(
       }
     >
       {presentation === 'table'
-        ? 'Review'
+        ? t('manager.approval.inbox.action.review')
         : item.status === 'ACTION_REQUIRED'
-          ? 'Review and decide'
-          : 'Review record'}
+          ? t('manager.approval.inbox.action.reviewAndDecide')
+          : t('manager.approval.inbox.action.reviewRecord')}
     </Link>
   );
 }
@@ -608,32 +677,40 @@ function SortHeader({
 }
 
 function ApprovalInboxLoading() {
+  const t = useWorkLedgerMessage();
   return (
-    <RouteState kind="loading" title="Loading approval inbox">
-      <p>Preparing the requests and monthly periods available for review.</p>
+    <RouteState kind="loading" title={t('manager.approval.inbox.loading.title')}>
+      <p>{t('manager.approval.inbox.loading.description')}</p>
     </RouteState>
   );
 }
 
 function ApprovalInboxError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
+  const t = useWorkLedgerMessage();
   const denied = error instanceof ApiClientError && error.code === 'ACCESS_DENIED';
   return (
     <Alert
-      title={denied ? 'Approval inbox unavailable' : 'Approval inbox could not be loaded'}
+      title={
+        denied
+          ? t('manager.approval.inbox.error.deniedTitle')
+          : t('manager.approval.inbox.error.unavailableTitle')
+      }
       tone="danger"
     >
       <p>
         {denied
-          ? 'Your current account cannot view the approval inbox.'
-          : 'WorkLedger could not load the approval inbox. No approval information is available.'}
+          ? t('manager.approval.inbox.error.deniedDescription')
+          : t('manager.approval.inbox.error.unavailableDescription')}
       </p>
       {!denied ? (
         <>
           {error instanceof ApiClientError && error.requestId !== undefined ? (
-            <p className="m-0 text-sm">Request reference: {error.requestId}</p>
+            <p className="m-0 text-sm">
+              {t('manager.approval.inbox.error.requestReference', { requestId: error.requestId })}
+            </p>
           ) : null}
           <Button type="button" variant="secondary" className="w-fit" onPress={retry}>
-            Try again
+            {t('shared.action.tryAgain')}
           </Button>
         </>
       ) : null}
@@ -675,21 +752,28 @@ function toSearchParams(query: ApprovalInboxQuery): URLSearchParams {
 function appliedFilterSummary(
   query: ApprovalInboxQuery,
   teams: ApprovalInbox['filterOptions']['teams'],
+  locale: Parameters<typeof formatDateOnly>[0],
+  t: ReturnType<typeof useWorkLedgerMessage>,
 ): string {
   const selectedTeam = teams.find((team) => team.id === query.team);
   const values = [
-    statusLabel(query.status),
-    typeFilterLabel(query.type),
+    t(QUEUE_STATUS_MESSAGE_KEYS[query.status]),
+    t(TYPE_FILTER_MESSAGE_KEYS[query.type]),
     query.team === undefined
-      ? 'all current teams'
-      : (selectedTeam?.name ?? 'selected current team'),
+      ? t('manager.approval.inbox.filter.team.allCurrent')
+      : (selectedTeam?.name ?? t('manager.approval.inbox.filter.team.selected')),
   ];
   if (query.from !== undefined && query.to !== undefined) {
-    values.push(`${formatLocalDate(query.from)} to ${formatLocalDate(query.to)}`);
+    values.push(
+      t('manager.approval.inbox.applied.dateRange', {
+        from: formatDateOnly(locale, query.from, { dateStyle: 'full' }),
+        to: formatDateOnly(locale, query.to, { dateStyle: 'full' }),
+      }),
+    );
   } else {
-    values.push('any affected date');
+    values.push(t('manager.approval.inbox.filter.anyAffectedDate'));
   }
-  values.push(orderLabel(query));
+  values.push(orderLabel(query, t));
   return values.join(', ');
 }
 
@@ -705,17 +789,27 @@ function hasNonDefaultFilters(query: ApprovalInboxQuery): boolean {
   );
 }
 
-function approvalPageSummary(pagination: ApprovalInbox['pagination']): string {
-  if (pagination.total === 0) return 'No approvals';
+function approvalPageSummary(
+  pagination: ApprovalInbox['pagination'],
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
+  if (pagination.total === 0) return t('manager.approval.inbox.pagination.none');
   const first = (pagination.page - 1) * pagination.limit + 1;
   const last = Math.min(pagination.page * pagination.limit, pagination.total);
-  return `Showing ${first.toString()}–${last.toString()} of ${pagination.total.toString()}`;
+  return t('manager.approval.inbox.pagination.summary', { first, last, total: pagination.total });
 }
 
-function formatAffectedDates(item: ApprovalInbox['items'][number]): string {
+function formatAffectedDates(
+  item: ApprovalInbox['items'][number],
+  locale: Parameters<typeof formatDateOnly>[0],
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
   return item.affectedStartDate === item.affectedEndDate
-    ? formatLocalDate(item.affectedStartDate)
-    : `${formatLocalDate(item.affectedStartDate)} to ${formatLocalDate(item.affectedEndDate)}`;
+    ? formatDateOnly(locale, item.affectedStartDate, { dateStyle: 'full' })
+    : t('manager.approval.inbox.applied.dateRange', {
+        from: formatDateOnly(locale, item.affectedStartDate, { dateStyle: 'full' }),
+        to: formatDateOnly(locale, item.affectedEndDate, { dateStyle: 'full' }),
+      });
 }
 
 function approvalStatusTone(status: ApprovalInboxStatus): NonNullable<StatusBadgeProps['tone']> {
@@ -725,46 +819,38 @@ function approvalStatusTone(status: ApprovalInboxStatus): NonNullable<StatusBadg
   return 'neutral';
 }
 
-function workflowLabel(kind: ApprovalInbox['items'][number]['kind']): string {
-  return kind === 'CORRECTION'
-    ? 'Correction'
-    : kind === 'ABSENCE'
-      ? 'Absence request'
-      : kind === 'CANCELLATION'
-        ? 'Absence cancellation'
-        : 'Monthly period';
+function workflowLabel(
+  kind: ApprovalInbox['items'][number]['kind'],
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
+  return t(WORKFLOW_MESSAGE_KEYS[kind]);
 }
 
-function statusLabel(status: ApprovalInboxStatus): string {
-  return status === 'ACTION_REQUIRED'
-    ? 'Action required'
-    : status === 'WAITING_ON_EMPLOYEE'
-      ? 'Waiting on employee'
-      : status === 'COMPLETED'
-        ? 'Completed'
-        : 'All records';
-}
-
-function typeFilterLabel(type: ApprovalInboxType): string {
-  return type === 'ALL' ? 'all workflow categories' : workflowLabel(type);
-}
-
-function orderLabel(value: Pick<ApprovalInboxQuery, 'direction' | 'sort'>): string {
+function orderLabel(
+  value: Pick<ApprovalInboxQuery, 'direction' | 'sort'>,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
   if (value.sort === 'SUBMITTED_AT') {
-    return value.direction === 'ASC' ? 'oldest submitted first' : 'newest submitted first';
+    return value.direction === 'ASC'
+      ? t('manager.approval.inbox.filter.order.oldestSubmitted')
+      : t('manager.approval.inbox.filter.order.newestSubmitted');
   }
   if (value.sort === 'AFFECTED_DATE') {
-    return value.direction === 'ASC' ? 'earliest affected first' : 'latest affected first';
+    return value.direction === 'ASC'
+      ? t('manager.approval.inbox.filter.order.earliestAffected')
+      : t('manager.approval.inbox.filter.order.latestAffected');
   }
-  return value.direction === 'ASC' ? 'employee A to Z' : 'employee Z to A';
+  return value.direction === 'ASC'
+    ? t('manager.approval.inbox.filter.order.employeeAscending')
+    : t('manager.approval.inbox.filter.order.employeeDescending');
 }
 
-function formatSubmittedAt(value: string, timeZone: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone,
-  }).format(new Date(value));
+function formatSubmittedAt(
+  value: string,
+  timeZone: string,
+  locale: Parameters<typeof formatDateOnly>[0],
+): string {
+  return formatInstant(locale, value, timeZone);
 }
 
 function isAuthenticationError(error: unknown): error is ApiClientError {

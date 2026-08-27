@@ -6,13 +6,14 @@ import {
   domainAuditQuerySchema,
   type DomainAuditQuery,
 } from '@workledger/contracts';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 
 import { domainAuditPageQuery } from '../app/query.js';
-import { canonicalRouteLabel } from '../app/route-copy.js';
 import { AuditEventExplorer, type AuditExplorerQuery } from '../components/audit-event-explorer.js';
 import { PageHeader } from '../components/page-header.js';
 
 export function AuditPage() {
+  const t = useWorkLedgerMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = parseQuery(searchParams);
   const result = useQuery(domainAuditPageQuery(query));
@@ -31,18 +32,18 @@ export function AuditPage() {
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="HR administration"
-        title={canonicalRouteLabel('/audit')}
-        description="Review recorded organizational changes and decisions."
+        eyebrow={t('system.audit.domain.page.eyebrow')}
+        title={t('shared.route.title.audit')}
+        description={t('system.audit.domain.page.description')}
       />
       <AuditEventExplorer
-        caption="Redacted organization domain audit events, newest first"
-        filterDescription="Dates use the organization time zone. Exact action codes can narrow a known workflow."
-        filterTitle="Filter domain audit events"
+        caption={t('system.audit.domain.page.caption')}
+        filterDescription={t('system.audit.domain.page.filterDescription')}
+        filterTitle={t('system.audit.domain.page.filterTitle')}
         page={result.data}
         query={query}
-        resultsTitle="Domain audit events"
-        scrollLabel="Domain audit results"
+        resultsTitle={t('system.audit.domain.page.resultsTitle')}
+        scrollLabel={t('system.audit.domain.page.scrollLabel')}
         targetKinds={DOMAIN_AUDIT_TARGET_KINDS}
         updateQuery={update}
       />

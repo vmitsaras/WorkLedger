@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
 import type { EmployeeEntitlementAdminDetail } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
+import { WorkLedgerI18nProvider } from '@workledger/i18n/react';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
@@ -56,6 +58,11 @@ const DETAIL: EmployeeEntitlementAdminDetail = {
   asOfLocalDate: '2026-08-14',
   privilegedActionsAllowed: true,
 };
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 
 afterEach(() => {
   clearSessionMemory();
@@ -87,10 +94,15 @@ test('explains the ledger and submits a reasoned non-zero adjustment', async () 
   );
   const user = userEvent.setup();
   const queryClient = createWorkLedgerQueryClient();
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
   const { container } = render(
-    <QueryClientProvider client={queryClient}>
-      <EmployeeEntitlementAdministration employeeId="employee-1" entitlement={DETAIL} />
-    </QueryClientProvider>,
+    <WorkLedgerI18nProvider runtime={defaultLocaleRuntime}>
+      <QueryClientProvider client={queryClient}>
+        <EmployeeEntitlementAdministration employeeId="employee-1" entitlement={DETAIL} />
+      </QueryClientProvider>
+    </WorkLedgerI18nProvider>,
   );
   expect(screen.getByText('Reason: Initial allocation.')).toBeVisible();
   await user.selectOptions(screen.getByLabelText('Entitlement account'), 'vacation-v1');

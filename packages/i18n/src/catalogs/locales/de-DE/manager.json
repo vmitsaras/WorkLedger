@@ -1,1 +1,584 @@
-{}
+{
+  "approval": {
+    "common": {
+      "status": {
+        "actionRequired": "Aktion erforderlich",
+        "allRecords": "Alle Datensätze",
+        "completed": "Abgeschlossen",
+        "waitingOnEmployee": "Wartet auf Mitarbeitende"
+      },
+      "workflow": {
+        "absenceCancellation": "Abwesenheitsstornierung",
+        "absenceRequest": "Abwesenheitsantrag",
+        "correction": "Korrektur",
+        "monthlyPeriod": "Monatszeitraum"
+      }
+    },
+    "detail": {
+      "action": {
+        "acknowledge": "Meldung bestätigen",
+        "approve": "Genehmigen",
+        "approveCorrection": "Korrektur genehmigen",
+        "backToInbox": "Zurück zum Genehmigungseingang",
+        "reject": "Ablehnen",
+        "requestChanges": "Änderungen anfordern"
+      },
+      "apply": {
+        "action": "Korrektur anwenden",
+        "description": {
+          "postLock": "Durch die Anwendung wird die genehmigte Änderung nach dem gesperrten Monat hinzugefügt. Der genehmigte Monatsdatensatz bleibt unverändert.",
+          "unlocked": "Durch die Anwendung wird der ungesperrte Tagesdatensatz aktualisiert und die daraus resultierende Saldoänderung hinzugefügt."
+        },
+        "heading": "Genehmigte Korrektur anwenden",
+        "pending": "Wird angewendet…"
+      },
+      "decision": {
+        "description": "Für jedes Ergebnis außer einer Bestätigung ist eine Begründung mit mindestens 10 Zeichen erforderlich.",
+        "heading": "Entscheidung erfassen",
+        "overrideDescription": "Ich habe den voraussichtlichen Anspruchssaldo geprüft und erteile ausdrücklich eine Ausnahme durch die Personaladministration.",
+        "overrideTitle": "Mit Ausnahme für einen negativen Saldo genehmigen.",
+        "pending": "Wird erfasst…",
+        "reasonHelp": "Die Begründung wird mit der Entscheidung gespeichert und nicht im minimierten Eingang angezeigt.",
+        "reasonLabel": "Entscheidungsbegründung"
+      },
+      "empty": {
+        "description": "Für diese Genehmigung ist im aktuellen Status keine Aktion verfügbar.",
+        "title": "Keine Entscheidung verfügbar"
+      },
+      "error": {
+        "accessDenied": "Sie sind nicht berechtigt, diese Aktion auszuführen.",
+        "adjustmentRequired": "Diese Korrektur betrifft einen gesperrten Monat und erfordert den Ablauf für nachträgliche Anpassungen.",
+        "deniedDescription": "Ihr Konto kann auf diese Genehmigung nicht zugreifen.",
+        "deniedStateDescription": "Nur eine berechtigte prüfende Person im aktuellen Berichtsbereich kann diesen Datensatz öffnen.",
+        "deniedStateTitle": "Zugriff auf Genehmigung eingeschränkt",
+        "description": "WorkLedger konnte diesen Genehmigungsdatensatz nicht laden. Kehren Sie zum Eingang zurück und versuchen Sie es erneut.",
+        "insufficientBalance": "Dieser Antrag überschreitet den verfügbaren Anspruch. Die Genehmigung erfordert eine ausdrückliche Ausnahme durch die Personaladministration.",
+        "recording": "WorkLedger konnte diese Aktion nicht erfassen. Es wurde keine Entscheidung gespeichert.",
+        "stateConflict": "Diese Genehmigung wurde vor Ihrer Aktion geändert. Der aktuelle Datensatz wurde neu geladen; prüfen Sie ihn, bevor Sie es erneut versuchen.",
+        "stateDescription": "Es wurde keine Entscheidung erfasst.",
+        "title": "Genehmigung nicht verfügbar"
+      },
+      "evidence": {
+        "description": "Diese ursprünglichen Ereignisse bleiben bei der Genehmigung einer Korrektur unverändert.",
+        "empty": "Dieser Korrektur sind keine ursprünglichen Stempelereignisse zugeordnet.",
+        "eyebrow": "Nachweise",
+        "heading": "Erfasste Stempelereignisse"
+      },
+      "feedback": {
+        "correctionApplied": "Korrektur angewendet. Die Arbeitszeit beträgt {{worked}} und der Saldo hat sich um {{balance}} geändert.",
+        "decisionRecorded": "{{action}} erfasst. Aktueller Status: {{status}}.",
+        "errorTitle": "Entscheidung nicht erfasst",
+        "postLockApproved": "Korrektur genehmigt. Die nachträgliche Anpassung wurde angehängt und der genehmigte Monatsdatensatz bleibt unverändert.",
+        "successTitle": "Entscheidung erfasst"
+      },
+      "loading": {
+        "description": "Der aktuelle Datensatz und verfügbare Aktionen werden geprüft.",
+        "pageDescription": "Der aktuelle Datensatz, seine Auswirkung und verfügbare Entscheidungen werden vorbereitet.",
+        "pageTitle": "Genehmigung wird geladen",
+        "title": "Prüfdetails werden geladen"
+      },
+      "page": {
+        "description": "Prüfen Sie den aktuellen Datensatz, seine Auswirkung und die verfügbaren Ergebnisse, bevor Sie eine Entscheidung erfassen.",
+        "eyebrow": "Genehmigungen",
+        "title": "{{workflow}} prüfen"
+      },
+      "summary": {
+        "absenceType": "Abwesenheitsart:",
+        "coverage": {
+          "caption": "Von dieser Genehmigung abgedeckte Daten und Minuten",
+          "date": "Datum",
+          "kind": "Zeitraum",
+          "minutes": "Minuten",
+          "scrollHint": "Scrollen Sie horizontal, um jeden Zeitraumwert zu prüfen.",
+          "scrollLabel": "Abwesenheitszeitraum"
+        },
+        "dateRange": "{{from}} bis {{to}}",
+        "effect": "So wird diese Änderung wirksam:",
+        "effectPostLock": "Die Genehmigung fügt dem gesperrten Monat eine Anpassung hinzu, während der genehmigte Monatsdatensatz unverändert bleibt.",
+        "effectUnlocked": "Nach der Genehmigung kann die Korrektur auf den ungesperrten Tagesdatensatz angewendet werden.",
+        "employeeReason": "Begründung der beschäftigten Person:",
+        "entitlement": "Anspruch:",
+        "entitlementValue": "Beantragt {{requested}}; voraussichtlich verbleibend {{projected}}.",
+        "originalBalance": "Saldo {{value}}",
+        "originalCalculation": "Ursprüngliche Berechnung",
+        "originalCredited": "Gutgeschrieben {{value}}",
+        "originalWorked": "Gearbeitet {{value}}",
+        "proposedInterval": "Vorgeschlagenes Intervall",
+        "submitted": "Eingereicht",
+        "workflow": "Ablauf"
+      },
+      "validation": {
+        "confirmOverride": "Bestätigen Sie die Ausnahme für den negativen Saldo, bevor Sie diesen Antrag genehmigen.",
+        "hrOverrideOnly": "Dieser Antrag überschreitet den verfügbaren Anspruch. Nur die Personaladministration kann ihn mit einer ausdrücklichen Ausnahme genehmigen.",
+        "reason": "Geben Sie mindestens 10 Zeichen zur Begründung der Entscheidung ein."
+      },
+      "workflow": {
+        "absenceCancellation": "Abwesenheitsstornierung",
+        "absenceRequest": "Abwesenheitsantrag",
+        "correctionRequest": "Korrekturantrag"
+      }
+    },
+    "inbox": {
+      "action": {
+        "ariaLabel": "{{workflow}} für {{employee}} prüfen",
+        "review": "Prüfen",
+        "reviewAndDecide": "Prüfen und entscheiden",
+        "reviewRecord": "Datensatz prüfen",
+        "wait": "Nach Abschluss der Aktualisierung prüfen"
+      },
+      "applied": {
+        "dateRange": "{{from}} bis {{to}}",
+        "label": "Angewendete Ansicht:",
+        "reset": "Auf „Prüfung erforderlich“ zurücksetzen"
+      },
+      "column": {
+        "action": "Aktion",
+        "affectedDates": "Betroffene Daten",
+        "employee": "Mitarbeitende",
+        "status": "Status",
+        "submitted": "Eingereicht",
+        "workflow": "Ablauf"
+      },
+      "empty": {
+        "defaultDescription": "Derzeit erfordert keine Genehmigung Ihre Aktion.",
+        "defaultTitle": "Keine Genehmigung erfordert eine Aktion",
+        "filteredDescription": "Keine Genehmigung entspricht den angewendeten Filtern.",
+        "filteredTitle": "Keine Genehmigung entspricht diesen Filtern"
+      },
+      "error": {
+        "deniedDescription": "Ihr aktuelles Konto kann den Genehmigungseingang nicht anzeigen.",
+        "deniedTitle": "Genehmigungseingang nicht verfügbar",
+        "requestReference": "Anfragereferenz: {{requestId}}",
+        "unavailableDescription": "WorkLedger konnte den Genehmigungseingang nicht laden. Es sind keine Genehmigungsinformationen verfügbar.",
+        "unavailableTitle": "Genehmigungseingang konnte nicht geladen werden"
+      },
+      "filter": {
+        "anyAffectedDate": "Beliebiges betroffenes Datum",
+        "apply": "Filter anwenden",
+        "ariaLabel": "Genehmigungsfilter",
+        "category": {
+          "all": "Alle Kategorien",
+          "label": "Ablaufkategorie"
+        },
+        "error": "Geben Sie beide Daten in der richtigen Reihenfolge ein und begrenzen Sie den Zeitraum auf 366 Kalendertage.",
+        "errorTitle": "Datumsbereich prüfen",
+        "from": "Betroffen ab",
+        "hide": "Filter ausblenden",
+        "order": {
+          "earliestAffected": "Frühestes betroffenes Datum zuerst",
+          "employeeAscending": "Mitarbeitende A bis Z",
+          "employeeDescending": "Mitarbeitende Z bis A",
+          "label": "Reihenfolge",
+          "latestAffected": "Spätestes betroffenes Datum zuerst",
+          "newestSubmitted": "Neueste Einreichung zuerst",
+          "oldestSubmitted": "Älteste Einreichung zuerst"
+        },
+        "show": "Diese Ansicht eingrenzen",
+        "team": {
+          "all": "Alle verfügbaren Teams",
+          "allCurrent": "Alle aktuellen Teams",
+          "label": "Aktuelles Team",
+          "selected": "Ausgewähltes aktuelles Team"
+        },
+        "to": "Betroffen bis"
+      },
+      "loading": {
+        "description": "Die zur Prüfung verfügbaren Anträge und Monatszeiträume werden vorbereitet.",
+        "title": "Genehmigungseingang wird geladen"
+      },
+      "page": {
+        "description": "Prüfen Sie Korrekturen, Abwesenheitsanträge, Stornierungen und Monatszeiträume, die Ihre Entscheidung benötigen.",
+        "eyebrow": "Genehmigungen"
+      },
+      "pagination": {
+        "label": "Seiten des Genehmigungseingangs",
+        "none": "Keine Genehmigungen",
+        "summary": "{{first}}–{{last}} von {{total}} werden angezeigt"
+      },
+      "permission": {
+        "description": "Ihr aktuelles Konto kann den Genehmigungseingang nicht anzeigen.",
+        "eyebrow": "Seitenstatus"
+      },
+      "queue": {
+        "label": "Aktuelle Warteschlange",
+        "needsReview": "Prüfung erforderlich",
+        "viewLabel": "Warteschlangenansicht"
+      },
+      "results": {
+        "caption": "Ergebnisse des Genehmigungseingangs",
+        "clearFilters": "Filter löschen",
+        "listLabel": "Ergebnisse des Genehmigungseingangs",
+        "refreshing": "Genehmigungsergebnisse werden aktualisiert…",
+        "statusLabel": "Status der Genehmigungsergebnisse",
+        "tableLabel": "Ergebnistabelle des Genehmigungseingangs"
+      },
+      "team": {
+        "none": "Kein aktuelles Team"
+      }
+    }
+  },
+  "report": {
+    "catalog": {
+      "flexibleTime": {
+        "description": "Anfangssaldo, Änderung im Zeitraum und Endsaldo der Gleitzeit aus dem unveränderlich fortgeschriebenen Zeitkonto.",
+        "title": "Gleitzeit"
+      },
+      "leave": {
+        "description": "Verfügbarkeit, Reservierungen und voraussichtliche Abwesenheitssalden ohne Krankheitsklassifizierung oder Antragsdetails.",
+        "title": "Abwesenheitssalden"
+      },
+      "missingRecords": {
+        "description": "Unvollständige Tagesdatensätze im ausgewählten Zeitraum, die Aufmerksamkeit benötigen, ohne private Ablaufdetails.",
+        "title": "Fehlende Datensätze"
+      },
+      "monthlyTime": {
+        "description": "Monatliche Soll-, Arbeits-, Gutschrift- und Saldominuten mit Ablauf- und nachträglichem Anpassungskontext.",
+        "title": "Monatszeit"
+      },
+      "pendingApprovals": {
+        "description": "Aktuell bearbeitbare Korrektur-, Abwesenheits-, Stornierungs- und Monatsgenehmigungen im Prüfbereich.",
+        "title": "Ausstehende Genehmigungen"
+      }
+    },
+    "common": {
+      "scope": {
+        "currentDirectReports": "aktuell direkt unterstellte Mitarbeitende",
+        "organization": "Organisation",
+        "self": "Ihre eigenen Datensätze",
+        "selfAndDirectReports": "Ihre eigenen Datensätze und aktuell direkt unterstellte Mitarbeitende"
+      },
+      "sort": {
+        "date": "Datum",
+        "employee": "Mitarbeitende",
+        "status": "Status",
+        "value": "Wert"
+      }
+    },
+    "detail": {
+      "action": {
+        "back": "Zurück zu Berichten",
+        "return": "Zu Berichten zurückkehren",
+        "review": "Prüfen"
+      },
+      "column": {
+        "action": "Aktion",
+        "affectedDates": "Betroffene Daten",
+        "closing": "Endsaldo",
+        "employee": "Mitarbeitende",
+        "incomplete": "Unvollständig",
+        "leaveAccount": "Abwesenheitskonto",
+        "month": "Monat",
+        "opening": "Anfangssaldo",
+        "projected": "Voraussichtlich",
+        "status": "Status",
+        "submitted": "Eingereicht",
+        "warnings": "Warnungen",
+        "workflow": "Ablauf"
+      },
+      "empty": {
+        "description": "Keine Berichtszeilen entsprechen dem angewendeten Datumsbereich und Berechtigungsumfang.",
+        "title": "Keine Berichtszeilen entsprechen dieser Ansicht"
+      },
+      "error": {
+        "deniedDescription": "Sie sind nicht mehr berechtigt, diesen Bericht auszuführen.",
+        "deniedTitle": "Sie haben keinen Zugriff auf diesen Bereich",
+        "refreshNoData": "Die Berichtsaktualisierung hat keine Daten zurückgegeben.",
+        "unavailableDescription": "Der Bericht konnte nicht geladen werden.",
+        "unavailableTitle": "Diese Informationen sind nicht verfügbar"
+      },
+      "filter": {
+        "applied": {
+          "employee": "Ein Mitarbeitendenfilter ist angewendet.",
+          "summary": "Angewendet: {{from}} bis {{to}}; {{sort}}, {{direction}}.",
+          "through": "bis"
+        },
+        "apply": "Berichtsfilter anwenden",
+        "direction": {
+          "ascending": "Aufsteigend",
+          "descending": "Absteigend",
+          "label": "Richtung"
+        },
+        "error": "Geben Sie beide Daten in der richtigen Reihenfolge ein, begrenzen Sie den Zeitraum auf 366 Tage und wählen Sie eine verfügbare Sortierung.",
+        "from": "Von",
+        "heading": "Datumsbereich und Reihenfolge",
+        "reset": "Berichtsfilter zurücksetzen",
+        "sort": "Sortieren nach",
+        "to": "Bis"
+      },
+      "loading": {
+        "description": "Bericht wird ausgeführt…",
+        "title": "Informationen werden geladen"
+      },
+      "missingRecords": {
+        "noWarningCode": "Kein Warncode"
+      },
+      "page": {
+        "eyebrow": "Bericht"
+      },
+      "pagination": {
+        "label": "Berichtsseiten",
+        "summary": "Seite {{current}} von {{total}}. {{count}} Berichtszeilen."
+      },
+      "partial": {
+        "description": "Dieser Bericht ist unvollständig, weil mindestens ein Tagesdatensatz nicht vollständig ist. Summen können sich nach Klärung dieser Datensätze ändern.",
+        "title": "Unvollständiger Bericht"
+      },
+      "results": {
+        "generated": "Bericht erstellt: {{value}}.",
+        "heading": "Ergebnisse",
+        "refreshing": "Bericht wird aktualisiert…",
+        "summary": "{{count}} Zeilen im Bereich {{scope}}. Summen umfassen alle passenden Zeilen, nicht nur diese Seite."
+      },
+      "summary": {
+        "actionableApprovals": "Bearbeitbare Genehmigungen",
+        "availableChange": "Verfügbarkeitsänderung",
+        "balance": "Saldo",
+        "closingAvailable": "Verfügbarkeit am Ende",
+        "closingBalance": "Endsaldo",
+        "credited": "Gutgeschrieben",
+        "expected": "Soll",
+        "incompleteRecords": "Unvollständige Datensätze",
+        "openingAvailable": "Verfügbarkeit am Anfang",
+        "openingBalance": "Anfangssaldo",
+        "postLockChange": "Nachträgliche Änderung",
+        "projectedRemaining": "Voraussichtlich verbleibend",
+        "rangeChange": "Änderung im Zeitraum",
+        "reserved": "Reserviert",
+        "worked": "Gearbeitet"
+      },
+      "table": {
+        "caption": "Zeilen für {{report}} von {{from}} bis {{to}}",
+        "scrollHint": "Scrollen Sie diesen Ergebnisbereich auf schmalen Bildschirmen horizontal, um alle Berichtsspalten zu vergleichen.",
+        "scrollLabel": "Berichtstabelle {{report}}"
+      }
+    },
+    "page": {
+      "available": {
+        "description": "Der Katalog enthält nur Berichte, die Ihr aktuelles Konto ausführen darf.",
+        "heading": "Verfügbare Berichte"
+      },
+      "description": "Prüfen Sie Zeit-, Saldo-, Abwesenheits-, Datenqualitäts- und Genehmigungsinformationen in Ihrem aktuellen Berechtigungsumfang. Jedes Ergebnis nennt den angewendeten Bereich.",
+      "error": {
+        "title": "Berichte sind derzeit nicht verfügbar"
+      },
+      "eyebrow": "Betrieb",
+      "loading": {
+        "description": "Der verfügbare Berichtskatalog wird abgerufen.",
+        "title": "Informationen werden geladen"
+      },
+      "open": "{{report}} öffnen"
+    },
+    "portability": {
+      "action": {
+        "copy": "Berichtszusammenfassung kopieren",
+        "copyPending": "Zusammenfassung wird kopiert…",
+        "csvLabel": "CSV-Export",
+        "export": "CSV exportieren",
+        "exportPending": "CSV wird exportiert…",
+        "summaryCopyLabel": "Kopieren der Zusammenfassung"
+      },
+      "description": {
+        "copy": "Beim Kopieren der Zusammenfassung werden nur der sichtbare Datumsbereich, der Berechtigungsumfang, die vollständige Zeilenanzahl und die Zusammenfassungswerte geschrieben. Tabellenzeilen werden niemals automatisch kopiert.",
+        "csv": "Die CSV-Datei enthält alle zu diesem Bericht passenden Zeilen und diese Felder: {{fields}}. Interne Kennungen, Abwesenheitsunterart, Krankheitsklassifizierung, Notizen, Begründungen, Prüfungskommentare und ausgeblendete Spalten werden weggelassen."
+      },
+      "error": {
+        "accessDenied": "Ihr Berichtsbereich hat sich geändert. {{action}} wurde nicht abgeschlossen.",
+        "clipboardUnavailable": "Der Zugriff auf die Zwischenablage ist nicht verfügbar.",
+        "failed": "{{action}} ist fehlgeschlagen. Es wurde nichts Neues in den Download oder die Zwischenablage geschrieben.",
+        "sessionEnded": "Ihre Sitzung ist abgelaufen. {{action}} wurde nicht abgeschlossen.",
+        "tooLarge": "Die CSV-Datei ist zu groß. Grenzen Sie den Datumsbereich ein oder wählen Sie eine beschäftigte Person."
+      },
+      "fields": {
+        "flexibleTime": "Name der beschäftigten Person sowie Minuten für Anfangssaldo, Zeitraumänderung und Endsaldo",
+        "leave": "Name der beschäftigten Person, Bezeichnung des Abwesenheitskontos, Verfügbarkeitsänderungen, Reservierungen und voraussichtliche Minuten",
+        "missingRecords": "Name der beschäftigten Person, Datum, Status, Soll-/Arbeitsminuten und Warncodes",
+        "monthlyTime": "Name der beschäftigten Person, Monat, Ablaufstatus, Soll-/Arbeits-/Gutschrift-/Saldominuten, Anzahl unvollständiger Datensätze und nachträgliche Differenz",
+        "pendingApprovals": "Name der beschäftigten Person, allgemeine Ablaufkategorie, betroffene Daten und Einreichungszeitpunkt"
+      },
+      "heading": "Exportieren und kopieren",
+      "status": {
+        "copySuccess": "Berichtszusammenfassung kopiert. Tabellenzeilen und ausgeblendete Felder wurden nicht kopiert.",
+        "exportSuccess": "CSV-Download gestartet. Text mit Formelzeichen wurde vor der CSV-Quotierung mit einem Apostroph versehen.",
+        "label": "Status der Berichtsübertragung"
+      },
+      "summary": {
+        "actionableApprovals": "Bearbeitbare Genehmigungen",
+        "availableChange": "Verfügbarkeitsänderung",
+        "balance": "Saldo",
+        "closing": "Endsaldo",
+        "closingAvailable": "Verfügbarkeit am Ende",
+        "closingBalance": "Endsaldo",
+        "credited": "Gutgeschrieben",
+        "dateRange": "Datumsbereich",
+        "expected": "Soll",
+        "incompleteRecords": "Unvollständige Datensätze",
+        "matchingRows": "Passende Zeilen",
+        "openingAvailable": "Verfügbarkeit am Anfang",
+        "openingBalance": "Anfangssaldo",
+        "postLockChange": "Nachträgliche Änderung",
+        "projectedRemaining": "Voraussichtlich verbleibend",
+        "rangeChange": "Änderung im Zeitraum",
+        "reserved": "Reserviert",
+        "scope": "Bereich",
+        "worked": "Gearbeitet"
+      }
+    }
+  },
+  "team": {
+    "calendar": {
+      "agenda": {
+        "label": "Agenda der Teamverfügbarkeit für {{month}}",
+        "selectDate": "Datum auswählen"
+      },
+      "byDate": "Verfügbarkeit nach Datum",
+      "coverage": {
+        "firstHalf": "erste Hälfte der Sollarbeitszeit",
+        "fullDay": "ganzer Tag",
+        "secondHalf": "zweite Hälfte der Sollarbeitszeit"
+      },
+      "empty": {
+        "dateDescription": "Für dieses Datum ist keine Nichtverfügbarkeit im Team erfasst.",
+        "monthDescription": "Für diesen Monat ist keine Nichtverfügbarkeit im Team erfasst.",
+        "monthTitle": "Keine Nichtverfügbarkeit in diesem Monat"
+      },
+      "entry": {
+        "summary": "Nicht verfügbar — {{coverage}}",
+        "team": "Team: {{team}}",
+        "teamMissing": "Aktuelle Teamzuweisung nicht verfügbar"
+      },
+      "error": {
+        "description": "Der ausgewählte Monat konnte nicht geladen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "title": "Teamkalender nicht verfügbar"
+      },
+      "grid": {
+        "caption": "Neutrale Nichtverfügbarkeit im Team für {{month}}. Wählen Sie ein Datum für eine eingegrenzte Liste.",
+        "scrollHint": "Scrollen Sie horizontal, um alle sieben Tage zu prüfen.",
+        "scrollLabel": "Monatsraster der Teamverfügbarkeit",
+        "selectDate": "{{date}} auswählen"
+      },
+      "loading": {
+        "description": "Die Teamverfügbarkeit für den ausgewählten Monat wird vorbereitet.",
+        "title": "Teamkalender wird geladen"
+      },
+      "marker": {
+        "selected": "Ausgewählt",
+        "today": "Heute"
+      },
+      "missingTeam": {
+        "description_one": "{{count}} Verfügbarkeitseintrag hat keine aktuelle Teamzuweisung. Der Eintrag bleibt sichtbar, ohne ein Team anzunehmen.",
+        "description_other": "{{count}} Verfügbarkeitseinträge haben keine aktuelle Teamzuweisung. Die Einträge bleiben sichtbar, ohne ein Team anzunehmen.",
+        "title": "Aktuelle Teamzuweisung nicht verfügbar"
+      },
+      "navigation": {
+        "label": "Monat des Teamkalenders",
+        "next": "Nächster Monat",
+        "previous": "Vorheriger Monat"
+      },
+      "page": {
+        "description": "Planen Sie anhand neutraler Teamverfügbarkeit und behalten Sie das ausgewählte Datum und den Monat im Blick.",
+        "eyebrow": "Teamverfügbarkeit"
+      },
+      "permission": {
+        "description": "Ihr aktuelles Konto kann den Teamkalender nicht anzeigen. Es wurde keine Verfügbarkeit von Mitarbeitenden offengelegt.",
+        "eyebrow": "Seitenstatus"
+      },
+      "scopeAsOf": "Aktueller Mitarbeitendenbereich ausgewertet am {{date}} ({{timeZone}}). Beide Ansichten enthalten dieselbe neutrale Verfügbarkeit.",
+      "selectedDate": "Ausgewähltes Datum",
+      "selectedMonth": "Ausgewählter Monat",
+      "todaySuffix": " — Heute",
+      "unavailableCount": "{{count}} Einträge zur Nichtverfügbarkeit",
+      "view": {
+        "agenda": "Agendaliste",
+        "label": "Ansicht des Teamkalenders",
+        "month": "Monatsraster"
+      },
+      "weekday": {
+        "friday": "Freitag",
+        "monday": "Montag",
+        "saturday": "Samstag",
+        "sunday": "Sonntag",
+        "thursday": "Donnerstag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch"
+      }
+    },
+    "status": {
+      "action": {
+        "none": "Keine Folgeaktion",
+        "openInbox": "Eingang öffnen",
+        "openInboxLabel": "Genehmigungseingang öffnen, um offene Datensätze für {{employee}} zu finden",
+        "viewCalendar": "Kalender anzeigen",
+        "viewCalendarLabel": "Teamkalender für {{employee}} anzeigen"
+      },
+      "availability": {
+        "offWork": "Arbeitet derzeit nicht",
+        "onBreak": "In Pause",
+        "unavailable": "Heute nicht verfügbar",
+        "working": "Arbeitet derzeit"
+      },
+      "column": {
+        "availability": "Verfügbarkeit",
+        "currentTeam": "Aktuelles Team",
+        "employee": "Mitarbeitende",
+        "nextStep": "Nächster Schritt",
+        "recordState": "Datensatzstatus"
+      },
+      "empty": {
+        "filteredDescription": "Ändern Sie die Übersichtsfilter, um andere aktuell direkt unterstellte Mitarbeitende anzuzeigen.",
+        "filteredTitle": "Keine Teammitglieder entsprechen dieser Ansicht",
+        "noReportsDescription": "Sie haben keine aktuell direkt unterstellten Mitarbeitenden, die angezeigt werden können.",
+        "noReportsTitle": "Keine aktuell direkt unterstellten Mitarbeitenden"
+      },
+      "error": {
+        "description": "Der Teamstatus konnte nicht geladen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "title": "Teamstatus nicht verfügbar"
+      },
+      "filter": {
+        "allAvailability": "alle Verfügbarkeitsstatus",
+        "allDirectReports": "Alle direkt unterstellten Mitarbeitenden",
+        "description": "Offene Datensätze können Arbeit enthalten, die Ihre Prüfung, eine Antwort der beschäftigten Person oder die endgültige Anwendung benötigt. Die Bezeichnung legt weder Ablauf noch Abwesenheitsart offen.",
+        "heading": "Nach aktueller Verfügbarkeit filtern",
+        "openRecords": "Personen mit offenen Datensätzen",
+        "option": "{{label}}: {{count}}",
+        "recordLabel": "Datensatzfilter",
+        "withOpenRecords": " mit offenen Datensätzen"
+      },
+      "loading": {
+        "description": "Aktuelle Verfügbarkeit und Anzahl ungeklärter Datensätze werden vorbereitet.",
+        "title": "Teamstatus wird geladen"
+      },
+      "members": {
+        "currentCount": "{{count}} aktuell direkt unterstellte Mitarbeitende.",
+        "filteredCount": "{{visible}} von {{total}} direkt unterstellten Mitarbeitenden werden angezeigt: {{availability}}{{records}}.",
+        "heading": "Teammitglieder",
+        "showAll": "Alle direkt unterstellten Mitarbeitenden anzeigen"
+      },
+      "page": {
+        "description": "Sehen Sie, wer arbeitet, pausiert, heute nicht verfügbar ist oder offene Datensätze hat, und öffnen Sie anschließend die passende Folgeaktion.",
+        "eyebrow": "Teamarbeitsbereich",
+        "shortcuts": "Kurzbefehle des Teamarbeitsbereichs"
+      },
+      "permission": {
+        "description": "Ihr aktuelles Konto kann den Teamstatus nicht anzeigen. Es wurde keine Verfügbarkeit von Mitarbeitenden offengelegt.",
+        "eyebrow": "Seitenstatus"
+      },
+      "results": {
+        "caption": "Aktuelle Verfügbarkeit, Status offener Datensätze und nächste Schritte für direkt unterstellte Mitarbeitende.",
+        "currentTeam": "Aktuelles Team",
+        "listLabel": "Ergebnisse des Teamstatus",
+        "noOpenRecords": "Keine offenen Datensätze",
+        "noTeam": "Kein aktuelles Team",
+        "openRecords": "Offene Datensätze",
+        "records": "Datensätze",
+        "tableLabel": "Teamstatustabelle"
+      },
+      "summary": {
+        "asOf": "{{date}}, Stand {{time}} ({{timeZone}}).",
+        "current": "Status aktuell für {{count}} direkt unterstellte Mitarbeitende.",
+        "heading": "Aktuelle Übersicht",
+        "refreshLabel": "Aktualisierungsstatus des Teams",
+        "refreshing": "Status wird aktualisiert…"
+      }
+    }
+  }
+}

@@ -6,9 +6,11 @@ import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
 import type { AbsenceSettingsAdminDetail, SelfContext } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { createWebLocaleController, LocaleControllerProvider } from '../src/app/locale.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
@@ -47,6 +49,11 @@ const SETTINGS: AbsenceSettingsAdminDetail = {
     },
   ],
 };
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 
 afterEach(() => {
   clearSessionMemory();
@@ -58,13 +65,16 @@ test('shows immutable versions and creates a sickness-safe bounded version', asy
   stubFetch(bodies);
   const user = userEvent.setup();
   const queryClient = createWorkLedgerQueryClient();
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const localeController = requireLocaleController();
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: ['/settings/absence'],
   });
   const { container } = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={localeController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
   expect(await screen.findByRole('heading', { name: 'Vacation · version 1' })).toBeVisible();
   await user.selectOptions(screen.getByLabelText('Type code'), 'SICKNESS');
@@ -89,6 +99,13 @@ test('shows immutable versions and creates a sickness-safe bounded version', asy
   );
   await expectNoAxeViolations(container);
 });
+
+function requireLocaleController() {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  return createWebLocaleController(defaultLocaleRuntime);
+}
 
 function stubFetch(bodies: unknown[]) {
   vi.stubGlobal(

@@ -10,7 +10,7 @@ export const APPLICATION_BUNDLE_BASELINE = Object.freeze({
 });
 
 export const INTERNATIONALIZATION_RUNTIME_ALLOWANCE = Object.freeze({
-  totalJavaScriptBytes: 76_000,
+  totalJavaScriptBytes: 96_000,
   totalJavaScriptGzipBytes: 22_000,
 });
 

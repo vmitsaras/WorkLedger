@@ -33,6 +33,26 @@ const governedSourcePaths = [
   path.join(repositoryRoot, 'apps/web/src/routes/monthly-period-page.tsx'),
   path.join(repositoryRoot, 'apps/web/src/components/monthly-period-print.tsx'),
   path.join(repositoryRoot, 'apps/web/src/components/workflow-status-badge.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/approval-inbox-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/approval-detail-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/team-status-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/team-calendar-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/team-administration-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/employee-administration-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/audit-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/system-audit-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/system-operations-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/system-account-administration-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/reports-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/report-detail-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/absence-settings-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/holiday-settings-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/time-settings-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/employee-entitlement-administration.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/employee-schedule-administration.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/employee-policy-administration.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/report-portability-actions.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/components/audit-event-explorer.tsx'),
 ];
 const PLURAL_SUFFIX_PATTERN = /_(zero|one|two|few|many|other)$/u;
 const INTERPOLATION_PATTERN = /\{\{\s*([A-Za-z][A-Za-z0-9]*)\s*\}\}/gu;
@@ -86,6 +106,55 @@ export function readStringArrayConstant(source, name) {
   throw new Error(`Cannot find exported string array constant ${name}.`);
 }
 
+function readReadonlyTypeLiteral(node, label) {
+  if (node?.type !== 'TSTypeReference' || node.typeName?.name !== 'Readonly') {
+    throw new Error(`${label} must use Readonly<{ ... }> syntax.`);
+  }
+  const parameters = node.typeParameters ?? node.typeArguments;
+  const literal = parameters?.params[0];
+  if (literal?.type !== 'TSTypeLiteral') {
+    throw new Error(`${label} must contain an object type literal.`);
+  }
+  return literal;
+}
+
+export function readMessageParameterContract(source) {
+  const program = parse(source, { plugins: ['typescript'], sourceType: 'module' }).program;
+  const declaration = program.body
+    .filter((statement) => statement.type === 'ExportNamedDeclaration')
+    .map((statement) => statement.declaration)
+    .find(
+      (value) =>
+        value?.type === 'TSTypeAliasDeclaration' && value.id.name === 'MessageParameterMap',
+    );
+  if (declaration === undefined) throw new Error('Cannot find MessageParameterMap.');
+
+  const parameterMap = new Map();
+  for (const member of readReadonlyTypeLiteral(declaration.typeAnnotation, 'MessageParameterMap')
+    .members) {
+    if (member.type !== 'TSPropertySignature' || member.key.type !== 'StringLiteral') {
+      throw new Error('MessageParameterMap may contain only string-keyed properties.');
+    }
+    const valueType = member.typeAnnotation?.typeAnnotation;
+    if (valueType?.type === 'TSUndefinedKeyword') {
+      parameterMap.set(member.key.value, []);
+      continue;
+    }
+    const parameters = readReadonlyTypeLiteral(valueType, member.key.value).members.map(
+      (parameter) => {
+        if (parameter.type !== 'TSPropertySignature') {
+          throw new Error(`${member.key.value} parameters must be object properties.`);
+        }
+        if (parameter.key.type === 'Identifier') return parameter.key.name;
+        if (parameter.key.type === 'StringLiteral') return parameter.key.value;
+        throw new Error(`${member.key.value} contains an unsupported parameter key.`);
+      },
+    );
+    parameterMap.set(member.key.value, parameters.sort());
+  }
+  return parameterMap;
+}
+
 function flattenCatalog(value, prefix = '', messages = new Map()) {
   if (typeof value === 'string') {
     messages.set(prefix, value);
@@ -122,6 +191,7 @@ export function validateI18nCatalogs({
   descriptorMap,
   messageKeys,
   namespaces,
+  parameterContract,
   supportedLocales,
 }) {
   assertSameValues(supportedLocales, ['en-GB', 'de-DE', 'es-ES'], 'Production locale allowlist');
@@ -158,6 +228,18 @@ export function validateI18nCatalogs({
     if (!SEMANTIC_KEY_PATTERN.test(key)) throw new Error(`Message key ${key} is not semantic.`);
   }
   assertSameValues(sourceMessageKeys, messageKeys, 'Typed message key contract');
+  assertSameValues(parameterContract.keys(), sourceMessageKeys, 'Message parameter contract keys');
+
+  for (const baseKey of sourceMessageKeys) {
+    const sourceVariants = sourceLeafKeys.filter((key) => normalizedMessageKey(key) === baseKey);
+    for (const sourceVariant of sourceVariants) {
+      assertSameValues(
+        interpolationParameters(source.get(sourceVariant)),
+        parameterContract.get(baseKey),
+        `Typed interpolation parameters for ${sourceVariant}`,
+      );
+    }
+  }
 
   for (const locale of supportedLocales) {
     const messages = flattenedByLocale.get(locale);
@@ -267,6 +349,7 @@ export async function checkI18n(repositoryDirectory = repositoryRoot) {
   const defaultLocale = readStringConstant(contractsSource, 'DEFAULT_LOCALE');
   const namespaces = readStringArrayConstant(catalogContractSource, 'CATALOG_NAMESPACES');
   const messageKeys = readStringArrayConstant(catalogContractSource, 'MESSAGE_KEYS');
+  const parameterContract = readMessageParameterContract(catalogContractSource);
   const actualCatalogRoot = path.join(
     repositoryDirectory,
     path.relative(repositoryRoot, catalogRoot),
@@ -305,6 +388,7 @@ export async function checkI18n(repositoryDirectory = repositoryRoot) {
     descriptorMap,
     messageKeys,
     namespaces,
+    parameterContract,
     supportedLocales,
   });
 

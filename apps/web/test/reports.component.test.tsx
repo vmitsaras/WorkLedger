@@ -134,7 +134,7 @@ test('renders scoped full-result totals, partial context, and an accessible repo
     'ascending',
   );
   expect(within(table).getByRole('row', { name: /Emma Reed/iu })).toBeVisible();
-  expect(within(table).getByRole('link', { name: /August 1, 2026/iu })).toHaveAttribute(
+  expect(within(table).getByRole('link', { name: /1 August 2026/iu })).toHaveAttribute(
     'href',
     `/monthly-periods/${PERIOD_ID}`,
   );
@@ -209,7 +209,7 @@ test('announces an export scope loss without creating a download', async () => {
   await user.click(await screen.findByRole('button', { name: 'Export CSV' }));
   expect(
     await screen.findByRole('status', { name: 'Report portability status' }),
-  ).toHaveTextContent('Your report scope changed. The CSV was not completed.');
+  ).toHaveTextContent('Your report scope changed. The CSV export was not completed.');
   expect(createObjectUrl).not.toHaveBeenCalled();
 });
 

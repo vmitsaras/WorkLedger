@@ -5,14 +5,54 @@ import type {
   ReportExportRequest,
   ReportQuery,
   ReportResult,
+  SupportedLocale,
 } from '@workledger/contracts';
+import { formatDateOnly, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Button } from '@workledger/ui';
 
 import { ApiClientError, exportReportCsv, type ReportCsvDownload } from '../app/api-client.js';
-import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
+import { formatDuration } from '../app/date-time-format.js';
 import { reportPresentation } from '../app/presentation-codes.js';
 
 type PortabilityStatus = Readonly<{ kind: 'ERROR' | 'SUCCESS'; message: string }>;
+
+const SUMMARY_LABEL_KEYS = Object.freeze({
+  ActionableApprovals: 'manager.report.portability.summary.actionableApprovals',
+  AvailableChange: 'manager.report.portability.summary.availableChange',
+  Balance: 'manager.report.portability.summary.balance',
+  Closing: 'manager.report.portability.summary.closing',
+  ClosingAvailable: 'manager.report.portability.summary.closingAvailable',
+  ClosingBalance: 'manager.report.portability.summary.closingBalance',
+  Credited: 'manager.report.portability.summary.credited',
+  DateRange: 'manager.report.portability.summary.dateRange',
+  Expected: 'manager.report.portability.summary.expected',
+  IncompleteRecords: 'manager.report.portability.summary.incompleteRecords',
+  MatchingRows: 'manager.report.portability.summary.matchingRows',
+  OpeningAvailable: 'manager.report.portability.summary.openingAvailable',
+  OpeningBalance: 'manager.report.portability.summary.openingBalance',
+  PostLockChange: 'manager.report.portability.summary.postLockChange',
+  ProjectedRemaining: 'manager.report.portability.summary.projectedRemaining',
+  RangeChange: 'manager.report.portability.summary.rangeChange',
+  Reserved: 'manager.report.portability.summary.reserved',
+  Scope: 'manager.report.portability.summary.scope',
+  Worked: 'manager.report.portability.summary.worked',
+} as const satisfies Readonly<Record<string, MessageKey>>);
+
+const INCLUDED_FIELD_KEYS = Object.freeze({
+  'flexible-time': 'manager.report.portability.fields.flexibleTime',
+  leave: 'manager.report.portability.fields.leave',
+  'missing-records': 'manager.report.portability.fields.missingRecords',
+  'monthly-time': 'manager.report.portability.fields.monthlyTime',
+  'pending-approvals': 'manager.report.portability.fields.pendingApprovals',
+} as const satisfies Readonly<Record<ReportResult['key'], MessageKey>>);
+
+const SCOPE_KEYS = Object.freeze({
+  ORGANIZATION: 'manager.report.common.scope.organization',
+  REPORTS: 'manager.report.common.scope.currentDirectReports',
+  SELF: 'manager.report.common.scope.self',
+  SELF_AND_REPORTS: 'manager.report.common.scope.selfAndDirectReports',
+} as const satisfies Readonly<Record<ReportResult['scope'], MessageKey>>);
 
 export function ReportPortabilityActions({
   data,
@@ -28,6 +68,9 @@ export function ReportPortabilityActions({
   const [exportPending, setExportPending] = useState(false);
   const [copyPending, setCopyPending] = useState(false);
   const [status, setStatus] = useState<PortabilityStatus>();
+  const runtime = useWorkLedgerI18n();
+  const locale = runtime.locale as SupportedLocale;
+  const t = useWorkLedgerMessage();
 
   const exportCsv = async () => {
     setExportPending(true);
@@ -37,11 +80,10 @@ export function ReportPortabilityActions({
       startDownload(download);
       setStatus({
         kind: 'SUCCESS',
-        message:
-          'CSV download started. Formula-significant text was prefixed with an apostrophe before CSV quoting.',
+        message: t('manager.report.portability.status.exportSuccess'),
       });
     } catch (error) {
-      setStatus({ kind: 'ERROR', message: portabilityErrorMessage(error, 'CSV') });
+      setStatus({ kind: 'ERROR', message: portabilityErrorMessage(error, 'csv', t) });
     } finally {
       setExportPending(false);
     }
@@ -53,17 +95,17 @@ export function ReportPortabilityActions({
     try {
       const refreshed = await refresh();
       if (navigator.clipboard?.writeText === undefined) {
-        throw new Error('Clipboard access is unavailable.');
+        throw new Error(t('manager.report.portability.error.clipboardUnavailable'));
       }
       await navigator.clipboard.writeText(
-        reportSummaryText(reportPresentation(report.key).title, refreshed),
+        reportSummaryText(reportPresentation(report.key, t).title, refreshed, locale, t),
       );
       setStatus({
         kind: 'SUCCESS',
-        message: 'Report summary copied. No table rows or hidden fields were copied.',
+        message: t('manager.report.portability.status.copySuccess'),
       });
     } catch (error) {
-      setStatus({ kind: 'ERROR', message: portabilityErrorMessage(error, 'summary copy') });
+      setStatus({ kind: 'ERROR', message: portabilityErrorMessage(error, 'summaryCopy', t) });
     } finally {
       setCopyPending(false);
     }
@@ -76,32 +118,35 @@ export function ReportPortabilityActions({
     >
       <div>
         <h3 id="report-portability-heading" className="m-0 text-lg font-bold">
-          Export and copy
+          {t('manager.report.portability.heading')}
         </h3>
         <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-          CSV includes all rows matching this report and these fields: {includedFields(data.key)}.
-          It omits internal identifiers, absence subtype, sickness classification, notes, reasons,
-          reviewer comments, and hidden columns.
+          {t('manager.report.portability.description.csv', {
+            fields: t(INCLUDED_FIELD_KEYS[data.key]),
+          })}
         </p>
         <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
-          Copy summary writes only the visible date range, permission scope, full row count, and
-          summary values. It never copies table rows automatically.
+          {t('manager.report.portability.description.copy')}
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
         <Button isDisabled={exportPending || copyPending} onPress={() => void exportCsv()}>
-          {exportPending ? 'Exporting CSV…' : 'Export CSV'}
+          {exportPending
+            ? t('manager.report.portability.action.exportPending')
+            : t('manager.report.portability.action.export')}
         </Button>
         <Button
           isDisabled={exportPending || copyPending}
           onPress={() => void copySummary()}
           variant="secondary"
         >
-          {copyPending ? 'Copying summary…' : 'Copy report summary'}
+          {copyPending
+            ? t('manager.report.portability.action.copyPending')
+            : t('manager.report.portability.action.copy')}
         </Button>
       </div>
       <p
-        aria-label="Report portability status"
+        aria-label={t('manager.report.portability.status.label')}
         aria-atomic="true"
         aria-live="polite"
         className={`m-0 min-h-6 text-sm font-semibold ${
@@ -140,81 +185,81 @@ function startDownload(download: ReportCsvDownload): void {
   }
 }
 
-function reportSummaryText(title: string, data: ReportResult): string {
+function reportSummaryText(
+  title: string,
+  data: ReportResult,
+  locale: SupportedLocale,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
   return [
     title,
-    `Date range: ${formatLocalDate(data.range.from)} through ${formatLocalDate(data.range.to)}`,
-    `Scope: ${scopeLabel(data.scope)}`,
-    `Matching rows: ${data.pagination.total.toString()}`,
-    ...summaryLines(data),
+    `${t(SUMMARY_LABEL_KEYS.DateRange)}: ${formatDateOnly(locale, data.range.from, {
+      dateStyle: 'full',
+    })} ${t('manager.report.detail.filter.applied.through')} ${formatDateOnly(
+      locale,
+      data.range.to,
+      { dateStyle: 'full' },
+    )}`,
+    `${t(SUMMARY_LABEL_KEYS.Scope)}: ${t(SCOPE_KEYS[data.scope])}`,
+    `${t(SUMMARY_LABEL_KEYS.MatchingRows)}: ${data.pagination.total.toString()}`,
+    ...summaryLines(data, t),
   ].join('\n');
 }
 
-function summaryLines(data: ReportResult): readonly string[] {
+function summaryLines(
+  data: ReportResult,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): readonly string[] {
   switch (data.summary.kind) {
     case 'MONTHLY_TIME':
       return [
-        `Expected: ${formatDuration(data.summary.expectedMinutes)}`,
-        `Worked: ${formatDuration(data.summary.workedMinutes)}`,
-        `Credited: ${formatDuration(data.summary.creditedMinutes)}`,
-        `Balance: ${formatDuration(data.summary.balanceMinutes, true)}`,
-        `Post-lock change: ${formatDuration(data.summary.postLockDeltaMinutes, true)}`,
-        `Incomplete records: ${data.summary.incompleteRecordCount.toString()}`,
+        `${t(SUMMARY_LABEL_KEYS.Expected)}: ${formatDuration(data.summary.expectedMinutes)}`,
+        `${t(SUMMARY_LABEL_KEYS.Worked)}: ${formatDuration(data.summary.workedMinutes)}`,
+        `${t(SUMMARY_LABEL_KEYS.Credited)}: ${formatDuration(data.summary.creditedMinutes)}`,
+        `${t(SUMMARY_LABEL_KEYS.Balance)}: ${formatDuration(data.summary.balanceMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.PostLockChange)}: ${formatDuration(data.summary.postLockDeltaMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.IncompleteRecords)}: ${data.summary.incompleteRecordCount.toString()}`,
       ];
     case 'FLEXIBLE_TIME':
       return [
-        `Opening balance: ${formatDuration(data.summary.openingBalanceMinutes, true)}`,
-        `Range change: ${formatDuration(data.summary.rangeChangeMinutes, true)}`,
-        `Closing balance: ${formatDuration(data.summary.closingBalanceMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.OpeningBalance)}: ${formatDuration(data.summary.openingBalanceMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.RangeChange)}: ${formatDuration(data.summary.rangeChangeMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.ClosingBalance)}: ${formatDuration(data.summary.closingBalanceMinutes, true)}`,
       ];
     case 'LEAVE':
       return [
-        `Opening available: ${formatDuration(data.summary.openingAvailableMinutes, true)}`,
-        `Available change: ${formatDuration(data.summary.availableChangeMinutes, true)}`,
-        `Closing available: ${formatDuration(data.summary.closingAvailableMinutes, true)}`,
-        `Reserved: ${formatDuration(data.summary.reservedMinutes)}`,
-        `Projected remaining: ${formatDuration(data.summary.projectedRemainingMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.OpeningAvailable)}: ${formatDuration(data.summary.openingAvailableMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.AvailableChange)}: ${formatDuration(data.summary.availableChangeMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.ClosingAvailable)}: ${formatDuration(data.summary.closingAvailableMinutes, true)}`,
+        `${t(SUMMARY_LABEL_KEYS.Reserved)}: ${formatDuration(data.summary.reservedMinutes)}`,
+        `${t(SUMMARY_LABEL_KEYS.ProjectedRemaining)}: ${formatDuration(data.summary.projectedRemainingMinutes, true)}`,
       ];
     case 'MISSING_RECORD':
-      return [`Incomplete records: ${data.summary.recordCount.toString()}`];
+      return [`${t(SUMMARY_LABEL_KEYS.IncompleteRecords)}: ${data.summary.recordCount.toString()}`];
     case 'PENDING_APPROVAL':
-      return [`Actionable approvals: ${data.summary.itemCount.toString()}`];
+      return [`${t(SUMMARY_LABEL_KEYS.ActionableApprovals)}: ${data.summary.itemCount.toString()}`];
   }
 }
 
-function includedFields(key: ReportResult['key']): string {
-  return {
-    'flexible-time': 'employee name and opening, range-change, and closing minutes',
-    leave:
-      'employee name, leave-account label, available changes, reservations, and projected minutes',
-    'missing-records': 'employee name, date, status, expected/worked minutes, and warning codes',
-    'monthly-time':
-      'employee name, month, workflow status, expected/worked/credited/balance minutes, incomplete count, and post-lock delta',
-    'pending-approvals':
-      'employee name, broad workflow category, affected dates, and submitted instant',
-  }[key];
-}
-
-function scopeLabel(scope: ReportResult['scope']): string {
-  return {
-    ORGANIZATION: 'organization',
-    REPORTS: 'current direct reports',
-    SELF: 'your own records',
-    SELF_AND_REPORTS: 'your own records and current direct reports',
-  }[scope];
-}
-
-function portabilityErrorMessage(error: unknown, action: 'CSV' | 'summary copy'): string {
+function portabilityErrorMessage(
+  error: unknown,
+  action: 'csv' | 'summaryCopy',
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
+  const actionLabel =
+    action === 'csv'
+      ? t('manager.report.portability.action.csvLabel')
+      : t('manager.report.portability.action.summaryCopyLabel');
   if (error instanceof ApiClientError) {
     if (error.code === 'ACCESS_DENIED') {
-      return `Your report scope changed. The ${action} was not completed.`;
+      return t('manager.report.portability.error.accessDenied', { action: actionLabel });
     }
     if (error.code === 'REPORT_EXPORT_TOO_LARGE') {
-      return 'The CSV is too large. Narrow the date range or select one employee.';
+      return t('manager.report.portability.error.tooLarge');
     }
     if (error.code === 'AUTH_REQUIRED' || error.code === 'AUTH_SESSION_EXPIRED') {
-      return `Your session ended. The ${action} was not completed.`;
+      return t('manager.report.portability.error.sessionEnded', { action: actionLabel });
     }
   }
-  return `The ${action} failed. Nothing new was written to the download or clipboard.`;
+  return t('manager.report.portability.error.failed', { action: actionLabel });
 }

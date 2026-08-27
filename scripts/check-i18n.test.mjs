@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { checkI18n, findHardCodedJsxCopy, validateI18nCatalogs } from './check-i18n.mjs';
+import {
+  checkI18n,
+  findHardCodedJsxCopy,
+  readMessageParameterContract,
+  validateI18nCatalogs,
+} from './check-i18n.mjs';
 
 const locales = ['en-GB', 'de-DE', 'es-ES'];
 const namespaces = ['shared', 'auth', 'employee', 'manager', 'admin', 'system', 'output'];
@@ -37,6 +42,10 @@ function validate(catalogs = createCatalogs(), overrides = {}) {
     descriptorMap: { EXAMPLE: 'shared.example.title' },
     messageKeys: ['shared.example.count', 'shared.example.title'],
     namespaces,
+    parameterContract: new Map([
+      ['shared.example.count', ['count']],
+      ['shared.example.title', ['name']],
+    ]),
     supportedLocales: locales,
     ...overrides,
   });
@@ -46,8 +55,8 @@ test('accepts the repository locale, namespace, key, parameter, plural, and desc
   const values = await checkI18n();
   assert.equal(values.localeCount, 3);
   assert.equal(values.namespaceCount, 7);
-  assert.equal(values.messageCount, 1043);
-  assert.equal(values.governedSourceCount, 20);
+  assert.equal(values.messageCount, 1997);
+  assert.equal(values.governedSourceCount, 40);
 });
 
 test('rejects pseudo locales and a different runtime fallback', () => {
@@ -66,6 +75,20 @@ test('rejects missing keys and mismatched interpolation parameters', () => {
   const mismatched = createCatalogs();
   mismatched['es-ES'].shared.example.title = 'Example for {{employee}}';
   assert.throws(() => validate(mismatched), /interpolation parameters/);
+});
+
+test('reads typed interpolation parameters and rejects source messages that omit them', () => {
+  const contract = readMessageParameterContract(`
+    export type MessageParameterMap = Readonly<{
+      'shared.example.count': Readonly<{ count: number }>;
+      'shared.example.title': Readonly<{ name: string }>;
+    }>;
+  `);
+  assert.deepEqual(contract.get('shared.example.count'), ['count']);
+
+  const catalogs = createCatalogs();
+  for (const locale of locales) catalogs[locale].shared.example.title = 'Example';
+  assert.throws(() => validate(catalogs), /Typed interpolation parameters/);
 });
 
 test('rejects incomplete locale plural forms and markup-bearing messages', () => {

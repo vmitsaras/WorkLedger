@@ -1,1 +1,584 @@
-{}
+{
+  "approval": {
+    "common": {
+      "status": {
+        "actionRequired": "Action required",
+        "allRecords": "All records",
+        "completed": "Completed",
+        "waitingOnEmployee": "Waiting on employee"
+      },
+      "workflow": {
+        "absenceCancellation": "Absence cancellation",
+        "absenceRequest": "Absence request",
+        "correction": "Correction",
+        "monthlyPeriod": "Monthly period"
+      }
+    },
+    "detail": {
+      "action": {
+        "acknowledge": "Acknowledge report",
+        "approve": "Approve",
+        "approveCorrection": "Approve correction",
+        "backToInbox": "Back to approval inbox",
+        "reject": "Reject",
+        "requestChanges": "Request changes"
+      },
+      "apply": {
+        "action": "Apply correction",
+        "description": {
+          "postLock": "Applying adds the approved change after the locked month. The approved monthly record remains unchanged.",
+          "unlocked": "Applying updates the unlocked daily record and adds the resulting balance change."
+        },
+        "heading": "Apply approved correction",
+        "pending": "Applying…"
+      },
+      "decision": {
+        "description": "A reason of at least 10 characters is required for every outcome except acknowledgement.",
+        "heading": "Record a decision",
+        "overrideDescription": "I have reviewed the projected entitlement balance and am making an explicit HR exception.",
+        "overrideTitle": "Approve with a negative-balance override.",
+        "pending": "Recording…",
+        "reasonHelp": "The reason is stored with the decision and is not shown in the minimized inbox.",
+        "reasonLabel": "Decision reason"
+      },
+      "empty": {
+        "description": "This approval has no action available in its current state.",
+        "title": "No decision is available"
+      },
+      "error": {
+        "accessDenied": "You do not have permission to perform this action.",
+        "adjustmentRequired": "This correction affects a locked month and requires the post-lock adjustment workflow.",
+        "deniedDescription": "Your account cannot access this approval.",
+        "deniedStateDescription": "Only an eligible reviewer in the current reporting scope can open this record.",
+        "deniedStateTitle": "Approval access is limited",
+        "description": "WorkLedger could not load this approval record. You can return to the inbox and try again.",
+        "insufficientBalance": "This request exceeds the available entitlement. Approval requires an explicit HR override.",
+        "recording": "WorkLedger could not record this action. No decision was saved.",
+        "stateConflict": "This approval changed before your action. The current record has been reloaded; review it before trying again.",
+        "stateDescription": "No decision was recorded.",
+        "title": "Approval unavailable"
+      },
+      "evidence": {
+        "description": "These original events remain unchanged when a correction is approved.",
+        "empty": "No source punch events are attached to this correction.",
+        "eyebrow": "Evidence",
+        "heading": "Recorded punch events"
+      },
+      "feedback": {
+        "correctionApplied": "Correction applied. Worked time is {{worked}} and the balance changed by {{balance}}.",
+        "decisionRecorded": "{{action}} recorded. Current status: {{status}}.",
+        "errorTitle": "Decision not recorded",
+        "postLockApproved": "Correction approved. The post-lock adjustment was appended and the approved monthly record remains unchanged.",
+        "successTitle": "Decision recorded"
+      },
+      "loading": {
+        "description": "Checking the current record and available actions.",
+        "pageDescription": "Preparing the current record, its effect, and available decisions.",
+        "pageTitle": "Loading approval",
+        "title": "Loading review details"
+      },
+      "page": {
+        "description": "Check the current record, its effect, and the available outcomes before recording one decision.",
+        "eyebrow": "Approvals",
+        "title": "Review {{workflow}}"
+      },
+      "summary": {
+        "absenceType": "Absence type:",
+        "coverage": {
+          "caption": "Dates and minutes covered by this approval",
+          "date": "Date",
+          "kind": "Coverage",
+          "minutes": "Minutes",
+          "scrollHint": "Scroll horizontally to review each coverage value.",
+          "scrollLabel": "Absence coverage"
+        },
+        "dateRange": "{{from}} to {{to}}",
+        "effect": "How this change takes effect:",
+        "effectPostLock": "Approval adds an adjustment to the locked month while the approved monthly record stays unchanged.",
+        "effectUnlocked": "After approval, the correction can be applied to the unlocked daily record.",
+        "employeeReason": "Employee reason:",
+        "entitlement": "Entitlement:",
+        "entitlementValue": "Requests {{requested}}; projected remaining {{projected}}.",
+        "originalBalance": "Balance {{value}}",
+        "originalCalculation": "Original calculation",
+        "originalCredited": "Credited {{value}}",
+        "originalWorked": "Worked {{value}}",
+        "proposedInterval": "Proposed interval",
+        "submitted": "Submitted",
+        "workflow": "Workflow"
+      },
+      "validation": {
+        "confirmOverride": "Confirm the negative-balance override before approving this request.",
+        "hrOverrideOnly": "This request exceeds the available entitlement. Only HR can approve it with an explicit override.",
+        "reason": "Enter at least 10 characters explaining the decision."
+      },
+      "workflow": {
+        "absenceCancellation": "absence cancellation",
+        "absenceRequest": "absence request",
+        "correctionRequest": "correction request"
+      }
+    },
+    "inbox": {
+      "action": {
+        "ariaLabel": "Review {{workflow}} for {{employee}}",
+        "review": "Review",
+        "reviewAndDecide": "Review and decide",
+        "reviewRecord": "Review record",
+        "wait": "Review after update finishes"
+      },
+      "applied": {
+        "dateRange": "{{from}} to {{to}}",
+        "label": "Applied view:",
+        "reset": "Reset to needs review"
+      },
+      "column": {
+        "action": "Action",
+        "affectedDates": "Affected Dates",
+        "employee": "Employee",
+        "status": "Status",
+        "submitted": "Submitted",
+        "workflow": "Workflow"
+      },
+      "empty": {
+        "defaultDescription": "No approvals currently require your action.",
+        "defaultTitle": "No approvals need action",
+        "filteredDescription": "No approvals match the applied filters.",
+        "filteredTitle": "No approvals match these filters"
+      },
+      "error": {
+        "deniedDescription": "Your current account cannot view the approval inbox.",
+        "deniedTitle": "Approval inbox unavailable",
+        "requestReference": "Request reference: {{requestId}}",
+        "unavailableDescription": "WorkLedger could not load the approval inbox. No approval information is available.",
+        "unavailableTitle": "Approval inbox could not be loaded"
+      },
+      "filter": {
+        "anyAffectedDate": "Any affected date",
+        "apply": "Apply filters",
+        "ariaLabel": "Approval filters",
+        "category": {
+          "all": "All categories",
+          "label": "Workflow category"
+        },
+        "error": "Enter both dates in order and keep the range within 366 calendar days.",
+        "errorTitle": "Check the date range",
+        "from": "Affected from",
+        "hide": "Hide filters",
+        "order": {
+          "earliestAffected": "Earliest affected first",
+          "employeeAscending": "Employee A to Z",
+          "employeeDescending": "Employee Z to A",
+          "label": "Order",
+          "latestAffected": "Latest affected first",
+          "newestSubmitted": "Newest submitted first",
+          "oldestSubmitted": "Oldest submitted first"
+        },
+        "show": "Refine this view",
+        "team": {
+          "all": "All available teams",
+          "allCurrent": "All current teams",
+          "label": "Current team",
+          "selected": "Selected current team"
+        },
+        "to": "Affected through"
+      },
+      "loading": {
+        "description": "Preparing the requests and monthly periods available for review.",
+        "title": "Loading approval inbox"
+      },
+      "page": {
+        "description": "Review the corrections, absence requests, cancellations, and monthly periods that need your decision.",
+        "eyebrow": "Approvals"
+      },
+      "pagination": {
+        "label": "Approval inbox pages",
+        "none": "No approvals",
+        "summary": "Showing {{first}}–{{last}} of {{total}}"
+      },
+      "permission": {
+        "description": "Your current account cannot view the approval inbox.",
+        "eyebrow": "Route status"
+      },
+      "queue": {
+        "label": "Current queue",
+        "needsReview": "Needs review",
+        "viewLabel": "Queue view"
+      },
+      "results": {
+        "caption": "Approval inbox results",
+        "clearFilters": "Clear filters",
+        "listLabel": "Approval inbox results",
+        "refreshing": "Updating approval results…",
+        "statusLabel": "Approval results status",
+        "tableLabel": "Approval inbox results table"
+      },
+      "team": {
+        "none": "No current team"
+      }
+    }
+  },
+  "report": {
+    "catalog": {
+      "flexibleTime": {
+        "description": "Opening, in-range change, and closing flexible-time balances from the append-only time account.",
+        "title": "Flexible time"
+      },
+      "leave": {
+        "description": "Leave availability, reservation, and projected balances without sickness classification or request detail.",
+        "title": "Leave balances"
+      },
+      "missingRecords": {
+        "description": "Incomplete daily records that need attention in the selected range, without private workflow detail.",
+        "title": "Missing records"
+      },
+      "monthlyTime": {
+        "description": "Monthly expected, worked, credited, and balance minutes with workflow and post-lock adjustment context.",
+        "title": "Monthly time"
+      },
+      "pendingApprovals": {
+        "description": "Current actionable correction, absence, cancellation, and monthly approvals in reviewer scope.",
+        "title": "Pending approvals"
+      }
+    },
+    "common": {
+      "scope": {
+        "currentDirectReports": "current direct reports",
+        "organization": "organization",
+        "self": "your own records",
+        "selfAndDirectReports": "your own records and current direct reports"
+      },
+      "sort": {
+        "date": "Date",
+        "employee": "Employee",
+        "status": "Status",
+        "value": "Value"
+      }
+    },
+    "detail": {
+      "action": {
+        "back": "Back to reports",
+        "return": "Return to reports",
+        "review": "Review"
+      },
+      "column": {
+        "action": "Action",
+        "affectedDates": "Affected dates",
+        "closing": "Closing",
+        "employee": "Employee",
+        "incomplete": "Incomplete",
+        "leaveAccount": "Leave account",
+        "month": "Month",
+        "opening": "Opening",
+        "projected": "Projected",
+        "status": "Status",
+        "submitted": "Submitted",
+        "warnings": "Warnings",
+        "workflow": "Workflow"
+      },
+      "empty": {
+        "description": "No report rows match the applied date range and permission scope.",
+        "title": "No report rows match this view"
+      },
+      "error": {
+        "deniedDescription": "You no longer have permission to run this report.",
+        "deniedTitle": "You do not have access to this area",
+        "refreshNoData": "Report refresh returned no data.",
+        "unavailableDescription": "The report could not be loaded.",
+        "unavailableTitle": "This information is unavailable"
+      },
+      "filter": {
+        "applied": {
+          "employee": "One employee filter is applied.",
+          "summary": "Applied: {{from}} through {{to}}; {{sort}}, {{direction}}.",
+          "through": "through"
+        },
+        "apply": "Apply report filters",
+        "direction": {
+          "ascending": "Ascending",
+          "descending": "Descending",
+          "label": "Direction"
+        },
+        "error": "Enter both dates in order, keep the range within 366 days, and choose an available sort.",
+        "from": "From",
+        "heading": "Date range and order",
+        "reset": "Reset report filters",
+        "sort": "Sort by",
+        "to": "To"
+      },
+      "loading": {
+        "description": "Running report…",
+        "title": "Loading information"
+      },
+      "missingRecords": {
+        "noWarningCode": "No warning code"
+      },
+      "page": {
+        "eyebrow": "Report"
+      },
+      "pagination": {
+        "label": "Report pages",
+        "summary": "Page {{current}} of {{total}}. {{count}} report rows."
+      },
+      "partial": {
+        "description": "This report is partial because one or more daily records are incomplete. Totals may change after those records are resolved.",
+        "title": "Partial report"
+      },
+      "results": {
+        "generated": "Report generated {{value}}.",
+        "heading": "Results",
+        "refreshing": "Refreshing report…",
+        "summary": "{{count}} rows in {{scope}} scope. Totals cover all matching rows, not only this page."
+      },
+      "summary": {
+        "actionableApprovals": "Actionable Approvals",
+        "availableChange": "Available Change",
+        "balance": "Balance",
+        "closingAvailable": "Closing Available",
+        "closingBalance": "Closing Balance",
+        "credited": "Credited",
+        "expected": "Expected",
+        "incompleteRecords": "Incomplete Records",
+        "openingAvailable": "Opening Available",
+        "openingBalance": "Opening Balance",
+        "postLockChange": "Post Lock Change",
+        "projectedRemaining": "Projected Remaining",
+        "rangeChange": "Range Change",
+        "reserved": "Reserved",
+        "worked": "Worked"
+      },
+      "table": {
+        "caption": "{{report}} rows for {{from}} through {{to}}",
+        "scrollHint": "On narrow screens, scroll this results region horizontally to compare every report column.",
+        "scrollLabel": "{{report}} report table"
+      }
+    },
+    "page": {
+      "available": {
+        "description": "The catalog only lists reports your current account may run.",
+        "heading": "Available reports"
+      },
+      "description": "Review time, balance, leave, record-quality, and approval information within your current permission scope. Every result states the scope applied.",
+      "error": {
+        "title": "Reports are unavailable right now"
+      },
+      "eyebrow": "Operations",
+      "loading": {
+        "description": "The available report catalog is being retrieved.",
+        "title": "Loading information"
+      },
+      "open": "Open {{report}}"
+    },
+    "portability": {
+      "action": {
+        "copy": "Copy report summary",
+        "copyPending": "Copying summary…",
+        "csvLabel": "CSV export",
+        "export": "Export CSV",
+        "exportPending": "Exporting CSV…",
+        "summaryCopyLabel": "summary copy"
+      },
+      "description": {
+        "copy": "Copy summary writes only the visible date range, permission scope, full row count, and summary values. It never copies table rows automatically.",
+        "csv": "CSV includes all rows matching this report and these fields: {{fields}}. It omits internal identifiers, absence subtype, sickness classification, notes, reasons, reviewer comments, and hidden columns."
+      },
+      "error": {
+        "accessDenied": "Your report scope changed. The {{action}} was not completed.",
+        "clipboardUnavailable": "Clipboard access is unavailable.",
+        "failed": "The {{action}} failed. Nothing new was written to the download or clipboard.",
+        "sessionEnded": "Your session ended. The {{action}} was not completed.",
+        "tooLarge": "The CSV is too large. Narrow the date range or select one employee."
+      },
+      "fields": {
+        "flexibleTime": "employee name and opening, range-change, and closing minutes",
+        "leave": "employee name, leave-account label, available changes, reservations, and projected minutes",
+        "missingRecords": "employee name, date, status, expected/worked minutes, and warning codes",
+        "monthlyTime": "employee name, month, workflow status, expected/worked/credited/balance minutes, incomplete count, and post-lock delta",
+        "pendingApprovals": "employee name, broad workflow category, affected dates, and submitted instant"
+      },
+      "heading": "Export and copy",
+      "status": {
+        "copySuccess": "Report summary copied. No table rows or hidden fields were copied.",
+        "exportSuccess": "CSV download started. Formula-significant text was prefixed with an apostrophe before CSV quoting.",
+        "label": "Report portability status"
+      },
+      "summary": {
+        "actionableApprovals": "Actionable approvals",
+        "availableChange": "Available change",
+        "balance": "Balance",
+        "closing": "Closing",
+        "closingAvailable": "Closing available",
+        "closingBalance": "Closing balance",
+        "credited": "Credited",
+        "dateRange": "Date range",
+        "expected": "Expected",
+        "incompleteRecords": "Incomplete records",
+        "matchingRows": "Matching rows",
+        "openingAvailable": "Opening available",
+        "openingBalance": "Opening balance",
+        "postLockChange": "Post-lock change",
+        "projectedRemaining": "Projected remaining",
+        "rangeChange": "Range change",
+        "reserved": "Reserved",
+        "scope": "Scope",
+        "worked": "Worked"
+      }
+    }
+  },
+  "team": {
+    "calendar": {
+      "agenda": {
+        "label": "Team availability agenda for {{month}}",
+        "selectDate": "Select date"
+      },
+      "byDate": "Availability by date",
+      "coverage": {
+        "firstHalf": "first half of expected work",
+        "fullDay": "full day",
+        "secondHalf": "second half of expected work"
+      },
+      "empty": {
+        "dateDescription": "No team unavailability is recorded for this date.",
+        "monthDescription": "No team unavailability is recorded for this month.",
+        "monthTitle": "No unavailability this month"
+      },
+      "entry": {
+        "summary": "Unavailable — {{coverage}}",
+        "team": "Team: {{team}}",
+        "teamMissing": "Current team assignment unavailable"
+      },
+      "error": {
+        "description": "The selected month could not be loaded. Check your connection and try again.",
+        "title": "Team calendar is unavailable"
+      },
+      "grid": {
+        "caption": "Neutral team unavailability for {{month}}. Select a date for a focused list.",
+        "scrollHint": "Scroll horizontally to review all seven days.",
+        "scrollLabel": "Team availability month grid",
+        "selectDate": "Select {{date}}"
+      },
+      "loading": {
+        "description": "Preparing team availability for the selected month.",
+        "title": "Loading team calendar"
+      },
+      "marker": {
+        "selected": "Selected",
+        "today": "Today"
+      },
+      "missingTeam": {
+        "description_one": "{{count}} availability entry has no current team assignment. The entry remains visible without guessing a team.",
+        "description_other": "{{count}} availability entries have no current team assignment. The entries remain visible without guessing a team.",
+        "title": "Current team assignment unavailable"
+      },
+      "navigation": {
+        "label": "Team calendar month",
+        "next": "Next month",
+        "previous": "Previous month"
+      },
+      "page": {
+        "description": "Plan around neutral team availability while keeping the selected date and month in view.",
+        "eyebrow": "Team availability"
+      },
+      "permission": {
+        "description": "Your current account cannot view the team calendar. No employee availability was disclosed.",
+        "eyebrow": "Route status"
+      },
+      "scopeAsOf": "Current employee scope evaluated on {{date}} ({{timeZone}}). Both views contain the same neutral availability.",
+      "selectedDate": "Selected date",
+      "selectedMonth": "Selected month",
+      "todaySuffix": " — Today",
+      "unavailableCount": "{{count}} unavailable entries",
+      "view": {
+        "agenda": "Agenda list",
+        "label": "Team calendar view",
+        "month": "Month grid"
+      },
+      "weekday": {
+        "friday": "Friday",
+        "monday": "Monday",
+        "saturday": "Saturday",
+        "sunday": "Sunday",
+        "thursday": "Thursday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday"
+      }
+    },
+    "status": {
+      "action": {
+        "none": "No follow-up",
+        "openInbox": "Open inbox",
+        "openInboxLabel": "Open approval inbox to find open records for {{employee}}",
+        "viewCalendar": "View calendar",
+        "viewCalendarLabel": "View team calendar for {{employee}}"
+      },
+      "availability": {
+        "offWork": "Not working now",
+        "onBreak": "On break",
+        "unavailable": "Unavailable today",
+        "working": "Working now"
+      },
+      "column": {
+        "availability": "Availability",
+        "currentTeam": "Current team",
+        "employee": "Employee",
+        "nextStep": "Next step",
+        "recordState": "Record state"
+      },
+      "empty": {
+        "filteredDescription": "Change the overview filters to see other current direct reports.",
+        "filteredTitle": "No team members match this view",
+        "noReportsDescription": "You have no current direct reports to show.",
+        "noReportsTitle": "No current direct reports"
+      },
+      "error": {
+        "description": "Team status could not be loaded. Check your connection and try again.",
+        "title": "Team status is unavailable"
+      },
+      "filter": {
+        "allAvailability": "all availability states",
+        "allDirectReports": "All direct reports",
+        "description": "Open records can include work that needs your review, an employee response, or final application. The label does not expose the workflow or absence type.",
+        "heading": "Filter by current availability",
+        "openRecords": "People with open records",
+        "option": "{{label}}: {{count}}",
+        "recordLabel": "Record filters",
+        "withOpenRecords": " with open records"
+      },
+      "loading": {
+        "description": "Preparing current availability and unresolved record counts.",
+        "title": "Loading team status"
+      },
+      "members": {
+        "currentCount": "{{count}} current direct reports.",
+        "filteredCount": "Showing {{visible}} of {{total}} direct reports: {{availability}}{{records}}.",
+        "heading": "Team members",
+        "showAll": "Show all direct reports"
+      },
+      "page": {
+        "description": "See who is working, on break, unavailable today, or has open records, then open the right follow-up.",
+        "eyebrow": "Team workspace",
+        "shortcuts": "Team workspace shortcuts"
+      },
+      "permission": {
+        "description": "Your current account cannot view team status. No employee availability was disclosed.",
+        "eyebrow": "Route status"
+      },
+      "results": {
+        "caption": "Current availability, open record state, and next steps for direct reports.",
+        "currentTeam": "Current team",
+        "listLabel": "Team status results",
+        "noOpenRecords": "No open records",
+        "noTeam": "No current team",
+        "openRecords": "Open records",
+        "records": "Records",
+        "tableLabel": "Team status table"
+      },
+      "summary": {
+        "asOf": "{{date}}, as of {{time}} ({{timeZone}}).",
+        "current": "Status current for {{count}} direct reports.",
+        "heading": "Current overview",
+        "refreshLabel": "Team refresh status",
+        "refreshing": "Refreshing status…"
+      }
+    }
+  }
+}

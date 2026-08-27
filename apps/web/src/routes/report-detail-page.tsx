@@ -12,7 +12,10 @@ import {
   type ReportResult,
   type ReportRow,
   type ReportSort,
+  type SupportedLocale,
 } from '@workledger/contracts';
+import { formatDateOnly, formatInstant, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import {
   Alert,
   Button,
@@ -25,9 +28,9 @@ import {
 import { Pagination } from '../components/pagination.js';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
-import { formatDuration, formatLocalDate, formatTimeWithOffset } from '../app/date-time-format.js';
+import { formatDuration } from '../app/date-time-format.js';
 import { reportResultQuery } from '../app/query.js';
-import { reportPresentation } from '../app/presentation-codes.js';
+import { attentionPresentation, reportPresentation } from '../app/presentation-codes.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { PageHeader } from '../components/page-header.js';
 import { ReportPortabilityActions } from '../components/report-portability-actions.js';
@@ -47,7 +50,55 @@ type FilterDraft = Readonly<{
   to: string;
 }>;
 
+const REPORT_SUMMARY_KEYS = Object.freeze({
+  ActionableApprovals: 'manager.report.detail.summary.actionableApprovals',
+  AvailableChange: 'manager.report.detail.summary.availableChange',
+  Balance: 'manager.report.detail.summary.balance',
+  ClosingAvailable: 'manager.report.detail.summary.closingAvailable',
+  ClosingBalance: 'manager.report.detail.summary.closingBalance',
+  Credited: 'manager.report.detail.summary.credited',
+  Expected: 'manager.report.detail.summary.expected',
+  IncompleteRecords: 'manager.report.detail.summary.incompleteRecords',
+  OpeningAvailable: 'manager.report.detail.summary.openingAvailable',
+  OpeningBalance: 'manager.report.detail.summary.openingBalance',
+  PostLockChange: 'manager.report.detail.summary.postLockChange',
+  ProjectedRemaining: 'manager.report.detail.summary.projectedRemaining',
+  RangeChange: 'manager.report.detail.summary.rangeChange',
+  Reserved: 'manager.report.detail.summary.reserved',
+  Worked: 'manager.report.detail.summary.worked',
+} as const satisfies Readonly<Record<string, MessageKey>>);
+
+const SORT_LABEL_KEYS = Object.freeze({
+  DATE: 'manager.report.common.sort.date',
+  EMPLOYEE: 'manager.report.common.sort.employee',
+  STATUS: 'manager.report.common.sort.status',
+  VALUE: 'manager.report.common.sort.value',
+} as const satisfies Readonly<Record<ReportSort, MessageKey>>);
+
+const REPORT_KEY_LABEL_KEYS = Object.freeze({
+  'flexible-time': 'manager.report.catalog.flexibleTime.title',
+  leave: 'manager.report.catalog.leave.title',
+  'missing-records': 'manager.report.catalog.missingRecords.title',
+  'monthly-time': 'manager.report.catalog.monthlyTime.title',
+  'pending-approvals': 'manager.report.catalog.pendingApprovals.title',
+} as const satisfies Readonly<Record<ReportKey, MessageKey>>);
+
+const SCOPE_KEYS = Object.freeze({
+  ORGANIZATION: 'manager.report.common.scope.organization',
+  REPORTS: 'manager.report.common.scope.currentDirectReports',
+  SELF: 'manager.report.common.scope.self',
+  SELF_AND_REPORTS: 'manager.report.common.scope.selfAndDirectReports',
+} as const satisfies Readonly<Record<ReportResult['scope'], MessageKey>>);
+
+const PENDING_APPROVAL_KIND_KEYS = Object.freeze({
+  ABSENCE: 'manager.approval.common.workflow.absenceRequest',
+  CANCELLATION: 'manager.approval.common.workflow.absenceCancellation',
+  CORRECTION: 'manager.approval.common.workflow.correction',
+  MONTHLY_PERIOD: 'manager.approval.common.workflow.monthlyPeriod',
+} as const satisfies Readonly<Record<string, MessageKey>>);
+
 export function ReportDetailPage() {
+  const t = useWorkLedgerMessage();
   const loaderData = useLoaderData<ReportRouteLoaderData>();
   const [, setSearchParams] = useSearchParams();
   const query = useQuery(reportResultQuery(loaderData.reportKey, loaderData.query));
@@ -55,7 +106,7 @@ export function ReportDetailPage() {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<FilterDraft>(() => toDraft(loaderData.query));
   const [filterError, setFilterError] = useState<string>();
-  const presentation = reportPresentation(loaderData.report.key);
+  const presentation = reportPresentation(loaderData.report.key, t);
 
   useEffect(() => {
     setDraft(toDraft(loaderData.query));
@@ -93,9 +144,7 @@ export function ReportDetailPage() {
       to: draft.to,
     });
     if (!parsed.success || !loaderData.report.availableSorts.includes(parsed.data.sort)) {
-      setFilterError(
-        'Enter both dates in order, keep the range within 366 days, and choose an available sort.',
-      );
+      setFilterError(t('manager.report.detail.filter.error'));
       return;
     }
     setFilterError(undefined);
@@ -119,10 +168,10 @@ export function ReportDetailPage() {
     <section className="grid gap-6">
       <div className="grid gap-3">
         <Link className="w-fit text-sm font-semibold" to="/reports">
-          Back to reports
+          {t('manager.report.detail.action.back')}
         </Link>
         <PageHeader
-          eyebrow="Report"
+          eyebrow={t('manager.report.detail.page.eyebrow')}
           title={presentation.title}
           description={presentation.description}
         />
@@ -148,7 +197,9 @@ export function ReportDetailPage() {
           query={loaderData.query}
           refresh={async () => {
             const refreshed = await query.refetch({ throwOnError: true });
-            if (refreshed.data === undefined) throw new Error('Report refresh returned no data.');
+            if (refreshed.data === undefined) {
+              throw new Error(t('manager.report.detail.error.refreshNoData'));
+            }
             return refreshed.data;
           }}
           report={loaderData.report}
@@ -175,20 +226,32 @@ function ReportFilters({
   query: ReportQuery;
   report: ReportCatalogItem;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as SupportedLocale;
   return (
     <FilterBar
       description={
         <>
-          Applied: {formatLocalDate(query.from)} through {formatLocalDate(query.to)};{' '}
-          {sortLabel(query.sort).toLocaleLowerCase()}, {query.direction.toLocaleLowerCase()}.
-          {query.employeeId === undefined ? '' : ' One employee filter is applied.'}
+          {t('manager.report.detail.filter.applied.summary', {
+            direction:
+              query.direction === 'ASC'
+                ? t('manager.report.detail.filter.direction.ascending')
+                : t('manager.report.detail.filter.direction.descending'),
+            from: formatDateOnly(locale, query.from, { dateStyle: 'full' }),
+            sort: sortLabel(query.sort, t).toLocaleLowerCase(locale),
+            to: formatDateOnly(locale, query.to, { dateStyle: 'full' }),
+          })}
+          {query.employeeId === undefined
+            ? ''
+            : ` ${t('manager.report.detail.filter.applied.employee')}`}
         </>
       }
       onSubmit={onSubmit}
-      title="Date range and order"
+      title={t('manager.report.detail.filter.heading')}
     >
       <label className="grid gap-2 text-sm font-semibold" htmlFor="report-from">
-        From
+        {t('manager.report.detail.filter.from')}
         <input
           aria-describedby={error === undefined ? undefined : 'report-filter-error'}
           aria-invalid={error === undefined ? undefined : true}
@@ -201,7 +264,7 @@ function ReportFilters({
         />
       </label>
       <label className="grid gap-2 text-sm font-semibold" htmlFor="report-to">
-        To
+        {t('manager.report.detail.filter.to')}
         <input
           aria-describedby={error === undefined ? undefined : 'report-filter-error'}
           aria-invalid={error === undefined ? undefined : true}
@@ -214,7 +277,7 @@ function ReportFilters({
         />
       </label>
       <label className="grid gap-2 text-sm font-semibold" htmlFor="report-sort">
-        Sort by
+        {t('manager.report.detail.filter.sort')}
         <select
           className="wl-field-control"
           id="report-sort"
@@ -227,13 +290,13 @@ function ReportFilters({
         >
           {report.availableSorts.map((sort) => (
             <option key={sort} value={sort}>
-              {sortLabel(sort)}
+              {sortLabel(sort, t)}
             </option>
           ))}
         </select>
       </label>
       <label className="grid gap-2 text-sm font-semibold" htmlFor="report-direction">
-        Direction
+        {t('manager.report.detail.filter.direction.label')}
         <select
           className="wl-field-control"
           id="report-direction"
@@ -246,8 +309,8 @@ function ReportFilters({
             })
           }
         >
-          <option value="ASC">Ascending</option>
-          <option value="DESC">Descending</option>
+          <option value="ASC">{t('manager.report.detail.filter.direction.ascending')}</option>
+          <option value="DESC">{t('manager.report.detail.filter.direction.descending')}</option>
         </select>
       </label>
       {error === undefined ? null : (
@@ -260,10 +323,10 @@ function ReportFilters({
         </p>
       )}
       <Button className="w-fit" type="submit">
-        Apply report filters
+        {t('manager.report.detail.filter.apply')}
       </Button>
       <Button type="button" variant="quiet" className="w-fit" onPress={onReset}>
-        Reset report filters
+        {t('manager.report.detail.filter.reset')}
       </Button>
     </FilterBar>
   );
@@ -284,16 +347,21 @@ function ReportResults({
   refresh: () => Promise<ReportResult>;
   report: ReportCatalogItem;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as SupportedLocale;
   return (
     <section className="grid gap-5" aria-labelledby="report-results-heading">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="report-results-heading" className="m-0 text-xl font-bold">
-            Results
+            {t('manager.report.detail.results.heading')}
           </h2>
           <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-            {data.pagination.total} row{data.pagination.total === 1 ? '' : 's'} in{' '}
-            {scopeLabel(data.scope)} scope. Totals cover all matching rows, not only this page.
+            {t('manager.report.detail.results.summary', {
+              count: data.pagination.total,
+              scope: t(SCOPE_KEYS[data.scope]),
+            })}
           </p>
         </div>
         <p
@@ -303,22 +371,30 @@ function ReportResults({
           aria-atomic="true"
         >
           {isFetching
-            ? 'Refreshing report…'
-            : `Report generated ${formatTimeWithOffset(data.generatedAt, data.timeZone)}.`}
+            ? t('manager.report.detail.results.refreshing')
+            : t('manager.report.detail.results.generated', {
+                value: formatInstant(locale, data.generatedAt, data.timeZone, {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  timeZoneName: 'shortOffset',
+                }),
+              })}
         </p>
       </div>
       {data.partial ? (
-        <Alert announce={false} headingLevel="h3" title="Partial report" tone="warning">
-          <p>
-            This report is partial because one or more daily records are incomplete. Totals may
-            change after those records are resolved.
-          </p>
+        <Alert
+          announce={false}
+          headingLevel="h3"
+          title={t('manager.report.detail.partial.title')}
+          tone="warning"
+        >
+          <p>{t('manager.report.detail.partial.description')}</p>
         </Alert>
       ) : null}
       <ReportSummary data={data} />
       {data.rows.length === 0 ? (
-        <RouteState kind="empty" title="No report rows match this view">
-          No report rows match the applied date range and permission scope.
+        <RouteState kind="empty" title={t('manager.report.detail.empty.title')}>
+          {t('manager.report.detail.empty.description')}
         </RouteState>
       ) : (
         <ReportTable data={data} query={query} />
@@ -330,35 +406,67 @@ function ReportResults({
 }
 
 function ReportSummary({ data }: Readonly<{ data: ReportResult }>) {
+  const t = useWorkLedgerMessage();
   const items: readonly [string, ReactNode][] = (() => {
     switch (data.summary.kind) {
       case 'MONTHLY_TIME':
         return [
-          ['Expected', formatDuration(data.summary.expectedMinutes)],
-          ['Worked', formatDuration(data.summary.workedMinutes)],
-          ['Credited', formatDuration(data.summary.creditedMinutes)],
-          ['Balance', formatDuration(data.summary.balanceMinutes, true)],
-          ['Post-lock change', formatDuration(data.summary.postLockDeltaMinutes, true)],
-          ['Incomplete records', data.summary.incompleteRecordCount.toLocaleString()],
+          [t(REPORT_SUMMARY_KEYS.Expected), formatDuration(data.summary.expectedMinutes)],
+          [t(REPORT_SUMMARY_KEYS.Worked), formatDuration(data.summary.workedMinutes)],
+          [t(REPORT_SUMMARY_KEYS.Credited), formatDuration(data.summary.creditedMinutes)],
+          [t(REPORT_SUMMARY_KEYS.Balance), formatDuration(data.summary.balanceMinutes, true)],
+          [
+            t(REPORT_SUMMARY_KEYS.PostLockChange),
+            formatDuration(data.summary.postLockDeltaMinutes, true),
+          ],
+          [
+            t(REPORT_SUMMARY_KEYS.IncompleteRecords),
+            data.summary.incompleteRecordCount.toLocaleString(),
+          ],
         ];
       case 'FLEXIBLE_TIME':
         return [
-          ['Opening balance', formatDuration(data.summary.openingBalanceMinutes, true)],
-          ['Range change', formatDuration(data.summary.rangeChangeMinutes, true)],
-          ['Closing balance', formatDuration(data.summary.closingBalanceMinutes, true)],
+          [
+            t(REPORT_SUMMARY_KEYS.OpeningBalance),
+            formatDuration(data.summary.openingBalanceMinutes, true),
+          ],
+          [
+            t(REPORT_SUMMARY_KEYS.RangeChange),
+            formatDuration(data.summary.rangeChangeMinutes, true),
+          ],
+          [
+            t(REPORT_SUMMARY_KEYS.ClosingBalance),
+            formatDuration(data.summary.closingBalanceMinutes, true),
+          ],
         ];
       case 'LEAVE':
         return [
-          ['Opening available', formatDuration(data.summary.openingAvailableMinutes, true)],
-          ['Available change', formatDuration(data.summary.availableChangeMinutes, true)],
-          ['Closing available', formatDuration(data.summary.closingAvailableMinutes, true)],
-          ['Reserved', formatDuration(data.summary.reservedMinutes)],
-          ['Projected remaining', formatDuration(data.summary.projectedRemainingMinutes, true)],
+          [
+            t(REPORT_SUMMARY_KEYS.OpeningAvailable),
+            formatDuration(data.summary.openingAvailableMinutes, true),
+          ],
+          [
+            t(REPORT_SUMMARY_KEYS.AvailableChange),
+            formatDuration(data.summary.availableChangeMinutes, true),
+          ],
+          [
+            t(REPORT_SUMMARY_KEYS.ClosingAvailable),
+            formatDuration(data.summary.closingAvailableMinutes, true),
+          ],
+          [t(REPORT_SUMMARY_KEYS.Reserved), formatDuration(data.summary.reservedMinutes)],
+          [
+            t(REPORT_SUMMARY_KEYS.ProjectedRemaining),
+            formatDuration(data.summary.projectedRemainingMinutes, true),
+          ],
         ];
       case 'MISSING_RECORD':
-        return [['Incomplete records', data.summary.recordCount.toLocaleString()]];
+        return [
+          [t(REPORT_SUMMARY_KEYS.IncompleteRecords), data.summary.recordCount.toLocaleString()],
+        ];
       case 'PENDING_APPROVAL':
-        return [['Actionable approvals', data.summary.itemCount.toLocaleString()]];
+        return [
+          [t(REPORT_SUMMARY_KEYS.ActionableApprovals), data.summary.itemCount.toLocaleString()],
+        ];
     }
   })();
   return (
@@ -374,13 +482,22 @@ function ReportSummary({ data }: Readonly<{ data: ReportResult }>) {
 }
 
 function ReportTable({ data, query }: Readonly<{ data: ReportResult; query: ReportQuery }>) {
-  const content = tableContent(data.key, data.rows, query, data.timeZone);
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as SupportedLocale;
+  const content = tableContent(data.key, data.rows, query, data.timeZone, locale, t);
   return (
     <DataTable
-      caption={`${reportKeyLabel(data.key)} rows for ${formatLocalDate(data.range.from)} through ${formatLocalDate(data.range.to)}`}
+      caption={t('manager.report.detail.table.caption', {
+        from: formatDateOnly(locale, data.range.from, { dateStyle: 'full' }),
+        report: t(REPORT_KEY_LABEL_KEYS[data.key]),
+        to: formatDateOnly(locale, data.range.to, { dateStyle: 'full' }),
+      })}
       className="min-w-[48rem] text-sm"
-      scrollHint="On narrow screens, scroll this results region horizontally to compare every report column."
-      scrollLabel={`${reportKeyLabel(data.key)} report table`}
+      scrollHint={t('manager.report.detail.table.scrollHint')}
+      scrollLabel={t('manager.report.detail.table.scrollLabel', {
+        report: t(REPORT_KEY_LABEL_KEYS[data.key]),
+      })}
     >
       {content}
     </DataTable>
@@ -392,6 +509,8 @@ function tableContent(
   rows: ReportResult['rows'],
   query: ReportQuery,
   timeZone: string,
+  locale: SupportedLocale,
+  t: ReturnType<typeof useWorkLedgerMessage>,
 ): ReactNode {
   switch (key) {
     case 'monthly-time':
@@ -399,19 +518,19 @@ function tableContent(
         <>
           <ReportTableHead
             columns={[
-              ['Employee', 'EMPLOYEE'],
-              ['Month', 'DATE'],
-              ['Status', 'STATUS'],
-              ['Expected'],
-              ['Worked'],
-              ['Credited'],
-              ['Balance', 'VALUE'],
-              ['Incomplete'],
-              ['Post-lock change'],
+              [t('manager.report.detail.column.employee'), 'EMPLOYEE'],
+              [t('manager.report.detail.column.month'), 'DATE'],
+              [t('manager.report.detail.column.status'), 'STATUS'],
+              [t(REPORT_SUMMARY_KEYS.Expected)],
+              [t(REPORT_SUMMARY_KEYS.Worked)],
+              [t(REPORT_SUMMARY_KEYS.Credited)],
+              [t(REPORT_SUMMARY_KEYS.Balance), 'VALUE'],
+              [t('manager.report.detail.column.incomplete')],
+              [t(REPORT_SUMMARY_KEYS.PostLockChange)],
             ]}
             query={query}
           />
-          <tbody>{rows.map((row, index) => monthlyTimeRow(row, index))}</tbody>
+          <tbody>{rows.map((row, index) => monthlyTimeRow(row, index, locale))}</tbody>
         </>
       );
     case 'flexible-time':
@@ -419,10 +538,10 @@ function tableContent(
         <>
           <ReportTableHead
             columns={[
-              ['Employee', 'EMPLOYEE'],
-              ['Opening'],
-              ['Range change'],
-              ['Closing', 'VALUE'],
+              [t('manager.report.detail.column.employee'), 'EMPLOYEE'],
+              [t('manager.report.detail.column.opening')],
+              [t(REPORT_SUMMARY_KEYS.RangeChange)],
+              [t('manager.report.detail.column.closing'), 'VALUE'],
             ]}
             query={query}
           />
@@ -434,13 +553,13 @@ function tableContent(
         <>
           <ReportTableHead
             columns={[
-              ['Employee', 'EMPLOYEE'],
-              ['Leave account'],
-              ['Opening'],
-              ['Available change'],
-              ['Closing'],
-              ['Reserved'],
-              ['Projected', 'VALUE'],
+              [t('manager.report.detail.column.employee'), 'EMPLOYEE'],
+              [t('manager.report.detail.column.leaveAccount')],
+              [t('manager.report.detail.column.opening')],
+              [t(REPORT_SUMMARY_KEYS.AvailableChange)],
+              [t('manager.report.detail.column.closing')],
+              [t(REPORT_SUMMARY_KEYS.Reserved)],
+              [t('manager.report.detail.column.projected'), 'VALUE'],
             ]}
             query={query}
           />
@@ -452,16 +571,16 @@ function tableContent(
         <>
           <ReportTableHead
             columns={[
-              ['Employee', 'EMPLOYEE'],
-              ['Date', 'DATE'],
-              ['Status'],
-              ['Expected'],
-              ['Worked'],
-              ['Warnings'],
+              [t('manager.report.detail.column.employee'), 'EMPLOYEE'],
+              [t('manager.report.common.sort.date'), 'DATE'],
+              [t('manager.report.detail.column.status')],
+              [t(REPORT_SUMMARY_KEYS.Expected)],
+              [t(REPORT_SUMMARY_KEYS.Worked)],
+              [t('manager.report.detail.column.warnings')],
             ]}
             query={query}
           />
-          <tbody>{rows.map((row, index) => missingRecordRow(row, index))}</tbody>
+          <tbody>{rows.map((row, index) => missingRecordRow(row, index, locale, t))}</tbody>
         </>
       );
     case 'pending-approvals':
@@ -469,15 +588,17 @@ function tableContent(
         <>
           <ReportTableHead
             columns={[
-              ['Employee', 'EMPLOYEE'],
-              ['Workflow'],
-              ['Affected dates'],
-              ['Submitted', 'DATE'],
-              ['Action'],
+              [t('manager.report.detail.column.employee'), 'EMPLOYEE'],
+              [t('manager.report.detail.column.workflow')],
+              [t('manager.report.detail.column.affectedDates')],
+              [t('manager.report.detail.column.submitted'), 'DATE'],
+              [t('manager.report.detail.column.action')],
             ]}
             query={query}
           />
-          <tbody>{rows.map((row, index) => pendingApprovalRow(row, index, timeZone))}</tbody>
+          <tbody>
+            {rows.map((row, index) => pendingApprovalRow(row, index, timeZone, locale, t))}
+          </tbody>
         </>
       );
   }
@@ -513,7 +634,7 @@ function ReportTableHead({
   );
 }
 
-function monthlyTimeRow(row: ReportRow, index: number): ReactNode {
+function monthlyTimeRow(row: ReportRow, index: number, locale: SupportedLocale): ReactNode {
   if (row.kind !== 'MONTHLY_TIME') return null;
   return (
     <tr
@@ -525,7 +646,7 @@ function monthlyTimeRow(row: ReportRow, index: number): ReactNode {
       </th>
       <td className="px-4 py-3">
         <Link to={`/monthly-periods/${row.monthlyPeriodId}`}>
-          {formatLocalDate(row.monthStart)}
+          {formatDateOnly(locale, row.monthStart, { dateStyle: 'full' })}
         </Link>
       </td>
       <td className="px-4 py-3">
@@ -584,7 +705,12 @@ function leaveRow(row: ReportRow, index: number): ReactNode {
   );
 }
 
-function missingRecordRow(row: ReportRow, index: number): ReactNode {
+function missingRecordRow(
+  row: ReportRow,
+  index: number,
+  locale: SupportedLocale,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): ReactNode {
   if (row.kind !== 'MISSING_RECORD') return null;
   return (
     <tr
@@ -594,22 +720,28 @@ function missingRecordRow(row: ReportRow, index: number): ReactNode {
       <th className="px-4 py-3 font-semibold" scope="row">
         {row.employeeDisplayName}
       </th>
-      <td className="px-4 py-3">{formatLocalDate(row.localDate)}</td>
+      <td className="px-4 py-3">{formatDateOnly(locale, row.localDate, { dateStyle: 'full' })}</td>
       <td className="px-4 py-3">
-        <StatusBadge tone="warning">Incomplete</StatusBadge>
+        <StatusBadge tone="warning">{t('manager.report.detail.column.incomplete')}</StatusBadge>
       </td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.expectedMinutes)}</td>
       <td className="px-4 py-3 tabular-nums">{formatDuration(row.workedMinutes)}</td>
       <td className="px-4 py-3">
         {row.warningCodes.length === 0
-          ? 'No warning code'
-          : row.warningCodes.map(humanize).join(', ')}
+          ? t('manager.report.detail.missingRecords.noWarningCode')
+          : row.warningCodes.map((code) => attentionPresentation(code, t).title).join(', ')}
       </td>
     </tr>
   );
 }
 
-function pendingApprovalRow(row: ReportRow, index: number, timeZone: string): ReactNode {
+function pendingApprovalRow(
+  row: ReportRow,
+  index: number,
+  timeZone: string,
+  locale: SupportedLocale,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): ReactNode {
   if (row.kind !== 'PENDING_APPROVAL') return null;
   return (
     <tr
@@ -619,20 +751,18 @@ function pendingApprovalRow(row: ReportRow, index: number, timeZone: string): Re
       <th className="px-4 py-3 font-semibold" scope="row">
         {row.employeeDisplayName}
       </th>
-      <td className="px-4 py-3">{humanize(row.approvalKind)}</td>
+      <td className="px-4 py-3">{t(PENDING_APPROVAL_KIND_KEYS[row.approvalKind])}</td>
       <td className="px-4 py-3">
-        {formatLocalDate(row.affectedStartDate)}
+        {formatDateOnly(locale, row.affectedStartDate, { dateStyle: 'full' })}
         {row.affectedEndDate === row.affectedStartDate
           ? ''
-          : ` – ${formatLocalDate(row.affectedEndDate)}`}
+          : ` – ${formatDateOnly(locale, row.affectedEndDate, { dateStyle: 'full' })}`}
       </td>
       <td className="px-4 py-3">
-        {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone }).format(
-          new Date(row.submittedAt),
-        )}
+        {formatInstant(locale, row.submittedAt, timeZone, { dateStyle: 'medium' })}
       </td>
       <td className="px-4 py-3">
-        <Link to={`/approvals/${row.approvalId}`}>Review</Link>
+        <Link to={`/approvals/${row.approvalId}`}>{t('manager.report.detail.action.review')}</Link>
       </td>
     </tr>
   );
@@ -642,47 +772,58 @@ function ReportPagination({
   data,
   onPage,
 }: Readonly<{ data: ReportResult; onPage: (page: number) => void }>) {
+  const t = useWorkLedgerMessage();
   return (
     <Pagination
-      ariaLabel="Report pages"
+      ariaLabel={t('manager.report.detail.pagination.label')}
       currentPage={data.pagination.page}
       onPageChange={onPage}
       pageCount={data.pagination.totalPages}
-      summary={`Page ${data.pagination.page} of ${Math.max(1, data.pagination.totalPages)}. ${data.pagination.total} report rows.`}
+      summary={t('manager.report.detail.pagination.summary', {
+        count: data.pagination.total,
+        current: data.pagination.page,
+        total: Math.max(1, data.pagination.totalPages),
+      })}
     />
   );
 }
 
 function ReportLoading() {
+  const t = useWorkLedgerMessage();
   return (
-    <RouteState kind="loading" title="Loading information">
-      Running report…
+    <RouteState kind="loading" title={t('manager.report.detail.loading.title')}>
+      {t('manager.report.detail.loading.description')}
     </RouteState>
   );
 }
 
 function ReportError({ error, retry }: Readonly<{ error: unknown; retry: () => void }>) {
+  const t = useWorkLedgerMessage();
   const denied = error instanceof ApiClientError && error.status === 403;
   return (
     <RouteState
       actions={
         denied ? (
           <Link className={buttonVariants({ variant: 'secondary' })} to="/reports">
-            Return to reports
+            {t('manager.report.detail.action.return')}
           </Link>
         ) : (
           <Button className="w-fit" variant="secondary" onPress={retry}>
-            Try again
+            {t('shared.action.tryAgain')}
           </Button>
         )
       }
       kind={denied ? 'permission-denied' : 'error'}
-      title={denied ? 'You do not have access to this area' : 'This information is unavailable'}
+      title={
+        denied
+          ? t('manager.report.detail.error.deniedTitle')
+          : t('manager.report.detail.error.unavailableTitle')
+      }
     >
       <p>
         {denied
-          ? 'You no longer have permission to run this report.'
-          : 'The report could not be loaded.'}
+          ? t('manager.report.detail.error.deniedDescription')
+          : t('manager.report.detail.error.unavailableDescription')}
       </p>
     </RouteState>
   );
@@ -714,32 +855,8 @@ function toSearchParams(query: ReportQuery): URLSearchParams {
   return search;
 }
 
-function sortLabel(sort: ReportSort): string {
-  return { DATE: 'Date', EMPLOYEE: 'Employee', STATUS: 'Status', VALUE: 'Value' }[sort];
-}
-
-function reportKeyLabel(key: ReportKey): string {
-  return {
-    'flexible-time': 'Flexible time',
-    leave: 'Leave balances',
-    'missing-records': 'Missing records',
-    'monthly-time': 'Monthly time',
-    'pending-approvals': 'Pending approvals',
-  }[key];
-}
-
-function scopeLabel(scope: ReportResult['scope']): string {
-  return {
-    ORGANIZATION: 'organization',
-    REPORTS: 'current direct reports',
-    SELF: 'your own records',
-    SELF_AND_REPORTS: 'your own records and current direct reports',
-  }[scope];
-}
-
-function humanize(value: string): string {
-  const normalized = value.toLocaleLowerCase().replaceAll('_', ' ');
-  return normalized.charAt(0).toLocaleUpperCase() + normalized.slice(1);
+function sortLabel(sort: ReportSort, t: ReturnType<typeof useWorkLedgerMessage>): string {
+  return t(SORT_LABEL_KEYS[sort]);
 }
 
 function isAuthenticationError(error: unknown): error is ApiClientError {

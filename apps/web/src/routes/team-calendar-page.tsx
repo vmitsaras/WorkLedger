@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import type { TeamCalendar, TeamCalendarEntry } from '@workledger/contracts';
+import { formatDateOnly, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import {
   Alert,
   Button,
@@ -12,9 +14,7 @@ import {
   StatusBadge,
   buttonVariants,
 } from '@workledger/ui';
-
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
-import { formatLocalDate } from '../app/date-time-format.js';
 import { teamCalendarQuery } from '../app/query.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
@@ -22,7 +22,18 @@ import { PageHeader } from '../components/page-header.js';
 
 type CalendarView = 'AGENDA' | 'MONTH';
 
+const WEEKDAY_KEYS = [
+  'manager.team.calendar.weekday.monday',
+  'manager.team.calendar.weekday.tuesday',
+  'manager.team.calendar.weekday.wednesday',
+  'manager.team.calendar.weekday.thursday',
+  'manager.team.calendar.weekday.friday',
+  'manager.team.calendar.weekday.saturday',
+  'manager.team.calendar.weekday.sunday',
+] as const satisfies readonly MessageKey[];
+
 export function TeamCalendarPage() {
+  const t = useWorkLedgerMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedMonth = searchParams.get('month') ?? undefined;
   const query = useQuery(
@@ -76,9 +87,9 @@ export function TeamCalendarPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Team availability"
-        title="Team calendar"
-        description="Plan around neutral team availability while keeping the selected date and month in view."
+        eyebrow={t('manager.team.calendar.page.eyebrow')}
+        title={t('shared.route.title.teamCalendar')}
+        description={t('manager.team.calendar.page.description')}
       />
       {query.isPending ? (
         <TeamCalendarLoading />
@@ -118,6 +129,9 @@ function TeamCalendarContent({
   setView: (view: CalendarView) => void;
   view: CalendarView;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as Parameters<typeof formatDateOnly>[0];
   const entries = useMemo(() => entriesByDate(calendar), [calendar]);
   const missingTeamCount = calendar.entries.filter(({ teamName }) => teamName === null).length;
 
@@ -126,34 +140,37 @@ function TeamCalendarContent({
       <Panel aria-labelledby="team-calendar-month-heading" className="grid gap-4" density="compact">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Selected month</p>
+            <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">
+              {t('manager.team.calendar.selectedMonth')}
+            </p>
             <h2
               id="team-calendar-month-heading"
               className="m-0 mt-1 text-2xl font-bold"
               aria-live="polite"
               aria-atomic="true"
             >
-              {formatMonth(calendar.month)}
+              {formatMonth(calendar.month, locale)}
             </h2>
           </div>
           <StatusBadge tone="info">
-            {calendar.entries.length} unavailable{' '}
-            {calendar.entries.length === 1 ? 'entry' : 'entries'}
+            {t('manager.team.calendar.unavailableCount', { count: calendar.entries.length })}
           </StatusBadge>
         </div>
         <p className="m-0 text-sm text-[var(--wl-text-muted)]">
-          Current employee scope evaluated on {formatLocalDate(calendar.scopeAsOfLocalDate)} (
-          {calendar.timeZone}). Both views contain the same neutral availability.
+          {t('manager.team.calendar.scopeAsOf', {
+            date: formatDateOnly(locale, calendar.scopeAsOfLocalDate, { dateStyle: 'full' }),
+            timeZone: calendar.timeZone,
+          })}
         </p>
       </Panel>
-      <div className="flex flex-wrap gap-2" aria-label="Team calendar view">
+      <div className="flex flex-wrap gap-2" aria-label={t('manager.team.calendar.view.label')}>
         <Button
           type="button"
           variant="secondary"
           aria-pressed={view === 'MONTH'}
           onPress={() => setView('MONTH')}
         >
-          Month grid
+          {t('manager.team.calendar.view.month')}
         </Button>
         <Button
           type="button"
@@ -161,17 +178,12 @@ function TeamCalendarContent({
           aria-pressed={view === 'AGENDA'}
           onPress={() => setView('AGENDA')}
         >
-          Agenda list
+          {t('manager.team.calendar.view.agenda')}
         </Button>
       </div>
       {missingTeamCount > 0 ? (
-        <Alert announce={false} title="Current team assignment unavailable" tone="warning">
-          <p>
-            {missingTeamCount} availability {missingTeamCount === 1 ? 'entry has' : 'entries have'}{' '}
-            no current team assignment. The{' '}
-            {missingTeamCount === 1 ? 'entry remains' : 'entries remain'} visible without guessing a
-            team.
-          </p>
+        <Alert announce={false} title={t('manager.team.calendar.missingTeam.title')} tone="warning">
+          <p>{t('manager.team.calendar.missingTeam.description', { count: missingTeamCount })}</p>
         </Alert>
       ) : null}
       <SelectedDate
@@ -180,13 +192,13 @@ function TeamCalendarContent({
         isToday={selectedDate === calendar.scopeAsOfLocalDate}
       />
       {calendar.entries.length === 0 ? (
-        <RouteState kind="empty" title="No unavailability this month">
-          <p>No team unavailability is recorded for this month.</p>
+        <RouteState kind="empty" title={t('manager.team.calendar.empty.monthTitle')}>
+          <p>{t('manager.team.calendar.empty.monthDescription')}</p>
         </RouteState>
       ) : (
         <section aria-labelledby="team-availability-view-heading" className="grid gap-4">
           <h2 id="team-availability-view-heading" className="m-0 text-xl font-bold">
-            Availability by date
+            {t('manager.team.calendar.byDate')}
           </h2>
           {view === 'MONTH' ? (
             <MonthGrid
@@ -205,14 +217,17 @@ function TeamCalendarContent({
           )}
         </section>
       )}
-      <nav className="flex flex-wrap gap-2" aria-label="Team calendar month">
+      <nav
+        className="flex flex-wrap gap-2"
+        aria-label={t('manager.team.calendar.navigation.label')}
+      >
         <Button
           type="button"
           variant="secondary"
           data-route-focus-key="team-calendar-previous-month"
           onPress={() => changeMonth(-1)}
         >
-          Previous month
+          {t('manager.team.calendar.navigation.previous')}
         </Button>
         <Button
           type="button"
@@ -220,7 +235,7 @@ function TeamCalendarContent({
           data-route-focus-key="team-calendar-next-month"
           onPress={() => changeMonth(1)}
         >
-          Next month
+          {t('manager.team.calendar.navigation.next')}
         </Button>
       </nav>
     </>
@@ -238,6 +253,9 @@ function MonthGrid({
   selectedDate: string;
   setSelectedDate: (date: string) => void;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as Parameters<typeof formatDateOnly>[0];
   const dates = useMemo(
     () => [
       ...Array<string | null>(calendar.leadingEmptyDays).fill(null),
@@ -250,16 +268,18 @@ function MonthGrid({
   );
   return (
     <DataTable
-      caption={`Neutral team unavailability for ${formatMonth(calendar.month)}. Select a date for a focused list.`}
+      caption={t('manager.team.calendar.grid.caption', {
+        month: formatMonth(calendar.month, locale),
+      })}
       className="min-w-[52rem]"
-      scrollHint="Scroll horizontally to review all seven days."
-      scrollLabel="Team availability month grid"
+      scrollHint={t('manager.team.calendar.grid.scrollHint')}
+      scrollLabel={t('manager.team.calendar.grid.scrollLabel')}
     >
       <thead>
         <tr>
-          {WEEKDAYS.map((day) => (
+          {WEEKDAY_KEYS.map((day) => (
             <th key={day} scope="col">
-              {day}
+              {t(day)}
             </th>
           ))}
         </tr>
@@ -280,7 +300,9 @@ function MonthGrid({
                         type="button"
                         className="w-fit px-2 py-1"
                         variant="quiet"
-                        aria-label={`Select ${formatLocalDate(date)}`}
+                        aria-label={t('manager.team.calendar.grid.selectDate', {
+                          date: formatDateOnly(locale, date, { dateStyle: 'full' }),
+                        })}
                         aria-pressed={selectedDate === date}
                         onPress={() => setSelectedDate(date)}
                       >
@@ -317,25 +339,32 @@ function Agenda({
   selectedDate: string;
   setSelectedDate: (date: string) => void;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as Parameters<typeof formatDateOnly>[0];
   const dates = calendar.days.filter((date) => (entries.get(date)?.length ?? 0) > 0);
   if (dates.length === 0) return null;
   return (
     <ol
       className="m-0 grid gap-3 p-0"
-      aria-label={`Team availability agenda for ${formatMonth(calendar.month)}`}
+      aria-label={t('manager.team.calendar.agenda.label', {
+        month: formatMonth(calendar.month, locale),
+      })}
     >
       {dates.map((date) => (
         <li key={date} className="list-none">
           <Panel as="article" className="grid gap-3" density="compact">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="m-0 text-lg font-bold">{formatLocalDate(date)}</h3>
+              <h3 className="m-0 text-lg font-bold">
+                {formatDateOnly(locale, date, { dateStyle: 'full' })}
+              </h3>
               <Button
                 type="button"
                 variant="secondary"
                 aria-pressed={selectedDate === date}
                 onPress={() => setSelectedDate(date)}
               >
-                Select date
+                {t('manager.team.calendar.agenda.selectDate')}
               </Button>
             </div>
             <DateMarkers
@@ -362,22 +391,27 @@ function SelectedDate({
   entries,
   isToday,
 }: Readonly<{ date: string; entries: readonly TeamCalendarEntry[]; isToday: boolean }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  const locale = runtime.locale as Parameters<typeof formatDateOnly>[0];
   return (
     <Panel className="grid gap-3" aria-labelledby="selected-team-date-heading" density="balanced">
       <div>
-        <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">Selected date</p>
+        <p className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]">
+          {t('manager.team.calendar.selectedDate')}
+        </p>
         <h2
           id="selected-team-date-heading"
           className="m-0 mt-1 text-xl font-bold"
           aria-live="polite"
           aria-atomic="true"
         >
-          {formatLocalDate(date)}
-          {isToday ? ' — Today' : ''}
+          {formatDateOnly(locale, date, { dateStyle: 'full' })}
+          {isToday ? t('manager.team.calendar.todaySuffix') : ''}
         </h2>
       </div>
       {entries.length === 0 ? (
-        <p className="m-0">No team unavailability is recorded for this date.</p>
+        <p className="m-0">{t('manager.team.calendar.empty.dateDescription')}</p>
       ) : (
         <ul className="m-0 grid gap-2 p-0" role="list">
           {entries.map((entry, index) => (
@@ -400,9 +434,14 @@ function DateMarkers({
   isSelected: boolean;
   isToday: boolean;
 }>) {
+  const t = useWorkLedgerMessage();
   return (
     <p className="m-0 text-xs font-semibold text-[var(--wl-text-muted)]">
-      {[isToday ? 'Today' : null, isSelected ? 'Selected' : null, availabilityCount(entries)]
+      {[
+        isToday ? t('manager.team.calendar.marker.today') : null,
+        isSelected ? t('manager.team.calendar.marker.selected') : null,
+        availabilityCount(entries, t),
+      ]
         .filter((value): value is string => value !== null)
         .join(' · ')}
     </p>
@@ -413,6 +452,7 @@ function AvailabilityEntry({
   compact = false,
   entry,
 }: Readonly<{ compact?: boolean; entry: TeamCalendarEntry }>) {
+  const t = useWorkLedgerMessage();
   return (
     <div
       className={
@@ -422,52 +462,55 @@ function AvailabilityEntry({
       }
     >
       <p className="m-0 font-semibold">{entry.employeeDisplayName}</p>
-      <p className="m-0">Unavailable — {coverageLabel(entry)}</p>
+      <p className="m-0">
+        {t('manager.team.calendar.entry.summary', { coverage: coverageLabel(entry, t) })}
+      </p>
       <p className="m-0 text-[var(--wl-text-muted)]">
         {entry.teamName === null
-          ? 'Current team assignment unavailable'
-          : `Team: ${entry.teamName}`}
+          ? t('manager.team.calendar.entry.teamMissing')
+          : t('manager.team.calendar.entry.team', { team: entry.teamName })}
       </p>
     </div>
   );
 }
 
 function TeamCalendarLoading() {
+  const t = useWorkLedgerMessage();
   return (
-    <RouteState kind="loading" title="Loading team calendar">
-      <p>Preparing team availability for the selected month.</p>
+    <RouteState kind="loading" title={t('manager.team.calendar.loading.title')}>
+      <p>{t('manager.team.calendar.loading.description')}</p>
     </RouteState>
   );
 }
 
 function TeamCalendarError({ retry }: Readonly<{ retry: () => void }>) {
+  const t = useWorkLedgerMessage();
   return (
-    <Alert title="Team calendar is unavailable" tone="danger">
-      <p>The selected month could not be loaded. Check your connection and try again.</p>
+    <Alert title={t('manager.team.calendar.error.title')} tone="danger">
+      <p>{t('manager.team.calendar.error.description')}</p>
       <Button className="w-fit" type="button" variant="secondary" onPress={retry}>
-        Try again
+        {t('shared.action.tryAgain')}
       </Button>
     </Alert>
   );
 }
 
 function TeamCalendarPermissionDenied() {
-  useBoundaryPresentation('Permission denied');
+  const t = useWorkLedgerMessage();
+  useBoundaryPresentation(t('shared.route.boundary.permissionDenied.title'));
   return (
     <section className="grid max-w-2xl gap-6">
       <PageHeader
-        eyebrow="Route status"
-        title="Permission denied"
-        description="Your current account cannot view the team calendar. No employee availability was disclosed."
+        eyebrow={t('manager.team.calendar.permission.eyebrow')}
+        title={t('shared.route.boundary.permissionDenied.title')}
+        description={t('manager.team.calendar.permission.description')}
       />
       <Link className={buttonVariants({ variant: 'secondary' })} to="/">
-        Go to my home
+        {t('shared.action.goHome')}
       </Link>
     </section>
   );
 }
-
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 function initialView(): CalendarView {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'MONTH';
@@ -499,26 +542,32 @@ function shiftMonth(month: string, direction: -1 | 1): string {
   return `${year}-${monthNumber.toString().padStart(2, '0')}`;
 }
 
-function formatMonth(month: string): string {
+function formatMonth(month: string, locale: Parameters<typeof formatDateOnly>[0]): string {
   const [yearText = '', monthText = ''] = month.split('-');
   const year = Number(yearText);
   const monthNumber = Number(monthText);
   if (!Number.isInteger(year) || !Number.isInteger(monthNumber)) return `${monthText} ${yearText}`;
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     month: 'long',
     timeZone: 'UTC',
     year: 'numeric',
   }).format(new Date(Date.UTC(year, monthNumber - 1, 1)));
 }
 
-function availabilityCount(entries: readonly TeamCalendarEntry[]): string {
-  return `${entries.length} unavailable ${entries.length === 1 ? 'entry' : 'entries'}`;
+function availabilityCount(
+  entries: readonly TeamCalendarEntry[],
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
+  return t('manager.team.calendar.unavailableCount', { count: entries.length });
 }
 
-function coverageLabel(entry: TeamCalendarEntry): string {
-  if (entry.coverageKind === 'FULL_DAY') return 'full day';
-  if (entry.coverageKind === 'FIRST_HALF') return 'first half of expected work';
-  if (entry.coverageKind === 'SECOND_HALF') return 'second half of expected work';
+function coverageLabel(
+  entry: TeamCalendarEntry,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
+  if (entry.coverageKind === 'FULL_DAY') return t('manager.team.calendar.coverage.fullDay');
+  if (entry.coverageKind === 'FIRST_HALF') return t('manager.team.calendar.coverage.firstHalf');
+  if (entry.coverageKind === 'SECOND_HALF') return t('manager.team.calendar.coverage.secondHalf');
   return `${formatClock(entry.startsAtMinute)}–${formatClock(entry.endsAtMinute)}`;
 }
 

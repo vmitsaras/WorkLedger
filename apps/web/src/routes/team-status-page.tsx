@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Link, useLoaderData, useNavigate, useSearchParams } from 'react-router';
 
 import type { TeamAvailabilityState, TeamStatus, TeamStatusMember } from '@workledger/contracts';
+import { formatDateOnly, formatInstant, type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import {
   Alert,
   Button,
@@ -15,9 +17,7 @@ import {
 } from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
-import { formatLocalDate, formatTime } from '../app/date-time-format.js';
 import { teamStatusQuery } from '../app/query.js';
-import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import {
@@ -28,18 +28,18 @@ import {
 } from '../app/team-status-view.js';
 import { PageHeader } from '../components/page-header.js';
 
-const STATUS_LABELS: Readonly<Record<TeamAvailabilityState, string>> = Object.freeze({
-  OFF_WORK: 'Not working now',
-  ON_BREAK: 'On break',
-  UNAVAILABLE: 'Unavailable today',
-  WORKING: 'Working now',
-});
+const STATUS_LABELS = Object.freeze({
+  OFF_WORK: 'manager.team.status.availability.offWork',
+  ON_BREAK: 'manager.team.status.availability.onBreak',
+  UNAVAILABLE: 'manager.team.status.availability.unavailable',
+  WORKING: 'manager.team.status.availability.working',
+} as const satisfies Readonly<Record<TeamAvailabilityState, MessageKey>>);
 
 const AVAILABILITY_FILTERS: readonly Readonly<{
-  label: string;
+  label: MessageKey;
   value: TeamAvailabilityFilter;
 }>[] = [
-  { label: 'All direct reports', value: 'ALL' },
+  { label: 'manager.team.status.filter.allDirectReports', value: 'ALL' },
   { label: STATUS_LABELS.WORKING, value: 'WORKING' },
   { label: STATUS_LABELS.ON_BREAK, value: 'ON_BREAK' },
   { label: STATUS_LABELS.UNAVAILABLE, value: 'UNAVAILABLE' },
@@ -47,6 +47,7 @@ const AVAILABILITY_FILTERS: readonly Readonly<{
 ];
 
 export function TeamStatusPage() {
+  const t = useWorkLedgerMessage();
   const view = useLoaderData<TeamStatusView>();
   const [, setSearchParams] = useSearchParams();
   const query = useQuery(teamStatusQuery());
@@ -74,16 +75,16 @@ export function TeamStatusPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        eyebrow="Team workspace"
-        title={canonicalRouteLabel('/team')}
-        description="See who is working, on break, unavailable today, or has open records, then open the right follow-up."
+        eyebrow={t('manager.team.status.page.eyebrow')}
+        title={t('shared.route.title.teamStatus')}
+        description={t('manager.team.status.page.description')}
       >
-        <nav aria-label="Team workspace shortcuts" className="flex flex-wrap gap-2">
+        <nav aria-label={t('manager.team.status.page.shortcuts')} className="flex flex-wrap gap-2">
           <Link className={buttonVariants({ variant: 'secondary' })} to="/approvals">
-            Approval inbox
+            {t('shared.route.title.approvalInbox')}
           </Link>
           <Link className={buttonVariants({ variant: 'quiet' })} to="/team-calendar">
-            Team calendar
+            {t('shared.route.title.teamCalendar')}
           </Link>
         </nav>
       </PageHeader>
@@ -114,6 +115,8 @@ function TeamStatusContent({
   refreshing: boolean;
   view: TeamStatusView;
 }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
   const members = filterMembers(data.members, view);
   const filtered = !isDefaultView(view);
 
@@ -123,23 +126,29 @@ function TeamStatusContent({
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 id="team-summary-heading" className="m-0 text-xl font-bold">
-              Current overview
+              {t('manager.team.status.summary.heading')}
             </h2>
             <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-              {formatLocalDate(data.localDate)}, as of {formatTime(data.asOf, data.timeZone)} (
-              {data.timeZone}).
+              {t('manager.team.status.summary.asOf', {
+                date: formatDateOnly(runtime.locale, data.localDate, { dateStyle: 'full' }),
+                time: formatInstant(runtime.locale, data.asOf, data.timeZone, {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                }),
+                timeZone: data.timeZone,
+              })}
             </p>
           </div>
           <p
             className="m-0 min-h-6 text-sm text-[var(--wl-text-muted)]"
             role="status"
-            aria-label="Team refresh status"
+            aria-label={t('manager.team.status.summary.refreshLabel')}
             aria-live="polite"
             aria-atomic="true"
           >
             {refreshing
-              ? 'Refreshing status…'
-              : `Status current for ${data.summary.total.toString()} direct report${data.summary.total === 1 ? '' : 's'}.`}
+              ? t('manager.team.status.summary.refreshing')
+              : t('manager.team.status.summary.current', { count: data.summary.total })}
           </p>
         </div>
         <div className="grid gap-3">
@@ -147,7 +156,7 @@ function TeamStatusContent({
             id="team-availability-filter-label"
             className="m-0 text-sm font-semibold text-[var(--wl-text-muted)]"
           >
-            Filter by current availability
+            {t('manager.team.status.filter.heading')}
           </p>
           <div
             aria-labelledby="team-availability-filter-label"
@@ -158,7 +167,7 @@ function TeamStatusContent({
               <OverviewFilter
                 count={availabilityCount(data, filter.value)}
                 key={filter.value}
-                label={filter.label}
+                label={t(filter.label)}
                 pressed={view.availability === filter.value}
                 routeFocusKey={`team-availability-${filter.value}`}
                 onPress={() => onViewChange({ ...view, availability: filter.value })}
@@ -167,10 +176,14 @@ function TeamStatusContent({
           </div>
         </div>
         <div className="grid gap-2 border-t border-[var(--wl-border)] pt-4">
-          <div aria-label="Record filters" className="wl-team-overview__record-filter" role="group">
+          <div
+            aria-label={t('manager.team.status.filter.recordLabel')}
+            className="wl-team-overview__record-filter"
+            role="group"
+          >
             <OverviewFilter
               count={data.summary.unresolved}
-              label="People with open records"
+              label={t('manager.team.status.filter.openRecords')}
               pressed={view.records === 'OPEN'}
               routeFocusKey="team-records-OPEN"
               onPress={() =>
@@ -179,8 +192,7 @@ function TeamStatusContent({
             />
           </div>
           <p className="m-0 max-w-2xl text-sm text-[var(--wl-text-muted)]">
-            Open records can include work that needs your review, an employee response, or final
-            application. The label does not expose the workflow or absence type.
+            {t('manager.team.status.filter.description')}
           </p>
         </div>
       </Panel>
@@ -188,7 +200,7 @@ function TeamStatusContent({
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 id="team-members-heading" className="m-0 text-xl font-bold">
-              Team members
+              {t('manager.team.status.members.heading')}
             </h2>
             <p
               className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]"
@@ -196,7 +208,7 @@ function TeamStatusContent({
               aria-live="polite"
               aria-atomic="true"
             >
-              {teamResultsSummary(members.length, data.summary.total, view)}
+              {teamResultsSummary(members.length, data.summary.total, view, t)}
             </p>
           </div>
           {filtered && members.length > 0 ? (
@@ -206,13 +218,13 @@ function TeamStatusContent({
               variant="quiet"
               onPress={() => onViewChange(DEFAULT_TEAM_STATUS_VIEW)}
             >
-              Show all direct reports
+              {t('manager.team.status.members.showAll')}
             </Button>
           ) : null}
         </div>
         {data.members.length === 0 ? (
-          <RouteState kind="empty" title="No current direct reports">
-            <p>You have no current direct reports to show.</p>
+          <RouteState kind="empty" title={t('manager.team.status.empty.noReportsTitle')}>
+            <p>{t('manager.team.status.empty.noReportsDescription')}</p>
           </RouteState>
         ) : members.length === 0 ? (
           <RouteState
@@ -223,13 +235,13 @@ function TeamStatusContent({
                 variant="secondary"
                 onPress={() => onViewChange(DEFAULT_TEAM_STATUS_VIEW)}
               >
-                Show all direct reports
+                {t('manager.team.status.members.showAll')}
               </Button>
             }
             kind="empty"
-            title="No team members match this view"
+            title={t('manager.team.status.empty.filteredTitle')}
           >
-            <p>Change the overview filters to see other current direct reports.</p>
+            <p>{t('manager.team.status.empty.filteredDescription')}</p>
           </RouteState>
         ) : (
           <TeamMembers localDate={data.localDate} members={members} />
@@ -252,9 +264,10 @@ function OverviewFilter({
   pressed: boolean;
   routeFocusKey: string;
 }>) {
+  const t = useWorkLedgerMessage();
   return (
     <Button
-      aria-label={`${label}: ${count.toString()}`}
+      aria-label={t('manager.team.status.filter.option', { count, label })}
       aria-pressed={pressed}
       className="wl-team-overview__filter"
       data-route-focus-key={routeFocusKey}
@@ -278,29 +291,41 @@ function TeamMembers({
   members,
 }: Readonly<{ localDate: string; members: TeamStatus['members'] }>) {
   const wideLayout = useWideTeamLayout();
+  const t = useWorkLedgerMessage();
 
   if (!wideLayout) {
     return (
-      <ol className="m-0 grid list-none gap-3 p-0" aria-label="Team status results">
+      <ol
+        className="m-0 grid list-none gap-3 p-0"
+        aria-label={t('manager.team.status.results.listLabel')}
+      >
         {members.map((member, index) => (
           <li key={memberKey(member, index)}>
             <Panel as="article" className="grid min-w-0 gap-3" density="compact">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <h3 className="m-0 text-lg font-bold">{member.displayName}</h3>
                 <StatusBadge tone={availabilityTone(member.availability)}>
-                  {STATUS_LABELS[member.availability]}
+                  {t(STATUS_LABELS[member.availability])}
                 </StatusBadge>
               </div>
               <dl className="m-0 grid gap-2 text-sm">
                 <div className="grid gap-1">
-                  <dt className="font-semibold text-[var(--wl-text-muted)]">Current team</dt>
-                  <dd className="m-0">{member.teamName ?? 'No current team'}</dd>
+                  <dt className="font-semibold text-[var(--wl-text-muted)]">
+                    {t('manager.team.status.results.currentTeam')}
+                  </dt>
+                  <dd className="m-0">
+                    {member.teamName ?? t('manager.team.status.results.noTeam')}
+                  </dd>
                 </div>
                 <div className="grid gap-1">
-                  <dt className="font-semibold text-[var(--wl-text-muted)]">Records</dt>
+                  <dt className="font-semibold text-[var(--wl-text-muted)]">
+                    {t('manager.team.status.results.records')}
+                  </dt>
                   <dd className="m-0">
                     <StatusBadge tone={member.hasUnresolvedRecords ? 'warning' : 'neutral'}>
-                      {member.hasUnresolvedRecords ? 'Open records' : 'No open records'}
+                      {member.hasUnresolvedRecords
+                        ? t('manager.team.status.results.openRecords')
+                        : t('manager.team.status.results.noOpenRecords')}
                     </StatusBadge>
                   </dd>
                 </div>
@@ -315,32 +340,34 @@ function TeamMembers({
 
   return (
     <DataTable
-      caption="Current availability, open record state, and next steps for direct reports."
+      caption={t('manager.team.status.results.caption')}
       className="min-w-[50rem]"
-      scrollLabel="Team status table"
+      scrollLabel={t('manager.team.status.results.tableLabel')}
     >
       <thead>
         <tr>
-          <th scope="col">Employee</th>
-          <th scope="col">Current team</th>
-          <th scope="col">Availability</th>
-          <th scope="col">Record state</th>
-          <th scope="col">Next step</th>
+          <th scope="col">{t('manager.team.status.column.employee')}</th>
+          <th scope="col">{t('manager.team.status.column.currentTeam')}</th>
+          <th scope="col">{t('manager.team.status.column.availability')}</th>
+          <th scope="col">{t('manager.team.status.column.recordState')}</th>
+          <th scope="col">{t('manager.team.status.column.nextStep')}</th>
         </tr>
       </thead>
       <tbody>
         {members.map((member, index) => (
           <tr key={memberKey(member, index)}>
             <th scope="row">{member.displayName}</th>
-            <td>{member.teamName ?? 'No current team'}</td>
+            <td>{member.teamName ?? t('manager.team.status.results.noTeam')}</td>
             <td>
               <StatusBadge tone={availabilityTone(member.availability)}>
-                {STATUS_LABELS[member.availability]}
+                {t(STATUS_LABELS[member.availability])}
               </StatusBadge>
             </td>
             <td>
               <StatusBadge tone={member.hasUnresolvedRecords ? 'warning' : 'neutral'}>
-                {member.hasUnresolvedRecords ? 'Open records' : 'No open records'}
+                {member.hasUnresolvedRecords
+                  ? t('manager.team.status.results.openRecords')
+                  : t('manager.team.status.results.noOpenRecords')}
               </StatusBadge>
             </td>
             <td>
@@ -362,17 +389,20 @@ function TeamMemberAction({
   member: TeamStatusMember;
   presentation: 'list' | 'table';
 }>) {
+  const t = useWorkLedgerMessage();
   if (member.hasUnresolvedRecords) {
     return (
       <Link
-        aria-label={`Open approval inbox to find open records for ${member.displayName}`}
+        aria-label={t('manager.team.status.action.openInboxLabel', {
+          employee: member.displayName,
+        })}
         className={buttonVariants({
           variant: 'secondary',
           className: presentation === 'list' ? 'w-full' : 'w-fit',
         })}
         to="/approvals?status=ALL&sort=EMPLOYEE&direction=ASC"
       >
-        Open inbox
+        {t('manager.team.status.action.openInbox')}
       </Link>
     );
   }
@@ -380,51 +410,60 @@ function TeamMemberAction({
   if (member.availability === 'UNAVAILABLE') {
     return (
       <Link
-        aria-label={`View team calendar for ${member.displayName}`}
+        aria-label={t('manager.team.status.action.viewCalendarLabel', {
+          employee: member.displayName,
+        })}
         className={buttonVariants({
           variant: 'secondary',
           className: presentation === 'list' ? 'w-full' : 'w-fit',
         })}
         to={`/team-calendar?month=${localDate.slice(0, 7)}`}
       >
-        View calendar
+        {t('manager.team.status.action.viewCalendar')}
       </Link>
     );
   }
 
-  return <span className="text-sm text-[var(--wl-text-muted)]">No follow-up</span>;
+  return (
+    <span className="text-sm text-[var(--wl-text-muted)]">
+      {t('manager.team.status.action.none')}
+    </span>
+  );
 }
 
 function TeamStatusLoading() {
+  const t = useWorkLedgerMessage();
   return (
-    <RouteState kind="loading" title="Loading team status">
-      <p>Preparing current availability and unresolved record counts.</p>
+    <RouteState kind="loading" title={t('manager.team.status.loading.title')}>
+      <p>{t('manager.team.status.loading.description')}</p>
     </RouteState>
   );
 }
 
 function TeamStatusError({ retry }: Readonly<{ retry: () => void }>) {
+  const t = useWorkLedgerMessage();
   return (
-    <Alert title="Team status is unavailable" tone="danger">
-      <p>Team status could not be loaded. Check your connection and try again.</p>
+    <Alert title={t('manager.team.status.error.title')} tone="danger">
+      <p>{t('manager.team.status.error.description')}</p>
       <Button className="w-fit" type="button" variant="secondary" onPress={retry}>
-        Try again
+        {t('shared.action.tryAgain')}
       </Button>
     </Alert>
   );
 }
 
 function TeamPermissionDenied() {
-  useBoundaryPresentation('Permission denied');
+  const t = useWorkLedgerMessage();
+  useBoundaryPresentation(t('shared.route.boundary.permissionDenied.title'));
   return (
     <section className="grid max-w-2xl gap-6">
       <PageHeader
-        eyebrow="Route status"
-        title="Permission denied"
-        description="Your current account cannot view team status. No employee availability was disclosed."
+        eyebrow={t('manager.team.status.permission.eyebrow')}
+        title={t('shared.route.boundary.permissionDenied.title')}
+        description={t('manager.team.status.permission.description')}
       />
       <Link className={buttonVariants({ variant: 'secondary' })} to="/">
-        Go to my home
+        {t('shared.action.goHome')}
       </Link>
     </section>
   );
@@ -460,16 +499,21 @@ function isDefaultView(view: TeamStatusView): boolean {
   );
 }
 
-function teamResultsSummary(visible: number, total: number, view: TeamStatusView): string {
+function teamResultsSummary(
+  visible: number,
+  total: number,
+  view: TeamStatusView,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
   if (isDefaultView(view)) {
-    return `${total.toString()} current direct report${total === 1 ? '' : 's'}.`;
+    return t('manager.team.status.members.currentCount', { count: total });
   }
   const availability =
     view.availability === 'ALL'
-      ? 'all availability states'
-      : STATUS_LABELS[view.availability].toLowerCase();
-  const records = view.records === 'OPEN' ? ' with open records' : '';
-  return `Showing ${visible.toString()} of ${total.toString()} direct reports: ${availability}${records}.`;
+      ? t('manager.team.status.filter.allAvailability')
+      : t(STATUS_LABELS[view.availability]).toLocaleLowerCase();
+  const records = view.records === 'OPEN' ? t('manager.team.status.filter.withOpenRecords') : '';
+  return t('manager.team.status.members.filteredCount', { availability, records, total, visible });
 }
 
 function availabilityTone(state: TeamAvailabilityState): NonNullable<StatusBadgeProps['tone']> {

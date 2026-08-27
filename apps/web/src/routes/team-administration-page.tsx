@@ -7,6 +7,7 @@ import {
   type TeamAdminPage,
   type TeamAdminQuery,
 } from '@workledger/contracts';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import {
   Alert,
   Button,
@@ -26,7 +27,6 @@ import {
   setTeamStateForAdministration,
 } from '../app/api-client.js';
 import { teamAdminPageQuery } from '../app/query.js';
-import { canonicalRouteLabel } from '../app/route-copy.js';
 import { useWideAdministrationLayout } from '../app/use-wide-administration-layout.js';
 import { PageHeader } from '../components/page-header.js';
 
@@ -34,6 +34,7 @@ type TeamOperation = Readonly<{ active?: boolean; teamId?: string }>;
 type TeamItem = TeamAdminPage['items'][number];
 
 export function TeamAdministrationPage() {
+  const t = useWorkLedgerMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = readTeamQuery(searchParams);
   const teamsQuery = useQuery(teamAdminPageQuery(query));
@@ -56,7 +57,7 @@ export function TeamAdministrationPage() {
   async function run(operation: TeamOperation) {
     setMessage(undefined);
     if (operation.teamId === undefined && name.trim() === '') {
-      setMessage({ kind: 'error', text: 'Enter a team name.' });
+      setMessage({ kind: 'error', text: t('admin.team.validation.name') });
       document.querySelector<HTMLElement>('#new-team-name')?.focus();
       return;
     }
@@ -64,25 +65,25 @@ export function TeamAdministrationPage() {
       await mutation.mutateAsync(operation);
       setName('');
       await queryClient.invalidateQueries({ queryKey: ['administration', 'teams'] });
-      setMessage({ kind: 'success', text: 'The team catalog was updated.' });
+      setMessage({ kind: 'success', text: t('admin.team.feedback.updated') });
     } catch (error) {
-      setMessage({ kind: 'error', text: teamMutationError(error) });
+      setMessage({ kind: 'error', text: teamMutationError(error, t) });
     }
   }
 
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="People administration"
-        title={canonicalRouteLabel('/teams')}
-        description="Create and maintain orientation teams used to organize employee records. Manager access still follows direct-manager assignments."
+        eyebrow={t('admin.team.page.eyebrow')}
+        title={t('shared.route.title.teams')}
+        description={t('admin.team.page.description')}
       >
         <div className="flex flex-wrap gap-3">
           <a className={linkVariants({ prominence: 'default' })} href="#new-team-name">
-            Create team
+            {t('admin.team.page.create')}
           </a>
           <Link className={linkVariants({ prominence: 'quiet' })} to="/employees">
-            Employee directory
+            {t('admin.team.page.employeeDirectory')}
           </Link>
         </div>
       </PageHeader>
@@ -90,16 +91,19 @@ export function TeamAdministrationPage() {
       <Panel className="grid gap-5" aria-labelledby="create-team-heading">
         <div>
           <h2 id="create-team-heading" className="m-0 text-xl font-bold">
-            Add an orientation team
+            {t('admin.team.form.heading')}
           </h2>
           <p className="m-0 mt-2 max-w-3xl text-sm text-[var(--wl-text-muted)]">
-            Creating a team does not assign employees or change reporting access. Assign membership
-            from an employee record after the team exists.
+            {t('admin.team.form.description')}
           </p>
         </div>
         {message === undefined ? null : (
           <Alert
-            title={message.kind === 'error' ? 'Team update failed' : 'Team catalog updated'}
+            title={
+              message.kind === 'error'
+                ? t('admin.team.feedback.errorTitle')
+                : t('admin.team.feedback.successTitle')
+            }
             tone={message.kind === 'error' ? 'danger' : 'success'}
           >
             <p>{message.text}</p>
@@ -115,28 +119,28 @@ export function TeamAdministrationPage() {
           <TextField
             id="new-team-name"
             className="min-w-64 flex-[1_1_24rem]"
-            description="Use the name employees and managers recognize in daily work."
-            label="Team name"
+            description={t('admin.team.form.nameDescription')}
+            label={t('admin.team.form.name')}
             name="team-name"
             value={name}
             onChange={setName}
           />
           <Button type="submit" isDisabled={mutation.isPending}>
-            {mutation.isPending ? 'Updating…' : 'Create team'}
+            {mutation.isPending ? t('admin.team.form.pending') : t('admin.team.form.submit')}
           </Button>
         </form>
       </Panel>
 
       <FilterBar
-        description="Show teams available for new assignments, inactive historical teams, or the complete catalog."
-        title="Filter team catalog"
+        description={t('admin.team.filter.description')}
+        title={t('admin.team.filter.title')}
         onSubmit={(event) => {
           event.preventDefault();
           setSearchParams({ limit: '20', page: '1', status });
         }}
       >
         <label className="grid gap-2 text-sm font-semibold" htmlFor="team-status-filter">
-          Team status
+          {t('admin.team.filter.status')}
           <select
             id="team-status-filter"
             className="min-h-11 rounded-lg border border-[var(--wl-border-strong)] bg-[var(--wl-surface-raised)] px-3"
@@ -144,29 +148,28 @@ export function TeamAdministrationPage() {
             value={status}
             onChange={(event) => setStatus(event.target.value as TeamAdminQuery['status'])}
           >
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="ALL">All teams</option>
+            <option value="ACTIVE">{t('admin.team.status.active')}</option>
+            <option value="INACTIVE">{t('admin.team.status.inactive')}</option>
+            <option value="ALL">{t('admin.team.filter.all')}</option>
           </select>
         </label>
         <Button type="submit" variant="secondary">
-          Apply filter
+          {t('admin.team.filter.apply')}
         </Button>
       </FilterBar>
 
       {teamsQuery.isPending ? (
-        <RouteState kind="loading" title="Loading information">
-          Team records are being retrieved.
+        <RouteState kind="loading" title={t('admin.team.loading.title')}>
+          {t('admin.team.loading.description')}
         </RouteState>
       ) : teamsQuery.data.items.length === 0 ? (
-        <RouteState kind="empty" title="No teams in this view">
-          Change the team status or create a team for a new orientation group.
+        <RouteState kind="empty" title={t('admin.team.empty.title')}>
+          {t('admin.team.empty.description')}
         </RouteState>
       ) : (
         <div className="grid gap-4">
           <p className="m-0 text-sm text-[var(--wl-text-muted)]" role="status" aria-live="polite">
-            {teamsQuery.data.pagination.total}{' '}
-            {teamsQuery.data.pagination.total === 1 ? 'team' : 'teams'} in this result.
+            {t('admin.team.results.count', { count: teamsQuery.data.pagination.total })}
           </p>
           {wideLayout ? (
             <TeamDirectoryTable
@@ -186,7 +189,7 @@ export function TeamAdministrationPage() {
 
       {teamsQuery.data === undefined ? null : (
         <Pagination
-          ariaLabel="Team result pages"
+          ariaLabel={t('admin.team.pagination.label')}
           currentPage={query.page}
           onPageChange={(page) =>
             setSearchParams({
@@ -196,7 +199,11 @@ export function TeamAdministrationPage() {
             })
           }
           pageCount={teamsQuery.data.pagination.totalPages}
-          summary={`Page ${query.page} of ${Math.max(1, teamsQuery.data.pagination.totalPages)}. ${teamsQuery.data.pagination.total} teams.`}
+          summary={t('admin.team.pagination.summary', {
+            count: teamsQuery.data.pagination.total,
+            current: query.page,
+            total: Math.max(1, teamsQuery.data.pagination.totalPages),
+          })}
         />
       )}
     </section>
@@ -212,19 +219,20 @@ function TeamDirectoryTable({
   onAction: (operation: TeamOperation) => Promise<void>;
   teams: TeamAdminPage;
 }>) {
+  const t = useWorkLedgerMessage();
   return (
     <DataTable
-      caption="Teams matching the selected team status"
+      caption={t('admin.team.results.caption')}
       className="min-w-[42rem]"
-      scrollHint="Scroll horizontally if every team comparison column does not fit."
-      scrollLabel="Team catalog results"
+      scrollHint={t('admin.team.results.scrollHint')}
+      scrollLabel={t('admin.team.results.scrollLabel')}
     >
       <thead>
         <tr>
-          <th scope="col">Team</th>
-          <th scope="col">Status</th>
-          <th scope="col">Current members</th>
-          <th scope="col">Action</th>
+          <th scope="col">{t('admin.team.column.team')}</th>
+          <th scope="col">{t('admin.team.column.status')}</th>
+          <th scope="col">{t('admin.team.column.members')}</th>
+          <th scope="col">{t('admin.team.column.action')}</th>
         </tr>
       </thead>
       <tbody>
@@ -235,7 +243,7 @@ function TeamDirectoryTable({
             </th>
             <td>
               <StatusBadge tone={team.active ? 'success' : 'neutral'}>
-                {team.active ? 'Active' : 'Inactive'}
+                {team.active ? t('admin.team.status.active') : t('admin.team.status.inactive')}
               </StatusBadge>
             </td>
             <td>{team.currentMemberCount}</td>
@@ -258,8 +266,9 @@ function TeamDirectoryList({
   onAction: (operation: TeamOperation) => Promise<void>;
   teams: TeamAdminPage;
 }>) {
+  const t = useWorkLedgerMessage();
   return (
-    <ol className="m-0 grid list-none gap-3 p-0" aria-label="Team catalog results">
+    <ol className="m-0 grid list-none gap-3 p-0" aria-label={t('admin.team.results.scrollLabel')}>
       {teams.items.map((team) => (
         <li key={team.id}>
           <Panel as="article" className="grid gap-3" density="compact">
@@ -267,12 +276,11 @@ function TeamDirectoryList({
               <div>
                 <h2 className="m-0 text-lg font-bold">{team.name}</h2>
                 <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-                  {team.currentMemberCount}{' '}
-                  {team.currentMemberCount === 1 ? 'current member' : 'current members'}
+                  {t('admin.team.results.members', { count: team.currentMemberCount })}
                 </p>
               </div>
               <StatusBadge tone={team.active ? 'success' : 'neutral'}>
-                {team.active ? 'Active' : 'Inactive'}
+                {team.active ? t('admin.team.status.active') : t('admin.team.status.inactive')}
               </StatusBadge>
             </div>
             <TeamStateAction isPending={isPending} onAction={onAction} team={team} />
@@ -292,6 +300,7 @@ function TeamStateAction({
   onAction: (operation: TeamOperation) => Promise<void>;
   team: TeamItem;
 }>) {
+  const t = useWorkLedgerMessage();
   const blocked = team.active && team.currentMemberCount > 0;
   return (
     <div className="grid max-w-sm justify-items-start gap-2">
@@ -301,15 +310,16 @@ function TeamStateAction({
         isDisabled={isPending || blocked}
         onPress={() => void onAction({ active: !team.active, teamId: team.id })}
       >
-        {team.active ? `Deactivate ${team.name}` : `Activate ${team.name}`}
+        {team.active
+          ? t('admin.team.action.deactivate', { team: team.name })
+          : t('admin.team.action.activate', { team: team.name })}
       </Button>
       {blocked ? (
         <p
           id={`team-${team.id}-deactivation-reason`}
           className="m-0 text-sm text-[var(--wl-text-muted)]"
         >
-          Move all current members to another team or end their team assignments before deactivating
-          this team. Existing assignment history remains unchanged.
+          {t('admin.team.action.blocked')}
         </p>
       ) : null}
     </div>
@@ -321,12 +331,11 @@ function readTeamQuery(searchParams: URLSearchParams): TeamAdminQuery {
   return parsed.success ? parsed.data : { limit: 20, page: 1, status: 'ACTIVE' };
 }
 
-function teamMutationError(error: unknown): string {
+function teamMutationError(error: unknown, t: ReturnType<typeof useWorkLedgerMessage>): string {
   if (error instanceof ApiClientError) {
-    if (error.code === 'ACCESS_DENIED') return 'You no longer have permission to manage teams.';
-    if (error.code === 'TEAM_NAME_ALREADY_EXISTS') return 'A team already uses that name.';
-    if (error.code === 'TEAM_STATE_CONFLICT')
-      return 'The team changed or still has current or scheduled assignments. Refresh and review the catalog.';
+    if (error.code === 'ACCESS_DENIED') return t('admin.team.error.accessDenied');
+    if (error.code === 'TEAM_NAME_ALREADY_EXISTS') return t('admin.team.error.nameExists');
+    if (error.code === 'TEAM_STATE_CONFLICT') return t('admin.team.error.stateConflict');
   }
-  return 'The team change could not be completed. Try again.';
+  return t('admin.team.error.generic');
 }

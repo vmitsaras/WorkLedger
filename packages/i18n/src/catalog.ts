@@ -975,6 +975,999 @@ export type MessageParameterMap = Readonly<{
   'employee.today.timeline.incomplete.title': undefined;
   'employee.today.timeline.originalEvents': undefined;
   'employee.today.timeline.title': undefined;
+  'admin.absenceSettings.coverage.fullDay': undefined;
+  'admin.absenceSettings.coverage.halfDay': undefined;
+  'admin.absenceSettings.coverage.heading': undefined;
+  'admin.absenceSettings.coverage.minutes': undefined;
+  'admin.absenceSettings.empty.description': undefined;
+  'admin.absenceSettings.empty.title': undefined;
+  'admin.absenceSettings.entitlement.description': undefined;
+  'admin.absenceSettings.entitlement.label': undefined;
+  'admin.absenceSettings.entitlement.reservePending': undefined;
+  'admin.absenceSettings.entitlement.reservePendingSickness': undefined;
+  'admin.absenceSettings.entitlement.sicknessReason': undefined;
+  'admin.absenceSettings.error.configuration': undefined;
+  'admin.absenceSettings.error.conflict': undefined;
+  'admin.absenceSettings.error.effectiveDate': undefined;
+  'admin.absenceSettings.error.generic': undefined;
+  'admin.absenceSettings.feedback.created': undefined;
+  'admin.absenceSettings.feedback.errorTitle': undefined;
+  'admin.absenceSettings.feedback.successTitle': undefined;
+  'admin.absenceSettings.form.active': undefined;
+  'admin.absenceSettings.form.description': undefined;
+  'admin.absenceSettings.form.displayName': undefined;
+  'admin.absenceSettings.form.effectiveFrom': undefined;
+  'admin.absenceSettings.form.heading': undefined;
+  'admin.absenceSettings.form.pending': undefined;
+  'admin.absenceSettings.form.submit': undefined;
+  'admin.absenceSettings.form.typeCode': undefined;
+  'admin.absenceSettings.history.available': undefined;
+  'admin.absenceSettings.history.coverageOptions': Readonly<{ count: number }>;
+  'admin.absenceSettings.history.entitlement': Readonly<{ account: string }>;
+  'admin.absenceSettings.history.heading': undefined;
+  'admin.absenceSettings.history.historical': undefined;
+  'admin.absenceSettings.history.inactive': undefined;
+  'admin.absenceSettings.history.latest': undefined;
+  'admin.absenceSettings.history.noEntitlement': undefined;
+  'admin.absenceSettings.history.ongoing': undefined;
+  'admin.absenceSettings.history.range': Readonly<{ from: string; to: string }>;
+  'admin.absenceSettings.history.versionLabel': Readonly<{ name: string; version: number }>;
+  'admin.absenceSettings.loading.description': undefined;
+  'admin.absenceSettings.loading.title': undefined;
+  'admin.absenceSettings.page.description': undefined;
+  'admin.absenceSettings.page.eyebrow': undefined;
+  'admin.absenceSettings.requestNote.disabled': undefined;
+  'admin.absenceSettings.requestNote.label': undefined;
+  'admin.absenceSettings.requestNote.optional': undefined;
+  'admin.absenceSettings.requestNote.required': undefined;
+  'admin.absenceSettings.requestNote.sicknessReason': undefined;
+  'admin.absenceSettings.timeTreatment.creditCovered': undefined;
+  'admin.absenceSettings.timeTreatment.label': undefined;
+  'admin.absenceSettings.timeTreatment.none': undefined;
+  'admin.absenceSettings.timeTreatment.reduceCovered': undefined;
+  'admin.absenceSettings.timing.maximumRetrospectiveDays': undefined;
+  'admin.absenceSettings.timing.maximumRetrospectiveDescription': undefined;
+  'admin.absenceSettings.timing.minimumLeadDays': undefined;
+  'admin.absenceSettings.type.other': undefined;
+  'admin.absenceSettings.type.sickness': undefined;
+  'admin.absenceSettings.type.unpaid': undefined;
+  'admin.absenceSettings.type.vacation': undefined;
+  'admin.absenceSettings.validation.required': undefined;
+  'admin.absenceSettings.workflow.approvalRequired': undefined;
+  'admin.absenceSettings.workflow.label': undefined;
+  'admin.absenceSettings.workflow.reportAndAcknowledge': undefined;
+  'admin.absenceSettings.workflow.sicknessReason': undefined;
+  'admin.employee.assignment.changeManager': undefined;
+  'admin.employee.assignment.changeTeam': undefined;
+  'admin.employee.assignment.chooseChange': undefined;
+  'admin.employee.assignment.current': Readonly<{ current: string }>;
+  'admin.employee.assignment.description': Readonly<{ date: string }>;
+  'admin.employee.assignment.feedback.errorTitle': undefined;
+  'admin.employee.assignment.feedback.managerUpdated': undefined;
+  'admin.employee.assignment.feedback.successTitle': undefined;
+  'admin.employee.assignment.feedback.teamUpdated': undefined;
+  'admin.employee.assignment.heading': undefined;
+  'admin.employee.assignment.historyItem': Readonly<{ from: string; label: string; to: string }>;
+  'admin.employee.assignment.inactiveTeam': Readonly<{ team: string }>;
+  'admin.employee.assignment.managerChange': undefined;
+  'admin.employee.assignment.managerHistory': undefined;
+  'admin.employee.assignment.noCurrentManager': undefined;
+  'admin.employee.assignment.noCurrentTeam': undefined;
+  'admin.employee.assignment.noHistory': undefined;
+  'admin.employee.assignment.noManager': undefined;
+  'admin.employee.assignment.noTeam': undefined;
+  'admin.employee.assignment.saveManager': undefined;
+  'admin.employee.assignment.saveTeam': undefined;
+  'admin.employee.assignment.teamChange': undefined;
+  'admin.employee.assignment.teamHistory': undefined;
+  'admin.employee.assignment.validation.manager': undefined;
+  'admin.employee.assignment.validation.team': undefined;
+  'admin.employee.common.effectiveFrom': undefined;
+  'admin.employee.common.historical': undefined;
+  'admin.employee.common.latest': undefined;
+  'admin.employee.common.none': undefined;
+  'admin.employee.common.ongoing': undefined;
+  'admin.employee.create.feedback.created': undefined;
+  'admin.employee.create.form.accountEmail': undefined;
+  'admin.employee.create.form.accountEmailDescription': undefined;
+  'admin.employee.create.form.cancel': undefined;
+  'admin.employee.create.form.displayName': undefined;
+  'admin.employee.create.form.employeeNumber': undefined;
+  'admin.employee.create.form.employmentStartsOn': undefined;
+  'admin.employee.create.form.invitationDescription': undefined;
+  'admin.employee.create.form.invitationLanguage': undefined;
+  'admin.employee.create.form.pending': undefined;
+  'admin.employee.create.form.rolesDescription': undefined;
+  'admin.employee.create.form.rolesHeading': undefined;
+  'admin.employee.create.form.submit': undefined;
+  'admin.employee.create.page.description': undefined;
+  'admin.employee.create.page.eyebrow': undefined;
+  'admin.employee.create.page.title': undefined;
+  'admin.employee.create.validation.accountEmail': undefined;
+  'admin.employee.create.validation.displayName': undefined;
+  'admin.employee.create.validation.employeeNumber': undefined;
+  'admin.employee.create.validation.employmentStartsOn': undefined;
+  'admin.employee.detail.account.email': undefined;
+  'admin.employee.detail.account.heading': undefined;
+  'admin.employee.detail.account.invitation': undefined;
+  'admin.employee.detail.account.invitationPending': undefined;
+  'admin.employee.detail.account.noInvitation': undefined;
+  'admin.employee.detail.account.none': undefined;
+  'admin.employee.detail.account.state': undefined;
+  'admin.employee.detail.employment.description': undefined;
+  'admin.employee.detail.employment.heading': undefined;
+  'admin.employee.detail.feedback.errorTitle': undefined;
+  'admin.employee.detail.feedback.invitationReissued': undefined;
+  'admin.employee.detail.feedback.successTitle': undefined;
+  'admin.employee.detail.feedback.updated': undefined;
+  'admin.employee.detail.lifecycle.activate': undefined;
+  'admin.employee.detail.lifecycle.deactivate': undefined;
+  'admin.employee.detail.lifecycle.endsOn': undefined;
+  'admin.employee.detail.lifecycle.heading': undefined;
+  'admin.employee.detail.lifecycle.reinvite': undefined;
+  'admin.employee.detail.lifecycle.startsOn': undefined;
+  'admin.employee.detail.loading.description': undefined;
+  'admin.employee.detail.loading.heading': undefined;
+  'admin.employee.detail.loading.pageDescription': undefined;
+  'admin.employee.detail.loading.title': undefined;
+  'admin.employee.detail.page.active': undefined;
+  'admin.employee.detail.page.back': undefined;
+  'admin.employee.detail.page.description': Readonly<{ employeeNumber: string; status: string }>;
+  'admin.employee.detail.page.eyebrow': undefined;
+  'admin.employee.detail.page.inactive': undefined;
+  'admin.employee.detail.range': Readonly<{ from: string; to: string }>;
+  'admin.employee.detail.reviewOnly.description': undefined;
+  'admin.employee.detail.reviewOnly.title': undefined;
+  'admin.employee.detail.roles.description': undefined;
+  'admin.employee.detail.roles.heading': undefined;
+  'admin.employee.detail.roles.submit': undefined;
+  'admin.employee.detail.validation.effectiveDate': undefined;
+  'admin.employee.directory.account.active': undefined;
+  'admin.employee.directory.account.inactive': undefined;
+  'admin.employee.directory.account.invitationPending': undefined;
+  'admin.employee.directory.account.none': undefined;
+  'admin.employee.directory.column.account': undefined;
+  'admin.employee.directory.column.action': undefined;
+  'admin.employee.directory.column.employee': undefined;
+  'admin.employee.directory.column.employment': undefined;
+  'admin.employee.directory.column.number': undefined;
+  'admin.employee.directory.column.roles': undefined;
+  'admin.employee.directory.employment.noCurrent': Readonly<{ status: string }>;
+  'admin.employee.directory.employment.since': Readonly<{ date: string; status: string }>;
+  'admin.employee.directory.empty.description': undefined;
+  'admin.employee.directory.empty.searchDescription': undefined;
+  'admin.employee.directory.empty.searchTitle': undefined;
+  'admin.employee.directory.empty.title': undefined;
+  'admin.employee.directory.loading.description': undefined;
+  'admin.employee.directory.loading.title': undefined;
+  'admin.employee.directory.openRecord': undefined;
+  'admin.employee.directory.openRecordLabel': Readonly<{ employee: string }>;
+  'admin.employee.directory.page.addEmployee': undefined;
+  'admin.employee.directory.page.description': undefined;
+  'admin.employee.directory.page.eyebrow': undefined;
+  'admin.employee.directory.page.manageTeams': undefined;
+  'admin.employee.directory.pagination.label': undefined;
+  'admin.employee.directory.pagination.summary': Readonly<{
+    count: number;
+    current: number;
+    total: number;
+  }>;
+  'admin.employee.directory.results.caption': undefined;
+  'admin.employee.directory.results.count': Readonly<{ count: number }>;
+  'admin.employee.directory.results.scrollHint': undefined;
+  'admin.employee.directory.results.scrollLabel': undefined;
+  'admin.employee.directory.search.all': undefined;
+  'admin.employee.directory.search.clear': undefined;
+  'admin.employee.directory.search.description': undefined;
+  'admin.employee.directory.search.label': undefined;
+  'admin.employee.directory.search.status': undefined;
+  'admin.employee.directory.search.submit': undefined;
+  'admin.employee.directory.search.title': undefined;
+  'admin.employee.directory.validation.search': undefined;
+  'admin.employee.entitlement.description': undefined;
+  'admin.employee.entitlement.empty.description': undefined;
+  'admin.employee.entitlement.empty.entries': undefined;
+  'admin.employee.entitlement.empty.title': undefined;
+  'admin.employee.entitlement.entry.effective': Readonly<{ date: string }>;
+  'admin.employee.entitlement.entry.reason': Readonly<{ reason: string }>;
+  'admin.employee.entitlement.entryType.allocation': undefined;
+  'admin.employee.entitlement.entryType.approvedDeduction': undefined;
+  'admin.employee.entitlement.entryType.cancellationRestoration': undefined;
+  'admin.employee.entitlement.entryType.carryover': undefined;
+  'admin.employee.entitlement.entryType.expiry': undefined;
+  'admin.employee.entitlement.entryType.manualAdjustment': undefined;
+  'admin.employee.entitlement.entryType.pendingReservation': undefined;
+  'admin.employee.entitlement.entryType.reservationRelease': undefined;
+  'admin.employee.entitlement.error.conflict': undefined;
+  'admin.employee.entitlement.error.effectiveDate': undefined;
+  'admin.employee.entitlement.error.generic': undefined;
+  'admin.employee.entitlement.feedback.added': undefined;
+  'admin.employee.entitlement.feedback.errorTitle': undefined;
+  'admin.employee.entitlement.feedback.successTitle': undefined;
+  'admin.employee.entitlement.form.account': undefined;
+  'admin.employee.entitlement.form.chooseAccount': undefined;
+  'admin.employee.entitlement.form.description': undefined;
+  'admin.employee.entitlement.form.effectiveOn': undefined;
+  'admin.employee.entitlement.form.heading': undefined;
+  'admin.employee.entitlement.form.minutes': undefined;
+  'admin.employee.entitlement.form.minutesDescription': undefined;
+  'admin.employee.entitlement.form.pending': undefined;
+  'admin.employee.entitlement.form.reason': undefined;
+  'admin.employee.entitlement.form.reasonDescription': undefined;
+  'admin.employee.entitlement.form.submit': undefined;
+  'admin.employee.entitlement.form.unavailable': undefined;
+  'admin.employee.entitlement.heading': undefined;
+  'admin.employee.entitlement.validation.required': undefined;
+  'admin.employee.entitlement.value.available': undefined;
+  'admin.employee.entitlement.value.projected': undefined;
+  'admin.employee.entitlement.value.reserved': undefined;
+  'admin.employee.error.accessDenied': undefined;
+  'admin.employee.error.assignmentConflict': undefined;
+  'admin.employee.error.assignmentDateInvalid': undefined;
+  'admin.employee.error.emailExists': undefined;
+  'admin.employee.error.employeeNumberExists': undefined;
+  'admin.employee.error.employeeStateConflict': undefined;
+  'admin.employee.error.employmentOverlap': undefined;
+  'admin.employee.error.freshSession': undefined;
+  'admin.employee.error.generic': undefined;
+  'admin.employee.error.managerCycle': undefined;
+  'admin.employee.error.managerNotEligible': undefined;
+  'admin.employee.error.teamNameExists': undefined;
+  'admin.employee.error.teamStateConflict': undefined;
+  'admin.employee.policy.current.covered': undefined;
+  'admin.employee.policy.current.gapsTitle': undefined;
+  'admin.employee.policy.current.heading': undefined;
+  'admin.employee.policy.current.none': undefined;
+  'admin.employee.policy.description': Readonly<{ date: string }>;
+  'admin.employee.policy.error.effectiveDate': undefined;
+  'admin.employee.policy.error.employeeState': undefined;
+  'admin.employee.policy.error.generic': undefined;
+  'admin.employee.policy.error.notAssigned': undefined;
+  'admin.employee.policy.error.stateConflict': undefined;
+  'admin.employee.policy.error.versionConflict': undefined;
+  'admin.employee.policy.feedback.errorTitle': undefined;
+  'admin.employee.policy.feedback.successTitle': undefined;
+  'admin.employee.policy.feedback.updated': undefined;
+  'admin.employee.policy.form.chooseVersion': undefined;
+  'admin.employee.policy.form.description': undefined;
+  'admin.employee.policy.form.heading': undefined;
+  'admin.employee.policy.form.pending': undefined;
+  'admin.employee.policy.form.submit': undefined;
+  'admin.employee.policy.form.unavailable': undefined;
+  'admin.employee.policy.form.version': undefined;
+  'admin.employee.policy.heading': undefined;
+  'admin.employee.policy.history.heading': undefined;
+  'admin.employee.policy.history.none': undefined;
+  'admin.employee.policy.option': Readonly<{ name: string; status: string; version: number }>;
+  'admin.employee.policy.preview.description': Readonly<{ date: string; threshold: string }>;
+  'admin.employee.policy.preview.empty': undefined;
+  'admin.employee.policy.preview.heading': undefined;
+  'admin.employee.policy.range': Readonly<{ from: string; to: string }>;
+  'admin.employee.policy.summary': Readonly<{ from: string; threshold: string; to: string }>;
+  'admin.employee.policy.validation.effectiveFrom': undefined;
+  'admin.employee.policy.validation.version': undefined;
+  'admin.employee.policy.versionLabel': Readonly<{ name: string; version: number }>;
+  'admin.employee.schedule.current.covered': undefined;
+  'admin.employee.schedule.current.detail': Readonly<{
+    effectiveFrom: string;
+    weeklyTotal: string;
+  }>;
+  'admin.employee.schedule.current.gapsTitle': undefined;
+  'admin.employee.schedule.current.heading': undefined;
+  'admin.employee.schedule.current.none': undefined;
+  'admin.employee.schedule.description': Readonly<{ date: string }>;
+  'admin.employee.schedule.error.effectiveDate': undefined;
+  'admin.employee.schedule.error.employeeState': undefined;
+  'admin.employee.schedule.error.generic': undefined;
+  'admin.employee.schedule.error.notAssigned': undefined;
+  'admin.employee.schedule.error.stateConflict': undefined;
+  'admin.employee.schedule.error.versionConflict': undefined;
+  'admin.employee.schedule.feedback.errorTitle': undefined;
+  'admin.employee.schedule.feedback.successTitle': undefined;
+  'admin.employee.schedule.feedback.updated': undefined;
+  'admin.employee.schedule.form.chooseVersion': undefined;
+  'admin.employee.schedule.form.description': undefined;
+  'admin.employee.schedule.form.heading': undefined;
+  'admin.employee.schedule.form.pending': undefined;
+  'admin.employee.schedule.form.submit': undefined;
+  'admin.employee.schedule.form.unavailable': undefined;
+  'admin.employee.schedule.form.version': undefined;
+  'admin.employee.schedule.heading': undefined;
+  'admin.employee.schedule.history.heading': undefined;
+  'admin.employee.schedule.history.item': Readonly<{
+    from: string;
+    to: string;
+    weeklyTotal: string;
+  }>;
+  'admin.employee.schedule.history.none': undefined;
+  'admin.employee.schedule.option': Readonly<{ name: string; status: string; version: number }>;
+  'admin.employee.schedule.range': Readonly<{ from: string; to: string }>;
+  'admin.employee.schedule.validation.effectiveFrom': undefined;
+  'admin.employee.schedule.validation.version': undefined;
+  'admin.employee.schedule.versionLabel': Readonly<{ name: string; version: number }>;
+  'admin.holidaySettings.empty.description': undefined;
+  'admin.holidaySettings.empty.title': undefined;
+  'admin.holidaySettings.error.accessDenied': undefined;
+  'admin.holidaySettings.error.blocked': undefined;
+  'admin.holidaySettings.error.conflict': undefined;
+  'admin.holidaySettings.error.generic': undefined;
+  'admin.holidaySettings.feedback.created': undefined;
+  'admin.holidaySettings.feedback.errorTitle': undefined;
+  'admin.holidaySettings.feedback.successTitle': undefined;
+  'admin.holidaySettings.form.createPending': undefined;
+  'admin.holidaySettings.form.date': undefined;
+  'admin.holidaySettings.form.description': undefined;
+  'admin.holidaySettings.form.heading': undefined;
+  'admin.holidaySettings.form.name': undefined;
+  'admin.holidaySettings.form.preview': undefined;
+  'admin.holidaySettings.form.previewPending': undefined;
+  'admin.holidaySettings.form.submit': undefined;
+  'admin.holidaySettings.list.heading': undefined;
+  'admin.holidaySettings.loading.description': undefined;
+  'admin.holidaySettings.loading.title': undefined;
+  'admin.holidaySettings.page.description': undefined;
+  'admin.holidaySettings.page.eyebrow': undefined;
+  'admin.holidaySettings.preview.allowed': undefined;
+  'admin.holidaySettings.preview.blocked': Readonly<{ periods: number }>;
+  'admin.holidaySettings.preview.heading': undefined;
+  'admin.holidaySettings.preview.summary': Readonly<{ employees: number; projections: number }>;
+  'admin.holidaySettings.validation.required': undefined;
+  'admin.team.action.activate': Readonly<{ team: string }>;
+  'admin.team.action.blocked': undefined;
+  'admin.team.action.deactivate': Readonly<{ team: string }>;
+  'admin.team.column.action': undefined;
+  'admin.team.column.members': undefined;
+  'admin.team.column.status': undefined;
+  'admin.team.column.team': undefined;
+  'admin.team.empty.description': undefined;
+  'admin.team.empty.title': undefined;
+  'admin.team.error.accessDenied': undefined;
+  'admin.team.error.generic': undefined;
+  'admin.team.error.nameExists': undefined;
+  'admin.team.error.stateConflict': undefined;
+  'admin.team.feedback.errorTitle': undefined;
+  'admin.team.feedback.successTitle': undefined;
+  'admin.team.feedback.updated': undefined;
+  'admin.team.filter.all': undefined;
+  'admin.team.filter.apply': undefined;
+  'admin.team.filter.description': undefined;
+  'admin.team.filter.status': undefined;
+  'admin.team.filter.title': undefined;
+  'admin.team.form.description': undefined;
+  'admin.team.form.heading': undefined;
+  'admin.team.form.name': undefined;
+  'admin.team.form.nameDescription': undefined;
+  'admin.team.form.pending': undefined;
+  'admin.team.form.submit': undefined;
+  'admin.team.loading.description': undefined;
+  'admin.team.loading.title': undefined;
+  'admin.team.page.create': undefined;
+  'admin.team.page.description': undefined;
+  'admin.team.page.employeeDirectory': undefined;
+  'admin.team.page.eyebrow': undefined;
+  'admin.team.pagination.label': undefined;
+  'admin.team.pagination.summary': Readonly<{ count: number; current: number; total: number }>;
+  'admin.team.results.caption': undefined;
+  'admin.team.results.count': Readonly<{ count: number }>;
+  'admin.team.results.members': Readonly<{ count: number }>;
+  'admin.team.results.scrollHint': undefined;
+  'admin.team.results.scrollLabel': undefined;
+  'admin.team.status.active': undefined;
+  'admin.team.status.inactive': undefined;
+  'admin.team.validation.name': undefined;
+  'admin.timeSettings.common.historical': undefined;
+  'admin.timeSettings.common.latest': undefined;
+  'admin.timeSettings.loading.title': undefined;
+  'admin.timeSettings.page.description': undefined;
+  'admin.timeSettings.page.eyebrow': undefined;
+  'admin.timeSettings.policy.description': undefined;
+  'admin.timeSettings.policy.empty.description': undefined;
+  'admin.timeSettings.policy.empty.title': undefined;
+  'admin.timeSettings.policy.error.conflict': undefined;
+  'admin.timeSettings.policy.error.generic': undefined;
+  'admin.timeSettings.policy.error.noChange': undefined;
+  'admin.timeSettings.policy.feedback.created': undefined;
+  'admin.timeSettings.policy.feedback.errorTitle': undefined;
+  'admin.timeSettings.policy.feedback.successTitle': undefined;
+  'admin.timeSettings.policy.heading': undefined;
+  'admin.timeSettings.policy.name': undefined;
+  'admin.timeSettings.policy.pending': undefined;
+  'admin.timeSettings.policy.preview': Readonly<{ duration: string }>;
+  'admin.timeSettings.policy.submit': undefined;
+  'admin.timeSettings.policy.summary': undefined;
+  'admin.timeSettings.policy.threshold': undefined;
+  'admin.timeSettings.policy.thresholdDescription': undefined;
+  'admin.timeSettings.policy.thresholdValue': Readonly<{ duration: string }>;
+  'admin.timeSettings.policy.validation.name': undefined;
+  'admin.timeSettings.policy.validation.threshold': undefined;
+  'admin.timeSettings.policy.versionLabel': Readonly<{ name: string; version: number }>;
+  'admin.timeSettings.schedule.description': undefined;
+  'admin.timeSettings.schedule.empty.description': undefined;
+  'admin.timeSettings.schedule.empty.title': undefined;
+  'admin.timeSettings.schedule.error.conflict': undefined;
+  'admin.timeSettings.schedule.error.generic': undefined;
+  'admin.timeSettings.schedule.error.noChange': undefined;
+  'admin.timeSettings.schedule.feedback.created': undefined;
+  'admin.timeSettings.schedule.feedback.successTitle': undefined;
+  'admin.timeSettings.schedule.heading': undefined;
+  'admin.timeSettings.schedule.history.description': undefined;
+  'admin.timeSettings.schedule.history.heading': undefined;
+  'admin.timeSettings.schedule.loadingDescription': undefined;
+  'admin.timeSettings.schedule.name': undefined;
+  'admin.timeSettings.schedule.nameDescription': undefined;
+  'admin.timeSettings.schedule.pending': undefined;
+  'admin.timeSettings.schedule.perWeek': Readonly<{ duration: string }>;
+  'admin.timeSettings.schedule.submit': undefined;
+  'admin.timeSettings.schedule.total': Readonly<{ duration: string }>;
+  'admin.timeSettings.schedule.validation.name': undefined;
+  'admin.timeSettings.schedule.validation.weekdayMinutes': Readonly<{ day: string }>;
+  'admin.timeSettings.schedule.versionLabel': Readonly<{ name: string; version: number }>;
+  'admin.timeSettings.schedule.weekdayHeading': undefined;
+  'admin.timeSettings.schedule.weekdayLabel': Readonly<{ day: string }>;
+  'admin.timeSettings.weekday.friday': undefined;
+  'admin.timeSettings.weekday.monday': undefined;
+  'admin.timeSettings.weekday.saturday': undefined;
+  'admin.timeSettings.weekday.sunday': undefined;
+  'admin.timeSettings.weekday.thursday': undefined;
+  'admin.timeSettings.weekday.tuesday': undefined;
+  'admin.timeSettings.weekday.wednesday': undefined;
+  'manager.approval.common.status.actionRequired': undefined;
+  'manager.approval.common.status.allRecords': undefined;
+  'manager.approval.common.status.completed': undefined;
+  'manager.approval.common.status.waitingOnEmployee': undefined;
+  'manager.approval.common.workflow.absenceCancellation': undefined;
+  'manager.approval.common.workflow.absenceRequest': undefined;
+  'manager.approval.common.workflow.correction': undefined;
+  'manager.approval.common.workflow.monthlyPeriod': undefined;
+  'manager.approval.detail.action.acknowledge': undefined;
+  'manager.approval.detail.action.approve': undefined;
+  'manager.approval.detail.action.approveCorrection': undefined;
+  'manager.approval.detail.action.backToInbox': undefined;
+  'manager.approval.detail.action.reject': undefined;
+  'manager.approval.detail.action.requestChanges': undefined;
+  'manager.approval.detail.apply.action': undefined;
+  'manager.approval.detail.apply.description.postLock': undefined;
+  'manager.approval.detail.apply.description.unlocked': undefined;
+  'manager.approval.detail.apply.heading': undefined;
+  'manager.approval.detail.apply.pending': undefined;
+  'manager.approval.detail.decision.description': undefined;
+  'manager.approval.detail.decision.heading': undefined;
+  'manager.approval.detail.decision.overrideDescription': undefined;
+  'manager.approval.detail.decision.overrideTitle': undefined;
+  'manager.approval.detail.decision.pending': undefined;
+  'manager.approval.detail.decision.reasonHelp': undefined;
+  'manager.approval.detail.decision.reasonLabel': undefined;
+  'manager.approval.detail.empty.description': undefined;
+  'manager.approval.detail.empty.title': undefined;
+  'manager.approval.detail.error.accessDenied': undefined;
+  'manager.approval.detail.error.adjustmentRequired': undefined;
+  'manager.approval.detail.error.deniedDescription': undefined;
+  'manager.approval.detail.error.deniedStateDescription': undefined;
+  'manager.approval.detail.error.deniedStateTitle': undefined;
+  'manager.approval.detail.error.description': undefined;
+  'manager.approval.detail.error.insufficientBalance': undefined;
+  'manager.approval.detail.error.recording': undefined;
+  'manager.approval.detail.error.stateConflict': undefined;
+  'manager.approval.detail.error.stateDescription': undefined;
+  'manager.approval.detail.error.title': undefined;
+  'manager.approval.detail.evidence.description': undefined;
+  'manager.approval.detail.evidence.empty': undefined;
+  'manager.approval.detail.evidence.eyebrow': undefined;
+  'manager.approval.detail.evidence.heading': undefined;
+  'manager.approval.detail.feedback.correctionApplied': Readonly<{
+    balance: string;
+    worked: string;
+  }>;
+  'manager.approval.detail.feedback.decisionRecorded': Readonly<{ action: string; status: string }>;
+  'manager.approval.detail.feedback.errorTitle': undefined;
+  'manager.approval.detail.feedback.postLockApproved': undefined;
+  'manager.approval.detail.feedback.successTitle': undefined;
+  'manager.approval.detail.loading.description': undefined;
+  'manager.approval.detail.loading.pageDescription': undefined;
+  'manager.approval.detail.loading.pageTitle': undefined;
+  'manager.approval.detail.loading.title': undefined;
+  'manager.approval.detail.page.description': undefined;
+  'manager.approval.detail.page.eyebrow': undefined;
+  'manager.approval.detail.page.title': Readonly<{ workflow: string }>;
+  'manager.approval.detail.summary.absenceType': undefined;
+  'manager.approval.detail.summary.coverage.caption': undefined;
+  'manager.approval.detail.summary.coverage.date': undefined;
+  'manager.approval.detail.summary.coverage.kind': undefined;
+  'manager.approval.detail.summary.coverage.minutes': undefined;
+  'manager.approval.detail.summary.coverage.scrollHint': undefined;
+  'manager.approval.detail.summary.coverage.scrollLabel': undefined;
+  'manager.approval.detail.summary.dateRange': Readonly<{ from: string; to: string }>;
+  'manager.approval.detail.summary.effect': undefined;
+  'manager.approval.detail.summary.effectPostLock': undefined;
+  'manager.approval.detail.summary.effectUnlocked': undefined;
+  'manager.approval.detail.summary.employeeReason': undefined;
+  'manager.approval.detail.summary.entitlement': undefined;
+  'manager.approval.detail.summary.entitlementValue': Readonly<{
+    projected: string;
+    requested: string;
+  }>;
+  'manager.approval.detail.summary.originalBalance': Readonly<{ value: string }>;
+  'manager.approval.detail.summary.originalCalculation': undefined;
+  'manager.approval.detail.summary.originalCredited': Readonly<{ value: string }>;
+  'manager.approval.detail.summary.originalWorked': Readonly<{ value: string }>;
+  'manager.approval.detail.summary.proposedInterval': undefined;
+  'manager.approval.detail.summary.submitted': undefined;
+  'manager.approval.detail.summary.workflow': undefined;
+  'manager.approval.detail.validation.confirmOverride': undefined;
+  'manager.approval.detail.validation.hrOverrideOnly': undefined;
+  'manager.approval.detail.validation.reason': undefined;
+  'manager.approval.detail.workflow.absenceCancellation': undefined;
+  'manager.approval.detail.workflow.absenceRequest': undefined;
+  'manager.approval.detail.workflow.correctionRequest': undefined;
+  'manager.approval.inbox.action.ariaLabel': Readonly<{ employee: string; workflow: string }>;
+  'manager.approval.inbox.action.review': undefined;
+  'manager.approval.inbox.action.reviewAndDecide': undefined;
+  'manager.approval.inbox.action.reviewRecord': undefined;
+  'manager.approval.inbox.action.wait': undefined;
+  'manager.approval.inbox.applied.dateRange': Readonly<{ from: string; to: string }>;
+  'manager.approval.inbox.applied.label': undefined;
+  'manager.approval.inbox.applied.reset': undefined;
+  'manager.approval.inbox.column.action': undefined;
+  'manager.approval.inbox.column.affectedDates': undefined;
+  'manager.approval.inbox.column.employee': undefined;
+  'manager.approval.inbox.column.status': undefined;
+  'manager.approval.inbox.column.submitted': undefined;
+  'manager.approval.inbox.column.workflow': undefined;
+  'manager.approval.inbox.empty.defaultDescription': undefined;
+  'manager.approval.inbox.empty.defaultTitle': undefined;
+  'manager.approval.inbox.empty.filteredDescription': undefined;
+  'manager.approval.inbox.empty.filteredTitle': undefined;
+  'manager.approval.inbox.error.deniedDescription': undefined;
+  'manager.approval.inbox.error.deniedTitle': undefined;
+  'manager.approval.inbox.error.requestReference': Readonly<{ requestId: string }>;
+  'manager.approval.inbox.error.unavailableDescription': undefined;
+  'manager.approval.inbox.error.unavailableTitle': undefined;
+  'manager.approval.inbox.filter.anyAffectedDate': undefined;
+  'manager.approval.inbox.filter.apply': undefined;
+  'manager.approval.inbox.filter.ariaLabel': undefined;
+  'manager.approval.inbox.filter.category.all': undefined;
+  'manager.approval.inbox.filter.category.label': undefined;
+  'manager.approval.inbox.filter.error': undefined;
+  'manager.approval.inbox.filter.errorTitle': undefined;
+  'manager.approval.inbox.filter.from': undefined;
+  'manager.approval.inbox.filter.hide': undefined;
+  'manager.approval.inbox.filter.order.earliestAffected': undefined;
+  'manager.approval.inbox.filter.order.employeeAscending': undefined;
+  'manager.approval.inbox.filter.order.employeeDescending': undefined;
+  'manager.approval.inbox.filter.order.label': undefined;
+  'manager.approval.inbox.filter.order.latestAffected': undefined;
+  'manager.approval.inbox.filter.order.newestSubmitted': undefined;
+  'manager.approval.inbox.filter.order.oldestSubmitted': undefined;
+  'manager.approval.inbox.filter.show': undefined;
+  'manager.approval.inbox.filter.team.all': undefined;
+  'manager.approval.inbox.filter.team.allCurrent': undefined;
+  'manager.approval.inbox.filter.team.label': undefined;
+  'manager.approval.inbox.filter.team.selected': undefined;
+  'manager.approval.inbox.filter.to': undefined;
+  'manager.approval.inbox.loading.description': undefined;
+  'manager.approval.inbox.loading.title': undefined;
+  'manager.approval.inbox.page.description': undefined;
+  'manager.approval.inbox.page.eyebrow': undefined;
+  'manager.approval.inbox.pagination.label': undefined;
+  'manager.approval.inbox.pagination.none': undefined;
+  'manager.approval.inbox.pagination.summary': Readonly<{
+    first: number;
+    last: number;
+    total: number;
+  }>;
+  'manager.approval.inbox.permission.description': undefined;
+  'manager.approval.inbox.permission.eyebrow': undefined;
+  'manager.approval.inbox.queue.label': undefined;
+  'manager.approval.inbox.queue.needsReview': undefined;
+  'manager.approval.inbox.queue.viewLabel': undefined;
+  'manager.approval.inbox.results.caption': undefined;
+  'manager.approval.inbox.results.clearFilters': undefined;
+  'manager.approval.inbox.results.listLabel': undefined;
+  'manager.approval.inbox.results.refreshing': undefined;
+  'manager.approval.inbox.results.statusLabel': undefined;
+  'manager.approval.inbox.results.tableLabel': undefined;
+  'manager.approval.inbox.team.none': undefined;
+  'manager.report.catalog.flexibleTime.description': undefined;
+  'manager.report.catalog.flexibleTime.title': undefined;
+  'manager.report.catalog.leave.description': undefined;
+  'manager.report.catalog.leave.title': undefined;
+  'manager.report.catalog.missingRecords.description': undefined;
+  'manager.report.catalog.missingRecords.title': undefined;
+  'manager.report.catalog.monthlyTime.description': undefined;
+  'manager.report.catalog.monthlyTime.title': undefined;
+  'manager.report.catalog.pendingApprovals.description': undefined;
+  'manager.report.catalog.pendingApprovals.title': undefined;
+  'manager.report.common.scope.currentDirectReports': undefined;
+  'manager.report.common.scope.organization': undefined;
+  'manager.report.common.scope.self': undefined;
+  'manager.report.common.scope.selfAndDirectReports': undefined;
+  'manager.report.common.sort.date': undefined;
+  'manager.report.common.sort.employee': undefined;
+  'manager.report.common.sort.status': undefined;
+  'manager.report.common.sort.value': undefined;
+  'manager.report.detail.action.back': undefined;
+  'manager.report.detail.action.return': undefined;
+  'manager.report.detail.action.review': undefined;
+  'manager.report.detail.column.action': undefined;
+  'manager.report.detail.column.affectedDates': undefined;
+  'manager.report.detail.column.closing': undefined;
+  'manager.report.detail.column.employee': undefined;
+  'manager.report.detail.column.incomplete': undefined;
+  'manager.report.detail.column.leaveAccount': undefined;
+  'manager.report.detail.column.month': undefined;
+  'manager.report.detail.column.opening': undefined;
+  'manager.report.detail.column.projected': undefined;
+  'manager.report.detail.column.status': undefined;
+  'manager.report.detail.column.submitted': undefined;
+  'manager.report.detail.column.warnings': undefined;
+  'manager.report.detail.column.workflow': undefined;
+  'manager.report.detail.empty.description': undefined;
+  'manager.report.detail.empty.title': undefined;
+  'manager.report.detail.error.deniedDescription': undefined;
+  'manager.report.detail.error.deniedTitle': undefined;
+  'manager.report.detail.error.refreshNoData': undefined;
+  'manager.report.detail.error.unavailableDescription': undefined;
+  'manager.report.detail.error.unavailableTitle': undefined;
+  'manager.report.detail.filter.applied.employee': undefined;
+  'manager.report.detail.filter.applied.summary': Readonly<{
+    direction: string;
+    from: string;
+    sort: string;
+    to: string;
+  }>;
+  'manager.report.detail.filter.applied.through': undefined;
+  'manager.report.detail.filter.apply': undefined;
+  'manager.report.detail.filter.direction.ascending': undefined;
+  'manager.report.detail.filter.direction.descending': undefined;
+  'manager.report.detail.filter.direction.label': undefined;
+  'manager.report.detail.filter.error': undefined;
+  'manager.report.detail.filter.from': undefined;
+  'manager.report.detail.filter.heading': undefined;
+  'manager.report.detail.filter.reset': undefined;
+  'manager.report.detail.filter.sort': undefined;
+  'manager.report.detail.filter.to': undefined;
+  'manager.report.detail.loading.description': undefined;
+  'manager.report.detail.loading.title': undefined;
+  'manager.report.detail.missingRecords.noWarningCode': undefined;
+  'manager.report.detail.page.eyebrow': undefined;
+  'manager.report.detail.pagination.label': undefined;
+  'manager.report.detail.pagination.summary': Readonly<{
+    count: number;
+    current: number;
+    total: number;
+  }>;
+  'manager.report.detail.partial.description': undefined;
+  'manager.report.detail.partial.title': undefined;
+  'manager.report.detail.results.generated': Readonly<{ value: string }>;
+  'manager.report.detail.results.heading': undefined;
+  'manager.report.detail.results.refreshing': undefined;
+  'manager.report.detail.results.summary': Readonly<{ count: number; scope: string }>;
+  'manager.report.detail.summary.actionableApprovals': undefined;
+  'manager.report.detail.summary.availableChange': undefined;
+  'manager.report.detail.summary.balance': undefined;
+  'manager.report.detail.summary.closingAvailable': undefined;
+  'manager.report.detail.summary.closingBalance': undefined;
+  'manager.report.detail.summary.credited': undefined;
+  'manager.report.detail.summary.expected': undefined;
+  'manager.report.detail.summary.incompleteRecords': undefined;
+  'manager.report.detail.summary.openingAvailable': undefined;
+  'manager.report.detail.summary.openingBalance': undefined;
+  'manager.report.detail.summary.postLockChange': undefined;
+  'manager.report.detail.summary.projectedRemaining': undefined;
+  'manager.report.detail.summary.rangeChange': undefined;
+  'manager.report.detail.summary.reserved': undefined;
+  'manager.report.detail.summary.worked': undefined;
+  'manager.report.detail.table.caption': Readonly<{ from: string; report: string; to: string }>;
+  'manager.report.detail.table.scrollHint': undefined;
+  'manager.report.detail.table.scrollLabel': Readonly<{ report: string }>;
+  'manager.report.page.available.description': undefined;
+  'manager.report.page.available.heading': undefined;
+  'manager.report.page.description': undefined;
+  'manager.report.page.error.title': undefined;
+  'manager.report.page.eyebrow': undefined;
+  'manager.report.page.loading.description': undefined;
+  'manager.report.page.loading.title': undefined;
+  'manager.report.page.open': Readonly<{ report: string }>;
+  'manager.report.portability.action.copy': undefined;
+  'manager.report.portability.action.copyPending': undefined;
+  'manager.report.portability.action.csvLabel': undefined;
+  'manager.report.portability.action.export': undefined;
+  'manager.report.portability.action.exportPending': undefined;
+  'manager.report.portability.action.summaryCopyLabel': undefined;
+  'manager.report.portability.description.copy': undefined;
+  'manager.report.portability.description.csv': Readonly<{ fields: string }>;
+  'manager.report.portability.error.accessDenied': Readonly<{ action: string }>;
+  'manager.report.portability.error.clipboardUnavailable': undefined;
+  'manager.report.portability.error.failed': Readonly<{ action: string }>;
+  'manager.report.portability.error.sessionEnded': Readonly<{ action: string }>;
+  'manager.report.portability.error.tooLarge': undefined;
+  'manager.report.portability.fields.flexibleTime': undefined;
+  'manager.report.portability.fields.leave': undefined;
+  'manager.report.portability.fields.missingRecords': undefined;
+  'manager.report.portability.fields.monthlyTime': undefined;
+  'manager.report.portability.fields.pendingApprovals': undefined;
+  'manager.report.portability.heading': undefined;
+  'manager.report.portability.status.copySuccess': undefined;
+  'manager.report.portability.status.exportSuccess': undefined;
+  'manager.report.portability.status.label': undefined;
+  'manager.report.portability.summary.actionableApprovals': undefined;
+  'manager.report.portability.summary.availableChange': undefined;
+  'manager.report.portability.summary.balance': undefined;
+  'manager.report.portability.summary.closing': undefined;
+  'manager.report.portability.summary.closingAvailable': undefined;
+  'manager.report.portability.summary.closingBalance': undefined;
+  'manager.report.portability.summary.credited': undefined;
+  'manager.report.portability.summary.dateRange': undefined;
+  'manager.report.portability.summary.expected': undefined;
+  'manager.report.portability.summary.incompleteRecords': undefined;
+  'manager.report.portability.summary.matchingRows': undefined;
+  'manager.report.portability.summary.openingAvailable': undefined;
+  'manager.report.portability.summary.openingBalance': undefined;
+  'manager.report.portability.summary.postLockChange': undefined;
+  'manager.report.portability.summary.projectedRemaining': undefined;
+  'manager.report.portability.summary.rangeChange': undefined;
+  'manager.report.portability.summary.reserved': undefined;
+  'manager.report.portability.summary.scope': undefined;
+  'manager.report.portability.summary.worked': undefined;
+  'manager.team.calendar.agenda.label': Readonly<{ month: string }>;
+  'manager.team.calendar.agenda.selectDate': undefined;
+  'manager.team.calendar.byDate': undefined;
+  'manager.team.calendar.coverage.firstHalf': undefined;
+  'manager.team.calendar.coverage.fullDay': undefined;
+  'manager.team.calendar.coverage.secondHalf': undefined;
+  'manager.team.calendar.empty.dateDescription': undefined;
+  'manager.team.calendar.empty.monthDescription': undefined;
+  'manager.team.calendar.empty.monthTitle': undefined;
+  'manager.team.calendar.entry.summary': Readonly<{ coverage: string }>;
+  'manager.team.calendar.entry.team': Readonly<{ team: string }>;
+  'manager.team.calendar.entry.teamMissing': undefined;
+  'manager.team.calendar.error.description': undefined;
+  'manager.team.calendar.error.title': undefined;
+  'manager.team.calendar.grid.caption': Readonly<{ month: string }>;
+  'manager.team.calendar.grid.scrollHint': undefined;
+  'manager.team.calendar.grid.scrollLabel': undefined;
+  'manager.team.calendar.grid.selectDate': Readonly<{ date: string }>;
+  'manager.team.calendar.loading.description': undefined;
+  'manager.team.calendar.loading.title': undefined;
+  'manager.team.calendar.marker.selected': undefined;
+  'manager.team.calendar.marker.today': undefined;
+  'manager.team.calendar.missingTeam.description': Readonly<{ count: number }>;
+  'manager.team.calendar.missingTeam.title': undefined;
+  'manager.team.calendar.navigation.label': undefined;
+  'manager.team.calendar.navigation.next': undefined;
+  'manager.team.calendar.navigation.previous': undefined;
+  'manager.team.calendar.page.description': undefined;
+  'manager.team.calendar.page.eyebrow': undefined;
+  'manager.team.calendar.permission.description': undefined;
+  'manager.team.calendar.permission.eyebrow': undefined;
+  'manager.team.calendar.scopeAsOf': Readonly<{ date: string; timeZone: string }>;
+  'manager.team.calendar.selectedDate': undefined;
+  'manager.team.calendar.selectedMonth': undefined;
+  'manager.team.calendar.todaySuffix': undefined;
+  'manager.team.calendar.unavailableCount': Readonly<{ count: number }>;
+  'manager.team.calendar.view.agenda': undefined;
+  'manager.team.calendar.view.label': undefined;
+  'manager.team.calendar.view.month': undefined;
+  'manager.team.calendar.weekday.friday': undefined;
+  'manager.team.calendar.weekday.monday': undefined;
+  'manager.team.calendar.weekday.saturday': undefined;
+  'manager.team.calendar.weekday.sunday': undefined;
+  'manager.team.calendar.weekday.thursday': undefined;
+  'manager.team.calendar.weekday.tuesday': undefined;
+  'manager.team.calendar.weekday.wednesday': undefined;
+  'manager.team.status.action.none': undefined;
+  'manager.team.status.action.openInbox': undefined;
+  'manager.team.status.action.openInboxLabel': Readonly<{ employee: string }>;
+  'manager.team.status.action.viewCalendar': undefined;
+  'manager.team.status.action.viewCalendarLabel': Readonly<{ employee: string }>;
+  'manager.team.status.availability.offWork': undefined;
+  'manager.team.status.availability.onBreak': undefined;
+  'manager.team.status.availability.unavailable': undefined;
+  'manager.team.status.availability.working': undefined;
+  'manager.team.status.column.availability': undefined;
+  'manager.team.status.column.currentTeam': undefined;
+  'manager.team.status.column.employee': undefined;
+  'manager.team.status.column.nextStep': undefined;
+  'manager.team.status.column.recordState': undefined;
+  'manager.team.status.empty.filteredDescription': undefined;
+  'manager.team.status.empty.filteredTitle': undefined;
+  'manager.team.status.empty.noReportsDescription': undefined;
+  'manager.team.status.empty.noReportsTitle': undefined;
+  'manager.team.status.error.description': undefined;
+  'manager.team.status.error.title': undefined;
+  'manager.team.status.filter.allAvailability': undefined;
+  'manager.team.status.filter.allDirectReports': undefined;
+  'manager.team.status.filter.description': undefined;
+  'manager.team.status.filter.heading': undefined;
+  'manager.team.status.filter.openRecords': undefined;
+  'manager.team.status.filter.option': Readonly<{ count: number; label: string }>;
+  'manager.team.status.filter.recordLabel': undefined;
+  'manager.team.status.filter.withOpenRecords': undefined;
+  'manager.team.status.loading.description': undefined;
+  'manager.team.status.loading.title': undefined;
+  'manager.team.status.members.currentCount': Readonly<{ count: number }>;
+  'manager.team.status.members.filteredCount': Readonly<{
+    availability: string;
+    records: string;
+    total: number;
+    visible: number;
+  }>;
+  'manager.team.status.members.heading': undefined;
+  'manager.team.status.members.showAll': undefined;
+  'manager.team.status.page.description': undefined;
+  'manager.team.status.page.eyebrow': undefined;
+  'manager.team.status.page.shortcuts': undefined;
+  'manager.team.status.permission.description': undefined;
+  'manager.team.status.permission.eyebrow': undefined;
+  'manager.team.status.results.caption': undefined;
+  'manager.team.status.results.currentTeam': undefined;
+  'manager.team.status.results.listLabel': undefined;
+  'manager.team.status.results.noOpenRecords': undefined;
+  'manager.team.status.results.noTeam': undefined;
+  'manager.team.status.results.openRecords': undefined;
+  'manager.team.status.results.records': undefined;
+  'manager.team.status.results.tableLabel': undefined;
+  'manager.team.status.summary.asOf': Readonly<{
+    date: string;
+    time: string;
+    timeZone: string;
+  }>;
+  'manager.team.status.summary.current': Readonly<{ count: number }>;
+  'manager.team.status.summary.heading': undefined;
+  'manager.team.status.summary.refreshLabel': undefined;
+  'manager.team.status.summary.refreshing': undefined;
+  'system.accounts.action.activateAccount': undefined;
+  'system.accounts.action.assignSystemRole': undefined;
+  'system.accounts.action.deactivateAccount': undefined;
+  'system.accounts.action.revokeSystemRole': undefined;
+  'system.accounts.create.accountEmail': undefined;
+  'system.accounts.create.accountName': undefined;
+  'system.accounts.create.action': undefined;
+  'system.accounts.create.description': undefined;
+  'system.accounts.create.heading': undefined;
+  'system.accounts.create.invitationDescription': undefined;
+  'system.accounts.create.invitationLanguage': undefined;
+  'system.accounts.create.pending': undefined;
+  'system.accounts.directory.activeAccount': undefined;
+  'system.accounts.directory.activeSessions': undefined;
+  'system.accounts.directory.currentAccount': undefined;
+  'system.accounts.directory.description': undefined;
+  'system.accounts.directory.employeeLinked': undefined;
+  'system.accounts.directory.heading': undefined;
+  'system.accounts.directory.inactiveAccount': undefined;
+  'system.accounts.directory.invitationPending': undefined;
+  'system.accounts.directory.lastActive': Readonly<{ value: string }>;
+  'system.accounts.directory.noActiveSessions': undefined;
+  'system.accounts.directory.noSystemRole': undefined;
+  'system.accounts.directory.stateAndAuthority': undefined;
+  'system.accounts.directory.technicalOnly': undefined;
+  'system.accounts.empty.description': undefined;
+  'system.accounts.empty.title': undefined;
+  'system.accounts.error.accessDenied': undefined;
+  'system.accounts.error.emailExists': undefined;
+  'system.accounts.error.freshSession': undefined;
+  'system.accounts.error.generic': undefined;
+  'system.accounts.error.stateConflict': undefined;
+  'system.accounts.feedback.created': undefined;
+  'system.accounts.feedback.title': undefined;
+  'system.accounts.feedback.updated': undefined;
+  'system.accounts.loading.description': undefined;
+  'system.accounts.loading.title': undefined;
+  'system.accounts.page.description': undefined;
+  'system.accounts.page.eyebrow': undefined;
+  'system.accounts.validation.accountEmail': undefined;
+  'system.accounts.validation.accountName': undefined;
+  'system.audit.domain.page.caption': undefined;
+  'system.audit.domain.page.description': undefined;
+  'system.audit.domain.page.eyebrow': undefined;
+  'system.audit.domain.page.filterDescription': undefined;
+  'system.audit.domain.page.filterTitle': undefined;
+  'system.audit.domain.page.resultsTitle': undefined;
+  'system.audit.domain.page.scrollLabel': undefined;
+  'system.audit.explorer.actor.account': undefined;
+  'system.audit.explorer.actor.systemProcess': Readonly<{ process: string }>;
+  'system.audit.explorer.actor.unknown': undefined;
+  'system.audit.explorer.boolean.no': undefined;
+  'system.audit.explorer.boolean.yes': undefined;
+  'system.audit.explorer.detail.actor': undefined;
+  'system.audit.explorer.detail.privileged': undefined;
+  'system.audit.explorer.detail.reasonCode': undefined;
+  'system.audit.explorer.detail.safeFacts': undefined;
+  'system.audit.explorer.detail.summary': undefined;
+  'system.audit.explorer.detail.targetReference': undefined;
+  'system.audit.explorer.empty.description': undefined;
+  'system.audit.explorer.empty.title': undefined;
+  'system.audit.explorer.fact.attendanceRevision': undefined;
+  'system.audit.explorer.fact.authenticationMethod': undefined;
+  'system.audit.explorer.fact.changedRole': undefined;
+  'system.audit.explorer.fact.effectiveDate': undefined;
+  'system.audit.explorer.fact.eventCount': undefined;
+  'system.audit.explorer.fact.failureCategory': undefined;
+  'system.audit.explorer.fact.httpStatus': undefined;
+  'system.audit.explorer.fact.minutes': undefined;
+  'system.audit.explorer.fact.nextStatus': undefined;
+  'system.audit.explorer.fact.previousStatus': undefined;
+  'system.audit.explorer.fact.scope': undefined;
+  'system.audit.explorer.fact.sessionReference': undefined;
+  'system.audit.explorer.fact.sourceCount': undefined;
+  'system.audit.explorer.fact.version': undefined;
+  'system.audit.explorer.filter.action': undefined;
+  'system.audit.explorer.filter.from': undefined;
+  'system.audit.explorer.filter.outcome': undefined;
+  'system.audit.explorer.filter.outcomeAll': undefined;
+  'system.audit.explorer.filter.target': undefined;
+  'system.audit.explorer.filter.targetAll': undefined;
+  'system.audit.explorer.filter.to': undefined;
+  'system.audit.explorer.loading.description': undefined;
+  'system.audit.explorer.loading.inline': undefined;
+  'system.audit.explorer.loading.title': undefined;
+  'system.audit.explorer.outcome.denied': undefined;
+  'system.audit.explorer.outcome.failure': undefined;
+  'system.audit.explorer.outcome.success': undefined;
+  'system.audit.explorer.pagination.label': undefined;
+  'system.audit.explorer.pagination.summary': Readonly<{ current: number; total: number }>;
+  'system.audit.explorer.results.count': Readonly<{ count: number }>;
+  'system.audit.explorer.table.column.action': undefined;
+  'system.audit.explorer.table.column.detail': undefined;
+  'system.audit.explorer.table.column.occurred': undefined;
+  'system.audit.explorer.table.column.outcome': undefined;
+  'system.audit.explorer.table.column.target': undefined;
+  'system.audit.explorer.table.scrollHint': undefined;
+  'system.audit.explorer.target.absenceRequest': undefined;
+  'system.audit.explorer.target.account': undefined;
+  'system.audit.explorer.target.assignment': undefined;
+  'system.audit.explorer.target.attendance': undefined;
+  'system.audit.explorer.target.authentication': undefined;
+  'system.audit.explorer.target.authorization': undefined;
+  'system.audit.explorer.target.backup': undefined;
+  'system.audit.explorer.target.configuration': undefined;
+  'system.audit.explorer.target.correctionRequest': undefined;
+  'system.audit.explorer.target.employee': undefined;
+  'system.audit.explorer.target.export': undefined;
+  'system.audit.explorer.target.invitation': undefined;
+  'system.audit.explorer.target.leaveEntitlement': undefined;
+  'system.audit.explorer.target.monthlyPeriod': undefined;
+  'system.audit.explorer.target.notificationDelivery': undefined;
+  'system.audit.explorer.target.operations': undefined;
+  'system.audit.explorer.target.recovery': undefined;
+  'system.audit.explorer.target.secret': undefined;
+  'system.audit.explorer.target.session': undefined;
+  'system.audit.explorer.target.team': undefined;
+  'system.audit.explorer.target.timeAccount': undefined;
+  'system.audit.technical.page.caption': undefined;
+  'system.audit.technical.page.description': undefined;
+  'system.audit.technical.page.eyebrow': undefined;
+  'system.audit.technical.page.filterDescription': undefined;
+  'system.audit.technical.page.filterTitle': undefined;
+  'system.audit.technical.page.resultsTitle': undefined;
+  'system.audit.technical.page.scrollLabel': undefined;
+  'system.operations.alert.criticalTitle': undefined;
+  'system.operations.alert.degradedTitle': undefined;
+  'system.operations.alert.description': undefined;
+  'system.operations.dependencies.authentication.heading': undefined;
+  'system.operations.dependencies.database.heading': undefined;
+  'system.operations.dependencies.error': undefined;
+  'system.operations.dependencies.heading': undefined;
+  'system.operations.dependencies.latency': undefined;
+  'system.operations.dependencies.latencyValue': Readonly<{ milliseconds: number }>;
+  'system.operations.dependencies.status': undefined;
+  'system.operations.deployment.description': undefined;
+  'system.operations.deployment.documentation': undefined;
+  'system.operations.deployment.heading': undefined;
+  'system.operations.health.critical': undefined;
+  'system.operations.health.degraded': undefined;
+  'system.operations.health.healthy': undefined;
+  'system.operations.health.unavailable': undefined;
+  'system.operations.loading.description': undefined;
+  'system.operations.loading.title': undefined;
+  'system.operations.page.description': undefined;
+  'system.operations.page.eyebrow': undefined;
+  'system.operations.status.environment': undefined;
+  'system.operations.status.heading': undefined;
+  'system.operations.status.overallHealth': undefined;
+  'system.operations.status.service': undefined;
+  'system.operations.status.timestamp': undefined;
+  'system.operations.status.version': undefined;
   'shared.duration.hours': Readonly<{ count: number }>;
   'shared.duration.minutes': Readonly<{ count: number }>;
   'shared.duration.compact': Readonly<{ hours: string; minutes: string }>;
@@ -2021,6 +3014,960 @@ export const MESSAGE_KEYS = [
   'employee.today.timeline.incomplete.title',
   'employee.today.timeline.originalEvents',
   'employee.today.timeline.title',
+  'admin.absenceSettings.coverage.fullDay',
+  'admin.absenceSettings.coverage.halfDay',
+  'admin.absenceSettings.coverage.heading',
+  'admin.absenceSettings.coverage.minutes',
+  'admin.absenceSettings.empty.description',
+  'admin.absenceSettings.empty.title',
+  'admin.absenceSettings.entitlement.description',
+  'admin.absenceSettings.entitlement.label',
+  'admin.absenceSettings.entitlement.reservePending',
+  'admin.absenceSettings.entitlement.reservePendingSickness',
+  'admin.absenceSettings.entitlement.sicknessReason',
+  'admin.absenceSettings.error.configuration',
+  'admin.absenceSettings.error.conflict',
+  'admin.absenceSettings.error.effectiveDate',
+  'admin.absenceSettings.error.generic',
+  'admin.absenceSettings.feedback.created',
+  'admin.absenceSettings.feedback.errorTitle',
+  'admin.absenceSettings.feedback.successTitle',
+  'admin.absenceSettings.form.active',
+  'admin.absenceSettings.form.description',
+  'admin.absenceSettings.form.displayName',
+  'admin.absenceSettings.form.effectiveFrom',
+  'admin.absenceSettings.form.heading',
+  'admin.absenceSettings.form.pending',
+  'admin.absenceSettings.form.submit',
+  'admin.absenceSettings.form.typeCode',
+  'admin.absenceSettings.history.available',
+  'admin.absenceSettings.history.coverageOptions',
+  'admin.absenceSettings.history.entitlement',
+  'admin.absenceSettings.history.heading',
+  'admin.absenceSettings.history.historical',
+  'admin.absenceSettings.history.inactive',
+  'admin.absenceSettings.history.latest',
+  'admin.absenceSettings.history.noEntitlement',
+  'admin.absenceSettings.history.ongoing',
+  'admin.absenceSettings.history.range',
+  'admin.absenceSettings.history.versionLabel',
+  'admin.absenceSettings.loading.description',
+  'admin.absenceSettings.loading.title',
+  'admin.absenceSettings.page.description',
+  'admin.absenceSettings.page.eyebrow',
+  'admin.absenceSettings.requestNote.disabled',
+  'admin.absenceSettings.requestNote.label',
+  'admin.absenceSettings.requestNote.optional',
+  'admin.absenceSettings.requestNote.required',
+  'admin.absenceSettings.requestNote.sicknessReason',
+  'admin.absenceSettings.timeTreatment.creditCovered',
+  'admin.absenceSettings.timeTreatment.label',
+  'admin.absenceSettings.timeTreatment.none',
+  'admin.absenceSettings.timeTreatment.reduceCovered',
+  'admin.absenceSettings.timing.maximumRetrospectiveDays',
+  'admin.absenceSettings.timing.maximumRetrospectiveDescription',
+  'admin.absenceSettings.timing.minimumLeadDays',
+  'admin.absenceSettings.type.other',
+  'admin.absenceSettings.type.sickness',
+  'admin.absenceSettings.type.unpaid',
+  'admin.absenceSettings.type.vacation',
+  'admin.absenceSettings.validation.required',
+  'admin.absenceSettings.workflow.approvalRequired',
+  'admin.absenceSettings.workflow.label',
+  'admin.absenceSettings.workflow.reportAndAcknowledge',
+  'admin.absenceSettings.workflow.sicknessReason',
+  'admin.employee.assignment.changeManager',
+  'admin.employee.assignment.changeTeam',
+  'admin.employee.assignment.chooseChange',
+  'admin.employee.assignment.current',
+  'admin.employee.assignment.description',
+  'admin.employee.assignment.feedback.errorTitle',
+  'admin.employee.assignment.feedback.managerUpdated',
+  'admin.employee.assignment.feedback.successTitle',
+  'admin.employee.assignment.feedback.teamUpdated',
+  'admin.employee.assignment.heading',
+  'admin.employee.assignment.historyItem',
+  'admin.employee.assignment.inactiveTeam',
+  'admin.employee.assignment.managerChange',
+  'admin.employee.assignment.managerHistory',
+  'admin.employee.assignment.noCurrentManager',
+  'admin.employee.assignment.noCurrentTeam',
+  'admin.employee.assignment.noHistory',
+  'admin.employee.assignment.noManager',
+  'admin.employee.assignment.noTeam',
+  'admin.employee.assignment.saveManager',
+  'admin.employee.assignment.saveTeam',
+  'admin.employee.assignment.teamChange',
+  'admin.employee.assignment.teamHistory',
+  'admin.employee.assignment.validation.manager',
+  'admin.employee.assignment.validation.team',
+  'admin.employee.common.effectiveFrom',
+  'admin.employee.common.historical',
+  'admin.employee.common.latest',
+  'admin.employee.common.none',
+  'admin.employee.common.ongoing',
+  'admin.employee.create.feedback.created',
+  'admin.employee.create.form.accountEmail',
+  'admin.employee.create.form.accountEmailDescription',
+  'admin.employee.create.form.cancel',
+  'admin.employee.create.form.displayName',
+  'admin.employee.create.form.employeeNumber',
+  'admin.employee.create.form.employmentStartsOn',
+  'admin.employee.create.form.invitationDescription',
+  'admin.employee.create.form.invitationLanguage',
+  'admin.employee.create.form.pending',
+  'admin.employee.create.form.rolesDescription',
+  'admin.employee.create.form.rolesHeading',
+  'admin.employee.create.form.submit',
+  'admin.employee.create.page.description',
+  'admin.employee.create.page.eyebrow',
+  'admin.employee.create.page.title',
+  'admin.employee.create.validation.accountEmail',
+  'admin.employee.create.validation.displayName',
+  'admin.employee.create.validation.employeeNumber',
+  'admin.employee.create.validation.employmentStartsOn',
+  'admin.employee.detail.account.email',
+  'admin.employee.detail.account.heading',
+  'admin.employee.detail.account.invitation',
+  'admin.employee.detail.account.invitationPending',
+  'admin.employee.detail.account.noInvitation',
+  'admin.employee.detail.account.none',
+  'admin.employee.detail.account.state',
+  'admin.employee.detail.employment.description',
+  'admin.employee.detail.employment.heading',
+  'admin.employee.detail.feedback.errorTitle',
+  'admin.employee.detail.feedback.invitationReissued',
+  'admin.employee.detail.feedback.successTitle',
+  'admin.employee.detail.feedback.updated',
+  'admin.employee.detail.lifecycle.activate',
+  'admin.employee.detail.lifecycle.deactivate',
+  'admin.employee.detail.lifecycle.endsOn',
+  'admin.employee.detail.lifecycle.heading',
+  'admin.employee.detail.lifecycle.reinvite',
+  'admin.employee.detail.lifecycle.startsOn',
+  'admin.employee.detail.loading.description',
+  'admin.employee.detail.loading.heading',
+  'admin.employee.detail.loading.pageDescription',
+  'admin.employee.detail.loading.title',
+  'admin.employee.detail.page.active',
+  'admin.employee.detail.page.back',
+  'admin.employee.detail.page.description',
+  'admin.employee.detail.page.eyebrow',
+  'admin.employee.detail.page.inactive',
+  'admin.employee.detail.range',
+  'admin.employee.detail.reviewOnly.description',
+  'admin.employee.detail.reviewOnly.title',
+  'admin.employee.detail.roles.description',
+  'admin.employee.detail.roles.heading',
+  'admin.employee.detail.roles.submit',
+  'admin.employee.detail.validation.effectiveDate',
+  'admin.employee.directory.account.active',
+  'admin.employee.directory.account.inactive',
+  'admin.employee.directory.account.invitationPending',
+  'admin.employee.directory.account.none',
+  'admin.employee.directory.column.account',
+  'admin.employee.directory.column.action',
+  'admin.employee.directory.column.employee',
+  'admin.employee.directory.column.employment',
+  'admin.employee.directory.column.number',
+  'admin.employee.directory.column.roles',
+  'admin.employee.directory.employment.noCurrent',
+  'admin.employee.directory.employment.since',
+  'admin.employee.directory.empty.description',
+  'admin.employee.directory.empty.searchDescription',
+  'admin.employee.directory.empty.searchTitle',
+  'admin.employee.directory.empty.title',
+  'admin.employee.directory.loading.description',
+  'admin.employee.directory.loading.title',
+  'admin.employee.directory.openRecord',
+  'admin.employee.directory.openRecordLabel',
+  'admin.employee.directory.page.addEmployee',
+  'admin.employee.directory.page.description',
+  'admin.employee.directory.page.eyebrow',
+  'admin.employee.directory.page.manageTeams',
+  'admin.employee.directory.pagination.label',
+  'admin.employee.directory.pagination.summary',
+  'admin.employee.directory.results.caption',
+  'admin.employee.directory.results.count',
+  'admin.employee.directory.results.scrollHint',
+  'admin.employee.directory.results.scrollLabel',
+  'admin.employee.directory.search.all',
+  'admin.employee.directory.search.clear',
+  'admin.employee.directory.search.description',
+  'admin.employee.directory.search.label',
+  'admin.employee.directory.search.status',
+  'admin.employee.directory.search.submit',
+  'admin.employee.directory.search.title',
+  'admin.employee.directory.validation.search',
+  'admin.employee.entitlement.description',
+  'admin.employee.entitlement.empty.description',
+  'admin.employee.entitlement.empty.entries',
+  'admin.employee.entitlement.empty.title',
+  'admin.employee.entitlement.entry.effective',
+  'admin.employee.entitlement.entry.reason',
+  'admin.employee.entitlement.entryType.allocation',
+  'admin.employee.entitlement.entryType.approvedDeduction',
+  'admin.employee.entitlement.entryType.cancellationRestoration',
+  'admin.employee.entitlement.entryType.carryover',
+  'admin.employee.entitlement.entryType.expiry',
+  'admin.employee.entitlement.entryType.manualAdjustment',
+  'admin.employee.entitlement.entryType.pendingReservation',
+  'admin.employee.entitlement.entryType.reservationRelease',
+  'admin.employee.entitlement.error.conflict',
+  'admin.employee.entitlement.error.effectiveDate',
+  'admin.employee.entitlement.error.generic',
+  'admin.employee.entitlement.feedback.added',
+  'admin.employee.entitlement.feedback.errorTitle',
+  'admin.employee.entitlement.feedback.successTitle',
+  'admin.employee.entitlement.form.account',
+  'admin.employee.entitlement.form.chooseAccount',
+  'admin.employee.entitlement.form.description',
+  'admin.employee.entitlement.form.effectiveOn',
+  'admin.employee.entitlement.form.heading',
+  'admin.employee.entitlement.form.minutes',
+  'admin.employee.entitlement.form.minutesDescription',
+  'admin.employee.entitlement.form.pending',
+  'admin.employee.entitlement.form.reason',
+  'admin.employee.entitlement.form.reasonDescription',
+  'admin.employee.entitlement.form.submit',
+  'admin.employee.entitlement.form.unavailable',
+  'admin.employee.entitlement.heading',
+  'admin.employee.entitlement.validation.required',
+  'admin.employee.entitlement.value.available',
+  'admin.employee.entitlement.value.projected',
+  'admin.employee.entitlement.value.reserved',
+  'admin.employee.error.accessDenied',
+  'admin.employee.error.assignmentConflict',
+  'admin.employee.error.assignmentDateInvalid',
+  'admin.employee.error.emailExists',
+  'admin.employee.error.employeeNumberExists',
+  'admin.employee.error.employeeStateConflict',
+  'admin.employee.error.employmentOverlap',
+  'admin.employee.error.freshSession',
+  'admin.employee.error.generic',
+  'admin.employee.error.managerCycle',
+  'admin.employee.error.managerNotEligible',
+  'admin.employee.error.teamNameExists',
+  'admin.employee.error.teamStateConflict',
+  'admin.employee.policy.current.covered',
+  'admin.employee.policy.current.gapsTitle',
+  'admin.employee.policy.current.heading',
+  'admin.employee.policy.current.none',
+  'admin.employee.policy.description',
+  'admin.employee.policy.error.effectiveDate',
+  'admin.employee.policy.error.employeeState',
+  'admin.employee.policy.error.generic',
+  'admin.employee.policy.error.notAssigned',
+  'admin.employee.policy.error.stateConflict',
+  'admin.employee.policy.error.versionConflict',
+  'admin.employee.policy.feedback.errorTitle',
+  'admin.employee.policy.feedback.successTitle',
+  'admin.employee.policy.feedback.updated',
+  'admin.employee.policy.form.chooseVersion',
+  'admin.employee.policy.form.description',
+  'admin.employee.policy.form.heading',
+  'admin.employee.policy.form.pending',
+  'admin.employee.policy.form.submit',
+  'admin.employee.policy.form.unavailable',
+  'admin.employee.policy.form.version',
+  'admin.employee.policy.heading',
+  'admin.employee.policy.history.heading',
+  'admin.employee.policy.history.none',
+  'admin.employee.policy.option',
+  'admin.employee.policy.preview.description',
+  'admin.employee.policy.preview.empty',
+  'admin.employee.policy.preview.heading',
+  'admin.employee.policy.range',
+  'admin.employee.policy.summary',
+  'admin.employee.policy.validation.effectiveFrom',
+  'admin.employee.policy.validation.version',
+  'admin.employee.policy.versionLabel',
+  'admin.employee.schedule.current.covered',
+  'admin.employee.schedule.current.detail',
+  'admin.employee.schedule.current.gapsTitle',
+  'admin.employee.schedule.current.heading',
+  'admin.employee.schedule.current.none',
+  'admin.employee.schedule.description',
+  'admin.employee.schedule.error.effectiveDate',
+  'admin.employee.schedule.error.employeeState',
+  'admin.employee.schedule.error.generic',
+  'admin.employee.schedule.error.notAssigned',
+  'admin.employee.schedule.error.stateConflict',
+  'admin.employee.schedule.error.versionConflict',
+  'admin.employee.schedule.feedback.errorTitle',
+  'admin.employee.schedule.feedback.successTitle',
+  'admin.employee.schedule.feedback.updated',
+  'admin.employee.schedule.form.chooseVersion',
+  'admin.employee.schedule.form.description',
+  'admin.employee.schedule.form.heading',
+  'admin.employee.schedule.form.pending',
+  'admin.employee.schedule.form.submit',
+  'admin.employee.schedule.form.unavailable',
+  'admin.employee.schedule.form.version',
+  'admin.employee.schedule.heading',
+  'admin.employee.schedule.history.heading',
+  'admin.employee.schedule.history.item',
+  'admin.employee.schedule.history.none',
+  'admin.employee.schedule.option',
+  'admin.employee.schedule.range',
+  'admin.employee.schedule.validation.effectiveFrom',
+  'admin.employee.schedule.validation.version',
+  'admin.employee.schedule.versionLabel',
+  'admin.holidaySettings.empty.description',
+  'admin.holidaySettings.empty.title',
+  'admin.holidaySettings.error.accessDenied',
+  'admin.holidaySettings.error.blocked',
+  'admin.holidaySettings.error.conflict',
+  'admin.holidaySettings.error.generic',
+  'admin.holidaySettings.feedback.created',
+  'admin.holidaySettings.feedback.errorTitle',
+  'admin.holidaySettings.feedback.successTitle',
+  'admin.holidaySettings.form.createPending',
+  'admin.holidaySettings.form.date',
+  'admin.holidaySettings.form.description',
+  'admin.holidaySettings.form.heading',
+  'admin.holidaySettings.form.name',
+  'admin.holidaySettings.form.preview',
+  'admin.holidaySettings.form.previewPending',
+  'admin.holidaySettings.form.submit',
+  'admin.holidaySettings.list.heading',
+  'admin.holidaySettings.loading.description',
+  'admin.holidaySettings.loading.title',
+  'admin.holidaySettings.page.description',
+  'admin.holidaySettings.page.eyebrow',
+  'admin.holidaySettings.preview.allowed',
+  'admin.holidaySettings.preview.blocked',
+  'admin.holidaySettings.preview.heading',
+  'admin.holidaySettings.preview.summary',
+  'admin.holidaySettings.validation.required',
+  'admin.team.action.activate',
+  'admin.team.action.blocked',
+  'admin.team.action.deactivate',
+  'admin.team.column.action',
+  'admin.team.column.members',
+  'admin.team.column.status',
+  'admin.team.column.team',
+  'admin.team.empty.description',
+  'admin.team.empty.title',
+  'admin.team.error.accessDenied',
+  'admin.team.error.generic',
+  'admin.team.error.nameExists',
+  'admin.team.error.stateConflict',
+  'admin.team.feedback.errorTitle',
+  'admin.team.feedback.successTitle',
+  'admin.team.feedback.updated',
+  'admin.team.filter.all',
+  'admin.team.filter.apply',
+  'admin.team.filter.description',
+  'admin.team.filter.status',
+  'admin.team.filter.title',
+  'admin.team.form.description',
+  'admin.team.form.heading',
+  'admin.team.form.name',
+  'admin.team.form.nameDescription',
+  'admin.team.form.pending',
+  'admin.team.form.submit',
+  'admin.team.loading.description',
+  'admin.team.loading.title',
+  'admin.team.page.create',
+  'admin.team.page.description',
+  'admin.team.page.employeeDirectory',
+  'admin.team.page.eyebrow',
+  'admin.team.pagination.label',
+  'admin.team.pagination.summary',
+  'admin.team.results.caption',
+  'admin.team.results.count',
+  'admin.team.results.members',
+  'admin.team.results.scrollHint',
+  'admin.team.results.scrollLabel',
+  'admin.team.status.active',
+  'admin.team.status.inactive',
+  'admin.team.validation.name',
+  'admin.timeSettings.common.historical',
+  'admin.timeSettings.common.latest',
+  'admin.timeSettings.loading.title',
+  'admin.timeSettings.page.description',
+  'admin.timeSettings.page.eyebrow',
+  'admin.timeSettings.policy.description',
+  'admin.timeSettings.policy.empty.description',
+  'admin.timeSettings.policy.empty.title',
+  'admin.timeSettings.policy.error.conflict',
+  'admin.timeSettings.policy.error.generic',
+  'admin.timeSettings.policy.error.noChange',
+  'admin.timeSettings.policy.feedback.created',
+  'admin.timeSettings.policy.feedback.errorTitle',
+  'admin.timeSettings.policy.feedback.successTitle',
+  'admin.timeSettings.policy.heading',
+  'admin.timeSettings.policy.name',
+  'admin.timeSettings.policy.pending',
+  'admin.timeSettings.policy.preview',
+  'admin.timeSettings.policy.submit',
+  'admin.timeSettings.policy.summary',
+  'admin.timeSettings.policy.threshold',
+  'admin.timeSettings.policy.thresholdDescription',
+  'admin.timeSettings.policy.thresholdValue',
+  'admin.timeSettings.policy.validation.name',
+  'admin.timeSettings.policy.validation.threshold',
+  'admin.timeSettings.policy.versionLabel',
+  'admin.timeSettings.schedule.description',
+  'admin.timeSettings.schedule.empty.description',
+  'admin.timeSettings.schedule.empty.title',
+  'admin.timeSettings.schedule.error.conflict',
+  'admin.timeSettings.schedule.error.generic',
+  'admin.timeSettings.schedule.error.noChange',
+  'admin.timeSettings.schedule.feedback.created',
+  'admin.timeSettings.schedule.feedback.successTitle',
+  'admin.timeSettings.schedule.heading',
+  'admin.timeSettings.schedule.history.description',
+  'admin.timeSettings.schedule.history.heading',
+  'admin.timeSettings.schedule.loadingDescription',
+  'admin.timeSettings.schedule.name',
+  'admin.timeSettings.schedule.nameDescription',
+  'admin.timeSettings.schedule.pending',
+  'admin.timeSettings.schedule.perWeek',
+  'admin.timeSettings.schedule.submit',
+  'admin.timeSettings.schedule.total',
+  'admin.timeSettings.schedule.validation.name',
+  'admin.timeSettings.schedule.validation.weekdayMinutes',
+  'admin.timeSettings.schedule.versionLabel',
+  'admin.timeSettings.schedule.weekdayHeading',
+  'admin.timeSettings.schedule.weekdayLabel',
+  'admin.timeSettings.weekday.friday',
+  'admin.timeSettings.weekday.monday',
+  'admin.timeSettings.weekday.saturday',
+  'admin.timeSettings.weekday.sunday',
+  'admin.timeSettings.weekday.thursday',
+  'admin.timeSettings.weekday.tuesday',
+  'admin.timeSettings.weekday.wednesday',
+  'manager.approval.common.status.actionRequired',
+  'manager.approval.common.status.allRecords',
+  'manager.approval.common.status.completed',
+  'manager.approval.common.status.waitingOnEmployee',
+  'manager.approval.common.workflow.absenceCancellation',
+  'manager.approval.common.workflow.absenceRequest',
+  'manager.approval.common.workflow.correction',
+  'manager.approval.common.workflow.monthlyPeriod',
+  'manager.approval.detail.action.acknowledge',
+  'manager.approval.detail.action.approve',
+  'manager.approval.detail.action.approveCorrection',
+  'manager.approval.detail.action.backToInbox',
+  'manager.approval.detail.action.reject',
+  'manager.approval.detail.action.requestChanges',
+  'manager.approval.detail.apply.action',
+  'manager.approval.detail.apply.description.postLock',
+  'manager.approval.detail.apply.description.unlocked',
+  'manager.approval.detail.apply.heading',
+  'manager.approval.detail.apply.pending',
+  'manager.approval.detail.decision.description',
+  'manager.approval.detail.decision.heading',
+  'manager.approval.detail.decision.overrideDescription',
+  'manager.approval.detail.decision.overrideTitle',
+  'manager.approval.detail.decision.pending',
+  'manager.approval.detail.decision.reasonHelp',
+  'manager.approval.detail.decision.reasonLabel',
+  'manager.approval.detail.empty.description',
+  'manager.approval.detail.empty.title',
+  'manager.approval.detail.error.accessDenied',
+  'manager.approval.detail.error.adjustmentRequired',
+  'manager.approval.detail.error.deniedDescription',
+  'manager.approval.detail.error.deniedStateDescription',
+  'manager.approval.detail.error.deniedStateTitle',
+  'manager.approval.detail.error.description',
+  'manager.approval.detail.error.insufficientBalance',
+  'manager.approval.detail.error.recording',
+  'manager.approval.detail.error.stateConflict',
+  'manager.approval.detail.error.stateDescription',
+  'manager.approval.detail.error.title',
+  'manager.approval.detail.evidence.description',
+  'manager.approval.detail.evidence.empty',
+  'manager.approval.detail.evidence.eyebrow',
+  'manager.approval.detail.evidence.heading',
+  'manager.approval.detail.feedback.correctionApplied',
+  'manager.approval.detail.feedback.decisionRecorded',
+  'manager.approval.detail.feedback.errorTitle',
+  'manager.approval.detail.feedback.postLockApproved',
+  'manager.approval.detail.feedback.successTitle',
+  'manager.approval.detail.loading.description',
+  'manager.approval.detail.loading.pageDescription',
+  'manager.approval.detail.loading.pageTitle',
+  'manager.approval.detail.loading.title',
+  'manager.approval.detail.page.description',
+  'manager.approval.detail.page.eyebrow',
+  'manager.approval.detail.page.title',
+  'manager.approval.detail.summary.absenceType',
+  'manager.approval.detail.summary.coverage.caption',
+  'manager.approval.detail.summary.coverage.date',
+  'manager.approval.detail.summary.coverage.kind',
+  'manager.approval.detail.summary.coverage.minutes',
+  'manager.approval.detail.summary.coverage.scrollHint',
+  'manager.approval.detail.summary.coverage.scrollLabel',
+  'manager.approval.detail.summary.dateRange',
+  'manager.approval.detail.summary.effect',
+  'manager.approval.detail.summary.effectPostLock',
+  'manager.approval.detail.summary.effectUnlocked',
+  'manager.approval.detail.summary.employeeReason',
+  'manager.approval.detail.summary.entitlement',
+  'manager.approval.detail.summary.entitlementValue',
+  'manager.approval.detail.summary.originalBalance',
+  'manager.approval.detail.summary.originalCalculation',
+  'manager.approval.detail.summary.originalCredited',
+  'manager.approval.detail.summary.originalWorked',
+  'manager.approval.detail.summary.proposedInterval',
+  'manager.approval.detail.summary.submitted',
+  'manager.approval.detail.summary.workflow',
+  'manager.approval.detail.validation.confirmOverride',
+  'manager.approval.detail.validation.hrOverrideOnly',
+  'manager.approval.detail.validation.reason',
+  'manager.approval.detail.workflow.absenceCancellation',
+  'manager.approval.detail.workflow.absenceRequest',
+  'manager.approval.detail.workflow.correctionRequest',
+  'manager.approval.inbox.action.ariaLabel',
+  'manager.approval.inbox.action.review',
+  'manager.approval.inbox.action.reviewAndDecide',
+  'manager.approval.inbox.action.reviewRecord',
+  'manager.approval.inbox.action.wait',
+  'manager.approval.inbox.applied.dateRange',
+  'manager.approval.inbox.applied.label',
+  'manager.approval.inbox.applied.reset',
+  'manager.approval.inbox.column.action',
+  'manager.approval.inbox.column.affectedDates',
+  'manager.approval.inbox.column.employee',
+  'manager.approval.inbox.column.status',
+  'manager.approval.inbox.column.submitted',
+  'manager.approval.inbox.column.workflow',
+  'manager.approval.inbox.empty.defaultDescription',
+  'manager.approval.inbox.empty.defaultTitle',
+  'manager.approval.inbox.empty.filteredDescription',
+  'manager.approval.inbox.empty.filteredTitle',
+  'manager.approval.inbox.error.deniedDescription',
+  'manager.approval.inbox.error.deniedTitle',
+  'manager.approval.inbox.error.requestReference',
+  'manager.approval.inbox.error.unavailableDescription',
+  'manager.approval.inbox.error.unavailableTitle',
+  'manager.approval.inbox.filter.anyAffectedDate',
+  'manager.approval.inbox.filter.apply',
+  'manager.approval.inbox.filter.ariaLabel',
+  'manager.approval.inbox.filter.category.all',
+  'manager.approval.inbox.filter.category.label',
+  'manager.approval.inbox.filter.error',
+  'manager.approval.inbox.filter.errorTitle',
+  'manager.approval.inbox.filter.from',
+  'manager.approval.inbox.filter.hide',
+  'manager.approval.inbox.filter.order.earliestAffected',
+  'manager.approval.inbox.filter.order.employeeAscending',
+  'manager.approval.inbox.filter.order.employeeDescending',
+  'manager.approval.inbox.filter.order.label',
+  'manager.approval.inbox.filter.order.latestAffected',
+  'manager.approval.inbox.filter.order.newestSubmitted',
+  'manager.approval.inbox.filter.order.oldestSubmitted',
+  'manager.approval.inbox.filter.show',
+  'manager.approval.inbox.filter.team.all',
+  'manager.approval.inbox.filter.team.allCurrent',
+  'manager.approval.inbox.filter.team.label',
+  'manager.approval.inbox.filter.team.selected',
+  'manager.approval.inbox.filter.to',
+  'manager.approval.inbox.loading.description',
+  'manager.approval.inbox.loading.title',
+  'manager.approval.inbox.page.description',
+  'manager.approval.inbox.page.eyebrow',
+  'manager.approval.inbox.pagination.label',
+  'manager.approval.inbox.pagination.none',
+  'manager.approval.inbox.pagination.summary',
+  'manager.approval.inbox.permission.description',
+  'manager.approval.inbox.permission.eyebrow',
+  'manager.approval.inbox.queue.label',
+  'manager.approval.inbox.queue.needsReview',
+  'manager.approval.inbox.queue.viewLabel',
+  'manager.approval.inbox.results.caption',
+  'manager.approval.inbox.results.clearFilters',
+  'manager.approval.inbox.results.listLabel',
+  'manager.approval.inbox.results.refreshing',
+  'manager.approval.inbox.results.statusLabel',
+  'manager.approval.inbox.results.tableLabel',
+  'manager.approval.inbox.team.none',
+  'manager.report.catalog.flexibleTime.description',
+  'manager.report.catalog.flexibleTime.title',
+  'manager.report.catalog.leave.description',
+  'manager.report.catalog.leave.title',
+  'manager.report.catalog.missingRecords.description',
+  'manager.report.catalog.missingRecords.title',
+  'manager.report.catalog.monthlyTime.description',
+  'manager.report.catalog.monthlyTime.title',
+  'manager.report.catalog.pendingApprovals.description',
+  'manager.report.catalog.pendingApprovals.title',
+  'manager.report.common.scope.currentDirectReports',
+  'manager.report.common.scope.organization',
+  'manager.report.common.scope.self',
+  'manager.report.common.scope.selfAndDirectReports',
+  'manager.report.common.sort.date',
+  'manager.report.common.sort.employee',
+  'manager.report.common.sort.status',
+  'manager.report.common.sort.value',
+  'manager.report.detail.action.back',
+  'manager.report.detail.action.return',
+  'manager.report.detail.action.review',
+  'manager.report.detail.column.action',
+  'manager.report.detail.column.affectedDates',
+  'manager.report.detail.column.closing',
+  'manager.report.detail.column.employee',
+  'manager.report.detail.column.incomplete',
+  'manager.report.detail.column.leaveAccount',
+  'manager.report.detail.column.month',
+  'manager.report.detail.column.opening',
+  'manager.report.detail.column.projected',
+  'manager.report.detail.column.status',
+  'manager.report.detail.column.submitted',
+  'manager.report.detail.column.warnings',
+  'manager.report.detail.column.workflow',
+  'manager.report.detail.empty.description',
+  'manager.report.detail.empty.title',
+  'manager.report.detail.error.deniedDescription',
+  'manager.report.detail.error.deniedTitle',
+  'manager.report.detail.error.refreshNoData',
+  'manager.report.detail.error.unavailableDescription',
+  'manager.report.detail.error.unavailableTitle',
+  'manager.report.detail.filter.applied.employee',
+  'manager.report.detail.filter.applied.summary',
+  'manager.report.detail.filter.applied.through',
+  'manager.report.detail.filter.apply',
+  'manager.report.detail.filter.direction.ascending',
+  'manager.report.detail.filter.direction.descending',
+  'manager.report.detail.filter.direction.label',
+  'manager.report.detail.filter.error',
+  'manager.report.detail.filter.from',
+  'manager.report.detail.filter.heading',
+  'manager.report.detail.filter.reset',
+  'manager.report.detail.filter.sort',
+  'manager.report.detail.filter.to',
+  'manager.report.detail.loading.description',
+  'manager.report.detail.loading.title',
+  'manager.report.detail.missingRecords.noWarningCode',
+  'manager.report.detail.page.eyebrow',
+  'manager.report.detail.pagination.label',
+  'manager.report.detail.pagination.summary',
+  'manager.report.detail.partial.description',
+  'manager.report.detail.partial.title',
+  'manager.report.detail.results.generated',
+  'manager.report.detail.results.heading',
+  'manager.report.detail.results.refreshing',
+  'manager.report.detail.results.summary',
+  'manager.report.detail.summary.actionableApprovals',
+  'manager.report.detail.summary.availableChange',
+  'manager.report.detail.summary.balance',
+  'manager.report.detail.summary.closingAvailable',
+  'manager.report.detail.summary.closingBalance',
+  'manager.report.detail.summary.credited',
+  'manager.report.detail.summary.expected',
+  'manager.report.detail.summary.incompleteRecords',
+  'manager.report.detail.summary.openingAvailable',
+  'manager.report.detail.summary.openingBalance',
+  'manager.report.detail.summary.postLockChange',
+  'manager.report.detail.summary.projectedRemaining',
+  'manager.report.detail.summary.rangeChange',
+  'manager.report.detail.summary.reserved',
+  'manager.report.detail.summary.worked',
+  'manager.report.detail.table.caption',
+  'manager.report.detail.table.scrollHint',
+  'manager.report.detail.table.scrollLabel',
+  'manager.report.page.available.description',
+  'manager.report.page.available.heading',
+  'manager.report.page.description',
+  'manager.report.page.error.title',
+  'manager.report.page.eyebrow',
+  'manager.report.page.loading.description',
+  'manager.report.page.loading.title',
+  'manager.report.page.open',
+  'manager.report.portability.action.copy',
+  'manager.report.portability.action.copyPending',
+  'manager.report.portability.action.csvLabel',
+  'manager.report.portability.action.export',
+  'manager.report.portability.action.exportPending',
+  'manager.report.portability.action.summaryCopyLabel',
+  'manager.report.portability.description.copy',
+  'manager.report.portability.description.csv',
+  'manager.report.portability.error.accessDenied',
+  'manager.report.portability.error.clipboardUnavailable',
+  'manager.report.portability.error.failed',
+  'manager.report.portability.error.sessionEnded',
+  'manager.report.portability.error.tooLarge',
+  'manager.report.portability.fields.flexibleTime',
+  'manager.report.portability.fields.leave',
+  'manager.report.portability.fields.missingRecords',
+  'manager.report.portability.fields.monthlyTime',
+  'manager.report.portability.fields.pendingApprovals',
+  'manager.report.portability.heading',
+  'manager.report.portability.status.copySuccess',
+  'manager.report.portability.status.exportSuccess',
+  'manager.report.portability.status.label',
+  'manager.report.portability.summary.actionableApprovals',
+  'manager.report.portability.summary.availableChange',
+  'manager.report.portability.summary.balance',
+  'manager.report.portability.summary.closing',
+  'manager.report.portability.summary.closingAvailable',
+  'manager.report.portability.summary.closingBalance',
+  'manager.report.portability.summary.credited',
+  'manager.report.portability.summary.dateRange',
+  'manager.report.portability.summary.expected',
+  'manager.report.portability.summary.incompleteRecords',
+  'manager.report.portability.summary.matchingRows',
+  'manager.report.portability.summary.openingAvailable',
+  'manager.report.portability.summary.openingBalance',
+  'manager.report.portability.summary.postLockChange',
+  'manager.report.portability.summary.projectedRemaining',
+  'manager.report.portability.summary.rangeChange',
+  'manager.report.portability.summary.reserved',
+  'manager.report.portability.summary.scope',
+  'manager.report.portability.summary.worked',
+  'manager.team.calendar.agenda.label',
+  'manager.team.calendar.agenda.selectDate',
+  'manager.team.calendar.byDate',
+  'manager.team.calendar.coverage.firstHalf',
+  'manager.team.calendar.coverage.fullDay',
+  'manager.team.calendar.coverage.secondHalf',
+  'manager.team.calendar.empty.dateDescription',
+  'manager.team.calendar.empty.monthDescription',
+  'manager.team.calendar.empty.monthTitle',
+  'manager.team.calendar.entry.summary',
+  'manager.team.calendar.entry.team',
+  'manager.team.calendar.entry.teamMissing',
+  'manager.team.calendar.error.description',
+  'manager.team.calendar.error.title',
+  'manager.team.calendar.grid.caption',
+  'manager.team.calendar.grid.scrollHint',
+  'manager.team.calendar.grid.scrollLabel',
+  'manager.team.calendar.grid.selectDate',
+  'manager.team.calendar.loading.description',
+  'manager.team.calendar.loading.title',
+  'manager.team.calendar.marker.selected',
+  'manager.team.calendar.marker.today',
+  'manager.team.calendar.missingTeam.description',
+  'manager.team.calendar.missingTeam.title',
+  'manager.team.calendar.navigation.label',
+  'manager.team.calendar.navigation.next',
+  'manager.team.calendar.navigation.previous',
+  'manager.team.calendar.page.description',
+  'manager.team.calendar.page.eyebrow',
+  'manager.team.calendar.permission.description',
+  'manager.team.calendar.permission.eyebrow',
+  'manager.team.calendar.scopeAsOf',
+  'manager.team.calendar.selectedDate',
+  'manager.team.calendar.selectedMonth',
+  'manager.team.calendar.todaySuffix',
+  'manager.team.calendar.unavailableCount',
+  'manager.team.calendar.view.agenda',
+  'manager.team.calendar.view.label',
+  'manager.team.calendar.view.month',
+  'manager.team.calendar.weekday.friday',
+  'manager.team.calendar.weekday.monday',
+  'manager.team.calendar.weekday.saturday',
+  'manager.team.calendar.weekday.sunday',
+  'manager.team.calendar.weekday.thursday',
+  'manager.team.calendar.weekday.tuesday',
+  'manager.team.calendar.weekday.wednesday',
+  'manager.team.status.action.none',
+  'manager.team.status.action.openInbox',
+  'manager.team.status.action.openInboxLabel',
+  'manager.team.status.action.viewCalendar',
+  'manager.team.status.action.viewCalendarLabel',
+  'manager.team.status.availability.offWork',
+  'manager.team.status.availability.onBreak',
+  'manager.team.status.availability.unavailable',
+  'manager.team.status.availability.working',
+  'manager.team.status.column.availability',
+  'manager.team.status.column.currentTeam',
+  'manager.team.status.column.employee',
+  'manager.team.status.column.nextStep',
+  'manager.team.status.column.recordState',
+  'manager.team.status.empty.filteredDescription',
+  'manager.team.status.empty.filteredTitle',
+  'manager.team.status.empty.noReportsDescription',
+  'manager.team.status.empty.noReportsTitle',
+  'manager.team.status.error.description',
+  'manager.team.status.error.title',
+  'manager.team.status.filter.allAvailability',
+  'manager.team.status.filter.allDirectReports',
+  'manager.team.status.filter.description',
+  'manager.team.status.filter.heading',
+  'manager.team.status.filter.openRecords',
+  'manager.team.status.filter.option',
+  'manager.team.status.filter.recordLabel',
+  'manager.team.status.filter.withOpenRecords',
+  'manager.team.status.loading.description',
+  'manager.team.status.loading.title',
+  'manager.team.status.members.currentCount',
+  'manager.team.status.members.filteredCount',
+  'manager.team.status.members.heading',
+  'manager.team.status.members.showAll',
+  'manager.team.status.page.description',
+  'manager.team.status.page.eyebrow',
+  'manager.team.status.page.shortcuts',
+  'manager.team.status.permission.description',
+  'manager.team.status.permission.eyebrow',
+  'manager.team.status.results.caption',
+  'manager.team.status.results.currentTeam',
+  'manager.team.status.results.listLabel',
+  'manager.team.status.results.noOpenRecords',
+  'manager.team.status.results.noTeam',
+  'manager.team.status.results.openRecords',
+  'manager.team.status.results.records',
+  'manager.team.status.results.tableLabel',
+  'manager.team.status.summary.asOf',
+  'manager.team.status.summary.current',
+  'manager.team.status.summary.heading',
+  'manager.team.status.summary.refreshLabel',
+  'manager.team.status.summary.refreshing',
+  'system.accounts.action.activateAccount',
+  'system.accounts.action.assignSystemRole',
+  'system.accounts.action.deactivateAccount',
+  'system.accounts.action.revokeSystemRole',
+  'system.accounts.create.accountEmail',
+  'system.accounts.create.accountName',
+  'system.accounts.create.action',
+  'system.accounts.create.description',
+  'system.accounts.create.heading',
+  'system.accounts.create.invitationDescription',
+  'system.accounts.create.invitationLanguage',
+  'system.accounts.create.pending',
+  'system.accounts.directory.activeAccount',
+  'system.accounts.directory.activeSessions',
+  'system.accounts.directory.currentAccount',
+  'system.accounts.directory.description',
+  'system.accounts.directory.employeeLinked',
+  'system.accounts.directory.heading',
+  'system.accounts.directory.inactiveAccount',
+  'system.accounts.directory.invitationPending',
+  'system.accounts.directory.lastActive',
+  'system.accounts.directory.noActiveSessions',
+  'system.accounts.directory.noSystemRole',
+  'system.accounts.directory.stateAndAuthority',
+  'system.accounts.directory.technicalOnly',
+  'system.accounts.empty.description',
+  'system.accounts.empty.title',
+  'system.accounts.error.accessDenied',
+  'system.accounts.error.emailExists',
+  'system.accounts.error.freshSession',
+  'system.accounts.error.generic',
+  'system.accounts.error.stateConflict',
+  'system.accounts.feedback.created',
+  'system.accounts.feedback.title',
+  'system.accounts.feedback.updated',
+  'system.accounts.loading.description',
+  'system.accounts.loading.title',
+  'system.accounts.page.description',
+  'system.accounts.page.eyebrow',
+  'system.accounts.validation.accountEmail',
+  'system.accounts.validation.accountName',
+  'system.audit.domain.page.caption',
+  'system.audit.domain.page.description',
+  'system.audit.domain.page.eyebrow',
+  'system.audit.domain.page.filterDescription',
+  'system.audit.domain.page.filterTitle',
+  'system.audit.domain.page.resultsTitle',
+  'system.audit.domain.page.scrollLabel',
+  'system.audit.explorer.actor.account',
+  'system.audit.explorer.actor.systemProcess',
+  'system.audit.explorer.actor.unknown',
+  'system.audit.explorer.boolean.no',
+  'system.audit.explorer.boolean.yes',
+  'system.audit.explorer.detail.actor',
+  'system.audit.explorer.detail.privileged',
+  'system.audit.explorer.detail.reasonCode',
+  'system.audit.explorer.detail.safeFacts',
+  'system.audit.explorer.detail.summary',
+  'system.audit.explorer.detail.targetReference',
+  'system.audit.explorer.empty.description',
+  'system.audit.explorer.empty.title',
+  'system.audit.explorer.fact.attendanceRevision',
+  'system.audit.explorer.fact.authenticationMethod',
+  'system.audit.explorer.fact.changedRole',
+  'system.audit.explorer.fact.effectiveDate',
+  'system.audit.explorer.fact.eventCount',
+  'system.audit.explorer.fact.failureCategory',
+  'system.audit.explorer.fact.httpStatus',
+  'system.audit.explorer.fact.minutes',
+  'system.audit.explorer.fact.nextStatus',
+  'system.audit.explorer.fact.previousStatus',
+  'system.audit.explorer.fact.scope',
+  'system.audit.explorer.fact.sessionReference',
+  'system.audit.explorer.fact.sourceCount',
+  'system.audit.explorer.fact.version',
+  'system.audit.explorer.filter.action',
+  'system.audit.explorer.filter.from',
+  'system.audit.explorer.filter.outcome',
+  'system.audit.explorer.filter.outcomeAll',
+  'system.audit.explorer.filter.target',
+  'system.audit.explorer.filter.targetAll',
+  'system.audit.explorer.filter.to',
+  'system.audit.explorer.loading.description',
+  'system.audit.explorer.loading.inline',
+  'system.audit.explorer.loading.title',
+  'system.audit.explorer.outcome.denied',
+  'system.audit.explorer.outcome.failure',
+  'system.audit.explorer.outcome.success',
+  'system.audit.explorer.pagination.label',
+  'system.audit.explorer.pagination.summary',
+  'system.audit.explorer.results.count',
+  'system.audit.explorer.table.column.action',
+  'system.audit.explorer.table.column.detail',
+  'system.audit.explorer.table.column.occurred',
+  'system.audit.explorer.table.column.outcome',
+  'system.audit.explorer.table.column.target',
+  'system.audit.explorer.table.scrollHint',
+  'system.audit.explorer.target.absenceRequest',
+  'system.audit.explorer.target.account',
+  'system.audit.explorer.target.assignment',
+  'system.audit.explorer.target.attendance',
+  'system.audit.explorer.target.authentication',
+  'system.audit.explorer.target.authorization',
+  'system.audit.explorer.target.backup',
+  'system.audit.explorer.target.configuration',
+  'system.audit.explorer.target.correctionRequest',
+  'system.audit.explorer.target.employee',
+  'system.audit.explorer.target.export',
+  'system.audit.explorer.target.invitation',
+  'system.audit.explorer.target.leaveEntitlement',
+  'system.audit.explorer.target.monthlyPeriod',
+  'system.audit.explorer.target.notificationDelivery',
+  'system.audit.explorer.target.operations',
+  'system.audit.explorer.target.recovery',
+  'system.audit.explorer.target.secret',
+  'system.audit.explorer.target.session',
+  'system.audit.explorer.target.team',
+  'system.audit.explorer.target.timeAccount',
+  'system.audit.technical.page.caption',
+  'system.audit.technical.page.description',
+  'system.audit.technical.page.eyebrow',
+  'system.audit.technical.page.filterDescription',
+  'system.audit.technical.page.filterTitle',
+  'system.audit.technical.page.resultsTitle',
+  'system.audit.technical.page.scrollLabel',
+  'system.operations.alert.criticalTitle',
+  'system.operations.alert.degradedTitle',
+  'system.operations.alert.description',
+  'system.operations.dependencies.authentication.heading',
+  'system.operations.dependencies.database.heading',
+  'system.operations.dependencies.error',
+  'system.operations.dependencies.heading',
+  'system.operations.dependencies.latency',
+  'system.operations.dependencies.latencyValue',
+  'system.operations.dependencies.status',
+  'system.operations.deployment.description',
+  'system.operations.deployment.documentation',
+  'system.operations.deployment.heading',
+  'system.operations.health.critical',
+  'system.operations.health.degraded',
+  'system.operations.health.healthy',
+  'system.operations.health.unavailable',
+  'system.operations.loading.description',
+  'system.operations.loading.title',
+  'system.operations.page.description',
+  'system.operations.page.eyebrow',
+  'system.operations.status.environment',
+  'system.operations.status.heading',
+  'system.operations.status.overallHealth',
+  'system.operations.status.service',
+  'system.operations.status.timestamp',
+  'system.operations.status.version',
   'shared.duration.hours',
   'shared.duration.minutes',
   'shared.duration.compact',

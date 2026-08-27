@@ -1,1 +1,585 @@
-{}
+{
+  "approval": {
+    "common": {
+      "status": {
+        "actionRequired": "Acción necesaria",
+        "allRecords": "Todos los registros",
+        "completed": "Completado",
+        "waitingOnEmployee": "En espera del empleado"
+      },
+      "workflow": {
+        "absenceCancellation": "Cancelación de ausencia",
+        "absenceRequest": "Solicitud de ausencia",
+        "correction": "Corrección",
+        "monthlyPeriod": "Periodo mensual"
+      }
+    },
+    "detail": {
+      "action": {
+        "acknowledge": "Confirmar parte",
+        "approve": "Aprobar",
+        "approveCorrection": "Aprobar corrección",
+        "backToInbox": "Volver a la bandeja de aprobaciones",
+        "reject": "Rechazar",
+        "requestChanges": "Solicitar cambios"
+      },
+      "apply": {
+        "action": "Aplicar corrección",
+        "description": {
+          "postLock": "Al aplicarla, se añade el cambio aprobado después del mes bloqueado. El registro mensual aprobado permanece sin cambios.",
+          "unlocked": "Al aplicarla, se actualiza el registro diario desbloqueado y se añade el cambio de saldo resultante."
+        },
+        "heading": "Aplicar corrección aprobada",
+        "pending": "Aplicando…"
+      },
+      "decision": {
+        "description": "Todos los resultados salvo la confirmación requieren un motivo de al menos 10 caracteres.",
+        "heading": "Registrar una decisión",
+        "overrideDescription": "He revisado el saldo de derecho previsto y estoy aplicando una excepción explícita de RR. HH.",
+        "overrideTitle": "Aprobar con una excepción por saldo negativo.",
+        "pending": "Registrando…",
+        "reasonHelp": "El motivo se guarda con la decisión y no aparece en la bandeja minimizada.",
+        "reasonLabel": "Motivo de la decisión"
+      },
+      "empty": {
+        "description": "Esta aprobación no tiene ninguna acción disponible en su estado actual.",
+        "title": "No hay ninguna decisión disponible"
+      },
+      "error": {
+        "accessDenied": "No tienes permiso para realizar esta acción.",
+        "adjustmentRequired": "Esta corrección afecta a un mes bloqueado y requiere el flujo de ajuste posterior al bloqueo.",
+        "deniedDescription": "Tu cuenta no puede acceder a esta aprobación.",
+        "deniedStateDescription": "Solo una persona revisora apta dentro del ámbito jerárquico actual puede abrir este registro.",
+        "deniedStateTitle": "El acceso a la aprobación está limitado",
+        "description": "WorkLedger no ha podido cargar este registro de aprobación. Puedes volver a la bandeja e intentarlo de nuevo.",
+        "insufficientBalance": "Esta solicitud supera el derecho disponible. Para aprobarla hace falta una excepción explícita de RR. HH.",
+        "recording": "WorkLedger no ha podido registrar esta acción. No se ha guardado ninguna decisión.",
+        "stateConflict": "Esta aprobación cambió antes de tu acción. Se ha vuelto a cargar el registro actual; revísalo antes de intentarlo de nuevo.",
+        "stateDescription": "No se ha registrado ninguna decisión.",
+        "title": "Aprobación no disponible"
+      },
+      "evidence": {
+        "description": "Estos eventos originales permanecen sin cambios cuando se aprueba una corrección.",
+        "empty": "Esta corrección no tiene eventos de fichaje de origen asociados.",
+        "eyebrow": "Pruebas",
+        "heading": "Eventos de fichaje registrados"
+      },
+      "feedback": {
+        "correctionApplied": "Corrección aplicada. El tiempo trabajado es {{worked}} y el saldo ha cambiado en {{balance}}.",
+        "decisionRecorded": "{{action}} registrado. Estado actual: {{status}}.",
+        "errorTitle": "Decisión no registrada",
+        "postLockApproved": "Corrección aprobada. Se ha añadido el ajuste posterior al bloqueo y el registro mensual aprobado permanece sin cambios.",
+        "successTitle": "Decisión registrada"
+      },
+      "loading": {
+        "description": "Comprobando el registro actual y las acciones disponibles.",
+        "pageDescription": "Preparando el registro actual, su efecto y las decisiones disponibles.",
+        "pageTitle": "Cargando aprobación",
+        "title": "Cargando detalles de revisión"
+      },
+      "page": {
+        "description": "Comprueba el registro actual, su efecto y los resultados disponibles antes de registrar una decisión.",
+        "eyebrow": "Aprobaciones",
+        "title": "Revisar {{workflow}}"
+      },
+      "summary": {
+        "absenceType": "Tipo de ausencia:",
+        "coverage": {
+          "caption": "Fechas y minutos incluidos en esta aprobación",
+          "date": "Fecha",
+          "kind": "Cobertura",
+          "minutes": "Minutos",
+          "scrollHint": "Desplázate horizontalmente para revisar cada valor de cobertura.",
+          "scrollLabel": "Cobertura de ausencia"
+        },
+        "dateRange": "Del {{from}} al {{to}}",
+        "effect": "Cómo entra en vigor este cambio:",
+        "effectPostLock": "La aprobación añade un ajuste al mes bloqueado mientras el registro mensual aprobado permanece sin cambios.",
+        "effectUnlocked": "Tras la aprobación, la corrección se puede aplicar al registro diario desbloqueado.",
+        "employeeReason": "Motivo del empleado:",
+        "entitlement": "Derecho:",
+        "entitlementValue": "Solicita {{requested}}; saldo restante previsto {{projected}}.",
+        "originalBalance": "Saldo {{value}}",
+        "originalCalculation": "Cálculo original",
+        "originalCredited": "Acreditado {{value}}",
+        "originalWorked": "Trabajado {{value}}",
+        "proposedInterval": "Intervalo propuesto",
+        "submitted": "Enviado",
+        "workflow": "Flujo"
+      },
+      "validation": {
+        "confirmOverride": "Confirma la excepción por saldo negativo antes de aprobar esta solicitud.",
+        "hrOverrideOnly": "Esta solicitud supera el derecho disponible. Solo RR. HH. puede aprobarla con una excepción explícita.",
+        "reason": "Introduce al menos 10 caracteres para explicar la decisión."
+      },
+      "workflow": {
+        "absenceCancellation": "cancelación de ausencia",
+        "absenceRequest": "solicitud de ausencia",
+        "correctionRequest": "solicitud de corrección"
+      }
+    },
+    "inbox": {
+      "action": {
+        "ariaLabel": "Revisar {{workflow}} de {{employee}}",
+        "review": "Revisar",
+        "reviewAndDecide": "Revisar y decidir",
+        "reviewRecord": "Revisar registro",
+        "wait": "Revisar cuando termine la actualización"
+      },
+      "applied": {
+        "dateRange": "Del {{from}} al {{to}}",
+        "label": "Vista aplicada:",
+        "reset": "Restablecer a pendiente de revisión"
+      },
+      "column": {
+        "action": "Acción",
+        "affectedDates": "Fechas afectadas",
+        "employee": "Empleado",
+        "status": "Estado",
+        "submitted": "Enviado",
+        "workflow": "Flujo"
+      },
+      "empty": {
+        "defaultDescription": "Ahora mismo ninguna aprobación requiere una acción tuya.",
+        "defaultTitle": "Ninguna aprobación requiere acción",
+        "filteredDescription": "Ninguna aprobación coincide con los filtros aplicados.",
+        "filteredTitle": "Ninguna aprobación coincide con estos filtros"
+      },
+      "error": {
+        "deniedDescription": "Tu cuenta actual no puede ver la bandeja de aprobaciones.",
+        "deniedTitle": "Bandeja de aprobaciones no disponible",
+        "requestReference": "Referencia de solicitud: {{requestId}}",
+        "unavailableDescription": "WorkLedger no ha podido cargar la bandeja de aprobaciones. No hay información de aprobaciones disponible.",
+        "unavailableTitle": "No se ha podido cargar la bandeja de aprobaciones"
+      },
+      "filter": {
+        "anyAffectedDate": "Cualquier fecha afectada",
+        "apply": "Aplicar filtros",
+        "ariaLabel": "Filtros de aprobación",
+        "category": {
+          "all": "Todas las categorías",
+          "label": "Categoría de flujo"
+        },
+        "error": "Introduce ambas fechas en orden y limita el intervalo a 366 días naturales.",
+        "errorTitle": "Comprueba el intervalo de fechas",
+        "from": "Afectado desde",
+        "hide": "Ocultar filtros",
+        "order": {
+          "earliestAffected": "Primero la fecha afectada más antigua",
+          "employeeAscending": "Empleado de A a Z",
+          "employeeDescending": "Empleado de Z a A",
+          "label": "Orden",
+          "latestAffected": "Primero la fecha afectada más reciente",
+          "newestSubmitted": "Primero el envío más reciente",
+          "oldestSubmitted": "Primero el envío más antiguo"
+        },
+        "show": "Acotar esta vista",
+        "team": {
+          "all": "Todos los equipos disponibles",
+          "allCurrent": "Todos los equipos actuales",
+          "label": "Equipo actual",
+          "selected": "Equipo actual seleccionado"
+        },
+        "to": "Afectado hasta"
+      },
+      "loading": {
+        "description": "Preparando las solicitudes y los periodos mensuales disponibles para revisión.",
+        "title": "Cargando bandeja de aprobaciones"
+      },
+      "page": {
+        "description": "Revisa las correcciones, solicitudes de ausencia, cancelaciones y periodos mensuales que necesitan tu decisión.",
+        "eyebrow": "Aprobaciones"
+      },
+      "pagination": {
+        "label": "Páginas de la bandeja de aprobaciones",
+        "none": "No hay aprobaciones",
+        "summary": "Mostrando {{first}}–{{last}} de {{total}}"
+      },
+      "permission": {
+        "description": "Tu cuenta actual no puede ver la bandeja de aprobaciones.",
+        "eyebrow": "Estado de la página"
+      },
+      "queue": {
+        "label": "Cola actual",
+        "needsReview": "Pendiente de revisión",
+        "viewLabel": "Vista de cola"
+      },
+      "results": {
+        "caption": "Resultados de la bandeja de aprobaciones",
+        "clearFilters": "Borrar filtros",
+        "listLabel": "Resultados de la bandeja de aprobaciones",
+        "refreshing": "Actualizando resultados de aprobaciones…",
+        "statusLabel": "Estado de los resultados de aprobaciones",
+        "tableLabel": "Tabla de resultados de la bandeja de aprobaciones"
+      },
+      "team": {
+        "none": "Sin equipo actual"
+      }
+    }
+  },
+  "report": {
+    "catalog": {
+      "flexibleTime": {
+        "description": "Saldos inicial, de cambio en el intervalo y final de tiempo flexible procedentes de la cuenta de tiempo de solo adición.",
+        "title": "Tiempo flexible"
+      },
+      "leave": {
+        "description": "Disponibilidad, reservas y saldos previstos de ausencias sin clasificación de enfermedad ni detalles de solicitudes.",
+        "title": "Saldos de ausencias"
+      },
+      "missingRecords": {
+        "description": "Registros diarios incompletos que requieren atención en el intervalo seleccionado, sin detalles privados del flujo.",
+        "title": "Registros ausentes"
+      },
+      "monthlyTime": {
+        "description": "Minutos mensuales previstos, trabajados, acreditados y de saldo, con contexto del flujo y de ajustes posteriores al bloqueo.",
+        "title": "Tiempo mensual"
+      },
+      "pendingApprovals": {
+        "description": "Aprobaciones actuales de correcciones, ausencias, cancelaciones y meses que requieren acción dentro del ámbito de revisión.",
+        "title": "Aprobaciones pendientes"
+      }
+    },
+    "common": {
+      "scope": {
+        "currentDirectReports": "empleados subordinados directos actuales",
+        "organization": "organización",
+        "self": "tus propios registros",
+        "selfAndDirectReports": "tus propios registros y empleados subordinados directos actuales"
+      },
+      "sort": {
+        "date": "Fecha",
+        "employee": "Empleado",
+        "status": "Estado",
+        "value": "Valor"
+      }
+    },
+    "detail": {
+      "action": {
+        "back": "Volver a informes",
+        "return": "Regresar a informes",
+        "review": "Revisar"
+      },
+      "column": {
+        "action": "Acción",
+        "affectedDates": "Fechas afectadas",
+        "closing": "Final",
+        "employee": "Empleado",
+        "incomplete": "Incompleto",
+        "leaveAccount": "Cuenta de ausencia",
+        "month": "Mes",
+        "opening": "Inicial",
+        "projected": "Previsto",
+        "status": "Estado",
+        "submitted": "Enviado",
+        "warnings": "Avisos",
+        "workflow": "Flujo"
+      },
+      "empty": {
+        "description": "Ninguna fila del informe coincide con el intervalo de fechas y el ámbito de permisos aplicados.",
+        "title": "Ninguna fila del informe coincide con esta vista"
+      },
+      "error": {
+        "deniedDescription": "Ya no tienes permiso para ejecutar este informe.",
+        "deniedTitle": "No tienes acceso a esta área",
+        "refreshNoData": "La actualización del informe no ha devuelto datos.",
+        "unavailableDescription": "No se ha podido cargar el informe.",
+        "unavailableTitle": "Esta información no está disponible"
+      },
+      "filter": {
+        "applied": {
+          "employee": "Se ha aplicado un filtro de empleado.",
+          "summary": "Aplicado: del {{from}} al {{to}}; {{sort}}, {{direction}}.",
+          "through": "hasta"
+        },
+        "apply": "Aplicar filtros del informe",
+        "direction": {
+          "ascending": "Ascendente",
+          "descending": "Descendente",
+          "label": "Dirección"
+        },
+        "error": "Introduce ambas fechas en orden, limita el intervalo a 366 días y elige una ordenación disponible.",
+        "from": "Desde",
+        "heading": "Intervalo de fechas y orden",
+        "reset": "Restablecer filtros del informe",
+        "sort": "Ordenar por",
+        "to": "Hasta"
+      },
+      "loading": {
+        "description": "Ejecutando informe…",
+        "title": "Cargando información"
+      },
+      "missingRecords": {
+        "noWarningCode": "Sin código de aviso"
+      },
+      "page": {
+        "eyebrow": "Informe"
+      },
+      "pagination": {
+        "label": "Páginas del informe",
+        "summary": "Página {{current}} de {{total}}. {{count}} filas del informe."
+      },
+      "partial": {
+        "description": "Este informe es parcial porque uno o varios registros diarios están incompletos. Los totales pueden cambiar cuando se resuelvan esos registros.",
+        "title": "Informe parcial"
+      },
+      "results": {
+        "generated": "Informe generado: {{value}}.",
+        "heading": "Resultados",
+        "refreshing": "Actualizando informe…",
+        "summary": "{{count}} filas en el ámbito {{scope}}. Los totales abarcan todas las filas coincidentes, no solo esta página."
+      },
+      "summary": {
+        "actionableApprovals": "Aprobaciones que requieren acción",
+        "availableChange": "Cambio disponible",
+        "balance": "Saldo",
+        "closingAvailable": "Disponible final",
+        "closingBalance": "Saldo final",
+        "credited": "Acreditado",
+        "expected": "Previsto",
+        "incompleteRecords": "Registros incompletos",
+        "openingAvailable": "Disponible inicial",
+        "openingBalance": "Saldo inicial",
+        "postLockChange": "Cambio posterior al bloqueo",
+        "projectedRemaining": "Restante previsto",
+        "rangeChange": "Cambio en el intervalo",
+        "reserved": "Reservado",
+        "worked": "Trabajado"
+      },
+      "table": {
+        "caption": "Filas de {{report}} del {{from}} al {{to}}",
+        "scrollHint": "En pantallas estrechas, desplázate horizontalmente por esta región de resultados para comparar todas las columnas del informe.",
+        "scrollLabel": "Tabla del informe {{report}}"
+      }
+    },
+    "page": {
+      "available": {
+        "description": "El catálogo solo muestra los informes que tu cuenta actual puede ejecutar.",
+        "heading": "Informes disponibles"
+      },
+      "description": "Revisa información de tiempo, saldos, ausencias, calidad de registros y aprobaciones dentro de tu ámbito de permisos actual. Cada resultado indica el ámbito aplicado.",
+      "error": {
+        "title": "Los informes no están disponibles ahora mismo"
+      },
+      "eyebrow": "Operaciones",
+      "loading": {
+        "description": "Se está recuperando el catálogo de informes disponible.",
+        "title": "Cargando información"
+      },
+      "open": "Abrir {{report}}"
+    },
+    "portability": {
+      "action": {
+        "copy": "Copiar resumen del informe",
+        "copyPending": "Copiando resumen…",
+        "csvLabel": "Exportación CSV",
+        "export": "Exportar CSV",
+        "exportPending": "Exportando CSV…",
+        "summaryCopyLabel": "copia del resumen"
+      },
+      "description": {
+        "copy": "Copiar el resumen solo escribe el intervalo de fechas visible, el ámbito de permisos, el número total de filas y los valores del resumen. Nunca copia automáticamente las filas de la tabla.",
+        "csv": "El CSV incluye todas las filas que coinciden con este informe y estos campos: {{fields}}. Omite identificadores internos, subtipo de ausencia, clasificación de enfermedad, notas, motivos, comentarios de revisión y columnas ocultas."
+      },
+      "error": {
+        "accessDenied": "El ámbito de tu informe ha cambiado. No se ha completado la {{action}}.",
+        "clipboardUnavailable": "El acceso al portapapeles no está disponible.",
+        "failed": "Ha fallado la {{action}}. No se ha escrito nada nuevo en la descarga ni en el portapapeles.",
+        "sessionEnded": "Tu sesión ha terminado. No se ha completado la {{action}}.",
+        "tooLarge": "El CSV es demasiado grande. Acota el intervalo de fechas o selecciona un empleado."
+      },
+      "fields": {
+        "flexibleTime": "nombre del empleado y minutos iniciales, de cambio en el intervalo y finales",
+        "leave": "nombre del empleado, etiqueta de la cuenta de ausencia, cambios disponibles, reservas y minutos previstos",
+        "missingRecords": "nombre del empleado, fecha, estado, minutos previstos y trabajados, y códigos de aviso",
+        "monthlyTime": "nombre del empleado, mes, estado del flujo, minutos previstos, trabajados, acreditados y de saldo, número de registros incompletos y diferencia posterior al bloqueo",
+        "pendingApprovals": "nombre del empleado, categoría general del flujo, fechas afectadas y momento del envío"
+      },
+      "heading": "Exportar y copiar",
+      "status": {
+        "copySuccess": "Resumen del informe copiado. No se han copiado filas de la tabla ni campos ocultos.",
+        "exportSuccess": "Descarga CSV iniciada. Se ha añadido un apóstrofo al texto que podría interpretarse como fórmula antes de entrecomillarlo para CSV.",
+        "label": "Estado de portabilidad del informe"
+      },
+      "summary": {
+        "actionableApprovals": "Aprobaciones que requieren acción",
+        "availableChange": "Cambio disponible",
+        "balance": "Saldo",
+        "closing": "Final",
+        "closingAvailable": "Disponible final",
+        "closingBalance": "Saldo final",
+        "credited": "Acreditado",
+        "dateRange": "Intervalo de fechas",
+        "expected": "Previsto",
+        "incompleteRecords": "Registros incompletos",
+        "matchingRows": "Filas coincidentes",
+        "openingAvailable": "Disponible inicial",
+        "openingBalance": "Saldo inicial",
+        "postLockChange": "Cambio posterior al bloqueo",
+        "projectedRemaining": "Restante previsto",
+        "rangeChange": "Cambio en el intervalo",
+        "reserved": "Reservado",
+        "scope": "Ámbito",
+        "worked": "Trabajado"
+      }
+    }
+  },
+  "team": {
+    "calendar": {
+      "agenda": {
+        "label": "Agenda de disponibilidad del equipo para {{month}}",
+        "selectDate": "Seleccionar fecha"
+      },
+      "byDate": "Disponibilidad por fecha",
+      "coverage": {
+        "firstHalf": "primera mitad del trabajo previsto",
+        "fullDay": "día completo",
+        "secondHalf": "segunda mitad del trabajo previsto"
+      },
+      "empty": {
+        "dateDescription": "No hay ninguna indisponibilidad del equipo registrada para esta fecha.",
+        "monthDescription": "No hay ninguna indisponibilidad del equipo registrada para este mes.",
+        "monthTitle": "No hay indisponibilidad este mes"
+      },
+      "entry": {
+        "summary": "No disponible — {{coverage}}",
+        "team": "Equipo: {{team}}",
+        "teamMissing": "Asignación de equipo actual no disponible"
+      },
+      "error": {
+        "description": "No se ha podido cargar el mes seleccionado. Comprueba tu conexión e inténtalo de nuevo.",
+        "title": "El calendario del equipo no está disponible"
+      },
+      "grid": {
+        "caption": "Indisponibilidad neutral del equipo para {{month}}. Selecciona una fecha para obtener una lista concreta.",
+        "scrollHint": "Desplázate horizontalmente para revisar los siete días.",
+        "scrollLabel": "Cuadrícula mensual de disponibilidad del equipo",
+        "selectDate": "Seleccionar {{date}}"
+      },
+      "loading": {
+        "description": "Preparando la disponibilidad del equipo para el mes seleccionado.",
+        "title": "Cargando calendario del equipo"
+      },
+      "marker": {
+        "selected": "Seleccionado",
+        "today": "Hoy"
+      },
+      "missingTeam": {
+        "description_one": "{{count}} entrada de disponibilidad no tiene asignación de equipo actual. La entrada sigue visible sin suponer un equipo.",
+        "description_many": "{{count}} entradas de disponibilidad no tienen asignación de equipo actual. Las entradas siguen visibles sin suponer un equipo.",
+        "description_other": "{{count}} entradas de disponibilidad no tienen asignación de equipo actual. Las entradas siguen visibles sin suponer un equipo.",
+        "title": "Asignación de equipo actual no disponible"
+      },
+      "navigation": {
+        "label": "Mes del calendario del equipo",
+        "next": "Mes siguiente",
+        "previous": "Mes anterior"
+      },
+      "page": {
+        "description": "Planifica teniendo en cuenta la disponibilidad neutral del equipo mientras mantienes a la vista la fecha y el mes seleccionados.",
+        "eyebrow": "Disponibilidad del equipo"
+      },
+      "permission": {
+        "description": "Tu cuenta actual no puede ver el calendario del equipo. No se ha revelado la disponibilidad de ningún empleado.",
+        "eyebrow": "Estado de la página"
+      },
+      "scopeAsOf": "Ámbito actual de empleados evaluado el {{date}} ({{timeZone}}). Ambas vistas contienen la misma disponibilidad neutral.",
+      "selectedDate": "Fecha seleccionada",
+      "selectedMonth": "Mes seleccionado",
+      "todaySuffix": " — Hoy",
+      "unavailableCount": "{{count}} entradas de indisponibilidad",
+      "view": {
+        "agenda": "Lista de agenda",
+        "label": "Vista del calendario del equipo",
+        "month": "Cuadrícula mensual"
+      },
+      "weekday": {
+        "friday": "Viernes",
+        "monday": "Lunes",
+        "saturday": "Sábado",
+        "sunday": "Domingo",
+        "thursday": "Jueves",
+        "tuesday": "Martes",
+        "wednesday": "Miércoles"
+      }
+    },
+    "status": {
+      "action": {
+        "none": "Sin seguimiento",
+        "openInbox": "Abrir bandeja",
+        "openInboxLabel": "Abrir la bandeja de aprobaciones para buscar registros abiertos de {{employee}}",
+        "viewCalendar": "Ver calendario",
+        "viewCalendarLabel": "Ver el calendario del equipo de {{employee}}"
+      },
+      "availability": {
+        "offWork": "No está trabajando ahora",
+        "onBreak": "En pausa",
+        "unavailable": "No disponible hoy",
+        "working": "Trabajando ahora"
+      },
+      "column": {
+        "availability": "Disponibilidad",
+        "currentTeam": "Equipo actual",
+        "employee": "Empleado",
+        "nextStep": "Paso siguiente",
+        "recordState": "Estado del registro"
+      },
+      "empty": {
+        "filteredDescription": "Cambia los filtros de la vista general para ver otros empleados subordinados directos actuales.",
+        "filteredTitle": "Ningún miembro del equipo coincide con esta vista",
+        "noReportsDescription": "No tienes empleados subordinados directos actuales que mostrar.",
+        "noReportsTitle": "No hay empleados subordinados directos actuales"
+      },
+      "error": {
+        "description": "No se ha podido cargar el estado del equipo. Comprueba tu conexión e inténtalo de nuevo.",
+        "title": "El estado del equipo no está disponible"
+      },
+      "filter": {
+        "allAvailability": "todos los estados de disponibilidad",
+        "allDirectReports": "Todos los empleados subordinados directos",
+        "description": "Los registros abiertos pueden incluir trabajo que necesita tu revisión, una respuesta del empleado o la aplicación final. La etiqueta no revela el flujo ni el tipo de ausencia.",
+        "heading": "Filtrar por disponibilidad actual",
+        "openRecords": "Personas con registros abiertos",
+        "option": "{{label}}: {{count}}",
+        "recordLabel": "Filtros de registros",
+        "withOpenRecords": " con registros abiertos"
+      },
+      "loading": {
+        "description": "Preparando la disponibilidad actual y el número de registros sin resolver.",
+        "title": "Cargando estado del equipo"
+      },
+      "members": {
+        "currentCount": "{{count}} empleados subordinados directos actuales.",
+        "filteredCount": "Mostrando {{visible}} de {{total}} empleados subordinados directos: {{availability}}{{records}}.",
+        "heading": "Miembros del equipo",
+        "showAll": "Mostrar todos los empleados subordinados directos"
+      },
+      "page": {
+        "description": "Consulta quién está trabajando, en pausa, no disponible hoy o tiene registros abiertos y abre después el seguimiento adecuado.",
+        "eyebrow": "Área de trabajo del equipo",
+        "shortcuts": "Accesos directos del área de trabajo del equipo"
+      },
+      "permission": {
+        "description": "Tu cuenta actual no puede ver el estado del equipo. No se ha revelado la disponibilidad de ningún empleado.",
+        "eyebrow": "Estado de la página"
+      },
+      "results": {
+        "caption": "Disponibilidad actual, estado de registros abiertos y pasos siguientes para empleados subordinados directos.",
+        "currentTeam": "Equipo actual",
+        "listLabel": "Resultados del estado del equipo",
+        "noOpenRecords": "Sin registros abiertos",
+        "noTeam": "Sin equipo actual",
+        "openRecords": "Registros abiertos",
+        "records": "Registros",
+        "tableLabel": "Tabla del estado del equipo"
+      },
+      "summary": {
+        "asOf": "{{date}}, a las {{time}} ({{timeZone}}).",
+        "current": "Estado actual de {{count}} empleados subordinados directos.",
+        "heading": "Vista general actual",
+        "refreshLabel": "Estado de actualización del equipo",
+        "refreshing": "Actualizando estado…"
+      }
+    }
+  }
+}

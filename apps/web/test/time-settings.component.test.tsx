@@ -6,9 +6,11 @@ import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
 import type { SelfContext, TimeSettingsAdminDetail } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { createWebLocaleController, LocaleControllerProvider } from '../src/app/locale.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
@@ -72,6 +74,11 @@ const TIME_SETTINGS: TimeSettingsAdminDetail = {
     },
   ],
 };
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 
 afterEach(() => {
   clearSessionMemory();
@@ -105,8 +112,8 @@ test('creates a new version without changing assignments', async () => {
   renderApplication();
 
   await user.type(await screen.findByLabelText('Schedule name'), 'Reduced Friday');
-  await user.clear(screen.getByLabelText('Friday minutes'));
-  await user.type(screen.getByLabelText('Friday minutes'), '360');
+  await user.clear(screen.getByLabelText('Scheduled minutes for Friday'));
+  await user.type(screen.getByLabelText('Scheduled minutes for Friday'), '360');
   await user.click(screen.getByRole('button', { name: 'Create schedule version' }));
 
   expect(await screen.findByRole('status')).toHaveTextContent(
@@ -156,14 +163,20 @@ test('previews and creates a bounded immutable time-policy version', async () =>
 });
 
 function renderApplication() {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  const localeController = createWebLocaleController(defaultLocaleRuntime);
   const queryClient = createWorkLedgerQueryClient();
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: ['/settings/time'],
   });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={localeController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
 }
 

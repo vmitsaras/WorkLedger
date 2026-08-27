@@ -109,7 +109,7 @@ test('requires a reason and explicit HR override before approving a negative abs
   await user.click(screen.getByRole('button', { name: 'Approve' }));
 
   const status = await screen.findByRole('status');
-  expect(status).toHaveTextContent('Approve recorded. The approval is now approved.');
+  expect(status).toHaveTextContent('Approve recorded. Current status: Approved.');
   await waitFor(() => expect(status).toHaveFocus());
   expect(requests.find(({ method }) => method === 'POST')?.body).toEqual({
     action: 'APPROVE',
@@ -155,7 +155,7 @@ test('acknowledges a sickness report without requiring or transmitting a reason'
 
   await user.click(await screen.findByRole('button', { name: 'Acknowledge report' }));
   expect(await screen.findByRole('status')).toHaveTextContent(
-    'Acknowledge report recorded. The approval is now acknowledged.',
+    'Acknowledge report recorded. Current status: Acknowledged.',
   );
   expect(postedBody).toEqual({
     action: 'ACKNOWLEDGE',

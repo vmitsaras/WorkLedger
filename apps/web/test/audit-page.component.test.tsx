@@ -6,9 +6,11 @@ import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
 import type { DomainAuditPage, SecurityAuditPage, SelfContext } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { createWebLocaleController, LocaleControllerProvider } from '../src/app/locale.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
@@ -64,6 +66,11 @@ const SECURITY_PAGE: SecurityAuditPage = {
   ],
   pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
 };
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 
 afterEach(() => {
   clearSessionMemory();
@@ -75,22 +82,25 @@ test('owns filters in the URL and reveals only redacted audit detail', async () 
   stubFetch(requests);
   const user = userEvent.setup();
   const queryClient = createWorkLedgerQueryClient();
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const localeController = requireLocaleController();
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: ['/audit'],
   });
   const { container } = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={localeController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
   expect(await screen.findByText('HOLIDAY_CREATED')).toBeVisible();
   await user.selectOptions(screen.getByLabelText('Outcome'), 'SUCCESS');
   expect(router.state.location.search).toContain('outcome=SUCCESS');
-  expect(await screen.findByText('1 events found.')).toBeVisible();
+  expect(await screen.findByText('Events found: 1')).toBeVisible();
   await user.click(screen.getByText('View redacted detail'));
   const detail = screen.getByText('View redacted detail').closest('details');
   if (detail === null) throw new Error('Expected redacted audit detail.');
-  expect(within(detail).getByText('Hr administrator')).toBeVisible();
+  expect(within(detail).getByText('HR administrator')).toBeVisible();
   expect(within(detail).getByText('holiday-1')).toBeVisible();
   expect(container).not.toHaveTextContent('account-secret-id');
   expect(requests.some((url) => url.searchParams.get('outcome') === 'SUCCESS')).toBe(true);
@@ -102,13 +112,16 @@ test('provides a filtered technical audit explorer without domain or account pay
   stubSystemFetch(requests);
   const user = userEvent.setup();
   const queryClient = createWorkLedgerQueryClient();
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const localeController = requireLocaleController();
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: ['/system/audit'],
   });
   const { container } = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={localeController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
   expect(await screen.findByText('SESSION_REVOKED')).toBeVisible();
   expect(screen.queryByText(/full search implementation coming/i)).not.toBeInTheDocument();
@@ -118,7 +131,7 @@ test('provides a filtered technical audit explorer without domain or account pay
   const detail = screen.getByText('View redacted detail').closest('details');
   if (detail === null) throw new Error('Expected redacted technical audit detail.');
   expect(within(detail).getByText('revoked-session')).toBeVisible();
-  expect(within(detail).getByText(/Http status: 204/)).toBeVisible();
+  expect(within(detail).getByText(/HTTP status: 204/)).toBeVisible();
   expect(container).not.toHaveTextContent('account-secret-id');
   expect(container).not.toHaveTextContent('sickness detail');
   expect(requests.some((url) => url.searchParams.get('targetKind') === 'SESSION')).toBe(true);
@@ -141,6 +154,13 @@ function stubFetch(requests: URL[]) {
       throw new Error(`Unexpected request: ${url.pathname}`);
     }),
   );
+}
+
+function requireLocaleController() {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  return createWebLocaleController(defaultLocaleRuntime);
 }
 
 function stubSystemFetch(requests: URL[]) {

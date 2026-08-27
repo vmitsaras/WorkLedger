@@ -1,1 +1,232 @@
-{}
+{
+  "accounts": {
+    "action": {
+      "activateAccount": "Activar cuenta",
+      "assignSystemRole": "Asignar rol de sistema",
+      "deactivateAccount": "Desactivar cuenta",
+      "revokeSystemRole": "Revocar rol de sistema"
+    },
+    "create": {
+      "accountEmail": "Correo electrónico de la cuenta",
+      "accountName": "Nombre de la cuenta",
+      "action": "Crear e invitar cuenta técnica",
+      "description": "Las cuentas técnicas no tienen un registro de empleado ficticio. Aquí no se concede acceso a RR. HH., asistencia, saldos, ausencias ni auditoría de dominio.",
+      "heading": "Invitar a administración técnica",
+      "invitationDescription": "Define el idioma de la cuenta para esta invitación y para el primer inicio de sesión de la persona administradora.",
+      "invitationLanguage": "Idioma de la invitación",
+      "pending": "Creando…"
+    },
+    "directory": {
+      "activeAccount": "Cuenta activa",
+      "activeSessions": "Sesiones activas",
+      "currentAccount": "Esta es tu cuenta actual. Usa Perfil para tus propias sesiones; no se permiten cambios en tu propio rol ni en el estado de tu cuenta.",
+      "description": "La vinculación con una persona empleada solo se muestra para evitar cambios técnicos accidentales en el ciclo de vida. Esta vista no incluye número de empleado, estado laboral, equipo, horario, saldo, solicitudes ni datos de enfermedad.",
+      "employeeLinked": "Vinculada a empleado",
+      "heading": "Directorio de cuentas",
+      "inactiveAccount": "Cuenta inactiva",
+      "invitationPending": "Invitación pendiente",
+      "lastActive": " — última actividad: {{value}}",
+      "noActiveSessions": "No hay sesiones activas.",
+      "noSystemRole": "Sin rol de sistema",
+      "stateAndAuthority": "Estado y autoridad de la cuenta",
+      "technicalOnly": "Solo técnica"
+    },
+    "empty": {
+      "description": "Invita arriba a la primera persona administradora técnica.",
+      "title": "No hay cuentas asociadas a esta instalación"
+    },
+    "error": {
+      "accessDenied": "Ya no tienes autoridad técnica para esta acción o la acción afecta a tu propia cuenta.",
+      "emailExists": "Ese correo electrónico ya está en uso.",
+      "freshSession": "Cierra sesión y vuelve a iniciarla antes de realizar este cambio privilegiado.",
+      "generic": "No se ha podido completar el cambio de la cuenta técnica. Inténtalo de nuevo.",
+      "stateConflict": "El estado de la cuenta ha cambiado. Actualiza la página y revisa la cuenta actual."
+    },
+    "feedback": {
+      "created": "Se ha creado la cuenta técnica y se ha enviado una invitación válida durante 24 horas.",
+      "title": "Cuenta técnica actualizada",
+      "updated": "Se ha actualizado el estado de la cuenta técnica y se han revocado las sesiones afectadas."
+    },
+    "loading": {
+      "description": "Se están recuperando los registros de cuentas técnicas.",
+      "title": "Cargando información"
+    },
+    "page": {
+      "description": "Gestiona el acceso técnico, los roles de administración del sistema y las sesiones activas.",
+      "eyebrow": "Administración del sistema"
+    },
+    "validation": {
+      "accountEmail": "Introduce una dirección de correo válida.",
+      "accountName": "Introduce un nombre de cuenta."
+    }
+  },
+  "audit": {
+    "domain": {
+      "page": {
+        "caption": "Eventos de auditoría de dominio de la organización redactados, del más reciente al más antiguo",
+        "description": "Revisa los cambios y las decisiones de la organización que se han registrado.",
+        "eyebrow": "Administración de RR. HH.",
+        "filterDescription": "Las fechas usan la zona horaria de la organización. Un código de acción exacto permite acotar un flujo conocido.",
+        "filterTitle": "Filtrar eventos de auditoría de dominio",
+        "resultsTitle": "Eventos de auditoría de dominio",
+        "scrollLabel": "Resultados de auditoría de dominio"
+      }
+    },
+    "explorer": {
+      "actor": {
+        "account": "Cuenta",
+        "systemProcess": "Proceso del sistema: {{process}}",
+        "unknown": "Desconocido"
+      },
+      "boolean": {
+        "no": "No",
+        "yes": "Sí"
+      },
+      "detail": {
+        "actor": "Actor",
+        "privileged": "Acción privilegiada",
+        "reasonCode": "Código de motivo",
+        "safeFacts": "Datos seguros",
+        "summary": "Ver detalle redactado",
+        "targetReference": "Referencia del objetivo"
+      },
+      "empty": {
+        "description": "Cambia o borra los filtros para revisar un intervalo de tiempo más amplio.",
+        "title": "No hay eventos de auditoría coincidentes"
+      },
+      "fact": {
+        "attendanceRevision": "Revisión de asistencia",
+        "authenticationMethod": "Método de autenticación",
+        "changedRole": "Rol modificado",
+        "effectiveDate": "Fecha de vigencia",
+        "eventCount": "Número de eventos",
+        "failureCategory": "Categoría del fallo",
+        "httpStatus": "Estado HTTP",
+        "minutes": "Minutos",
+        "nextStatus": "Estado siguiente",
+        "previousStatus": "Estado anterior",
+        "scope": "Ámbito",
+        "sessionReference": "Referencia de sesión",
+        "sourceCount": "Número de fuentes",
+        "version": "Versión"
+      },
+      "filter": {
+        "action": "Código de acción exacto",
+        "from": "Fecha inicial",
+        "outcome": "Resultado",
+        "outcomeAll": "Todos los resultados",
+        "target": "Tipo de destino",
+        "targetAll": "Todos los tipos de objetivo",
+        "to": "Fecha final"
+      },
+      "loading": {
+        "description": "Se están recuperando las pruebas de auditoría.",
+        "inline": "Cargando eventos de auditoría…",
+        "title": "Cargando información"
+      },
+      "outcome": {
+        "denied": "Denegado",
+        "failure": "Fallido",
+        "success": "Correcto"
+      },
+      "pagination": {
+        "label": "Páginas de auditoría",
+        "summary": "Página {{current}} de {{total}}"
+      },
+      "results": {
+        "count": "Eventos encontrados: {{count}}"
+      },
+      "table": {
+        "column": {
+          "action": "Acción",
+          "detail": "Detalle",
+          "occurred": "Fecha y hora",
+          "outcome": "Resultado",
+          "target": "Objetivo"
+        },
+        "scrollHint": "En pantallas estrechas, desplázate horizontalmente por esta región de resultados para comparar todas las columnas."
+      },
+      "target": {
+        "absenceRequest": "Solicitud de ausencia",
+        "account": "Cuenta",
+        "assignment": "Asignación",
+        "attendance": "Asistencia",
+        "authentication": "Autenticación",
+        "authorization": "Autorización",
+        "backup": "Copia de seguridad",
+        "configuration": "Configuración",
+        "correctionRequest": "Solicitud de corrección",
+        "employee": "Empleado",
+        "export": "Exportación",
+        "invitation": "Invitación",
+        "leaveEntitlement": "Derecho de ausencia",
+        "monthlyPeriod": "Periodo mensual",
+        "notificationDelivery": "Entrega de notificaciones",
+        "operations": "Operaciones",
+        "recovery": "Recuperación",
+        "secret": "Secreto",
+        "session": "Sesión",
+        "team": "Equipo",
+        "timeAccount": "Cuenta de tiempo"
+      }
+    },
+    "technical": {
+      "page": {
+        "caption": "Eventos de auditoría técnicos y de seguridad redactados, del más reciente al más antiguo",
+        "description": "Revisa eventos de inicio de sesión, acceso, sesión y operaciones.",
+        "eyebrow": "Administración del sistema",
+        "filterDescription": "Los resultados incluyen datos técnicos limitados. No contienen registros de empleados, contenido de notificaciones ni identificadores de cuentas.",
+        "filterTitle": "Filtrar eventos de auditoría técnica",
+        "resultsTitle": "Eventos de auditoría técnica",
+        "scrollLabel": "Resultados de auditoría técnica"
+      }
+    }
+  },
+  "operations": {
+    "alert": {
+      "criticalTitle": "El servicio requiere atención inmediata",
+      "degradedTitle": "El servicio está degradado",
+      "description": "Revisa a continuación las pruebas de dependencias y usa después los procedimientos documentados de recuperación del operador del host. Esta página no ofrece controles para reiniciar ni restaurar."
+    },
+    "dependencies": {
+      "authentication": {
+        "heading": "Autenticación"
+      },
+      "database": {
+        "heading": "Base de datos"
+      },
+      "error": "Error",
+      "heading": "Dependencias",
+      "latency": "Latencia",
+      "latencyValue": "{{milliseconds}} ms",
+      "status": "Estado"
+    },
+    "deployment": {
+      "description": "Las copias de seguridad, la restauración, las migraciones y las actualizaciones son procedimientos del operador del host y no están disponibles en esta interfaz.",
+      "documentation": "Consulta la documentación de despliegue y operaciones para ver los procedimientos validados.",
+      "heading": "Procedimientos de despliegue"
+    },
+    "health": {
+      "critical": "Crítico",
+      "degraded": "Degradado",
+      "healthy": "Correcto",
+      "unavailable": "No disponible"
+    },
+    "loading": {
+      "description": "Se están recuperando los diagnósticos del sistema.",
+      "title": "Cargando información"
+    },
+    "page": {
+      "description": "Comprueba el estado del servicio, las dependencias afectadas y la siguiente acción operativa.",
+      "eyebrow": "Administración del sistema"
+    },
+    "status": {
+      "environment": "Entorno",
+      "heading": "Estado del servicio",
+      "overallHealth": "Estado general",
+      "service": "Servicio",
+      "timestamp": "Marca de tiempo",
+      "version": "Versión"
+    }
+  }
+}

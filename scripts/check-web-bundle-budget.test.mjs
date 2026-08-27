@@ -53,22 +53,24 @@ test('adds only the measured internationalization runtime allowance to applicati
       totalJavaScriptBytes: 916_728,
       totalJavaScriptGzipBytes: 247_840,
     }),
-    { rawBytes: 6_728, rawBudget: 76_000, gzipBytes: 1_840, gzipBudget: 22_000 },
+    { rawBytes: 6_728, rawBudget: 96_000, gzipBytes: 1_840, gzipBudget: 22_000 },
   );
 });
 
 test('rejects totals above the combined application and runtime ceiling', () => {
   const entriesAtLimit = [
-    { name: 'app-a.js', bytes: 493_000, gzipBytes: 134_000 },
-    { name: 'app-b.js', bytes: 493_000, gzipBytes: 134_000 },
+    { name: 'app-a.js', bytes: 500_000, gzipBytes: 120_000 },
+    { name: 'app-b.js', bytes: 500_000, gzipBytes: 120_000 },
+    { name: 'app-c.js', bytes: 6_000, gzipBytes: 28_000 },
   ];
 
-  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 986_000);
+  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 1_006_000);
   assert.throws(
     () =>
       assertBundleBudget([
         entriesAtLimit[0],
-        { ...entriesAtLimit[1], bytes: entriesAtLimit[1].bytes + 1 },
+        entriesAtLimit[1],
+        { ...entriesAtLimit[2], bytes: entriesAtLimit[2].bytes + 1 },
       ]),
     /totalJavaScriptBytes/,
   );
@@ -76,7 +78,8 @@ test('rejects totals above the combined application and runtime ceiling', () => 
     () =>
       assertBundleBudget([
         entriesAtLimit[0],
-        { ...entriesAtLimit[1], gzipBytes: entriesAtLimit[1].gzipBytes + 1 },
+        entriesAtLimit[1],
+        { ...entriesAtLimit[2], gzipBytes: entriesAtLimit[2].gzipBytes + 1 },
       ]),
     /totalJavaScriptGzipBytes/,
   );

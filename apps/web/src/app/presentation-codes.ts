@@ -96,32 +96,27 @@ const ATTENTION_PRESENTATION: Readonly<Record<AttentionCode, AttentionPresentati
 };
 
 const REPORT_PRESENTATION: Readonly<
-  Record<ReportKey, Readonly<{ description: string; title: string }>>
+  Record<ReportKey, Readonly<{ description: MessageKey; title: MessageKey }>>
 > = {
   'monthly-time': {
-    description:
-      'Monthly expected, worked, credited, and balance minutes with workflow and post-lock adjustment context.',
-    title: 'Monthly time',
+    description: 'manager.report.catalog.monthlyTime.description',
+    title: 'manager.report.catalog.monthlyTime.title',
   },
   'flexible-time': {
-    description:
-      'Opening, in-range change, and closing flexible-time balances from the append-only time account.',
-    title: 'Flexible time',
+    description: 'manager.report.catalog.flexibleTime.description',
+    title: 'manager.report.catalog.flexibleTime.title',
   },
   leave: {
-    description:
-      'Leave availability, reservation, and projected balances without sickness classification or request detail.',
-    title: 'Leave balances',
+    description: 'manager.report.catalog.leave.description',
+    title: 'manager.report.catalog.leave.title',
   },
   'missing-records': {
-    description:
-      'Incomplete daily records that need attention in the selected range, without private workflow detail.',
-    title: 'Missing records',
+    description: 'manager.report.catalog.missingRecords.description',
+    title: 'manager.report.catalog.missingRecords.title',
   },
   'pending-approvals': {
-    description:
-      'Current actionable correction, absence, cancellation, and monthly approvals in reviewer scope.',
-    title: 'Pending approvals',
+    description: 'manager.report.catalog.pendingApprovals.description',
+    title: 'manager.report.catalog.pendingApprovals.title',
   },
 };
 
@@ -216,8 +211,10 @@ export function notificationPresentation(
 
 export function reportPresentation(
   key: ReportKey,
+  t: MessageTranslator,
 ): Readonly<{ description: string; title: string }> {
-  return REPORT_PRESENTATION[key];
+  const presentation = REPORT_PRESENTATION[key];
+  return { description: t(presentation.description), title: t(presentation.title) };
 }
 
 export function sessionDevicePresentation(

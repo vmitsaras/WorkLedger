@@ -117,7 +117,7 @@ test('hydrates controls from the URL and renders a privacy-minimized, accessible
   expect(appliedView).not.toBeNull();
   if (appliedView === null) throw new Error('Expected the applied view summary.');
   expect(appliedView).toHaveTextContent('Client Services');
-  expect(appliedView).toHaveTextContent('employee A to Z');
+  expect(appliedView).toHaveTextContent('Employee A to Z');
   expect(screen.getByRole('combobox', { name: 'Workflow category' })).not.toBeVisible();
   await userEvent.setup().click(screen.getByText('Refine this view', { exact: true }));
   expect(screen.getByRole('combobox', { name: 'Workflow category' })).toHaveValue('ALL');
@@ -141,12 +141,12 @@ test('hydrates controls from the URL and renders a privacy-minimized, accessible
   expect(within(table).getByText('Waiting on employee')).toBeVisible();
   expect(
     within(within(table).getByRole('row', { name: /Maria Chen/u })).getByRole('link', {
-      name: 'Review correction for Maria Chen',
+      name: 'Review Correction for Maria Chen',
     }),
   ).toHaveAttribute('href', `/approvals/${CORRECTION_ID}`);
   expect(
     within(within(table).getByRole('row', { name: /Lena Hoffmann/u })).getByRole('link', {
-      name: 'Review monthly period for Lena Hoffmann',
+      name: 'Review Monthly period for Lena Hoffmann',
     }),
   ).toHaveAttribute('href', `/monthly-periods/${MONTHLY_PERIOD_ID}`);
   expect(screen.queryByText(/sickness|vacation/iu)).not.toBeInTheDocument();
@@ -165,6 +165,34 @@ test('hydrates controls from the URL and renders a privacy-minimized, accessible
     to: '2026-08-31',
     type: 'ALL',
   });
+  await expectNoAxeViolations(container);
+});
+
+test.each([
+  {
+    action: 'Korrektur für Maria Chen prüfen',
+    heading: 'Freigabe-Eingang',
+    locale: 'de-DE' as const,
+    results: 'Ergebnisse des Genehmigungseingangs',
+  },
+  {
+    action: 'Revisar Corrección de Maria Chen',
+    heading: 'Bandeja de aprobaciones',
+    locale: 'es-ES' as const,
+    results: 'Resultados de la bandeja de aprobaciones',
+  },
+])('renders the manager approval workflow in $locale', async (scenario) => {
+  stubInboxFetch({
+    context: { ...MANAGER_CONTEXT, locale: scenario.locale },
+    onInbox: () => successResponse(inbox({ items: INBOX_ITEMS, limit: 20, page: 1, total: 4 })),
+  });
+  const { container } = renderApplication('/approvals');
+
+  const heading = await screen.findByRole('heading', { name: scenario.heading });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(screen.getByRole('table', { name: scenario.results })).toBeVisible();
+  expect(screen.getByRole('link', { name: scenario.action })).toBeVisible();
+  expect(document.documentElement).toHaveAttribute('lang', scenario.locale);
   await expectNoAxeViolations(container);
 });
 
@@ -423,10 +451,10 @@ test('presents complete approval records and review actions without horizontal p
   if (mariaRecord === null) throw new Error('Expected Maria Chen approval record.');
   expect(within(mariaRecord).getByText('Correction')).toBeVisible();
   expect(within(mariaRecord).getByText('Action required')).toBeVisible();
-  expect(within(mariaRecord).getByText('Wednesday, August 12, 2026')).toBeVisible();
+  expect(within(mariaRecord).getByText('Wednesday, 12 August 2026')).toBeVisible();
   expect(within(mariaRecord).getByText('Client Services')).toBeVisible();
   expect(
-    within(mariaRecord).getByRole('link', { name: 'Review correction for Maria Chen' }),
+    within(mariaRecord).getByRole('link', { name: 'Review Correction for Maria Chen' }),
   ).toHaveAttribute('href', `/approvals/${CORRECTION_ID}`);
   await expectNoAxeViolations(container);
 });
@@ -508,10 +536,10 @@ test('lets HR discover and open minimized approval records without requiring an 
   const table = await screen.findByRole('table', { name: 'Approval inbox results' });
   expect(within(table).getByText('Maria Chen')).toBeVisible();
   expect(
-    within(table).getByRole('link', { name: 'Review correction for Maria Chen' }),
+    within(table).getByRole('link', { name: 'Review Correction for Maria Chen' }),
   ).toHaveAttribute('href', `/approvals/${CORRECTION_ID}`);
   expect(
-    within(table).getByRole('link', { name: 'Review absence request for Noah Williams' }),
+    within(table).getByRole('link', { name: 'Review Absence request for Noah Williams' }),
   ).toHaveAttribute('href', `/approvals/${ABSENCE_ID}`);
   expect(screen.getByRole('link', { name: 'Approval inbox' })).toHaveAttribute(
     'aria-current',

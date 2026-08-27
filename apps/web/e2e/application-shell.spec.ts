@@ -1048,7 +1048,7 @@ test('records an approval decision with field-linked errors and keyboard-scrolla
 
   const status = page.getByRole('status');
   await expect(status).toBeFocused();
-  await expect(status).toContainText('Approve recorded. The approval is now approved.');
+  await expect(status).toContainText('Approve recorded. Current status: Approved.');
   expect(submittedDecision).toEqual({
     action: 'APPROVE',
     expectedVersion: 3,
@@ -2804,6 +2804,127 @@ for (const scenario of [
   });
 }
 
+for (const scenario of [
+  {
+    approvalHeading: 'Freigabe-Eingang',
+    approvalResults: 'Ergebnisse des Genehmigungseingangs',
+    employeeHeading: 'Mitarbeitende',
+    employeeSearch: 'Mitarbeitendenverzeichnis durchsuchen',
+    health: 'Beeinträchtigt',
+    locale: 'de-DE' as const,
+    operationsHeading: 'Betrieb',
+  },
+  {
+    approvalHeading: 'Bandeja de aprobaciones',
+    approvalResults: 'Resultados de la bandeja de aprobaciones',
+    employeeHeading: 'Empleados',
+    employeeSearch: 'Buscar en el directorio de empleados',
+    health: 'Degradado',
+    locale: 'es-ES' as const,
+    operationsHeading: 'Operaciones',
+  },
+]) {
+  test(`renders responsive manager, HR, and system workflows in ${scenario.locale}`, async ({
+    page,
+  }) => {
+    await page.route('**/v1/me/context', async (route) => {
+      await route.fulfill({
+        json: success({ ...COMBINED_CONTEXT, locale: scenario.locale }),
+        status: 200,
+      });
+    });
+    await page.route('**/v1/approvals*', async (route) => {
+      await route.fulfill({
+        json: success({
+          filterOptions: { teams: [{ id: APPROVAL_TEAM_ID, name: 'Client Services' }] },
+          items: APPROVAL_ITEMS,
+          pagination: { limit: 20, page: 1, total: 2, totalPages: 1 },
+          timeZone: 'Europe/Berlin',
+        }),
+        status: 200,
+      });
+    });
+    await page.route('**/v1/hr/employees*', async (route) => {
+      await route.fulfill({
+        json: success({
+          items: [
+            {
+              account: {
+                active: true,
+                email: 'jordan@example.test',
+                invitationPending: false,
+              },
+              currentEmployment: {
+                endsOn: null,
+                id: '123e4567-e89b-42d3-a456-426614174102',
+                startsOn: '2026-08-01',
+              },
+              displayName: 'Jordan Lee',
+              employeeNumber: 'WL-900-001',
+              id: '123e4567-e89b-42d3-a456-426614174101',
+              roles: ['EMPLOYEE'],
+              status: 'ACTIVE',
+            },
+          ],
+          pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+        }),
+        status: 200,
+      });
+    });
+    await page.route('**/v1/system/operations', async (route) => {
+      await route.fulfill({
+        json: {
+          dependencies: {
+            authentication: { status: 'healthy' },
+            database: {
+              error: 'Bounded readiness timeout.',
+              latencyMs: 750,
+              status: 'unavailable',
+            },
+          },
+          environment: 'production',
+          health: 'degraded',
+          service: 'workledger-api',
+          timestamp: '2026-08-21T10:30:00Z',
+          version: '0.14.0',
+        },
+        status: 200,
+      });
+    });
+
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.goto('/approvals');
+    await expect(
+      page.getByRole('heading', { level: 1, name: scenario.approvalHeading }),
+    ).toBeFocused();
+    await expect(page.getByRole('list', { name: scenario.approvalResults })).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await expectPageToHaveNoAxeViolations(page);
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/employees');
+    await expect(
+      page.getByRole('heading', { level: 1, name: scenario.employeeHeading }),
+    ).toBeFocused();
+    await expect(page.getByRole('heading', { name: scenario.employeeSearch })).toBeVisible();
+    await expectPageToHaveNoAxeViolations(page);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/system/operations');
+    await expect(
+      page.getByRole('heading', { level: 1, name: scenario.operationsHeading }),
+    ).toBeFocused();
+    await expect(page.getByText(scenario.health, { exact: true })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', scenario.locale);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await expectPageToHaveNoAxeViolations(page);
+  });
+}
+
 test('uses responsive personal records and an agenda-first personal calendar', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.route('**/v1/me/context', async (route) => {
@@ -3009,7 +3130,7 @@ test('defaults the team calendar to an equivalent agenda on narrow screens', asy
 
   await page.goto('/team-calendar?month=2026-08');
   await expect(page).toHaveTitle('Team calendar | WorkLedger');
-  await expect(page.getByRole('heading', { name: 'Team calendar' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Team calendar', exact: true })).toBeFocused();
   await expect(page.getByRole('button', { name: 'Agenda list' })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -3023,12 +3144,12 @@ test('defaults the team calendar to an equivalent agenda on narrow screens', asy
   await expect(agenda.getByText('Unavailable — second half of expected work')).toBeVisible();
 
   const augustFifteenth = agenda
-    .getByRole('heading', { name: /Saturday, August 15, 2026/u })
+    .getByRole('heading', { name: /Saturday, 15 August 2026/u })
     .locator('..');
   await augustFifteenth.getByRole('button', { name: 'Select date' }).click();
   await expect(page.getByText('Selected date', { exact: true })).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Saturday, August 15, 2026' }).last(),
+    page.getByRole('heading', { name: 'Saturday, 15 August 2026' }).last(),
   ).toBeVisible();
   await capturePhase12Manager(page, 'team-calendar-agenda-mobile-390x844');
 
@@ -3305,11 +3426,11 @@ test('creates, invites, and assigns an employee through the keyboard-complete HR
   await page.getByLabel('Team change').selectOption(teamId);
   await page.getByLabel('Effective from', { exact: true }).first().fill('2026-08-18');
   await page.getByRole('button', { name: 'Save team assignment' }).click();
-  await expect(page.getByRole('status')).toContainText('team assignment was updated');
+  await expect(page.getByRole('status')).toContainText('Team assignment updated.');
   await page.getByLabel('Direct-manager change').selectOption(managerId);
   await page.getByLabel('Effective from', { exact: true }).nth(1).fill('2026-08-18');
   await page.getByRole('button', { name: 'Save direct-manager assignment' }).click();
-  await expect(page.getByRole('status')).toContainText('direct-manager assignment was updated');
+  await expect(page.getByRole('status')).toContainText('Direct-manager assignment updated.');
   await page.getByLabel('Weekly schedule version').selectOption(scheduleId);
   await page.getByLabel('Effective from', { exact: true }).nth(2).fill('2026-08-18');
   await page.getByRole('button', { name: 'Save weekly schedule' }).click();
@@ -3363,7 +3484,7 @@ test('creates an immutable weekly schedule version with keyboard-recoverable val
     '#schedule-name',
   );
   await page.getByLabel('Schedule name').fill('Reduced Friday');
-  await page.getByLabel('Friday minutes').fill('360');
+  await page.getByLabel('Scheduled minutes for Friday').fill('360');
   await page.getByRole('button', { name: 'Create schedule version' }).click();
 
   await expect(page.getByRole('status')).toContainText('Employee assignments remain unchanged');
@@ -3534,7 +3655,7 @@ test('keeps employee, team, and technical audit administration usable from reflo
   await capturePhase12Administration(page, 'technical-audit-reflow-320x900');
   await page.getByLabel('Target type').selectOption('AUTHORIZATION');
   await page.getByText('View redacted detail').click();
-  await expect(page.getByText(/Http status: 403/u)).toBeVisible();
+  await expect(page.getByText(/HTTP status: 403/u)).toBeVisible();
   await expect(page.getByText(/account-secret|sickness detail/iu)).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,

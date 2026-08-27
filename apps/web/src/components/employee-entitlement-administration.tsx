@@ -2,15 +2,32 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { EmployeeEntitlementAdminDetail } from '@workledger/contracts';
+import type { MessageKey } from '@workledger/i18n';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, Panel, RouteState, TextField } from '@workledger/ui';
 
 import { ApiClientError, createEntitlementAdjustmentForAdministration } from '../app/api-client.js';
 import { formatDuration, formatLocalDate } from '../app/date-time-format.js';
 
+type EntitlementEntryType =
+  EmployeeEntitlementAdminDetail['accounts'][number]['entries'][number]['entryType'];
+
+const ENTITLEMENT_ENTRY_TYPE_KEYS = Object.freeze({
+  ALLOCATION: 'admin.employee.entitlement.entryType.allocation',
+  APPROVED_DEDUCTION: 'admin.employee.entitlement.entryType.approvedDeduction',
+  CANCELLATION_RESTORATION: 'admin.employee.entitlement.entryType.cancellationRestoration',
+  CARRYOVER: 'admin.employee.entitlement.entryType.carryover',
+  EXPIRY: 'admin.employee.entitlement.entryType.expiry',
+  MANUAL_ADJUSTMENT: 'admin.employee.entitlement.entryType.manualAdjustment',
+  PENDING_RESERVATION: 'admin.employee.entitlement.entryType.pendingReservation',
+  RESERVATION_RELEASE: 'admin.employee.entitlement.entryType.reservationRelease',
+} as const satisfies Readonly<Record<EntitlementEntryType, MessageKey>>);
+
 export function EmployeeEntitlementAdministration({
   employeeId,
   entitlement,
 }: Readonly<{ employeeId: string; entitlement: EmployeeEntitlementAdminDetail }>) {
+  const t = useWorkLedgerMessage();
   const queryClient = useQueryClient();
   const [absenceTypeId, setAbsenceTypeId] = useState('');
   const [minutes, setMinutes] = useState('');
@@ -38,7 +55,7 @@ export function EmployeeEntitlementAdministration({
     ) {
       setMessage({
         kind: 'error',
-        text: 'Choose an account and effective date, enter non-zero integer minutes, and provide a reason.',
+        text: t('admin.employee.entitlement.validation.required'),
       });
       document.querySelector<HTMLElement>('#entitlement-account')?.focus();
       return;
@@ -50,27 +67,28 @@ export function EmployeeEntitlementAdministration({
       setReason('');
       setMessage({
         kind: 'success',
-        text: 'The entitlement adjustment was added. Prior entries remain unchanged.',
+        text: t('admin.employee.entitlement.feedback.added'),
       });
     } catch (error) {
-      setMessage({ kind: 'error', text: adjustmentError(error) });
+      setMessage({ kind: 'error', text: adjustmentError(error, t) });
     }
   }
   return (
     <section className="grid gap-6" aria-labelledby="employee-entitlement-heading">
       <div>
         <h2 id="employee-entitlement-heading" className="m-0 text-2xl font-bold">
-          Leave entitlement
+          {t('admin.employee.entitlement.heading')}
         </h2>
         <p className="mb-0 text-sm text-[var(--wl-text-muted)]">
-          Each adjustment records whole minutes. Positive minutes add entitlement, while negative
-          minutes reduce it.
+          {t('admin.employee.entitlement.description')}
         </p>
       </div>
       {message === undefined ? null : (
         <Alert
           title={
-            message.kind === 'error' ? 'Entitlement update failed' : 'Entitlement adjustment added'
+            message.kind === 'error'
+              ? t('admin.employee.entitlement.feedback.errorTitle')
+              : t('admin.employee.entitlement.feedback.successTitle')
           }
           tone={message.kind === 'error' ? 'danger' : 'success'}
         >
@@ -78,8 +96,8 @@ export function EmployeeEntitlementAdministration({
         </Alert>
       )}
       {entitlement.accounts.length === 0 ? (
-        <RouteState kind="empty" title="No entitlement backed absence type is available">
-          Configure an entitlement backed absence type before managing employee leave balances.
+        <RouteState kind="empty" title={t('admin.employee.entitlement.empty.title')}>
+          {t('admin.employee.entitlement.empty.description')}
         </RouteState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -87,22 +105,38 @@ export function EmployeeEntitlementAdministration({
             <Panel key={account.absenceTypeId} as="article" className="grid gap-3">
               <h3 className="m-0 text-xl font-bold">{account.absenceTypeName}</h3>
               <dl className="m-0 grid grid-cols-3 gap-3">
-                <Value label="Available" minutes={account.availableMinutes} />
-                <Value label="Reserved" minutes={account.reservedMinutes} />
-                <Value label="Projected" minutes={account.projectedRemainingMinutes} />
+                <Value
+                  label={t('admin.employee.entitlement.value.available')}
+                  minutes={account.availableMinutes}
+                />
+                <Value
+                  label={t('admin.employee.entitlement.value.reserved')}
+                  minutes={account.reservedMinutes}
+                />
+                <Value
+                  label={t('admin.employee.entitlement.value.projected')}
+                  minutes={account.projectedRemainingMinutes}
+                />
               </dl>
               {account.entries.length === 0 ? (
-                <p className="mb-0">No entitlement ledger entries.</p>
+                <p className="mb-0">{t('admin.employee.entitlement.empty.entries')}</p>
               ) : (
                 <ol className="m-0 grid gap-2 pl-5">
                   {account.entries.map((entry) => (
                     <li key={entry.id}>
-                      <strong>{entry.entryType.replaceAll('_', ' ').toLowerCase()}</strong> ·{' '}
-                      {formatSigned(entry.minutes)} · effective {formatLocalDate(entry.effectiveOn)}
+                      <strong>{t(ENTITLEMENT_ENTRY_TYPE_KEYS[entry.entryType])}</strong>
+                      {' · '}
+                      {formatSigned(entry.minutes)}
+                      {' · '}
+                      {t('admin.employee.entitlement.entry.effective', {
+                        date: formatLocalDate(entry.effectiveOn),
+                      })}
                       {entry.reason === null ? null : (
                         <>
                           <br />
-                          <span className="text-sm">Reason: {entry.reason}</span>
+                          <span className="text-sm">
+                            {t('admin.employee.entitlement.entry.reason', { reason: entry.reason })}
+                          </span>
                         </>
                       )}
                     </li>
@@ -116,21 +150,22 @@ export function EmployeeEntitlementAdministration({
       {!entitlement.privilegedActionsAllowed ? null : (
         <form className="wl-panel grid max-w-3xl gap-4" onSubmit={submit} noValidate>
           <div>
-            <h3 className="m-0 text-xl font-bold">Append entitlement adjustment</h3>
+            <h3 className="m-0 text-xl font-bold">
+              {t('admin.employee.entitlement.form.heading')}
+            </h3>
             <p className="mb-0 text-sm text-[var(--wl-text-muted)]">
-              Adjustments may take effect today or later. The employee can see the reason in their
-              entitlement history, and it is included in the audit record.
+              {t('admin.employee.entitlement.form.description')}
             </p>
           </div>
           <label className="grid gap-2 text-sm font-semibold" htmlFor="entitlement-account">
-            Entitlement account
+            {t('admin.employee.entitlement.form.account')}
             <select
               id="entitlement-account"
               className="min-h-11 rounded-lg border px-3"
               value={absenceTypeId}
               onChange={(event) => setAbsenceTypeId(event.target.value)}
             >
-              <option value="">Choose an account</option>
+              <option value="">{t('admin.employee.entitlement.form.chooseAccount')}</option>
               {entitlement.adjustableAbsenceTypes.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
@@ -141,13 +176,13 @@ export function EmployeeEntitlementAdministration({
           <TextField
             id="entitlement-minutes"
             type="number"
-            label="Adjustment minutes"
-            description="Use a positive or negative whole-minute amount; zero is not an adjustment."
+            label={t('admin.employee.entitlement.form.minutes')}
+            description={t('admin.employee.entitlement.form.minutesDescription')}
             value={minutes}
             onChange={setMinutes}
           />
           <label className="grid gap-2 text-sm font-semibold" htmlFor="entitlement-effective">
-            Effective on
+            {t('admin.employee.entitlement.form.effectiveOn')}
             <input
               id="entitlement-effective"
               type="date"
@@ -159,8 +194,8 @@ export function EmployeeEntitlementAdministration({
           </label>
           <TextField
             id="entitlement-reason"
-            label="Reason"
-            description="Required. Do not enter sickness or medical details."
+            label={t('admin.employee.entitlement.form.reason')}
+            description={t('admin.employee.entitlement.form.reasonDescription')}
             value={reason}
             onChange={setReason}
           />
@@ -171,14 +206,16 @@ export function EmployeeEntitlementAdministration({
               : {})}
             isDisabled={mutation.isPending || entitlement.adjustableAbsenceTypes.length === 0}
           >
-            {mutation.isPending ? 'Appending adjustment…' : 'Append entitlement adjustment'}
+            {mutation.isPending
+              ? t('admin.employee.entitlement.form.pending')
+              : t('admin.employee.entitlement.form.submit')}
           </Button>
           {entitlement.adjustableAbsenceTypes.length === 0 ? (
             <p
               id="entitlement-adjustment-unavailable-reason"
               className="m-0 text-sm text-[var(--wl-text-muted)]"
             >
-              Configure an active entitlement backed absence type before appending an adjustment.
+              {t('admin.employee.entitlement.form.unavailable')}
             </p>
           ) : null}
         </form>
@@ -197,12 +234,12 @@ function Value({ label, minutes }: Readonly<{ label: string; minutes: number }>)
 function formatSigned(minutes: number) {
   return `${minutes > 0 ? '+' : minutes < 0 ? '−' : ''}${formatDuration(Math.abs(minutes))}`;
 }
-function adjustmentError(error: unknown): string {
+function adjustmentError(error: unknown, t: ReturnType<typeof useWorkLedgerMessage>): string {
   if (error instanceof ApiClientError) {
     if (error.code === 'ENTITLEMENT_ADJUSTMENT_CONFLICT')
-      return 'The selected account is unavailable or the employee state changed.';
+      return t('admin.employee.entitlement.error.conflict');
     if (error.code === 'ASSIGNMENT_EFFECTIVE_DATE_INVALID')
-      return 'Choose today or a future effective date.';
+      return t('admin.employee.entitlement.error.effectiveDate');
   }
-  return 'The entitlement adjustment could not be appended. Try again.';
+  return t('admin.employee.entitlement.error.generic');
 }

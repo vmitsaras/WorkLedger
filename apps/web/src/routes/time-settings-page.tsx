@@ -2,6 +2,8 @@ import { useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { TimePolicyRules, WeeklyScheduleMinutes } from '@workledger/contracts';
+import { type MessageKey } from '@workledger/i18n';
+import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Alert, Button, Panel, RouteState, TextField } from '@workledger/ui';
 
 import {
@@ -15,13 +17,13 @@ import { FormErrorSummary } from '../components/form-error-summary.js';
 import { PageHeader } from '../components/page-header.js';
 
 const WEEKDAYS = [
-  ['MONDAY', 'Monday'],
-  ['TUESDAY', 'Tuesday'],
-  ['WEDNESDAY', 'Wednesday'],
-  ['THURSDAY', 'Thursday'],
-  ['FRIDAY', 'Friday'],
-  ['SATURDAY', 'Saturday'],
-  ['SUNDAY', 'Sunday'],
+  ['MONDAY', 'admin.timeSettings.weekday.monday'],
+  ['TUESDAY', 'admin.timeSettings.weekday.tuesday'],
+  ['WEDNESDAY', 'admin.timeSettings.weekday.wednesday'],
+  ['THURSDAY', 'admin.timeSettings.weekday.thursday'],
+  ['FRIDAY', 'admin.timeSettings.weekday.friday'],
+  ['SATURDAY', 'admin.timeSettings.weekday.saturday'],
+  ['SUNDAY', 'admin.timeSettings.weekday.sunday'],
 ] as const;
 
 const INITIAL_MINUTES: Record<keyof WeeklyScheduleMinutes, string> = {
@@ -35,6 +37,7 @@ const INITIAL_MINUTES: Record<keyof WeeklyScheduleMinutes, string> = {
 };
 
 export function TimeSettingsPage() {
+  const t = useWorkLedgerMessage();
   const queryClient = useQueryClient();
   const query = useQuery(timeSettingsAdminDetailQuery());
   const [name, setName] = useState('');
@@ -50,13 +53,18 @@ export function TimeSettingsPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const errors: Record<string, string> = {};
-    if (name.trim() === '') errors['schedule-name'] = 'Enter a schedule name.';
+    if (name.trim() === '')
+      errors['schedule-name'] = t('admin.timeSettings.schedule.validation.name');
     const parsed = {} as WeeklyScheduleMinutes;
-    for (const [weekday, label] of WEEKDAYS) {
+    for (const [weekday, labelKey] of WEEKDAYS) {
       const value = Number(minutes[weekday]);
       if (!Number.isInteger(value) || value < 0 || value > 1_440) {
-        errors[`schedule-${weekday.toLowerCase()}`] =
-          `Enter ${label.toLowerCase()} minutes from 0 to 1,440.`;
+        errors[`schedule-${weekday.toLowerCase()}`] = t(
+          'admin.timeSettings.schedule.validation.weekdayMinutes',
+          {
+            day: t(labelKey as MessageKey).toLocaleLowerCase(),
+          },
+        );
       } else {
         parsed[weekday] = value;
       }
@@ -72,11 +80,9 @@ export function TimeSettingsPage() {
       await mutation.mutateAsync({ name: name.trim(), scheduledMinutes: parsed });
       await queryClient.invalidateQueries({ queryKey: ['administration', 'time-settings'] });
       setName('');
-      setStatus(
-        'The weekly schedule version was created. Employee assignments remain unchanged until you assign it.',
-      );
+      setStatus(t('admin.timeSettings.schedule.feedback.created'));
     } catch (error) {
-      setFormError(scheduleMutationError(error));
+      setFormError(scheduleMutationError(error, t));
       window.requestAnimationFrame(() => summaryRef.current?.focus());
     }
   }
@@ -89,14 +95,14 @@ export function TimeSettingsPage() {
   return (
     <section className="grid gap-8">
       <PageHeader
-        eyebrow="HR administration"
-        title="Time settings"
-        description="Create weekly schedule and time policy versions for future employee assignments."
+        eyebrow={t('admin.timeSettings.page.eyebrow')}
+        title={t('shared.route.title.settingsTime')}
+        description={t('admin.timeSettings.page.description')}
       />
 
       <FormErrorSummary fieldErrors={fieldErrors} formError={formError} summaryRef={summaryRef} />
       {status === undefined ? null : (
-        <Alert title="Schedule version created" tone="success">
+        <Alert title={t('admin.timeSettings.schedule.feedback.successTitle')} tone="success">
           <p>{status}</p>
         </Alert>
       )}
@@ -104,35 +110,37 @@ export function TimeSettingsPage() {
       <Panel className="grid gap-5" aria-labelledby="create-schedule-heading">
         <div className="grid gap-2">
           <h2 id="create-schedule-heading" className="m-0 text-2xl font-bold">
-            Create schedule version
+            {t('admin.timeSettings.schedule.heading')}
           </h2>
           <p className="m-0 max-w-3xl text-sm leading-6 text-[var(--wl-text-muted)]">
-            Reusing a schedule name creates its next version. Earlier versions stay available, and
-            no employee is affected until the version is assigned. Enter integer minutes; zero is a
-            deliberate non-working day.
+            {t('admin.timeSettings.schedule.description')}
           </p>
         </div>
         <form className="grid gap-5" noValidate onSubmit={submit}>
           <TextField
             id="schedule-name"
-            label="Schedule name"
-            description="For example, Standard 40 hours or Reduced Friday."
+            label={t('admin.timeSettings.schedule.name')}
+            description={t('admin.timeSettings.schedule.nameDescription')}
             value={name}
             onChange={setName}
             isInvalid={fieldErrors['schedule-name'] !== undefined}
             errorMessage={fieldErrors['schedule-name']}
           />
           <fieldset className="grid gap-4 rounded-xl border border-[var(--wl-border)] p-4">
-            <legend className="px-2 text-base font-bold">Scheduled minutes by weekday</legend>
+            <legend className="px-2 text-base font-bold">
+              {t('admin.timeSettings.schedule.weekdayHeading')}
+            </legend>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {WEEKDAYS.map(([weekday, label]) => {
+              {WEEKDAYS.map(([weekday, labelKey]) => {
                 const id = `schedule-${weekday.toLowerCase()}`;
                 return (
                   <TextField
                     key={weekday}
                     id={id}
                     type="number"
-                    label={`${label} minutes`}
+                    label={t('admin.timeSettings.schedule.weekdayLabel', {
+                      day: t(labelKey as MessageKey),
+                    })}
                     value={minutes[weekday]}
                     onChange={(value) =>
                       setMinutes((current) => ({ ...current, [weekday]: value }))
@@ -144,9 +152,15 @@ export function TimeSettingsPage() {
               })}
             </div>
           </fieldset>
-          <p className="m-0 font-semibold">Entered weekly total: {formatDuration(weeklyPreview)}</p>
+          <p className="m-0 font-semibold">
+            {t('admin.timeSettings.schedule.total', {
+              duration: formatDuration(weeklyPreview),
+            })}
+          </p>
           <Button type="submit" isDisabled={mutation.isPending}>
-            {mutation.isPending ? 'Creating version…' : 'Create schedule version'}
+            {mutation.isPending
+              ? t('admin.timeSettings.schedule.pending')
+              : t('admin.timeSettings.schedule.submit')}
           </Button>
         </form>
       </Panel>
@@ -156,19 +170,19 @@ export function TimeSettingsPage() {
       <section className="grid gap-4" aria-labelledby="schedule-versions-heading">
         <div>
           <h2 id="schedule-versions-heading" className="m-0 text-2xl font-bold">
-            Schedule versions
+            {t('admin.timeSettings.schedule.history.heading')}
           </h2>
           <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
-            Earlier versions remain visible so historical assignments stay explainable.
+            {t('admin.timeSettings.schedule.history.description')}
           </p>
         </div>
         {query.isPending ? (
-          <RouteState kind="loading" title="Loading information">
-            Schedule versions are being retrieved.
+          <RouteState kind="loading" title={t('admin.timeSettings.loading.title')}>
+            {t('admin.timeSettings.schedule.loadingDescription')}
           </RouteState>
         ) : query.data.scheduleVersions.length === 0 ? (
-          <RouteState kind="empty" title="No schedule versions have been created">
-            Create the first weekly schedule above.
+          <RouteState kind="empty" title={t('admin.timeSettings.schedule.empty.title')}>
+            {t('admin.timeSettings.schedule.empty.description')}
           </RouteState>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
@@ -176,17 +190,27 @@ export function TimeSettingsPage() {
               <Panel key={schedule.id} as="article" className="grid gap-4">
                 <div>
                   <h3 className="m-0 text-xl font-bold">
-                    {schedule.name} · version {schedule.version}
+                    {t('admin.timeSettings.schedule.versionLabel', {
+                      name: schedule.name,
+                      version: schedule.version,
+                    })}
                   </h3>
                   <p className="m-0 mt-1 text-sm font-semibold">
-                    {schedule.latestVersion ? 'Latest version' : 'Historical version'} ·{' '}
-                    {formatDuration(schedule.weeklyTotalMinutes)} per week
+                    {schedule.latestVersion
+                      ? t('admin.timeSettings.common.latest')
+                      : t('admin.timeSettings.common.historical')}
+                    {' · '}
+                    {t('admin.timeSettings.schedule.perWeek', {
+                      duration: formatDuration(schedule.weeklyTotalMinutes),
+                    })}
                   </p>
                 </div>
                 <dl className="m-0 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {WEEKDAYS.map(([weekday, label]) => (
+                  {WEEKDAYS.map(([weekday, labelKey]) => (
                     <div key={weekday}>
-                      <dt className="text-sm text-[var(--wl-text-muted)]">{label}</dt>
+                      <dt className="text-sm text-[var(--wl-text-muted)]">
+                        {t(labelKey as MessageKey)}
+                      </dt>
                       <dd className="m-0 font-semibold">
                         {formatDuration(schedule.scheduledMinutes[weekday])}
                       </dd>
@@ -205,6 +229,7 @@ export function TimeSettingsPage() {
 function TimePolicyVersionAdministration({
   policyVersions,
 }: Readonly<{ policyVersions: import('@workledger/contracts').PolicyVersionAdminSummary[] }>) {
+  const t = useWorkLedgerMessage();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [threshold, setThreshold] = useState('30');
@@ -215,12 +240,12 @@ function TimePolicyVersionAdministration({
     setMessage(undefined);
     const minutes = Number(threshold);
     if (name.trim() === '') {
-      setMessage({ kind: 'error', text: 'Enter a time-policy name.' });
+      setMessage({ kind: 'error', text: t('admin.timeSettings.policy.validation.name') });
       document.querySelector<HTMLElement>('#policy-name')?.focus();
       return;
     }
     if (!Number.isInteger(minutes) || minutes < 0 || minutes > 1_440) {
-      setMessage({ kind: 'error', text: 'Enter a warning threshold from 0 to 1,440 minutes.' });
+      setMessage({ kind: 'error', text: t('admin.timeSettings.policy.validation.threshold') });
       document.querySelector<HTMLElement>('#policy-threshold')?.focus();
       return;
     }
@@ -235,65 +260,84 @@ function TimePolicyVersionAdministration({
       setName('');
       setMessage({
         kind: 'success',
-        text: 'The time policy version was created. Employee assignments remain unchanged.',
+        text: t('admin.timeSettings.policy.feedback.created'),
       });
     } catch (error) {
-      setMessage({ kind: 'error', text: policyMutationError(error) });
+      setMessage({ kind: 'error', text: policyMutationError(error, t) });
     }
   }
   return (
     <section className="grid gap-4" aria-labelledby="time-policy-versions-heading">
       <div>
         <h2 id="time-policy-versions-heading" className="m-0 text-2xl font-bold">
-          Time-policy versions
+          {t('admin.timeSettings.policy.heading')}
         </h2>
         <p className="m-0 mt-2 text-sm text-[var(--wl-text-muted)]">
-          The MVP policy is deliberately bounded: exact minutes, manual breaks with warnings, and no
-          hidden rounding.
+          {t('admin.timeSettings.policy.description')}
         </p>
       </div>
       {message === undefined ? null : (
         <Alert
-          title={message.kind === 'error' ? 'Time policy update failed' : 'Time policy created'}
+          title={
+            message.kind === 'error'
+              ? t('admin.timeSettings.policy.feedback.errorTitle')
+              : t('admin.timeSettings.policy.feedback.successTitle')
+          }
           tone={message.kind === 'error' ? 'danger' : 'success'}
         >
           <p>{message.text}</p>
         </Alert>
       )}
       <form className="wl-panel grid max-w-3xl gap-4" onSubmit={submit} noValidate>
-        <TextField id="policy-name" label="Time-policy name" value={name} onChange={setName} />
+        <TextField
+          id="policy-name"
+          label={t('admin.timeSettings.policy.name')}
+          value={name}
+          onChange={setName}
+        />
         <TextField
           id="policy-threshold"
           type="number"
-          label="Flexible-time warning threshold in minutes"
-          description="A warning signal only. It never caps, rounds, or discards worked time."
+          label={t('admin.timeSettings.policy.threshold')}
+          description={t('admin.timeSettings.policy.thresholdDescription')}
           value={threshold}
           onChange={setThreshold}
         />
         <p className="m-0 text-sm">
-          Preview: warn when the absolute flexible-time difference reaches{' '}
-          {formatDuration(Number(threshold) || 0)}; keep manual breaks and exact minute arithmetic.
+          {t('admin.timeSettings.policy.preview', {
+            duration: formatDuration(Number(threshold) || 0),
+          })}
         </p>
         <Button type="submit" isDisabled={mutation.isPending}>
-          {mutation.isPending ? 'Creating policy…' : 'Create time-policy version'}
+          {mutation.isPending
+            ? t('admin.timeSettings.policy.pending')
+            : t('admin.timeSettings.policy.submit')}
         </Button>
       </form>
       {policyVersions.length === 0 ? (
-        <RouteState kind="empty" title="No time policy versions have been created">
-          Create the first bounded time policy above.
+        <RouteState kind="empty" title={t('admin.timeSettings.policy.empty.title')}>
+          {t('admin.timeSettings.policy.empty.description')}
         </RouteState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {policyVersions.map((policy) => (
             <Panel key={policy.id} as="article">
               <h3 className="m-0 text-xl font-bold">
-                {policy.name} · version {policy.version}
+                {t('admin.timeSettings.policy.versionLabel', {
+                  name: policy.name,
+                  version: policy.version,
+                })}
               </h3>
               <p className="mb-0 font-semibold">
-                {policy.latestVersion ? 'Latest version' : 'Historical version'} ·{' '}
-                {formatDuration(policy.rules.flexibleTimeWarningMinutes)} warning threshold
+                {policy.latestVersion
+                  ? t('admin.timeSettings.common.latest')
+                  : t('admin.timeSettings.common.historical')}
+                {' · '}
+                {t('admin.timeSettings.policy.thresholdValue', {
+                  duration: formatDuration(policy.rules.flexibleTimeWarningMinutes),
+                })}
               </p>
-              <p className="mb-0 text-sm">Manual breaks with warnings · no rounding</p>
+              <p className="mb-0 text-sm">{t('admin.timeSettings.policy.summary')}</p>
             </Panel>
           ))}
         </div>
@@ -302,24 +346,24 @@ function TimePolicyVersionAdministration({
   );
 }
 
-function scheduleMutationError(error: unknown): string {
+function scheduleMutationError(error: unknown, t: ReturnType<typeof useWorkLedgerMessage>): string {
   if (error instanceof ApiClientError) {
     if (error.code === 'SCHEDULE_VERSION_NO_CHANGE') {
-      return 'The latest version with this name already has those weekday minutes.';
+      return t('admin.timeSettings.schedule.error.noChange');
     }
     if (error.code === 'SCHEDULE_VERSION_CONFLICT') {
-      return 'Schedule versions changed. Refresh and review them before trying again.';
+      return t('admin.timeSettings.schedule.error.conflict');
     }
   }
-  return 'The schedule version could not be created. Try again.';
+  return t('admin.timeSettings.schedule.error.generic');
 }
 
-function policyMutationError(error: unknown): string {
+function policyMutationError(error: unknown, t: ReturnType<typeof useWorkLedgerMessage>): string {
   if (error instanceof ApiClientError) {
     if (error.code === 'POLICY_VERSION_NO_CHANGE')
-      return 'The latest version with this name already has those rules.';
+      return t('admin.timeSettings.policy.error.noChange');
     if (error.code === 'POLICY_VERSION_CONFLICT')
-      return 'Time-policy versions changed. Refresh and review them before trying again.';
+      return t('admin.timeSettings.policy.error.conflict');
   }
-  return 'The time-policy version could not be created. Try again.';
+  return t('admin.timeSettings.policy.error.generic');
 }

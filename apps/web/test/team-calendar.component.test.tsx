@@ -6,14 +6,21 @@ import { RouterProvider } from 'react-router/dom';
 import { vi } from 'vitest';
 
 import type { SelfContext, TeamCalendar } from '@workledger/contracts';
+import { initializeI18n, type I18nRuntime } from '@workledger/i18n';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { createWebLocaleController, LocaleControllerProvider } from '../src/app/locale.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 let routerSequence = 0;
+let defaultLocaleRuntime: I18nRuntime | undefined;
+
+beforeAll(async () => {
+  defaultLocaleRuntime = await initializeI18n('en-GB');
+});
 
 const MANAGER_CONTEXT: SelfContext = {
   account: { email: 'manager@northstar.test', name: 'Maja Novak' },
@@ -94,7 +101,7 @@ test('presents equivalent accessible month and agenda availability with date sel
   expect(within(table).getByText('Unavailable — full day')).toBeVisible();
   expect(within(table).getByText('Noah Williams')).toBeVisible();
   expect(screen.getByText(/1 availability entry has no current team assignment/u)).toBeVisible();
-  expect(screen.getByRole('heading', { name: /Friday, August 14, 2026 — Today/u })).toBeVisible();
+  expect(screen.getByRole('heading', { name: /Friday, 14 August 2026 — Today/u })).toBeVisible();
   expect(screen.getByRole('heading', { name: 'August 2026' })).toHaveAttribute(
     'aria-live',
     'polite',
@@ -108,11 +115,11 @@ test('presents equivalent accessible month and agenda availability with date sel
   expect(within(agenda).getByText('Unavailable — 09:00–13:00')).toBeVisible();
 
   const augustFifteenth = within(agenda)
-    .getByRole('heading', { name: /Saturday, August 15, 2026/u })
+    .getByRole('heading', { name: /Saturday, 15 August 2026/u })
     .closest('li');
   if (augustFifteenth === null) throw new Error('Expected an agenda group for August 15.');
   await user.click(within(augustFifteenth).getByRole('button', { name: 'Select date' }));
-  expect(screen.getAllByRole('heading', { name: 'Saturday, August 15, 2026' })).toHaveLength(2);
+  expect(screen.getAllByRole('heading', { name: 'Saturday, 15 August 2026' })).toHaveLength(2);
   expect(document.querySelector('#selected-team-date-heading')).toHaveAttribute(
     'aria-live',
     'polite',
@@ -158,8 +165,12 @@ test('does not request or disclose team calendar data to an employee-only route'
 });
 
 function renderApplication(initialEntry: string) {
+  if (defaultLocaleRuntime === undefined) {
+    throw new Error('The default locale runtime was not initialized for this test.');
+  }
+  const localeController = createWebLocaleController(defaultLocaleRuntime);
   const queryClient = createWorkLedgerQueryClient();
-  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient), {
+  const router = createMemoryRouter(createWorkLedgerRoutes(queryClient, localeController), {
     initialEntries: [
       {
         key: `team-calendar-component-test-${(routerSequence += 1).toString()}`,
@@ -169,9 +180,11 @@ function renderApplication(initialEntry: string) {
     ],
   });
   const rendered = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <LocaleControllerProvider controller={localeController}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </LocaleControllerProvider>,
   );
   return { ...rendered, queryClient, router };
 }

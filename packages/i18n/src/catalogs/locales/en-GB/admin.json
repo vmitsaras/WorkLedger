@@ -1,1 +1,651 @@
-{}
+{
+  "absenceSettings": {
+    "coverage": {
+      "fullDay": "Full day",
+      "halfDay": "Schedule-relative half day",
+      "heading": "Coverage units",
+      "minutes": "Minute interval"
+    },
+    "empty": {
+      "description": "Create the first effective-dated absence type above.",
+      "title": "No absence type versions"
+    },
+    "entitlement": {
+      "description": "Leave blank when this type has no entitlement balance.",
+      "label": "Entitlement account category",
+      "reservePending": "Reserve entitlement while approval is pending",
+      "reservePendingSickness": "Sickness has no entitlement reservation and does not enter an approval queue.",
+      "sicknessReason": "Sickness cannot use an entitlement account because medical absence is not a leave balance."
+    },
+    "error": {
+      "configuration": "Review the workflow, entitlement, coverage, timing, and sickness-specific constraints.",
+      "conflict": "That effective boundary already exists, has no configuration change, or the version history changed.",
+      "effectiveDate": "Choose today or a future effective date.",
+      "generic": "The absence-type version could not be created. Try again."
+    },
+    "feedback": {
+      "created": "The absence type version was created. Existing requests keep the version they already use.",
+      "errorTitle": "Absence type update failed",
+      "successTitle": "Absence type version created"
+    },
+    "form": {
+      "active": "Available for new requests",
+      "description": "A future boundary closes only the version effective there. The configuration is constrained to the accepted MVP workflow.",
+      "displayName": "Display name",
+      "effectiveFrom": "Effective from",
+      "heading": "Create absence-type version",
+      "pending": "Creating version…",
+      "submit": "Create absence-type version",
+      "typeCode": "Type code"
+    },
+    "history": {
+      "available": "Available",
+      "coverageOptions": "{{count}} coverage options",
+      "entitlement": "Entitlement: {{account}}",
+      "heading": "Version history",
+      "historical": "Historical version",
+      "inactive": "Inactive",
+      "latest": "Latest version",
+      "noEntitlement": "No entitlement account",
+      "ongoing": "ongoing",
+      "range": "{{from}} to {{to}}",
+      "versionLabel": "{{name}} · version {{version}}"
+    },
+    "loading": {
+      "description": "Absence type versions are being retrieved.",
+      "title": "Loading information"
+    },
+    "page": {
+      "description": "Create bounded, effective-dated absence-type versions without reinterpreting existing requests or exposing sickness records.",
+      "eyebrow": "HR administration"
+    },
+    "requestNote": {
+      "disabled": "Disabled",
+      "label": "Request note",
+      "optional": "Optional",
+      "required": "Required",
+      "sicknessReason": "Sickness notes are disabled to minimize medical information."
+    },
+    "timeTreatment": {
+      "creditCovered": "Credit covered expectation",
+      "label": "Time treatment",
+      "none": "No time effect",
+      "reduceCovered": "Reduce covered expectation"
+    },
+    "timing": {
+      "maximumRetrospectiveDays": "Maximum retrospective days",
+      "maximumRetrospectiveDescription": "Leave blank when retrospective reporting is not bounded.",
+      "minimumLeadDays": "Minimum lead days"
+    },
+    "type": {
+      "other": "Other",
+      "sickness": "Sickness",
+      "unpaid": "Unpaid leave",
+      "vacation": "Vacation"
+    },
+    "validation": {
+      "required": "Enter a display name and effective date."
+    },
+    "workflow": {
+      "approvalRequired": "Approval required",
+      "label": "Workflow",
+      "reportAndAcknowledge": "Report and acknowledge",
+      "sicknessReason": "Sickness uses the fixed report and acknowledge workflow to avoid approval decisions about medical absence."
+    }
+  },
+  "employee": {
+    "assignment": {
+      "changeManager": "Change direct manager",
+      "changeTeam": "Change team",
+      "chooseChange": "Choose a change",
+      "current": "Current: {{current}}",
+      "description": "Current state is resolved for {{date}}. Team membership does not grant manager access; only the effective direct-manager relationship does.",
+      "feedback": {
+        "errorTitle": "Assignment update failed",
+        "managerUpdated": "Direct-manager assignment updated.",
+        "successTitle": "Assignment updated",
+        "teamUpdated": "Team assignment updated."
+      },
+      "heading": "Team and direct manager",
+      "historyItem": "{{from}}: {{label}} to {{to}}",
+      "inactiveTeam": "{{team}} (inactive team)",
+      "managerChange": "Direct-manager change",
+      "managerHistory": "Direct-manager history",
+      "noCurrentManager": "No current direct manager",
+      "noCurrentTeam": "No current team",
+      "noHistory": "No assignment history.",
+      "noManager": "No direct manager",
+      "noTeam": "No team",
+      "saveManager": "Save direct-manager assignment",
+      "saveTeam": "Save team assignment",
+      "teamChange": "Team change",
+      "teamHistory": "Team history",
+      "validation": {
+        "manager": "Choose a direct-manager change and effective date.",
+        "team": "Choose a team change and effective date."
+      }
+    },
+    "common": {
+      "effectiveFrom": "Effective from",
+      "historical": "historical",
+      "latest": "latest",
+      "none": "None",
+      "ongoing": "ongoing"
+    },
+    "create": {
+      "feedback": {
+        "created": "Employee created and invitation issued."
+      },
+      "form": {
+        "accountEmail": "Account email",
+        "accountEmailDescription": "A configured delivery service uses this address for the invitation. It is not used as an employment identifier.",
+        "cancel": "Cancel",
+        "displayName": "Display name",
+        "employeeNumber": "Employee number",
+        "employmentStartsOn": "Employment starts on",
+        "invitationDescription": "Sets the account language used for this invitation and the employee's first sign-in.",
+        "invitationLanguage": "Invitation language",
+        "pending": "Creating…",
+        "rolesDescription": "Employee is required. Technical system authority is administered separately.",
+        "rolesHeading": "Application roles",
+        "submit": "Create and invite employee"
+      },
+      "page": {
+        "description": "Create the stable employee and first employment period, then issue a 24-hour account invitation.",
+        "eyebrow": "People administration",
+        "title": "Add employee"
+      },
+      "validation": {
+        "accountEmail": "Enter a valid account email address.",
+        "displayName": "Enter the employee display name.",
+        "employeeNumber": "Enter an employee number.",
+        "employmentStartsOn": "Choose the employment start date."
+      }
+    },
+    "detail": {
+      "account": {
+        "email": "Email",
+        "heading": "Employee-linked account",
+        "invitation": "Invitation",
+        "invitationPending": "Pending for up to 24 hours",
+        "noInvitation": "No active invitation",
+        "none": "No account is linked.",
+        "state": "Account state"
+      },
+      "employment": {
+        "description": "Re-employment adds a new non-overlapping period. Earlier attendance, balances, approvals, and audit attribution remain linked to this employee.",
+        "heading": "Employment history"
+      },
+      "feedback": {
+        "errorTitle": "Employee update failed",
+        "invitationReissued": "A new invitation was issued and the prior invitation was invalidated.",
+        "successTitle": "Employee record updated",
+        "updated": "The employee lifecycle record was updated."
+      },
+      "lifecycle": {
+        "activate": "Activate employee and account",
+        "deactivate": "Deactivate employee and account",
+        "endsOn": "Employment ends on",
+        "heading": "Lifecycle actions",
+        "reinvite": "Reissue 24-hour invitation",
+        "startsOn": "Employment starts on"
+      },
+      "loading": {
+        "description": "Employee administration details are being retrieved.",
+        "heading": "Loading lifecycle history…",
+        "pageDescription": "Loading employee administration details.",
+        "title": "Loading information"
+      },
+      "page": {
+        "active": "Active",
+        "back": "Back to employees",
+        "description": "Employee {{employeeNumber}} · {{status}}",
+        "eyebrow": "People administration",
+        "inactive": "Inactive"
+      },
+      "range": "{{from}} to {{to}}",
+      "reviewOnly": {
+        "description": "You may review your own employee record here, but privileged self-edit controls are unavailable. Ask another HR administrator to make a required change.",
+        "title": "Review only"
+      },
+      "roles": {
+        "description": "Changing roles revokes the target account’s sessions. System authority is not available on this surface.",
+        "heading": "HR-managed roles",
+        "submit": "Save roles"
+      },
+      "validation": {
+        "effectiveDate": "Choose the effective employment date first."
+      }
+    },
+    "directory": {
+      "account": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "invitationPending": "Invitation pending",
+        "none": "None"
+      },
+      "column": {
+        "account": "Account",
+        "action": "Action",
+        "employee": "Employee",
+        "employment": "Employment",
+        "number": "Number",
+        "roles": "Roles"
+      },
+      "employment": {
+        "noCurrent": "{{status}}, no current period",
+        "since": "{{status}} since {{date}}"
+      },
+      "empty": {
+        "description": "Change the employment status or create the first employee record.",
+        "searchDescription": "Clear the search or change the employment status to broaden the directory results.",
+        "searchTitle": "No employees match this search",
+        "title": "No employees in this view"
+      },
+      "loading": {
+        "description": "Employee records are being retrieved.",
+        "title": "Loading information"
+      },
+      "openRecord": "Open record",
+      "openRecordLabel": "Open record for {{employee}}",
+      "page": {
+        "addEmployee": "Add employee",
+        "description": "Find an employee, open their record, or add a new employee.",
+        "eyebrow": "People administration",
+        "manageTeams": "Manage teams"
+      },
+      "pagination": {
+        "label": "Employee result pages",
+        "summary": "{{count}} employees · page {{current}} of {{total}}"
+      },
+      "results": {
+        "caption": "Employee directory results for the current search and employment status",
+        "count": "{{count}} employees in this result.",
+        "scrollHint": "Scroll horizontally if every employee comparison column does not fit.",
+        "scrollLabel": "Employee directory results"
+      },
+      "search": {
+        "all": "All employees",
+        "clear": "Clear search",
+        "description": "Search by display name, employee number, or linked account email. Search text stays in this tab and is never added to the URL.",
+        "label": "Name, employee number, or account email",
+        "status": "Employment status",
+        "submit": "Search directory",
+        "title": "Search employee directory"
+      },
+      "validation": {
+        "search": "Enter at least 2 characters, or clear the search field to browse by status."
+      }
+    },
+    "entitlement": {
+      "description": "Each adjustment records whole minutes. Positive minutes add entitlement, while negative minutes reduce it.",
+      "empty": {
+        "description": "Configure an entitlement-backed absence type before managing employee leave balances.",
+        "entries": "No entitlement ledger entries.",
+        "title": "No entitlement-backed absence type is available"
+      },
+      "entry": {
+        "effective": "effective {{date}}",
+        "reason": "Reason: {{reason}}"
+      },
+      "entryType": {
+        "allocation": "Allocation",
+        "approvedDeduction": "Approved deduction",
+        "cancellationRestoration": "Cancellation restoration",
+        "carryover": "Carryover",
+        "expiry": "Expiry",
+        "manualAdjustment": "Manual adjustment",
+        "pendingReservation": "Pending reservation",
+        "reservationRelease": "Reservation release"
+      },
+      "error": {
+        "conflict": "The selected account is unavailable or the employee state changed.",
+        "effectiveDate": "Choose today or a future effective date.",
+        "generic": "The entitlement adjustment could not be appended. Try again."
+      },
+      "feedback": {
+        "added": "The entitlement adjustment was added. Prior entries remain unchanged.",
+        "errorTitle": "Entitlement update failed",
+        "successTitle": "Entitlement adjustment added"
+      },
+      "form": {
+        "account": "Entitlement account",
+        "chooseAccount": "Choose an account",
+        "description": "Adjustments may take effect today or later. The employee can see the reason in their entitlement history, and it is included in the audit record.",
+        "effectiveOn": "Effective on",
+        "heading": "Append entitlement adjustment",
+        "minutes": "Adjustment minutes",
+        "minutesDescription": "Use a positive or negative whole-minute amount; zero is not an adjustment.",
+        "pending": "Appending adjustment…",
+        "reason": "Reason",
+        "reasonDescription": "Required. Do not enter sickness or medical details.",
+        "submit": "Append entitlement adjustment",
+        "unavailable": "Configure an active entitlement-backed absence type before appending an adjustment."
+      },
+      "heading": "Leave entitlement",
+      "validation": {
+        "required": "Choose an account and effective date, enter non-zero integer minutes, and provide a reason."
+      },
+      "value": {
+        "available": "Available",
+        "projected": "Projected",
+        "reserved": "Reserved"
+      }
+    },
+    "error": {
+      "accessDenied": "You no longer have permission for this employee change.",
+      "assignmentConflict": "The assignment changed or already has that value. Refresh and review its history.",
+      "assignmentDateInvalid": "Choose a later effective date that does not replace an assignment beginning that day.",
+      "emailExists": "That account email is already in use.",
+      "employeeNumberExists": "That employee number is already in use.",
+      "employeeStateConflict": "The employee state changed. Refresh and review the current record.",
+      "employmentOverlap": "The new employment period overlaps existing history.",
+      "freshSession": "Sign out and sign in again before making this privileged change.",
+      "generic": "The employee change could not be completed. Try again.",
+      "managerCycle": "That direct-manager change would create a reporting cycle.",
+      "managerNotEligible": "Choose an active employee with a current account and Manager role.",
+      "teamNameExists": "A team already uses that name.",
+      "teamStateConflict": "The team changed or still has current or scheduled assignments."
+    },
+    "policy": {
+      "current": {
+        "covered": "Current and scheduled employment is covered.",
+        "gapsTitle": "Policy coverage needs attention",
+        "heading": "Current policy",
+        "none": "No time policy is currently assigned."
+      },
+      "description": "Current state is resolved for {{date}}. Earlier versions stay available, and changes may begin today or later.",
+      "error": {
+        "effectiveDate": "Choose today or a future date that is not already an assignment boundary.",
+        "employeeState": "Choose a date inside the employee’s current or scheduled employment period.",
+        "generic": "The time-policy assignment could not be updated. Try again.",
+        "notAssigned": "That change would leave current or future employed dates without a time policy.",
+        "stateConflict": "That policy is already effective, or the assignment history changed.",
+        "versionConflict": "The selected policy or assignment changed. Refresh and review the current state."
+      },
+      "feedback": {
+        "errorTitle": "Time policy update failed",
+        "successTitle": "Time policy updated",
+        "updated": "The time-policy assignment was updated. Earlier assignments and approved records are unchanged."
+      },
+      "form": {
+        "chooseVersion": "Choose a policy version",
+        "description": "Review the selected warning threshold and effective boundary before saving. Recorded and locked dates before that boundary retain their original policy reference.",
+        "heading": "Preview and change time policy",
+        "pending": "Saving policy…",
+        "submit": "Save time policy",
+        "unavailable": "Create a time policy version in Time settings before assigning one here.",
+        "version": "Time-policy version"
+      },
+      "heading": "Time policy",
+      "history": {
+        "heading": "Policy history",
+        "none": "No policy assignment history."
+      },
+      "option": "{{name}} · version {{version}} ({{status}})",
+      "preview": {
+        "description": "From {{date}}, warnings use a {{threshold}} flexible-time threshold. Breaks remain manual with warnings and time is not rounded. Earlier dates remain unchanged.",
+        "empty": "Choose a version and effective date to preview the change.",
+        "heading": "Impact preview"
+      },
+      "range": "{{from}} to {{to}}",
+      "summary": "{{from}} to {{to}} · {{threshold}} warning threshold · no rounding",
+      "validation": {
+        "effectiveFrom": "Choose the date this policy begins.",
+        "version": "Choose a time-policy version."
+      },
+      "versionLabel": "{{name}} · version {{version}}"
+    },
+    "schedule": {
+      "current": {
+        "covered": "Current and scheduled employment is covered.",
+        "detail": "{{weeklyTotal}} per week, effective {{effectiveFrom}}",
+        "gapsTitle": "Schedule coverage needs attention",
+        "heading": "Current schedule",
+        "none": "No weekly schedule is currently assigned."
+      },
+      "description": "Current state is resolved for {{date}}. Changes may begin today or later, preserve earlier rows, and cannot leave current or future employed dates without a schedule.",
+      "error": {
+        "effectiveDate": "Choose today or a future date that is not already an assignment boundary.",
+        "employeeState": "Choose a date inside the employee’s current or scheduled employment period.",
+        "generic": "The schedule assignment could not be updated. Try again.",
+        "notAssigned": "That change would leave current or future employed dates without a schedule.",
+        "stateConflict": "That schedule is already effective, or the assignment history changed.",
+        "versionConflict": "The selected schedule or assignment changed. Refresh and review the current state."
+      },
+      "feedback": {
+        "errorTitle": "Schedule update failed",
+        "successTitle": "Schedule updated",
+        "updated": "The schedule assignment was updated. Earlier assignment and approved-period history is unchanged."
+      },
+      "form": {
+        "chooseVersion": "Choose a schedule version",
+        "description": "A future change closes only the schedule effective at that boundary. Any already scheduled later assignment remains in place.",
+        "heading": "Change weekly schedule",
+        "pending": "Saving schedule…",
+        "submit": "Save weekly schedule",
+        "unavailable": "Create a weekly schedule version in Time settings before assigning one here.",
+        "version": "Weekly schedule version"
+      },
+      "heading": "Weekly schedule",
+      "history": {
+        "heading": "Schedule history",
+        "item": "{{from}} to {{to}} · {{weeklyTotal}} per week",
+        "none": "No schedule assignment history."
+      },
+      "option": "{{name}} · version {{version}} ({{status}})",
+      "range": "{{from}} to {{to}}",
+      "validation": {
+        "effectiveFrom": "Choose the date this schedule begins.",
+        "version": "Choose a weekly schedule version."
+      },
+      "versionLabel": "{{name}} · version {{version}}"
+    }
+  },
+  "holidaySettings": {
+    "empty": {
+      "description": "Add the first date-only holiday above after reviewing its impact.",
+      "title": "No holidays have been configured"
+    },
+    "error": {
+      "accessDenied": "You do not have permission to manage holidays.",
+      "blocked": "The date became protected or is no longer eligible. Preview the impact again.",
+      "conflict": "A holiday already exists on this date.",
+      "generic": "The holiday change could not be completed."
+    },
+    "feedback": {
+      "created": "Holiday created. Existing projections on this date are now identified for recalculation.",
+      "errorTitle": "Holiday update failed",
+      "successTitle": "Holiday created"
+    },
+    "form": {
+      "createPending": "Creating holiday…",
+      "date": "Holiday date",
+      "description": "Preview is required after every name or date change. Dates use the organization calendar, with no time or timezone conversion.",
+      "heading": "Add public holiday",
+      "name": "Holiday name",
+      "preview": "Preview impact",
+      "previewPending": "Checking impact…",
+      "submit": "Confirm and create"
+    },
+    "list": {
+      "heading": "Configured holidays"
+    },
+    "loading": {
+      "description": "Configured holidays are being retrieved.",
+      "title": "Loading information"
+    },
+    "page": {
+      "description": "Add organization-wide date-only holidays after reviewing their calculation impact. Submitted, approved, and locked months remain protected.",
+      "eyebrow": "HR administration"
+    },
+    "preview": {
+      "allowed": "No submitted, approved, or locked monthly period blocks this change.",
+      "blocked": "This change cannot be saved: the date is in the past, is already configured, or belongs to {{periods}} protected monthly periods.",
+      "heading": "Calculation impact",
+      "summary": "{{employees}} scheduled employees and {{projections}} existing daily projections are affected."
+    },
+    "validation": {
+      "required": "Enter a holiday name and date."
+    }
+  },
+  "team": {
+    "action": {
+      "activate": "Activate {{team}}",
+      "blocked": "Move all current members to another team or end their team assignments before deactivating this team. Existing assignment history remains unchanged.",
+      "deactivate": "Deactivate {{team}}"
+    },
+    "column": {
+      "action": "Action",
+      "members": "Members",
+      "status": "Status",
+      "team": "Team"
+    },
+    "empty": {
+      "description": "Change the team status or create a team for a new orientation group.",
+      "title": "No teams in this view"
+    },
+    "error": {
+      "accessDenied": "You no longer have permission to manage teams.",
+      "generic": "The team change could not be completed. Try again.",
+      "nameExists": "A team already uses that name.",
+      "stateConflict": "The team changed or still has current or scheduled assignments. Refresh and review the catalog."
+    },
+    "feedback": {
+      "errorTitle": "Team update failed",
+      "successTitle": "Team catalog updated",
+      "updated": "The team catalog was updated."
+    },
+    "filter": {
+      "all": "All teams",
+      "apply": "Apply filter",
+      "description": "Show teams available for new assignments, inactive historical teams, or the complete catalog.",
+      "status": "Team status",
+      "title": "Filter team catalog"
+    },
+    "form": {
+      "description": "Creating a team does not assign employees or change reporting access. Assign membership from an employee record after the team exists.",
+      "heading": "Add an orientation team",
+      "name": "Team name",
+      "nameDescription": "Use the name employees and managers recognize in daily work.",
+      "pending": "Updating…",
+      "submit": "Create team"
+    },
+    "loading": {
+      "description": "Team records are being retrieved.",
+      "title": "Loading information"
+    },
+    "page": {
+      "create": "Create team",
+      "description": "Create and maintain orientation teams used to organize employee records. Manager access still follows direct-manager assignments.",
+      "employeeDirectory": "Employee directory",
+      "eyebrow": "People administration"
+    },
+    "pagination": {
+      "label": "Team result pages",
+      "summary": "{{count}} teams · page {{current}} of {{total}}"
+    },
+    "results": {
+      "caption": "Teams matching the selected team status",
+      "count": "{{count}} teams in this result.",
+      "members": "{{count}} current members",
+      "scrollHint": "Scroll horizontally if every team comparison column does not fit.",
+      "scrollLabel": "Team catalog results"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "validation": {
+      "name": "Enter a team name."
+    }
+  },
+  "timeSettings": {
+    "common": {
+      "historical": "Historical version",
+      "latest": "Latest version"
+    },
+    "loading": {
+      "title": "Loading information"
+    },
+    "page": {
+      "description": "Create weekly schedule and time policy versions for future employee assignments.",
+      "eyebrow": "HR administration"
+    },
+    "policy": {
+      "description": "The MVP policy is deliberately bounded: exact minutes, manual breaks with warnings, and no hidden rounding.",
+      "empty": {
+        "description": "Create the first bounded time policy above.",
+        "title": "No time policy versions have been created"
+      },
+      "error": {
+        "conflict": "Time-policy versions changed. Refresh and review them before trying again.",
+        "generic": "The time-policy version could not be created. Try again.",
+        "noChange": "The latest version with this name already has those rules."
+      },
+      "feedback": {
+        "created": "The time policy version was created. Employee assignments remain unchanged.",
+        "errorTitle": "Time policy update failed",
+        "successTitle": "Time policy created"
+      },
+      "heading": "Time-policy versions",
+      "name": "Time-policy name",
+      "pending": "Creating policy…",
+      "preview": "Preview: warn when the absolute flexible-time difference reaches {{duration}}; keep manual breaks and exact minute arithmetic.",
+      "submit": "Create time-policy version",
+      "summary": "Manual breaks with warnings · no rounding",
+      "threshold": "Flexible-time warning threshold in minutes",
+      "thresholdDescription": "A warning signal only. It never caps, rounds, or discards worked time.",
+      "thresholdValue": "{{duration}} warning threshold",
+      "validation": {
+        "name": "Enter a time-policy name.",
+        "threshold": "Enter a warning threshold from 0 to 1,440 minutes."
+      },
+      "versionLabel": "{{name}} · version {{version}}"
+    },
+    "schedule": {
+      "description": "Reusing a schedule name creates its next version. Earlier versions stay available, and no employee is affected until the version is assigned. Enter integer minutes; zero is a deliberate non-working day.",
+      "empty": {
+        "description": "Create the first weekly schedule above.",
+        "title": "No schedule versions have been created"
+      },
+      "error": {
+        "conflict": "Schedule versions changed. Refresh and review them before trying again.",
+        "generic": "The schedule version could not be created. Try again.",
+        "noChange": "The latest version with this name already has those weekday minutes."
+      },
+      "feedback": {
+        "created": "The weekly schedule version was created. Employee assignments remain unchanged until you assign it.",
+        "successTitle": "Schedule version created"
+      },
+      "heading": "Create schedule version",
+      "history": {
+        "description": "Earlier versions remain visible so historical assignments stay explainable.",
+        "heading": "Schedule versions"
+      },
+      "loadingDescription": "Schedule versions are being retrieved.",
+      "name": "Schedule name",
+      "nameDescription": "For example, Standard 40 hours or Reduced Friday.",
+      "pending": "Creating version…",
+      "perWeek": "{{duration}} per week",
+      "submit": "Create schedule version",
+      "total": "Entered weekly total: {{duration}}",
+      "validation": {
+        "name": "Enter a schedule name.",
+        "weekdayMinutes": "Enter whole scheduled minutes for {{day}}."
+      },
+      "versionLabel": "{{name}} · version {{version}}",
+      "weekdayHeading": "Scheduled minutes by weekday",
+      "weekdayLabel": "Scheduled minutes for {{day}}"
+    },
+    "weekday": {
+      "friday": "Friday",
+      "monday": "Monday",
+      "saturday": "Saturday",
+      "sunday": "Sunday",
+      "thursday": "Thursday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday"
+    }
+  }
+}

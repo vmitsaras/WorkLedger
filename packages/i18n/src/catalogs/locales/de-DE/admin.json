@@ -1,1 +1,651 @@
-{}
+{
+  "absenceSettings": {
+    "coverage": {
+      "fullDay": "Ganzer Tag",
+      "halfDay": "Arbeitsplanbezogener halber Tag",
+      "heading": "Zeitraumeinheiten",
+      "minutes": "Minutenintervall"
+    },
+    "empty": {
+      "description": "Erstellen Sie oben die erste Abwesenheitsart mit Wirksamkeitsdatum.",
+      "title": "Keine Versionen von Abwesenheitsarten"
+    },
+    "entitlement": {
+      "description": "Lassen Sie das Feld leer, wenn diese Art keinen Anspruchssaldo hat.",
+      "label": "Kategorie des Anspruchskontos",
+      "reservePending": "Anspruch während ausstehender Genehmigung reservieren",
+      "reservePendingSickness": "Krankheit reserviert keinen Anspruch und wird nicht in eine Genehmigungswarteschlange aufgenommen.",
+      "sicknessReason": "Krankheit kann kein Anspruchskonto verwenden, weil medizinische Abwesenheit kein Urlaubssaldo ist."
+    },
+    "error": {
+      "configuration": "Prüfen Sie Ablauf, Anspruch, Zeitraum, Fristen und krankheitsspezifische Einschränkungen.",
+      "conflict": "Diese Wirksamkeitsgrenze existiert bereits, enthält keine Konfigurationsänderung oder der Versionsverlauf wurde geändert.",
+      "effectiveDate": "Wählen Sie heute oder ein zukünftiges Wirksamkeitsdatum.",
+      "generic": "Die Version der Abwesenheitsart konnte nicht erstellt werden. Versuchen Sie es erneut."
+    },
+    "feedback": {
+      "created": "Die Version der Abwesenheitsart wurde erstellt. Bestehende Anträge behalten ihre bisherige Version.",
+      "errorTitle": "Aktualisierung der Abwesenheitsart fehlgeschlagen",
+      "successTitle": "Version der Abwesenheitsart erstellt"
+    },
+    "form": {
+      "active": "Für neue Anträge verfügbar",
+      "description": "Eine zukünftige Grenze schließt nur die dort wirksame Version. Die Konfiguration ist auf den angenommenen MVP-Ablauf begrenzt.",
+      "displayName": "Anzeigename",
+      "effectiveFrom": "Wirksam ab",
+      "heading": "Version einer Abwesenheitsart erstellen",
+      "pending": "Version wird erstellt…",
+      "submit": "Version der Abwesenheitsart erstellen",
+      "typeCode": "Artencode"
+    },
+    "history": {
+      "available": "Verfügbar",
+      "coverageOptions": "{{count}} Zeitraumoptionen",
+      "entitlement": "Anspruch: {{account}}",
+      "heading": "Versionsverlauf",
+      "historical": "Historische Version",
+      "inactive": "Inaktiv",
+      "latest": "Neueste Version",
+      "noEntitlement": "Kein Anspruchskonto",
+      "ongoing": "laufend",
+      "range": "{{from}} bis {{to}}",
+      "versionLabel": "{{name}} · Version {{version}}"
+    },
+    "loading": {
+      "description": "Versionen von Abwesenheitsarten werden abgerufen.",
+      "title": "Informationen werden geladen"
+    },
+    "page": {
+      "description": "Erstellen Sie begrenzte Versionen von Abwesenheitsarten mit Wirksamkeitsdatum, ohne bestehende Anträge neu auszulegen oder Krankheitsdaten offenzulegen.",
+      "eyebrow": "Personaladministration"
+    },
+    "requestNote": {
+      "disabled": "Deaktiviert",
+      "label": "Antragsnotiz",
+      "optional": "Optional",
+      "required": "Erforderlich",
+      "sicknessReason": "Krankheitsnotizen sind deaktiviert, um medizinische Informationen zu minimieren."
+    },
+    "timeTreatment": {
+      "creditCovered": "Abgedeckte Sollzeit gutschreiben",
+      "label": "Zeitbehandlung",
+      "none": "Keine Zeitauswirkung",
+      "reduceCovered": "Abgedeckte Sollzeit reduzieren"
+    },
+    "timing": {
+      "maximumRetrospectiveDays": "Maximale rückwirkende Tage",
+      "maximumRetrospectiveDescription": "Lassen Sie das Feld leer, wenn die rückwirkende Meldung nicht begrenzt ist.",
+      "minimumLeadDays": "Mindestvorlauf in Tagen"
+    },
+    "type": {
+      "other": "Sonstige",
+      "sickness": "Krankheit",
+      "unpaid": "Unbezahlte Abwesenheit",
+      "vacation": "Urlaub"
+    },
+    "validation": {
+      "required": "Geben Sie einen Anzeigenamen und ein Wirksamkeitsdatum ein."
+    },
+    "workflow": {
+      "approvalRequired": "Genehmigung erforderlich",
+      "label": "Ablauf",
+      "reportAndAcknowledge": "Melden und bestätigen",
+      "sicknessReason": "Krankheit verwendet den festen Ablauf „Melden und bestätigen“, um Genehmigungsentscheidungen über medizinische Abwesenheit zu vermeiden."
+    }
+  },
+  "employee": {
+    "assignment": {
+      "changeManager": "Direkte Führungskraft ändern",
+      "changeTeam": "Team ändern",
+      "chooseChange": "Änderung auswählen",
+      "current": "Aktuell: {{current}}",
+      "description": "Der aktuelle Status wird für {{date}} ermittelt. Die Teammitgliedschaft gewährt keinen Führungszugriff; dafür zählt nur die wirksame direkte Führungsbeziehung.",
+      "feedback": {
+        "errorTitle": "Zuweisung konnte nicht aktualisiert werden",
+        "managerUpdated": "Zuweisung der direkten Führungskraft aktualisiert.",
+        "successTitle": "Zuweisung aktualisiert",
+        "teamUpdated": "Teamzuweisung aktualisiert."
+      },
+      "heading": "Team und direkte Führungskraft",
+      "historyItem": "{{from}}: {{label}} bis {{to}}",
+      "inactiveTeam": "{{team}} (inaktives Team)",
+      "managerChange": "Änderung der direkten Führungskraft",
+      "managerHistory": "Verlauf der direkten Führungskraft",
+      "noCurrentManager": "Keine aktuelle direkte Führungskraft",
+      "noCurrentTeam": "Kein aktuelles Team",
+      "noHistory": "Kein Zuweisungsverlauf.",
+      "noManager": "Keine direkte Führungskraft",
+      "noTeam": "Kein Team",
+      "saveManager": "Zuweisung der direkten Führungskraft speichern",
+      "saveTeam": "Teamzuweisung speichern",
+      "teamChange": "Teamänderung",
+      "teamHistory": "Teamverlauf",
+      "validation": {
+        "manager": "Wählen Sie eine Änderung der direkten Führungskraft und ein Wirksamkeitsdatum.",
+        "team": "Wählen Sie eine Teamänderung und ein Wirksamkeitsdatum."
+      }
+    },
+    "common": {
+      "effectiveFrom": "Wirksam ab",
+      "historical": "historisch",
+      "latest": "neueste",
+      "none": "Keine",
+      "ongoing": "laufend"
+    },
+    "create": {
+      "feedback": {
+        "created": "Mitarbeitendendatensatz erstellt und Einladung versendet."
+      },
+      "form": {
+        "accountEmail": "E-Mail-Adresse des Kontos",
+        "accountEmailDescription": "Ein konfigurierter Zustelldienst verwendet diese Adresse für die Einladung. Sie dient nicht als Beschäftigungskennung.",
+        "cancel": "Abbrechen",
+        "displayName": "Anzeigename",
+        "employeeNumber": "Mitarbeitendennummer",
+        "employmentStartsOn": "Beschäftigung beginnt am",
+        "invitationDescription": "Legt die Kontosprache für diese Einladung und die erste Anmeldung der beschäftigten Person fest.",
+        "invitationLanguage": "Einladungssprache",
+        "pending": "Wird erstellt…",
+        "rolesDescription": "Die Mitarbeitendenrolle ist erforderlich. Technische Systemberechtigungen werden getrennt verwaltet.",
+        "rolesHeading": "Anwendungsrollen",
+        "submit": "Mitarbeitendendatensatz erstellen und einladen"
+      },
+      "page": {
+        "description": "Erstellen Sie den dauerhaften Mitarbeitendendatensatz und den ersten Beschäftigungszeitraum und versenden Sie anschließend eine 24 Stunden gültige Kontoeinladung.",
+        "eyebrow": "Personalverwaltung",
+        "title": "Mitarbeitende hinzufügen"
+      },
+      "validation": {
+        "accountEmail": "Geben Sie eine gültige E-Mail-Adresse des Kontos ein.",
+        "displayName": "Geben Sie den Anzeigenamen der beschäftigten Person ein.",
+        "employeeNumber": "Geben Sie eine Mitarbeitendennummer ein.",
+        "employmentStartsOn": "Wählen Sie den Beschäftigungsbeginn."
+      }
+    },
+    "detail": {
+      "account": {
+        "email": "E-Mail-Adresse",
+        "heading": "Verknüpftes Mitarbeitendenkonto",
+        "invitation": "Einladung",
+        "invitationPending": "Bis zu 24 Stunden ausstehend",
+        "noInvitation": "Keine aktive Einladung",
+        "none": "Kein Konto ist verknüpft.",
+        "state": "Kontostatus"
+      },
+      "employment": {
+        "description": "Eine Wiedereinstellung fügt einen neuen, nicht überlappenden Zeitraum hinzu. Frühere Anwesenheit, Salden, Genehmigungen und Auditzurechnung bleiben mit dieser Person verknüpft.",
+        "heading": "Beschäftigungsverlauf"
+      },
+      "feedback": {
+        "errorTitle": "Aktualisierung des Mitarbeitendendatensatzes fehlgeschlagen",
+        "invitationReissued": "Eine neue Einladung wurde versendet und die vorherige ungültig gemacht.",
+        "successTitle": "Mitarbeitendendatensatz aktualisiert",
+        "updated": "Der Lebenszyklusdatensatz der beschäftigten Person wurde aktualisiert."
+      },
+      "lifecycle": {
+        "activate": "Mitarbeitendendatensatz und Konto aktivieren",
+        "deactivate": "Mitarbeitendendatensatz und Konto deaktivieren",
+        "endsOn": "Beschäftigung endet am",
+        "heading": "Lebenszyklusaktionen",
+        "reinvite": "24-Stunden-Einladung erneut versenden",
+        "startsOn": "Beschäftigung beginnt am"
+      },
+      "loading": {
+        "description": "Details zur Mitarbeitendenverwaltung werden abgerufen.",
+        "heading": "Lebenszyklusverlauf wird geladen…",
+        "pageDescription": "Details zur Mitarbeitendenverwaltung werden geladen.",
+        "title": "Informationen werden geladen"
+      },
+      "page": {
+        "active": "Aktive beschäftigte Person",
+        "back": "Zurück zu Mitarbeitenden",
+        "description": "Mitarbeitende {{employeeNumber}} · {{status}}",
+        "eyebrow": "Personalverwaltung",
+        "inactive": "Inaktive beschäftigte Person"
+      },
+      "range": "{{from}} bis {{to}}",
+      "reviewOnly": {
+        "description": "Sie können Ihren eigenen Mitarbeitendendatensatz hier prüfen, privilegierte Selbstbearbeitungsfunktionen sind jedoch nicht verfügbar. Bitten Sie eine andere Person mit Personaladministrationsrolle um die erforderliche Änderung.",
+        "title": "Nur zur Prüfung"
+      },
+      "roles": {
+        "description": "Eine Rollenänderung widerruft die Sitzungen des Zielkontos. Systemberechtigungen sind auf dieser Oberfläche nicht verfügbar.",
+        "heading": "Von der Personaladministration verwaltete Rollen",
+        "submit": "Rollen speichern"
+      },
+      "validation": {
+        "effectiveDate": "Wählen Sie zuerst das Wirksamkeitsdatum der Beschäftigung."
+      }
+    },
+    "directory": {
+      "account": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "invitationPending": "Einladung ausstehend",
+        "none": "Kein verknüpftes Konto"
+      },
+      "column": {
+        "account": "Konto",
+        "action": "Aktion",
+        "employee": "Mitarbeitende",
+        "employment": "Beschäftigung",
+        "number": "Nummer",
+        "roles": "Rollen"
+      },
+      "employment": {
+        "noCurrent": "{{status}}, kein aktueller Beschäftigungszeitraum",
+        "since": "{{status}} seit {{date}}"
+      },
+      "empty": {
+        "description": "Ändern Sie den Beschäftigungsstatus oder erstellen Sie den ersten Mitarbeitendendatensatz.",
+        "searchDescription": "Löschen Sie die Suche oder ändern Sie den Beschäftigungsstatus, um die Verzeichnisergebnisse zu erweitern.",
+        "searchTitle": "Keine Mitarbeitenden entsprechen dieser Suche",
+        "title": "Keine Mitarbeitenden in dieser Ansicht"
+      },
+      "loading": {
+        "description": "Mitarbeitendendatensätze werden abgerufen.",
+        "title": "Informationen werden geladen"
+      },
+      "openRecord": "Datensatz öffnen",
+      "openRecordLabel": "Datensatz für {{employee}} öffnen",
+      "page": {
+        "addEmployee": "Mitarbeitende hinzufügen",
+        "description": "Suchen Sie Mitarbeitende, öffnen Sie deren Datensatz oder fügen Sie eine neue beschäftigte Person hinzu.",
+        "eyebrow": "Personalverwaltung",
+        "manageTeams": "Teams verwalten"
+      },
+      "pagination": {
+        "label": "Seiten der Mitarbeitendenergebnisse",
+        "summary": "{{count}} Mitarbeitende · Seite {{current}} von {{total}}"
+      },
+      "results": {
+        "caption": "Ergebnisse des Mitarbeitendenverzeichnisses für die aktuelle Suche und den Beschäftigungsstatus",
+        "count": "{{count}} Mitarbeitende in diesem Ergebnis.",
+        "scrollHint": "Scrollen Sie horizontal, wenn nicht alle Vergleichsspalten für Mitarbeitende passen.",
+        "scrollLabel": "Ergebnisse des Mitarbeitendenverzeichnisses"
+      },
+      "search": {
+        "all": "Alle Mitarbeitenden",
+        "clear": "Suche löschen",
+        "description": "Suchen Sie nach Anzeigename, Mitarbeitendennummer oder E-Mail-Adresse des verknüpften Kontos. Der Suchtext bleibt in diesem Tab und wird nie zur URL hinzugefügt.",
+        "label": "Name, Mitarbeitendennummer oder E-Mail-Adresse des Kontos",
+        "status": "Beschäftigungsstatus",
+        "submit": "Verzeichnis durchsuchen",
+        "title": "Mitarbeitendenverzeichnis durchsuchen"
+      },
+      "validation": {
+        "search": "Geben Sie mindestens 2 Zeichen ein oder leeren Sie das Suchfeld, um nach Status zu suchen."
+      }
+    },
+    "entitlement": {
+      "description": "Jede Anpassung erfasst ganze Minuten. Positive Minuten erhöhen den Anspruch, negative Minuten verringern ihn.",
+      "empty": {
+        "description": "Konfigurieren Sie eine anspruchsbasierte Abwesenheitsart, bevor Sie Abwesenheitssalden von Mitarbeitenden verwalten.",
+        "entries": "Keine Einträge im Anspruchsledger.",
+        "title": "Keine anspruchsbasierte Abwesenheitsart verfügbar"
+      },
+      "entry": {
+        "effective": "wirksam {{date}}",
+        "reason": "Begründung: {{reason}}"
+      },
+      "entryType": {
+        "allocation": "Zuteilung",
+        "approvedDeduction": "Genehmigter Abzug",
+        "cancellationRestoration": "Wiederherstellung nach Stornierung",
+        "carryover": "Übertrag",
+        "expiry": "Verfall",
+        "manualAdjustment": "Manuelle Anpassung",
+        "pendingReservation": "Ausstehende Reservierung",
+        "reservationRelease": "Reservierungsfreigabe"
+      },
+      "error": {
+        "conflict": "Das ausgewählte Konto ist nicht verfügbar oder der Mitarbeitendenstatus hat sich geändert.",
+        "effectiveDate": "Wählen Sie heute oder ein zukünftiges Wirksamkeitsdatum.",
+        "generic": "Die Anspruchsanpassung konnte nicht angehängt werden. Versuchen Sie es erneut."
+      },
+      "feedback": {
+        "added": "Die Anspruchsanpassung wurde hinzugefügt. Vorherige Einträge bleiben unverändert.",
+        "errorTitle": "Anspruch konnte nicht aktualisiert werden",
+        "successTitle": "Anspruchsanpassung hinzugefügt"
+      },
+      "form": {
+        "account": "Anspruchskonto",
+        "chooseAccount": "Konto auswählen",
+        "description": "Anpassungen können heute oder später wirksam werden. Die beschäftigte Person kann die Begründung im Anspruchsverlauf sehen; sie wird außerdem im Auditdatensatz erfasst.",
+        "effectiveOn": "Wirksam am",
+        "heading": "Anspruchsanpassung anhängen",
+        "minutes": "Anpassungsminuten",
+        "minutesDescription": "Verwenden Sie einen positiven oder negativen Betrag in ganzen Minuten; null ist keine Anpassung.",
+        "pending": "Anpassung wird angehängt…",
+        "reason": "Begründung",
+        "reasonDescription": "Erforderlich. Geben Sie keine Krankheits- oder medizinischen Details ein.",
+        "submit": "Anspruchsanpassung anhängen",
+        "unavailable": "Konfigurieren Sie eine aktive anspruchsbasierte Abwesenheitsart, bevor Sie eine Anpassung anhängen."
+      },
+      "heading": "Abwesenheitsanspruch",
+      "validation": {
+        "required": "Wählen Sie ein Konto und ein Wirksamkeitsdatum, geben Sie ganze Minuten ungleich null und eine Begründung ein."
+      },
+      "value": {
+        "available": "Verfügbar",
+        "projected": "Voraussichtlich",
+        "reserved": "Reserviert"
+      }
+    },
+    "error": {
+      "accessDenied": "Sie sind für diese Mitarbeitendenänderung nicht mehr berechtigt.",
+      "assignmentConflict": "Die Zuweisung wurde geändert oder hat bereits diesen Wert. Aktualisieren Sie die Seite und prüfen Sie den Verlauf.",
+      "assignmentDateInvalid": "Wählen Sie ein späteres Wirksamkeitsdatum, das keine an diesem Tag beginnende Zuweisung ersetzt.",
+      "emailExists": "Diese E-Mail-Adresse wird bereits verwendet.",
+      "employeeNumberExists": "Diese Mitarbeitendennummer wird bereits verwendet.",
+      "employeeStateConflict": "Der Status der beschäftigten Person hat sich geändert. Aktualisieren Sie die Seite und prüfen Sie den aktuellen Datensatz.",
+      "employmentOverlap": "Der neue Beschäftigungszeitraum überschneidet sich mit dem bestehenden Verlauf.",
+      "freshSession": "Melden Sie sich ab und erneut an, bevor Sie diese privilegierte Änderung vornehmen.",
+      "generic": "Die Mitarbeitendenänderung konnte nicht abgeschlossen werden. Versuchen Sie es erneut.",
+      "managerCycle": "Diese Änderung der direkten Führungskraft würde einen Berichtszyklus erzeugen.",
+      "managerNotEligible": "Wählen Sie eine aktive beschäftigte Person mit aktuellem Konto und Führungsrolle.",
+      "teamNameExists": "Ein Team verwendet diesen Namen bereits.",
+      "teamStateConflict": "Das Team wurde geändert oder hat noch aktuelle oder geplante Zuweisungen."
+    },
+    "policy": {
+      "current": {
+        "covered": "Aktuelle und geplante Beschäftigung ist abgedeckt.",
+        "gapsTitle": "Richtlinienabdeckung benötigt Aufmerksamkeit",
+        "heading": "Aktuelle Zeitrichtlinie",
+        "none": "Derzeit ist keine Zeitrichtlinie zugewiesen."
+      },
+      "description": "Der aktuelle Status wird für {{date}} ermittelt. Frühere Versionen bleiben verfügbar und Änderungen können heute oder später beginnen.",
+      "error": {
+        "effectiveDate": "Wählen Sie heute oder ein zukünftiges Datum, das noch keine Zuweisungsgrenze ist.",
+        "employeeState": "Wählen Sie ein Datum innerhalb des aktuellen oder geplanten Beschäftigungszeitraums.",
+        "generic": "Die Zuweisung der Zeitrichtlinie konnte nicht aktualisiert werden. Versuchen Sie es erneut.",
+        "notAssigned": "Diese Änderung würde aktuelle oder zukünftige Beschäftigungstage ohne Zeitrichtlinie lassen.",
+        "stateConflict": "Diese Richtlinie ist bereits wirksam oder der Zuweisungsverlauf wurde geändert.",
+        "versionConflict": "Die ausgewählte Richtlinie oder Zuweisung wurde geändert. Aktualisieren Sie die Seite und prüfen Sie den aktuellen Status."
+      },
+      "feedback": {
+        "errorTitle": "Zeitrichtlinie konnte nicht aktualisiert werden",
+        "successTitle": "Zeitrichtlinie aktualisiert",
+        "updated": "Die Zuweisung der Zeitrichtlinie wurde aktualisiert. Frühere Zuweisungen und genehmigte Datensätze bleiben unverändert."
+      },
+      "form": {
+        "chooseVersion": "Richtlinienversion auswählen",
+        "description": "Prüfen Sie den ausgewählten Warnschwellenwert und die Wirksamkeitsgrenze vor dem Speichern. Erfasste und gesperrte Daten vor dieser Grenze behalten ihre ursprüngliche Richtlinienreferenz.",
+        "heading": "Zeitrichtlinie prüfen und ändern",
+        "pending": "Richtlinie wird gespeichert…",
+        "submit": "Zeitrichtlinie speichern",
+        "unavailable": "Erstellen Sie in den Zeiteinstellungen eine Version der Zeitrichtlinie, bevor Sie hier eine zuweisen.",
+        "version": "Version der Zeitrichtlinie"
+      },
+      "heading": "Zeitrichtlinie",
+      "history": {
+        "heading": "Richtlinienverlauf",
+        "none": "Kein Verlauf von Richtlinienzuweisungen."
+      },
+      "option": "{{name}} · Version {{version}} ({{status}})",
+      "preview": {
+        "description": "Ab {{date}} verwenden Warnungen einen Gleitzeitschwellenwert von {{threshold}}. Pausen bleiben manuell mit Warnungen und Zeit wird nicht gerundet. Frühere Daten bleiben unverändert.",
+        "empty": "Wählen Sie eine Version und ein Wirksamkeitsdatum, um die Änderung in der Vorschau anzuzeigen.",
+        "heading": "Auswirkungsvorschau"
+      },
+      "range": "{{from}} bis {{to}}",
+      "summary": "{{from}} bis {{to}} · Warnschwellenwert {{threshold}} · keine Rundung",
+      "validation": {
+        "effectiveFrom": "Wählen Sie das Datum, an dem diese Richtlinie beginnt.",
+        "version": "Wählen Sie eine Version der Zeitrichtlinie."
+      },
+      "versionLabel": "{{name}} · Version {{version}}"
+    },
+    "schedule": {
+      "current": {
+        "covered": "Aktuelle und geplante Beschäftigung ist abgedeckt.",
+        "detail": "{{weeklyTotal}} pro Woche, wirksam ab {{effectiveFrom}}",
+        "gapsTitle": "Arbeitsplanabdeckung benötigt Aufmerksamkeit",
+        "heading": "Aktueller Arbeitsplan",
+        "none": "Derzeit ist kein wöchentlicher Arbeitsplan zugewiesen."
+      },
+      "description": "Der aktuelle Status wird für {{date}} ermittelt. Änderungen können heute oder später beginnen, bewahren frühere Zeilen und dürfen aktuelle oder zukünftige Beschäftigungstage nicht ohne Arbeitsplan lassen.",
+      "error": {
+        "effectiveDate": "Wählen Sie heute oder ein zukünftiges Datum, das noch keine Zuweisungsgrenze ist.",
+        "employeeState": "Wählen Sie ein Datum innerhalb des aktuellen oder geplanten Beschäftigungszeitraums.",
+        "generic": "Die Arbeitsplanzuweisung konnte nicht aktualisiert werden. Versuchen Sie es erneut.",
+        "notAssigned": "Diese Änderung würde aktuelle oder zukünftige Beschäftigungstage ohne Arbeitsplan lassen.",
+        "stateConflict": "Dieser Arbeitsplan ist bereits wirksam oder der Zuweisungsverlauf wurde geändert.",
+        "versionConflict": "Der ausgewählte Arbeitsplan oder die Zuweisung wurde geändert. Aktualisieren Sie die Seite und prüfen Sie den aktuellen Status."
+      },
+      "feedback": {
+        "errorTitle": "Arbeitsplan konnte nicht aktualisiert werden",
+        "successTitle": "Arbeitsplan aktualisiert",
+        "updated": "Die Arbeitsplanzuweisung wurde aktualisiert. Frühere Zuweisungen und der Verlauf genehmigter Zeiträume bleiben unverändert."
+      },
+      "form": {
+        "chooseVersion": "Arbeitsplanversion auswählen",
+        "description": "Eine zukünftige Änderung schließt nur den an dieser Grenze wirksamen Arbeitsplan. Eine bereits geplante spätere Zuweisung bleibt bestehen.",
+        "heading": "Wöchentlichen Arbeitsplan ändern",
+        "pending": "Arbeitsplan wird gespeichert…",
+        "submit": "Wöchentlichen Arbeitsplan speichern",
+        "unavailable": "Erstellen Sie in den Zeiteinstellungen eine Version des wöchentlichen Arbeitsplans, bevor Sie hier eine zuweisen.",
+        "version": "Version des wöchentlichen Arbeitsplans"
+      },
+      "heading": "Wöchentlicher Arbeitsplan",
+      "history": {
+        "heading": "Arbeitsplanverlauf",
+        "item": "{{from}} bis {{to}} · {{weeklyTotal}} pro Woche",
+        "none": "Kein Verlauf von Arbeitsplanzuweisungen."
+      },
+      "option": "{{name}} · Version {{version}} ({{status}})",
+      "range": "{{from}} bis {{to}}",
+      "validation": {
+        "effectiveFrom": "Wählen Sie das Datum, an dem dieser Arbeitsplan beginnt.",
+        "version": "Wählen Sie eine Version des wöchentlichen Arbeitsplans."
+      },
+      "versionLabel": "{{name}} · Version {{version}}"
+    }
+  },
+  "holidaySettings": {
+    "empty": {
+      "description": "Fügen Sie oben den ersten reinen Datumsfeiertag hinzu, nachdem Sie seine Auswirkung geprüft haben.",
+      "title": "Keine Feiertage konfiguriert"
+    },
+    "error": {
+      "accessDenied": "Sie sind nicht berechtigt, Feiertage zu verwalten.",
+      "blocked": "Das Datum ist geschützt oder nicht mehr zulässig. Prüfen Sie die Auswirkung erneut.",
+      "conflict": "Für dieses Datum ist bereits ein Feiertag vorhanden.",
+      "generic": "Die Feiertagsänderung konnte nicht abgeschlossen werden."
+    },
+    "feedback": {
+      "created": "Feiertag erstellt. Bestehende Projektionen für dieses Datum sind nun zur Neuberechnung markiert.",
+      "errorTitle": "Feiertag konnte nicht aktualisiert werden",
+      "successTitle": "Feiertag erstellt"
+    },
+    "form": {
+      "createPending": "Feiertag wird erstellt…",
+      "date": "Feiertagsdatum",
+      "description": "Nach jeder Änderung von Name oder Datum ist eine Vorschau erforderlich. Daten verwenden den Organisationskalender ohne Zeit- oder Zeitzonenumrechnung.",
+      "heading": "Feiertag hinzufügen",
+      "name": "Feiertagsname",
+      "preview": "Auswirkung prüfen",
+      "previewPending": "Auswirkung wird geprüft…",
+      "submit": "Bestätigen und erstellen"
+    },
+    "list": {
+      "heading": "Konfigurierte Feiertage"
+    },
+    "loading": {
+      "description": "Konfigurierte Feiertage werden abgerufen.",
+      "title": "Informationen werden geladen"
+    },
+    "page": {
+      "description": "Fügen Sie organisationsweite reine Datumsfeiertage hinzu, nachdem Sie deren Berechnungsauswirkung geprüft haben. Eingereichte, genehmigte und gesperrte Monate bleiben geschützt.",
+      "eyebrow": "Personaladministration"
+    },
+    "preview": {
+      "allowed": "Kein eingereichter, genehmigter oder gesperrter Monatszeitraum blockiert diese Änderung.",
+      "blocked": "Diese Änderung kann nicht gespeichert werden: Das Datum liegt in der Vergangenheit, ist bereits konfiguriert oder gehört zu {{periods}} geschützten Monatszeiträumen.",
+      "heading": "Berechnungsauswirkung",
+      "summary": "{{employees}} Mitarbeitende mit Arbeitsplan und {{projections}} bestehende Tagesprojektionen sind betroffen."
+    },
+    "validation": {
+      "required": "Geben Sie einen Feiertagsnamen und ein Datum ein."
+    }
+  },
+  "team": {
+    "action": {
+      "activate": "{{team}} aktivieren",
+      "blocked": "Verschieben Sie alle aktuellen Mitglieder in ein anderes Team oder beenden Sie deren Teamzuweisungen, bevor Sie dieses Team deaktivieren. Der bestehende Zuweisungsverlauf bleibt unverändert.",
+      "deactivate": "{{team}} deaktivieren"
+    },
+    "column": {
+      "action": "Aktion",
+      "members": "Aktuelle Mitglieder",
+      "status": "Status",
+      "team": "Team"
+    },
+    "empty": {
+      "description": "Ändern Sie den Teamstatus oder erstellen Sie ein Team für eine neue Orientierungsgruppe.",
+      "title": "Keine Teams in dieser Ansicht"
+    },
+    "error": {
+      "accessDenied": "Sie sind nicht mehr berechtigt, Teams zu verwalten.",
+      "generic": "Die Teamänderung konnte nicht abgeschlossen werden. Versuchen Sie es erneut.",
+      "nameExists": "Ein Team verwendet diesen Namen bereits.",
+      "stateConflict": "Das Team wurde geändert oder hat noch aktuelle oder geplante Zuweisungen. Aktualisieren Sie die Seite und prüfen Sie den Katalog."
+    },
+    "feedback": {
+      "errorTitle": "Team konnte nicht aktualisiert werden",
+      "successTitle": "Teamkatalog aktualisiert",
+      "updated": "Der Teamkatalog wurde aktualisiert."
+    },
+    "filter": {
+      "all": "Alle Teams",
+      "apply": "Filter anwenden",
+      "description": "Zeigen Sie Teams für neue Zuweisungen, inaktive historische Teams oder den vollständigen Katalog an.",
+      "status": "Teamstatus",
+      "title": "Teamkatalog filtern"
+    },
+    "form": {
+      "description": "Das Erstellen eines Teams weist keine Mitarbeitenden zu und ändert keinen Führungszugriff. Weisen Sie die Mitgliedschaft aus einem Mitarbeitendendatensatz zu, nachdem das Team existiert.",
+      "heading": "Orientierungsteam hinzufügen",
+      "name": "Teamname",
+      "nameDescription": "Verwenden Sie den Namen, den Mitarbeitende und Führungskräfte im Arbeitsalltag kennen.",
+      "pending": "Wird aktualisiert…",
+      "submit": "Team erstellen"
+    },
+    "loading": {
+      "description": "Teamdatensätze werden abgerufen.",
+      "title": "Informationen werden geladen"
+    },
+    "page": {
+      "create": "Team erstellen",
+      "description": "Erstellen und pflegen Sie Orientierungsteams zur Organisation von Mitarbeitendendatensätzen. Führungszugriff richtet sich weiterhin nach direkten Führungszuweisungen.",
+      "employeeDirectory": "Mitarbeitendenverzeichnis",
+      "eyebrow": "Personalverwaltung"
+    },
+    "pagination": {
+      "label": "Seiten der Teamergebnisse",
+      "summary": "{{count}} Teams · Seite {{current}} von {{total}}"
+    },
+    "results": {
+      "caption": "Teams, die dem ausgewählten Teamstatus entsprechen",
+      "count": "{{count}} Teams in diesem Ergebnis.",
+      "members": "{{count}} aktuelle Mitglieder",
+      "scrollHint": "Scrollen Sie horizontal, wenn nicht alle Vergleichsspalten für Teams passen.",
+      "scrollLabel": "Ergebnisse des Teamkatalogs"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv"
+    },
+    "validation": {
+      "name": "Geben Sie einen Teamnamen ein."
+    }
+  },
+  "timeSettings": {
+    "common": {
+      "historical": "Historische Version",
+      "latest": "Neueste Version"
+    },
+    "loading": {
+      "title": "Informationen werden geladen"
+    },
+    "page": {
+      "description": "Erstellen Sie Versionen wöchentlicher Arbeitspläne und Zeitrichtlinien für zukünftige Mitarbeitendenzuweisungen.",
+      "eyebrow": "Personaladministration"
+    },
+    "policy": {
+      "description": "Die MVP-Richtlinie ist bewusst begrenzt: exakte Minuten, manuelle Pausen mit Warnungen und keine versteckte Rundung.",
+      "empty": {
+        "description": "Erstellen Sie oben die erste begrenzte Zeitrichtlinie.",
+        "title": "Keine Versionen von Zeitrichtlinien erstellt"
+      },
+      "error": {
+        "conflict": "Die Versionen der Zeitrichtlinie wurden geändert. Aktualisieren und prüfen Sie sie, bevor Sie es erneut versuchen.",
+        "generic": "Die Version der Zeitrichtlinie konnte nicht erstellt werden. Versuchen Sie es erneut.",
+        "noChange": "Die neueste Version mit diesem Namen enthält bereits diese Regeln."
+      },
+      "feedback": {
+        "created": "Die Version der Zeitrichtlinie wurde erstellt. Mitarbeitendenzuweisungen bleiben unverändert.",
+        "errorTitle": "Zeitrichtlinie konnte nicht aktualisiert werden",
+        "successTitle": "Zeitrichtlinie erstellt"
+      },
+      "heading": "Versionen der Zeitrichtlinie",
+      "name": "Name der Zeitrichtlinie",
+      "pending": "Richtlinie wird erstellt…",
+      "preview": "Vorschau: warnen, wenn die absolute Gleitzeitdifferenz {{duration}} erreicht; manuelle Pausen und exakte Minutenberechnung beibehalten.",
+      "submit": "Version der Zeitrichtlinie erstellen",
+      "summary": "Manuelle Pausen mit Warnungen · keine Rundung",
+      "threshold": "Gleitzeit-Warnschwellenwert in Minuten",
+      "thresholdDescription": "Nur ein Warnsignal. Gearbeitete Zeit wird nie begrenzt, gerundet oder verworfen.",
+      "thresholdValue": "Warnschwellenwert {{duration}}",
+      "validation": {
+        "name": "Geben Sie einen Namen für die Zeitrichtlinie ein.",
+        "threshold": "Geben Sie einen Warnschwellenwert von 0 bis 1.440 Minuten ein."
+      },
+      "versionLabel": "{{name}} · Version {{version}}"
+    },
+    "schedule": {
+      "description": "Die erneute Verwendung eines Arbeitsplannamens erstellt dessen nächste Version. Frühere Versionen bleiben verfügbar und Mitarbeitende sind erst nach der Zuweisung betroffen. Geben Sie ganze Minuten ein; null bedeutet bewusst einen arbeitsfreien Tag.",
+      "empty": {
+        "description": "Erstellen Sie oben den ersten wöchentlichen Arbeitsplan.",
+        "title": "Keine Arbeitsplanversionen erstellt"
+      },
+      "error": {
+        "conflict": "Die Arbeitsplanversionen wurden geändert. Aktualisieren und prüfen Sie sie, bevor Sie es erneut versuchen.",
+        "generic": "Die Arbeitsplanversion konnte nicht erstellt werden. Versuchen Sie es erneut.",
+        "noChange": "Die neueste Version mit diesem Namen enthält bereits diese Wochentagsminuten."
+      },
+      "feedback": {
+        "created": "Die Version des wöchentlichen Arbeitsplans wurde erstellt. Mitarbeitendenzuweisungen bleiben unverändert, bis Sie ihn zuweisen.",
+        "successTitle": "Arbeitsplanversion erstellt"
+      },
+      "heading": "Arbeitsplanversion erstellen",
+      "history": {
+        "description": "Frühere Versionen bleiben sichtbar, damit historische Zuweisungen nachvollziehbar sind.",
+        "heading": "Arbeitsplanversionen"
+      },
+      "loadingDescription": "Arbeitsplanversionen werden abgerufen.",
+      "name": "Arbeitsplanname",
+      "nameDescription": "Zum Beispiel Standard 40 Stunden oder Reduzierter Freitag.",
+      "pending": "Version wird erstellt…",
+      "perWeek": "{{duration}} pro Woche",
+      "submit": "Arbeitsplanversion erstellen",
+      "total": "Eingegebene Wochensumme: {{duration}}",
+      "validation": {
+        "name": "Geben Sie einen Arbeitsplannamen ein.",
+        "weekdayMinutes": "Geben Sie ganze geplante Minuten für {{day}} ein."
+      },
+      "versionLabel": "{{name}} · Version {{version}}",
+      "weekdayHeading": "Geplante Minuten nach Wochentag",
+      "weekdayLabel": "Geplante Minuten für {{day}}"
+    },
+    "weekday": {
+      "friday": "Freitag",
+      "monday": "Montag",
+      "saturday": "Samstag",
+      "sunday": "Sonntag",
+      "thursday": "Donnerstag",
+      "tuesday": "Dienstag",
+      "wednesday": "Mittwoch"
+    }
+  }
+}

@@ -1,1 +1,232 @@
-{}
+{
+  "accounts": {
+    "action": {
+      "activateAccount": "Konto aktivieren",
+      "assignSystemRole": "Systemrolle zuweisen",
+      "deactivateAccount": "Konto deaktivieren",
+      "revokeSystemRole": "Systemrolle entziehen"
+    },
+    "create": {
+      "accountEmail": "E-Mail-Adresse des Kontos",
+      "accountName": "Kontoname",
+      "action": "Technisches Konto erstellen und einladen",
+      "description": "Technische Konten erhalten keinen fingierten Mitarbeitendendatensatz. Zugriff auf Personalverwaltung, Anwesenheit, Salden, Abwesenheiten und fachliche Auditdaten wird hier nicht gewährt.",
+      "heading": "Technische Administration einladen",
+      "invitationDescription": "Legt die Kontosprache für diese Einladung und die erste Anmeldung der administrierenden Person fest.",
+      "invitationLanguage": "Einladungssprache",
+      "pending": "Wird erstellt…"
+    },
+    "directory": {
+      "activeAccount": "Aktives Konto",
+      "activeSessions": "Aktive Sitzungen",
+      "currentAccount": "Dies ist Ihr aktuelles Konto. Verwalten Sie Ihre eigenen Sitzungen im Profil; Änderungen an der eigenen Rolle und am eigenen Kontostatus sind nicht zulässig.",
+      "description": "Die Mitarbeitendenverknüpfung wird nur angezeigt, um versehentliche technische Lebenszyklusänderungen zu verhindern. Mitarbeitendennummer, Beschäftigungsstatus, Team, Arbeitsplan, Saldo, Anträge und Krankheitsdaten erscheinen nicht in dieser Ansicht.",
+      "employeeLinked": "Mit Mitarbeitenden verknüpft",
+      "heading": "Kontoverzeichnis",
+      "inactiveAccount": "Inaktives Konto",
+      "invitationPending": "Einladung ausstehend",
+      "lastActive": " — zuletzt aktiv {{value}}",
+      "noActiveSessions": "Keine aktiven Sitzungen.",
+      "noSystemRole": "Keine Systemrolle",
+      "stateAndAuthority": "Kontostatus und Berechtigung",
+      "technicalOnly": "Nur technisch"
+    },
+    "empty": {
+      "description": "Laden Sie oben die erste technische Administration ein.",
+      "title": "Mit dieser Installation sind keine Konten verknüpft"
+    },
+    "error": {
+      "accessDenied": "Sie haben für diese Aktion keine technische Berechtigung mehr oder die Aktion betrifft Ihr eigenes Konto.",
+      "emailExists": "Diese E-Mail-Adresse wird bereits verwendet.",
+      "freshSession": "Melden Sie sich ab und erneut an, bevor Sie diese privilegierte Änderung vornehmen.",
+      "generic": "Die Änderung des technischen Kontos konnte nicht abgeschlossen werden. Versuchen Sie es erneut.",
+      "stateConflict": "Der Kontostatus hat sich geändert. Aktualisieren Sie die Seite und prüfen Sie das aktuelle Konto."
+    },
+    "feedback": {
+      "created": "Das technische Konto wurde erstellt und eine 24 Stunden gültige Einladung versendet.",
+      "title": "Technisches Konto aktualisiert",
+      "updated": "Der Status des technischen Kontos wurde aktualisiert und betroffene Sitzungen wurden widerrufen."
+    },
+    "loading": {
+      "description": "Die Datensätze technischer Konten werden abgerufen.",
+      "title": "Informationen werden geladen"
+    },
+    "page": {
+      "description": "Verwalten Sie technische Anmeldezugriffe, Systemadministrationsrollen und aktive Sitzungen.",
+      "eyebrow": "Systemadministration"
+    },
+    "validation": {
+      "accountEmail": "Geben Sie eine gültige E-Mail-Adresse ein.",
+      "accountName": "Geben Sie einen Kontonamen ein."
+    }
+  },
+  "audit": {
+    "domain": {
+      "page": {
+        "caption": "Geschwärzte fachliche Auditereignisse der Organisation, neueste zuerst",
+        "description": "Prüfen Sie aufgezeichnete organisatorische Änderungen und Entscheidungen.",
+        "eyebrow": "Personaladministration",
+        "filterDescription": "Datumsangaben verwenden die Zeitzone der Organisation. Ein genauer Aktionscode kann einen bekannten Ablauf eingrenzen.",
+        "filterTitle": "Fachliche Auditereignisse filtern",
+        "resultsTitle": "Fachliche Auditereignisse",
+        "scrollLabel": "Ergebnisse des fachlichen Audits"
+      }
+    },
+    "explorer": {
+      "actor": {
+        "account": "Konto",
+        "systemProcess": "Systemprozess: {{process}}",
+        "unknown": "Unbekannt"
+      },
+      "boolean": {
+        "no": "Nein",
+        "yes": "Ja"
+      },
+      "detail": {
+        "actor": "Akteur",
+        "privileged": "Privilegierte Aktion",
+        "reasonCode": "Ursachencode",
+        "safeFacts": "Unbedenkliche Fakten",
+        "summary": "Geschwärzte Details anzeigen",
+        "targetReference": "Zielreferenz"
+      },
+      "empty": {
+        "description": "Ändern oder löschen Sie die Filter, um einen größeren Zeitraum zu prüfen.",
+        "title": "Keine passenden Auditereignisse"
+      },
+      "fact": {
+        "attendanceRevision": "Anwesenheitsrevision",
+        "authenticationMethod": "Authentifizierungsmethode",
+        "changedRole": "Geänderte Rolle",
+        "effectiveDate": "Wirksamkeitsdatum",
+        "eventCount": "Anzahl Ereignisse",
+        "failureCategory": "Fehlerkategorie",
+        "httpStatus": "HTTP-Status",
+        "minutes": "Minuten",
+        "nextStatus": "Neuer Status",
+        "previousStatus": "Vorheriger Status",
+        "scope": "Geltungsbereich",
+        "sessionReference": "Sitzungsreferenz",
+        "sourceCount": "Anzahl Quellen",
+        "version": "Version"
+      },
+      "filter": {
+        "action": "Genauer Aktionscode",
+        "from": "Von Datum",
+        "outcome": "Ergebnis",
+        "outcomeAll": "Alle Ergebnisse",
+        "target": "Zieltyp",
+        "targetAll": "Alle Zieltypen",
+        "to": "Bis Datum"
+      },
+      "loading": {
+        "description": "Auditnachweise werden abgerufen.",
+        "inline": "Auditereignisse werden geladen…",
+        "title": "Informationen werden geladen"
+      },
+      "outcome": {
+        "denied": "Abgelehnt",
+        "failure": "Fehlgeschlagen",
+        "success": "Erfolgreich"
+      },
+      "pagination": {
+        "label": "Auditseiten",
+        "summary": "Seite {{current}} von {{total}}"
+      },
+      "results": {
+        "count": "Gefundene Ereignisse: {{count}}"
+      },
+      "table": {
+        "column": {
+          "action": "Aktion",
+          "detail": "Details",
+          "occurred": "Aufgetreten",
+          "outcome": "Ergebnis",
+          "target": "Ziel"
+        },
+        "scrollHint": "Scrollen Sie diesen Ergebnisbereich auf schmalen Bildschirmen horizontal, um alle Spalten zu vergleichen."
+      },
+      "target": {
+        "absenceRequest": "Abwesenheitsantrag",
+        "account": "Konto",
+        "assignment": "Zuweisung",
+        "attendance": "Anwesenheit",
+        "authentication": "Authentifizierung",
+        "authorization": "Autorisierung",
+        "backup": "Sicherung",
+        "configuration": "Konfiguration",
+        "correctionRequest": "Korrekturantrag",
+        "employee": "Mitarbeitende",
+        "export": "Export",
+        "invitation": "Einladung",
+        "leaveEntitlement": "Abwesenheitsanspruch",
+        "monthlyPeriod": "Monatszeitraum",
+        "notificationDelivery": "Benachrichtigungszustellung",
+        "operations": "Betrieb",
+        "recovery": "Wiederherstellung",
+        "secret": "Geheimnis",
+        "session": "Sitzung",
+        "team": "Team",
+        "timeAccount": "Zeitkonto"
+      }
+    },
+    "technical": {
+      "page": {
+        "caption": "Geschwärzte Sicherheits- und technische Auditereignisse, neueste zuerst",
+        "description": "Prüfen Sie Anmelde-, Zugriffs-, Sitzungs- und Betriebsereignisse.",
+        "eyebrow": "Systemadministration",
+        "filterDescription": "Die Ergebnisse enthalten begrenzte technische Fakten. Mitarbeitendendatensätze, Benachrichtigungsinhalte und Kontokennungen sind nicht enthalten.",
+        "filterTitle": "Technische Auditereignisse filtern",
+        "resultsTitle": "Technische Auditereignisse",
+        "scrollLabel": "Technische Auditergebnisse"
+      }
+    }
+  },
+  "operations": {
+    "alert": {
+      "criticalTitle": "Der Dienst benötigt sofortige Aufmerksamkeit",
+      "degradedTitle": "Der Dienst ist beeinträchtigt",
+      "description": "Prüfen Sie die Abhängigkeitsnachweise unten und verwenden Sie dann die dokumentierten Wiederherstellungsverfahren für den Hostbetrieb. Diese Seite bietet keine Neustart- oder Wiederherstellungssteuerung."
+    },
+    "dependencies": {
+      "authentication": {
+        "heading": "Authentifizierung"
+      },
+      "database": {
+        "heading": "Datenbank"
+      },
+      "error": "Fehler",
+      "heading": "Abhängigkeiten",
+      "latency": "Latenz",
+      "latencyValue": "{{milliseconds}} ms",
+      "status": "Status"
+    },
+    "deployment": {
+      "description": "Sicherung, Wiederherstellung, Migration und Upgrade sind Verfahren des Hostbetriebs und werden in dieser Oberfläche nicht angeboten.",
+      "documentation": "Validierte Verfahren finden Sie in der Dokumentation zu Bereitstellung und Betrieb.",
+      "heading": "Bereitstellungsverfahren"
+    },
+    "health": {
+      "critical": "Kritisch",
+      "degraded": "Beeinträchtigt",
+      "healthy": "Fehlerfrei",
+      "unavailable": "Nicht verfügbar"
+    },
+    "loading": {
+      "description": "Systemdiagnosen werden abgerufen.",
+      "title": "Informationen werden geladen"
+    },
+    "page": {
+      "description": "Prüfen Sie den Dienstzustand, betroffene Abhängigkeiten und die nächste Betriebsmaßnahme.",
+      "eyebrow": "Systemadministration"
+    },
+    "status": {
+      "environment": "Umgebung",
+      "heading": "Dienststatus",
+      "overallHealth": "Gesamtzustand",
+      "service": "Dienst",
+      "timestamp": "Zeitstempel",
+      "version": "Version"
+    }
+  }
+}
