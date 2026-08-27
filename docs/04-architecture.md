@@ -355,3 +355,54 @@ Create or update an ADR before:
 - allowing a new dependency edge or package cycle,
 - publishing any workspace package or introducing registry/release automation,
 - importing authoritative domain behavior into the browser or transport/database behavior into the domain.
+- enabling a model provider, changing the local model egress boundary, persisting prompts or model
+  output, exposing an Insight tool outside the API process, or adding an MCP adapter.
+
+## 13. Phase 15 Insights architecture
+
+ADR 0014 adds a model optional explanation layer without changing the existing workspace graph.
+
+```text
+apps/web /insights
+        │ same origin, authenticated POST, no-store
+        ▼
+apps/api Insight Service
+        ├── current authorization and active workspace
+        ├── purpose specific repositories and read models
+        ├── packages/domain deterministic rules
+        ├── packages/contracts native result and tool schemas
+        └── optional provider adapter
+                    │ exact private origin, disabled by default
+                    ▼
+             operator controlled Ollama
+```
+
+The deterministic Insight Service lives in `apps/api` because it composes authorization,
+repositories, transactions, and domain results. Pure calculation rules remain in
+`packages/domain`. Wire contracts and provider independent structured output live in
+`packages/contracts`. The route, visible context, presentation, and session only conversation live
+in `apps/web`.
+
+The service produces one typed native result containing:
+
+- the Insight kind and reauthorized active workspace,
+- current actor scope and requested period,
+- trusted freshness and posted or calculated through boundaries,
+- exact typed facts from authoritative WorkLedger sources,
+- authorized source links and native actions, and
+- explicit limitations for provisional, incomplete, stale, suppressed, or unavailable evidence.
+
+The internal Insight tool registry is read only and deny by default. Each tool declares its input
+schema, workspace, authorization policy, result projection, sensitivity, limits, and whether any
+later adapter may expose it. There is no generic query, SQL, database, filesystem, network, shell,
+export, notification, audit, or mutation tool.
+
+The provider adapter receives only minimized typed tool results. It cannot import database access
+or bypass the Insight Service. WorkLedger validates tool selection and arguments, reauthorizes each
+execution, validates the final structured response, and renders fact values, sources, limitations,
+and actions from the native result rather than model prose.
+
+No prompt, conversation, result, tool trace, or model output table is part of Phase 15. Provider
+diagnostics use the existing operational log boundary and contain no content. A future second
+internal consumer may justify extracting a shared registry package, but MCP evaluation alone does
+not authorize that dependency or exposure.

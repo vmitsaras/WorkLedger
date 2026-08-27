@@ -22,6 +22,7 @@ WorkLedger uses authenticated identity, application role, resource scope, and re
 | `Reports` | The actor is the target employee's current effective direct manager when the request is handled. |
 | `Org HR` | The actor has the HR administrator role and the target belongs to the installation organization. |
 | `Technical` | The operation concerns authentication, sessions, service configuration, health, backup, restore, or upgrade rather than HR/domain data. |
+| `Active workspace` | The one Employee, Manager, HR, or System purpose selected for the current Insight request. It narrows tool eligibility but never grants a role or resource scope. |
 | `Limited` | A purpose-specific DTO exposes fewer fields than the underlying record; the matrix row defines the permitted purpose. |
 | `No` | The role alone does not grant the action. A separately assigned role may still grant it, subject to all self-action and scope restrictions. |
 
@@ -111,6 +112,12 @@ The cells describe what each role alone grants. Managers and HR administrators m
 | Run monthly-time, flexible-time, or leave report | `Self` | `Self`, `Reports` | `Org HR` | `No` |
 | Run missing-record report | `Self` | `Self`, `Reports` | `Org HR` | `No` |
 | Run pending-approval report | `No` | `Reports` | `Org HR` | `No` |
+| Run deterministic employee Insight | `Self` | `Self` | `No`; a separate active employee role may grant `Self` | `No` |
+| Run deterministic manager Insight | `No` | `Reports`, not self, after the manager Insights gate | `No` | `No` |
+| Run privacy-suppressed HR aggregate Insight | `No` | `No` | `Org HR` aggregate only after the dedicated privacy gate | `No` |
+| Run isolated System Insight | `No` | `No` | `No` | `Technical` after the System Insights gate |
+| Request local model interpretation | `Self` after the employee pilot gate | Active workspace scope only after its later gate | Active HR workspace only after the aggregate gate | Active System workspace only after the isolated system gate |
+| Use unrestricted AI, SQL, write, approval, scoring, or recommendation tool | `No` | `No` | `No` | `No` |
 | Export or print monthly-time, balance, or leave records | `Self` | `Reports` | `Org HR` | `No` |
 | View record history/domain audit information | `Self` embedded history | `Reports` embedded history | `Org HR` audit explorer | `No` |
 | View security/technical audit information | `No` | `No` | `No` unless separately system administrator | `Technical` limited metadata |
@@ -134,6 +141,14 @@ notification checks. System administrators and historical managers have no fallb
 - Employee profile summaries do not make HR-owned fields editable.
 - System administrators may see account identifiers, session/security state, delivery status, and technical audit metadata only when needed for a technical action; these DTOs do not include HR/domain payloads.
 - Generic exports and printable records use the same scope and field minimization as their source query and omit sickness classification, request/decision notes, and reviewer comments. A sickness-specific export is excluded from the MVP.
+- Insight native results and tools expose only purpose specific facts, source links, limitations, and
+  native actions. Questions, prior turns, model context, and model output do not widen the DTO.
+- Manager Insight context uses neutral availability and omits sickness subtype, notes, reasons,
+  entitlement history, and medical inference. HR Insights receive only fixed purpose aggregates
+  after cohort, case, and complement suppression. System Insights receive no employee or HR field.
+- A combined role selects one active workspace. Switching workspace clears Insight context and
+  conversation state. Every tool rechecks current authority, so a model call, prior result, or
+  browser workspace cannot carry permission across role boundaries.
 
 ## Scope lifecycle and reassignment
 
@@ -181,3 +196,8 @@ Every protected endpoint must cover the applicable cases:
 13. collection scope is applied before pagination, counts, and totals,
 14. response omits fields outside the actor's purpose-specific DTO,
 15. role/scope change takes effect without relying on stale client navigation state.
+16. an Insight request is denied when its active workspace does not match current capability,
+17. every Insight tool call repeats current authorization and returns no partial mixed-scope result,
+18. combined roles cannot merge employee, manager, HR, or system model context,
+19. provider failure or invalid model output preserves only the authorized native result, and
+20. unrestricted query, write, scoring, recommendation, and externally exposed tools remain denied.

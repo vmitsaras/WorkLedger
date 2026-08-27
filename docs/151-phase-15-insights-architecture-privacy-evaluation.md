@@ -1,0 +1,183 @@
+# Phase 15 Insights Architecture, Privacy, and Evaluation Contract
+
+**Task:** `WL-1500`
+**Date:** 2026-08-27
+**Decision:** `docs/adr/0014-deterministic-insights-and-local-ai-boundary.md`
+**Runtime changes:** None
+
+## Outcome
+
+The Phase 15 boundary is accepted. WorkLedger will first ship deterministic, role scoped native
+Insights. Optional private Ollama interpretation follows only after the foundation gate, starts
+with employee self scope, and remains disabled by default.
+
+No product code, dependency, package, migration, database table, model, provider request, MCP
+surface, prompt store, conversation store, or version change is part of `WL-1500`.
+
+## Accepted product scope
+
+### Included
+
+- Deterministic employee balance change, monthly submission blocker, leave projection, and Today
+  explanation results.
+- One dedicated accessible Insights route with visible bounded context and native source actions.
+- Purpose specific read only tools that reauthorize the current active workspace on every call.
+- Optional private Ollama interpretation after the native gate, beginning with employee self scope.
+- Later manager action summary, team coverage, allowlisted report specification, privacy suppressed
+  HR aggregates, and isolated technical diagnostics only after their named gates.
+
+### Excluded
+
+- General chat, natural language SQL, arbitrary database or report queries, and unrestricted tool
+  access.
+- Employee ranking, productivity or absence scoring, illness prediction, staffing or discipline
+  advice, approval recommendations, policy invention, legal conclusions, and autonomous actions.
+- Model generated calculations, workflow decisions, writes, exports, notifications, or audit
+  entries.
+- Persistent global assistant UI, automatic DOM capture, hidden page context, stored conversation
+  history, third party analytics, external model providers, and cloud Ollama models.
+- MCP exposure until its own ADR and threat gate.
+
+## Data inventory
+
+| Data | Source | Storage or transfer | Sensitivity | Purpose | Retention | User control | Main risk | Required control |
+|---|---|---|---:|---|---|---|---|---|
+| Native Insight request | Authenticated browser | Same origin JSON body to API | High personal operational | Select one purpose specific result | Request lifetime only | Explicit submit or context link | Query leaks through URL or logs | POST body, strict schema, no-store, no body logging |
+| Native facts | Authorized domain and read models | API memory and purpose DTO | High personal operational | Explain one bounded question | Request lifetime only | Visible source links | Excess fields or wrong scope | Current authorization, field allowlist, typed facts |
+| Context descriptor | Current native route | Browser memory and request body | Moderate to high | Narrow the requested Insight | Current page or conversation only | Visible and removable | DOM or full DTO capture | Allowlisted kind, period, and source references only |
+| Question and bounded prior turns | Employee form | Browser memory, API memory, private Ollama request | High personal operational | Natural language interpretation | Current browser session and request only | Clear, reload, workspace change, sign out | Prompt disclosure or accidental persistence | No URL, database, log, audit, cache, analytics, or backup copy |
+| Tool definitions and arguments | API registry and model selection | API memory, private Ollama request | High when scoped | Retrieve exact authorized facts | Request lifetime only | No direct user storage | Model expands scope or injects an argument | Schema validation and authorization on every execution |
+| Tool results | Authorized Insight service | API memory, minimized private Ollama request | High personal operational | Ground the interpretation | Request lifetime only | Native result stays visible | Excess data, identity, notes, or source leakage | Purpose DTO, aliases, no stored free text, minimum fields |
+| Model output | Private Ollama | API memory then validated DTO | High personal operational | Optional explanation | Current browser session only | Clear, cancel, retry | Unsupported claim or leaked model trace | Structured schema, grounding, no reasoning trace, safe rejection |
+| Provider diagnostics | API provider adapter | Allowlisted structured operational log | Low to moderate technical | Health, capacity, failure diagnosis | `OPERATIONAL_LOGS` profile | Operator retention | Prompt or domain data copied into logs | Content free field allowlist and redaction tests |
+| Golden evaluation set | Repository synthetic fixtures | Git and local test runner | None or low synthetic | Release evaluation | Repository history | Maintainer review | Production data enters fixtures | Synthetic facts only, fixture review and secret scan |
+| HR aggregate | Purpose specific aggregate service | API memory, then model only after suppression | High sensitive HR | Later organization trend explanation | Request lifetime only | HR initiates bounded query | Small cohort inference or differencing | Minimum cohort and case floors, complement test, no drilldown |
+
+Repository classification is a mixed self hosted web, API, storage, reporting, and optional private
+AI application. Data sensitivity is high. The primary new flow is browser to same origin API to
+authorized Insight service, with an optional second hop from the API to one operator controlled
+private Ollama origin.
+
+## Authorization contract
+
+| Actor and active workspace | Native result | Model interpretation | Data excluded |
+|---|---|---|---|
+| Employee in Employee workspace | Own active employee facts | Allowed only after employee pilot gate | Other people, HR and technical data |
+| Manager in Employee workspace | Own employee facts | Employee pilot behavior only | Current reports and manager queue |
+| Manager in Manager workspace | Current direct report summary after `WL-1509` | Only after `WL-1510` | Self data, former reports, sickness subtype, reasons, notes |
+| HR in HR workspace | Fixed purpose aggregates only after `WL-1513` | Only after `WL-1512` privacy gate | Row data, free text, small cohorts, technical data |
+| System administrator in System workspace | Technical diagnostics after `WL-1514` | Bounded technical interpretation only | Employee, attendance, balance, absence, request, report, HR data |
+| Combined role with no matching active workspace | Denied | Denied | All other role scopes |
+
+Collection scope, aggregation, suppression, totals, tool output, model context, and source actions all
+use the same authorization transaction. A partial response cannot mix allowed and denied tools.
+
+## Privacy risk matrix
+
+| ID | Area | Risk | Severity | Accepted control | Evidence owner |
+|---|---|---|---:|---|---|
+| `AI-R01` | Scope | Combined roles or prior turns blend employee, manager, HR, or system facts | Critical | One active workspace, current authorization per tool, clear state on workspace change | `WL-1501`, `WL-1505`, role tasks |
+| `AI-R02` | Authority | Model calculates or invents a domain value | Critical | Native facts are authoritative; rendered values come only from referenced facts | `WL-1501`, `WL-1502`, `WL-1508` |
+| `AI-R03` | Prompt injection | User question or tool data directs an undeclared tool or prohibited action | High | Tool allowlist, schema validation, data treated as data, no write tools | `WL-1505`, `WL-1508` |
+| `AI-R04` | Egress | A local endpoint or model silently invokes cloud service | Critical | Private exact origin, public origin rejection, signed out Ollama, blocked provider internet, pinned digest | `WL-1506`, `WL-1516` |
+| `AI-R05` | Retention | Prompt, conversation, result, or reasoning trace enters database, logs, audit, backup, or browser persistence | High | Request and browser memory only; content free operational trace | `WL-1506` to `WL-1508` |
+| `AI-R06` | Context | DOM, full DTO, stored free text, notes, reasons, or sickness data enters model context | High | Explicit descriptor and purpose tool projection, no stored free text | `WL-1504`, `WL-1505`, role tasks |
+| `AI-R07` | Grounding | Valid JSON contains a wrong fact, source, limitation, or action | High | Reference validation, native value rendering, reject unreferenced claims | `WL-1507`, `WL-1508` |
+| `AI-R08` | HR inference | Small cohorts, complements, or repeated queries reveal sickness or identity | Critical | Suppress before context, cohort and case floors, fixed purposes, no row drilldown | `WL-1512`, `WL-1513` |
+| `AI-R09` | Accessibility | Streaming text, focus movement, or chat semantics create noisy or incomplete output | High | Nonstreaming response, one status, normal document structure, native result first | `WL-1503`, `WL-1507`, `WL-1508` |
+| `AI-R10` | Failure | Provider timeout or invalid output hides the deterministic answer | High | Native result remains available; cancel, safe retry, provider unavailable state | `WL-1506` to `WL-1508` |
+| `AI-R11` | URLs and cache | Questions, sensitive context, or results enter history or shared cache | High | POST body, memory only state, no-store, clear on session or scope loss | `WL-1503`, `WL-1504`, `WL-1508` |
+| `AI-R12` | Operations | Diagnostics expose provider origin, model, prompts, employee facts, or raw errors | High | Safe capability codes and content free logs; technical authorization | `WL-1506`, `WL-1514`, `WL-1516` |
+| `AI-R13` | Model supply chain | Model digest, behavior, or capabilities drift after evaluation | High | Exact digest, startup check, complete reevaluation before enablement | `WL-1506`, `WL-1508`, `WL-1516` |
+| `AI-R14` | Localization | Model responds in the wrong locale or changes numeric and date meaning | High | Account locale input, native locale formatters, three locale evaluation | `WL-1507`, `WL-1508` |
+| `AI-R15` | Reuse | Internal tools are exposed through MCP without equivalent controls | Critical | MCP excluded; separate ADR, metadata allowlist, auth and threat gate | `WL-1515` |
+
+Overall privacy status is acceptable for deterministic implementation. Provider work remains blocked
+until the foundation gate passes and `WL-1506` proves the egress, model, failure, and operations
+controls. HR work remains blocked until `WL-1512` accepts its purpose contracts and suppression
+tests.
+
+## Evaluation contract
+
+### Deterministic foundation gate
+
+- Exact integer minute, date, timezone, state, source, freshness, and limitation fixtures pass.
+- Employee self, current manager, former manager, unrelated actor, HR, system, combined role,
+  deactivated account, permission loss, and cross organization cases pass where applicable.
+- The complete product works with provider mode `disabled` and makes no model request.
+- The native route passes all supported locale, keyboard, focus, screen reader, zoom, reflow, forced
+  colors, reduced motion, touch, offline, stale, partial, empty, denied, and failure states.
+- Questions, context, and results are absent from URL history, browser persistence, logs, audit, and
+  cache.
+
+### Employee local AI pilot gate
+
+The golden set contains 24 semantic questions. Each question has British English, German, and
+Spanish wording and runs three times against the exact model digest and inference configuration.
+Fixtures cover all four employee Insight kinds plus ambiguity, provisional and incomplete evidence,
+prompt injection, prohibited employment and health requests, scope loss, timeout, cancellation,
+invalid output, and provider unavailability.
+
+The gate fails on any wrong numeric, date, status, scope, permission, source, limitation, or action
+reference; any unsupported domain, policy, legal, health, employment, or workflow claim; any
+sensitive disclosure; any unvalidated schema; or any loss of the native fallback. Latency, token
+counts, cancellation time, and provider failures are recorded as content free operational evidence.
+They do not replace correctness thresholds.
+
+### Later role and release gates
+
+- Manager work repeats the scope, former manager, self exclusion, neutral availability, and
+  prohibited recommendation set.
+- Report work validates only allowlisted report specifications that the native report service
+  reauthorizes and executes.
+- HR work tests cohort, case, complement, differencing, repeated query, and source absence before
+  any model call.
+- System work proves that every employee and HR field is absent from the tool and provider context.
+- `WL-1516` runs provider disabled and provider enabled paths, every supported locale and accepted
+  workspace, upgrade and configuration failure, model drift, and rollback to disabled.
+
+## Staged gate contract
+
+| Gate | Tasks | Entry condition | Exit evidence |
+|---|---|---|---|
+| Architecture gate | `WL-1500` | Phase 14 complete at `0.15.0` | ADR 0014 and synchronized product, permission, architecture, accessibility, security, retention, evaluation, and operations contracts |
+| Insights foundation | `WL-1501` to `WL-1504` | Architecture gate complete | Deterministic product and contextual entry points pass with provider disabled |
+| Employee local AI pilot | `WL-1505` to `WL-1508` | Foundation gate complete | Read only tools, private Ollama adapter, grounded employee interpretation, golden evaluation, privacy and accessibility evidence |
+| Manager and reports | `WL-1509` to `WL-1511` | Both earlier gates complete | Current manager scope and allowlisted native report actions pass their own evidence |
+| HR aggregate | `WL-1512` and `WL-1513` | Employee pilot and report prerequisites complete | Accepted privacy decision, suppression before context, no row data or inference leak |
+| System | `WL-1514` | Employee pilot complete | Technical facts remain isolated from all domain and HR data |
+| MCP evaluation | `WL-1515` | Every intended internal consumer complete | Separate accepted ADR and threat review, or explicit rejection |
+| Phase release | `WL-1516` | All accepted Phase 15 surfaces complete | Full multilingual, accessibility, privacy, security, operations, upgrade, provider failure, and no provider gates; version `0.16.0` |
+
+No later row may bypass an earlier gate. A later task may be removed from Phase 15 without weakening
+an earlier completed gate.
+
+## Required implementation checks
+
+- Contract and service tests for exact native result shape, value source, and safe omissions.
+- Exhaustive tool metadata, argument, permission, workspace, and output allowlist tests.
+- SSRF, redirect, public origin, cloud model, digest drift, timeout, cancellation, rate, concurrency,
+  and dependency error tests for the provider.
+- Prompt injection, malformed tool call, tool loop, invalid schema, ungrounded number, source and
+  action fabrication, locale, and hostile stored text tests.
+- Browser URL, history, storage, cache, network, clipboard, accessibility tree, focus, and live
+  region inspection.
+- Operational log, technical audit, backup, retention, and restored environment inspection for
+  absence of prompt and result content.
+
+## `WL-1500` acceptance evidence
+
+| Requirement | Evidence |
+|---|---|
+| Product boundary and prohibited use | ADR 0014 and Accepted product scope above |
+| Role and active workspace scope | ADR 0014 role table, Authorization contract, and `docs/02-roles-permissions.md` |
+| Architecture and data flow | ADR 0014 ownership, tool, provider, and grounding sections; `docs/04-architecture.md` |
+| Privacy, retention, and egress | Data inventory, Privacy risk matrix, `docs/06-security-operations.md`, and `docs/107-retention-and-minimization.md` |
+| Accessibility | ADR 0014 interaction contract and `docs/05-ux-accessibility.md` |
+| Evaluation | Evaluation contract and gate thresholds above |
+| Staged gates and operations | Staged gate contract, `docs/07-roadmap.md`, and `docs/06-security-operations.md` |
+
+## Safety confirmation
+
+No publish, push, tag, upload, release, provider request, or remote write command was run. No secret
+value is printed in this review.

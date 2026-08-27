@@ -4,35 +4,34 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
-### 2026-08-27 — Phase 15 registers Insights before local AI
+### 2026-08-27 — WL-1500 accepts deterministic Insights before local AI
 
-The accepted Phase 14 gate remains complete at `0.15.0`. The new roadmap direction is registered as
-Phase 15 — WorkLedger Insights and local AI, with `WL-1500` as the only ready task. This planning
-change does not accept an AI provider, create a new package, enable network egress, persist prompts
-or conversations, expose an MCP server, add HR analytics, or authorize any model-generated write,
-approval, staffing, discipline, performance, or policy decision.
+The accepted Phase 14 gate remains complete at `0.15.0`. `WL-1500` now accepts ADR 0014 and the
+Phase 15 architecture, privacy, security, retention, accessibility, evaluation, operations, and
+staged-gate contracts. This decision adds no product code, package, dependency, migration, database
+table, configured provider, network request, MCP server, or manifest version change.
 
-Until `WL-1500` resolves the architecture through an ADR and updated data-flow/threat review, use
-these planning assumptions:
+The accepted contract is:
 
 - WorkLedger calculations and purpose-specific read models remain authoritative; the model may
   interpret or explain structured results but never calculate balances or invent policy.
 - Insights are role- and active-workspace-scoped, read-only, and deny by default. Combined roles do
   not silently merge employee, manager, HR, or system contexts.
-- The deterministic foundation must work without AI. Optional local Ollama support is disabled by
+- The deterministic foundation works without AI. Optional private Ollama support is disabled by
   default and may start only after the Insights foundation sub-gate passes.
-- Context is a bounded visible descriptor, never a DOM dump or bulk record export. Initial
-  conversation state is session-only, with explicit retention and trace minimization still to be
-  resolved.
-- HR aggregates require purpose-specific contracts and cohort suppression before model-context
-  creation. System Insights remain isolated from employee and HR data.
+- Context is a bounded visible descriptor, never a DOM dump or bulk record export. Questions,
+  conversations, tool content, model input/output, and reasoning traces are session/request only and
+  never enter PostgreSQL, logs, audit, backup, analytics, URL, or persistent browser storage.
+- HR aggregates require purpose-specific contracts and cohort, case, and complement suppression
+  before model-context creation. System Insights remain isolated from employee and HR data.
 - Tool contracts may be designed for reuse, but an MCP adapter remains a later evaluation requiring
   its own exposure allowlist, ADR, and threat review.
 
 The roadmap deliberately rejects general-purpose chat, natural-language SQL, employee scoring,
 illness prediction, approval recommendations, autonomous HR actions, and a persistent global AI
 drawer. Those exclusions preserve the existing product, accessibility, security, and privacy
-contracts while `WL-1500` establishes the exact Phase 15 boundary.
+contracts. ADR 0014 and `docs/151-phase-15-insights-architecture-privacy-evaluation.md` are the
+authoritative Phase 15 boundary.
 
 ### 2026-08-26 — Phase 14 roadmap registration preserves the completed Phase 13 gate
 
@@ -764,3 +763,26 @@ regression contract for `WL-1008`.
   the localized main chunk compared with `WL-1405`, while gzip usage falls. The narrowly owned raw
   allowance therefore moves by a rounded 20,000 bytes; the gzip allowance, application baseline,
   largest-chunk, CSS, and locale-catalog limits remain unchanged.
+
+### D-509 — Deterministic Insights and local AI boundary
+
+**Status:** Resolved by ADR 0014 and `WL-1500`; no longer blocking `WL-1501`.
+
+- WorkLedger native results remain authoritative and complete without a model. The model may only
+  explain validated facts and reference existing sources, limitations, and native actions.
+- One active Employee, Manager, HR, or System workspace narrows every Insight request. Current API
+  authorization runs again for every tool call, and combined roles never merge context.
+- The provider is disabled by default. Phase 15 accepts only one exact private, operator-controlled
+  Ollama origin and one pinned local model digest after the deterministic foundation gate. Public
+  providers, cloud models, redirects, and silent outbound egress remain prohibited.
+- Questions, conversations, tool arguments/results, model input/output, and reasoning traces are
+  request or browser-session only. Content-free provider diagnostics use the existing operational
+  log retention class.
+- HR aggregation is unavailable until purpose contracts suppress cohorts below 10 eligible people,
+  case counts below 3, and comparison complements below 10 before model context. `WL-1512` may be
+  stricter but cannot weaken those floors without a superseding decision.
+- General chat, natural-language SQL, unrestricted tools, scoring, prediction, approval or staffing
+  recommendations, legal conclusions, autonomous action, and model-authored domain decisions are
+  excluded.
+- The deterministic foundation and employee local AI pilot are separate gates. Later manager,
+  report, HR, system, and MCP work cannot bypass them or their own named privacy and threat reviews.

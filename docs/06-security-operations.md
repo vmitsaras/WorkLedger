@@ -2,7 +2,7 @@
 
 ## 1. Security posture and classification
 
-WorkLedger is a self-hosted web application that processes high-sensitivity authentication, employment, attendance, benefit, health-related absence, approval, and audit data. Its primary data flow is browser → same-origin reverse proxy → web/API → PostgreSQL, with optional outbound email carrying generic notification or one-time account links only.
+WorkLedger is a self-hosted web application that processes high-sensitivity authentication, employment, attendance, benefit, health-related absence, approval, and audit data. Its primary data flow is browser → same-origin reverse proxy → web/API → PostgreSQL, with optional outbound email carrying generic notification or one-time account links. Phase 15 may add one disabled-by-default API → private Ollama flow only under ADR 0014.
 
 The privacy status is **conditionally acceptable for implementation**. Production release remains blocked until the controls and tests in this document are implemented, a deployment-specific retention profile is configured, and backup/restore plus authorization evidence passes the production gate.
 
@@ -44,6 +44,16 @@ PostgreSQL is the authoritative store for account/session records and domain fac
 | CSV/print/clipboard result | Explicit authorized user action | Streamed response, browser download/print/clipboard | Same class as included source fields | User-controlled report portability | Export is not server-retained; local copy is recipient-controlled | Actor initiates and chooses destination | Formula execution, hidden metadata, excessive fields | Generation-time authorization, purpose DTO, formula neutralization, clear included-field copy, no hidden content |
 | Database backup | Host operator scheduled/manual action | Encrypted protected backup storage | Highest aggregate sensitivity | Disaster recovery | Backup retention | Host operator lifecycle; no app-user download | Complete breach or resurrected credentials/deleted data | Encryption, access isolation, inventory/expiry, restore quarantine, session/grant invalidation, integrity test |
 
+### Phase 15 Insights data
+
+| Data | Source | Storage / transfer | Sensitivity | Purpose | Retention class | User control | Main risk | Required control |
+|---|---|---|---:|---|---|---|---|---|
+| Native Insight request and result | Authenticated actor plus authorized domain sources | Same-origin POST, API memory, browser memory | High personal operational | Explain one purpose-specific question | Request/current page only | Explicit submit, remove context, navigate away | URL, cache, log, or excess-field disclosure | Strict schema, current scope, purpose DTO, no-store, no body logging |
+| Question and bounded prior turns | Actor | Browser memory, API memory, optional private Ollama request | High personal operational | Optional natural-language interpretation | Current browser session and request only | Clear, reload, workspace change, sign out | Prompt persistence or egress | No URL, database, audit, log, cache, analytics, backup, or external provider |
+| Tool arguments and results | API registry and authorized Insight Service | API memory, minimized private Ollama request | High personal operational | Ground optional interpretation | Request only | Indirect through visible context and question | Model-directed scope expansion or stored-text injection | Allowlist, strict schema, authorization per call, no generic query, no stored free text |
+| Model output | Private operator-controlled Ollama | API memory, validated browser DTO | High personal operational | Optional explanation | Current browser session only | Cancel, clear, retry | Unsupported claim, source fabrication, or reasoning trace disclosure | Structured output, native references, server grounding, no reasoning trace, safe rejection |
+| Provider diagnostics | Provider adapter | Content-free structured operational log | Low/moderate technical | Health and failure diagnosis | Operational logs | Deployment retention profile | Prompt, model, endpoint, or domain value leakage | Safe codes, timings, counts, digest state, and redaction only |
+
 ## 3. Privacy boundary matrix
 
 | Area | Data involved | Prohibited behavior | Severity | Required behavior |
@@ -56,7 +66,8 @@ PostgreSQL is the authoritative store for account/session records and domain fac
 | Notification/email | Request/decision outcome | Subject/preview reveals sickness, type, reason, entitlement, or full employee data | High | Generic attention/outcome copy; restricted detail fetched after current authorization; optional SMTP cannot determine transaction success |
 | Logs/technical audit | HTTP/auth/domain activity | Request/response bodies, raw query strings, cookies, authorization/CSRF/idempotency/reset tokens, passwords, notes/reasons, sickness codes, entitlement values | Critical/High | Generic route template, safe code/status, request ID, latency, opaque actor/account ID only where justified; redaction tests and restricted access |
 | Export/print/clipboard | Report/domain data | Automatic export/copy, hidden fields/metadata, sickness-specific export, formula-active cells | High | Explicit user action and included-field explanation; same authorization/DTO as screen; safe filename; formula neutralization; success/failure feedback |
-| Analytics/network | Any employee/domain/browser activity | Third-party analytics, pixels, remote error payloads, external AI/decision calls, undisclosed webhooks | High | No telemetry by default and no third-party runtime scripts; only configured WorkLedger API and optional privacy-safe SMTP communication |
+| Analytics/network | Any employee/domain/browser activity | Third-party analytics, pixels, remote error payloads, external AI/decision calls, undisclosed webhooks | High | No telemetry by default and no third-party runtime scripts; only configured WorkLedger API, optional privacy-safe SMTP, and the ADR 0014 private model path after its gate |
+| Insights/local AI | Questions, context, domain facts, model output | DOM capture, persistent transcript, public provider, cloud model, unrestricted tool, cross-workspace context, ungrounded claim | Critical/High | Native result first; explicit memory-only question; exact private origin; local model digest; current authorization per read-only tool; structured grounding and safe rejection |
 | Retention/deletion | All persisted classes | Universal legal claim, cascade history deletion, silent indefinite retention, backup exemption | High | Deployment-configured class profile, documented user control, source-preserving anonymization/minimization, backup expiry, tested retention job |
 | Host/backup | Complete database and secrets | Public storage, unencrypted portable copy, production restore exposed to network/email, restoring valid sessions/grants | Critical | Least-privilege operators, encryption/access isolation, clean restore network, new secrets, revoke sessions/grants, verify ledger/snapshot/audit integrity |
 
@@ -78,6 +89,7 @@ WorkLedger API/auth process
 PostgreSQL authority
 
 WorkLedger process ── generic one-time/outcome mail ──► optional SMTP relay
+WorkLedger API ── minimized structured request ──► optional private Ollama
 host operator ── explicit backup/restore/migrate ──► protected backup store
 ```
 
@@ -89,6 +101,13 @@ host operator ── explicit backup/restore/migrate ──► protected backup 
 - The API port and PostgreSQL are not publicly reachable. Only the configured reverse proxy reaches the application; only the application/authorized operator reaches PostgreSQL.
 - The canonical public origin is validated configuration, not inferred from an arbitrary `Host` or forwarded header. Proxy headers are trusted only from exact configured proxy addresses, and the proxy overwrites client-supplied forwarded values.
 - SMTP is an outbound adapter. It receives only the destination and generic message or a single-use account link; delivery failure never changes a domain decision.
+- Ollama is an optional interpretation adapter. It is disabled by default, receives only minimized
+  authorized typed facts, and never becomes a calculation, permission, decision, or write service.
+  Its exact origin, model digest, private network, and blocked outbound internet are operator-owned
+  production evidence.
+- Browser requests, model output, tool arguments, redirects, and environment proxy variables cannot
+  select or expand the provider origin. WorkLedger never invokes model pull, copy, delete, publish,
+  or cloud endpoints.
 - Host access and backups are out-of-band operational privileges, not application roles. A system-administrator role does not itself grant shell, database, backup, or secret access.
 
 ## 5. Threat model
@@ -117,10 +136,17 @@ Severity reflects plausible impact before controls: `Critical` can enable broad 
 | T-018 | Public health/error/operations endpoint reveals topology, versions, migration state, record counts, or secrets | Medium | Generic public liveness only; detailed readiness/diagnostics authorized to technical role/host; safe request ID; production errors | Anonymous/employee/HR/system-admin response-shape tests and error snapshot review |
 | T-019 | Notification/reset email leaks domain detail, allows header/content injection, or retries duplicate domain action | High | Generic fixed templates, validated address/header handling, no raw note/reason/type, one-time link controls, delivery record separate from outcome | Message snapshot/privacy tests, SMTP failure/retry, malicious display name/address fixtures |
 | T-020 | Host, database-superuser, mailbox, endpoint device, or deployment-owner compromise bypasses application controls | Critical residual | Least privilege, host hardening, encryption, operator separation, backup protection, incident/rotation docs | Documented trust assumption; cannot be eliminated by application authorization alone |
+| T-021 | Combined roles, stale workspace, or prior turns blend employee, manager, HR, or system data | Critical | One active workspace, current authorization on every tool, no partial mixed result, clear context on workspace or role change | Exhaustive role/workspace/scope-loss integration and browser tests |
+| T-022 | Prompt injection or model-selected arguments invoke an undeclared tool, widen scope, or trigger a write | Critical | Read-only deny-by-default registry, strict tool/argument schema, authorization per execution, bounded rounds, no generic query or write tool | Hostile question and tool-result fixtures, unknown tool/argument denial, loop and limit tests |
+| T-023 | Local model configuration silently sends protected data to a public or cloud service | Critical | Provider disabled by default; exact private origin allowlist; no redirects; reject public provider origins; signed-out Ollama; blocked provider internet; exact local model digest | Startup/config, DNS/IP, redirect, proxy, cloud-model, network-isolation, and digest-drift evidence |
+| T-024 | Prompt, tool data, answer, or reasoning trace enters URL, browser persistence, database, logs, audit, backup, or restored environment | High | POST body and memory only state; no transcript table; no-store; content-free diagnostics; no reasoning trace | URL/storage/cache/log/audit/backup/restore inspection and field-absence tests |
+| T-025 | Structured model output contains wrong facts, sources, limitations, statuses, or actions | High | Native result authority; provider-independent schema; reference validation; native value rendering; reject unreferenced claims | Golden evaluation, malformed/hostile output, number/date/source/action fabrication tests |
+| T-026 | Small HR cohort or differenced aggregate reveals sickness or identity | Critical | Fixed-purpose aggregates, suppression before model context, minimum cohort/case/complement floors, no row drilldown or free text | Cohort boundary, complement, repeated query, differencing, and model-context absence tests |
+| T-027 | Provider slowness, cancellation, model drift, or invalid output removes the usable deterministic result | High | Native result first; timeout, cancellation, rate/concurrency bounds, safe failure state, pinned digest and reevaluation | Dependency failure, cancellation, drift, rollback-to-disabled, accessibility, and recovery tests |
 
 ### Deferred-surface triggers
 
-Attachments, public API/webhooks, OIDC/LDAP, telemetry, S3, Redis/queues, multi-organization SaaS, mobile/native clients, cross-origin app hosting, and external AI are outside the MVP. Introducing one requires an ADR plus a new data-flow/threat review before implementation. No dormant attachment URL, upload, remote-script, analytics, or webhook code is included in the MVP.
+Attachments, public API/webhooks, OIDC/LDAP, telemetry, S3, Redis/queues, multi-organization SaaS, mobile/native clients, cross-origin app hosting, external or cloud AI, and MCP exposure are outside the MVP. ADR 0014 accepts only the staged private local model path after the deterministic gate. Introducing another surface requires an ADR plus a new data-flow/threat review before implementation. No dormant attachment URL, upload, remote-script, analytics, webhook, public model, or MCP code is included in the MVP.
 
 ## 6. Credential and account security contract
 
@@ -238,7 +264,7 @@ required event in the same transaction as its source action where applicable.
 
 Operational logs answer service-health questions, not employee activity questions. Allowlisted structured fields include timestamp, level, service/version family, generic route template, HTTP status, stable safe error code, request ID, latency, dependency category, and opaque actor/account ID only when necessary.
 
-Never log raw request URL/query, bodies, responses, cookies/headers containing secrets, passwords, session/reset/CSRF/idempotency values, notes/reasons, sickness/type/coverage, entitlement, report rows, exports, notification content, or database statements with bound personal values. Redaction occurs before serialization, including exceptions and dependency errors.
+Never log raw request URL/query, bodies, responses, cookies/headers containing secrets, passwords, session/reset/CSRF/idempotency values, notes/reasons, sickness/type/coverage, entitlement, report rows, exports, notification content, Insight questions, prompts, prior turns, tool arguments/results, model input/output/reasoning, source references, or database statements with bound personal values. Redaction occurs before serialization, including exceptions and dependency errors.
 
 ## 13. Export, print, clipboard, and notification safety
 
@@ -257,6 +283,17 @@ Never log raw request URL/query, bodies, responses, cookies/headers containing s
 - The initial/bootstrap privileged-account procedure is one-time, deployment-controlled, produces audit evidence, never prints a generated password/token to ordinary logs, and is disabled after eligible administrators exist.
 - Lock exact dependency versions, use stable supported releases, pin production image versions/digests, run dependency/image/secret scans in CI/release review, and record upgrade/remediation decisions. No runtime CDN scripts or remote code.
 - PostgreSQL application, migration, backup, and restore privileges are separate where practical. The application role cannot create/drop schemas, read host files, or bypass row/purpose authorization through a public database port.
+- Phase 15 provider configuration is startup owned and disabled by default. It validates one exact
+  private Ollama origin, an exact local model name and digest, capability requirements, timeout,
+  concurrency, and rate bounds. Browser or database input cannot change it. Direct public provider
+  origins, redirects, cloud models, embedded credentials, model auto-pull, and silent environment
+  proxy routing are rejected. Diagnostics report safe state only, never the origin, model, digest,
+  or raw dependency error.
+- The Ollama deployment sets `OLLAMA_NO_CLOUD=1` or the equivalent server setting, has no outbound
+  proxy or internet route, and exposes no public port. WorkLedger rechecks loopback/private address
+  resolution at connection time, permits only `/api/tags`, `/api/show`, and `/api/chat`, and never
+  follows redirects. The exact request, tool, concurrency, rate, and timeout ceilings come from ADR
+  0014 and must be enforced before the pilot can be enabled.
 
 ## 15. Self-hosting and reverse-proxy contract
 
@@ -280,6 +317,10 @@ Caddy reference proxy
 - Apply request/body/header limits, timeouts, HSTS and security headers consistently. Do not disable upstream TLS verification when TLS is used between proxy and application.
 - Production containers run as non-root where supported, use minimal pinned images, avoid host Docker socket/mutable source mounts, use health/readiness checks and resource limits, and persist only documented database/backup volumes.
 - Optional SMTP is configured separately. Redis, workers, S3, attachment storage, and analytics are not part of the MVP reference deployment.
+- Optional Ollama uses a separate private service or operator-controlled private endpoint only after
+  the Phase 15 foundation gate. The provider has no public port, no WorkLedger database access, no
+  mounted application secrets, no cloud sign-in, and no outbound internet. The operator provisions
+  and pins the model out of band.
 - Optional company media is mounted read-only at `/srv/web/identity` through the explicit identity
   Compose override. Runtime configuration accepts only `/identity/` image paths and approved file
   extensions; remote origins, traversal, query/fragment content, custom CSS, and executable HTML
@@ -291,6 +332,9 @@ Caddy reference proxy
 - Public liveness answers only whether the service process can respond. It contains no dependency version, database state, migration identifier, organization/employee count, host/path, or exception.
 - Readiness verifies required dependencies and compatible migrations but exposes detail only to the orchestrator/host operator or authorized `/system/operations` DTO. A non-ready instance does not accept normal traffic.
 - Detailed diagnostics use request IDs and safe categories. They never return environment variables, connection strings, SQL, secrets, protected counts, or domain payloads.
+- Optional model diagnostics expose only `disabled`, `ready`, `unavailable`, or `misconfigured`,
+  safe capability categories, last check time, and a safe reason code. Provider failure does not
+  make deterministic Insights or the core application unavailable.
 - Document incident steps for suspected credential/session secret, database, email, backup, or host compromise: isolate, preserve safe evidence, rotate affected secrets, revoke sessions/grants, verify audit/integrity, restore if necessary, and communicate through deployment-owned procedures.
 
 ## 17. Backup and restore
@@ -332,6 +376,10 @@ The profile records the duration/expiry rule, deletion versus minimization behav
 - When the configured domain retention period ends, the `WL-1007` process minimizes/anonymizes personal identity and sensitive free text where permitted while preserving referential, ledger, snapshot, and audit integrity. It records the action without copying removed content into audit.
 - Backup copies retain removed data only until their configured expiry; restore procedures must reapply retention jobs before any restored environment becomes active.
 - Legal-hold/case-management automation is not an MVP feature. A deployment that requires it must define an operational procedure and later product work rather than assuming WorkLedger provides legal compliance.
+- Phase 15 creates no prompt, conversation, tool trace, native result, or model output retention
+  class because those contents are not persisted. Content-free provider timing, token count, tool
+  code, validation outcome, cancellation, and safe failure facts use `OPERATIONAL_LOGS`. Synthetic
+  evaluation fixtures are repository artifacts and may not contain copied production records.
 
 ## 20. Verification and release controls
 
@@ -347,6 +395,12 @@ The profile records the duration/expiry rule, deletion versus minimization behav
 - Proxy-header spoof, direct app/database exposure check, health/readiness response shapes, production config/secret validation.
 - Backup encryption/access manifest and clean restore with credential/session/grant invalidation plus ledger/snapshot/audit integrity.
 - Retention profile validation, class-specific purge/minimization, backup-expiry behavior, and no cascade history loss.
+- Insight active-workspace and per-tool authorization, purpose-field omission, POST/no-store
+  behavior, prompt and result non-persistence, structured grounding, prohibited tool denial, and
+  deterministic fallback.
+- Provider-disabled no-egress, private-origin and redirect enforcement, public/cloud denial, model
+  digest and capability validation, timeout/cancellation/rate/concurrency handling, content-free
+  diagnostics, and safe rollback to disabled.
 
 ### Required manual evidence
 
@@ -354,6 +408,12 @@ The profile records the duration/expiry rule, deletion versus minimization behav
 - Inspect proxy/application/database/mail logs and technical/domain audit views for secrets, raw queries, sensitive absence data, and hostile text.
 - Exercise former-manager, combined-role, technical-only, deactivated, restored-backup, dependency-failure, and maintenance scenarios.
 - Review production proxy/TLS, network exposure, trusted headers, secret injection/rotation, backup store, restore isolation, retention profile, and incident contacts.
+- Inspect Insight URLs, history, browser storage, cache, network, logs, audit, backups, and restored
+  environments for question, prompt, tool, result, model, and source content. Verify the provider
+  service has no public port, cloud sign-in, or outbound internet.
+- Exercise every active workspace with combined roles, scope loss during a tool call, provider
+  timeout, cancellation, invalid output, model drift, and rollback to disabled using keyboard and
+  representative screen reader flows.
 
 ### Release blockers
 
@@ -362,6 +422,11 @@ The profile records the duration/expiry rule, deletion versus minimization behav
 - Production secret, canonical origin, proxy-trust, retention, backup, or SMTP setting left at a sample/unsafe value.
 - No successful clean restore or integrity/revocation evidence.
 - Sensitive data found in URL persistence, browser storage/cache, generic/team/system DTO, export, notification, clipboard, audit, or operational logs outside its permitted purpose.
+- Any prompt, conversation, tool argument/result, model input/output/reasoning, or source reference
+  persisted outside the bounded browser/request lifetime.
+- Any public or unapproved model egress, cloud model use, unrestricted tool, cross-workspace result,
+  unsupported claim, wrong numeric/date/status/source/action, small-cohort disclosure, or provider
+  failure that removes the deterministic result.
 
 ## 21. Primary references
 
@@ -369,5 +434,12 @@ The profile records the duration/expiry rule, deletion versus minimization behav
 - OWASP Authentication, Session Management, Forgot Password, CSRF Prevention, Password Storage, and HTTP Headers Cheat Sheets: <https://cheatsheetseries.owasp.org/>.
 - MDN cookie header reference: <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie>.
 - Caddy automatic HTTPS and reverse-proxy documentation: <https://caddyserver.com/docs/caddyfile/options>, <https://caddyserver.com/docs/caddyfile/directives/reverse_proxy>.
+- ADR 0014 defines the accepted deterministic Insight, private Ollama, retention, grounding,
+  evaluation, and staged-gate boundary.
+- Ollama structured output, tool calling, streaming, and authentication documentation:
+  <https://docs.ollama.com/capabilities/structured-outputs>,
+  <https://docs.ollama.com/capabilities/tool-calling>,
+  <https://docs.ollama.com/api/streaming>, and
+  <https://docs.ollama.com/api/authentication>.
 
 The selected stable dependency versions and exact supported browser versions must be rechecked during implementation and before release; this document defines the security floor, not permission to trust a library default without verification.

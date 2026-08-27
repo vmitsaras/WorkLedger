@@ -190,7 +190,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 
 ## Phase 15 — WorkLedger Insights and local AI
 
-- [ ] `WL-1500` Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts.
+- [x] `WL-1500` Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts.
 - [ ] `WL-1501` Implement the deterministic Insight Service and typed native-result contracts.
 - [ ] `WL-1502` Implement employee balance-change, submission-blocker, leave-projection, and Today-explanation insights.
 - [ ] `WL-1503` Build the accessible, role-scoped Insights route and native result presentation.

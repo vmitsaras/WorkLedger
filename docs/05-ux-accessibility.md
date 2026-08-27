@@ -40,6 +40,7 @@ product-owned. Forced-colors mode replaces the accent with a system color, and l
 - My balances
 - My requests
 - Calendar
+- Insights
 
 Notifications and Profile are account utilities available from the application shell. Monthly periods and individual records are reached from My time, My requests, Approval inbox, or Reports rather than duplicated in primary navigation.
 
@@ -67,6 +68,8 @@ Notifications and Profile are account utilities available from the application s
 A technical-only system-administrator account does not receive employee navigation. A combined-role account receives the union of eligible navigation, but navigation never weakens field minimization or the prohibition on privileged self-action.
 
 Navigation visibility is convenience only; the API enforces authorization.
+Insights appears in the currently active eligible work area only. A combined role never sees one
+merged Insight context, and changing work area clears pending and prior model interaction state.
 
 ## 3. Route map
 
@@ -80,6 +83,9 @@ Navigation visibility is convenience only; the API enforces authorization.
 - `/requests/new`, `/requests/:requestId`, and `/approvals/:approvalId` are type-neutral. The authorized response determines the workflow presentation; sickness or another sensitive absence type is never encoded in the route.
 - A route may render several role-specific actions, but the server-authorized resource and current state determine which actions are available. Client route guards and hidden navigation are never authorization evidence.
 - Browser back/forward restores the prior route and non-sensitive filters. Draft complex-form state is not persisted in the URL or browser storage; after an unexpected navigation, only server-saved drafts explicitly added by a later scoped task may be restored.
+- `/insights` URLs may contain only an allowlisted Insight kind and bounded date or month context.
+  Questions, prior turns, employee identity, source records, model output, and provider state remain
+  in memory and never enter the path, query, or hash.
 
 ### Authentication and account-entry routes
 
@@ -105,6 +111,7 @@ Navigation visibility is convenience only; the API enforces authorization.
 | `/monthly-periods/:periodId` | Self, current manager, or HR reviews a scoped monthly period, blockers/warnings, per-date totals, workflow decisions, immutable approved record, and post-lock adjustments according to current state. | `WL-800`–`WL-803` |
 | `/notifications` | Authenticated actor reads or dismisses their generic in-app outcome/attention records and follows an authorized link to restricted detail. Notification copy does not reveal sickness/type/reason on this generic surface. | `WL-704` |
 | `/profile` | Authenticated actor views account/session information, revokes their own sessions, and signs out. An actor with an employee link also sees a read-only employee summary; HR-owned identity, employment, team, schedule, and role facts are not editable here. | `WL-302`, `WL-400` |
+| `/insights` | Authenticated actor runs only the deterministic Insights permitted by the active Employee, Manager, HR, or System workspace. Native facts, freshness, sources, limitations, and actions remain primary. Optional model interpretation appears only when its workspace gate and provider checks pass. | `WL-1501`–`WL-1514` |
 
 ### Manager routes
 
@@ -200,8 +207,32 @@ Do not render organization-wide statistics on the employee’s primary screen.
 - `TeamAvailabilityList`
 - `MonthlyPeriodSummary`
 - `AuditEventEntry`
+- `InsightContext`
+- `InsightNativeResult`
+- `InsightQuestionForm`
+- `InsightInterpretation`
 
 Product-specific components display domain results; they do not calculate them.
+
+### Insights interaction contract
+
+- The native result comes before optional interpretation in DOM and visual order.
+- Visible context names its source and period and provides a real remove button. Removing it does
+  not submit another question.
+- The question uses a labelled form with description, bounded text area, submit, and a cancel
+  button while provider work is pending. No interaction starts from typing, focus, route load, or
+  background refresh.
+- A completed response is inserted as normal document content with headings, lists, tables, source
+  links, limitations, and native actions. It is not exposed as an application style chat log.
+- Nonstreaming output produces at most one polite completion status. Token generation, tool calls,
+  retries, elapsed time, and reasoning are not announced.
+- Focus stays on the initiating control unless validation requires the shared error summary or
+  permission loss replaces the route. A completion status may link to the result without moving
+  focus automatically.
+- Provider failure, timeout, cancellation, or invalid output leaves the deterministic result in
+  place and identifies that only the optional explanation is unavailable.
+- Workspace change, sign out, session expiry, permission loss, reload, and explicit clear remove
+  all question and conversation state before another context renders.
 
 ## 7. Semantic structure
 
@@ -426,6 +457,7 @@ Under reduced motion, preserve immediate state feedback and remove spatial trave
 | Calendar routes (`/calendar`, `/team-calendar`) | Initial loading; background refresh; empty; partial/stale data; permission denied; network/dependency failure; equivalent grid/agenda loading and selection state. |
 | Report/export routes | Initial loading; background refresh; empty/zero-result filters; partial data; permission denied; stale data; export pending/success/failure; dependency failure; session expiry. |
 | `/profile` | Initial loading; employee-linked and technical-only account variants; own-session revocation pending/success/conflict; session expiry; dependency failure; read-only employee facts. |
+| `/insights` | Initial loading; native ready; no applicable Insight; partial, provisional, stale, or suppressed evidence; question validation; provider disabled, pending, cancelled, timed out, unavailable, invalid, or rate limited; permission and workspace loss; offline; session expiry. |
 | `/system/operations` and host-operator workflows | Initial loading; healthy/degraded/unavailable dependency states; migration/version mismatch; permission denied; stale diagnostic data; safe documentation-only recovery path. |
 
 ## 17. Accessibility test matrix
@@ -534,6 +566,19 @@ Under reduced motion, preserve immediate state feedback and remove spatial trave
   bounded device/browser/fallback order, and immediate switching preserves route, safe URL and form
   state, scroll position, and selector focus while one polite status reports success or rollback.
 
+#### AC-INSIGHT-01 — Deterministic and optional interpreted Insights
+
+- Given every permitted active workspace, provider disabled, provider available, provider failure,
+  incomplete or suppressed evidence, hostile question, permission change, and long localized
+  response fixture,
+- when an actor opens `/insights`, adds or removes visible context, runs a native Insight, asks a
+  bounded question, cancels work, follows a source, or changes workspace,
+- then the deterministic result remains first and complete, questions and context stay out of URL
+  and persistence, every source and limitation is perceivable, one concise status reports the
+  optional result, focus remains deliberate, and no unavailable, ungrounded, or out of scope model
+  content is exposed at keyboard, screen reader, touch, 200 percent zoom, 320 CSS pixels, forced
+  colors, or reduced motion.
+
 #### AC-ADMIN-01 — Employee and effective-dated settings
 
 - Given new/existing employee, overlap/gap, future-effective, timezone-blocked, holiday-impact, entitlement-adjustment, and privileged-self-action fixtures,
@@ -569,6 +614,7 @@ Under reduced motion, preserve immediate state feedback and remove spatial trave
 | Approvals and monthly periods | Component/axe for queue, decision panels, blockers, confirmations, comparisons, and states; permission/concurrency integration; critical decision/lock E2E. | Keyboard and screen-reader decision flow, narrow/wide comparison, reduced motion, zoom, and self-action denial review. |
 | Profile, notifications, and employee/settings administration | Component/axe for read-only/edit variants and complex forms; permission/field-minimization integration; E2E for own-session revoke, employee creation, invitation/activation, and effective-dated setting. | Keyboard, screen-reader validation/confirmation, reflow/touch, forced colors, and combined-role review. |
 | Reports, export, and audit | Component/axe for filters/tables/empty/partial states; scoped query/export integration including formula injection; representative E2E for report/filter/export. | Keyboard sort/filter/pagination, screen-reader table smoke, narrow contained scroll/list, print review, and privacy-field inspection. |
+| Insights | Component and axe tests for native facts, context, question, sources, limitations, provider states, and workspace loss; permission, grounding, locale, failure, cancellation, URL, storage, and no-store integration; representative deterministic and local provider E2E. | Keyboard and screen reader result flow, one-announcement behavior, 320 CSS pixel and 200 percent zoom reflow, forced colors, reduced motion, touch, long German and Spanish text, provider failure, and browser privacy inspection. |
 | System administration and operations | Component/axe for diagnostic states; role-separation and redaction integration; E2E for safe account/session operation only. | Keyboard/screen-reader diagnostics, degraded-state recovery, zoom/reflow, and confirmation that host-only actions are absent. |
 
 Exact supported browser versions remain owned by `D-502`. Until that production decision is accepted, each implementation phase uses the currently supported stable project targets while preserving these browser-independent behavioral criteria.

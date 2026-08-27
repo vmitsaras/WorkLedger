@@ -2,23 +2,25 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 planned — 0 of 17 tasks complete
+**Phase progress:** Phase 15 in progress — 1 of 17 tasks complete
 **Current milestone:** Phase 15 Insights foundation sub-gate (`WL-1500`–`WL-1504`)
-**Active task:** `WL-1500` — Ratify Insights boundaries, privacy, security, evaluation, and staged gates
-**Status:** Phase 14 remains complete at `0.15.0`; Phase 15 is registered and awaits its architecture/privacy contract before implementation
+**Active task:** `WL-1501` — Implement the deterministic Insight Service and typed native-result contracts
+**Status:** `WL-1500` accepted ADR 0014 and the Phase 15 architecture, privacy, security, accessibility, retention, evaluation, operations, and staged-gate contract; deterministic implementation may begin
 **Last verified:** 2026-08-27
 
 ## Current objective
 
-Phase 15 is now registered as a staged, post-MVP extension. `WL-1500` is the only ready task and
-must ratify the product boundary, role and active-workspace scopes, prohibited uses, data flow,
-retention, egress, privacy suppression, accessibility, evaluation, operations, and release gates
-before any Insights or AI implementation begins. `WL-1501`–`WL-1504` then deliver a deterministic,
-model-independent Insights foundation. Optional local Ollama interpretation is deferred to the
-employee-only `WL-1505`–`WL-1508` pilot and remains disabled by default. Manager, report-builder,
-HR aggregate, System Insights, and optional MCP work are sequenced behind those sub-gates. General
-chat, natural-language SQL, employee scoring, illness prediction, approval recommendations,
-autonomous HR actions, and model-authored domain decisions are explicitly excluded.
+Phase 15 is a staged, post-MVP extension. Completed `WL-1500` accepts ADR 0014 and
+`docs/151-phase-15-insights-architecture-privacy-evaluation.md`. Deterministic native facts remain
+authoritative and complete without a model; one active workspace narrows every request and every
+read-only tool call reauthorizes current scope. Optional private Ollama interpretation remains
+disabled by default, employee-only at pilot start, pinned to one local model digest, and blocked
+from public or cloud egress. Questions, conversations, tool content, model input/output, and
+reasoning traces are request/session only. `WL-1501`–`WL-1504` may now deliver the deterministic
+foundation before any provider work begins. Manager, report-builder, privacy-suppressed HR,
+isolated System Insights, and optional MCP evaluation remain behind their named gates. General
+chat, natural-language SQL, unrestricted tools, scoring, prediction, recommendations, autonomous
+actions, and model-authored domain decisions remain excluded.
 
 Phase 14 remains complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
 foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
@@ -145,6 +147,15 @@ remains an unnumbered draft.
   route-state contract with a focused `h1`, safe recovery links, and a real retry button only for
   unexpected failures. A standalone top-level boundary also covers self-context startup failures
   before the application or authentication shell exists.
+- Phase 15 Insights are read-only, active-workspace-scoped explanations over deterministic native
+  results. The native result remains complete without a model and owns every fact, source,
+  limitation, and action.
+- Optional Phase 15 model interpretation is disabled by default and limited to a private,
+  operator-controlled Ollama origin with a pinned local model digest. Public or cloud provider
+  egress requires a superseding ADR and full privacy/security gate.
+- Insight questions, conversations, tool content, model input/output, and reasoning traces are not
+  persisted. Each tool reauthorizes current scope, and model output cannot calculate, authorize,
+  decide, score, recommend, or write.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -2736,11 +2747,36 @@ remains an unnumbered draft.
   local AI is optional and disabled by default; general chat, natural-language SQL, scoring,
   prediction, recommendations, autonomous decisions, and persistent global AI UI are excluded.
 
+**2026-08-27 — WL-1500 Insights architecture, privacy, and evaluation gate**
+
+- Accepted ADR 0014. Deterministic native results own facts, scope, period, freshness, sources,
+  limitations, and native actions; no model can calculate, authorize, decide, score, recommend, or
+  write.
+- Fixed one active Employee, Manager, HR, or System workspace per request. Every read-only tool
+  execution reauthorizes current PostgreSQL scope, and combined roles never merge model context.
+- Limited Phase 15 provider work to one disabled-by-default, operator-controlled private Ollama
+  origin and one pinned local model digest after the foundation gate. Public origins, cloud models,
+  redirects, model auto-pull, and silent external egress are prohibited.
+- Made questions, conversations, tool arguments/results, model input/output, and reasoning traces
+  request or browser-session only. Content-free provider diagnostics use the existing operational
+  log retention class, and evaluation fixtures must remain synthetic.
+- Set the HR privacy floor at 10 eligible people, 3 contributing cases where applicable, and a
+  complementary group of at least 10 before any aggregate reaches a model. `WL-1512` may only make
+  that boundary stricter without a superseding decision.
+- Defined the native foundation, employee local AI pilot, later role, optional MCP, and final Phase
+  15 release gates. The employee golden set uses 24 semantic questions in all three locales, three
+  repeated runs, and zero-tolerance fact, scope, source, action, unsupported-claim, and leakage
+  thresholds.
+- Synchronized the product charter, scope/non-goals, permission matrix, architecture, UX and
+  accessibility contract, security/data flow and threats, retention, roadmap, definition of done,
+  open decisions, task board, TODO, and project status. No product code, dependency, package,
+  migration, provider request, manifest, or version changed.
+
 ## Current blockers
 
-Phase 15 has no scheduling blocker, but implementation is intentionally blocked on completion of
-`WL-1500` because the existing security contract requires an ADR and new data-flow/threat review
-before introducing AI or new egress. Exact partial-day work-versus-absence overlap,
+Phase 15 has no scheduling blocker. `WL-1501` may begin the provider-independent Insight Service
+and typed native-result contracts under ADR 0014. Provider, manager, report-builder, HR, system,
+and MCP tasks remain blocked by their named sub-gates. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
 domain or repository facts; Today does not guess them from minute totals or an otherwise valid
 overnight session. The earlier Phase 12 and task-specific Phase 13 images remain historical and
@@ -2753,10 +2789,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1500`: ratify the Insights product and architecture boundary, including deterministic
-result ownership, active-workspace authorization, provider/egress configuration, prompt and trace
-retention, evaluation thresholds, HR cohort suppression, accessibility behavior, and the two
-staged sub-gates. The portfolio presentation scope remains preserved in
+Execute `WL-1501`: implement the provider-independent deterministic Insight Service and typed
+native-result contracts for facts, scope, period, freshness, sources, limitations, and native
+actions. The portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as a separate unnumbered draft.
 
 ## Update rules

@@ -64,6 +64,8 @@ Organizations often split attendance, flexible-time balances, vacation, sickness
 6. **Configurable, not legally presumptive:** Policies are organizational configuration, not hardcoded claims of legal compliance.
 7. **Self-hostable:** Installation, backup, restore, upgrade, and diagnostics are part of the product.
 8. **Portfolio-grade:** Architecture, tests, UX decisions, accessibility, and tradeoffs are visible and documented.
+9. **Model optional:** Deterministic WorkLedger facts remain useful and authoritative without an AI
+   provider. A model may explain bounded facts but never decide, score, or act for a person.
 
 ## Primary success outcomes
 
@@ -92,6 +94,13 @@ Organizations often split attendance, flexible-time balances, vacation, sickness
 | SC-009 | Every protected endpoint passes the actor/scope cases defined in `docs/02-roles-permissions.md`, including self-approval, former-scope, deactivated-account, system-administrator, and cross-organization denial cases. | Permission-matrix integration suite. |
 | SC-010 | All critical workflows in `docs/05-ux-accessibility.md` are keyboard complete, pass configured automated accessibility checks, and have no unresolved critical accessibility blocker after screen-reader, zoom/reflow, forced-colors, reduced-motion, and touch review. | Automated reports and recorded manual review notes. |
 | SC-011 | A clean self-hosted deployment can be configured without committed secrets, migrated, health-checked, backed up, and restored with verified record and ledger integrity. | Production-style deployment, backup/restore, migration, and integrity-check evidence. |
+
+## Post MVP Insights success criterion
+
+A role scoped Insight succeeds only when the actor can reach the same authoritative facts, sources,
+limitations, and native actions without a model. Optional interpretation must preserve current
+permission scope, disclose its sources and limitations, make no write or employment decision, and
+fail back to the deterministic result. ADR 0014 and the Phase 15 gates own this evidence.
 
 ## Product success evidence
 

@@ -105,9 +105,28 @@ The MVP is the complete set of capabilities listed below. A capability is not co
 - Kiosk mode.
 - Organization branding.
 - Additional locales and per-employee timezone display.
-- Role-scoped, read-only WorkLedger Insights built on deterministic native results, with optional
-  local natural-language interpretation only after a dedicated architecture, privacy, security,
-  accessibility, evaluation, and operations gate.
+
+## Accepted Phase 15 extension
+
+WorkLedger Insights is a post MVP, role scoped, read only extension governed by ADR 0014. The
+deterministic native result is complete without a model. Optional private Ollama interpretation is
+disabled by default, begins with employee self scope only after the native foundation gate, and may
+explain but never calculate, decide, score, or write.
+
+Later manager, report, HR aggregate, system, and MCP surfaces remain outside the accepted boundary
+until their named Phase 15 dependencies and separate privacy or threat gates pass.
+
+### Phase 15 non-goals
+
+- General purpose chat, persistent global assistant UI, and hidden page or DOM capture.
+- Natural language SQL, arbitrary database access, arbitrary report queries, shell, file, network,
+  export, notification, audit, or write tools.
+- Employee ranking, productivity or absence scoring, illness prediction, performance, discipline,
+  staffing, approval, or policy recommendations.
+- Model authored calculations, legal conclusions, workflow transitions, or autonomous HR actions.
+- Stored prompts, conversation history, reasoning traces, or production data evaluation fixtures.
+- External or cloud model providers, cloud Ollama models, and public provider egress without a
+  superseding ADR and complete privacy, security, retention, and operations review.
 
 ## MVP boundary clarifications
 

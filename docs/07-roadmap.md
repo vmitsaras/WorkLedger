@@ -553,3 +553,81 @@ the same product-quality gate.
 - [x] Project status, roadmap, task board, decisions, implementation evidence, and operations
   documentation are current.
 - [x] The gate advances every workspace manifest to `0.15.0` only after every Phase 14 task passes.
+
+---
+
+# Phase 15 — WorkLedger Insights and Local AI
+
+## Objective
+
+Add role scoped, read only WorkLedger Insights whose deterministic native facts remain complete
+without a model. Permit optional private Ollama interpretation only after a separate employee pilot
+gate, then add later roles through purpose specific permission, privacy, evaluation, accessibility,
+and operations evidence.
+
+## Dependencies
+
+- Phase 14 is complete and every workspace manifest is at `0.15.0`.
+- ADR 0014 and `docs/151-phase-15-insights-architecture-privacy-evaluation.md` define the accepted
+  authority, scope, data flow, egress, retention, grounding, accessibility, evaluation, and staged
+  gate contracts.
+- Existing domain, immutable history, ledger, permission, privacy, localization, route state,
+  accessibility, operations, and self hosting contracts remain authoritative.
+- No provider, manager, HR, system, report builder, or MCP task may bypass its listed prerequisite
+  gate.
+
+## Deliverables
+
+- A deterministic Insight Service and typed native result contract.
+- Employee balance change, monthly submission blocker, leave projection, and Today explanation
+  Insights.
+- A dedicated accessible Insights route plus visible bounded contextual entry points.
+- A deny by default read only Insight tool registry with active workspace authorization on every
+  execution.
+- An optional private Ollama adapter that is disabled by default and fails without affecting native
+  Insights.
+- Grounded employee interpretation with sources, limitations, native actions, and a synthetic
+  multilingual golden evaluation set.
+- Later current manager summaries, allowlisted report specifications, privacy suppressed HR
+  aggregates, isolated technical diagnostics, and optional MCP evaluation behind separate gates.
+
+## Insights foundation sub gate
+
+- [ ] `WL-1500` through `WL-1504` are complete.
+- [ ] Provider mode `disabled` is the complete and tested product path, with no model request,
+  prompt persistence, or provider dependency.
+- [ ] Exact domain values, scope, period, freshness, sources, limitations, and native actions pass
+  deterministic fixtures.
+- [ ] Context is visible, removable, bounded, and absent from sensitive URL or persistent browser
+  state.
+- [ ] The Insights route passes every supported locale, keyboard, focus, announcement, reflow,
+  forced color, reduced motion, touch, offline, partial, stale, empty, denied, and failure state.
+
+## Employee local AI pilot sub gate
+
+- [ ] `WL-1505` through `WL-1508` are complete after the foundation sub gate.
+- [ ] The provider remains disabled by default and uses only one exact private operator controlled
+  Ollama origin plus one pinned local model digest when enabled.
+- [ ] Every tool is purpose specific, read only, schema validated, and reauthorized from current
+  employee self scope on every call.
+- [ ] Questions and bounded prior turns remain session only. Prompt, tool, result, output, and
+  reasoning content is absent from storage, logs, audit, backup, and analytics.
+- [ ] The 24 question, three locale, three repetition golden set meets every zero tolerance
+  correctness, scope, source, action, unsupported claim, and leakage threshold in ADR 0014.
+- [ ] Timeout, cancellation, invalid output, model drift, and provider failure leave the native
+  result usable and accessible.
+
+## Phase 15 release gate
+
+- [ ] Every accepted Phase 15 role and provider disabled/enabled path passes its named prerequisite
+  and evidence gate.
+- [ ] Manager scope is current reports only, HR aggregation is suppressed before model context, and
+  System Insights contains technical data only.
+- [ ] No unrestricted query, SQL, write, scoring, prediction, recommendation, autonomous action,
+  public provider, cloud model, or unreviewed MCP surface exists.
+- [ ] Multilingual, accessibility, security, privacy, retention, operations, model failure, upgrade,
+  rollback, and browser privacy evidence has no open P0/P1 or unresolved Critical/High finding.
+- [ ] Project status, roadmap, task board, ADR, product, permission, architecture, accessibility,
+  security, retention, evaluation, and operations documentation is current.
+- [ ] The gate advances every workspace manifest to `0.16.0` only after every accepted Phase 15 task
+  passes.

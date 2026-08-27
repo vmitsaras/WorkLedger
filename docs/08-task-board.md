@@ -260,11 +260,14 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 Phase 15 is staged so the deterministic product value does not depend on an LLM. `WL-1500`–`WL-1504`
 form the Insights foundation sub-gate; `WL-1505`–`WL-1508` form the employee-only local AI pilot
 sub-gate. Manager, report-builder, HR, system, and optional MCP work cannot bypass those gates.
+ADR 0014 and `docs/151-phase-15-insights-architecture-privacy-evaluation.md` now fix the accepted
+authority, active-workspace, prohibited-use, egress, retention, grounding, accessibility,
+evaluation, operations, and staged-gate boundary.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 |---|---|---|---|---|
-| WL-1500 | Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts | WL-1410 | Accepted ADR and updated product, permission, security/data-flow, retention, accessibility, evaluation, and operations contracts; deterministic foundation and employee AI pilot gates are explicit | Ready |
-| WL-1501 | Implement the deterministic Insight Service and typed native-result contracts | WL-1500 | Framework-independent, model-independent results expose answer facts, scope, period, freshness, sources, limitations, and valid native actions; domain calculations remain authoritative | Not started |
+| WL-1500 | Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts | WL-1410 | ADR 0014; `docs/151-phase-15-insights-architecture-privacy-evaluation.md`; synchronized product, permission, architecture, accessibility, security, retention, evaluation, operations, roadmap, and project-memory contracts | Complete |
+| WL-1501 | Implement the deterministic Insight Service and typed native-result contracts | WL-1500 | Framework-independent, model-independent results expose answer facts, scope, period, freshness, sources, limitations, and valid native actions; domain calculations remain authoritative | Ready |
 | WL-1502 | Implement employee balance-change, submission-blocker, leave-projection, and Today-explanation insights | WL-1501 | Exact integer-minute/date fixtures, posted-versus-provisional semantics, source links, permission tests, and no invented policy | Not started |
 | WL-1503 | Build the accessible, role-scoped Insights route and native result presentation | WL-1501, WL-1502 | Native results are primary; keyboard, focus, announcements, error/loading/empty/unavailable states, reflow, forced-colors, reduced-motion, and all supported locales pass | Not started |
 | WL-1504 | Add bounded contextual entry points from Today, My Time, My Balances, Requests, and Reports, then execute the Insights foundation sub-gate | WL-1502, WL-1503 | Visible removable context, no DOM/data dump, safe URL/session state, deterministic operation without Ollama, and signed foundation evidence | Not started |

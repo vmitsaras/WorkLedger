@@ -58,6 +58,24 @@ WorkLedger requires explicit configuration for eight data retention classes befo
 7. **TECHNICAL_AUDIT** — Security/technical audit evidence, access logs
 8. **DATABASE_BACKUPS** — Encrypted database backup copies and manifests
 
+### Phase 15 Insight and AI data
+
+ADR 0014 adds no ninth retention class and no prompt or conversation table. Native Insight
+requests/results, questions, bounded prior turns, tool arguments/results, model input/output, and
+reasoning traces remain in request memory or the current browser session only. They are never
+written to PostgreSQL, operational logs, audit, analytics, exports, backups, or restored data.
+
+Provider diagnostics may retain only content-free facts such as provider kind, configured model
+digest state, safe outcome code, request ID, duration, token counts, tool codes, validation outcome,
+cancellation, and retry count. Those facts use `OPERATIONAL_LOGS` and its deployment-configured
+purge behavior. They contain no prompt, answer, domain value, identity, tool argument/result, or
+source reference.
+
+Golden evaluation fixtures are synthetic repository files. Copying a production question, prompt,
+record, source identifier, model trace, or response into a fixture is prohibited. Restored
+environments must keep the provider disabled until retention reapplication, network isolation,
+model digest, and evaluation evidence are reverified.
+
 ### Retention Behaviors
 
 Each class uses one of three behaviors:
@@ -272,6 +290,8 @@ This preserves audit continuity per D-500 without defeating the purpose of minim
 - Minimization tests verifying integrity preservation (foreign keys, ledger equations, snapshot totals intact)
 - User export authorization tests (own data only, expiry enforcement)
 - Backup restore + retention reapplication integration test
+- Phase 15 non-persistence tests for Insight questions, prompts, conversations, tool content, model
+  content, browser storage, operational logs, audit, backup, and restored environments
 
 ## References
 
@@ -280,6 +300,8 @@ This preserves audit continuity per D-500 without defeating the purpose of minim
 - **Domain Rules**: docs/03-domain-rules.md section 17 — Evolution, retention, migration guidance
 - **Backup/Restore**: docs/104-backup-and-clean-restore.md — Retention reapplication before activation
 - **Threat Model**: docs/96-phase-10-threat-permission-baseline.md T-011, T-014 — Minimization verification
+- **Insights and Local AI**: docs/adr/0014-deterministic-insights-and-local-ai-boundary.md — Request
+  lifetime content and content-free operational diagnostics
 
 ## Evidence
 

@@ -104,6 +104,10 @@ Relevant states exist and are tested or reviewed:
 - Threat model is updated for a new surface.
 - Authentication/session/CSRF/proxy/cache controls remain at or above the accepted security profile.
 - Retention, user control, backup/restore, and restored-credential behavior are tested or explicitly not applicable.
+- Insight work names every fact source, reauthorizes the active workspace and each tool execution,
+  and preserves the deterministic native result when optional interpretation fails.
+- Model work has no unrestricted read or write tool, no external or cloud egress, no prompt or
+  transcript persistence, no ungrounded fact/action, and no cross-workspace or small-cohort leak.
 
 ## 9. Tests
 
@@ -114,6 +118,8 @@ Relevant states exist and are tested or reviewed:
 - Regression tests reproduce fixed bugs.
 - Tests use realistic times, schedules, and permission scopes.
 - Time-dependent tests use an injected/fixed clock.
+- Insight and model evaluation uses synthetic fixtures, a pinned provider/model configuration,
+  zero-tolerance correctness and privacy thresholds, and provider-disabled failure evidence.
 
 ## 10. Verification commands
 
