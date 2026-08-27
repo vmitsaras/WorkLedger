@@ -5,6 +5,7 @@ import { test } from 'node:test';
 
 import {
   EXPECTED_CONFIG_EXPORTS,
+  EXPECTED_CONTRACT_EXPORTS,
   EXPECTED_I18N_EXPORTS,
   EXPECTED_NODE_VERSION,
   EXPECTED_PACKAGE_EXPORTS,
@@ -53,11 +54,13 @@ function createProject(expectedProject) {
           : structuredClone(
               expectedProject.directory === 'packages/config'
                 ? EXPECTED_CONFIG_EXPORTS
-                : expectedProject.directory === 'packages/i18n'
-                  ? EXPECTED_I18N_EXPORTS
-                  : expectedProject.directory === 'packages/ui'
-                    ? EXPECTED_UI_EXPORTS
-                    : EXPECTED_PACKAGE_EXPORTS,
+                : expectedProject.directory === 'packages/contracts'
+                  ? EXPECTED_CONTRACT_EXPORTS
+                  : expectedProject.directory === 'packages/i18n'
+                    ? EXPECTED_I18N_EXPORTS
+                    : expectedProject.directory === 'packages/ui'
+                      ? EXPECTED_UI_EXPORTS
+                      : EXPECTED_PACKAGE_EXPORTS,
             ),
       scripts: {
         build:

@@ -28,8 +28,8 @@ const negativeFixtures = [
 test('accepts every current workspace source import', async () => {
   assert.deepEqual(await checkWorkspaceBoundaries(repositoryRoot), {
     errors: [],
-    fileCount: 317,
-    importCount: 1777,
+    fileCount: 321,
+    importCount: 1793,
   });
 });
 
@@ -60,6 +60,24 @@ test('allows the i18n pseudo-locale only in test source', async () => {
 
   assert.deepEqual(accepted, { errors: [], importCount: 1 });
   assert.equal(rejected.errors[0]?.code, 'production-i18n-testing-import');
+});
+
+test('allows the explicit Insights contract surface without allowing other deep imports', async () => {
+  const accepted = await validateSourceImports({
+    projectDirectory: 'apps/api',
+    relativeFile: 'src/insights.ts',
+    repositoryDirectory: repositoryRoot,
+    source: "import { insightRequestSchema } from '@workledger/contracts/insights';",
+  });
+  const rejected = await validateSourceImports({
+    projectDirectory: 'apps/api',
+    relativeFile: 'src/private-contract.ts',
+    repositoryDirectory: repositoryRoot,
+    source: "import { privateSchema } from '@workledger/contracts/private';",
+  });
+
+  assert.deepEqual(accepted, { errors: [], importCount: 1 });
+  assert.equal(rejected.errors[0]?.code, 'deep-import');
 });
 
 for (const [fixtureName, projectDirectory, relativeFile, expectedCode] of negativeFixtures) {

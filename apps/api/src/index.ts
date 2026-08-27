@@ -85,6 +85,16 @@ export {
   type AuthorizedEmployeeCollection,
   type EmployeeAuthorizationRequest,
 } from './authorization/service.js';
+export {
+  createInsightService,
+  parseInsightIdentity,
+  type EmployeeInsightAuthority,
+  type InsightHandler,
+  type InsightHandlerInput,
+  type InsightHandlers,
+  type InsightIdentity,
+  type InsightService,
+} from './insights/insight-service.js';
 export type { RuntimeConfig, RuntimeConfigSummary, RuntimeEnvironment } from './config.js';
 
 export const workspacePackage = '@workledger/api' as const;

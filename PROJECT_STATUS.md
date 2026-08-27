@@ -2,22 +2,23 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 1 of 17 tasks complete
+**Phase progress:** Phase 15 in progress — 2 of 17 tasks complete
 **Current milestone:** Phase 15 Insights foundation sub-gate (`WL-1500`–`WL-1504`)
-**Active task:** `WL-1501` — Implement the deterministic Insight Service and typed native-result contracts
-**Status:** `WL-1500` accepted ADR 0014 and the Phase 15 architecture, privacy, security, accessibility, retention, evaluation, operations, and staged-gate contract; deterministic implementation may begin
+**Active task:** `WL-1502` — Implement the four deterministic employee Insight computations
+**Status:** `WL-1501` completed the strict native request/result contract and the repeatable-read, current-scope Employee Insight Service; authoritative balance, blocker, leave, and Today computations may begin
 **Last verified:** 2026-08-27
 
 ## Current objective
 
 Phase 15 is a staged, post-MVP extension. Completed `WL-1500` accepts ADR 0014 and
-`docs/151-phase-15-insights-architecture-privacy-evaluation.md`. Deterministic native facts remain
-authoritative and complete without a model; one active workspace narrows every request and every
-read-only tool call reauthorizes current scope. Optional private Ollama interpretation remains
-disabled by default, employee-only at pilot start, pinned to one local model digest, and blocked
-from public or cloud egress. Questions, conversations, tool content, model input/output, and
-reasoning traces are request/session only. `WL-1501`–`WL-1504` may now deliver the deterministic
-foundation before any provider work begins. Manager, report-builder, privacy-suppressed HR,
+`docs/151-phase-15-insights-architecture-privacy-evaluation.md`. Completed `WL-1501` now supplies
+strict typed Employee Insight requests, closed native result validation, and a repeatable-read
+service that reloads current PostgreSQL authority before every handler. Deterministic native facts
+remain authoritative and complete without a model; one active workspace narrows every request and
+every later read-only tool call must reauthorize current scope. `WL-1502` may now implement the four
+employee computations before `WL-1503` adds the endpoint and route. Optional private Ollama
+interpretation remains disabled by default, employee-only at pilot start, pinned to one local model
+digest, and blocked from public or cloud egress. Manager, report-builder, privacy-suppressed HR,
 isolated System Insights, and optional MCP evaluation remain behind their named gates. General
 chat, natural-language SQL, unrestricted tools, scoring, prediction, recommendations, autonomous
 actions, and model-authored domain decisions remain excluded.
@@ -156,6 +157,14 @@ remains an unnumbered draft.
 - Insight questions, conversations, tool content, model input/output, and reasoning traces are not
   persisted. Each tool reauthorizes current scope, and model output cannot calculate, authorize,
   decide, score, recommend, or write.
+- Employee Insight requests accept only one allowlisted kind with its exact date, month, or date
+  range plus optional bounded visible context. Caller-supplied actor, organization, role, prose,
+  model, and raw-filter fields are rejected.
+- The Employee Insight Service reloads current PostgreSQL account, link, role, employee, and
+  organization scope inside one repeatable-read transaction. It constructs kind, `SELF` scope,
+  period, timezone, and capture metadata itself, then validates every handler result before return.
+- Insight runtime schemas use the explicit `@workledger/contracts/insights` surface while the root
+  keeps type-only exports, preserving the accepted browser bundle baseline until the route exists.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -2772,15 +2781,38 @@ remains an unnumbered draft.
   open decisions, task board, TODO, and project status. No product code, dependency, package,
   migration, provider request, manifest, or version changed.
 
+**2026-08-27 — WL-1501 deterministic Insight Service and typed native results (complete)**
+
+- Added strict kind-specific employee requests and closed native results for exact scope, period,
+  timezone, capture freshness, typed facts, explicit qualifiers, sources, limitations, and native
+  actions. Cross-reference, source-destination, period-kind, workspace-scope, safe-integer, and
+  unknown-field checks fail closed.
+- Added a repeatable-read API service that reloads current account, employee link, role, employee
+  state, organization, and timezone on every run. Existing policy actions grant only `SELF` scope,
+  while technical-only, deactivated, permission-lost, missing-handler, and invalid-result cases are
+  rejected before a result can leave the service.
+- Kept account, employee, organization, and role identifiers in server authority only. No endpoint,
+  UI, database migration, dependency, provider, model, network request, persistence path, audit
+  event, or log content was added.
+- Moved runtime schemas to the explicit `@workledger/contracts/insights` export after the initial
+  root export exceeded the browser raw-JavaScript budget. The final production graph returns to the
+  accepted 435,303 largest-chunk, 1,004,370 raw, 258,039 gzip, and 50,242 CSS-byte baseline.
+- Formatting, lint, strict TypeScript, 54 tooling tests, 416 unit/component tests, the 14-file
+  canonical PostgreSQL suite with 27 passes and one intentional skip, and the production/workspace
+  build pass. The broad integration command still exposes unrelated existing fixture-label and
+  parallel API failures recorded in `docs/152-wl-1501-deterministic-insight-service-contracts.md`.
+
 ## Current blockers
 
-Phase 15 has no scheduling blocker. `WL-1501` may begin the provider-independent Insight Service
-and typed native-result contracts under ADR 0014. Provider, manager, report-builder, HR, system,
-and MCP tasks remain blocked by their named sub-gates. Exact partial-day work-versus-absence overlap,
-calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
-domain or repository facts; Today does not guess them from minute totals or an otherwise valid
-overnight session. The earlier Phase 12 and task-specific Phase 13 images remain historical and
-intentionally differ from the current green `WL-1312` visual gate.
+Phase 15 has no scheduling blocker. `WL-1502` may implement the four provider-independent employee
+Insight computations through the completed `WL-1501` service and contracts. Provider, manager,
+report-builder, HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
+`pnpm test:integration` command remains red on unrelated existing fixture-label failures and two
+parallel API responses; the canonical isolated `pnpm db:test` gate is green. Exact partial-day
+work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
+still require authoritative domain or repository facts; Today does not guess them from minute
+totals or an otherwise valid overnight session. The earlier Phase 12 and task-specific Phase 13
+images remain historical and intentionally differ from the current green `WL-1312` visual gate.
 `D-502` remains the broader exact retail assistive-technology matrix rather than a whole-product
 conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for Testing and Safari.
 The temporary Astro backup is recoverable at
@@ -2789,9 +2821,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1501`: implement the provider-independent deterministic Insight Service and typed
-native-result contracts for facts, scope, period, freshness, sources, limitations, and native
-actions. The portfolio presentation scope remains preserved in
+Execute `WL-1502`: implement employee balance-change, submission-blocker, leave-projection, and
+Today-explanation Insights with authoritative integer-minute, date, freshness, source, limitation,
+and action fixtures. The portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as a separate unnumbered draft.
 
 ## Update rules

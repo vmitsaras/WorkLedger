@@ -598,6 +598,27 @@ export {
   type SystemDiagnosticsResponse,
 } from './system-operations.js';
 
+export type {
+  BalanceChangeInsightRequest,
+  InsightFact,
+  InsightFactValue,
+  InsightFreshnessBoundary,
+  InsightKind,
+  InsightLimitation,
+  InsightNativeAction,
+  InsightNativePayload,
+  InsightNativeResult,
+  InsightPeriod,
+  InsightRequest,
+  InsightScopeKind,
+  InsightSource,
+  InsightVisibleContext,
+  InsightWorkspace,
+  LeaveProjectionInsightRequest,
+  SubmissionBlockersInsightRequest,
+  TodayExplanationInsightRequest,
+} from './insights.js';
+
 export {
   minimizationAuditFactSchema,
   retentionBehaviorSchema,

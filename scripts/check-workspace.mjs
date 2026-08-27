@@ -106,6 +106,14 @@ export const EXPECTED_CONFIG_EXPORTS = {
   './vitest': './vitest/index.js',
 };
 
+export const EXPECTED_CONTRACT_EXPORTS = {
+  ...EXPECTED_PACKAGE_EXPORTS,
+  './insights': {
+    types: './dist/insights.d.ts',
+    import: './dist/insights.js',
+  },
+};
+
 export const EXPECTED_UI_EXPORTS = {
   ...EXPECTED_PACKAGE_EXPORTS,
   './styles.css': './src/styles.css',
@@ -554,11 +562,13 @@ export function validateWorkspace(state) {
       const expectedExports =
         directory === 'packages/config'
           ? EXPECTED_CONFIG_EXPORTS
-          : directory === 'packages/i18n'
-            ? EXPECTED_I18N_EXPORTS
-            : directory === 'packages/ui'
-              ? EXPECTED_UI_EXPORTS
-              : EXPECTED_PACKAGE_EXPORTS;
+          : directory === 'packages/contracts'
+            ? EXPECTED_CONTRACT_EXPORTS
+            : directory === 'packages/i18n'
+              ? EXPECTED_I18N_EXPORTS
+              : directory === 'packages/ui'
+                ? EXPECTED_UI_EXPORTS
+                : EXPECTED_PACKAGE_EXPORTS;
       if (!isDeepStrictEqual(manifest.exports, expectedExports)) {
         errors.push(`${directory} must expose only its accepted explicit public surfaces.`);
       }
