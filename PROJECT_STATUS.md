@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 2 of 17 tasks complete
+**Phase progress:** Phase 15 in progress — 3 of 17 tasks complete
 **Current milestone:** Phase 15 Insights foundation sub-gate (`WL-1500`–`WL-1504`)
-**Active task:** `WL-1502` — Implement the four deterministic employee Insight computations
-**Status:** `WL-1501` completed the strict native request/result contract and the repeatable-read, current-scope Employee Insight Service; authoritative balance, blocker, leave, and Today computations may begin
+**Active task:** `WL-1503` — Build the accessible, role-scoped Insights route and native result presentation
+**Status:** `WL-1502` completed the four authoritative employee Insight computations with exact posted, projected, provisional, incomplete, freshness, limitation, source, action, privacy, and current-permission evidence
 **Last verified:** 2026-08-27
 
 ## Current objective
@@ -15,8 +15,10 @@ Phase 15 is a staged, post-MVP extension. Completed `WL-1500` accepts ADR 0014 a
 strict typed Employee Insight requests, closed native result validation, and a repeatable-read
 service that reloads current PostgreSQL authority before every handler. Deterministic native facts
 remain authoritative and complete without a model; one active workspace narrows every request and
-every later read-only tool call must reauthorize current scope. `WL-1502` may now implement the four
-employee computations before `WL-1503` adds the endpoint and route. Optional private Ollama
+every later read-only tool call must reauthorize current scope. Completed `WL-1502` now supplies
+authoritative balance-change, submission-blocker, leave-projection, and Today-explanation handlers
+without inventing policy or exposing protected identifiers. `WL-1503` may now add the endpoint,
+route, and accessible localized native presentation. Optional private Ollama
 interpretation remains disabled by default, employee-only at pilot start, pinned to one local model
 digest, and blocked from public or cloud egress. Manager, report-builder, privacy-suppressed HR,
 isolated System Insights, and optional MCP evaluation remain behind their named gates. General
@@ -165,6 +167,19 @@ remains an unnumbered draft.
   period, timezone, and capture metadata itself, then validates every handler result before return.
 - Insight runtime schemas use the explicit `@workledger/contracts/insights` surface while the root
   keeps type-only exports, preserving the accepted browser bundle baseline until the route exists.
+- Employee balance Insights derive posted opening, range change, and closing values only from the
+  captured time account ledger. Complete unposted daily projections contribute to a separately
+  qualified projected range change, while incomplete dates are excluded and materially disclosed.
+- Employee leave Insights calculate each configured entitlement account independently at the
+  requested effective date. Account names may label their own authorized sources, but WorkLedger
+  does not sum unlike accounts or fabricate a zero balance when no entitlement ledger exists.
+- Employee submission Insights reuse the monthly projection pipeline and expose ordered blocker
+  codes through purpose aliases only. Employee Today Insights reuse the complete Today pipeline,
+  accept only the organization local current date, and keep prior-date posted flexible time apart
+  from provisional or incomplete current-day facts.
+- Deterministic Employee Insight payloads omit account, employee, organization, request, ledger,
+  daily record, monthly period, absence type, punch event, note, and policy identifiers or details.
+  Sources and details stay bounded, and current permission loss is checked before each computation.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -2802,13 +2817,37 @@ remains an unnumbered draft.
   build pass. The broad integration command still exposes unrelated existing fixture-label and
   parallel API failures recorded in `docs/152-wl-1501-deterministic-insight-service-contracts.md`.
 
+**2026-08-27 — WL-1502 deterministic employee Insight computations (complete)**
+
+- Added all four Employee Insight handlers. Balance change returns exact captured ledger values and
+  a separately qualified complete unposted projection. Leave projection calculates every
+  configured entitlement account independently. Submission blockers reuse the monthly projection
+  service. Today explanation reuses the complete Today calculation pipeline for the organization
+  local current date.
+- Added bounded source labels for authorized leave account names, purpose-only source and action
+  aliases, explicit posted, projected, provisional, reserved, incomplete, and unavailable
+  qualifiers, freshness boundaries, and material limitations. No protected domain identifier,
+  punch event, note, policy detail, or invented cross-account total enters a native result.
+- Added pure fixture coverage for exact integer-minute and state semantics plus a real PostgreSQL
+  fixture that computes every kind, checks Berlin date behavior and purpose-minimized output, and
+  denies execution after current permission loss. The Today and monthly projection refactors reuse
+  existing authoritative logic without changing their external behavior.
+- Formatting, lint, strict TypeScript, 54 tooling tests, 420 unit/component tests, 13 broad
+  environment-independent integration tests, the 15-file canonical PostgreSQL suite with 28
+  passes and one intentional skip, 47 Playwright tests with one historical skip, and the
+  production/workspace build pass. Source boundaries cover 324 files and 1,817 imports. The
+  browser graph remains at the accepted baseline.
+- Added `docs/153-wl-1502-employee-insight-computations.md`. No endpoint, page, migration,
+  dependency, provider, model, network request, write action, persistence path, or version change
+  was added.
+
 ## Current blockers
 
-Phase 15 has no scheduling blocker. `WL-1502` may implement the four provider-independent employee
-Insight computations through the completed `WL-1501` service and contracts. Provider, manager,
-report-builder, HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
-`pnpm test:integration` command remains red on unrelated existing fixture-label failures and two
-parallel API responses; the canonical isolated `pnpm db:test` gate is green. Exact partial-day
+Phase 15 has no scheduling blocker. `WL-1503` may build the Employee Insights endpoint, route, and
+accessible localized native presentation through the completed `WL-1501` and `WL-1502` service,
+contract, and handler foundation. Provider, manager, report-builder, HR, system, and MCP tasks
+remain blocked by their named sub-gates. The broad environment-independent integration command and
+the canonical isolated `pnpm db:test` gate are green. Exact partial-day
 work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
 still require authoritative domain or repository facts; Today does not guess them from minute
 totals or an otherwise valid overnight session. The earlier Phase 12 and task-specific Phase 13
@@ -2821,9 +2860,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1502`: implement employee balance-change, submission-blocker, leave-projection, and
-Today-explanation Insights with authoritative integer-minute, date, freshness, source, limitation,
-and action fixtures. The portfolio presentation scope remains preserved in
+Execute `WL-1503`: build the accessible, role-scoped Insights endpoint and route with localized
+native result presentation, private no-store transport, keyboard and focus behavior, announcements,
+and complete loading, empty, unavailable, denied, and error states. The portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as a separate unnumbered draft.
 
 ## Update rules

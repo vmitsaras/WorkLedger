@@ -552,7 +552,7 @@ export function parseMonthlyPeriodId(value: string): DomainId<'MonthlyPeriod'> {
   return periodId.value;
 }
 
-function projectMonthlyPeriod(
+export function projectMonthlyPeriod(
   source: MonthlyPeriodProjectionSourceRecord,
   currentLocalDate: LocalDate,
   timeZone: string,

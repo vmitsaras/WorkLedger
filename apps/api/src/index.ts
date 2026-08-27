@@ -95,6 +95,17 @@ export {
   type InsightIdentity,
   type InsightService,
 } from './insights/insight-service.js';
+export {
+  balanceChangeInsightHandler,
+  createBalanceChangePayload,
+  createEmployeeInsightHandlers,
+  createLeaveProjectionPayload,
+  createSubmissionBlockersPayload,
+  createTodayExplanationPayload,
+  leaveProjectionInsightHandler,
+  submissionBlockersInsightHandler,
+  todayExplanationInsightHandler,
+} from './insights/employee-insight-handlers.js';
 export type { RuntimeConfig, RuntimeConfigSummary, RuntimeEnvironment } from './config.js';
 
 export const workspacePackage = '@workledger/api' as const;

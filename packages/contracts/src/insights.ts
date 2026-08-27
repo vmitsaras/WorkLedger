@@ -236,6 +236,7 @@ export const insightFactSchema = z
 export const insightSourceSchema = z.strictObject({
   destination: insightNativeActionDestinationSchema,
   kind: insightSourceKindSchema,
+  label: z.string().trim().min(1).max(200).optional(),
   period: insightPeriodSchema,
   reference: opaqueInsightReferenceSchema,
 });
