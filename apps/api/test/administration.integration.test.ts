@@ -163,6 +163,9 @@ integrationTest(
       expect(createEmployee.payload).not.toMatch(/token|activationUrl/iu);
       expect(invitations).toHaveLength(1);
       expect(invitations[0]?.locale).toBe('de-DE');
+      expect(invitations[0]?.subject).toBe('Ihr WorkLedger-Konto aktivieren');
+      expect(invitations[0]?.text).toContain('Hallo Jordan Lee,');
+      expect(invitations[0]?.text).not.toMatch(/password|Passwort/iu);
       const activationToken = invitations[0]?.activationUrl.searchParams.get('token');
       expect(activationToken).toMatch(/^[A-Za-z0-9_-]{43}$/u);
       const verification = await fixture.client.query<{ identifier: string }>(
@@ -350,6 +353,8 @@ integrationTest(
       expect(createTechnical.statusCode).toBe(200);
       expect(invitations).toHaveLength(2);
       expect(invitations[1]?.locale).toBe('es-ES');
+      expect(invitations[1]?.subject).toBe('Activa tu cuenta de WorkLedger');
+      expect(invitations[1]?.text).toContain('Hola, Backup Operator:');
       const technicalLocale = await fixture.client.query<{ locale: string }>(
         `select locale from auth_users where email = 'operator@example.test'`,
       );

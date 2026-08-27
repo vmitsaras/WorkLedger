@@ -25,5 +25,5 @@ for (const expectedProject of EXPECTED_PROJECTS) {
 }
 
 console.log(
-  'Workspace build valid: 9 typed entries import successfully through 10 public-root edges.',
+  'Workspace build valid: 9 typed entries import successfully through 11 public-root edges.',
 );

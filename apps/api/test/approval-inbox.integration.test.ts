@@ -402,14 +402,20 @@ integrationTest(
         {
           content: { event: 'ITEM_REJECTED', parameters: {} },
           destinationPath: '/requests',
+          locale: 'en-GB',
           notificationId: expect.any(String),
           recipientEmail: scenario.alpha.email,
+          subject: 'WorkLedger item not approved',
+          text: 'An item you submitted was not approved. Sign in to WorkLedger to review the related record.',
         },
         {
           content: { event: 'ITEM_REJECTED', parameters: {} },
           destinationPath: '/requests',
+          locale: 'en-GB',
           notificationId: expect.any(String),
           recipientEmail: scenario.alpha.email,
+          subject: 'WorkLedger item not approved',
+          text: 'An item you submitted was not approved. Sign in to WorkLedger to review the related record.',
         },
       ]);
       expect(notificationDelivery.messages[0]?.notificationId).toBe(

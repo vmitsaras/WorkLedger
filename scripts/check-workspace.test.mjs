@@ -148,7 +148,7 @@ function createState() {
 test('accepts the exact private workspace and tooling graph', () => {
   assert.deepEqual(validateWorkspace(createState()), {
     projectCount: 9,
-    runtimeEdgeCount: 10,
+    runtimeEdgeCount: 11,
     developmentEdgeCount: 12,
   });
 });

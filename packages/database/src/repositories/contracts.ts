@@ -163,6 +163,7 @@ export type NotificationRecord = AppendNotificationInput &
     id: DomainId<'Notification'>;
     recipientAccountId: DomainId<'Account'> | null;
     recipientEmail: string | null;
+    recipientLocale: string | null;
   }>;
 
 export type AppendNotificationDeliveryAttemptInput = Readonly<{

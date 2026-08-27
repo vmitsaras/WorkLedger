@@ -1,4 +1,5 @@
 import {
+  isSupportedLocale,
   reportRecordIssueCodeSchema,
   type ReportCatalog,
   type ReportCatalogItem,
@@ -160,10 +161,14 @@ export function createReportService(database: WorkLedgerDatabase) {
           if (page.total > REPORT_EXPORT_MAX_ROWS || page.rows.length > REPORT_EXPORT_MAX_ROWS) {
             throw exportTooLarge();
           }
-          const document = createReportCsv(
+          if (!isSupportedLocale(state.context.locale)) {
+            throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+          }
+          const document = await createReportCsv(
             key,
             Object.freeze({ from: query.from, to: query.to }),
             page.rows,
+            state.context.locale,
           );
           if (!reportCsvFitsBounds(document, page.total)) {
             throw exportTooLarge();

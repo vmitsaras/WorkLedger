@@ -1,4 +1,10 @@
-import type { ReportKey, ReportRow } from '@workledger/contracts';
+import type { ReportKey, ReportRow, SupportedLocale } from '@workledger/contracts';
+
+import {
+  createOutputMessageTranslator,
+  type OutputMessageKey,
+  type OutputMessageTranslator,
+} from '../i18n/output.js';
 
 export const REPORT_EXPORT_MAX_ROWS = 100_000;
 export const REPORT_EXPORT_MAX_BYTES = 32 * 1_024 * 1_024;
@@ -32,12 +38,13 @@ export function reportCsvFitsBounds(
   );
 }
 
-export function createReportCsv(
+export async function createReportCsv(
   key: ReportKey,
   range: Readonly<{ from: string; to: string }>,
   rows: readonly ReportRow[],
-): ReportCsvDocument {
-  const records = csvRecords(key, rows);
+  locale: SupportedLocale,
+): Promise<ReportCsvDocument> {
+  const records = csvRecords(key, rows, await createOutputMessageTranslator(locale));
   const body = `${records.map(csvRecord).join(CSV_LINE_ENDING)}${CSV_LINE_ENDING}`;
   return Object.freeze({
     body,
@@ -71,27 +78,31 @@ function csvRecord(record: readonly CsvCell[]): string {
   return record.map(csvCell).join(CSV_DELIMITER);
 }
 
-function csvRecords(key: ReportKey, rows: readonly ReportRow[]): readonly (readonly CsvCell[])[] {
+function csvRecords(
+  key: ReportKey,
+  rows: readonly ReportRow[],
+  t: OutputMessageTranslator,
+): readonly (readonly CsvCell[])[] {
   switch (key) {
     case 'monthly-time':
       return [
         [
-          'employee_name',
-          'month',
-          'workflow_status',
-          'expected_minutes',
-          'worked_minutes',
-          'credited_minutes',
-          'balance_minutes',
-          'incomplete_record_count',
-          'post_lock_delta_minutes',
+          t('output.csv.column.employeeName'),
+          t('output.csv.column.month'),
+          t('output.csv.column.workflowStatus'),
+          t('output.csv.column.expectedMinutes'),
+          t('output.csv.column.workedMinutes'),
+          t('output.csv.column.creditedMinutes'),
+          t('output.csv.column.balanceMinutes'),
+          t('output.csv.column.incompleteRecordCount'),
+          t('output.csv.column.postLockDeltaMinutes'),
         ],
         ...rows.map((row) => {
           if (row.kind !== 'MONTHLY_TIME') throw mismatchedRow(key, row.kind);
           return [
             row.employeeDisplayName,
             row.monthStart,
-            row.workflowStatus,
+            t(WORKFLOW_STATUS_KEYS[row.workflowStatus]),
             row.expectedMinutes,
             row.workedMinutes,
             row.creditedMinutes,
@@ -104,10 +115,10 @@ function csvRecords(key: ReportKey, rows: readonly ReportRow[]): readonly (reado
     case 'flexible-time':
       return [
         [
-          'employee_name',
-          'opening_balance_minutes',
-          'range_change_minutes',
-          'closing_balance_minutes',
+          t('output.csv.column.employeeName'),
+          t('output.csv.column.openingBalanceMinutes'),
+          t('output.csv.column.rangeChangeMinutes'),
+          t('output.csv.column.closingBalanceMinutes'),
         ],
         ...rows.map((row) => {
           if (row.kind !== 'FLEXIBLE_TIME') throw mismatchedRow(key, row.kind);
@@ -122,13 +133,13 @@ function csvRecords(key: ReportKey, rows: readonly ReportRow[]): readonly (reado
     case 'leave':
       return [
         [
-          'employee_name',
-          'leave_account',
-          'opening_available_minutes',
-          'available_change_minutes',
-          'closing_available_minutes',
-          'reserved_minutes',
-          'projected_remaining_minutes',
+          t('output.csv.column.employeeName'),
+          t('output.csv.column.leaveAccount'),
+          t('output.csv.column.openingAvailableMinutes'),
+          t('output.csv.column.availableChangeMinutes'),
+          t('output.csv.column.closingAvailableMinutes'),
+          t('output.csv.column.reservedMinutes'),
+          t('output.csv.column.projectedRemainingMinutes'),
         ],
         ...rows.map((row) => {
           if (row.kind !== 'LEAVE') throw mismatchedRow(key, row.kind);
@@ -145,33 +156,40 @@ function csvRecords(key: ReportKey, rows: readonly ReportRow[]): readonly (reado
       ];
     case 'missing-records':
       return [
-        ['employee_name', 'date', 'status', 'expected_minutes', 'worked_minutes', 'warning_codes'],
+        [
+          t('output.csv.column.employeeName'),
+          t('output.csv.column.date'),
+          t('output.csv.column.status'),
+          t('output.csv.column.expectedMinutes'),
+          t('output.csv.column.workedMinutes'),
+          t('output.csv.column.warningCodes'),
+        ],
         ...rows.map((row) => {
           if (row.kind !== 'MISSING_RECORD') throw mismatchedRow(key, row.kind);
           return [
             row.employeeDisplayName,
             row.localDate,
-            row.status,
+            t(RECORD_STATUS_KEYS[row.status]),
             row.expectedMinutes,
             row.workedMinutes,
-            row.warningCodes.join(';'),
+            row.warningCodes.map((code) => t(RECORD_ISSUE_KEYS[code])).join(';'),
           ];
         }),
       ];
     case 'pending-approvals':
       return [
         [
-          'employee_name',
-          'workflow_category',
-          'affected_start_date',
-          'affected_end_date',
-          'submitted_at',
+          t('output.csv.column.employeeName'),
+          t('output.csv.column.workflowCategory'),
+          t('output.csv.column.affectedStartDate'),
+          t('output.csv.column.affectedEndDate'),
+          t('output.csv.column.submittedAt'),
         ],
         ...rows.map((row) => {
           if (row.kind !== 'PENDING_APPROVAL') throw mismatchedRow(key, row.kind);
           return [
             row.employeeDisplayName,
-            row.approvalKind,
+            t(APPROVAL_KIND_KEYS[row.approvalKind]),
             row.affectedStartDate,
             row.affectedEndDate,
             row.submittedAt,
@@ -180,6 +198,50 @@ function csvRecords(key: ReportKey, rows: readonly ReportRow[]): readonly (reado
       ];
   }
 }
+
+type MonthlyWorkflowStatus = Extract<ReportRow, { kind: 'MONTHLY_TIME' }>['workflowStatus'];
+type MissingRecordStatus = Extract<ReportRow, { kind: 'MISSING_RECORD' }>['status'];
+type RecordIssueCode = Extract<ReportRow, { kind: 'MISSING_RECORD' }>['warningCodes'][number];
+type ApprovalKind = Extract<ReportRow, { kind: 'PENDING_APPROVAL' }>['approvalKind'];
+
+const WORKFLOW_STATUS_KEYS = Object.freeze({
+  APPROVED: 'output.csv.status.workflow.approved',
+  CHANGES_REQUESTED: 'output.csv.status.workflow.changesRequested',
+  LOCKED: 'output.csv.status.workflow.locked',
+  OPEN: 'output.csv.status.workflow.open',
+  SUBMITTED: 'output.csv.status.workflow.submitted',
+} as const satisfies Readonly<Record<MonthlyWorkflowStatus, OutputMessageKey>>);
+
+const RECORD_STATUS_KEYS = Object.freeze({
+  INCOMPLETE: 'output.csv.status.record.incomplete',
+} as const satisfies Readonly<Record<MissingRecordStatus, OutputMessageKey>>);
+
+const APPROVAL_KIND_KEYS = Object.freeze({
+  ABSENCE: 'output.csv.status.approvalKind.absence',
+  CANCELLATION: 'output.csv.status.approvalKind.cancellation',
+  CORRECTION: 'output.csv.status.approvalKind.correction',
+  MONTHLY_PERIOD: 'output.csv.status.approvalKind.monthlyPeriod',
+} as const satisfies Readonly<Record<ApprovalKind, OutputMessageKey>>);
+
+const RECORD_ISSUE_KEYS = Object.freeze({
+  ABSENCE_APPROVAL_PENDING: 'output.csv.issue.absenceApprovalPending',
+  ATTENDANCE_INCOMPLETE: 'output.csv.issue.attendanceIncomplete',
+  ATTENDANCE_INVALID_EVENT_ORDER: 'output.csv.issue.attendanceInvalidEventOrder',
+  ATTENDANCE_INVALID_EVENT_PRECISION: 'output.csv.issue.attendanceInvalidEventPrecision',
+  ATTENDANCE_OVERLAP: 'output.csv.issue.attendanceOverlap',
+  CORRECTION_UNRESOLVED: 'output.csv.issue.correctionUnresolved',
+  FLEX_NEGATIVE_THRESHOLD_EXCEEDED: 'output.csv.issue.flexNegativeThresholdExceeded',
+  FLEX_POSITIVE_THRESHOLD_EXCEEDED: 'output.csv.issue.flexPositiveThresholdExceeded',
+  LEDGER_SOURCE_MISMATCH: 'output.csv.issue.ledgerSourceMismatch',
+  POLICY_ASSIGNMENT_OVERLAP: 'output.csv.issue.policyAssignmentOverlap',
+  POLICY_CONFIGURATION_INVALID: 'output.csv.issue.policyConfigurationInvalid',
+  POLICY_NOT_ASSIGNED: 'output.csv.issue.policyNotAssigned',
+  SCHEDULE_ASSIGNMENT_OVERLAP: 'output.csv.issue.scheduleAssignmentOverlap',
+  SCHEDULE_NOT_ASSIGNED: 'output.csv.issue.scheduleNotAssigned',
+  WORK_DURING_ABSENCE: 'output.csv.issue.workDuringAbsence',
+  WORK_ON_HOLIDAY: 'output.csv.issue.workOnHoliday',
+  WORK_ON_ZERO_EXPECTED_DAY: 'output.csv.issue.workOnZeroExpectedDay',
+} as const satisfies Readonly<Record<RecordIssueCode, OutputMessageKey>>);
 
 function mismatchedRow(key: ReportKey, kind: ReportRow['kind']): Error {
   return new Error(`Report row ${kind} does not match ${key}.`);

@@ -352,22 +352,7 @@
       "title": "Cargando periodo mensual"
     },
     "print": {
-      "adjustedHeading": "Registro ajustado actual",
-      "adjustedTotals": "Saldo de cierre aprobado {{closing}} · cambio acumulado posterior al bloqueo {{delta}} · saldo de cierre ajustado {{adjusted}}",
-      "adjustmentCaption": "Cadena de ajustes posteriores al bloqueo con datos minimizados",
-      "approvedMetadata": "Ciclo aprobado {{cycle}} · aprobado el {{date}}",
-      "approvedTotals": "Previsto {{expected}} · acreditado {{credited}} · saldo {{balance}} · cierre contabilizado {{closing}}",
-      "dailyCaption": "Registro mensual diario con datos minimizados para {{employee}}",
-      "dateRange": "{{employee}} · {{start}} a {{end}} · {{timeZone}}",
-      "footer": "Esta impresión contiene el estado mensual visible, los totales, los valores diarios, la base aprobada y, cuando existen, los cambios posteriores al bloqueo. No contiene identificadores internos, huellas de origen, clasificación de enfermedad, notas, motivos de decisiones ni comentarios de revisión.",
-      "opened": "Se abrió el diálogo de impresión con el registro mensual más reciente.",
-      "readiness": {
-        "notReady": "no está listo",
-        "ready": "listo para enviar",
-        "workflow": "registro de flujo"
-      },
-      "statusLine": "Estado: {{status}} · {{readiness}}",
-      "title": "Registro mensual"
+      "opened": "Se abrió el diálogo de impresión con el registro mensual más reciente."
     },
     "readiness": {
       "completeDates": "{{complete}} de {{covered}} fechas de empleo cubiertas tienen cálculos diarios completos. Si cambia un registro de origen, revisa el mes actualizado antes de realizar la siguiente acción.",

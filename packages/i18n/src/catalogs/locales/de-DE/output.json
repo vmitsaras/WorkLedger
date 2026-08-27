@@ -1,1 +1,148 @@
-{}
+{
+  "clipboard": {
+    "report": {
+      "line": {
+        "actionableApprovals": "Zu bearbeitende Genehmigungen: {{value}}",
+        "availableChange": "Änderung der Verfügbarkeit: {{value}}",
+        "balance": "Saldo: {{value}}",
+        "closingAvailable": "Verfügbar am Ende: {{value}}",
+        "closingBalance": "Endsaldo: {{value}}",
+        "credited": "Angerechnet: {{value}}",
+        "dateRange": "Zeitraum: {{from}} bis {{to}}",
+        "expected": "Sollzeit: {{value}}",
+        "incompleteRecords": "Unvollständige Einträge: {{value}}",
+        "matchingRows": "Passende Zeilen: {{value}}",
+        "openingAvailable": "Verfügbar am Anfang: {{value}}",
+        "openingBalance": "Anfangssaldo: {{value}}",
+        "postLockChange": "Änderung nach Sperrung: {{value}}",
+        "projectedRemaining": "Voraussichtlich verbleibend: {{value}}",
+        "rangeChange": "Änderung im Zeitraum: {{value}}",
+        "reserved": "Reserviert: {{value}}",
+        "scope": "Umfang: {{value}}",
+        "worked": "Arbeitszeit: {{value}}"
+      },
+      "scope": {
+        "currentDirectReports": "Aktuell direkt unterstellte Personen",
+        "organisation": "Organisation",
+        "self": "Ihre eigenen Datensätze",
+        "selfAndDirectReports": "Ihre eigenen Datensätze und aktuell direkt unterstellte Mitarbeitende"
+      },
+      "title": {
+        "flexibleTime": "Gleitzeit",
+        "leave": "Urlaubskonten",
+        "missingRecords": "Fehlende Einträge",
+        "monthlyTime": "Monatsarbeitszeit",
+        "pendingApprovals": "Ausstehende Genehmigungen"
+      }
+    }
+  },
+  "communication": {
+    "invitation": {
+      "body": "Hallo {{name}},\n\nSie wurden eingeladen, Ihr WorkLedger-Konto zu aktivieren. Verwenden Sie diesen einmalig nutzbaren Link innerhalb von 24 Stunden:\n{{activationUrl}}\n\nWenn Sie diese Einladung nicht erwartet haben, können Sie diese Nachricht ignorieren.",
+      "subject": "Ihr WorkLedger-Konto aktivieren"
+    },
+    "notification": {
+      "acknowledged": {
+        "body": "Ein von Ihnen eingereichter Vorgang wurde bestätigt. Melden Sie sich bei WorkLedger an, um den zugehörigen Eintrag zu prüfen.",
+        "subject": "WorkLedger-Vorgang bestätigt"
+      },
+      "approved": {
+        "body": "Ein von Ihnen eingereichter Vorgang wurde genehmigt. Melden Sie sich bei WorkLedger an, um den zugehörigen Eintrag zu prüfen.",
+        "subject": "WorkLedger-Vorgang genehmigt"
+      },
+      "changesRequested": {
+        "body": "Ein von Ihnen eingereichter Vorgang muss geändert werden. Melden Sie sich bei WorkLedger an, um den zugehörigen Eintrag zu prüfen.",
+        "subject": "WorkLedger-Änderungen angefordert"
+      },
+      "rejected": {
+        "body": "Ein von Ihnen eingereichter Vorgang wurde nicht genehmigt. Melden Sie sich bei WorkLedger an, um den zugehörigen Eintrag zu prüfen.",
+        "subject": "WorkLedger-Vorgang nicht genehmigt"
+      }
+    },
+    "passwordReset": {
+      "body": "Für Ihr WorkLedger-Konto wurde das Zurücksetzen des Passworts angefordert. Verwenden Sie diesen einmalig nutzbaren Link innerhalb von 30 Minuten:\n{{resetUrl}}\n\nWenn Sie dies nicht angefordert haben, können Sie diese Nachricht ignorieren.",
+      "subject": "Ihr WorkLedger-Passwort zurücksetzen"
+    }
+  },
+  "csv": {
+    "column": {
+      "affectedEndDate": "betroffenes_enddatum",
+      "affectedStartDate": "betroffenes_startdatum",
+      "availableChangeMinutes": "aenderung_verfuegbar_minuten",
+      "balanceMinutes": "saldo_minuten",
+      "closingAvailableMinutes": "verfuegbar_ende_minuten",
+      "closingBalanceMinutes": "endsaldo_minuten",
+      "creditedMinutes": "angerechnet_minuten",
+      "date": "datum",
+      "employeeName": "mitarbeitername",
+      "expectedMinutes": "soll_minuten",
+      "incompleteRecordCount": "anzahl_unvollstaendige_eintraege",
+      "leaveAccount": "urlaubskonto",
+      "month": "monat",
+      "openingAvailableMinutes": "verfuegbar_anfang_minuten",
+      "openingBalanceMinutes": "anfangssaldo_minuten",
+      "postLockDeltaMinutes": "aenderung_nach_sperrung_minuten",
+      "projectedRemainingMinutes": "voraussichtlich_verbleibend_minuten",
+      "rangeChangeMinutes": "zeitraum_aenderung_minuten",
+      "reservedMinutes": "reserviert_minuten",
+      "status": "status",
+      "submittedAt": "eingereicht_am",
+      "warningCodes": "hinweise",
+      "workedMinutes": "arbeitszeit_minuten",
+      "workflowCategory": "workflow_kategorie",
+      "workflowStatus": "workflow_status"
+    },
+    "issue": {
+      "absenceApprovalPending": "Abwesenheitsgenehmigung ausstehend",
+      "attendanceIncomplete": "Anwesenheit unvollständig",
+      "attendanceInvalidEventOrder": "Ungültige Reihenfolge der Anwesenheitsereignisse",
+      "attendanceInvalidEventPrecision": "Ungültige Genauigkeit der Anwesenheitszeit",
+      "attendanceOverlap": "Anwesenheitszeiten überschneiden sich",
+      "correctionUnresolved": "Korrektur noch offen",
+      "flexNegativeThresholdExceeded": "Negativer Gleitzeitgrenzwert überschritten",
+      "flexPositiveThresholdExceeded": "Positiver Gleitzeitgrenzwert überschritten",
+      "ledgerSourceMismatch": "Ledger-Quelle stimmt nicht überein",
+      "policyAssignmentOverlap": "Arbeitszeitregel-Zuweisungen überschneiden sich",
+      "policyConfigurationInvalid": "Ungültige Arbeitszeitregel-Konfiguration",
+      "policyNotAssigned": "Keine Arbeitszeitregel zugewiesen",
+      "scheduleAssignmentOverlap": "Arbeitsplan-Zuweisungen überschneiden sich",
+      "scheduleNotAssigned": "Kein Arbeitsplan zugewiesen",
+      "workDuringAbsence": "Arbeit während einer Abwesenheit",
+      "workOnHoliday": "Arbeit an einem Feiertag",
+      "workOnZeroExpectedDay": "Arbeit an einem Tag ohne Sollzeit"
+    },
+    "status": {
+      "approvalKind": {
+        "absence": "Abwesenheit",
+        "cancellation": "Stornierung",
+        "correction": "Korrektur",
+        "monthlyPeriod": "Monatszeitraum"
+      },
+      "record": { "incomplete": "Unvollständig" },
+      "workflow": {
+        "approved": "Genehmigt",
+        "changesRequested": "Änderungen angefordert",
+        "locked": "Gesperrt",
+        "open": "Offen",
+        "submitted": "Eingereicht"
+      }
+    }
+  },
+  "monthlyPrint": {
+    "adjustedHeading": "Angepasster Nachweis",
+    "adjustedTotals": "Ursprünglicher Endsaldo {{closing}}; kumulierte Anpassung {{delta}}; angepasster Endsaldo {{adjusted}}.",
+    "adjustmentCaption": "In diesem Drucknachweis enthaltene Anpassungen nach der Sperrung",
+    "approvedMetadata": "Genehmigungszyklus {{cycle}}, genehmigt am {{date}}.",
+    "approvedTotals": "Genehmigte Sollzeit {{expected}}, angerechnet {{credited}}, Saldo {{balance}} und Endsaldo im Ledger {{closing}}.",
+    "dailyCaption": "Täglicher Monatsnachweis für {{employee}}",
+    "dateRange": "{{employee}}, {{start}} bis {{end}}, Organisationszeitzone {{timeZone}}.",
+    "footer": "Nach einer erneuten Autorisierungsprüfung zum Zeitpunkt der Aktion erstellt. Ursprüngliche Anwesenheitsereignisse und genehmigte Snapshots bleiben unverändert.",
+    "readiness": {
+      "notReady": "Nicht bereit",
+      "ready": "Bereit zur Einreichung",
+      "workflow": "Workflow läuft"
+    },
+    "statusLine": "Workflowstatus: {{status}}. Bereitschaft: {{readiness}}.",
+    "title": "Monatlicher Arbeitszeitnachweis"
+  }
+}

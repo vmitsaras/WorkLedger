@@ -344,22 +344,7 @@
       "title": "Monatszeitraum wird geladen"
     },
     "print": {
-      "adjustedHeading": "Aktuell angepasster Nachweis",
-      "adjustedTotals": "Genehmigter Endsaldo {{closing}} · kumulierte Änderung nach Sperrung {{delta}} · angepasster Endsaldo {{adjusted}}",
-      "adjustmentCaption": "Datensparsame Kette der Anpassungen nach der Sperrung",
-      "approvedMetadata": "Genehmigungszyklus {{cycle}} · genehmigt am {{date}}",
-      "approvedTotals": "Soll {{expected}} · angerechnet {{credited}} · Saldo {{balance}} · gebuchter Endsaldo {{closing}}",
-      "dailyCaption": "Datensparsamer täglicher Monatsnachweis für {{employee}}",
-      "dateRange": "{{employee}} · {{start}} bis {{end}} · {{timeZone}}",
-      "footer": "Dieser Ausdruck enthält den sichtbaren Monatsstatus, Summen, Tageswerte, den genehmigten Ausgangsstand und gegebenenfalls Saldoänderungen nach der Sperrung. Er enthält keine internen Kennungen, Quellfingerabdrücke, Krankheitsklassifizierung, Notizen, Entscheidungsgründe oder Kommentare von Prüfenden.",
-      "opened": "Der Druckdialog wurde mit dem neuesten Monatsnachweis geöffnet.",
-      "readiness": {
-        "notReady": "nicht bereit",
-        "ready": "bereit zur Einreichung",
-        "workflow": "Workflow-Nachweis"
-      },
-      "statusLine": "Status: {{status}} · {{readiness}}",
-      "title": "Monatsnachweis"
+      "opened": "Der Druckdialog wurde mit dem neuesten Monatsnachweis geöffnet."
     },
     "readiness": {
       "completeDates": "{{complete}} von {{covered}} abgedeckten Beschäftigungstagen haben vollständige Tagesberechnungen. Wenn sich ein Quelldatensatz ändert, prüfen Sie den aktualisierten Monat vor der nächsten Aktion.",

@@ -301,8 +301,11 @@ test('approves, shows the immutable record, and requires permanent-lock confirma
 
   await user.click(await screen.findByRole('button', { name: 'Approve month' }));
   await waitFor(() => expect(screen.getByRole('heading', { name: 'Approved' })).toHaveFocus());
-  expect(screen.getByRole('heading', { name: 'Approved record' })).toBeVisible();
-  expect(screen.getByText(/Approval cycle 1/u)).toBeVisible();
+  const approvedHeading = screen.getByRole('heading', { name: 'Approved record' });
+  expect(approvedHeading).toBeVisible();
+  const approvedSection = approvedHeading.closest('section');
+  expect(approvedSection).not.toBeNull();
+  expect(within(approvedSection as HTMLElement).getByText(/Approval cycle 1/u)).toBeVisible();
 
   const lockTrigger = screen.getByRole('button', { name: 'Lock month' });
   await user.click(lockTrigger);
@@ -432,9 +435,9 @@ test('reauthorizes before opening a purpose-minimized monthly print view', async
   const printView = container.querySelector<HTMLElement>('[data-print-monthly-record]');
   expect(printView).not.toBeNull();
   expect(printView).toHaveClass('wl-print-only');
-  expect(printView).toHaveTextContent('Monthly record');
+  expect(printView).toHaveTextContent('Monthly time record');
   expect(printView).toHaveTextContent('Approved record');
-  expect(printView).toHaveTextContent('Current adjusted record');
+  expect(printView).toHaveTextContent('Adjusted record');
   expect(printView).not.toHaveTextContent('Private reviewer reason that must not print.');
   expect(printView).not.toHaveTextContent(period.snapshotVersion.sourceFingerprint);
   expect(printView).not.toHaveTextContent(FIRST_RECORD_ID);

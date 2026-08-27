@@ -347,22 +347,7 @@
       "title": "Loading monthly period"
     },
     "print": {
-      "adjustedHeading": "Current adjusted record",
-      "adjustedTotals": "Approved closing balance {{closing}} · cumulative post-lock delta {{delta}} · adjusted closing balance {{adjusted}}",
-      "adjustmentCaption": "Purpose-minimized post-lock adjustment chain",
-      "approvedMetadata": "Approved cycle {{cycle}} · approved {{date}}",
-      "approvedTotals": "Expected {{expected}} · credited {{credited}} · balance {{balance}} · posted closing {{closing}}",
-      "dailyCaption": "Purpose-minimized daily monthly record for {{employee}}",
-      "dateRange": "{{employee}} · {{start}} through {{end}} · {{timeZone}}",
-      "footer": "This print contains the visible monthly status, totals, daily values, approved baseline, and post-lock deltas where present. It contains no internal identifiers, source fingerprints, sickness classification, notes, decision reasons, or reviewer comments.",
-      "opened": "Print dialog opened with the latest monthly record.",
-      "readiness": {
-        "notReady": "not ready",
-        "ready": "ready for submission",
-        "workflow": "workflow record"
-      },
-      "statusLine": "Status: {{status}} · {{readiness}}",
-      "title": "Monthly record"
+      "opened": "Print dialog opened with the latest monthly record."
     },
     "readiness": {
       "completeDates": "{{complete}} of {{covered}} covered employment dates have complete daily calculations. If a source record changes, review the updated month before taking the next action.",

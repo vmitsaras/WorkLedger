@@ -400,27 +400,6 @@
         "copySuccess": "Report summary copied. No table rows or hidden fields were copied.",
         "exportSuccess": "CSV download started. Formula-significant text was prefixed with an apostrophe before CSV quoting.",
         "label": "Report portability status"
-      },
-      "summary": {
-        "actionableApprovals": "Actionable approvals",
-        "availableChange": "Available change",
-        "balance": "Balance",
-        "closing": "Closing",
-        "closingAvailable": "Closing available",
-        "closingBalance": "Closing balance",
-        "credited": "Credited",
-        "dateRange": "Date range",
-        "expected": "Expected",
-        "incompleteRecords": "Incomplete records",
-        "matchingRows": "Matching rows",
-        "openingAvailable": "Opening available",
-        "openingBalance": "Opening balance",
-        "postLockChange": "Post-lock change",
-        "projectedRemaining": "Projected remaining",
-        "rangeChange": "Range change",
-        "reserved": "Reserved",
-        "scope": "Scope",
-        "worked": "Worked"
       }
     }
   },

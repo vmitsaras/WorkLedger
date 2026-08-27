@@ -3816,7 +3816,7 @@ class PostgresNotificationRepository implements NotificationRepository {
     input: Parameters<NotificationRepository['append']>[0],
   ): Promise<Awaited<ReturnType<NotificationRepository['append']>>> {
     const [recipient] = await this.transaction
-      .select({ accountId: authUsers.id, email: authUsers.email })
+      .select({ accountId: authUsers.id, email: authUsers.email, locale: authUsers.locale })
       .from(accountEmployeeLinks)
       .innerJoin(authUsers, eq(authUsers.id, accountEmployeeLinks.userId))
       .where(
@@ -3865,6 +3865,7 @@ class PostgresNotificationRepository implements NotificationRepository {
           ? null
           : mapDomainId<'Account'>(row.recipientAccountId, 'notifications', 'recipient_account_id'),
       recipientEmail: deliveryRequested ? (recipient?.email ?? null) : null,
+      recipientLocale: deliveryRequested ? (recipient?.locale ?? null) : null,
       recipientEmployeeId: mapEmployeeId(row.recipientEmployeeId),
       sourceId: row.sourceId,
       sourceKind: row.sourceKind,

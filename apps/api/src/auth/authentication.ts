@@ -14,6 +14,7 @@ import {
   validateCredentialPassword,
 } from './password-policy.js';
 import { createSessionCsrfToken, verifySessionCsrfToken } from './session-csrf.js';
+import { createOutputMessageTranslator } from '../i18n/output.js';
 
 const MINUTE_SECONDS = 60;
 const HOUR_SECONDS = 60 * MINUTE_SECONDS;
@@ -41,6 +42,8 @@ export type PasswordResetMessage = Readonly<{
   email: string;
   locale: SupportedLocale;
   resetUrl: URL;
+  subject: string;
+  text: string;
 }>;
 
 export type PasswordResetSender = (message: PasswordResetMessage) => Promise<void>;
@@ -208,7 +211,16 @@ export function createAuthOptions(
         if (!isSupportedLocale(locale)) {
           throw new Error('Password reset account locale is unavailable or unsupported.');
         }
-        await sendPasswordReset(Object.freeze({ email: user.email, locale, resetUrl }));
+        const t = await createOutputMessageTranslator(locale);
+        await sendPasswordReset(
+          Object.freeze({
+            email: user.email,
+            locale,
+            resetUrl,
+            subject: t('output.communication.passwordReset.subject'),
+            text: t('output.communication.passwordReset.body', { resetUrl: resetUrl.toString() }),
+          }),
+        );
       },
     },
     logger: { disabled: true },

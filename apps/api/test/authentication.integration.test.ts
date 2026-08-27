@@ -181,6 +181,8 @@ integrationTest(
         expect(await knownReset.text()).toBe(await unknownReset.text());
         expect(resetMessages).toHaveLength(1);
         expect(resetMessages[0]?.locale).toBe('de-DE');
+        expect(resetMessages[0]?.subject).toBe('Ihr WorkLedger-Passwort zurücksetzen');
+        expect(resetMessages[0]?.text).toContain('innerhalb von 30 Minuten');
         expect(resetMessages[0]?.resetUrl.origin).toBe(ORIGIN);
         expect(resetMessages[0]?.resetUrl.pathname).toBe('/reset-password');
 
@@ -188,6 +190,7 @@ integrationTest(
         if (resetToken === null || resetToken === undefined) {
           throw new Error('Expected a reset grant from the test reset sender.');
         }
+        expect(resetMessages[0]?.text).toContain(resetToken);
         const storedResetGrant = await fixture.client.query<{ identifier: string }>(
           `select identifier from auth_verifications where value = $1`,
           [userId],

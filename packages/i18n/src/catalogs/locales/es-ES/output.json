@@ -1,1 +1,148 @@
-{}
+{
+  "clipboard": {
+    "report": {
+      "line": {
+        "actionableApprovals": "Aprobaciones que requieren acción: {{value}}",
+        "availableChange": "Cambio disponible: {{value}}",
+        "balance": "Saldo: {{value}}",
+        "closingAvailable": "Disponible al cierre: {{value}}",
+        "closingBalance": "Saldo de cierre: {{value}}",
+        "credited": "Acreditado: {{value}}",
+        "dateRange": "Intervalo de fechas: del {{from}} al {{to}}",
+        "expected": "Previsto: {{value}}",
+        "incompleteRecords": "Registros incompletos: {{value}}",
+        "matchingRows": "Filas coincidentes: {{value}}",
+        "openingAvailable": "Disponible al inicio: {{value}}",
+        "openingBalance": "Saldo inicial: {{value}}",
+        "postLockChange": "Cambio posterior al bloqueo: {{value}}",
+        "projectedRemaining": "Restante previsto: {{value}}",
+        "rangeChange": "Cambio en el intervalo: {{value}}",
+        "reserved": "Reservado: {{value}}",
+        "scope": "Ámbito: {{value}}",
+        "worked": "Trabajado: {{value}}"
+      },
+      "scope": {
+        "currentDirectReports": "Personas subordinadas directas actuales",
+        "organisation": "Organización",
+        "self": "tus propios registros",
+        "selfAndDirectReports": "tus propios registros y empleados subordinados directos actuales"
+      },
+      "title": {
+        "flexibleTime": "Tiempo flexible",
+        "leave": "Saldos de ausencias",
+        "missingRecords": "Registros pendientes",
+        "monthlyTime": "Tiempo mensual",
+        "pendingApprovals": "Aprobaciones pendientes"
+      }
+    }
+  },
+  "communication": {
+    "invitation": {
+      "body": "Hola, {{name}}:\n\nSe te ha invitado a activar tu cuenta de WorkLedger. Utiliza este enlace de un solo uso en un plazo de 24 horas:\n{{activationUrl}}\n\nSi no esperabas esta invitación, puedes ignorar este mensaje.",
+      "subject": "Activa tu cuenta de WorkLedger"
+    },
+    "notification": {
+      "acknowledged": {
+        "body": "Se ha confirmado un elemento que enviaste. Inicia sesión en WorkLedger para revisar el registro relacionado.",
+        "subject": "Elemento de WorkLedger confirmado"
+      },
+      "approved": {
+        "body": "Se ha aprobado un elemento que enviaste. Inicia sesión en WorkLedger para revisar el registro relacionado.",
+        "subject": "Elemento de WorkLedger aprobado"
+      },
+      "changesRequested": {
+        "body": "Un elemento que enviaste necesita cambios. Inicia sesión en WorkLedger para revisar el registro relacionado.",
+        "subject": "Cambios solicitados en WorkLedger"
+      },
+      "rejected": {
+        "body": "No se ha aprobado un elemento que enviaste. Inicia sesión en WorkLedger para revisar el registro relacionado.",
+        "subject": "Elemento de WorkLedger no aprobado"
+      }
+    },
+    "passwordReset": {
+      "body": "Se ha solicitado restablecer la contraseña de tu cuenta de WorkLedger. Utiliza este enlace de un solo uso en un plazo de 30 minutos:\n{{resetUrl}}\n\nSi no solicitaste el restablecimiento, puedes ignorar este mensaje.",
+      "subject": "Restablece tu contraseña de WorkLedger"
+    }
+  },
+  "csv": {
+    "column": {
+      "affectedEndDate": "fecha_fin_afectada",
+      "affectedStartDate": "fecha_inicio_afectada",
+      "availableChangeMinutes": "cambio_disponible_minutos",
+      "balanceMinutes": "saldo_minutos",
+      "closingAvailableMinutes": "disponible_cierre_minutos",
+      "closingBalanceMinutes": "saldo_cierre_minutos",
+      "creditedMinutes": "acreditado_minutos",
+      "date": "fecha",
+      "employeeName": "nombre_empleado",
+      "expectedMinutes": "previsto_minutos",
+      "incompleteRecordCount": "cantidad_registros_incompletos",
+      "leaveAccount": "cuenta_ausencia",
+      "month": "mes",
+      "openingAvailableMinutes": "disponible_inicio_minutos",
+      "openingBalanceMinutes": "saldo_inicial_minutos",
+      "postLockDeltaMinutes": "cambio_posterior_bloqueo_minutos",
+      "projectedRemainingMinutes": "restante_previsto_minutos",
+      "rangeChangeMinutes": "cambio_intervalo_minutos",
+      "reservedMinutes": "reservado_minutos",
+      "status": "estado",
+      "submittedAt": "fecha_envio",
+      "warningCodes": "avisos",
+      "workedMinutes": "trabajado_minutos",
+      "workflowCategory": "categoria_flujo",
+      "workflowStatus": "estado_flujo"
+    },
+    "issue": {
+      "absenceApprovalPending": "Aprobación de ausencia pendiente",
+      "attendanceIncomplete": "Asistencia incompleta",
+      "attendanceInvalidEventOrder": "Orden de eventos de asistencia no válido",
+      "attendanceInvalidEventPrecision": "Precisión de la hora de asistencia no válida",
+      "attendanceOverlap": "Solapamiento de asistencia",
+      "correctionUnresolved": "Corrección pendiente",
+      "flexNegativeThresholdExceeded": "Umbral negativo de tiempo flexible superado",
+      "flexPositiveThresholdExceeded": "Umbral positivo de tiempo flexible superado",
+      "ledgerSourceMismatch": "La fuente del libro mayor no coincide",
+      "policyAssignmentOverlap": "Solapamiento de asignaciones de política de tiempo",
+      "policyConfigurationInvalid": "Configuración de política de tiempo no válida",
+      "policyNotAssigned": "Política de tiempo sin asignar",
+      "scheduleAssignmentOverlap": "Solapamiento de asignaciones de horario",
+      "scheduleNotAssigned": "Horario de trabajo sin asignar",
+      "workDuringAbsence": "Trabajo durante una ausencia",
+      "workOnHoliday": "Trabajo en festivo",
+      "workOnZeroExpectedDay": "Trabajo en un día sin tiempo previsto"
+    },
+    "status": {
+      "approvalKind": {
+        "absence": "Ausencia",
+        "cancellation": "Cancelación",
+        "correction": "Corrección",
+        "monthlyPeriod": "Periodo mensual"
+      },
+      "record": { "incomplete": "Incompleto" },
+      "workflow": {
+        "approved": "Aprobado",
+        "changesRequested": "Cambios solicitados",
+        "locked": "Bloqueado",
+        "open": "Abierto",
+        "submitted": "Enviado"
+      }
+    }
+  },
+  "monthlyPrint": {
+    "adjustedHeading": "Registro ajustado",
+    "adjustedTotals": "Saldo de cierre original {{closing}}; ajuste acumulado {{delta}}; saldo de cierre ajustado {{adjusted}}.",
+    "adjustmentCaption": "Ajustes posteriores al bloqueo incluidos en este registro imprimible",
+    "approvedMetadata": "Ciclo de aprobación {{cycle}}, aprobado el {{date}}.",
+    "approvedTotals": "Previsto aprobado {{expected}}, acreditado {{credited}}, saldo {{balance}} y saldo de cierre del libro mayor {{closing}}.",
+    "dailyCaption": "Registro mensual diario de {{employee}}",
+    "dateRange": "{{employee}}, del {{start}} al {{end}}, zona horaria de la organización: {{timeZone}}.",
+    "footer": "Generado tras renovar la autorización en el momento de la acción. Los eventos de asistencia originales y las instantáneas aprobadas no cambian.",
+    "readiness": {
+      "notReady": "No preparado",
+      "ready": "Preparado para enviar",
+      "workflow": "Flujo en curso"
+    },
+    "statusLine": "Estado del flujo: {{status}}. Preparación: {{readiness}}.",
+    "title": "Registro mensual de tiempo"
+  }
+}

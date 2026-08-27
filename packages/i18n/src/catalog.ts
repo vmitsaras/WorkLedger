@@ -340,34 +340,7 @@ export type MessageParameterMap = Readonly<{
   'employee.monthly.frame.title': undefined;
   'employee.monthly.loading.description': undefined;
   'employee.monthly.loading.title': undefined;
-  'employee.monthly.print.adjustedHeading': undefined;
-  'employee.monthly.print.adjustedTotals': Readonly<{
-    adjusted: string;
-    closing: string;
-    delta: string;
-  }>;
-  'employee.monthly.print.adjustmentCaption': undefined;
-  'employee.monthly.print.approvedMetadata': Readonly<{ cycle: number; date: string }>;
-  'employee.monthly.print.approvedTotals': Readonly<{
-    balance: string;
-    closing: string;
-    credited: string;
-    expected: string;
-  }>;
-  'employee.monthly.print.dailyCaption': Readonly<{ employee: string }>;
-  'employee.monthly.print.dateRange': Readonly<{
-    employee: string;
-    end: string;
-    start: string;
-    timeZone: string;
-  }>;
-  'employee.monthly.print.footer': undefined;
   'employee.monthly.print.opened': undefined;
-  'employee.monthly.print.readiness.notReady': undefined;
-  'employee.monthly.print.readiness.ready': undefined;
-  'employee.monthly.print.readiness.workflow': undefined;
-  'employee.monthly.print.statusLine': Readonly<{ readiness: string; status: string }>;
-  'employee.monthly.print.title': undefined;
   'employee.monthly.readiness.completeDates': Readonly<{ complete: number; covered: number }>;
   'employee.monthly.readiness.explanation.approved': undefined;
   'employee.monthly.readiness.explanation.incomplete': undefined;
@@ -1690,25 +1663,6 @@ export type MessageParameterMap = Readonly<{
   'manager.report.portability.status.copySuccess': undefined;
   'manager.report.portability.status.exportSuccess': undefined;
   'manager.report.portability.status.label': undefined;
-  'manager.report.portability.summary.actionableApprovals': undefined;
-  'manager.report.portability.summary.availableChange': undefined;
-  'manager.report.portability.summary.balance': undefined;
-  'manager.report.portability.summary.closing': undefined;
-  'manager.report.portability.summary.closingAvailable': undefined;
-  'manager.report.portability.summary.closingBalance': undefined;
-  'manager.report.portability.summary.credited': undefined;
-  'manager.report.portability.summary.dateRange': undefined;
-  'manager.report.portability.summary.expected': undefined;
-  'manager.report.portability.summary.incompleteRecords': undefined;
-  'manager.report.portability.summary.matchingRows': undefined;
-  'manager.report.portability.summary.openingAvailable': undefined;
-  'manager.report.portability.summary.openingBalance': undefined;
-  'manager.report.portability.summary.postLockChange': undefined;
-  'manager.report.portability.summary.projectedRemaining': undefined;
-  'manager.report.portability.summary.rangeChange': undefined;
-  'manager.report.portability.summary.reserved': undefined;
-  'manager.report.portability.summary.scope': undefined;
-  'manager.report.portability.summary.worked': undefined;
   'manager.team.calendar.agenda.label': Readonly<{ month: string }>;
   'manager.team.calendar.agenda.selectDate': undefined;
   'manager.team.calendar.byDate': undefined;
@@ -1968,6 +1922,124 @@ export type MessageParameterMap = Readonly<{
   'system.operations.status.service': undefined;
   'system.operations.status.timestamp': undefined;
   'system.operations.status.version': undefined;
+  'output.clipboard.report.line.actionableApprovals': Readonly<{ value: string }>;
+  'output.clipboard.report.line.availableChange': Readonly<{ value: string }>;
+  'output.clipboard.report.line.balance': Readonly<{ value: string }>;
+  'output.clipboard.report.line.closingAvailable': Readonly<{ value: string }>;
+  'output.clipboard.report.line.closingBalance': Readonly<{ value: string }>;
+  'output.clipboard.report.line.credited': Readonly<{ value: string }>;
+  'output.clipboard.report.line.dateRange': Readonly<{ from: string; to: string }>;
+  'output.clipboard.report.line.expected': Readonly<{ value: string }>;
+  'output.clipboard.report.line.incompleteRecords': Readonly<{ value: string }>;
+  'output.clipboard.report.line.matchingRows': Readonly<{ value: string }>;
+  'output.clipboard.report.line.openingAvailable': Readonly<{ value: string }>;
+  'output.clipboard.report.line.openingBalance': Readonly<{ value: string }>;
+  'output.clipboard.report.line.postLockChange': Readonly<{ value: string }>;
+  'output.clipboard.report.line.projectedRemaining': Readonly<{ value: string }>;
+  'output.clipboard.report.line.rangeChange': Readonly<{ value: string }>;
+  'output.clipboard.report.line.reserved': Readonly<{ value: string }>;
+  'output.clipboard.report.line.scope': Readonly<{ value: string }>;
+  'output.clipboard.report.line.worked': Readonly<{ value: string }>;
+  'output.clipboard.report.scope.currentDirectReports': undefined;
+  'output.clipboard.report.scope.organisation': undefined;
+  'output.clipboard.report.scope.self': undefined;
+  'output.clipboard.report.scope.selfAndDirectReports': undefined;
+  'output.clipboard.report.title.flexibleTime': undefined;
+  'output.clipboard.report.title.leave': undefined;
+  'output.clipboard.report.title.missingRecords': undefined;
+  'output.clipboard.report.title.monthlyTime': undefined;
+  'output.clipboard.report.title.pendingApprovals': undefined;
+  'output.communication.invitation.body': Readonly<{ activationUrl: string; name: string }>;
+  'output.communication.invitation.subject': undefined;
+  'output.communication.notification.acknowledged.body': undefined;
+  'output.communication.notification.acknowledged.subject': undefined;
+  'output.communication.notification.approved.body': undefined;
+  'output.communication.notification.approved.subject': undefined;
+  'output.communication.notification.changesRequested.body': undefined;
+  'output.communication.notification.changesRequested.subject': undefined;
+  'output.communication.notification.rejected.body': undefined;
+  'output.communication.notification.rejected.subject': undefined;
+  'output.communication.passwordReset.body': Readonly<{ resetUrl: string }>;
+  'output.communication.passwordReset.subject': undefined;
+  'output.csv.column.affectedEndDate': undefined;
+  'output.csv.column.affectedStartDate': undefined;
+  'output.csv.column.availableChangeMinutes': undefined;
+  'output.csv.column.balanceMinutes': undefined;
+  'output.csv.column.closingAvailableMinutes': undefined;
+  'output.csv.column.closingBalanceMinutes': undefined;
+  'output.csv.column.creditedMinutes': undefined;
+  'output.csv.column.date': undefined;
+  'output.csv.column.employeeName': undefined;
+  'output.csv.column.expectedMinutes': undefined;
+  'output.csv.column.incompleteRecordCount': undefined;
+  'output.csv.column.leaveAccount': undefined;
+  'output.csv.column.month': undefined;
+  'output.csv.column.openingAvailableMinutes': undefined;
+  'output.csv.column.openingBalanceMinutes': undefined;
+  'output.csv.column.postLockDeltaMinutes': undefined;
+  'output.csv.column.projectedRemainingMinutes': undefined;
+  'output.csv.column.rangeChangeMinutes': undefined;
+  'output.csv.column.reservedMinutes': undefined;
+  'output.csv.column.status': undefined;
+  'output.csv.column.submittedAt': undefined;
+  'output.csv.column.warningCodes': undefined;
+  'output.csv.column.workedMinutes': undefined;
+  'output.csv.column.workflowCategory': undefined;
+  'output.csv.column.workflowStatus': undefined;
+  'output.csv.issue.absenceApprovalPending': undefined;
+  'output.csv.issue.attendanceIncomplete': undefined;
+  'output.csv.issue.attendanceInvalidEventOrder': undefined;
+  'output.csv.issue.attendanceInvalidEventPrecision': undefined;
+  'output.csv.issue.attendanceOverlap': undefined;
+  'output.csv.issue.correctionUnresolved': undefined;
+  'output.csv.issue.flexNegativeThresholdExceeded': undefined;
+  'output.csv.issue.flexPositiveThresholdExceeded': undefined;
+  'output.csv.issue.ledgerSourceMismatch': undefined;
+  'output.csv.issue.policyAssignmentOverlap': undefined;
+  'output.csv.issue.policyConfigurationInvalid': undefined;
+  'output.csv.issue.policyNotAssigned': undefined;
+  'output.csv.issue.scheduleAssignmentOverlap': undefined;
+  'output.csv.issue.scheduleNotAssigned': undefined;
+  'output.csv.issue.workDuringAbsence': undefined;
+  'output.csv.issue.workOnHoliday': undefined;
+  'output.csv.issue.workOnZeroExpectedDay': undefined;
+  'output.csv.status.approvalKind.absence': undefined;
+  'output.csv.status.approvalKind.cancellation': undefined;
+  'output.csv.status.approvalKind.correction': undefined;
+  'output.csv.status.approvalKind.monthlyPeriod': undefined;
+  'output.csv.status.record.incomplete': undefined;
+  'output.csv.status.workflow.approved': undefined;
+  'output.csv.status.workflow.changesRequested': undefined;
+  'output.csv.status.workflow.locked': undefined;
+  'output.csv.status.workflow.open': undefined;
+  'output.csv.status.workflow.submitted': undefined;
+  'output.monthlyPrint.adjustedHeading': undefined;
+  'output.monthlyPrint.adjustedTotals': Readonly<{
+    adjusted: string;
+    closing: string;
+    delta: string;
+  }>;
+  'output.monthlyPrint.adjustmentCaption': undefined;
+  'output.monthlyPrint.approvedMetadata': Readonly<{ cycle: number; date: string }>;
+  'output.monthlyPrint.approvedTotals': Readonly<{
+    balance: string;
+    closing: string;
+    credited: string;
+    expected: string;
+  }>;
+  'output.monthlyPrint.dailyCaption': Readonly<{ employee: string }>;
+  'output.monthlyPrint.dateRange': Readonly<{
+    employee: string;
+    end: string;
+    start: string;
+    timeZone: string;
+  }>;
+  'output.monthlyPrint.footer': undefined;
+  'output.monthlyPrint.readiness.notReady': undefined;
+  'output.monthlyPrint.readiness.ready': undefined;
+  'output.monthlyPrint.readiness.workflow': undefined;
+  'output.monthlyPrint.statusLine': Readonly<{ readiness: string; status: string }>;
+  'output.monthlyPrint.title': undefined;
   'shared.duration.hours': Readonly<{ count: number }>;
   'shared.duration.minutes': Readonly<{ count: number }>;
   'shared.duration.compact': Readonly<{ hours: string; minutes: string }>;
@@ -2412,20 +2484,7 @@ export const MESSAGE_KEYS = [
   'employee.monthly.frame.title',
   'employee.monthly.loading.description',
   'employee.monthly.loading.title',
-  'employee.monthly.print.adjustedHeading',
-  'employee.monthly.print.adjustedTotals',
-  'employee.monthly.print.adjustmentCaption',
-  'employee.monthly.print.approvedMetadata',
-  'employee.monthly.print.approvedTotals',
-  'employee.monthly.print.dailyCaption',
-  'employee.monthly.print.dateRange',
-  'employee.monthly.print.footer',
   'employee.monthly.print.opened',
-  'employee.monthly.print.readiness.notReady',
-  'employee.monthly.print.readiness.ready',
-  'employee.monthly.print.readiness.workflow',
-  'employee.monthly.print.statusLine',
-  'employee.monthly.print.title',
   'employee.monthly.readiness.completeDates',
   'employee.monthly.readiness.explanation.approved',
   'employee.monthly.readiness.explanation.incomplete',
@@ -3699,25 +3758,6 @@ export const MESSAGE_KEYS = [
   'manager.report.portability.status.copySuccess',
   'manager.report.portability.status.exportSuccess',
   'manager.report.portability.status.label',
-  'manager.report.portability.summary.actionableApprovals',
-  'manager.report.portability.summary.availableChange',
-  'manager.report.portability.summary.balance',
-  'manager.report.portability.summary.closing',
-  'manager.report.portability.summary.closingAvailable',
-  'manager.report.portability.summary.closingBalance',
-  'manager.report.portability.summary.credited',
-  'manager.report.portability.summary.dateRange',
-  'manager.report.portability.summary.expected',
-  'manager.report.portability.summary.incompleteRecords',
-  'manager.report.portability.summary.matchingRows',
-  'manager.report.portability.summary.openingAvailable',
-  'manager.report.portability.summary.openingBalance',
-  'manager.report.portability.summary.postLockChange',
-  'manager.report.portability.summary.projectedRemaining',
-  'manager.report.portability.summary.rangeChange',
-  'manager.report.portability.summary.reserved',
-  'manager.report.portability.summary.scope',
-  'manager.report.portability.summary.worked',
   'manager.team.calendar.agenda.label',
   'manager.team.calendar.agenda.selectDate',
   'manager.team.calendar.byDate',
@@ -3968,6 +4008,110 @@ export const MESSAGE_KEYS = [
   'system.operations.status.service',
   'system.operations.status.timestamp',
   'system.operations.status.version',
+  'output.clipboard.report.line.actionableApprovals',
+  'output.clipboard.report.line.availableChange',
+  'output.clipboard.report.line.balance',
+  'output.clipboard.report.line.closingAvailable',
+  'output.clipboard.report.line.closingBalance',
+  'output.clipboard.report.line.credited',
+  'output.clipboard.report.line.dateRange',
+  'output.clipboard.report.line.expected',
+  'output.clipboard.report.line.incompleteRecords',
+  'output.clipboard.report.line.matchingRows',
+  'output.clipboard.report.line.openingAvailable',
+  'output.clipboard.report.line.openingBalance',
+  'output.clipboard.report.line.postLockChange',
+  'output.clipboard.report.line.projectedRemaining',
+  'output.clipboard.report.line.rangeChange',
+  'output.clipboard.report.line.reserved',
+  'output.clipboard.report.line.scope',
+  'output.clipboard.report.line.worked',
+  'output.clipboard.report.scope.currentDirectReports',
+  'output.clipboard.report.scope.organisation',
+  'output.clipboard.report.scope.self',
+  'output.clipboard.report.scope.selfAndDirectReports',
+  'output.clipboard.report.title.flexibleTime',
+  'output.clipboard.report.title.leave',
+  'output.clipboard.report.title.missingRecords',
+  'output.clipboard.report.title.monthlyTime',
+  'output.clipboard.report.title.pendingApprovals',
+  'output.communication.invitation.body',
+  'output.communication.invitation.subject',
+  'output.communication.notification.acknowledged.body',
+  'output.communication.notification.acknowledged.subject',
+  'output.communication.notification.approved.body',
+  'output.communication.notification.approved.subject',
+  'output.communication.notification.changesRequested.body',
+  'output.communication.notification.changesRequested.subject',
+  'output.communication.notification.rejected.body',
+  'output.communication.notification.rejected.subject',
+  'output.communication.passwordReset.body',
+  'output.communication.passwordReset.subject',
+  'output.csv.column.affectedEndDate',
+  'output.csv.column.affectedStartDate',
+  'output.csv.column.availableChangeMinutes',
+  'output.csv.column.balanceMinutes',
+  'output.csv.column.closingAvailableMinutes',
+  'output.csv.column.closingBalanceMinutes',
+  'output.csv.column.creditedMinutes',
+  'output.csv.column.date',
+  'output.csv.column.employeeName',
+  'output.csv.column.expectedMinutes',
+  'output.csv.column.incompleteRecordCount',
+  'output.csv.column.leaveAccount',
+  'output.csv.column.month',
+  'output.csv.column.openingAvailableMinutes',
+  'output.csv.column.openingBalanceMinutes',
+  'output.csv.column.postLockDeltaMinutes',
+  'output.csv.column.projectedRemainingMinutes',
+  'output.csv.column.rangeChangeMinutes',
+  'output.csv.column.reservedMinutes',
+  'output.csv.column.status',
+  'output.csv.column.submittedAt',
+  'output.csv.column.warningCodes',
+  'output.csv.column.workedMinutes',
+  'output.csv.column.workflowCategory',
+  'output.csv.column.workflowStatus',
+  'output.csv.issue.absenceApprovalPending',
+  'output.csv.issue.attendanceIncomplete',
+  'output.csv.issue.attendanceInvalidEventOrder',
+  'output.csv.issue.attendanceInvalidEventPrecision',
+  'output.csv.issue.attendanceOverlap',
+  'output.csv.issue.correctionUnresolved',
+  'output.csv.issue.flexNegativeThresholdExceeded',
+  'output.csv.issue.flexPositiveThresholdExceeded',
+  'output.csv.issue.ledgerSourceMismatch',
+  'output.csv.issue.policyAssignmentOverlap',
+  'output.csv.issue.policyConfigurationInvalid',
+  'output.csv.issue.policyNotAssigned',
+  'output.csv.issue.scheduleAssignmentOverlap',
+  'output.csv.issue.scheduleNotAssigned',
+  'output.csv.issue.workDuringAbsence',
+  'output.csv.issue.workOnHoliday',
+  'output.csv.issue.workOnZeroExpectedDay',
+  'output.csv.status.approvalKind.absence',
+  'output.csv.status.approvalKind.cancellation',
+  'output.csv.status.approvalKind.correction',
+  'output.csv.status.approvalKind.monthlyPeriod',
+  'output.csv.status.record.incomplete',
+  'output.csv.status.workflow.approved',
+  'output.csv.status.workflow.changesRequested',
+  'output.csv.status.workflow.locked',
+  'output.csv.status.workflow.open',
+  'output.csv.status.workflow.submitted',
+  'output.monthlyPrint.adjustedHeading',
+  'output.monthlyPrint.adjustedTotals',
+  'output.monthlyPrint.adjustmentCaption',
+  'output.monthlyPrint.approvedMetadata',
+  'output.monthlyPrint.approvedTotals',
+  'output.monthlyPrint.dailyCaption',
+  'output.monthlyPrint.dateRange',
+  'output.monthlyPrint.footer',
+  'output.monthlyPrint.readiness.notReady',
+  'output.monthlyPrint.readiness.ready',
+  'output.monthlyPrint.readiness.workflow',
+  'output.monthlyPrint.statusLine',
+  'output.monthlyPrint.title',
   'shared.duration.hours',
   'shared.duration.minutes',
   'shared.duration.compact',

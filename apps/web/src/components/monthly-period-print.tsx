@@ -22,9 +22,9 @@ export function MonthlyPeriodPrintView({ period }: Readonly<{ period: MonthlyPer
     <article className="wl-print-only" data-print-monthly-record style={{ display: 'none' }}>
       <header className="grid gap-2 border-b border-[var(--wl-border)] pb-4">
         <p className="m-0 text-sm font-bold uppercase tracking-[0.12em]">{'WorkLedger'}</p>
-        <h1 className="m-0 text-3xl font-bold">{t('employee.monthly.print.title')}</h1>
+        <h1 className="m-0 text-3xl font-bold">{t('output.monthlyPrint.title')}</h1>
         <p className="m-0">
-          {t('employee.monthly.print.dateRange', {
+          {t('output.monthlyPrint.dateRange', {
             employee: period.employeeDisplayName,
             end: formatDateOnly(runtime.locale, period.monthEnd),
             start: formatDateOnly(runtime.locale, period.monthStart),
@@ -32,7 +32,7 @@ export function MonthlyPeriodPrintView({ period }: Readonly<{ period: MonthlyPer
           })}
         </p>
         <p className="m-0">
-          {t('employee.monthly.print.statusLine', {
+          {t('output.monthlyPrint.statusLine', {
             readiness: printReadiness(period, t),
             status: t(workflowStatusMessageKey(period.workflow.status)),
           })}
@@ -98,7 +98,7 @@ export function MonthlyPeriodPrintView({ period }: Readonly<{ period: MonthlyPer
         </h2>
         <table className="w-full border-collapse text-left text-sm">
           <caption className="sr-only">
-            {t('employee.monthly.print.dailyCaption', { employee: period.employeeDisplayName })}
+            {t('output.monthlyPrint.dailyCaption', { employee: period.employeeDisplayName })}
           </caption>
           <thead>
             <tr>
@@ -133,7 +133,7 @@ export function MonthlyPeriodPrintView({ period }: Readonly<{ period: MonthlyPer
             {t('employee.monthly.approved.heading')}
           </h2>
           <p className="m-0">
-            {t('employee.monthly.print.approvedMetadata', {
+            {t('output.monthlyPrint.approvedMetadata', {
               cycle: period.approvedRecord.approvalCycle,
               date: formatInstant(
                 runtime.locale,
@@ -143,7 +143,7 @@ export function MonthlyPeriodPrintView({ period }: Readonly<{ period: MonthlyPer
             })}
           </p>
           <p className="m-0">
-            {t('employee.monthly.print.approvedTotals', {
+            {t('output.monthlyPrint.approvedTotals', {
               balance: formatCompactDuration(
                 runtime,
                 period.approvedRecord.totals.balanceMinutes,
@@ -170,10 +170,10 @@ export function MonthlyPeriodPrintView({ period }: Readonly<{ period: MonthlyPer
       {period.postLockView === null ? null : (
         <section aria-labelledby="print-adjusted-record" className="grid gap-3">
           <h2 id="print-adjusted-record" className="m-0 text-xl font-bold">
-            {t('employee.monthly.print.adjustedHeading')}
+            {t('output.monthlyPrint.adjustedHeading')}
           </h2>
           <p className="m-0">
-            {t('employee.monthly.print.adjustedTotals', {
+            {t('output.monthlyPrint.adjustedTotals', {
               adjusted: formatCompactDuration(
                 runtime,
                 period.postLockView.adjustedClosingBalanceMinutes,
@@ -193,7 +193,7 @@ export function MonthlyPeriodPrintView({ period }: Readonly<{ period: MonthlyPer
           </p>
           {period.postLockView.adjustments.length === 0 ? null : (
             <table className="w-full border-collapse text-left text-sm">
-              <caption className="sr-only">{t('employee.monthly.print.adjustmentCaption')}</caption>
+              <caption className="sr-only">{t('output.monthlyPrint.adjustmentCaption')}</caption>
               <thead>
                 <tr>
                   <th scope="col">{t('employee.monthly.adjustments.column.version')}</th>
@@ -216,7 +216,7 @@ export function MonthlyPeriodPrintView({ period }: Readonly<{ period: MonthlyPer
       )}
 
       <footer className="border-t border-[var(--wl-border)] pt-3 text-sm">
-        {t('employee.monthly.print.footer')}
+        {t('output.monthlyPrint.footer')}
       </footer>
     </article>
   );
@@ -246,12 +246,12 @@ function PrintMinute({
 
 function printReadiness(period: MonthlyPeriod, t: MessageTranslator): string {
   if (period.readiness.status === 'READY_FOR_SUBMISSION') {
-    return t('employee.monthly.print.readiness.ready');
+    return t('output.monthlyPrint.readiness.ready');
   }
   if (period.readiness.status === 'INCOMPLETE') {
-    return t('employee.monthly.print.readiness.notReady');
+    return t('output.monthlyPrint.readiness.notReady');
   }
-  return t('employee.monthly.print.readiness.workflow');
+  return t('output.monthlyPrint.readiness.workflow');
 }
 
 function dailyColumnLabels(t: MessageTranslator): readonly string[] {

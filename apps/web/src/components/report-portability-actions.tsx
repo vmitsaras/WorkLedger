@@ -5,39 +5,20 @@ import type {
   ReportExportRequest,
   ReportQuery,
   ReportResult,
-  SupportedLocale,
 } from '@workledger/contracts';
-import { formatDateOnly, type MessageKey } from '@workledger/i18n';
+import {
+  formatCompactDuration,
+  formatDateOnly,
+  formatNumber,
+  type I18nRuntime,
+  type MessageKey,
+} from '@workledger/i18n';
 import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Button } from '@workledger/ui';
 
 import { ApiClientError, exportReportCsv, type ReportCsvDownload } from '../app/api-client.js';
-import { formatDuration } from '../app/date-time-format.js';
-import { reportPresentation } from '../app/presentation-codes.js';
 
 type PortabilityStatus = Readonly<{ kind: 'ERROR' | 'SUCCESS'; message: string }>;
-
-const SUMMARY_LABEL_KEYS = Object.freeze({
-  ActionableApprovals: 'manager.report.portability.summary.actionableApprovals',
-  AvailableChange: 'manager.report.portability.summary.availableChange',
-  Balance: 'manager.report.portability.summary.balance',
-  Closing: 'manager.report.portability.summary.closing',
-  ClosingAvailable: 'manager.report.portability.summary.closingAvailable',
-  ClosingBalance: 'manager.report.portability.summary.closingBalance',
-  Credited: 'manager.report.portability.summary.credited',
-  DateRange: 'manager.report.portability.summary.dateRange',
-  Expected: 'manager.report.portability.summary.expected',
-  IncompleteRecords: 'manager.report.portability.summary.incompleteRecords',
-  MatchingRows: 'manager.report.portability.summary.matchingRows',
-  OpeningAvailable: 'manager.report.portability.summary.openingAvailable',
-  OpeningBalance: 'manager.report.portability.summary.openingBalance',
-  PostLockChange: 'manager.report.portability.summary.postLockChange',
-  ProjectedRemaining: 'manager.report.portability.summary.projectedRemaining',
-  RangeChange: 'manager.report.portability.summary.rangeChange',
-  Reserved: 'manager.report.portability.summary.reserved',
-  Scope: 'manager.report.portability.summary.scope',
-  Worked: 'manager.report.portability.summary.worked',
-} as const satisfies Readonly<Record<string, MessageKey>>);
 
 const INCLUDED_FIELD_KEYS = Object.freeze({
   'flexible-time': 'manager.report.portability.fields.flexibleTime',
@@ -48,11 +29,19 @@ const INCLUDED_FIELD_KEYS = Object.freeze({
 } as const satisfies Readonly<Record<ReportResult['key'], MessageKey>>);
 
 const SCOPE_KEYS = Object.freeze({
-  ORGANIZATION: 'manager.report.common.scope.organization',
-  REPORTS: 'manager.report.common.scope.currentDirectReports',
-  SELF: 'manager.report.common.scope.self',
-  SELF_AND_REPORTS: 'manager.report.common.scope.selfAndDirectReports',
+  ORGANIZATION: 'output.clipboard.report.scope.organisation',
+  REPORTS: 'output.clipboard.report.scope.currentDirectReports',
+  SELF: 'output.clipboard.report.scope.self',
+  SELF_AND_REPORTS: 'output.clipboard.report.scope.selfAndDirectReports',
 } as const satisfies Readonly<Record<ReportResult['scope'], MessageKey>>);
+
+const REPORT_TITLE_KEYS = Object.freeze({
+  'flexible-time': 'output.clipboard.report.title.flexibleTime',
+  leave: 'output.clipboard.report.title.leave',
+  'missing-records': 'output.clipboard.report.title.missingRecords',
+  'monthly-time': 'output.clipboard.report.title.monthlyTime',
+  'pending-approvals': 'output.clipboard.report.title.pendingApprovals',
+} as const satisfies Readonly<Record<ReportResult['key'], MessageKey>>);
 
 export function ReportPortabilityActions({
   data,
@@ -69,7 +58,6 @@ export function ReportPortabilityActions({
   const [copyPending, setCopyPending] = useState(false);
   const [status, setStatus] = useState<PortabilityStatus>();
   const runtime = useWorkLedgerI18n();
-  const locale = runtime.locale as SupportedLocale;
   const t = useWorkLedgerMessage();
 
   const exportCsv = async () => {
@@ -98,7 +86,7 @@ export function ReportPortabilityActions({
         throw new Error(t('manager.report.portability.error.clipboardUnavailable'));
       }
       await navigator.clipboard.writeText(
-        reportSummaryText(reportPresentation(report.key, t).title, refreshed, locale, t),
+        reportSummaryText(t(REPORT_TITLE_KEYS[report.key]), refreshed, runtime, t),
       );
       setStatus({
         kind: 'SUCCESS',
@@ -188,57 +176,122 @@ function startDownload(download: ReportCsvDownload): void {
 function reportSummaryText(
   title: string,
   data: ReportResult,
-  locale: SupportedLocale,
+  runtime: I18nRuntime,
   t: ReturnType<typeof useWorkLedgerMessage>,
 ): string {
   return [
     title,
-    `${t(SUMMARY_LABEL_KEYS.DateRange)}: ${formatDateOnly(locale, data.range.from, {
-      dateStyle: 'full',
-    })} ${t('manager.report.detail.filter.applied.through')} ${formatDateOnly(
-      locale,
-      data.range.to,
-      { dateStyle: 'full' },
-    )}`,
-    `${t(SUMMARY_LABEL_KEYS.Scope)}: ${t(SCOPE_KEYS[data.scope])}`,
-    `${t(SUMMARY_LABEL_KEYS.MatchingRows)}: ${data.pagination.total.toString()}`,
-    ...summaryLines(data, t),
+    t('output.clipboard.report.line.dateRange', {
+      from: formatDateOnly(runtime.locale, data.range.from, { dateStyle: 'full' }),
+      to: formatDateOnly(runtime.locale, data.range.to, { dateStyle: 'full' }),
+    }),
+    t('output.clipboard.report.line.scope', { value: t(SCOPE_KEYS[data.scope]) }),
+    t('output.clipboard.report.line.matchingRows', {
+      value: formatNumber(runtime.locale, data.pagination.total),
+    }),
+    ...summaryLines(data, runtime, t),
   ].join('\n');
 }
 
 function summaryLines(
   data: ReportResult,
+  runtime: I18nRuntime,
   t: ReturnType<typeof useWorkLedgerMessage>,
 ): readonly string[] {
   switch (data.summary.kind) {
     case 'MONTHLY_TIME':
       return [
-        `${t(SUMMARY_LABEL_KEYS.Expected)}: ${formatDuration(data.summary.expectedMinutes)}`,
-        `${t(SUMMARY_LABEL_KEYS.Worked)}: ${formatDuration(data.summary.workedMinutes)}`,
-        `${t(SUMMARY_LABEL_KEYS.Credited)}: ${formatDuration(data.summary.creditedMinutes)}`,
-        `${t(SUMMARY_LABEL_KEYS.Balance)}: ${formatDuration(data.summary.balanceMinutes, true)}`,
-        `${t(SUMMARY_LABEL_KEYS.PostLockChange)}: ${formatDuration(data.summary.postLockDeltaMinutes, true)}`,
-        `${t(SUMMARY_LABEL_KEYS.IncompleteRecords)}: ${data.summary.incompleteRecordCount.toString()}`,
+        outputLine(t, 'expected', formatCompactDuration(runtime, data.summary.expectedMinutes)),
+        outputLine(t, 'worked', formatCompactDuration(runtime, data.summary.workedMinutes)),
+        outputLine(t, 'credited', formatCompactDuration(runtime, data.summary.creditedMinutes)),
+        outputLine(t, 'balance', formatCompactDuration(runtime, data.summary.balanceMinutes, true)),
+        outputLine(
+          t,
+          'postLockChange',
+          formatCompactDuration(runtime, data.summary.postLockDeltaMinutes, true),
+        ),
+        outputLine(
+          t,
+          'incompleteRecords',
+          formatNumber(runtime.locale, data.summary.incompleteRecordCount),
+        ),
       ];
     case 'FLEXIBLE_TIME':
       return [
-        `${t(SUMMARY_LABEL_KEYS.OpeningBalance)}: ${formatDuration(data.summary.openingBalanceMinutes, true)}`,
-        `${t(SUMMARY_LABEL_KEYS.RangeChange)}: ${formatDuration(data.summary.rangeChangeMinutes, true)}`,
-        `${t(SUMMARY_LABEL_KEYS.ClosingBalance)}: ${formatDuration(data.summary.closingBalanceMinutes, true)}`,
+        outputLine(
+          t,
+          'openingBalance',
+          formatCompactDuration(runtime, data.summary.openingBalanceMinutes, true),
+        ),
+        outputLine(
+          t,
+          'rangeChange',
+          formatCompactDuration(runtime, data.summary.rangeChangeMinutes, true),
+        ),
+        outputLine(
+          t,
+          'closingBalance',
+          formatCompactDuration(runtime, data.summary.closingBalanceMinutes, true),
+        ),
       ];
     case 'LEAVE':
       return [
-        `${t(SUMMARY_LABEL_KEYS.OpeningAvailable)}: ${formatDuration(data.summary.openingAvailableMinutes, true)}`,
-        `${t(SUMMARY_LABEL_KEYS.AvailableChange)}: ${formatDuration(data.summary.availableChangeMinutes, true)}`,
-        `${t(SUMMARY_LABEL_KEYS.ClosingAvailable)}: ${formatDuration(data.summary.closingAvailableMinutes, true)}`,
-        `${t(SUMMARY_LABEL_KEYS.Reserved)}: ${formatDuration(data.summary.reservedMinutes)}`,
-        `${t(SUMMARY_LABEL_KEYS.ProjectedRemaining)}: ${formatDuration(data.summary.projectedRemainingMinutes, true)}`,
+        outputLine(
+          t,
+          'openingAvailable',
+          formatCompactDuration(runtime, data.summary.openingAvailableMinutes, true),
+        ),
+        outputLine(
+          t,
+          'availableChange',
+          formatCompactDuration(runtime, data.summary.availableChangeMinutes, true),
+        ),
+        outputLine(
+          t,
+          'closingAvailable',
+          formatCompactDuration(runtime, data.summary.closingAvailableMinutes, true),
+        ),
+        outputLine(t, 'reserved', formatCompactDuration(runtime, data.summary.reservedMinutes)),
+        outputLine(
+          t,
+          'projectedRemaining',
+          formatCompactDuration(runtime, data.summary.projectedRemainingMinutes, true),
+        ),
       ];
     case 'MISSING_RECORD':
-      return [`${t(SUMMARY_LABEL_KEYS.IncompleteRecords)}: ${data.summary.recordCount.toString()}`];
+      return [
+        outputLine(t, 'incompleteRecords', formatNumber(runtime.locale, data.summary.recordCount)),
+      ];
     case 'PENDING_APPROVAL':
-      return [`${t(SUMMARY_LABEL_KEYS.ActionableApprovals)}: ${data.summary.itemCount.toString()}`];
+      return [
+        outputLine(t, 'actionableApprovals', formatNumber(runtime.locale, data.summary.itemCount)),
+      ];
   }
+}
+
+type OutputLineName =
+  | 'actionableApprovals'
+  | 'availableChange'
+  | 'balance'
+  | 'closingAvailable'
+  | 'closingBalance'
+  | 'credited'
+  | 'expected'
+  | 'incompleteRecords'
+  | 'openingAvailable'
+  | 'openingBalance'
+  | 'postLockChange'
+  | 'projectedRemaining'
+  | 'rangeChange'
+  | 'reserved'
+  | 'worked';
+
+function outputLine(
+  t: ReturnType<typeof useWorkLedgerMessage>,
+  name: OutputLineName,
+  value: string,
+): string {
+  return t(`output.clipboard.report.line.${name}`, { value });
 }
 
 function portabilityErrorMessage(

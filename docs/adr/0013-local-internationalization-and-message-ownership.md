@@ -1,6 +1,6 @@
 # ADR 0013: Local Internationalization and Message Ownership
 
-**Status:** Accepted by `WL-1400`; bundle accounting amended by `WL-1402`, `WL-1404`, `WL-1405`, `WL-1406`, and `D-508`
+**Status:** Accepted by `WL-1400`; bundle accounting amended by `WL-1402`, `WL-1404`, `WL-1405`, `WL-1406`, and `D-508`; output ownership applied by `WL-1407`
 
 ## Context
 
@@ -161,6 +161,11 @@ baseline, largest-chunk, CSS, and locale-catalog limits remain unchanged.
 HR, and system workflow translation measured 1,005,262 bytes raw and 258,138 bytes gzip. The
 localized main chunk accounts for the raw growth while total gzip usage falls. The gzip allowance,
 application baseline, largest-chunk, CSS, and locale-catalog limits remain unchanged.
+
+`WL-1407` applies the accepted output ownership without extending the allowance. The complete
+generated and recipient output integration measures 1,004,370 bytes raw and 258,040 bytes gzip,
+which consumes 94,370 raw and 12,040 gzip bytes of the existing Phase 14 allowance. The application
+baseline, allowance, largest-chunk, CSS, and locale-catalog limits remain unchanged.
 
 Each locale chunk is limited to 150 KiB raw and 50 KiB gzip. All three locale chunks together are
 limited to 450 KiB raw and 150 KiB gzip.

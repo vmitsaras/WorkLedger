@@ -1,1 +1,148 @@
-{}
+{
+  "clipboard": {
+    "report": {
+      "line": {
+        "actionableApprovals": "Actionable approvals: {{value}}",
+        "availableChange": "Available change: {{value}}",
+        "balance": "Balance: {{value}}",
+        "closingAvailable": "Closing available: {{value}}",
+        "closingBalance": "Closing balance: {{value}}",
+        "credited": "Credited: {{value}}",
+        "dateRange": "Date range: {{from}} through {{to}}",
+        "expected": "Expected: {{value}}",
+        "incompleteRecords": "Incomplete records: {{value}}",
+        "matchingRows": "Matching rows: {{value}}",
+        "openingAvailable": "Opening available: {{value}}",
+        "openingBalance": "Opening balance: {{value}}",
+        "postLockChange": "Post-lock change: {{value}}",
+        "projectedRemaining": "Projected remaining: {{value}}",
+        "rangeChange": "Range change: {{value}}",
+        "reserved": "Reserved: {{value}}",
+        "scope": "Scope: {{value}}",
+        "worked": "Worked: {{value}}"
+      },
+      "scope": {
+        "currentDirectReports": "Current direct reports",
+        "organisation": "Organisation",
+        "self": "your own records",
+        "selfAndDirectReports": "your own records and current direct reports"
+      },
+      "title": {
+        "flexibleTime": "Flexible time",
+        "leave": "Leave balances",
+        "missingRecords": "Missing records",
+        "monthlyTime": "Monthly time",
+        "pendingApprovals": "Pending approvals"
+      }
+    }
+  },
+  "communication": {
+    "invitation": {
+      "body": "Hello {{name}},\n\nYou have been invited to activate your WorkLedger account. Use this single-use link within 24 hours:\n{{activationUrl}}\n\nIf you were not expecting this invitation, you can ignore this message.",
+      "subject": "Activate your WorkLedger account"
+    },
+    "notification": {
+      "acknowledged": {
+        "body": "An item you submitted was acknowledged. Sign in to WorkLedger to review the related record.",
+        "subject": "WorkLedger item acknowledged"
+      },
+      "approved": {
+        "body": "An item you submitted was approved. Sign in to WorkLedger to review the related record.",
+        "subject": "WorkLedger item approved"
+      },
+      "changesRequested": {
+        "body": "An item you submitted needs changes. Sign in to WorkLedger to review the related record.",
+        "subject": "WorkLedger changes requested"
+      },
+      "rejected": {
+        "body": "An item you submitted was not approved. Sign in to WorkLedger to review the related record.",
+        "subject": "WorkLedger item not approved"
+      }
+    },
+    "passwordReset": {
+      "body": "A password reset was requested for your WorkLedger account. Use this single-use link within 30 minutes:\n{{resetUrl}}\n\nIf you did not request a reset, you can ignore this message.",
+      "subject": "Reset your WorkLedger password"
+    }
+  },
+  "csv": {
+    "column": {
+      "affectedEndDate": "affected_end_date",
+      "affectedStartDate": "affected_start_date",
+      "availableChangeMinutes": "available_change_minutes",
+      "balanceMinutes": "balance_minutes",
+      "closingAvailableMinutes": "closing_available_minutes",
+      "closingBalanceMinutes": "closing_balance_minutes",
+      "creditedMinutes": "credited_minutes",
+      "date": "date",
+      "employeeName": "employee_name",
+      "expectedMinutes": "expected_minutes",
+      "incompleteRecordCount": "incomplete_record_count",
+      "leaveAccount": "leave_account",
+      "month": "month",
+      "openingAvailableMinutes": "opening_available_minutes",
+      "openingBalanceMinutes": "opening_balance_minutes",
+      "postLockDeltaMinutes": "post_lock_delta_minutes",
+      "projectedRemainingMinutes": "projected_remaining_minutes",
+      "rangeChangeMinutes": "range_change_minutes",
+      "reservedMinutes": "reserved_minutes",
+      "status": "status",
+      "submittedAt": "submitted_at",
+      "warningCodes": "warning_codes",
+      "workedMinutes": "worked_minutes",
+      "workflowCategory": "workflow_category",
+      "workflowStatus": "workflow_status"
+    },
+    "issue": {
+      "absenceApprovalPending": "Absence approval pending",
+      "attendanceIncomplete": "Attendance incomplete",
+      "attendanceInvalidEventOrder": "Invalid attendance event order",
+      "attendanceInvalidEventPrecision": "Invalid attendance event precision",
+      "attendanceOverlap": "Attendance overlap",
+      "correctionUnresolved": "Correction unresolved",
+      "flexNegativeThresholdExceeded": "Negative flexible-time threshold exceeded",
+      "flexPositiveThresholdExceeded": "Positive flexible-time threshold exceeded",
+      "ledgerSourceMismatch": "Ledger source mismatch",
+      "policyAssignmentOverlap": "Time-policy assignment overlap",
+      "policyConfigurationInvalid": "Invalid time-policy configuration",
+      "policyNotAssigned": "Time policy not assigned",
+      "scheduleAssignmentOverlap": "Work-schedule assignment overlap",
+      "scheduleNotAssigned": "Work schedule not assigned",
+      "workDuringAbsence": "Work during absence",
+      "workOnHoliday": "Work on public holiday",
+      "workOnZeroExpectedDay": "Work on zero-expected day"
+    },
+    "status": {
+      "approvalKind": {
+        "absence": "Absence",
+        "cancellation": "Cancellation",
+        "correction": "Correction",
+        "monthlyPeriod": "Monthly period"
+      },
+      "record": { "incomplete": "Incomplete" },
+      "workflow": {
+        "approved": "Approved",
+        "changesRequested": "Changes requested",
+        "locked": "Locked",
+        "open": "Open",
+        "submitted": "Submitted"
+      }
+    }
+  },
+  "monthlyPrint": {
+    "adjustedHeading": "Adjusted record",
+    "adjustedTotals": "Original closing balance {{closing}}; cumulative adjustment {{delta}}; adjusted closing balance {{adjusted}}.",
+    "adjustmentCaption": "Post-lock adjustments included in this printable record",
+    "approvedMetadata": "Approval cycle {{cycle}}, approved {{date}}.",
+    "approvedTotals": "Approved expected {{expected}}, credited {{credited}}, balance {{balance}}, and closing ledger balance {{closing}}.",
+    "dailyCaption": "Daily monthly record for {{employee}}",
+    "dateRange": "{{employee}}, {{start}} to {{end}}, organisation timezone {{timeZone}}.",
+    "footer": "Generated after an action-time authorisation refresh. Original attendance events and approved snapshots remain unchanged.",
+    "readiness": {
+      "notReady": "Not ready",
+      "ready": "Ready for submission",
+      "workflow": "Workflow in progress"
+    },
+    "statusLine": "Workflow status: {{status}}. Readiness: {{readiness}}.",
+    "title": "Monthly time record"
+  }
+}

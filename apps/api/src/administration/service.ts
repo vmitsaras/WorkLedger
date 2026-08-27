@@ -46,6 +46,7 @@ import { PasswordPolicyError } from '../auth/password-policy.js';
 import { parseUserAgent } from '../account/self-service.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import { authorizeAccountTarget, authorizeEmployeeTarget } from '../authorization/policy.js';
+import { createOutputMessageTranslator } from '../i18n/output.js';
 
 const INVITATION_LIFETIME_MILLISECONDS = 24 * 60 * 60 * 1_000;
 const HR_ROLES = new Set<ApplicationRole>(['EMPLOYEE', 'MANAGER', 'HR_ADMINISTRATOR']);
@@ -60,6 +61,8 @@ export type AccountInvitationMessage = Readonly<{
   email: string;
   locale: SupportedLocale;
   name: string;
+  subject: string;
+  text: string;
 }>;
 
 export type AccountInvitationSender = (message: AccountInvitationMessage) => Promise<void>;
@@ -1345,11 +1348,17 @@ async function deliverInvitation(
   const activationUrl = new URL('/activate-account', canonicalOrigin);
   activationUrl.searchParams.set('token', token);
   try {
+    const t = await createOutputMessageTranslator(recipient.locale);
     await sender({
       activationUrl,
       email: recipient.email,
       locale: recipient.locale,
       name: recipient.name,
+      subject: t('output.communication.invitation.subject'),
+      text: t('output.communication.invitation.body', {
+        activationUrl: activationUrl.toString(),
+        name: recipient.name,
+      }),
     });
   } catch {
     process.stderr.write(

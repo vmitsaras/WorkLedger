@@ -400,27 +400,6 @@
         "copySuccess": "Resumen del informe copiado. No se han copiado filas de la tabla ni campos ocultos.",
         "exportSuccess": "Descarga CSV iniciada. Se ha añadido un apóstrofo al texto que podría interpretarse como fórmula antes de entrecomillarlo para CSV.",
         "label": "Estado de portabilidad del informe"
-      },
-      "summary": {
-        "actionableApprovals": "Aprobaciones que requieren acción",
-        "availableChange": "Cambio disponible",
-        "balance": "Saldo",
-        "closing": "Final",
-        "closingAvailable": "Disponible final",
-        "closingBalance": "Saldo final",
-        "credited": "Acreditado",
-        "dateRange": "Intervalo de fechas",
-        "expected": "Previsto",
-        "incompleteRecords": "Registros incompletos",
-        "matchingRows": "Filas coincidentes",
-        "openingAvailable": "Disponible inicial",
-        "openingBalance": "Saldo inicial",
-        "postLockChange": "Cambio posterior al bloqueo",
-        "projectedRemaining": "Restante previsto",
-        "rangeChange": "Cambio en el intervalo",
-        "reserved": "Reservado",
-        "scope": "Ámbito",
-        "worked": "Trabajado"
       }
     }
   },

@@ -400,27 +400,6 @@
         "copySuccess": "Berichtszusammenfassung kopiert. Tabellenzeilen und ausgeblendete Felder wurden nicht kopiert.",
         "exportSuccess": "CSV-Download gestartet. Text mit Formelzeichen wurde vor der CSV-Quotierung mit einem Apostroph versehen.",
         "label": "Status der Berichtsübertragung"
-      },
-      "summary": {
-        "actionableApprovals": "Bearbeitbare Genehmigungen",
-        "availableChange": "Verfügbarkeitsänderung",
-        "balance": "Saldo",
-        "closing": "Endsaldo",
-        "closingAvailable": "Verfügbarkeit am Ende",
-        "closingBalance": "Endsaldo",
-        "credited": "Gutgeschrieben",
-        "dateRange": "Datumsbereich",
-        "expected": "Soll",
-        "incompleteRecords": "Unvollständige Datensätze",
-        "matchingRows": "Passende Zeilen",
-        "openingAvailable": "Verfügbarkeit am Anfang",
-        "openingBalance": "Anfangssaldo",
-        "postLockChange": "Nachträgliche Änderung",
-        "projectedRemaining": "Voraussichtlich verbleibend",
-        "rangeChange": "Änderung im Zeitraum",
-        "reserved": "Reserviert",
-        "scope": "Bereich",
-        "worked": "Gearbeitet"
       }
     }
   },

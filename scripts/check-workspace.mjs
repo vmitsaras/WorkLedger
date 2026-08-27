@@ -25,7 +25,12 @@ export const EXPECTED_PROJECTS = [
     directory: 'apps/api',
     name: '@workledger/api',
     kind: 'application',
-    runtimeDependencies: ['@workledger/contracts', '@workledger/database', '@workledger/domain'],
+    runtimeDependencies: [
+      '@workledger/contracts',
+      '@workledger/database',
+      '@workledger/domain',
+      '@workledger/i18n',
+    ],
     developmentDependencies: ['@workledger/config', '@workledger/test-utils'],
   },
   {

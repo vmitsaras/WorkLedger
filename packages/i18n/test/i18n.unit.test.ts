@@ -119,3 +119,27 @@ test('formats integer-minute durations through locale plural messages', async ()
   expect(() => formatDuration(english, 1.5)).toThrow(RangeError);
   expect(() => formatCompactDuration(english, 1.5)).toThrow(RangeError);
 });
+
+test('renders generated output and recipient communication in the exact requested locale', async () => {
+  const german = await initializeI18n('de-DE');
+  const spanish = await initializeI18n('es-ES');
+
+  expect(translate(german, 'output.csv.status.workflow.changesRequested')).toBe(
+    'Änderungen angefordert',
+  );
+  expect(
+    translate(german, 'output.communication.invitation.body', {
+      activationUrl: 'https://ledger.example.test/activate-account?token=secret',
+      name: '<Jordan>',
+    }),
+  ).toContain('Hallo <Jordan>,');
+  expect(translate(spanish, 'output.communication.passwordReset.subject')).toBe(
+    'Restablece tu contraseña de WorkLedger',
+  );
+  expect(
+    translate(spanish, 'output.clipboard.report.line.dateRange', {
+      from: '1 de agosto de 2026',
+      to: '31 de agosto de 2026',
+    }),
+  ).toBe('Intervalo de fechas: del 1 de agosto de 2026 al 31 de agosto de 2026');
+});

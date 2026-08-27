@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 7 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1406` manager, HR, and system workflow localization complete
-**Active task:** `WL-1407` (not started)
-**Status:** Employee, manager, HR, and system browser workflows are catalog backed in all three production locales with critical German and Spanish component/browser coverage; `D-508` remains resolved through the measured localization allowance
+**Phase progress:** Phase 13 complete — 8 of 11 Phase 14 tasks complete
+**Current milestone:** `WL-1407` generated and recipient output localization complete
+**Active task:** `WL-1408` (not started)
+**Status:** Browser and generated output surfaces are catalog backed in all three production locales with locale authority, privacy, machine-value, and bundle contracts preserved; `D-508` remains resolved through the measured localization allowance
 **Last verified:** 2026-08-27
 
 ## Current objective
@@ -21,11 +21,13 @@ organization timezone. Completed `WL-1405` now localizes the employee workflows 
 and balances, daily records, requests, corrections, absences, calendar, notifications, and monthly
 review, including the integrated monthly print view. Completed `WL-1406` now localizes manager
 Approvals and Team views, reports, HR employee/team/policy/settings administration, audit,
-accounts, and system operations. `D-508` bounds the completed integration through a 96,000-byte raw
-and 22,000-byte gzip Phase 14 allowance above the preserved 910,000/246,000-byte application
-baseline; the measured build consumes 95,262/12,138 bytes of that allowance. Generated and
-recipient-facing CSV, clipboard, notification email, invitation, and password-reset output remains
-assigned to `WL-1407`. The broader
+accounts, and system operations. Completed `WL-1407` localizes print and clipboard output with the
+authenticated browser locale, CSV output with the authorized actor locale, notifications and
+password resets with the recipient account locale, and invitations with their stored initial
+locale. `D-508` bounds the completed integration through a 96,000-byte raw and 22,000-byte gzip
+Phase 14 allowance above the preserved 910,000/246,000-byte application baseline; the measured
+build consumes 94,370/12,040 bytes of that allowance. Catalog completion, fluent review, and the
+test-only pseudo-locale are assigned to `WL-1408`. The broader
 `D-502` retail browser and
 assistive-technology matrix remains
 an explicit limitation rather than a conformance claim. The portfolio presentation scope remains
@@ -2586,6 +2588,26 @@ an unnumbered draft.
   deployment, publication, tag, domain rule, permission, or audit policy changed. See
   `docs/146-manager-administration-system-workflow-i18n.md`.
 
+**2026-08-27 — WL-1407 generated and recipient output localization**
+
+- Added typed English, German, and Spanish output messages for monthly print records, clipboard
+  report summaries, CSV columns and statuses, notification email, invitations, and password reset.
+- Applied the authenticated browser locale to print and clipboard, the authorized actor locale to
+  CSV, the recipient account locale to notification and reset email, and the stored initial locale
+  to invitations. API output rendering uses the existing framework-independent i18n workspace.
+- Preserved CSV formula neutralization, ISO date and instant fields, integer minute values,
+  authorization scope, generic notification privacy, plain-text email, and existing delivery retry
+  and failure isolation behavior. No schema or migration changed.
+- The local completion run passes formatting, lint with 316-source/1,773-import boundaries, CSS,
+  strict TypeScript, 49 tooling tests, 409 unit/component tests across 50 files, 13 available
+  integration tests, catalog enforcement for 2,069 messages, and production/workspace builds. The
+  45 PostgreSQL-dependent integration cases remain skipped because the opt-in service is
+  unavailable.
+- The production graph passes at 435,303 largest-chunk bytes, 1,004,370 total raw JavaScript
+  bytes, 258,040 gzip JavaScript bytes, and 50,242 CSS bytes outside separately bounded catalogs.
+  The existing Phase 14 allowance remains unchanged at 96,000 raw and 22,000 gzip bytes. See
+  `docs/147-generated-recipient-output-i18n.md`.
+
 ## Current blockers
 
 German and Spanish still require named fluent reviewers before `WL-1408`; their absence does not
@@ -2602,9 +2624,8 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Begin `WL-1407`: localize print, clipboard, CSV labels and statuses, notification email,
-invitations, and password-reset communication while preserving authorization, privacy, formula
-neutralization, ISO-date, and integer-minute contracts. The
+Begin `WL-1408`: complete and human-review the English, German, and Spanish catalogs, add the
+test-only pseudo-locale, and close catalog enforcement gaps. The
 portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as an unnumbered draft.
 

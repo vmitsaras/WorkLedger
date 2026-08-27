@@ -1,6 +1,7 @@
 import { workspacePackage as contractsPackage } from '@workledger/contracts';
 import { workspacePackage as databasePackage } from '@workledger/database';
 import { workspacePackage as domainPackage } from '@workledger/domain';
+import { workspacePackage as i18nPackage } from '@workledger/i18n';
 
 export {
   RUNTIME_ENVIRONMENT_VARIABLES,
@@ -87,7 +88,12 @@ export {
 export type { RuntimeConfig, RuntimeConfigSummary, RuntimeEnvironment } from './config.js';
 
 export const workspacePackage = '@workledger/api' as const;
-export const workspaceDependencies = [contractsPackage, databasePackage, domainPackage] as const;
+export const workspaceDependencies = [
+  contractsPackage,
+  databasePackage,
+  domainPackage,
+  i18nPackage,
+] as const;
 
 export type WorkspacePackageName = typeof workspacePackage;
 export type WorkspaceDependencyName = (typeof workspaceDependencies)[number];

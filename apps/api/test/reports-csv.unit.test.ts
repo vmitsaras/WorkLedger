@@ -36,16 +36,21 @@ test('applies apostrophe neutralization before ordinary quoting and preserves nu
   expect(csvCell(-60)).toBe('-60');
 });
 
-test('creates a CRLF-terminated UTF-8-ready report with a generic filename and no hidden identifiers', () => {
-  const document = createReportCsv('flexible-time', { from: '2026-08-01', to: '2026-08-31' }, [
-    {
-      closingBalanceMinutes: -60,
-      employeeDisplayName: '=2+2',
-      kind: 'FLEXIBLE_TIME',
-      openingBalanceMinutes: 0,
-      rangeChangeMinutes: -60,
-    },
-  ]);
+test('creates a localized CRLF-terminated UTF-8-ready report with a generic filename and no hidden identifiers', async () => {
+  const document = await createReportCsv(
+    'flexible-time',
+    { from: '2026-08-01', to: '2026-08-31' },
+    [
+      {
+        closingBalanceMinutes: -60,
+        employeeDisplayName: '=2+2',
+        kind: 'FLEXIBLE_TIME',
+        openingBalanceMinutes: 0,
+        rangeChangeMinutes: -60,
+      },
+    ],
+    'en-GB',
+  );
 
   expect(document.filename).toBe('workledger-flexible-time-2026-08-01-to-2026-08-31.csv');
   expect(document.rowCount).toBe(1);
@@ -57,6 +62,35 @@ test('creates a CRLF-terminated UTF-8-ready report with a generic filename and n
   expect(document.body).not.toMatch(/employee_id|source_id|approval_id|monthly_period_id/iu);
   expect(document.body.endsWith('\r\n')).toBe(true);
   expect(document.body.replaceAll('\r\n', '')).not.toMatch(/[\r\n]/u);
+});
+
+test('localizes CSV labels and statuses while preserving ISO values and integer minutes', async () => {
+  const document = await createReportCsv(
+    'monthly-time',
+    { from: '2026-08-01', to: '2026-08-31' },
+    [
+      {
+        balanceMinutes: -30,
+        creditedMinutes: 450,
+        employeeDisplayName: 'Erika Muster',
+        expectedMinutes: 480,
+        incompleteRecordCount: 1,
+        kind: 'MONTHLY_TIME',
+        monthStart: '2026-08-01',
+        monthlyPeriodId: '11111111-1111-4111-8111-111111111111',
+        postLockDeltaMinutes: 0,
+        workedMinutes: 450,
+        workflowStatus: 'CHANGES_REQUESTED',
+      },
+    ],
+    'de-DE',
+  );
+
+  expect(document.body).toContain('mitarbeitername,monat,workflow_status');
+  expect(document.body).toContain(
+    'Erika Muster,2026-08-01,Änderungen angefordert,480,450,450,-30,1,0',
+  );
+  expect(document.body).not.toContain('CHANGES_REQUESTED');
 });
 
 test('rejects export row and UTF-8 byte counts beyond configured bounds', () => {
