@@ -214,7 +214,7 @@ const INSIGHT_RESULT: InsightNativeResult = {
     {
       code: 'REVIEW_TODAY',
       destination: 'TODAY',
-      period: { date: '2026-08-27', kind: 'DATE' },
+      period: { date: '2026-08-11', kind: 'DATE' },
       reference: 'action_today',
       sourceReferences: ['source_today'],
     },
@@ -232,11 +232,11 @@ const INSIGHT_RESULT: InsightNativeResult = {
     boundaries: [
       {
         kind: 'CALCULATED_THROUGH',
-        localDate: '2026-08-27',
+        localDate: '2026-08-11',
         sourceReferences: ['source_today'],
       },
     ],
-    capturedAt: '2026-08-27T12:00:00Z',
+    capturedAt: '2026-08-11T12:00:00Z',
   },
   kind: 'today-explanation',
   limitations: [
@@ -247,13 +247,13 @@ const INSIGHT_RESULT: InsightNativeResult = {
       sourceReferences: ['source_today'],
     },
   ],
-  period: { date: '2026-08-27', kind: 'DATE' },
+  period: { date: '2026-08-11', kind: 'DATE' },
   scope: { kind: 'SELF', workspace: 'EMPLOYEE' },
   sources: [
     {
       destination: 'TODAY',
       kind: 'TODAY_ATTENDANCE',
-      period: { date: '2026-08-27', kind: 'DATE' },
+      period: { date: '2026-08-11', kind: 'DATE' },
       reference: 'source_today',
     },
   ],
@@ -615,28 +615,57 @@ test('runs an employee insight only on request with accessible narrow and forced
   await page.route('**/v1/insights/run', async (route) => {
     runCount += 1;
     expect(route.request().postDataJSON()).toEqual({
+      context: {
+        kind: 'TODAY',
+        period: { date: '2026-08-11', kind: 'DATE' },
+        sourceReferences: [],
+      },
       kind: 'today-explanation',
-      period: { date: '2026-08-27', kind: 'DATE' },
+      period: { date: '2026-08-11', kind: 'DATE' },
       workspace: 'EMPLOYEE',
     });
     await route.fulfill({ json: success(INSIGHT_RESULT), status: 200 });
   });
   await page.setViewportSize({ height: 800, width: 320 });
-  await page.goto('/insights?kind=today-explanation&date=2026-08-27');
+  await page.goto('/today');
+  await page.getByRole('link', { name: 'Open Insights' }).click();
 
   await expect(page.getByRole('heading', { name: 'Insights' })).toBeFocused();
+  await expect(page).toHaveURL('/insights?kind=today-explanation&date=2026-08-11');
+  const context = page.getByRole('region', { name: 'Page context' });
+  await expect(context).toContainText('Today');
+  await expect(context).toContainText('11 August 2026');
+  await expect(context).toContainText('No page content or record identifiers were copied.');
   expect(runCount).toBe(0);
+  const storage = await page.evaluate(() => ({
+    local: { ...localStorage },
+    session: { ...sessionStorage },
+  }));
+  expect(JSON.stringify(storage)).not.toContain('TODAY');
+  expect(JSON.stringify(storage)).not.toContain('sourceReferences');
+  await page.getByRole('button', { name: 'Remove context' }).click();
+  await expect(page.getByLabel('What would you like to understand?')).toBeFocused();
+  await expect(page.getByRole('status')).toContainText('Page context removed.');
+  await expect(context).toHaveCount(0);
+
+  await page.goBack();
+  await page.getByRole('link', { name: 'Open Insights' }).click();
+  await expect(page.getByRole('region', { name: 'Page context' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await page.getByRole('button', { name: 'Run insight' }).click();
   await expect(page.getByRole('heading', { name: 'How was today calculated?' })).toBeVisible();
   expect(runCount).toBe(1);
-  await captureWl1503Insight(page);
+  await captureWl1504Foundation(page);
   await expectPageToHaveNoAxeViolations(page);
 
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Page context' })).toHaveCount(0);
+  expect(runCount).toBe(1);
+
   await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
-  await expect(page.getByText('Authoritative records')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Run insight' })).toBeVisible();
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -3942,14 +3971,14 @@ async function capturePhase11Surface(page: Page, name: string): Promise<void> {
   });
 }
 
-async function captureWl1503Insight(page: Page): Promise<void> {
-  if (process.env['WORKLEDGER_CAPTURE_WL1503'] !== '1') return;
-  const directory = 'output/playwright/wl1503';
+async function captureWl1504Foundation(page: Page): Promise<void> {
+  if (process.env['WORKLEDGER_CAPTURE_WL1504'] !== '1') return;
+  const directory = 'output/playwright/wl1504';
   await mkdir(directory, { recursive: true });
   await page.screenshot({
     animations: 'disabled',
     fullPage: true,
-    path: `${directory}/employee-insight-reflow-320x800.png`,
+    path: `${directory}/employee-insight-context-reflow-320x800.png`,
   });
 }
 

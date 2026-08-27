@@ -225,6 +225,16 @@ export type MessageParameterMap = Readonly<{
   'employee.insights.destination.myTime': undefined;
   'employee.insights.destination.reports': undefined;
   'employee.insights.destination.today': undefined;
+  'employee.insights.context.description': undefined;
+  'employee.insights.context.heading': undefined;
+  'employee.insights.context.noPeriod': undefined;
+  'employee.insights.context.period': undefined;
+  'employee.insights.context.remove': undefined;
+  'employee.insights.context.removed': undefined;
+  'employee.insights.context.source': undefined;
+  'employee.insights.entry.action': undefined;
+  'employee.insights.entry.description': undefined;
+  'employee.insights.entry.heading': undefined;
   'employee.insights.error.denied': undefined;
   'employee.insights.error.offline': undefined;
   'employee.insights.error.returnToday': undefined;
@@ -2527,6 +2537,16 @@ export const MESSAGE_KEYS = [
   'employee.insights.destination.myTime',
   'employee.insights.destination.reports',
   'employee.insights.destination.today',
+  'employee.insights.context.description',
+  'employee.insights.context.heading',
+  'employee.insights.context.noPeriod',
+  'employee.insights.context.period',
+  'employee.insights.context.remove',
+  'employee.insights.context.removed',
+  'employee.insights.context.source',
+  'employee.insights.entry.action',
+  'employee.insights.entry.description',
+  'employee.insights.entry.heading',
   'employee.insights.error.denied',
   'employee.insights.error.offline',
   'employee.insights.error.returnToday',

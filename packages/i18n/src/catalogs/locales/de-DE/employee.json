@@ -208,6 +208,20 @@
       "reports": "Berichte öffnen",
       "today": "Heute öffnen"
     },
+    "context": {
+      "description": "Nur der unten angezeigte Quellbereich und Zeitraum werden einbezogen. Seiteninhalte oder Datensatzkennungen wurden nicht kopiert.",
+      "heading": "Seitenkontext",
+      "noPeriod": "Von dieser Seite wurde kein Zeitraum übernommen",
+      "period": "Zeitraum",
+      "remove": "Kontext entfernen",
+      "removed": "Seitenkontext entfernt.",
+      "source": "Quelle"
+    },
+    "entry": {
+      "action": "Einblicke öffnen",
+      "description": "Übernehmen Sie nur den Namen dieser Seite und, falls vorhanden, den sichtbaren Zeitraum in eine gezielte schreibgeschützte Erklärung.",
+      "heading": "Diese Seite verstehen"
+    },
     "error": {
       "denied": "Sie haben keinen Zugriff auf Einblicke für Mitarbeitende",
       "offline": "Sie scheinen offline zu sein",

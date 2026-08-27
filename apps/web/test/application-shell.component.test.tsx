@@ -26,6 +26,7 @@ import {
 } from '../src/app/locale.js';
 import { createWorkLedgerQueryClient, todayAttendanceQuery } from '../src/app/query.js';
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { setPendingInsightContext, takePendingInsightContext } from '../src/app/insight-context.js';
 import { createWorkLedgerRoutes } from '../src/app/router.js';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
@@ -441,6 +442,37 @@ test('renders the role-aware shell and focuses each completed route navigation',
   const timeHeading = await screen.findByRole('heading', { name: 'My time' });
   await waitFor(() => expect(timeHeading).toHaveFocus());
   expect(document.title).toBe('My time | WorkLedger');
+  await expectNoAxeViolations(container);
+});
+
+test.each([
+  {
+    expectedHref: '/insights?kind=today-explanation&date=2026-08-11',
+    route: '/today',
+    title: 'Today',
+  },
+  {
+    expectedHref: '/insights?kind=balance-change&from=2026-08-10&to=2026-08-16',
+    route: '/my-time?date=2026-08-11&view=WEEK&page=1&limit=20',
+    title: 'My time',
+  },
+  {
+    expectedHref: '/insights?kind=balance-change&from=2026-08-10&to=2026-08-16',
+    route: '/my-balances?date=2026-08-11&view=WEEK&page=1&limit=20',
+    title: 'My balances',
+  },
+  {
+    expectedHref: '/insights',
+    route: '/requests',
+    title: 'My requests',
+  },
+])('offers a bounded Insights entry from $title', async ({ expectedHref, route, title }) => {
+  vi.stubGlobal('fetch', authenticatedFetch());
+  const { container } = renderApplication(route);
+
+  expect(await screen.findByRole('heading', { name: title })).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'Understand this page' })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Open Insights' })).toHaveAttribute('href', expectedHref);
   await expectNoAxeViolations(container);
 });
 
@@ -2009,6 +2041,19 @@ test('renders a non-leaking permission-denied route state', async () => {
   await expectNoAxeViolations(container);
 });
 
+test('clears pending insight context when the route is denied', async () => {
+  setPendingInsightContext({ kind: 'TODAY', sourceReferences: [] });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => successResponse(SYSTEM_CONTEXT)),
+  );
+  const { container } = renderApplication('/insights');
+
+  expect(await screen.findByRole('heading', { name: 'Permission denied' })).toBeVisible();
+  expect(takePendingInsightContext()).toBeUndefined();
+  await expectNoAxeViolations(container);
+});
+
 test('renders a shared focused not-found boundary with a safe recovery destination', async () => {
   const { container } = renderApplication('/not-a-workledger-route');
 
@@ -2211,6 +2256,8 @@ test.each([
     action: 'Pause beginnen',
     compactCredit: '3 Std. 15 Min. angerechnet',
     currentState: 'Arbeitszeit läuft',
+    insightAction: 'Einblicke öffnen',
+    insightHeading: 'Diese Seite verstehen',
     locale: 'de-DE' as const,
     progress: 'Heutiger Fortschritt',
     title: 'Heute',
@@ -2219,6 +2266,8 @@ test.each([
     action: 'Iniciar descanso',
     compactCredit: '3 h 15 min computado',
     currentState: 'Jornada activa',
+    insightAction: 'Abrir Información',
+    insightHeading: 'Entender esta página',
     locale: 'es-ES' as const,
     progress: 'Progreso de hoy',
     title: 'Hoy',
@@ -2233,6 +2282,8 @@ test.each([
   await waitFor(() => expect(title).toHaveFocus());
   expect(screen.getByRole('heading', { name: expected.currentState })).toBeVisible();
   expect(screen.getByRole('button', { name: expected.action })).toBeVisible();
+  expect(screen.getByRole('heading', { name: expected.insightHeading })).toBeVisible();
+  expect(screen.getByRole('link', { name: expected.insightAction })).toBeVisible();
   const progress = screen.getByRole('region', { name: expected.progress });
   expect(within(progress).getByText(expected.compactCredit)).toBeVisible();
   expect(document.documentElement.lang).toBe(expected.locale);

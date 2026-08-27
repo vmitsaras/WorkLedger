@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 4 of 17 tasks complete
-**Current milestone:** Phase 15 Insights foundation sub-gate (`WL-1500`–`WL-1504`)
-**Active task:** `WL-1504` — Add bounded contextual entry points and execute the Insights foundation subgate
-**Status:** `WL-1503` completed the authenticated no-store employee Insights endpoint and accessible localized native result route with request-only execution, safe URL context, source actions, and responsive browser evidence
+**Phase progress:** Phase 15 in progress — 5 of 17 tasks complete
+**Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
+**Active task:** `WL-1505` — Implement the read-only Insight tool registry
+**Status:** `WL-1504` completed the bounded contextual entry points and passed the deterministic Insights foundation sub-gate with provider mode disabled
 **Last verified:** 2026-08-27
 
 ## Current objective
@@ -18,13 +18,15 @@ remain authoritative and complete without a model; one active workspace narrows 
 every later read-only tool call must reauthorize current scope. Completed `WL-1502` now supplies
 authoritative balance-change, submission-blocker, leave-projection, and Today-explanation handlers
 without inventing policy or exposing protected identifiers. Completed `WL-1503` now supplies the
-same-origin CSRF-protected endpoint and accessible localized native route. `WL-1504` may add only
-the bounded contextual entry points and foundation evidence assigned to it. Optional private Ollama
-interpretation remains disabled by default, employee-only at pilot start, pinned to one local model
-digest, and blocked from public or cloud egress. Manager, report-builder, privacy-suppressed HR,
-isolated System Insights, and optional MCP evaluation remain behind their named gates. General
-chat, natural-language SQL, unrestricted tools, scoring, prediction, recommendations, autonomous
-actions, and model-authored domain decisions remain excluded.
+same-origin CSRF-protected endpoint and accessible localized native route. Completed `WL-1504` adds
+bounded, visible, removable, request-memory-only context from Today, My Time, My Balances, Requests,
+and employee-authorized Reports and passes the deterministic foundation sub-gate with no provider.
+`WL-1505` may now implement only the reusable read-only Insight tool registry assigned to it.
+Optional private Ollama interpretation remains disabled by default, employee-only at pilot start,
+pinned to one local model digest, and blocked from public or cloud egress. Manager, report-builder,
+privacy-suppressed HR, isolated System Insights, and optional MCP evaluation remain behind their
+named gates. General chat, natural-language SQL, unrestricted tools, scoring, prediction,
+recommendations, autonomous actions, and model-authored domain decisions remain excluded.
 
 Phase 14 remains complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
 foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
@@ -181,6 +183,14 @@ remains an unnumbered draft.
 - Deterministic Employee Insight payloads omit account, employee, organization, request, ledger,
   daily record, monthly period, absence type, punch event, note, and policy identifiers or details.
   Sources and details stay bounded, and current permission loss is checked before each computation.
+- Contextual Employee Insight entries exist on Today, My Time, My Balances, Requests, and Reports.
+  They carry only an allowlisted source kind and optional server-owned visible period into one-shot
+  module memory; no DOM, route DTO, record identifier, or free text is copied.
+- Insight context is visibly named and removable. It clears on consumption, explicit removal,
+  session clearing, route denial, API permission loss, reload, and process loss. Only the existing
+  allowlisted question kind and period may appear in the URL.
+- The deterministic Insights foundation gate is complete with provider mode disabled. This permits
+  `WL-1505` tool-registry work but does not enable Ollama, model requests, or external egress.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -2865,17 +2875,40 @@ remains an unnumbered draft.
   migration, write action, audit event, result persistence, manifest version, or external egress
   was added.
 
+**2026-08-27 — WL-1504 contextual entry points and Insights foundation gate (complete)**
+
+- Added one shared contextual entry component to Today, My Time, My Balances, Requests, and
+  employee-authorized Reports. Today and the returned time/report ranges prefill their matching
+  deterministic question; Requests invents no period.
+- Added one-shot module-memory context that carries only the allowlisted source kind, optional
+  visible period, and bounded empty source-reference list. The destination names and explains that
+  context and offers explicit removal with stable focus and one polite status.
+- Kept source context out of URLs, local storage, session storage, logs, audit, and persistence.
+  Context clears on consumption, removal, session expiry, route denial, API permission loss,
+  reload, and process loss. No DOM, route DTO, protected identifier, note, reason, or sickness
+  detail is copied.
+- Added complete English, German, and Spanish copy plus component and browser coverage for all five
+  entry points, employee-only Reports exposure, keyboard focus, permission loss, request body
+  bounds, 320 pixel reflow, forced colors, reduced motion, storage absence, reload clearing, and axe.
+- Formatting, lint, strict TypeScript, 54 tooling tests, 430 unit/component tests, 13 broad
+  integration tests, the 15-file PostgreSQL suite with 28 passes and one historical skip, 48
+  browser tests with one historical skip, and the production/workspace build pass. Source
+  boundaries cover 331 files and 1,889 imports.
+- Added `docs/155-wl-1504-insights-foundation-gate.md` and passed the deterministic foundation
+  sub-gate with provider mode disabled. No dependency, migration, provider, model, prompt,
+  conversation, write action, audit event, manifest version, or external egress was added.
+
 ## Current blockers
 
-Phase 15 has no scheduling blocker. `WL-1504` may add bounded visible contextual entry points from
-Today, My Time, My Balances, Requests, and Reports, then execute the Insights foundation subgate.
-Provider, manager, report-builder, HR, system, and MCP tasks
-remain blocked by their named sub-gates. The broad environment-independent integration command and
-the canonical isolated `pnpm db:test` gate are green. Exact partial-day
-work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
-still require authoritative domain or repository facts; Today does not guess them from minute
-totals or an otherwise valid overnight session. The earlier Phase 12 and task-specific Phase 13
-images remain historical and intentionally differ from the current green `WL-1312` visual gate.
+Phase 15 has no scheduling blocker. The deterministic Insights foundation sub-gate is complete.
+`WL-1505` may implement the bounded read-only Insight tool registry. Provider, manager,
+report-builder, HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
+environment-independent integration command and the canonical isolated `pnpm db:test` gate are
+green. Exact partial-day work-versus-absence overlap, calculation-to-ledger mismatch, and
+break-duration warning signals still require authoritative domain or repository facts; Today does
+not guess them from minute totals or an otherwise valid overnight session. The earlier Phase 12 and
+task-specific Phase 13 images remain historical and intentionally differ from the current green
+`WL-1312` visual gate.
 `D-502` remains the broader exact retail assistive-technology matrix rather than a whole-product
 conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for Testing and Safari.
 The temporary Astro backup is recoverable at
@@ -2884,9 +2917,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1504`: add bounded, visible, removable context from Today, My Time, My Balances,
-Requests, and Reports without DOM or data dumps, then execute the Insights foundation subgate. The
-portfolio presentation scope remains preserved in
+Execute `WL-1505`: implement a reusable read-only Insight tool registry with independent
+authorization, deny-by-default policy metadata, active-workspace scope, combined-role isolation,
+and no generic query or SQL capability. The portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as a separate unnumbered draft.
 
 ## Update rules

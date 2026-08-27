@@ -214,6 +214,20 @@
       "reports": "Abrir informes",
       "today": "Abrir Hoy"
     },
+    "context": {
+      "description": "Solo se incluirán el área de origen y el periodo que aparecen abajo. No se ha copiado contenido de la página ni identificadores de registros.",
+      "heading": "Contexto de la página",
+      "noPeriod": "No se trasladó ningún periodo desde esta página",
+      "period": "Periodo",
+      "remove": "Quitar contexto",
+      "removed": "Se ha quitado el contexto de la página.",
+      "source": "Origen"
+    },
+    "entry": {
+      "action": "Abrir Información",
+      "description": "Lleva solo el nombre de esta página y, cuando esté disponible, su periodo visible a una explicación concreta de solo lectura.",
+      "heading": "Entender esta página"
+    },
     "error": {
       "denied": "No tienes acceso a la información para empleados",
       "offline": "Parece que no tienes conexión",

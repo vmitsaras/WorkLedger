@@ -33,6 +33,16 @@ const EMPLOYEE_CONTEXT: SelfContext = {
   roles: ['EMPLOYEE'],
 };
 
+const HR_CONTEXT: SelfContext = {
+  account: { email: 'hr@northstar.test', name: 'Harper Rowe' },
+  defaultPath: '/employees',
+  locale: 'en-GB',
+  employee: null,
+  navigationAreas: ['HR'],
+  organization: { name: 'Northstar Studio' },
+  roles: ['HR_ADMINISTRATOR'],
+};
+
 const CATALOG: ReportCatalog = {
   defaultRange: { from: '2026-08-01', to: '2026-08-31' },
   reports: [
@@ -109,11 +119,25 @@ test('lists only the server-authorized report catalog with canonical report link
   expect(screen.getByRole('heading', { name: 'Available reports' })).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Monthly time' })).toBeVisible();
   expect(screen.queryByRole('heading', { name: 'Pending approvals' })).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Understand this page' })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Open Insights' })).toHaveAttribute(
+    'href',
+    '/insights?kind=balance-change&from=2026-08-01&to=2026-08-31',
+  );
   const link = screen.getByRole('link', { name: 'Open monthly time' });
   expect(link).toHaveAttribute(
     'href',
     '/reports/monthly-time?direction=ASC&from=2026-08-01&limit=20&page=1&sort=DATE&to=2026-08-31',
   );
+  await expectNoAxeViolations(container);
+});
+
+test('does not expose the employee Insights entry to an HR only report audience', async () => {
+  stubReportFetch({ context: HR_CONTEXT });
+  const { container } = renderApplication('/reports');
+
+  expect(await screen.findByRole('heading', { name: 'Available reports' })).toBeVisible();
+  expect(screen.queryByRole('link', { name: 'Open Insights' })).not.toBeInTheDocument();
   await expectNoAxeViolations(container);
 });
 
@@ -325,6 +349,7 @@ function renderApplication(initialEntry: string) {
 
 function stubReportFetch(
   options: Readonly<{
+    context?: SelfContext;
     onExport?: (url: URL, init: RequestInit | undefined) => Response | Promise<Response>;
     onReport?: (url: URL) => Response | Promise<Response>;
   }> = {},
@@ -335,7 +360,9 @@ function stubReportFetch(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = requestUrl(input);
-      if (url.pathname === '/v1/me/context') return successResponse(EMPLOYEE_CONTEXT);
+      if (url.pathname === '/v1/me/context') {
+        return successResponse(options.context ?? EMPLOYEE_CONTEXT);
+      }
       if (url.pathname === '/v1/me/csrf') {
         return successResponse({ token: 'c'.repeat(64) });
       }

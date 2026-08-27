@@ -1,12 +1,11 @@
 import { Link } from 'react-router';
 
+import type { SupportedLocale } from '@workledger/contracts';
 import type {
   InsightFact,
   InsightNativeResult,
-  InsightPeriod,
   InsightSource,
 } from '@workledger/contracts/insights';
-import type { SupportedLocale } from '@workledger/contracts';
 import {
   formatCompactDuration,
   formatDateOnly,
@@ -22,6 +21,7 @@ import {
   insightDestinationLabel,
   insightDestinationPath,
   insightFactLabel,
+  formatInsightPeriod,
   insightKindPresentation,
   insightLimitationLabel,
   insightQualifierLabel,
@@ -267,24 +267,6 @@ function formatFactValue(
       return formatCompactDuration(runtime, fact.value.value, SIGNED_MINUTE_FACTS.has(fact.code));
     case 'STATE':
       return insightStateLabel(fact, t);
-  }
-}
-
-function formatInsightPeriod(
-  period: InsightPeriod,
-  locale: SupportedLocale,
-  t: ReturnType<typeof useWorkLedgerMessage>,
-): string {
-  switch (period.kind) {
-    case 'DATE':
-      return formatDateOnly(locale, period.date);
-    case 'DATE_RANGE':
-      return t('employee.insights.period.range', {
-        end: formatDateOnly(locale, period.endDate),
-        start: formatDateOnly(locale, period.startDate),
-      });
-    case 'MONTH':
-      return formatDateOnly(locale, period.monthStart, { month: 'long', year: 'numeric' });
   }
 }
 

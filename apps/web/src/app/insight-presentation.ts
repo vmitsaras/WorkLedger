@@ -1,11 +1,16 @@
-import type { CalculationBlockerCode, CalculationWarningCode } from '@workledger/contracts';
+import type {
+  CalculationBlockerCode,
+  CalculationWarningCode,
+  SupportedLocale,
+} from '@workledger/contracts';
 import type {
   InsightFact,
   InsightKind,
   InsightPeriod,
   InsightSource,
+  InsightVisibleContext,
 } from '@workledger/contracts/insights';
-import { type MessageArguments, type MessageKey } from '@workledger/i18n';
+import { formatDateOnly, type MessageArguments, type MessageKey } from '@workledger/i18n';
 
 import { attentionPresentation } from './presentation-codes.js';
 
@@ -16,6 +21,7 @@ type MessageTranslator = <Key extends MessageKey>(
 type InsightFactQualifier = InsightFact['qualifiers'][number];
 type InsightNativeActionDestination = InsightSource['destination'];
 type InsightSourceKind = InsightSource['kind'];
+type InsightContextKind = InsightVisibleContext['kind'];
 
 const INSIGHT_KIND_KEYS = {
   'balance-change': {
@@ -107,6 +113,14 @@ const DESTINATION_KEYS = {
   TODAY: 'employee.insights.destination.today',
 } as const satisfies Readonly<Record<InsightNativeActionDestination, MessageKey>>;
 
+const CONTEXT_KEYS = {
+  MY_BALANCES: 'shared.route.title.myBalances',
+  MY_REQUESTS: 'shared.route.title.requests',
+  MY_TIME: 'shared.route.title.myTime',
+  REPORTS: 'shared.route.title.reports',
+  TODAY: 'shared.route.title.today',
+} as const satisfies Readonly<Record<InsightContextKind, MessageKey>>;
+
 const LIMITATION_KEYS: Readonly<Record<string, MessageKey>> = {
   INCOMPLETE_DATES_EXCLUDED_FROM_PROJECTION: 'employee.insights.limitation.incompleteDatesExcluded',
   LEAVE_ACCOUNT_DETAILS_LIMITED: 'employee.insights.limitation.leaveAccountDetailsLimited',
@@ -185,6 +199,28 @@ export function insightDestinationLabel(
   t: MessageTranslator,
 ): string {
   return t(DESTINATION_KEYS[destination]);
+}
+
+export function insightContextLabel(kind: InsightContextKind, t: MessageTranslator): string {
+  return t(CONTEXT_KEYS[kind]);
+}
+
+export function formatInsightPeriod(
+  period: InsightPeriod,
+  locale: SupportedLocale,
+  t: MessageTranslator,
+): string {
+  switch (period.kind) {
+    case 'DATE':
+      return formatDateOnly(locale, period.date);
+    case 'DATE_RANGE':
+      return t('employee.insights.period.range', {
+        end: formatDateOnly(locale, period.endDate),
+        start: formatDateOnly(locale, period.startDate),
+      });
+    case 'MONTH':
+      return formatDateOnly(locale, period.monthStart, { month: 'long', year: 'numeric' });
+  }
 }
 
 export function insightLimitationLabel(code: string, t: MessageTranslator): string {

@@ -16,6 +16,7 @@ import { Button, FilterBar, Panel, RouteState, buttonVariants } from '@workledge
 import { ApiClientError, clearSessionMemory } from '../app/api-client.js';
 import { personalRequestHistoryQuery } from '../app/query.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
+import { InsightEntryPoint } from '../components/insight-entry-point.js';
 import { PageHeader } from '../components/page-header.js';
 import { Pagination } from '../components/pagination.js';
 import { WorkflowStatusBadge } from '../components/workflow-status-badge.js';
@@ -81,6 +82,7 @@ export function RequestHistoryPage() {
           {t('employee.requests.history.new')}
         </Link>
       </PageHeader>
+      <InsightEntryPoint contextKind="MY_REQUESTS" />
       <FilterBar
         title={t('employee.requests.history.filter.title')}
         description={t('employee.requests.history.filter.description')}

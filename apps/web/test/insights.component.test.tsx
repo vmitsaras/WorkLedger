@@ -11,6 +11,7 @@ import { WorkLedgerI18nProvider } from '@workledger/i18n/react';
 import { expectNoAxeViolations } from '@workledger/test-utils';
 
 import { clearSessionMemory } from '../src/app/api-client.js';
+import { setPendingInsightContext, takePendingInsightContext } from '../src/app/insight-context.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { InsightsPage } from '../src/routes/insights-page.js';
 
@@ -42,9 +43,18 @@ test('runs only after submit, keeps safe URL context, and presents typed native 
     }),
   );
   const user = userEvent.setup();
+  setPendingInsightContext({
+    kind: 'TODAY',
+    period: { date: '2026-08-27', kind: 'DATE' },
+    sourceReferences: [],
+  });
   const rendered = renderInsights('/insights');
 
   expect(fetch).not.toHaveBeenCalled();
+  expect(await screen.findByRole('heading', { name: 'Page context' })).toBeVisible();
+  expect(screen.getByText('Today')).toBeVisible();
+  expect(screen.getByText('Thursday, 27 August 2026')).toBeVisible();
+  expect(screen.getByText(/No page content or record identifiers were copied/iu)).toBeVisible();
   await user.selectOptions(
     screen.getByLabelText('What would you like to understand?'),
     'today-explanation',
@@ -61,6 +71,11 @@ test('runs only after submit, keeps safe URL context, and presents typed native 
   expect(requests).toEqual([
     {
       body: {
+        context: {
+          kind: 'TODAY',
+          period: { date: '2026-08-27', kind: 'DATE' },
+          sourceReferences: [],
+        },
         kind: 'today-explanation',
         period: { date: '2026-08-27', kind: 'DATE' },
         workspace: 'EMPLOYEE',
@@ -70,6 +85,11 @@ test('runs only after submit, keeps safe URL context, and presents typed native 
   ]);
   expect(rendered.router.state.location.search).toBe('?kind=today-explanation&date=2026-08-27');
   expect(rendered.router.state.location.search).not.toContain('source_today');
+  expect(rendered.router.state.location.search).not.toContain('TODAY');
+  await user.click(screen.getByRole('button', { name: 'Remove context' }));
+  expect(screen.queryByRole('heading', { name: 'Page context' })).not.toBeInTheDocument();
+  expect(screen.getByLabelText('What would you like to understand?')).toHaveFocus();
+  expect(screen.getByRole('status')).toHaveTextContent('Page context removed.');
   await expectNoAxeViolations(rendered.container);
 });
 
@@ -90,12 +110,62 @@ test('does not rerun restored URL state and focuses a useful validation summary'
   expect(fetchSpy).not.toHaveBeenCalled();
 });
 
+test('consumes page context once and does not retain it across a remount', async () => {
+  setPendingInsightContext({ kind: 'MY_REQUESTS', sourceReferences: [] });
+  const first = renderInsights('/insights');
+
+  expect(await screen.findByRole('heading', { name: 'Page context' })).toBeVisible();
+  expect(screen.getByText('My requests')).toBeVisible();
+  expect(screen.getByText('No period was carried from this page')).toBeVisible();
+  first.unmount();
+
+  renderInsights('/insights');
+  await screen.findByRole('heading', { name: 'Insights' });
+  expect(screen.queryByRole('heading', { name: 'Page context' })).not.toBeInTheDocument();
+});
+
+test('clears page context when insight permission is lost', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = requestUrl(input);
+      if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (url.pathname === '/v1/insights/run') {
+        return Response.json(
+          { error: { code: 'ACCESS_DENIED', requestId: REQUEST_ID } },
+          { status: 403 },
+        );
+      }
+      throw new Error(`Unexpected request: ${url.pathname}`);
+    }),
+  );
+  const user = userEvent.setup();
+  setPendingInsightContext({
+    kind: 'TODAY',
+    period: { date: '2026-08-27', kind: 'DATE' },
+    sourceReferences: [],
+  });
+  renderInsights('/insights?kind=today-explanation&date=2026-08-27');
+
+  expect(await screen.findByRole('heading', { name: 'Page context' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Run insight' }));
+
+  expect(
+    await screen.findByRole('heading', { name: 'You do not have access to employee insights' }),
+  ).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Page context' })).not.toBeInTheDocument();
+});
+
 function renderInsights(initialEntry: string) {
   if (runtime === undefined) throw new Error('Expected initialized i18n runtime.');
   const queryClient = createWorkLedgerQueryClient();
   const router = createMemoryRouter(
     [
-      { path: '/insights', element: <InsightsPage /> },
+      {
+        path: '/insights',
+        element: <InsightsPage />,
+        loader: () => takePendingInsightContext() ?? null,
+      },
       { path: '/today', element: <h1>Today</h1> },
       { path: '/sign-in', element: <h1>Sign in</h1> },
     ],

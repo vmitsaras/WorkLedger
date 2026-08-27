@@ -30,6 +30,7 @@ import { todayAttendanceQuery } from '../app/query.js';
 import { useBoundaryPresentation } from '../app/route-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { DailyTimeBreakdown } from '../components/daily-time-breakdown.js';
+import { InsightEntryPoint } from '../components/insight-entry-point.js';
 import { PageHeader } from '../components/page-header.js';
 import { TodayAttention } from '../components/today-attention.js';
 import type { AttendanceRecoveryMode } from '../components/today-attendance-controls.js';
@@ -464,6 +465,15 @@ function renderTodayReady({
         setClockOutConfirmationOpen={setClockOutConfirmationOpen}
         statusHeadingRef={statusHeadingRef}
         today={today}
+      />
+
+      <InsightEntryPoint
+        contextKind="TODAY"
+        request={{
+          kind: 'today-explanation',
+          period: { date: today.localDate, kind: 'DATE' },
+          workspace: 'EMPLOYEE',
+        }}
       />
 
       <div className="wl-today-support-grid grid gap-8">

@@ -141,6 +141,8 @@ import {
 } from '@workledger/contracts';
 import type { InsightNativeResult, InsightRequest } from '@workledger/contracts/insights';
 
+import { clearPendingInsightContext } from './insight-context.js';
+
 export class ApiClientError extends Error {
   constructor(
     readonly code: ApiErrorCode | 'AUTH_PASSWORD_POLICY_REJECTED' | 'DEPENDENCY_FAILURE',
@@ -1210,6 +1212,7 @@ export async function loadSystemDiagnostics(
 
 export function clearSessionMemory(): void {
   csrfToken = null;
+  clearPendingInsightContext();
 }
 
 async function getCsrfToken(): Promise<string> {

@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useLoaderData, useNavigate, useSearchParams } from 'react-router';
 
 import {
   INSIGHT_KINDS,
   insightRequestSchema,
   type InsightKind,
   type InsightRequest,
+  type InsightVisibleContext,
 } from '@workledger/contracts/insights';
-import { useWorkLedgerMessage } from '@workledger/i18n/react';
+import { useWorkLedgerI18n, useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Button, FilterBar, Panel, RouteState } from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory, runEmployeeInsight } from '../app/api-client.js';
-import { insightKindPresentation } from '../app/insight-presentation.js';
+import {
+  formatInsightPeriod,
+  insightContextLabel,
+  insightKindPresentation,
+} from '../app/insight-presentation.js';
 import { setPendingSignInNotice } from '../app/session-notice.js';
 import { FormErrorSummary } from '../components/form-error-summary.js';
 import { InsightNativeResult } from '../components/insight-native-result.js';
@@ -40,13 +45,25 @@ export function InsightsPage() {
   const t = useWorkLedgerMessage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const loaderContext = useLoaderData() as InsightVisibleContext | null;
   const [search, setSearch] = useSearchParams();
   const initial = parseInsightSearch(search);
   const [values, setValues] = useState<FormValues>(initial.values);
   const [fieldErrors, setFieldErrors] = useState<Readonly<Record<string, string>>>({});
   const [formError, setFormError] = useState<string>();
+  const [visibleContext, setVisibleContext] = useState(loaderContext ?? undefined);
+  const [contextStatus, setContextStatus] = useState<string>();
   const summaryRef = useRef<HTMLElement>(null);
-  const mutation = useMutation({ mutationFn: runEmployeeInsight });
+  const kindRef = useRef<HTMLSelectElement>(null);
+  const mutation = useMutation({
+    mutationFn: runEmployeeInsight,
+    onError: (error) => {
+      if (error instanceof ApiClientError && error.status === 403) {
+        setVisibleContext(undefined);
+        setContextStatus(undefined);
+      }
+    },
+  });
 
   useEffect(() => {
     if (!initial.valid) setSearch({}, { replace: true });
@@ -62,12 +79,13 @@ export function InsightsPage() {
     setValues((current) => ({ ...current, [key]: value }));
     setFieldErrors({});
     setFormError(undefined);
+    setContextStatus(undefined);
     mutation.reset();
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const request = toInsightRequest(values);
+    const request = toInsightRequest(values, visibleContext);
     const parsed = insightRequestSchema.safeParse(request);
     if (!parsed.success) {
       setFieldErrors(validateForm(values, t));
@@ -77,6 +95,7 @@ export function InsightsPage() {
 
     setFieldErrors({});
     setFormError(undefined);
+    setContextStatus(undefined);
     setSearch(toInsightSearch(values), { replace: true });
     try {
       await mutation.mutateAsync(parsed.data);
@@ -102,6 +121,17 @@ export function InsightsPage() {
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(16rem,0.65fr)]">
         <div className="grid gap-4">
+          {visibleContext === undefined ? null : (
+            <InsightContextPanel
+              context={visibleContext}
+              onRemove={() => {
+                kindRef.current?.focus();
+                setVisibleContext(undefined);
+                setContextStatus(t('employee.insights.context.removed'));
+                mutation.reset();
+              }}
+            />
+          )}
           <FormErrorSummary
             fieldErrors={fieldErrors}
             formError={formError}
@@ -124,6 +154,7 @@ export function InsightsPage() {
                   className="wl-text-field"
                   id="insight-kind"
                   onChange={(event) => updateValue('kind', toInsightKind(event.target.value))}
+                  ref={kindRef}
                   value={values.kind}
                 >
                   <option value="">{t('employee.insights.form.kindPlaceholder')}</option>
@@ -210,8 +241,8 @@ export function InsightsPage() {
       </div>
 
       <div aria-atomic="true" aria-live="polite" className="min-h-6" role="status">
-        {mutation.isPending ? t('employee.insights.status.running') : null}
-        {mutation.isSuccess ? (
+        {contextStatus ?? (mutation.isPending ? t('employee.insights.status.running') : null)}
+        {contextStatus === undefined && mutation.isSuccess ? (
           <p className="m-0">
             {t('employee.insights.status.ready')}{' '}
             <a href="#insight-result-heading">{t('employee.insights.status.viewResult')}</a>
@@ -223,7 +254,9 @@ export function InsightsPage() {
         <InsightError
           error={mutation.error}
           retry={() => {
-            const request = insightRequestSchema.safeParse(toInsightRequest(values));
+            const request = insightRequestSchema.safeParse(
+              toInsightRequest(values, visibleContext),
+            );
             if (request.success) mutation.mutate(request.data);
           }}
         />
@@ -237,6 +270,47 @@ export function InsightsPage() {
         </p>
       </Panel>
     </section>
+  );
+}
+
+function InsightContextPanel({
+  context,
+  onRemove,
+}: Readonly<{ context: InsightVisibleContext; onRemove: () => void }>) {
+  const runtime = useWorkLedgerI18n();
+  const t = useWorkLedgerMessage();
+  return (
+    <Panel aria-labelledby="insight-context-heading" className="grid gap-4" density="compact">
+      <div>
+        <h2 className="m-0 text-lg font-bold" id="insight-context-heading">
+          {t('employee.insights.context.heading')}
+        </h2>
+        <p className="m-0 mt-1 text-sm leading-6 text-[var(--wl-text-muted)]">
+          {t('employee.insights.context.description')}
+        </p>
+      </div>
+      <dl className="m-0 grid gap-3 sm:grid-cols-2">
+        <div>
+          <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">
+            {t('employee.insights.context.source')}
+          </dt>
+          <dd className="m-0 mt-1 font-bold">{insightContextLabel(context.kind, t)}</dd>
+        </div>
+        <div>
+          <dt className="text-sm font-semibold text-[var(--wl-text-muted)]">
+            {t('employee.insights.context.period')}
+          </dt>
+          <dd className="m-0 mt-1 font-bold">
+            {context.period === undefined
+              ? t('employee.insights.context.noPeriod')
+              : formatInsightPeriod(context.period, runtime.locale, t)}
+          </dd>
+        </div>
+      </dl>
+      <Button className="w-fit" onPress={onRemove} variant="quiet">
+        {t('employee.insights.context.remove')}
+      </Button>
+    </Panel>
   );
 }
 
@@ -306,9 +380,14 @@ function DateField({
   );
 }
 
-function toInsightRequest(values: FormValues): InsightRequest | Readonly<Record<string, never>> {
+function toInsightRequest(
+  values: FormValues,
+  context?: InsightVisibleContext,
+): InsightRequest | Readonly<Record<string, never>> {
+  const contextInput = context === undefined ? {} : { context };
   if (values.kind === 'balance-change') {
     return {
+      ...contextInput,
       kind: values.kind,
       period: { endDate: values.endDate, kind: 'DATE_RANGE', startDate: values.startDate },
       workspace: 'EMPLOYEE',
@@ -316,6 +395,7 @@ function toInsightRequest(values: FormValues): InsightRequest | Readonly<Record<
   }
   if (values.kind === 'submission-blockers') {
     return {
+      ...contextInput,
       kind: values.kind,
       period: { kind: 'MONTH', monthStart: `${values.month}-01` },
       workspace: 'EMPLOYEE',
@@ -323,6 +403,7 @@ function toInsightRequest(values: FormValues): InsightRequest | Readonly<Record<
   }
   if (values.kind === 'leave-projection' || values.kind === 'today-explanation') {
     return {
+      ...contextInput,
       kind: values.kind,
       period: { date: values.date, kind: 'DATE' },
       workspace: 'EMPLOYEE',

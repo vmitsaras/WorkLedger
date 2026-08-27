@@ -31,6 +31,7 @@ import { Pagination } from '../components/pagination.js';
 
 import { ApiClientError } from '../app/api-client.js';
 import { myTimeQuery } from '../app/query.js';
+import { InsightEntryPoint } from '../components/insight-entry-point.js';
 import { PageHeader } from '../components/page-header.js';
 
 type MyTimePageProps = Readonly<{ balancesOnly?: boolean }>;
@@ -177,6 +178,19 @@ export function MyTimePage({ balancesOnly = false }: MyTimePageProps) {
           </dl>
         </section>
       </Panel>
+
+      <InsightEntryPoint
+        contextKind={balancesOnly ? 'MY_BALANCES' : 'MY_TIME'}
+        request={{
+          kind: 'balance-change',
+          period: {
+            endDate: period.endDate,
+            kind: 'DATE_RANGE',
+            startDate: period.startDate,
+          },
+          workspace: 'EMPLOYEE',
+        }}
+      />
 
       <FilterBar
         onSubmit={(event) => event.preventDefault()}

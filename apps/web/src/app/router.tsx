@@ -23,6 +23,7 @@ import { useOptionalWorkLedgerI18n } from '@workledger/i18n/react';
 import { RouteState } from '@workledger/ui';
 
 import { ApiClientError, clearSessionMemory } from './api-client.js';
+import { clearPendingInsightContext, takePendingInsightContext } from './insight-context.js';
 import {
   personalCalendarQuery,
   personalRequestDetailQuery,
@@ -187,7 +188,7 @@ export function createWorkLedgerRoutes(
             },
             {
               path: 'insights',
-              loader: createAreaLoader(queryClient, 'EMPLOYEE'),
+              loader: createInsightsLoader(queryClient),
               lazy: async () => {
                 const { InsightsPage } = await import('../routes/insights-page.js');
                 return { Component: InsightsPage };
@@ -513,6 +514,17 @@ function createAreaLoader(queryClient: QueryClient, area: NavigationArea): Loade
     const context = await requireContext(queryClient);
     if (!context.navigationAreas.includes(area)) throw new Response(null, { status: 403 });
     return null;
+  };
+}
+
+function createInsightsLoader(queryClient: QueryClient): LoaderFunction {
+  return async () => {
+    const context = await requireContext(queryClient);
+    if (!context.navigationAreas.includes('EMPLOYEE')) {
+      clearPendingInsightContext();
+      throw new Response(null, { status: 403 });
+    }
+    return takePendingInsightContext() ?? null;
   };
 }
 

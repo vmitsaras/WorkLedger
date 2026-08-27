@@ -1,17 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router';
+import { Link, useRouteLoaderData } from 'react-router';
 
-import type { ReportCatalogItem } from '@workledger/contracts';
+import type { ReportCatalogItem, SelfContext } from '@workledger/contracts';
 import { useWorkLedgerMessage } from '@workledger/i18n/react';
 import { Button, buttonVariants, Panel, RouteState } from '@workledger/ui';
 
 import { reportCatalogQuery } from '../app/query.js';
 import { reportPresentation } from '../app/presentation-codes.js';
+import { InsightEntryPoint } from '../components/insight-entry-point.js';
 import { PageHeader } from '../components/page-header.js';
 
 export function ReportsPage() {
   const t = useWorkLedgerMessage();
   const query = useQuery(reportCatalogQuery());
+  const context = useRouteLoaderData<SelfContext>('protected');
 
   return (
     <section className="grid gap-6">
@@ -35,27 +37,43 @@ export function ReportsPage() {
           title={t('manager.report.page.error.title')}
         />
       ) : (
-        <section className="grid gap-4" aria-labelledby="available-reports-heading">
-          <div>
-            <h2 id="available-reports-heading" className="m-0 text-xl font-bold">
-              {t('manager.report.page.available.heading')}
-            </h2>
-            <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
-              {t('manager.report.page.available.description')}
-            </p>
-          </div>
-          <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-2" role="list">
-            {query.data.reports.map((report) => (
-              <li key={report.key}>
-                <ReportCard
-                  report={report}
-                  from={query.data.defaultRange.from}
-                  to={query.data.defaultRange.to}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
+        <>
+          {context?.navigationAreas.includes('EMPLOYEE') ? (
+            <InsightEntryPoint
+              contextKind="REPORTS"
+              request={{
+                kind: 'balance-change',
+                period: {
+                  endDate: query.data.defaultRange.to,
+                  kind: 'DATE_RANGE',
+                  startDate: query.data.defaultRange.from,
+                },
+                workspace: 'EMPLOYEE',
+              }}
+            />
+          ) : null}
+          <section className="grid gap-4" aria-labelledby="available-reports-heading">
+            <div>
+              <h2 id="available-reports-heading" className="m-0 text-xl font-bold">
+                {t('manager.report.page.available.heading')}
+              </h2>
+              <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
+                {t('manager.report.page.available.description')}
+              </p>
+            </div>
+            <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-2" role="list">
+              {query.data.reports.map((report) => (
+                <li key={report.key}>
+                  <ReportCard
+                    report={report}
+                    from={query.data.defaultRange.from}
+                    to={query.data.defaultRange.to}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
       )}
     </section>
   );
