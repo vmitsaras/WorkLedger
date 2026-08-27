@@ -186,6 +186,16 @@ export function createWorkLedgerRoutes(
               handle: { title: routeTitle('/my-balances') },
             },
             {
+              path: 'insights',
+              loader: createAreaLoader(queryClient, 'EMPLOYEE'),
+              lazy: async () => {
+                const { InsightsPage } = await import('../routes/insights-page.js');
+                return { Component: InsightsPage };
+              },
+              errorElement: <RouteBoundary />,
+              handle: { title: routeTitle('/insights') },
+            },
+            {
               path: 'time-records/:recordId',
               loader: createEmployeeTimeLoader(queryClient),
               element: <DailyTimeRecordPage />,

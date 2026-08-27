@@ -3,6 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 
 import type { MonthlyPeriod, TodayAttendance } from '@workledger/contracts';
+import type { InsightNativeResult } from '@workledger/contracts/insights';
 import { COHERENT_TODAY_ATTENDANCE, expectPageToHaveNoAxeViolations } from '@workledger/test-utils';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
@@ -208,6 +209,57 @@ const TEAM_CALENDAR = {
   timeZone: 'Europe/Berlin',
 };
 const TODAY_ATTENDANCE: TodayAttendance = COHERENT_TODAY_ATTENDANCE;
+const INSIGHT_RESULT: InsightNativeResult = {
+  actions: [
+    {
+      code: 'REVIEW_TODAY',
+      destination: 'TODAY',
+      period: { date: '2026-08-27', kind: 'DATE' },
+      reference: 'action_today',
+      sourceReferences: ['source_today'],
+    },
+  ],
+  facts: [
+    {
+      code: 'TODAY_WORKED_MINUTES',
+      qualifiers: ['PROVISIONAL'],
+      reference: 'fact_worked',
+      sourceReferences: ['source_today'],
+      value: { kind: 'MINUTES', value: 450 },
+    },
+  ],
+  freshness: {
+    boundaries: [
+      {
+        kind: 'CALCULATED_THROUGH',
+        localDate: '2026-08-27',
+        sourceReferences: ['source_today'],
+      },
+    ],
+    capturedAt: '2026-08-27T12:00:00Z',
+  },
+  kind: 'today-explanation',
+  limitations: [
+    {
+      code: 'TODAY_VALUES_PROVISIONAL',
+      material: true,
+      reference: 'limit_provisional',
+      sourceReferences: ['source_today'],
+    },
+  ],
+  period: { date: '2026-08-27', kind: 'DATE' },
+  scope: { kind: 'SELF', workspace: 'EMPLOYEE' },
+  sources: [
+    {
+      destination: 'TODAY',
+      kind: 'TODAY_ATTENDANCE',
+      period: { date: '2026-08-27', kind: 'DATE' },
+      reference: 'source_today',
+    },
+  ],
+  timeZone: 'Europe/Berlin',
+  workspace: 'EMPLOYEE',
+};
 const PHASE_13_TODAY_BASELINE: TodayAttendance = {
   ...COHERENT_TODAY_ATTENDANCE,
   appliedCorrections: [
@@ -549,6 +601,42 @@ test('signs in through the accessible form and focuses the destination route', a
   await expect(page).toHaveTitle('Today | WorkLedger');
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Working' })).toBeVisible();
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('runs an employee insight only on request with accessible narrow and forced-colors states', async ({
+  page,
+}) => {
+  let runCount = 0;
+  await mockContext(page, () => true);
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'c'.repeat(64) }), status: 200 });
+  });
+  await page.route('**/v1/insights/run', async (route) => {
+    runCount += 1;
+    expect(route.request().postDataJSON()).toEqual({
+      kind: 'today-explanation',
+      period: { date: '2026-08-27', kind: 'DATE' },
+      workspace: 'EMPLOYEE',
+    });
+    await route.fulfill({ json: success(INSIGHT_RESULT), status: 200 });
+  });
+  await page.setViewportSize({ height: 800, width: 320 });
+  await page.goto('/insights?kind=today-explanation&date=2026-08-27');
+
+  await expect(page.getByRole('heading', { name: 'Insights' })).toBeFocused();
+  expect(runCount).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.getByRole('button', { name: 'Run insight' }).click();
+  await expect(page.getByRole('heading', { name: 'How was today calculated?' })).toBeVisible();
+  expect(runCount).toBe(1);
+  await captureWl1503Insight(page);
+  await expectPageToHaveNoAxeViolations(page);
+
+  await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+  await expect(page.getByText('Authoritative records')).toBeVisible();
   await expectPageToHaveNoAxeViolations(page);
 });
 
@@ -3851,6 +3939,17 @@ async function capturePhase11Surface(page: Page, name: string): Promise<void> {
     animations: 'disabled',
     fullPage: true,
     path: `${directory}/${name}.png`,
+  });
+}
+
+async function captureWl1503Insight(page: Page): Promise<void> {
+  if (process.env['WORKLEDGER_CAPTURE_WL1503'] !== '1') return;
+  const directory = 'output/playwright/wl1503';
+  await mkdir(directory, { recursive: true });
+  await page.screenshot({
+    animations: 'disabled',
+    fullPage: true,
+    path: `${directory}/employee-insight-reflow-320x800.png`,
   });
 }
 

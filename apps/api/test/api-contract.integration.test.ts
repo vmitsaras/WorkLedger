@@ -174,6 +174,7 @@ test('keeps authentication internals and runtime secrets out of OpenAPI', async 
     const serializedDocument = JSON.stringify(document);
 
     expect(document.paths).toHaveProperty('/v1/me/attendance/today');
+    expect(document.paths).toHaveProperty('/v1/insights/run');
     for (const path of [
       '/v1/me/attendance/clock-in',
       '/v1/me/attendance/start-break',

@@ -193,7 +193,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1500` Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts.
 - [x] `WL-1501` Implement the deterministic Insight Service and typed native-result contracts.
 - [x] `WL-1502` Implement employee balance-change, submission-blocker, leave-projection, and Today-explanation insights.
-- [ ] `WL-1503` Build the accessible, role-scoped Insights route and native result presentation.
+- [x] `WL-1503` Build the accessible, role-scoped Insights route and native result presentation.
 - [ ] `WL-1504` Add bounded contextual entry points from Today, My Time, My Balances, Requests, and Reports, then pass the Insights foundation sub-gate.
 - [ ] `WL-1505` Implement a reusable read-only Insight tool registry with independent authorization and active-workspace scope.
 - [ ] `WL-1506` Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks.

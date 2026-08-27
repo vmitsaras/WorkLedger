@@ -1,3 +1,4 @@
+import { hashPassword } from 'better-auth/crypto';
 import { fileURLToPath } from 'node:url';
 
 import type pg from 'pg';
@@ -13,6 +14,10 @@ import { createInsightService } from '../src/insights/insight-service.js';
 const databaseHarness = createDatabaseHarnessState(process.env);
 const integrationTest = databaseHarness.enabled ? test : test.skip;
 const CAPTURED_AT = instant('2026-02-03T10:30:45Z');
+const AUTH_SECRET = 'employee-insight-route-secret-with-thirty-two-bytes';
+const EMAIL = 'insight-employee@example.test';
+const ORIGIN = 'https://ledger.example.test';
+const PASSWORD = 'safe employee insight passphrase 2026';
 const repositoryDirectory = fileURLToPath(new URL('../../..', import.meta.url));
 const migrationFiles = [
   '0000_initial_schema.sql',
@@ -143,9 +148,92 @@ integrationTest(
         expect(serialized).not.toContain(employee.organizationId);
       }
 
-      await fixture.client.query(`update employees set status = 'INACTIVE' where id = $1`, [
-        employee.employeeId,
-      ]);
+      const app = createApiServer(
+        createRuntimeConfig({
+          WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
+          WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
+          WORKLEDGER_ENVIRONMENT: 'test',
+          WORKLEDGER_ORIGIN: ORIGIN,
+        }),
+        { now: () => '2026-02-03T10:30:45Z' },
+      );
+      try {
+        const unauthenticated = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/run',
+          headers: { origin: ORIGIN },
+          payload: balanceRequest(),
+        });
+        expect(unauthenticated.statusCode).toBe(401);
+
+        const cookie = await signIn(app);
+        const csrfResponse = await app.inject({
+          method: 'GET',
+          url: '/v1/me/csrf',
+          headers: { cookie, origin: ORIGIN },
+        });
+        const csrf = csrfResponse.json<{ data: { token: string } }>().data.token;
+        const wrongOrigin = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/run',
+          headers: { cookie, origin: 'https://untrusted.example.test', 'x-workledger-csrf': csrf },
+          payload: balanceRequest(),
+        });
+        expect(wrongOrigin.statusCode).toBe(403);
+
+        const missingCsrf = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/run',
+          headers: { cookie, origin: ORIGIN },
+          payload: balanceRequest(),
+        });
+        expect(missingCsrf.statusCode).toBe(403);
+
+        const invalid = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/run',
+          headers: { cookie, origin: ORIGIN, 'x-workledger-csrf': csrf },
+          payload: { ...balanceRequest(), privateQuestion: 'do not echo this' },
+        });
+        expect(invalid.statusCode).toBe(422);
+        expect(invalid.payload).not.toContain('privateQuestion');
+        expect(invalid.payload).not.toContain('do not echo this');
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/run',
+          headers: { cookie, origin: ORIGIN, 'x-workledger-csrf': csrf },
+          payload: balanceRequest(),
+        });
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['cache-control']).toBe('private, no-store');
+        expect(response.json()).toMatchObject({
+          data: {
+            kind: 'balance-change',
+            scope: { kind: 'SELF' },
+            workspace: 'EMPLOYEE',
+          },
+        });
+        expect(response.payload).not.toContain(employee.accountId);
+        expect(response.payload).not.toContain(employee.employeeId);
+        expect(response.payload).not.toContain(employee.organizationId);
+
+        await fixture.client.query(`update employees set status = 'INACTIVE' where id = $1`, [
+          employee.employeeId,
+        ]);
+        const denied = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/run',
+          headers: { cookie, origin: ORIGIN, 'x-workledger-csrf': csrf },
+          payload: balanceRequest(),
+        });
+        expect(denied.statusCode).toBe(403);
+        expect(denied.json()).toMatchObject({ error: { code: 'ACCESS_DENIED' } });
+        expect(denied.payload).not.toContain(employee.employeeId);
+      } finally {
+        await app.close();
+      }
+
       await expect(
         service.run(
           identity,
@@ -172,9 +260,15 @@ async function createEmployeeFixture(client: pg.ClientBase) {
   const organizationId = domainId<'Organization'>(organization.rows[0]?.id);
   const account = await client.query<{ id: string }>(
     `insert into auth_users (name, email, email_verified, active)
-     values ('Insight employee', 'insight-employee@example.test', true, true) returning id`,
+     values ('Insight employee', $1, true, true) returning id`,
+    [EMAIL],
   );
   const accountId = domainId<'Account'>(account.rows[0]?.id);
+  await client.query(
+    `insert into auth_accounts (user_id, account_id, provider_id, password)
+     values ($1, $2, 'credential', $3)`,
+    [accountId, accountId, await hashPassword(PASSWORD)],
+  );
   const employee = await client.query<{ id: string }>(
     `insert into employees (organization_id, employee_number, display_name, status)
      values ($1, 'INSIGHT-001', 'Insight employee', 'ACTIVE') returning id`,
@@ -309,6 +403,30 @@ function request(input: InsightRequest): InsightRequest {
   return input;
 }
 
+function balanceRequest(): InsightRequest {
+  return {
+    kind: 'balance-change',
+    period: { endDate: '2026-02-03', kind: 'DATE_RANGE', startDate: '2026-02-01' },
+    workspace: 'EMPLOYEE',
+  };
+}
+
+async function signIn(app: ReturnType<typeof createApiServer>): Promise<string> {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/api/auth/sign-in/email',
+    headers: { 'content-type': 'application/json', origin: ORIGIN },
+    payload: { email: EMAIL, password: PASSWORD },
+  });
+  expect(response.statusCode).toBe(200);
+  const setCookie = Array.isArray(response.headers['set-cookie'])
+    ? response.headers['set-cookie'][0]
+    : response.headers['set-cookie'];
+  const cookie = setCookie?.split(';', 1)[0];
+  if (cookie === undefined) throw new Error('Expected session cookie.');
+  return cookie;
+}
+
 function domainId<Entity extends string>(value: unknown): DomainId<Entity> {
   const parsed = parseDomainId<Entity>(value);
   if (!parsed.ok) throw new Error('Expected valid fixture domain identifier.');
@@ -320,3 +438,5 @@ function instant(value: string) {
   if (!parsed.ok) throw new Error('Expected valid fixture instant.');
   return parsed.value;
 }
+import { createRuntimeConfig } from '../src/config.js';
+import { createApiServer } from '../src/server.js';

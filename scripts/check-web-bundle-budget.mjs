@@ -4,8 +4,8 @@ import path from 'node:path';
 
 export const APPLICATION_BUNDLE_BASELINE = Object.freeze({
   largestJavaScriptBytes: 500_000,
-  totalJavaScriptBytes: 910_000,
-  totalJavaScriptGzipBytes: 246_000,
+  totalJavaScriptBytes: 942_000,
+  totalJavaScriptGzipBytes: 255_000,
   totalCssBytes: 51_000,
 });
 

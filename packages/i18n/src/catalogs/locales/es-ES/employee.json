@@ -205,6 +205,192 @@
       "startTime": "Introduce una hora de inicio con formato HH:MM."
     }
   },
+  "insights": {
+    "destination": {
+      "monthlyReview": "Revisar este mes",
+      "myBalances": "Abrir mis saldos",
+      "myRequests": "Abrir mis solicitudes",
+      "myTime": "Abrir mi tiempo",
+      "reports": "Abrir informes",
+      "today": "Abrir Hoy"
+    },
+    "error": {
+      "denied": "No tienes acceso a la información para empleados",
+      "offline": "Parece que no tienes conexión",
+      "returnToday": "Volver a Hoy",
+      "unavailable": "No se pudo ejecutar la consulta"
+    },
+    "fact": {
+      "balanceChange": "Cambio de saldo",
+      "balanceClosing": "Saldo final",
+      "balanceIncompleteDates": "Fechas incompletas",
+      "balanceOpening": "Saldo inicial",
+      "leaveAccountCount": "Cuentas de ausencia",
+      "leaveAvailable": "Ausencia disponible",
+      "leaveProjectedRemaining": "Ausencia restante prevista",
+      "leaveProjectionAvailable": "Previsión disponible",
+      "leaveReserved": "Ausencia reservada",
+      "monthEnded": "Mes finalizado",
+      "monthlyCompleteDates": "Fechas completas",
+      "monthlyCoveredDates": "Fechas cubiertas",
+      "monthlyReadiness": "Preparación para el envío",
+      "monthlyWorkflow": "Flujo mensual",
+      "postedBalance": "Saldo contabilizado",
+      "submissionBlocker": "Bloqueo del envío",
+      "submissionBlockerCount": "Bloqueos del envío",
+      "submissionBlockersAvailable": "Detalles de bloqueos disponibles",
+      "todayAbsenceCredit": "Crédito por ausencia",
+      "todayAbsenceExpectedReduction": "Reducción por ausencia",
+      "todayActiveElapsed": "Tiempo activo transcurrido",
+      "todayApprovedCorrection": "Corrección aprobada",
+      "todayAttendanceState": "Estado de asistencia",
+      "todayAttention": "Atención",
+      "todayBreak": "Tiempo de pausa",
+      "todayCalculationStatus": "Estado del cálculo",
+      "todayCredited": "Tiempo acreditado",
+      "todayDifference": "Diferencia diaria",
+      "todayEstimatedFinish": "Fin estimado",
+      "todayExpected": "Tiempo esperado",
+      "todayExplanationAvailable": "Explicación disponible",
+      "todayHolidayExpectedReduction": "Reducción por festivo",
+      "todayOtherApprovedAdjustment": "Otro ajuste aprobado",
+      "todayRemainingExpected": "Tiempo esperado restante",
+      "todayScheduled": "Tiempo programado",
+      "todayWorked": "Tiempo trabajado",
+      "unrecognized": "Resultado adicional"
+    },
+    "form": {
+      "date": "Fecha",
+      "description": "Elige una pregunta y el periodo que debe abarcar.",
+      "from": "Desde",
+      "heading": "Ejecutar una consulta",
+      "kind": "¿Qué te gustaría entender?",
+      "kindPlaceholder": "Elige una consulta",
+      "month": "Mes",
+      "run": "Ejecutar consulta",
+      "running": "Ejecutando consulta…",
+      "to": "Hasta"
+    },
+    "kind": {
+      "balanceChange": {
+        "description": "Compara los movimientos de saldo contabilizados en un intervalo e identifica las fechas excluidas.",
+        "title": "¿Cómo cambió mi saldo?"
+      },
+      "leaveProjection": {
+        "description": "Muestra la ausencia disponible y reservada con una previsión claramente identificada para la fecha elegida.",
+        "title": "¿Qué ausencia podría quedarme?"
+      },
+      "submissionBlockers": {
+        "description": "Comprueba si un periodo mensual contiene condiciones registradas que impiden su envío.",
+        "title": "¿Qué bloquea mi envío mensual?"
+      },
+      "todayExplanation": {
+        "description": "Desglosa los valores esperados, trabajados, acreditados y provisionales de hoy.",
+        "title": "¿Cómo se calculó el día de hoy?"
+      }
+    },
+    "limitation": {
+      "incompleteDatesExcluded": "Las fechas incompletas se excluyen de la previsión.",
+      "leaveAccountDetailsLimited": "Los detalles de la cuenta están limitados a lo que puedes consultar.",
+      "leaveEntitlementNotAvailable": "Los datos de derechos no están disponibles para este periodo.",
+      "monthNotEnded": "El mes elegido aún no ha terminado y sus valores pueden cambiar.",
+      "monthlyPeriodNotAvailable": "No hay un periodo mensual disponible para el mes elegido.",
+      "requestedDateNotToday": "La fecha elegida no es hoy, por lo que la asistencia en directo no está disponible.",
+      "submissionBlockerDetailsLimited": "Algunos detalles están ocultos para proteger registros restringidos.",
+      "submissionNotAvailable": "El envío no está disponible en el estado actual del flujo.",
+      "todayCalculationIncomplete": "El cálculo de hoy está incompleto.",
+      "todayTimelineTruncated": "Solo se incluye la parte compatible de la cronología de hoy.",
+      "todayValuesProvisional": "Los valores de hoy son provisionales hasta que se contabilicen.",
+      "unrecognized": "Este resultado tiene una limitación adicional."
+    },
+    "page": {
+      "description": "Haz una pregunta concreta sobre tus propios registros oficiales de WorkLedger.",
+      "eyebrow": "Área del empleado"
+    },
+    "period": { "range": "Del {{start}} al {{end}}" },
+    "provider": {
+      "disabled": "Las explicaciones generadas opcionales no están activadas. El resultado nativo anterior sigue disponible y es el oficial.",
+      "heading": "Explicación opcional"
+    },
+    "qualifier": {
+      "current": "Actual",
+      "incomplete": "Incompleto",
+      "posted": "Contabilizado",
+      "projected": "Previsto",
+      "provisional": "Provisional",
+      "reserved": "Reservado",
+      "suppressed": "Restringido",
+      "unavailable": "No disponible"
+    },
+    "result": {
+      "actions": { "heading": "Siguientes pasos útiles" },
+      "authoritative": "Registros oficiales",
+      "capturedAt": "Capturado",
+      "facts": {
+        "description": "Cada valor conserva su estado y el límite de sus pruebas.",
+        "heading": "Datos del resultado"
+      },
+      "freshness": {
+        "calculatedThrough": "Calculado hasta {{date}}",
+        "description": "Estos límites muestran la actualidad de cada parte del resultado.",
+        "heading": "Actualización",
+        "postedThrough": "Contabilizado hasta {{date}}"
+      },
+      "limitations": {
+        "heading": "Límites de este resultado",
+        "title": "Lee estos límites junto con el resultado"
+      },
+      "nativeLabel": "Consulta nativa de WorkLedger",
+      "period": "Periodo",
+      "scope": "Alcance",
+      "scopeSelf": "Tus propios registros",
+      "sourceEvidence": "Pruebas: {{sources}}",
+      "sources": {
+        "description": "Abre el área de WorkLedger correspondiente para revisar el registro oficial.",
+        "heading": "Fuentes"
+      }
+    },
+    "source": {
+      "dailyTimeRecord": "Registro horario diario",
+      "leaveEntitlementLedger": "Libro de derechos de ausencia",
+      "monthlyPeriod": "Periodo mensual",
+      "open": "Abrir la fuente {{source}}",
+      "personalRequest": "Solicitud personal",
+      "report": "Informe",
+      "timeAccountLedger": "Libro de la cuenta de tiempo",
+      "todayAttendance": "Asistencia de hoy"
+    },
+    "state": {
+      "complete": "Completo",
+      "incomplete": "Incompleto",
+      "provisional": "Provisional"
+    },
+    "status": {
+      "ready": "La consulta está lista.",
+      "running": "Ejecutando la consulta con tus registros de WorkLedger…",
+      "viewResult": "Ver resultado"
+    },
+    "trust": {
+      "description": "El resultado se calcula con datos tipados de WorkLedger. Los valores contabilizados y provisionales permanecen claramente separados.",
+      "heading": "Cómo funciona",
+      "privacy": "Solo se usan tus registros permitidos. Los resultados no se guardan en la dirección ni en el almacenamiento del navegador."
+    },
+    "validation": {
+      "correct": "Corrige los campos señalados y vuelve a ejecutar la consulta.",
+      "date": "Elige una fecha.",
+      "from": "Elige la primera fecha.",
+      "kind": "Elige una consulta.",
+      "month": "Elige un mes.",
+      "range": "La última fecha no puede ser anterior a la primera.",
+      "to": "Elige la última fecha."
+    },
+    "value": {
+      "no": "No",
+      "unavailable": "No disponible",
+      "unrecognizedState": "Estado adicional",
+      "yes": "Sí"
+    }
+  },
   "monthly": {
     "action": {
       "approve": "Aprobar mes",

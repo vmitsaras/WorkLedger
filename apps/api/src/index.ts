@@ -106,6 +106,7 @@ export {
   submissionBlockersInsightHandler,
   todayExplanationInsightHandler,
 } from './insights/employee-insight-handlers.js';
+export { registerInsightRoutes, type InsightApiClock } from './insights/routes.js';
 export type { RuntimeConfig, RuntimeConfigSummary, RuntimeEnvironment } from './config.js';
 
 export const workspacePackage = '@workledger/api' as const;

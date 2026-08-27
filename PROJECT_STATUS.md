@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 3 of 17 tasks complete
+**Phase progress:** Phase 15 in progress — 4 of 17 tasks complete
 **Current milestone:** Phase 15 Insights foundation sub-gate (`WL-1500`–`WL-1504`)
-**Active task:** `WL-1503` — Build the accessible, role-scoped Insights route and native result presentation
-**Status:** `WL-1502` completed the four authoritative employee Insight computations with exact posted, projected, provisional, incomplete, freshness, limitation, source, action, privacy, and current-permission evidence
+**Active task:** `WL-1504` — Add bounded contextual entry points and execute the Insights foundation subgate
+**Status:** `WL-1503` completed the authenticated no-store employee Insights endpoint and accessible localized native result route with request-only execution, safe URL context, source actions, and responsive browser evidence
 **Last verified:** 2026-08-27
 
 ## Current objective
@@ -17,8 +17,9 @@ service that reloads current PostgreSQL authority before every handler. Determin
 remain authoritative and complete without a model; one active workspace narrows every request and
 every later read-only tool call must reauthorize current scope. Completed `WL-1502` now supplies
 authoritative balance-change, submission-blocker, leave-projection, and Today-explanation handlers
-without inventing policy or exposing protected identifiers. `WL-1503` may now add the endpoint,
-route, and accessible localized native presentation. Optional private Ollama
+without inventing policy or exposing protected identifiers. Completed `WL-1503` now supplies the
+same-origin CSRF-protected endpoint and accessible localized native route. `WL-1504` may add only
+the bounded contextual entry points and foundation evidence assigned to it. Optional private Ollama
 interpretation remains disabled by default, employee-only at pilot start, pinned to one local model
 digest, and blocked from public or cloud egress. Manager, report-builder, privacy-suppressed HR,
 isolated System Insights, and optional MCP evaluation remain behind their named gates. General
@@ -2841,11 +2842,34 @@ remains an unnumbered draft.
   dependency, provider, model, network request, write action, persistence path, or version change
   was added.
 
+**2026-08-27 — WL-1503 accessible native Insights endpoint and route (complete)**
+
+- Added authenticated, same-origin, CSRF-protected `POST /v1/insights/run` transport with strict
+  request and response contracts, current Employee scope authorization, safe API errors, private
+  no-store success responses, and OpenAPI registration.
+- Added a lazy Employee Insights route and shell destination for all four native questions. The
+  page never executes on route load, stores only allowlisted kind and period context in the URL,
+  keeps results in request memory, and clears stale output when the question or period changes.
+- Added structured presentation for typed facts, textual qualifiers, freshness boundaries,
+  material limitations, source records, and native actions. Monthly source navigation uses a safe
+  month-focused My Time link and never treats a purpose alias as a protected period identifier.
+- Added complete English, German, and Spanish copy plus keyboard validation, focused error summary,
+  concise request announcements, offline, denied, unavailable, and retry states. Component and
+  browser axe checks cover request-only execution, 320 pixel reflow, forced colors, and reduced
+  motion. Visual inspection found and corrected one compressed narrow form layout.
+- Formatting, lint, strict TypeScript, 54 tooling tests, 422 unit/component tests, 13 broad
+  integration tests, the 15-file PostgreSQL suite with 28 passes and one historical skip, 48
+  browser tests with one historical skip, and the production/workspace build pass. Source
+  boundaries cover 329 files and 1,874 imports.
+- Added `docs/154-wl-1503-accessible-native-insights-route.md`. No provider, model, dependency,
+  migration, write action, audit event, result persistence, manifest version, or external egress
+  was added.
+
 ## Current blockers
 
-Phase 15 has no scheduling blocker. `WL-1503` may build the Employee Insights endpoint, route, and
-accessible localized native presentation through the completed `WL-1501` and `WL-1502` service,
-contract, and handler foundation. Provider, manager, report-builder, HR, system, and MCP tasks
+Phase 15 has no scheduling blocker. `WL-1504` may add bounded visible contextual entry points from
+Today, My Time, My Balances, Requests, and Reports, then execute the Insights foundation subgate.
+Provider, manager, report-builder, HR, system, and MCP tasks
 remain blocked by their named sub-gates. The broad environment-independent integration command and
 the canonical isolated `pnpm db:test` gate are green. Exact partial-day
 work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
@@ -2860,9 +2884,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1503`: build the accessible, role-scoped Insights endpoint and route with localized
-native result presentation, private no-store transport, keyboard and focus behavior, announcements,
-and complete loading, empty, unavailable, denied, and error states. The portfolio presentation scope remains preserved in
+Execute `WL-1504`: add bounded, visible, removable context from Today, My Time, My Balances,
+Requests, and Reports without DOM or data dumps, then execute the Insights foundation subgate. The
+portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as a separate unnumbered draft.
 
 ## Update rules

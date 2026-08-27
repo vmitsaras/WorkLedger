@@ -199,6 +199,192 @@
       "startTime": "Geben Sie eine Startzeit im Format HH:MM ein."
     }
   },
+  "insights": {
+    "destination": {
+      "monthlyReview": "Diesen Monat prüfen",
+      "myBalances": "Meine Salden öffnen",
+      "myRequests": "Meine Anträge öffnen",
+      "myTime": "Meine Zeit öffnen",
+      "reports": "Berichte öffnen",
+      "today": "Heute öffnen"
+    },
+    "error": {
+      "denied": "Sie haben keinen Zugriff auf Einblicke für Mitarbeitende",
+      "offline": "Sie scheinen offline zu sein",
+      "returnToday": "Zurück zu Heute",
+      "unavailable": "Der Einblick konnte nicht erstellt werden"
+    },
+    "fact": {
+      "balanceChange": "Saldoänderung",
+      "balanceClosing": "Endsaldo",
+      "balanceIncompleteDates": "Unvollständige Tage",
+      "balanceOpening": "Anfangssaldo",
+      "leaveAccountCount": "Abwesenheitskonten",
+      "leaveAvailable": "Verfügbare Abwesenheit",
+      "leaveProjectedRemaining": "Voraussichtlicher Restanspruch",
+      "leaveProjectionAvailable": "Prognose verfügbar",
+      "leaveReserved": "Reservierte Abwesenheit",
+      "monthEnded": "Monat beendet",
+      "monthlyCompleteDates": "Vollständige Tage",
+      "monthlyCoveredDates": "Abgedeckte Tage",
+      "monthlyReadiness": "Bereitschaft zur Einreichung",
+      "monthlyWorkflow": "Monatsablauf",
+      "postedBalance": "Gebuchter Saldo",
+      "submissionBlocker": "Hindernis für die Einreichung",
+      "submissionBlockerCount": "Hindernisse für die Einreichung",
+      "submissionBlockersAvailable": "Details zu Hindernissen verfügbar",
+      "todayAbsenceCredit": "Abwesenheitsgutschrift",
+      "todayAbsenceExpectedReduction": "Reduzierung durch Abwesenheit",
+      "todayActiveElapsed": "Aktive verstrichene Zeit",
+      "todayApprovedCorrection": "Genehmigte Korrektur",
+      "todayAttendanceState": "Anwesenheitsstatus",
+      "todayAttention": "Hinweis",
+      "todayBreak": "Pausenzeit",
+      "todayCalculationStatus": "Berechnungsstatus",
+      "todayCredited": "Angerechnete Zeit",
+      "todayDifference": "Tagesdifferenz",
+      "todayEstimatedFinish": "Voraussichtliches Ende",
+      "todayExpected": "Sollzeit",
+      "todayExplanationAvailable": "Erklärung verfügbar",
+      "todayHolidayExpectedReduction": "Reduzierung durch Feiertag",
+      "todayOtherApprovedAdjustment": "Sonstige genehmigte Anpassung",
+      "todayRemainingExpected": "Verbleibende Sollzeit",
+      "todayScheduled": "Geplante Zeit",
+      "todayWorked": "Arbeitszeit",
+      "unrecognized": "Zusätzliches Ergebnis"
+    },
+    "form": {
+      "date": "Datum",
+      "description": "Wählen Sie eine Frage und den Zeitraum, den sie abdecken soll.",
+      "from": "Von",
+      "heading": "Einblick erstellen",
+      "kind": "Was möchten Sie verstehen?",
+      "kindPlaceholder": "Einblick auswählen",
+      "month": "Monat",
+      "run": "Einblick erstellen",
+      "running": "Einblick wird erstellt…",
+      "to": "Bis"
+    },
+    "kind": {
+      "balanceChange": {
+        "description": "Vergleicht gebuchte Saldoeinträge im Zeitraum und zeigt nicht einbezogene Tage.",
+        "title": "Wie hat sich mein Saldo verändert?"
+      },
+      "leaveProjection": {
+        "description": "Zeigt verfügbaren und reservierten Anspruch mit klar gekennzeichneter Prognose zum gewählten Datum.",
+        "title": "Wie viel Abwesenheit könnte verbleiben?"
+      },
+      "submissionBlockers": {
+        "description": "Prüft einen Monatszeitraum auf erfasste Bedingungen, die eine Einreichung verhindern.",
+        "title": "Was verhindert meine Monatseinreichung?"
+      },
+      "todayExplanation": {
+        "description": "Schlüsselt heutige Soll-, Arbeits-, Anrechnungs- und vorläufige Werte auf.",
+        "title": "Wie wurde der heutige Tag berechnet?"
+      }
+    },
+    "limitation": {
+      "incompleteDatesExcluded": "Unvollständige Tage sind von der Prognose ausgeschlossen.",
+      "leaveAccountDetailsLimited": "Kontodetails sind auf Ihre Zugriffsrechte beschränkt.",
+      "leaveEntitlementNotAvailable": "Anspruchsdaten sind für diesen Zeitraum nicht verfügbar.",
+      "monthNotEnded": "Der gewählte Monat ist noch nicht beendet und seine Werte können sich ändern.",
+      "monthlyPeriodNotAvailable": "Für den gewählten Monat ist kein Monatszeitraum verfügbar.",
+      "requestedDateNotToday": "Das gewählte Datum ist nicht heute. Live-Anwesenheitsdaten sind daher nicht verfügbar.",
+      "submissionBlockerDetailsLimited": "Einige Details sind zum Schutz eingeschränkter Datensätze ausgeblendet.",
+      "submissionNotAvailable": "Im aktuellen Status ist keine Einreichung möglich.",
+      "todayCalculationIncomplete": "Die heutige Berechnung ist unvollständig.",
+      "todayTimelineTruncated": "Nur der unterstützte Teil des heutigen Verlaufs ist enthalten.",
+      "todayValuesProvisional": "Die heutigen Werte sind bis zur Buchung vorläufig.",
+      "unrecognized": "Für dieses Ergebnis gilt eine zusätzliche Einschränkung."
+    },
+    "page": {
+      "description": "Stellen Sie eine gezielte Frage zu Ihren eigenen maßgeblichen WorkLedger-Datensätzen.",
+      "eyebrow": "Arbeitsbereich Mitarbeitende"
+    },
+    "period": { "range": "{{start}} bis {{end}}" },
+    "provider": {
+      "disabled": "Optionale generierte Erklärungen sind nicht aktiviert. Das native Ergebnis oben bleibt verfügbar und maßgeblich.",
+      "heading": "Optionale Erklärung"
+    },
+    "qualifier": {
+      "current": "Aktuell",
+      "incomplete": "Unvollständig",
+      "posted": "Gebucht",
+      "projected": "Prognose",
+      "provisional": "Vorläufig",
+      "reserved": "Reserviert",
+      "suppressed": "Eingeschränkt",
+      "unavailable": "Nicht verfügbar"
+    },
+    "result": {
+      "actions": { "heading": "Sinnvolle nächste Schritte" },
+      "authoritative": "Maßgebliche Datensätze",
+      "capturedAt": "Erfasst",
+      "facts": {
+        "description": "Jeder Wert behält seinen Status und seine Nachweisgrenze.",
+        "heading": "Ergebnisdaten"
+      },
+      "freshness": {
+        "calculatedThrough": "Berechnet bis {{date}}",
+        "description": "Diese Grenzen zeigen, wie aktuell die einzelnen Teile des Ergebnisses sind.",
+        "heading": "Aktualität",
+        "postedThrough": "Gebucht bis {{date}}"
+      },
+      "limitations": {
+        "heading": "Grenzen dieses Ergebnisses",
+        "title": "Beachten Sie diese Grenzen beim Lesen"
+      },
+      "nativeLabel": "Nativer WorkLedger-Einblick",
+      "period": "Zeitraum",
+      "scope": "Umfang",
+      "scopeSelf": "Ihre eigenen Datensätze",
+      "sourceEvidence": "Nachweise: {{sources}}",
+      "sources": {
+        "description": "Öffnen Sie den zugrunde liegenden Bereich, um den maßgeblichen Datensatz zu prüfen.",
+        "heading": "Quellen"
+      }
+    },
+    "source": {
+      "dailyTimeRecord": "Tagesdatensatz",
+      "leaveEntitlementLedger": "Anspruchskonto",
+      "monthlyPeriod": "Monatszeitraum",
+      "open": "Quelle {{source}} öffnen",
+      "personalRequest": "Persönlicher Antrag",
+      "report": "Bericht",
+      "timeAccountLedger": "Zeitkontobuch",
+      "todayAttendance": "Heutige Anwesenheit"
+    },
+    "state": {
+      "complete": "Vollständig",
+      "incomplete": "Unvollständig",
+      "provisional": "Vorläufig"
+    },
+    "status": {
+      "ready": "Der Einblick ist bereit.",
+      "running": "Der Einblick wird aus Ihren WorkLedger-Datensätzen erstellt…",
+      "viewResult": "Ergebnis anzeigen"
+    },
+    "trust": {
+      "description": "Das Ergebnis wird aus typisierten WorkLedger-Daten berechnet. Gebuchte und vorläufige Werte bleiben klar getrennt.",
+      "heading": "So funktioniert es",
+      "privacy": "Es werden nur Ihre zulässigen Datensätze verwendet. Ergebnisse werden weder in der Adresse noch im Browserspeicher abgelegt."
+    },
+    "validation": {
+      "correct": "Korrigieren Sie die markierten Felder und erstellen Sie den Einblick erneut.",
+      "date": "Wählen Sie ein Datum.",
+      "from": "Wählen Sie das erste Datum.",
+      "kind": "Wählen Sie einen Einblick.",
+      "month": "Wählen Sie einen Monat.",
+      "range": "Das letzte Datum darf nicht vor dem ersten liegen.",
+      "to": "Wählen Sie das letzte Datum."
+    },
+    "value": {
+      "no": "Nein",
+      "unavailable": "Nicht verfügbar",
+      "unrecognizedState": "Zusätzlicher Status",
+      "yes": "Ja"
+    }
+  },
   "monthly": {
     "action": {
       "approve": "Monat genehmigen",

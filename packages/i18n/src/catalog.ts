@@ -219,6 +219,142 @@ export type MessageParameterMap = Readonly<{
   'employee.calendar.view.agenda': undefined;
   'employee.calendar.view.label': undefined;
   'employee.calendar.view.month': undefined;
+  'employee.insights.destination.monthlyReview': undefined;
+  'employee.insights.destination.myBalances': undefined;
+  'employee.insights.destination.myRequests': undefined;
+  'employee.insights.destination.myTime': undefined;
+  'employee.insights.destination.reports': undefined;
+  'employee.insights.destination.today': undefined;
+  'employee.insights.error.denied': undefined;
+  'employee.insights.error.offline': undefined;
+  'employee.insights.error.returnToday': undefined;
+  'employee.insights.error.unavailable': undefined;
+  'employee.insights.fact.balanceChange': undefined;
+  'employee.insights.fact.balanceClosing': undefined;
+  'employee.insights.fact.balanceIncompleteDates': undefined;
+  'employee.insights.fact.balanceOpening': undefined;
+  'employee.insights.fact.leaveAccountCount': undefined;
+  'employee.insights.fact.leaveAvailable': undefined;
+  'employee.insights.fact.leaveProjectedRemaining': undefined;
+  'employee.insights.fact.leaveProjectionAvailable': undefined;
+  'employee.insights.fact.leaveReserved': undefined;
+  'employee.insights.fact.monthEnded': undefined;
+  'employee.insights.fact.monthlyCompleteDates': undefined;
+  'employee.insights.fact.monthlyCoveredDates': undefined;
+  'employee.insights.fact.monthlyReadiness': undefined;
+  'employee.insights.fact.monthlyWorkflow': undefined;
+  'employee.insights.fact.postedBalance': undefined;
+  'employee.insights.fact.submissionBlocker': undefined;
+  'employee.insights.fact.submissionBlockerCount': undefined;
+  'employee.insights.fact.submissionBlockersAvailable': undefined;
+  'employee.insights.fact.todayAbsenceCredit': undefined;
+  'employee.insights.fact.todayAbsenceExpectedReduction': undefined;
+  'employee.insights.fact.todayActiveElapsed': undefined;
+  'employee.insights.fact.todayApprovedCorrection': undefined;
+  'employee.insights.fact.todayAttendanceState': undefined;
+  'employee.insights.fact.todayAttention': undefined;
+  'employee.insights.fact.todayBreak': undefined;
+  'employee.insights.fact.todayCalculationStatus': undefined;
+  'employee.insights.fact.todayCredited': undefined;
+  'employee.insights.fact.todayDifference': undefined;
+  'employee.insights.fact.todayEstimatedFinish': undefined;
+  'employee.insights.fact.todayExpected': undefined;
+  'employee.insights.fact.todayExplanationAvailable': undefined;
+  'employee.insights.fact.todayHolidayExpectedReduction': undefined;
+  'employee.insights.fact.todayOtherApprovedAdjustment': undefined;
+  'employee.insights.fact.todayRemainingExpected': undefined;
+  'employee.insights.fact.todayScheduled': undefined;
+  'employee.insights.fact.todayWorked': undefined;
+  'employee.insights.fact.unrecognized': undefined;
+  'employee.insights.form.date': undefined;
+  'employee.insights.form.description': undefined;
+  'employee.insights.form.from': undefined;
+  'employee.insights.form.heading': undefined;
+  'employee.insights.form.kind': undefined;
+  'employee.insights.form.kindPlaceholder': undefined;
+  'employee.insights.form.month': undefined;
+  'employee.insights.form.run': undefined;
+  'employee.insights.form.running': undefined;
+  'employee.insights.form.to': undefined;
+  'employee.insights.kind.balanceChange.description': undefined;
+  'employee.insights.kind.balanceChange.title': undefined;
+  'employee.insights.kind.leaveProjection.description': undefined;
+  'employee.insights.kind.leaveProjection.title': undefined;
+  'employee.insights.kind.submissionBlockers.description': undefined;
+  'employee.insights.kind.submissionBlockers.title': undefined;
+  'employee.insights.kind.todayExplanation.description': undefined;
+  'employee.insights.kind.todayExplanation.title': undefined;
+  'employee.insights.limitation.incompleteDatesExcluded': undefined;
+  'employee.insights.limitation.leaveAccountDetailsLimited': undefined;
+  'employee.insights.limitation.leaveEntitlementNotAvailable': undefined;
+  'employee.insights.limitation.monthNotEnded': undefined;
+  'employee.insights.limitation.monthlyPeriodNotAvailable': undefined;
+  'employee.insights.limitation.requestedDateNotToday': undefined;
+  'employee.insights.limitation.submissionBlockerDetailsLimited': undefined;
+  'employee.insights.limitation.submissionNotAvailable': undefined;
+  'employee.insights.limitation.todayCalculationIncomplete': undefined;
+  'employee.insights.limitation.todayTimelineTruncated': undefined;
+  'employee.insights.limitation.todayValuesProvisional': undefined;
+  'employee.insights.limitation.unrecognized': undefined;
+  'employee.insights.page.description': undefined;
+  'employee.insights.page.eyebrow': undefined;
+  'employee.insights.period.range': Readonly<{ end: string; start: string }>;
+  'employee.insights.provider.disabled': undefined;
+  'employee.insights.provider.heading': undefined;
+  'employee.insights.qualifier.current': undefined;
+  'employee.insights.qualifier.incomplete': undefined;
+  'employee.insights.qualifier.posted': undefined;
+  'employee.insights.qualifier.projected': undefined;
+  'employee.insights.qualifier.provisional': undefined;
+  'employee.insights.qualifier.reserved': undefined;
+  'employee.insights.qualifier.suppressed': undefined;
+  'employee.insights.qualifier.unavailable': undefined;
+  'employee.insights.result.actions.heading': undefined;
+  'employee.insights.result.authoritative': undefined;
+  'employee.insights.result.capturedAt': undefined;
+  'employee.insights.result.facts.description': undefined;
+  'employee.insights.result.facts.heading': undefined;
+  'employee.insights.result.freshness.calculatedThrough': Readonly<{ date: string }>;
+  'employee.insights.result.freshness.description': undefined;
+  'employee.insights.result.freshness.heading': undefined;
+  'employee.insights.result.freshness.postedThrough': Readonly<{ date: string }>;
+  'employee.insights.result.limitations.heading': undefined;
+  'employee.insights.result.limitations.title': undefined;
+  'employee.insights.result.nativeLabel': undefined;
+  'employee.insights.result.period': undefined;
+  'employee.insights.result.scope': undefined;
+  'employee.insights.result.scopeSelf': undefined;
+  'employee.insights.result.sourceEvidence': Readonly<{ sources: string }>;
+  'employee.insights.result.sources.description': undefined;
+  'employee.insights.result.sources.heading': undefined;
+  'employee.insights.source.dailyTimeRecord': undefined;
+  'employee.insights.source.leaveEntitlementLedger': undefined;
+  'employee.insights.source.monthlyPeriod': undefined;
+  'employee.insights.source.open': Readonly<{ source: string }>;
+  'employee.insights.source.personalRequest': undefined;
+  'employee.insights.source.report': undefined;
+  'employee.insights.source.timeAccountLedger': undefined;
+  'employee.insights.source.todayAttendance': undefined;
+  'employee.insights.state.complete': undefined;
+  'employee.insights.state.incomplete': undefined;
+  'employee.insights.state.provisional': undefined;
+  'employee.insights.status.ready': undefined;
+  'employee.insights.status.running': undefined;
+  'employee.insights.status.viewResult': undefined;
+  'employee.insights.trust.description': undefined;
+  'employee.insights.trust.heading': undefined;
+  'employee.insights.trust.privacy': undefined;
+  'employee.insights.validation.correct': undefined;
+  'employee.insights.validation.date': undefined;
+  'employee.insights.validation.from': undefined;
+  'employee.insights.validation.kind': undefined;
+  'employee.insights.validation.month': undefined;
+  'employee.insights.validation.range': undefined;
+  'employee.insights.validation.to': undefined;
+  'employee.insights.value.no': undefined;
+  'employee.insights.value.unavailable': undefined;
+  'employee.insights.value.unrecognizedState': undefined;
+  'employee.insights.value.yes': undefined;
   'employee.monthly.action.approve': undefined;
   'employee.monthly.action.cancel': undefined;
   'employee.monthly.action.lock': undefined;
@@ -2094,6 +2230,7 @@ export type MessageParameterMap = Readonly<{
   'shared.route.title.audit': undefined;
   'shared.route.title.calendar': undefined;
   'shared.route.title.employees': undefined;
+  'shared.route.title.insights': undefined;
   'shared.route.title.myBalances': undefined;
   'shared.route.title.myTime': undefined;
   'shared.route.title.notifications': undefined;
@@ -2384,6 +2521,142 @@ export const MESSAGE_KEYS = [
   'employee.calendar.view.agenda',
   'employee.calendar.view.label',
   'employee.calendar.view.month',
+  'employee.insights.destination.monthlyReview',
+  'employee.insights.destination.myBalances',
+  'employee.insights.destination.myRequests',
+  'employee.insights.destination.myTime',
+  'employee.insights.destination.reports',
+  'employee.insights.destination.today',
+  'employee.insights.error.denied',
+  'employee.insights.error.offline',
+  'employee.insights.error.returnToday',
+  'employee.insights.error.unavailable',
+  'employee.insights.fact.balanceChange',
+  'employee.insights.fact.balanceClosing',
+  'employee.insights.fact.balanceIncompleteDates',
+  'employee.insights.fact.balanceOpening',
+  'employee.insights.fact.leaveAccountCount',
+  'employee.insights.fact.leaveAvailable',
+  'employee.insights.fact.leaveProjectedRemaining',
+  'employee.insights.fact.leaveProjectionAvailable',
+  'employee.insights.fact.leaveReserved',
+  'employee.insights.fact.monthEnded',
+  'employee.insights.fact.monthlyCompleteDates',
+  'employee.insights.fact.monthlyCoveredDates',
+  'employee.insights.fact.monthlyReadiness',
+  'employee.insights.fact.monthlyWorkflow',
+  'employee.insights.fact.postedBalance',
+  'employee.insights.fact.submissionBlocker',
+  'employee.insights.fact.submissionBlockerCount',
+  'employee.insights.fact.submissionBlockersAvailable',
+  'employee.insights.fact.todayAbsenceCredit',
+  'employee.insights.fact.todayAbsenceExpectedReduction',
+  'employee.insights.fact.todayActiveElapsed',
+  'employee.insights.fact.todayApprovedCorrection',
+  'employee.insights.fact.todayAttendanceState',
+  'employee.insights.fact.todayAttention',
+  'employee.insights.fact.todayBreak',
+  'employee.insights.fact.todayCalculationStatus',
+  'employee.insights.fact.todayCredited',
+  'employee.insights.fact.todayDifference',
+  'employee.insights.fact.todayEstimatedFinish',
+  'employee.insights.fact.todayExpected',
+  'employee.insights.fact.todayExplanationAvailable',
+  'employee.insights.fact.todayHolidayExpectedReduction',
+  'employee.insights.fact.todayOtherApprovedAdjustment',
+  'employee.insights.fact.todayRemainingExpected',
+  'employee.insights.fact.todayScheduled',
+  'employee.insights.fact.todayWorked',
+  'employee.insights.fact.unrecognized',
+  'employee.insights.form.date',
+  'employee.insights.form.description',
+  'employee.insights.form.from',
+  'employee.insights.form.heading',
+  'employee.insights.form.kind',
+  'employee.insights.form.kindPlaceholder',
+  'employee.insights.form.month',
+  'employee.insights.form.run',
+  'employee.insights.form.running',
+  'employee.insights.form.to',
+  'employee.insights.kind.balanceChange.description',
+  'employee.insights.kind.balanceChange.title',
+  'employee.insights.kind.leaveProjection.description',
+  'employee.insights.kind.leaveProjection.title',
+  'employee.insights.kind.submissionBlockers.description',
+  'employee.insights.kind.submissionBlockers.title',
+  'employee.insights.kind.todayExplanation.description',
+  'employee.insights.kind.todayExplanation.title',
+  'employee.insights.limitation.incompleteDatesExcluded',
+  'employee.insights.limitation.leaveAccountDetailsLimited',
+  'employee.insights.limitation.leaveEntitlementNotAvailable',
+  'employee.insights.limitation.monthNotEnded',
+  'employee.insights.limitation.monthlyPeriodNotAvailable',
+  'employee.insights.limitation.requestedDateNotToday',
+  'employee.insights.limitation.submissionBlockerDetailsLimited',
+  'employee.insights.limitation.submissionNotAvailable',
+  'employee.insights.limitation.todayCalculationIncomplete',
+  'employee.insights.limitation.todayTimelineTruncated',
+  'employee.insights.limitation.todayValuesProvisional',
+  'employee.insights.limitation.unrecognized',
+  'employee.insights.page.description',
+  'employee.insights.page.eyebrow',
+  'employee.insights.period.range',
+  'employee.insights.provider.disabled',
+  'employee.insights.provider.heading',
+  'employee.insights.qualifier.current',
+  'employee.insights.qualifier.incomplete',
+  'employee.insights.qualifier.posted',
+  'employee.insights.qualifier.projected',
+  'employee.insights.qualifier.provisional',
+  'employee.insights.qualifier.reserved',
+  'employee.insights.qualifier.suppressed',
+  'employee.insights.qualifier.unavailable',
+  'employee.insights.result.actions.heading',
+  'employee.insights.result.authoritative',
+  'employee.insights.result.capturedAt',
+  'employee.insights.result.facts.description',
+  'employee.insights.result.facts.heading',
+  'employee.insights.result.freshness.calculatedThrough',
+  'employee.insights.result.freshness.description',
+  'employee.insights.result.freshness.heading',
+  'employee.insights.result.freshness.postedThrough',
+  'employee.insights.result.limitations.heading',
+  'employee.insights.result.limitations.title',
+  'employee.insights.result.nativeLabel',
+  'employee.insights.result.period',
+  'employee.insights.result.scope',
+  'employee.insights.result.scopeSelf',
+  'employee.insights.result.sourceEvidence',
+  'employee.insights.result.sources.description',
+  'employee.insights.result.sources.heading',
+  'employee.insights.source.dailyTimeRecord',
+  'employee.insights.source.leaveEntitlementLedger',
+  'employee.insights.source.monthlyPeriod',
+  'employee.insights.source.open',
+  'employee.insights.source.personalRequest',
+  'employee.insights.source.report',
+  'employee.insights.source.timeAccountLedger',
+  'employee.insights.source.todayAttendance',
+  'employee.insights.state.complete',
+  'employee.insights.state.incomplete',
+  'employee.insights.state.provisional',
+  'employee.insights.status.ready',
+  'employee.insights.status.running',
+  'employee.insights.status.viewResult',
+  'employee.insights.trust.description',
+  'employee.insights.trust.heading',
+  'employee.insights.trust.privacy',
+  'employee.insights.validation.correct',
+  'employee.insights.validation.date',
+  'employee.insights.validation.from',
+  'employee.insights.validation.kind',
+  'employee.insights.validation.month',
+  'employee.insights.validation.range',
+  'employee.insights.validation.to',
+  'employee.insights.value.no',
+  'employee.insights.value.unavailable',
+  'employee.insights.value.unrecognizedState',
+  'employee.insights.value.yes',
   'employee.monthly.action.approve',
   'employee.monthly.action.cancel',
   'employee.monthly.action.lock',
@@ -4166,6 +4439,7 @@ export const MESSAGE_KEYS = [
   'shared.route.title.audit',
   'shared.route.title.calendar',
   'shared.route.title.employees',
+  'shared.route.title.insights',
   'shared.route.title.myBalances',
   'shared.route.title.myTime',
   'shared.route.title.notifications',

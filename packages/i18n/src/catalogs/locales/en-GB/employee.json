@@ -199,6 +199,192 @@
       "startTime": "Enter a start time in HH:MM format."
     }
   },
+  "insights": {
+    "destination": {
+      "monthlyReview": "Review this month",
+      "myBalances": "Open my balances",
+      "myRequests": "Open my requests",
+      "myTime": "Open my time",
+      "reports": "Open reports",
+      "today": "Open Today"
+    },
+    "error": {
+      "denied": "You do not have access to employee insights",
+      "offline": "You appear to be offline",
+      "returnToday": "Return to Today",
+      "unavailable": "The insight could not be run"
+    },
+    "fact": {
+      "balanceChange": "Balance change",
+      "balanceClosing": "Closing balance",
+      "balanceIncompleteDates": "Incomplete dates",
+      "balanceOpening": "Opening balance",
+      "leaveAccountCount": "Leave accounts",
+      "leaveAvailable": "Available leave",
+      "leaveProjectedRemaining": "Projected remaining leave",
+      "leaveProjectionAvailable": "Projection available",
+      "leaveReserved": "Reserved leave",
+      "monthEnded": "Month ended",
+      "monthlyCompleteDates": "Complete dates",
+      "monthlyCoveredDates": "Covered dates",
+      "monthlyReadiness": "Submission readiness",
+      "monthlyWorkflow": "Monthly workflow",
+      "postedBalance": "Posted balance",
+      "submissionBlocker": "Submission blocker",
+      "submissionBlockerCount": "Submission blockers",
+      "submissionBlockersAvailable": "Blocker details available",
+      "todayAbsenceCredit": "Absence credit",
+      "todayAbsenceExpectedReduction": "Absence reduction",
+      "todayActiveElapsed": "Active elapsed time",
+      "todayApprovedCorrection": "Approved correction",
+      "todayAttendanceState": "Attendance state",
+      "todayAttention": "Attention",
+      "todayBreak": "Break time",
+      "todayCalculationStatus": "Calculation status",
+      "todayCredited": "Credited time",
+      "todayDifference": "Daily difference",
+      "todayEstimatedFinish": "Estimated finish",
+      "todayExpected": "Expected time",
+      "todayExplanationAvailable": "Explanation available",
+      "todayHolidayExpectedReduction": "Holiday reduction",
+      "todayOtherApprovedAdjustment": "Other approved adjustment",
+      "todayRemainingExpected": "Remaining expected time",
+      "todayScheduled": "Scheduled time",
+      "todayWorked": "Worked time",
+      "unrecognized": "Additional result"
+    },
+    "form": {
+      "date": "Date",
+      "description": "Choose one question and the period it should cover.",
+      "from": "From",
+      "heading": "Run an insight",
+      "kind": "What would you like to understand?",
+      "kindPlaceholder": "Choose an insight",
+      "month": "Month",
+      "run": "Run insight",
+      "running": "Running insight…",
+      "to": "To"
+    },
+    "kind": {
+      "balanceChange": {
+        "description": "Compare posted balance entries across a date range and identify dates excluded from the total.",
+        "title": "How did my balance change?"
+      },
+      "leaveProjection": {
+        "description": "See available and reserved leave with a clearly labelled projection for the selected date.",
+        "title": "What leave could remain?"
+      },
+      "submissionBlockers": {
+        "description": "Check a monthly period for recorded conditions that prevent submission.",
+        "title": "What blocks my monthly submission?"
+      },
+      "todayExplanation": {
+        "description": "Break down today’s expected, worked, credited, and provisional values.",
+        "title": "How was today calculated?"
+      }
+    },
+    "limitation": {
+      "incompleteDatesExcluded": "Incomplete dates are excluded from the projection.",
+      "leaveAccountDetailsLimited": "Leave account details are limited to what you may view.",
+      "leaveEntitlementNotAvailable": "Leave entitlement data is not available for this period.",
+      "monthNotEnded": "The selected month has not ended, so its values may still change.",
+      "monthlyPeriodNotAvailable": "No monthly period is available for the selected month.",
+      "requestedDateNotToday": "The selected date is not today, so live attendance details are unavailable.",
+      "submissionBlockerDetailsLimited": "Some blocker details are hidden to protect restricted records.",
+      "submissionNotAvailable": "Submission is not available in the current workflow state.",
+      "todayCalculationIncomplete": "Today’s calculation is incomplete.",
+      "todayTimelineTruncated": "Only the supported portion of today’s timeline is included.",
+      "todayValuesProvisional": "Today’s values are provisional until they are posted.",
+      "unrecognized": "An additional limitation applies to this result."
+    },
+    "page": {
+      "description": "Ask a focused question about your own authoritative WorkLedger records.",
+      "eyebrow": "Employee workspace"
+    },
+    "period": { "range": "{{start}} to {{end}}" },
+    "provider": {
+      "disabled": "Optional generated explanations are not enabled. The native result above remains available and authoritative.",
+      "heading": "Optional explanation"
+    },
+    "qualifier": {
+      "current": "Current",
+      "incomplete": "Incomplete",
+      "posted": "Posted",
+      "projected": "Projected",
+      "provisional": "Provisional",
+      "reserved": "Reserved",
+      "suppressed": "Restricted",
+      "unavailable": "Unavailable"
+    },
+    "result": {
+      "actions": { "heading": "Useful next steps" },
+      "authoritative": "Authoritative records",
+      "capturedAt": "Captured",
+      "facts": {
+        "description": "Each value retains its status and evidence boundary.",
+        "heading": "Result facts"
+      },
+      "freshness": {
+        "calculatedThrough": "Calculated through {{date}}",
+        "description": "These boundaries show how current each part of the result is.",
+        "heading": "Freshness",
+        "postedThrough": "Posted through {{date}}"
+      },
+      "limitations": {
+        "heading": "Limits on this result",
+        "title": "Read these limits with the result"
+      },
+      "nativeLabel": "Native WorkLedger insight",
+      "period": "Period",
+      "scope": "Scope",
+      "scopeSelf": "Your own records",
+      "sourceEvidence": "Evidence: {{sources}}",
+      "sources": {
+        "description": "Open the underlying WorkLedger area to review the authoritative record.",
+        "heading": "Sources"
+      }
+    },
+    "source": {
+      "dailyTimeRecord": "Daily time record",
+      "leaveEntitlementLedger": "Leave entitlement ledger",
+      "monthlyPeriod": "Monthly period",
+      "open": "Open {{source}} source",
+      "personalRequest": "Personal request",
+      "report": "Report",
+      "timeAccountLedger": "Time account ledger",
+      "todayAttendance": "Today attendance"
+    },
+    "state": {
+      "complete": "Complete",
+      "incomplete": "Incomplete",
+      "provisional": "Provisional"
+    },
+    "status": {
+      "ready": "The insight is ready.",
+      "running": "Running the insight from your WorkLedger records…",
+      "viewResult": "View result"
+    },
+    "trust": {
+      "description": "The result is calculated from typed WorkLedger facts. Posted and provisional values remain visibly separate.",
+      "heading": "How this works",
+      "privacy": "Only your permitted records are used. Results are not stored in the address or browser storage."
+    },
+    "validation": {
+      "correct": "Correct the highlighted fields and run the insight again.",
+      "date": "Choose a date.",
+      "from": "Choose the first date.",
+      "kind": "Choose an insight.",
+      "month": "Choose a month.",
+      "range": "The last date must not be before the first date.",
+      "to": "Choose the last date."
+    },
+    "value": {
+      "no": "No",
+      "unavailable": "Unavailable",
+      "unrecognizedState": "Additional status",
+      "yes": "Yes"
+    }
+  },
   "monthly": {
     "action": {
       "approve": "Approve month",
