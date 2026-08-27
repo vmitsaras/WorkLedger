@@ -536,20 +536,20 @@ the same product-quality gate.
 - [x] Shipped catalogs have matching keys, interpolation parameters, and plural forms.
 - [x] German and Spanish terminology and privacy-sensitive language have documented fluent-human
   approval.
-- [ ] Account and signed-out locale precedence works across sign-in, sign-out, refresh, and
+- [x] Account and signed-out locale precedence works across sign-in, sign-out, refresh, and
   multiple devices.
-- [ ] No protected route renders briefly in the wrong language.
-- [ ] Dates, times, numbers, lists, and minute durations use the resolved locale and authoritative
+- [x] No protected route renders briefly in the wrong language.
+- [x] Dates, times, numbers, lists, and minute durations use the resolved locale and authoritative
   timezone.
-- [ ] Today attention, errors, reports, and notifications remain code- or descriptor-driven.
-- [ ] CSV, print, clipboard, notification, invitation, password-reset, and optional-email output
+- [x] Today attention, errors, reports, and notifications remain code- or descriptor-driven.
+- [x] CSV, print, clipboard, notification, invitation, password-reset, and optional-email output
   preserve authorization, privacy, formula-neutralization, and data-minimization guarantees.
-- [ ] Keyboard, focus, live-region, forced-colors, reduced-motion, representative screen-reader,
+- [x] Keyboard, focus, live-region, forced-colors, reduced-motion, representative screen-reader,
   and 320 CSS-pixel reflow checks pass for all three locales.
-- [ ] The application baseline, bounded internationalization-runtime allowance, and separate
+- [x] The application baseline, bounded internationalization-runtime allowance, and separate
   locale-chunk budgets remain enforced.
-- [ ] The full repository quality gate passes with no mixed-language workflow or open P0/P1
+- [x] The full repository quality gate passes with no mixed-language workflow or open P0/P1
   defect.
-- [ ] Project status, roadmap, task board, decisions, implementation evidence, and operations
+- [x] Project status, roadmap, task board, decisions, implementation evidence, and operations
   documentation are current.
-- [ ] The gate advances every workspace manifest to `0.15.0` only after every Phase 14 task passes.
+- [x] The gate advances every workspace manifest to `0.15.0` only after every Phase 14 task passes.

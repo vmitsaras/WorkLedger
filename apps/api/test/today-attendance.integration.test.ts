@@ -222,7 +222,10 @@ integrationTest(
             attentionItems: [
               {
                 blocksSubmission: true,
-                code: 'SCHEDULE_NOT_ASSIGNED',
+                message: {
+                  code: 'SCHEDULE_NOT_ASSIGNED',
+                  parameters: {},
+                },
                 severity: 'BLOCKER',
                 source: 'CURRENT_DAY_CALCULATION',
               },

@@ -31,6 +31,53 @@ const preMonthlyActorMigrations = [
   '0015_rainy_nightshade.sql',
   '0016_flimsy_oracle.sql',
 ].map((file) => (file.startsWith('/') ? file : `${packageDirectory}/migrations/${file}`));
+const preLocaleMigrations = [
+  '0000_initial_schema.sql',
+  '0001_integrity_constraints.sql',
+  '0002_auth_foundation.sql',
+].map((file) => `${packageDirectory}/migrations/${file}`);
+
+integrationTest(
+  `backfills existing accounts and constrains locale during upgrade (${databaseHarness.safeLabel})`,
+  async () => {
+    const fixture = await createPostgresSchemaFixture({
+      connectionString: databaseHarness.url,
+      label: 'account_locale_upgrade',
+      migrationFiles: preLocaleMigrations,
+    });
+
+    try {
+      const account = await fixture.client.query<{ id: string }>(
+        `insert into auth_users (name, email)
+         values ('Existing Account', 'existing-account@example.test') returning id`,
+      );
+      const migration = readFileSync(
+        `${packageDirectory}/migrations/0022_account_locale.sql`,
+        'utf8',
+      );
+      await fixture.client.query(migration);
+
+      const migratedAccount = await fixture.client.query<{ locale: string }>(
+        `select locale from auth_users where id = $1`,
+        [account.rows[0]?.id],
+      );
+      expect(migratedAccount.rows[0]?.locale).toBe('en-GB');
+
+      await expect(
+        fixture.client.query(`update auth_users set locale = 'de-DE' where id = $1`, [
+          account.rows[0]?.id,
+        ]),
+      ).resolves.toBeDefined();
+      await expect(
+        fixture.client.query(`update auth_users set locale = 'en-US' where id = $1`, [
+          account.rows[0]?.id,
+        ]),
+      ).rejects.toMatchObject({ code: '23514' });
+    } finally {
+      await fixture.cleanup();
+    }
+  },
+);
 
 integrationTest(
   `applies the initial migrations and enforces core invariants (${databaseHarness.safeLabel})`,

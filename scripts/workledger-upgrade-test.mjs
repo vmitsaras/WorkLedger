@@ -34,7 +34,7 @@ Options:
 const databaseUrl =
   args.databaseUrl ??
   process.env.WORKLEDGER_TEST_DATABASE_URL ??
-  'postgresql://workledger_test:workledger_test@localhost:5432/workledger_test';
+  'postgresql://workledger_test:workledger_test_password@127.0.0.1:54329/workledger_test';
 const fromVersion = args.fromVersion ?? '0.9.0';
 const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -61,7 +61,7 @@ try {
   for (let index = 0; index <= checkpointIndex; index += 1) {
     const migrationPath = `${packageRoot}/packages/database/migrations/${migrationFiles[index]}`;
     const migrationSql = await readFile(migrationPath, 'utf8');
-    await pool.query(migrationSql);
+    await applyMigration(pool, schemaName, migrationSql);
   }
 
   console.log(`✓ Applied ${checkpointIndex + 1} migrations to ${fromVersion}`);
@@ -85,7 +85,7 @@ try {
   for (let index = checkpointIndex + 1; index < migrationFiles.length; index += 1) {
     const migrationPath = `${packageRoot}/packages/database/migrations/${migrationFiles[index]}`;
     const migrationSql = await readFile(migrationPath, 'utf8');
-    await pool.query(migrationSql);
+    await applyMigration(pool, schemaName, migrationSql);
   }
   console.log(`✓ Applied ${migrationFiles.length - checkpointIndex - 1} additional migrations`);
 
@@ -134,7 +134,7 @@ try {
   console.log(`\n✓ Upgrade test from ${fromVersion} to current PASSED`);
 } catch (error) {
   console.error('\n✗ Upgrade test FAILED');
-  console.error(error instanceof Error ? error.message : String(error));
+  console.error(formatError(error));
   process.exitCode = 1;
 } finally {
   try {
@@ -171,83 +171,67 @@ async function seedTestData(pool, schemaName) {
 
   // Create two employees
   const emp1Result = await pool.query(
-    `insert into ${schemaName}.employees (organization_id, employee_number, display_name, employment_status)
+    `insert into ${schemaName}.employees (organization_id, employee_number, display_name, status)
      values ($1, $2, $3, $4) returning id`,
     [organizationId, 'EMP-001', 'Test Employee One', 'ACTIVE'],
   );
   const employee1Id = emp1Result.rows[0].id;
 
-  const emp2Result = await pool.query(
-    `insert into ${schemaName}.employees (organization_id, employee_number, display_name, employment_status)
+  await pool.query(
+    `insert into ${schemaName}.employees (organization_id, employee_number, display_name, status)
      values ($1, $2, $3, $4) returning id`,
     [organizationId, 'EMP-002', 'Test Employee Two', 'ACTIVE'],
   );
-  const employee2Id = emp2Result.rows[0].id;
 
   // Create auth accounts (using Better Auth schema)
   const accountResult1 = await pool.query(
-    `insert into ${schemaName}.user (id, email, email_verified, created_at, updated_at)
-     values (gen_random_uuid(), $1, true, now(), now()) returning id`,
-    ['employee1@example.test'],
+    `insert into ${schemaName}.auth_users (name, email, email_verified)
+     values ($1, $2, true) returning id`,
+    ['Upgrade Test Account', 'employee1@example.test'],
   );
   const userId1 = accountResult1.rows[0].id;
 
   await pool.query(
-    `insert into ${schemaName}.account (id, user_id, provider, provider_account_id, account_id, password, created_at, updated_at)
-     values (gen_random_uuid(), $1, 'credential', $1::text, $1::text, $2, now(), now())`,
-    [userId1, '$2b$10$abcdefghijklmnopqrstuv.abcdefghijklmnopqrstuv'], // dummy hash
+    `insert into ${schemaName}.auth_accounts (user_id, provider_id, account_id, password)
+     values ($1, 'credential', $2, $3)`,
+    [
+      userId1,
+      String(userId1),
+      '$2b$10$abcdefghijklmnopqrstuv.abcdefghijklmnopqrstuv', // dummy hash
+    ],
   );
 
-  // Create work schedules
+  // Create immutable punch events for employee1
   await pool.query(
-    `insert into ${schemaName}.work_schedules
-     (organization_id, employee_id, version, valid_from, valid_to, monday_minutes, tuesday_minutes, wednesday_minutes, thursday_minutes, friday_minutes, saturday_minutes, sunday_minutes)
-     values ($1, $2, 1, '2026-01-01', null, 480, 480, 480, 480, 480, 0, 0)`,
+    `insert into ${schemaName}.punch_events
+     (organization_id, employee_id, event_sequence, event_type, occurred_at, actor_employee_id, command_id)
+     values ($1, $2, 1, 'CLOCK_IN', '2026-08-01 08:00:00+00', $2, gen_random_uuid())`,
     [organizationId, employee1Id],
   );
 
   await pool.query(
-    `insert into ${schemaName}.work_schedules
-     (organization_id, employee_id, version, valid_from, valid_to, monday_minutes, tuesday_minutes, wednesday_minutes, thursday_minutes, friday_minutes, saturday_minutes, sunday_minutes)
-     values ($1, $2, 1, '2026-01-01', null, 480, 480, 480, 480, 480, 0, 0)`,
-    [organizationId, employee2Id],
-  );
-
-  // Create time policies
-  await pool.query(
-    `insert into ${schemaName}.time_policies
-     (organization_id, version, valid_from, valid_to, rules)
-     values ($1, 1, '2026-01-01', null, '{}'::jsonb)`,
-    [organizationId],
-  );
-
-  // Create a punch and session for employee1
-  await pool.query(
-    `insert into ${schemaName}.punches
-     (organization_id, employee_id, punch_type, instant_utc, instant_tz, actor_employee_id, idempotency_key)
-     values ($1, $2, 'CLOCK_IN', '2026-08-01 08:00:00+00', 'Europe/Amsterdam', $2, gen_random_uuid())`,
+    `insert into ${schemaName}.punch_events
+     (organization_id, employee_id, event_sequence, event_type, occurred_at, actor_employee_id, command_id)
+     values ($1, $2, 2, 'CLOCK_OUT', '2026-08-01 17:00:00+00', $2, gen_random_uuid())`,
     [organizationId, employee1Id],
   );
 
-  await pool.query(
-    `insert into ${schemaName}.punches
-     (organization_id, employee_id, punch_type, instant_utc, instant_tz, actor_employee_id, idempotency_key)
-     values ($1, $2, 'CLOCK_OUT', '2026-08-01 17:00:00+00', 'Europe/Amsterdam', $2, gen_random_uuid())`,
-    [organizationId, employee1Id],
-  );
-
-  // Create time ledger entries
+  // Create explainable time-ledger entries
   await pool.query(
     `insert into ${schemaName}.time_account_entries
-     (organization_id, employee_id, entry_type, minutes, source_id, effective_on)
-     values ($1, $2, 'DAILY_CREDITED', 540, gen_random_uuid(), '2026-08-01')`,
+     (organization_id, employee_id, local_date, entry_type, minutes, source_id,
+      source_fingerprint, actor_kind, actor_id, explanation_code, posted_at)
+     values ($1, $2, '2026-07-31', 'OPENING_BALANCE', 0, gen_random_uuid(),
+      repeat('a', 64), 'SYSTEM', 'upgrade-fixture', 'OPENING_BALANCE', '2026-07-31 23:00:00+00')`,
     [organizationId, employee1Id],
   );
 
   await pool.query(
     `insert into ${schemaName}.time_account_entries
-     (organization_id, employee_id, entry_type, minutes, source_id, effective_on)
-     values ($1, $2, 'DAILY_EXPECTED', -480, gen_random_uuid(), '2026-08-01')`,
+     (organization_id, employee_id, local_date, entry_type, minutes, source_id,
+      source_fingerprint, actor_kind, actor_id, explanation_code, posted_at)
+     values ($1, $2, '2026-08-01', 'DAILY_DELTA', 60, gen_random_uuid(),
+      repeat('b', 64), 'SYSTEM', 'upgrade-fixture', 'DAILY_BALANCE', '2026-08-01 18:00:00+00')`,
     [organizationId, employee1Id],
   );
 }
@@ -255,8 +239,8 @@ async function seedTestData(pool, schemaName) {
 async function captureBaseline(pool, schemaName) {
   const orgCount = await pool.query(`select count(*) from ${schemaName}.organizations`);
   const empCount = await pool.query(`select count(*) from ${schemaName}.employees`);
-  const accountCount = await pool.query(`select count(*) from ${schemaName}.user`);
-  const punchCount = await pool.query(`select count(*) from ${schemaName}.punches`);
+  const accountCount = await pool.query(`select count(*) from ${schemaName}.auth_users`);
+  const punchCount = await pool.query(`select count(*) from ${schemaName}.punch_events`);
   const ledgerCount = await pool.query(`select count(*) from ${schemaName}.time_account_entries`);
 
   return {
@@ -278,27 +262,27 @@ async function runIntegrityChecks(pool, schemaName) {
     throw new Error('Foreign key integrity violation detected');
   }
 
-  // Check punch immutability (no duplicate instant+employee)
+  // Check punch immutability (no duplicate sequence per employee)
   const punchCheck = await pool.query(`
-    select employee_id, instant_utc, count(*)
-    from ${schemaName}.punches
-    group by employee_id, instant_utc
+    select employee_id, event_sequence, count(*)
+    from ${schemaName}.punch_events
+    group by employee_id, event_sequence
     having count(*) > 1
   `);
   if (punchCheck.rows.length > 0) {
     throw new Error('Duplicate punch detected (immutability violation)');
   }
 
-  // Check ledger has expected/credited pairs for worked days
+  // Check every ledger entry retains its required explanation evidence.
   const ledgerCheck = await pool.query(`
-    select effective_on, count(distinct entry_type)
+    select id
     from ${schemaName}.time_account_entries
-    where entry_type in ('DAILY_EXPECTED', 'DAILY_CREDITED')
-    group by effective_on
-    having count(distinct entry_type) = 1
+    where length(source_fingerprint) <> 64
+       or length(btrim(actor_id)) = 0
+       or length(btrim(explanation_code)) = 0
   `);
   if (ledgerCheck.rows.length > 0) {
-    console.warn('  Warning: Some days have incomplete expected/credited pairs');
+    throw new Error('Ledger explanation evidence is incomplete');
   }
 
   // Check snapshot links (if post-lock adjustments exist)
@@ -314,8 +298,11 @@ async function runIntegrityChecks(pool, schemaName) {
     const linkIntegrity = await pool.query(`
       select count(*) from ${schemaName}.absence_cancellation_snapshot_links l
       where not exists (
-        select 1 from ${schemaName}.absence_cancellation_adjustments a
-        where a.id = l.adjustment_id
+        select 1 from ${schemaName}.absence_cancellations c
+        where c.id = l.absence_cancellation_id
+      ) or not exists (
+        select 1 from ${schemaName}.approved_monthly_snapshots s
+        where s.id = l.monthly_snapshot_id
       )
     `);
     if (Number(linkIntegrity.rows[0].count) > 0) {
@@ -325,11 +312,11 @@ async function runIntegrityChecks(pool, schemaName) {
 }
 
 async function verifyAuthProfile(pool, schemaName) {
-  // Check that user/account/session tables exist and have expected columns
+  // Check that Better Auth tables exist and migrated accounts have the expected profile.
   const userColumns = await pool.query(
     `
     select column_name from information_schema.columns
-    where table_schema = $1 and table_name = 'user'
+    where table_schema = $1 and table_name = 'auth_users'
     order by ordinal_position
   `,
     [schemaName],
@@ -341,8 +328,10 @@ async function verifyAuthProfile(pool, schemaName) {
     'email_verified',
     'name',
     'image',
+    'active',
     'created_at',
     'updated_at',
+    'locale',
   ];
   const actualUserColumns = userColumns.rows.map((row) => row.column_name);
 
@@ -354,7 +343,7 @@ async function verifyAuthProfile(pool, schemaName) {
 
   // Check that accounts can be queried
   const accountCheck = await pool.query(`
-    select count(*) from ${schemaName}.account
+    select count(*) from ${schemaName}.auth_accounts
   `);
   if (Number(accountCheck.rows[0].count) < 1) {
     console.warn('  Warning: No accounts found after upgrade');
@@ -364,7 +353,7 @@ async function verifyAuthProfile(pool, schemaName) {
   const sessionTable = await pool.query(
     `
     select count(*) from information_schema.tables
-    where table_schema = $1 and table_name = 'session'
+    where table_schema = $1 and table_name = 'auth_sessions'
   `,
     [schemaName],
   );
@@ -372,6 +361,51 @@ async function verifyAuthProfile(pool, schemaName) {
   if (Number(sessionTable.rows[0].count) === 0) {
     throw new Error('Session table missing after upgrade');
   }
+
+  const migratedLocales = await pool.query(`
+    select distinct locale from ${schemaName}.auth_users
+  `);
+  if (migratedLocales.rows.length !== 1 || migratedLocales.rows[0]?.locale !== 'en-GB') {
+    throw new Error('Existing accounts did not migrate to the en-GB locale');
+  }
+
+  await pool.query(`update ${schemaName}.auth_users set locale = 'de-DE'`);
+  const supportedLocale = await pool.query(`
+    select locale from ${schemaName}.auth_users limit 1
+  `);
+  if (supportedLocale.rows[0]?.locale !== 'de-DE') {
+    throw new Error('Supported account locale could not be persisted after upgrade');
+  }
+
+  try {
+    await pool.query(`update ${schemaName}.auth_users set locale = 'en-US'`);
+    throw new Error('Unsupported account locale was accepted after upgrade');
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('auth_users_locale_supported')) {
+      throw error;
+    }
+  }
+}
+
+async function applyMigration(pool, schemaName, migrationSql) {
+  const schemaIdentifier = `"${schemaName}"`;
+  const statements = migrationSql
+    .replaceAll('"public".', `${schemaIdentifier}.`)
+    .split('--> statement-breakpoint')
+    .map((statement) => statement.trim())
+    .filter(Boolean);
+
+  for (const statement of statements) {
+    await pool.query(statement);
+  }
+}
+
+function formatError(error) {
+  if (error instanceof AggregateError) {
+    return error.errors.map((nestedError) => formatError(nestedError)).join('\n');
+  }
+  if (error instanceof Error) return error.stack ?? error.message;
+  return String(error);
 }
 
 function parseArgs(argv) {

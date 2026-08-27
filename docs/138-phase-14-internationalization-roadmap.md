@@ -1,6 +1,6 @@
 # Phase 14 Internationalization and Multilingual Product Roadmap
 
-**Status:** Active; `WL-1400` through `WL-1408` complete; `WL-1409` is next
+**Status:** Complete; `WL-1400` through `WL-1410` passed at workspace version `0.15.0`
 **Tasks:** `WL-1400` through `WL-1410`
 **Dependency:** Completed Phase 13 gate `WL-1313` at workspace version `0.14.0`
 **Gate version:** `0.15.0`
@@ -120,8 +120,8 @@ and its own content, layout, accessibility, output, and operational evidence.
 | `WL-1406` | Translate every manager, HR, and system workflow and required state. | `WL-1404` | Cross-role filter, table/list, decision, administration, audit, error, and responsive evidence. |
 | `WL-1407` | Localize generated and outbound user-facing output. | `WL-1402`–`WL-1404` | Print, clipboard, CSV, notification, invitation, reset, email, privacy, and security tests. |
 | `WL-1408` | Complete, validate, and human-review all three catalogs. | `WL-1405`–`WL-1407` | Key/interpolation/plural parity, pseudo-locale evidence, glossary approval, and one fluent reviewer per non-English locale. |
-| `WL-1409` | Complete the multilingual product-quality and upgrade gate. | `WL-1408` | Cross-role integration, visual, accessibility, usability, security, migration, and no-mixed-language evidence. |
-| `WL-1410` | Sign the Phase 14 gate and advance the workspace to `0.15.0`. | `WL-1409` | Clean full quality gate and synchronized roadmap, status, evidence, operations, and manifests. |
+| `WL-1409` | Complete the multilingual product-quality and upgrade gate. | `WL-1408` | Complete; see `docs/149-wl-1409-multilingual-product-quality-gate.md`. |
+| `WL-1410` | Sign the Phase 14 gate and advance the workspace to `0.15.0`. | `WL-1409` | Complete; see `docs/150-phase-14-gate-review.md`. |
 
 ## 6. Security, privacy, and data instructions
 
@@ -178,43 +178,30 @@ and its own content, layout, accessibility, output, and operational evidence.
 
 ## 9. Phase 14 release gate
 
-- [ ] Every canonical route, role, state, and user-facing output has catalog coverage.
-- [ ] `en-GB`, `de-DE`, and `es-ES` have matching keys, interpolation parameters, and plural forms.
-- [ ] German and Spanish have dated fluent-human terminology and privacy review.
-- [ ] Account and signed-out locale precedence works across sign-in, sign-out, refresh, and devices.
-- [ ] Protected routes do not flash a prior or device locale before the account locale is applied.
-- [ ] Document title, `lang`, `dir`, React, and React Aria remain synchronized.
-- [ ] Locale-aware formatting uses authoritative timezone facts and integer-minute semantics.
-- [ ] Today attention, errors, reports, notifications, and device summaries are descriptor-driven.
-- [ ] Print, clipboard, CSV, notification, invitation, reset, and email output preserve existing
+- [x] Every canonical route, role, state, and user-facing output has catalog coverage.
+- [x] `en-GB`, `de-DE`, and `es-ES` have matching keys, interpolation parameters, and plural forms.
+- [x] German and Spanish have dated fluent-human terminology and privacy review.
+- [x] Account and signed-out locale precedence works across sign-in, sign-out, refresh, and devices.
+- [x] Protected routes do not flash a prior or device locale before the account locale is applied.
+- [x] Document title, `lang`, `dir`, React, and React Aria remain synchronized.
+- [x] Locale-aware formatting uses authoritative timezone facts and integer-minute semantics.
+- [x] Today attention, errors, reports, notifications, and device summaries are descriptor-driven.
+- [x] Print, clipboard, CSV, notification, invitation, reset, and email output preserve existing
   authorization, privacy, formula-neutralization, and data-minimization rules.
-- [ ] Keyboard, screen-reader, zoom/reflow, forced-colors, reduced-motion, responsive, visual,
+- [x] Keyboard, screen-reader, zoom/reflow, forced-colors, reduced-motion, responsive, visual,
   usability, security, migration, and upgrade evidence passes for all shipped locales.
-- [ ] No mixed-language workflow or open P0/P1 defect remains.
-- [ ] The complete repository quality gate passes and documentation is current.
-- [ ] `WL-1410` alone advances every workspace manifest from `0.14.0` to `0.15.0`.
+- [x] No mixed-language workflow or open P0/P1 defect remains.
+- [x] The complete repository quality gate passes and documentation is current.
+- [x] `WL-1410` alone advances every workspace manifest from `0.14.0` to `0.15.0`.
 
 ## 10. Current state and next action
 
-`WL-1400` through `WL-1406` are complete. ADR 0013 is accepted and amended by the resolved `D-508`.
-The canonical inventory and risk register are in
-`docs/139-phase-14-internationalization-architecture-audit.md`, and the translation-review structure
-is in `docs/140-phase-14-translation-glossary.md`. The executable runtime foundation and measured
-bundle evidence are in `docs/141-shared-i18n-foundation.md`. Account, invitation, and device locale
-evidence is in `docs/142-account-locale-preferences.md`.
+`WL-1400` through `WL-1410` are complete. The architecture, runtime, preferences, descriptors,
+shared/employee/manager/admin/system integration, output localization, fluent-human review, and
+multilingual product-quality and release evidence are recorded in `docs/139` through `docs/150`.
 
-`WL-1404` is complete. The shared shell, canonical route titles, route-state boundaries,
-authentication, Profile, shared validation, dialogs, pagination controls, and shell announcements
-now use typed local catalogs while preserving established focus and recovery contracts. Profile
-session instants use the authoritative organization timezone supplied by the minimized self-profile
-contract. See `docs/144-shared-shell-route-i18n.md`.
-
-Employee Today, time and balances, daily records, requests and absences, personal calendar,
-notifications, monthly review, and its integrated print view now use the typed local catalogs.
-Critical German and Spanish employee flows have component, axe, focused-heading, document-language,
-and browser coverage. See `docs/145-employee-workflow-i18n.md`.
-
-Manager approvals and Team views, HR employee/team/policy/settings administration, reports, audit,
-accounts, and system operations now use the typed catalogs with responsive German and Spanish
-component/browser evidence. See `docs/146-manager-administration-system-workflow-i18n.md`.
-`WL-1407` is next and owns generated and recipient-facing output localization.
+`docs/149-wl-1409-multilingual-product-quality-gate.md` records the five-profile localized browser
+matrix, eight-image visual manifest, accessibility-tree and responsive review, security and upgrade
+verification, exact commands, and the original PostgreSQL residual. `WL-1410` closes that residual
+with database-enabled integration and upgrade evidence, signs the final checklist in
+`docs/150-phase-14-gate-review.md`, and advances the workspace from `0.14.0` to `0.15.0`.

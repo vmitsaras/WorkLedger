@@ -2,15 +2,15 @@
 
 **Current phase:** Phase 14 — Internationalization and multilingual product experience
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 13 complete — 9 of 11 Phase 14 tasks complete
-**Current milestone:** `WL-1408` catalog completion and fluent-human review complete
-**Active task:** `WL-1409` (not started)
-**Status:** All production catalogs pass strengthened automated enforcement, the isolated test-only pseudo-locale is available, and German and Spanish are approved by Vasileios Mitsaras and Sol respectively
+**Phase progress:** Phase 14 complete — 11 of 11 tasks complete
+**Current milestone:** `WL-1410` Phase 14 release gate complete at `0.15.0`
+**Active task:** None scheduled
+**Status:** The full repository, multilingual, database integration, accessibility, security, migration, and prior-release upgrade gates pass with no open P0/P1 multilingual defect
 **Last verified:** 2026-08-27
 
 ## Current objective
 
-Phase 13 is complete at `0.14.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
+Phase 14 is complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
 foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
 bounded signed-out device preference. `WL-1403` supplies language-neutral API descriptors for its
 bounded migration set. Completed `WL-1404` now localizes the shared and authenticated foundation,
@@ -26,16 +26,19 @@ authenticated browser locale, CSV output with the authorized actor locale, notif
 password resets with the recipient account locale, and invitations with their stored initial
 locale. `D-508` bounds the completed integration through a 96,000-byte raw and 22,000-byte gzip
 Phase 14 allowance above the preserved 910,000/246,000-byte application baseline; the measured
-build consumes 94,370/12,090 bytes of that allowance. `WL-1408` now provides expanded catalog
+build consumes 94,370/12,039 bytes of that allowance. `WL-1408` now provides expanded catalog
 enforcement, 39 contract descriptor mappings, an isolated `en-XA` test runtime, drafted glossary
 candidates, and the reproducible human-review guide in
 `docs/148-wl-1408-human-catalog-review.md`. German is approved by Vasileios Mitsaras and Spanish by
-Sol as of 2026-08-27 after their recorded terminology findings were resolved. `WL-1408` is complete;
-the broader
-`D-502` retail browser and
-assistive-technology matrix remains
-an explicit limitation rather than a conformance claim. The portfolio presentation scope remains
-an unnumbered draft.
+Sol as of 2026-08-27 after their recorded terminology findings were resolved. Completed `WL-1409`
+adds the five-profile localized browser matrix, eight deterministic German/Spanish cross-role
+screenshots, forced-colors and reduced-motion checks, native macOS accessibility-tree evidence,
+and corrected migration/upgrade verification for the account-locale backfill and constraint.
+Completed `WL-1410` closes the PostgreSQL residual with the database-enabled integration suite and
+the repaired `0.9.0` prior-release upgrade verifier, signs the Phase 14 checklist, and advances all
+ten manifests to `0.15.0`. The broader `D-502` retail browser and assistive-technology matrix
+remains an explicit limitation rather than a conformance claim. The portfolio presentation scope
+remains an unnumbered draft.
 
 ## Verified decisions
 
@@ -2651,13 +2654,67 @@ an unnumbered draft.
   the repository pins Node 24.18 and then attempted an interactive module refresh. Verification
   used the already-installed project binaries directly; no dependency or lockfile changed.
 
+**2026-08-27 — WL-1409 multilingual product-quality gate (complete)**
+
+- Added a dedicated `test:visual:i18n` gate and eight reviewed, deterministic German and Spanish
+  baselines for Today at 320 pixels, Approval inbox at 320 pixels, Employees at 1440 pixels, and
+  system Operations at 390 pixels. Baseline creation and comparison each pass four scenarios.
+- Expanded the signed-out locale flow into the five-profile browser matrix. Desktop Chromium,
+  Firefox, WebKit, mobile Chromium, and mobile WebKit all preserve the German device preference,
+  selector focus, localized announcement, and axe result.
+- Verified German and Spanish employee, manager, HR, and system routes with focused headings,
+  responsive containment, axe, and normal plus forced-colors/reduced-motion presentation. A
+  bounded macOS Chrome accessibility-tree review exposes localized titles, skip links, selector
+  names/values, status text, headings, links, and buttons without semantic substitution.
+- Corrected the manual upgrade verifier to use the current Better Auth tables, isolate hard-coded
+  `public` migration references, and validate `0022` existing-account `en-GB` backfill, supported
+  locale persistence, and unsupported-locale rejection. Added the same focused PostgreSQL
+  integration regression.
+- Direct installed-tool verification passes workspace/phase/i18n, formatting, ESLint,
+  317-source/1,777-import boundaries, CSS, strict TypeScript, 52 tooling tests, 411 unit/component
+  tests, 13 environment-independent integration tests, 47 browser tests with one intentional
+  historical skip, OpenAPI, runtime configuration, production build, bundle budgets, and workspace
+  build. The production graph remains at 435,303 largest-chunk, 1,004,370 raw JavaScript, 258,090
+  gzip JavaScript, and 50,242 CSS bytes outside catalogs.
+- PostgreSQL refused connections on port 54329 and Docker Desktop was not running. The 46
+  database-dependent integration cases and manual upgrade execution remain an explicit environment
+  residual for `WL-1410`; they are not reported as passed. See
+  `docs/149-wl-1409-multilingual-product-quality-gate.md`.
+
+**2026-08-27 — WL-1410 Phase 14 release gate (complete)**
+
+- Started the repository development PostgreSQL 18.4 service and closed the `WL-1409` database
+  residual. The 13-file database suite passes 26 tests with one intentional historical upgrade
+  test skipped; the focused `0022` migration case verifies existing-account `en-GB` backfill,
+  supported locale persistence, and unsupported-locale rejection.
+- Corrected two stale database integration expectations to the completed Phase 14 contracts: CSV
+  workflow statuses are localized for the authorized actor, and Today attention exposes its code
+  through the bounded message descriptor rather than the removed raw top-level field.
+- Repaired the manual `0.9.0` upgrade fixture to use the actual Phase 9 employee, Better Auth,
+  immutable punch-event, and explainable ledger schema. It applies 18 checkpoint migrations and
+  five later migrations, preserves representative rows, validates foreign-key, punch, ledger, and
+  snapshot-link integrity, confirms the Better Auth profile, backfills `en-GB`, persists `de-DE`,
+  rejects `en-US`, and removes its isolated schema after execution.
+- The repository-managed Node 24.18/pnpm 11.20 full gate passes runtime configuration, reproducible
+  OpenAPI, formatting, ESLint, 317-source/1,777-import boundaries, CSS, strict TypeScript, 52
+  tooling tests, 411 unit/component tests, 13 environment-independent integration tests, 47
+  Playwright tests with one intentional historical skip, i18n enforcement, production bundle
+  budgets, and the nine-entry workspace build.
+- The production graph passes at 435,303 largest-chunk bytes, 1,004,370 total JavaScript bytes,
+  258,039 gzip JavaScript bytes, and 50,242 CSS bytes. The Phase 14 runtime consumes
+  94,370/12,039 bytes of its 96,000/22,000-byte allowance; the locale chunks consume 359,242 raw
+  and 96,177 gzip bytes within their individual and collective ceilings.
+- Signed `docs/150-phase-14-gate-review.md`, completed `WL-1410`, and advanced the root plus all
+  nine workspace manifests from `0.14.0` to `0.15.0`. This internal milestone authorizes no tag,
+  publication, deployment, release, support warranty, or conformance claim.
+
 ## Current blockers
 
-`WL-1408` has no remaining blocker. Exact partial-day
-work-versus-absence overlap, calculation-to-ledger mismatch, and break-duration warning signals
-still require authoritative domain or repository facts; Today does not guess them from minute
-totals or an otherwise valid overnight session. The earlier Phase 12 and task-specific Phase 13
-images remain historical and intentionally differ from the current green `WL-1312` visual gate.
+Phase 14 has no product blocker. Exact partial-day work-versus-absence overlap,
+calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
+domain or repository facts; Today does not guess them from minute totals or an otherwise valid
+overnight session. The earlier Phase 12 and task-specific Phase 13 images remain historical and
+intentionally differ from the current green `WL-1312` visual gate.
 `D-502` remains the broader exact retail assistive-technology matrix rather than a whole-product
 conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for Testing and Safari.
 The temporary Astro backup is recoverable at
@@ -2666,10 +2723,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Begin `WL-1409` multilingual integration, accessibility, responsive, visual, usability, security,
-and upgrade verification. The
-portfolio presentation scope remains preserved in
-`docs/drafts/portfolio-presentation.md` as an unnumbered draft.
+No later numbered roadmap task is scheduled. The portfolio presentation scope remains preserved in
+`docs/drafts/portfolio-presentation.md` as an unnumbered draft and requires explicit scheduling
+before implementation.
 
 ## Update rules
 

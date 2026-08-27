@@ -448,7 +448,7 @@ test('preserves shared alert tone colors through the application stylesheet casc
   }
 });
 
-test('persists a bounded signed-out language choice and keeps focus on the selector', async ({
+test('persists a bounded signed-out language choice and keeps focus on the selector @browser-matrix', async ({
   page,
 }) => {
   await mockContext(page, () => false);
@@ -2783,6 +2783,15 @@ for (const scenario of [
     await expect(page.getByRole('button', { name: scenario.todayAction })).toBeVisible();
     await expectPageToHaveNoAxeViolations(page);
 
+    await page.setViewportSize({ width: 320, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    await capturePhase14I18nSurface(page, `${scenario.locale}-today-320x900`);
+
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/my-time?date=2026-08-11&view=WEEK&page=1&limit=20');
     await expect(page.getByRole('heading', { level: 1, name: scenario.myTime })).toBeFocused();
     await expect(page.getByText(scenario.postedBalance, { exact: true })).toBeVisible();
@@ -2902,6 +2911,14 @@ for (const scenario of [
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
     await expectPageToHaveNoAxeViolations(page);
+    await capturePhase14I18nSurface(page, `${scenario.locale}-approvals-320x900`);
+
+    await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+    await expect(
+      page.getByRole('heading', { level: 1, name: scenario.approvalHeading }),
+    ).toBeFocused();
+    await expectPageToHaveNoAxeViolations(page);
+    await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'no-preference' });
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/employees');
@@ -2910,6 +2927,7 @@ for (const scenario of [
     ).toBeFocused();
     await expect(page.getByRole('heading', { name: scenario.employeeSearch })).toBeVisible();
     await expectPageToHaveNoAxeViolations(page);
+    await capturePhase14I18nSurface(page, `${scenario.locale}-employees-1440x900`);
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/system/operations');
@@ -2922,6 +2940,7 @@ for (const scenario of [
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
     await expectPageToHaveNoAxeViolations(page);
+    await capturePhase14I18nSurface(page, `${scenario.locale}-operations-390x844`);
   });
 }
 
@@ -3881,6 +3900,16 @@ async function capturePhase13CrossRoute(page: Page, name: string): Promise<void>
   if (process.env['WORKLEDGER_ASSERT_PHASE_13_VISUALS'] !== '1') return;
 
   await capturePhase13Screenshot(page, 'wl1312', name);
+}
+
+async function capturePhase14I18nSurface(page: Page, name: string): Promise<void> {
+  if (process.env['WORKLEDGER_ASSERT_PHASE_14_I18N_VISUALS'] !== '1') return;
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page).toHaveScreenshot(['phase-14', 'wl1409', `${name}.png`], {
+    animations: 'disabled',
+    fullPage: true,
+  });
 }
 
 async function capturePhase13Surface(

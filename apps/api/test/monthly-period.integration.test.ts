@@ -703,7 +703,7 @@ integrationTest(
       );
       expect(adjustedExport.payload).toBe(
         'employee_name,month,workflow_status,expected_minutes,worked_minutes,credited_minutes,balance_minutes,incomplete_record_count,post_lock_delta_minutes\r\n' +
-          'Monthly Employee,2026-06-01,LOCKED,960,508,988,28,0,13\r\n',
+          'Monthly Employee,2026-06-01,Locked,960,508,988,28,0,13\r\n',
       );
       expect(adjustedExport.payload).not.toMatch(
         /employee_id|monthly_period_id|snapshot|correction|reason|sickness/iu,

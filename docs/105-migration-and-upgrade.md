@@ -7,13 +7,14 @@
 ## Version compatibility and release support
 
 WorkLedger uses zero-indexed phase-gate versioning: `0.<completed phase-gate count>.0`. Version
-`0.10.0` marks Phase 9 completion, `0.11.0` marks Phase 10 completion, and `0.12.0` marks Phase 11
-UI-foundation completion.
+`0.10.0` marks Phase 9 completion, `0.11.0` marks Phase 10 completion, `0.12.0` marks Phase 11
+UI-foundation completion, `0.13.0` marks Phase 12 completion, and `0.14.0` marks Phase 13
+completion. Phase 14 advances to `0.15.0` only after its release gate passes.
 
 - **Schema migrations are cumulative and forward-only.** Each version includes all prior migrations.
-- **Backward compatibility within Phase 10 is not guaranteed.** The MVP remains pre-1.0 development.
+- **Backward compatibility within the current pre-1.0 line is not guaranteed.**
 - **Test upgrades from at least the prior supported release** before applying to production.
-- **Current supported upgrade path:** `0.9.0` → `0.10.0` → future releases.
+- **Current tested fixture path:** `0.9.0` → `0.15.0` through the cumulative migration set.
 
 Future breaking changes to authentication, session handling, or core domain contracts will be documented in release notes with explicit migration procedures.
 
@@ -191,10 +192,10 @@ This prevents serving traffic with an incompatible schema.
 
 ## Testing upgrade paths
 
-The `WL-1005` integration test validates upgrade from a prior release fixture:
+The manual upgrade verifier validates upgrade from a prior release fixture:
 
 ```sh
-pnpm test:integration --grep "upgrade from prior release"
+pnpm run upgrade:test
 ```
 
 The test:
@@ -205,11 +206,19 @@ The test:
 5. Re-runs integrity checks (ledger reconciliation, snapshot links, auth profile)
 6. Confirms backward-compatible authentication and session behavior
 
-This automated test does not replace manual production-shaped verification, but it catches schema-breaking changes and data-migration errors during development.
+Phase 14 also verifies that migration `0022_account_locale.sql` backfills every existing account to
+`en-GB`, accepts only `en-GB`, `de-DE`, and `es-ES`, and preserves the preference through the
+current Better Auth profile. The focused database integration case is part of
+`packages/database/test/migrations.integration.test.ts`.
+
+This verifier and its focused integration coverage do not replace manual production-shaped
+verification, but they catch schema-breaking changes and data-migration errors during development.
 
 ## Authentication and session compatibility
 
-WorkLedger uses Better Auth for credential and session management. Schema changes to Better Auth tables (`user`, `account`, `session`, `verification`) require careful review:
+WorkLedger uses Better Auth for credential and session management. Schema changes to the mapped
+`auth_users`, `auth_accounts`, `auth_sessions`, and `auth_verifications` tables require careful
+review:
 
 - **Session cookie contract:** Changes to cookie name, domain, path, or security flags invalidate existing sessions.
 - **Password hashing:** Changing the algorithm or cost factor does not invalidate existing verifiers; new hashes apply only to new/changed passwords.

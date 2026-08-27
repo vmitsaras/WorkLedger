@@ -5,10 +5,10 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 5 of 5 — Production and UI release gates complete**<br>
-> **Current phase progress: Phase 14 — 3 of 11 tasks complete**<br>
-> **Internal milestone: `0.14.0`**
+> **Current phase progress: Phase 14 — 11 of 11 tasks complete**<br>
+> **Internal milestone: `0.15.0`**
 
-Phases 0–13 have passed their exit gates. The repository includes attendance, flexible-time and
+Phases 0–14 have passed their exit gates. The repository includes attendance, flexible-time and
 leave ledgers, correction and absence workflows, manager approvals and team availability, monthly
 review and locking, post-lock adjustments, reports and safe CSV export, HR administration,
 separate technical administration, production deployment and operations, and the Quiet Ledger UI
@@ -18,14 +18,15 @@ public project site, safe demo presentation, case study media, and final portfol
 remain an unnumbered draft without a task or version gate.
 
 The production reference deployment, backup/restore, migration/upgrade, retention, diagnostics,
-security, accessibility automation, and UI release gates are complete. `0.14.0` is an internal
+security, accessibility automation, and UI release gates are complete. `0.15.0` is an internal
 milestone, not a hosted service, package publication, container release, browser support warranty,
 or WCAG conformance statement.
 
-Phase 14 now has an accepted internationalization architecture, a typed local foundation for
-`en-GB`, `de-DE`, and `es-ES`, and persisted account/invitation plus signed-out device locale
-preferences. Most workflows remain English until their ordered descriptor, translation, and
-output tasks complete.
+Phase 14 has an accepted internationalization architecture, a typed local foundation for
+`en-GB`, `de-DE`, and `es-ES`, persisted account/invitation plus signed-out device locale
+preferences, descriptor-driven presentation, localized workflows and generated output,
+fluent-human German and Spanish approval, completed multilingual product-quality and database
+upgrade gates, and the signed `0.15.0` release milestone.
 
 ## Current status
 
@@ -231,7 +232,7 @@ versions and makes no response-time or production-support promise.
 | [docs/96-phase-10-threat-permission-baseline.md](docs/96-phase-10-threat-permission-baseline.md) through [docs/107-retention-and-minimization.md](docs/107-retention-and-minimization.md) | Phase 10 security, production deployment, operations, retention, restore, upgrade, and release-gate evidence |
 | [docs/110-ui-ux-baseline-audit.md](docs/110-ui-ux-baseline-audit.md) through [docs/123-phase-12-gate-review.md](docs/123-phase-12-gate-review.md) | Phase 11–12 UI foundation, workflow remediation, visual regression, and release-gate evidence |
 | [docs/124-phase-13-baseline.md](docs/124-phase-13-baseline.md) through [docs/137-phase-13-gate-review.md](docs/137-phase-13-gate-review.md) | Phase 13 attendance clarity, workflow usability, cross-route regression, accessibility, visual, and release-gate evidence |
-| [docs/138-phase-14-internationalization-roadmap.md](docs/138-phase-14-internationalization-roadmap.md) through [docs/148-wl-1408-human-catalog-review.md](docs/148-wl-1408-human-catalog-review.md) | Phase 14 internationalization roadmap, catalogs, runtime and preference foundations, workflow/output localization evidence, and fluent-human catalog review guide |
+| [docs/138-phase-14-internationalization-roadmap.md](docs/138-phase-14-internationalization-roadmap.md) through [docs/150-phase-14-gate-review.md](docs/150-phase-14-gate-review.md) | Phase 14 internationalization roadmap, catalogs, runtime and preference foundations, workflow/output localization evidence, fluent-human catalog review, multilingual product-quality verification, and signed release gate |
 
 ## License
 
