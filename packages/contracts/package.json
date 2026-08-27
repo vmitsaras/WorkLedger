@@ -13,6 +13,10 @@
     "./insights": {
       "types": "./dist/insights.d.ts",
       "import": "./dist/insights.js"
+    },
+    "./insight-tools": {
+      "types": "./dist/insight-tools.d.ts",
+      "import": "./dist/insight-tools.js"
     }
   },
   "scripts": {

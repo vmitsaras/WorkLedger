@@ -13,6 +13,7 @@ import {
   type EmployeeInsightAuthority,
   type InsightHandler,
 } from '../src/insights/insight-service.js';
+import { createInsightToolRegistry } from '../src/insights/insight-tool-registry.js';
 
 const databaseHarness = createDatabaseHarnessState(process.env);
 const integrationTest = databaseHarness.enabled ? test : test.skip;
@@ -141,6 +142,36 @@ integrationTest(
         expect(serialized).not.toContain(forbidden);
       }
 
+      const toolRegistry = createInsightToolRegistry(service);
+      const toolContext = Object.freeze({
+        activeWorkspace: 'EMPLOYEE' as const,
+        capturedAt: CAPTURED_AT,
+        identity: Object.freeze({ accountId: employee.accountId, sessionFresh: true }),
+      });
+      await expect(
+        toolRegistry.execute(toolContext, {
+          arguments: {
+            endDate: REQUEST.period.endDate,
+            startDate: REQUEST.period.startDate,
+          },
+          code: 'employee_balance_change',
+        }),
+      ).resolves.toEqual(result);
+      expect(handlerCalls).toBe(2);
+      await expect(
+        toolRegistry.execute(
+          { ...toolContext, activeWorkspace: 'MANAGER' },
+          {
+            arguments: {
+              endDate: REQUEST.period.endDate,
+              startDate: REQUEST.period.startDate,
+            },
+            code: 'employee_balance_change',
+          },
+        ),
+      ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
+      expect(handlerCalls).toBe(2);
+
       const missingHandler = createInsightService(database, {});
       await expect(
         missingHandler.run(
@@ -179,19 +210,21 @@ integrationTest(
           CAPTURED_AT,
         ),
       ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
-      expect(handlerCalls).toBe(1);
+      expect(handlerCalls).toBe(2);
 
       await fixture.client.query(`update employees set status = 'INACTIVE' where id = $1`, [
         employee.employeeId,
       ]);
       await expect(
-        service.run(
-          Object.freeze({ accountId: employee.accountId, sessionFresh: true }),
-          REQUEST,
-          CAPTURED_AT,
-        ),
+        toolRegistry.execute(toolContext, {
+          arguments: {
+            endDate: REQUEST.period.endDate,
+            startDate: REQUEST.period.startDate,
+          },
+          code: 'employee_balance_change',
+        }),
       ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
-      expect(handlerCalls).toBe(1);
+      expect(handlerCalls).toBe(2);
 
       await fixture.client.query(`update employees set status = 'ACTIVE' where id = $1`, [
         employee.employeeId,
@@ -200,13 +233,15 @@ integrationTest(
         employee.accountId,
       ]);
       await expect(
-        service.run(
-          Object.freeze({ accountId: employee.accountId, sessionFresh: true }),
-          REQUEST,
-          CAPTURED_AT,
-        ),
+        toolRegistry.execute(toolContext, {
+          arguments: {
+            endDate: REQUEST.period.endDate,
+            startDate: REQUEST.period.startDate,
+          },
+          code: 'employee_balance_change',
+        }),
       ).rejects.toMatchObject({ code: 'AUTH_SESSION_EXPIRED', statusCode: 401 });
-      expect(handlerCalls).toBe(1);
+      expect(handlerCalls).toBe(2);
     } finally {
       await database.close();
       await fixture.cleanup();

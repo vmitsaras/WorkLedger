@@ -1,4 +1,10 @@
 import {
+  INSIGHT_TOOL_CODES,
+  MAX_INSIGHT_TOOL_DATE_RANGE_DAYS,
+  insightToolArgumentSchemas,
+  insightToolCallSchema,
+} from '../src/insight-tools.js';
+import {
   insightNativePayloadSchema,
   insightNativeResultSchema,
   insightRequestSchema,
@@ -64,6 +70,75 @@ function validBalanceChangeResult() {
 }
 
 describe('Insight contracts', () => {
+  it('accepts only the four purpose specific tool calls with strict bounded arguments', () => {
+    const calls = [
+      {
+        arguments: { endDate: '2026-12-31', startDate: '2026-01-01' },
+        code: 'employee_balance_change',
+      },
+      {
+        arguments: { date: '2026-08-31' },
+        code: 'employee_leave_projection',
+      },
+      {
+        arguments: { monthStart: '2026-08-01' },
+        code: 'employee_submission_blockers',
+      },
+      {
+        arguments: { date: '2026-08-27' },
+        code: 'employee_today_explanation',
+      },
+    ] as const;
+
+    expect(INSIGHT_TOOL_CODES).toEqual(calls.map(({ code }) => code));
+    for (const call of calls) {
+      expect(insightToolCallSchema.parse(call)).toEqual(call);
+      expect(insightToolArgumentSchemas[call.code].parse(call.arguments)).toEqual(call.arguments);
+    }
+    expect(
+      insightToolArgumentSchemas.employee_balance_change.safeParse({
+        endDate: '2027-01-01',
+        startDate: '2026-01-01',
+      }).success,
+    ).toBe(true);
+    expect(MAX_INSIGHT_TOOL_DATE_RANGE_DAYS).toBe(366);
+  });
+
+  it('rejects unrestricted ranges, authority claims, generic queries, and unknown tool calls', () => {
+    for (const call of [
+      {
+        arguments: { endDate: '2027-01-02', startDate: '2026-01-01' },
+        code: 'employee_balance_change',
+      },
+      {
+        arguments: { endDate: '2026-08-01', startDate: '2026-08-02' },
+        code: 'employee_balance_change',
+      },
+      {
+        arguments: { date: '2026-08-27', employeeId: 'employee-1' },
+        code: 'employee_today_explanation',
+      },
+      {
+        arguments: { monthStart: '2026-08-02' },
+        code: 'employee_submission_blockers',
+      },
+      {
+        arguments: { date: '2026-08-27', role: 'HR_ADMINISTRATOR' },
+        code: 'employee_today_explanation',
+      },
+      {
+        arguments: { query: 'select * from employees' },
+        code: 'database_query',
+      },
+      {
+        arguments: { fields: ['*'], filters: {} },
+        code: 'report_query',
+      },
+    ]) {
+      expect(insightToolCallSchema.safeParse(call).success).toBe(false);
+    }
+  });
+
   it('accepts only the kind specific bounded period and optional visible context', () => {
     expect(
       insightRequestSchema.parse({

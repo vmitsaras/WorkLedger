@@ -108,6 +108,10 @@ export const EXPECTED_CONFIG_EXPORTS = {
 
 export const EXPECTED_CONTRACT_EXPORTS = {
   ...EXPECTED_PACKAGE_EXPORTS,
+  './insight-tools': {
+    types: './dist/insight-tools.d.ts',
+    import: './dist/insight-tools.js',
+  },
   './insights': {
     types: './dist/insights.d.ts',
     import: './dist/insights.js',

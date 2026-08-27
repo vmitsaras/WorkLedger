@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 5 of 17 tasks complete
+**Phase progress:** Phase 15 in progress — 6 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
-**Active task:** `WL-1505` — Implement the read-only Insight tool registry
-**Status:** `WL-1504` completed the bounded contextual entry points and passed the deterministic Insights foundation sub-gate with provider mode disabled
+**Active task:** `WL-1506` — Implement the provider abstraction and optional private Ollama adapter
+**Status:** `WL-1505` completed the deny-by-default read-only Insight tool registry with current authority and combined-role isolation
 **Last verified:** 2026-08-27
 
 ## Current objective
@@ -21,12 +21,14 @@ without inventing policy or exposing protected identifiers. Completed `WL-1503` 
 same-origin CSRF-protected endpoint and accessible localized native route. Completed `WL-1504` adds
 bounded, visible, removable, request-memory-only context from Today, My Time, My Balances, Requests,
 and employee-authorized Reports and passes the deterministic foundation sub-gate with no provider.
-`WL-1505` may now implement only the reusable read-only Insight tool registry assigned to it.
-Optional private Ollama interpretation remains disabled by default, employee-only at pilot start,
-pinned to one local model digest, and blocked from public or cloud egress. Manager, report-builder,
-privacy-suppressed HR, isolated System Insights, and optional MCP evaluation remain behind their
-named gates. General chat, natural-language SQL, unrestricted tools, scoring, prediction,
-recommendations, autonomous actions, and model-authored domain decisions remain excluded.
+Completed `WL-1505` now supplies four strict Employee Insight tools, current self authorization on
+every execution, exact purpose output allowlists, combined-role workspace isolation, and explicit
+external adapter denial. `WL-1506` may now implement only the provider abstraction and optional
+private Ollama adapter. Provider mode remains disabled by default, pinned to one local model digest,
+and blocked from public or cloud egress. Manager, report-builder, privacy-suppressed HR, isolated
+System Insights, and optional MCP evaluation remain behind their named gates. General chat,
+natural-language SQL, unrestricted tools, scoring, prediction, recommendations, autonomous
+actions, and model-authored domain decisions remain excluded.
 
 Phase 14 remains complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
 foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
@@ -189,8 +191,15 @@ remains an unnumbered draft.
 - Insight context is visibly named and removable. It clears on consumption, explicit removal,
   session clearing, route denial, API permission loss, reload, and process loss. Only the existing
   allowlisted question kind and period may appear in the URL.
-- The deterministic Insights foundation gate is complete with provider mode disabled. This permits
-  `WL-1505` tool-registry work but does not enable Ollama, model requests, or external egress.
+- The deterministic Insights foundation gate is complete with provider mode disabled.
+- The read-only Insight registry contains only four strict Employee tools. Each tool records its
+  current `SELF` authorization actions, purpose, source and result allowlists, freshness rules,
+  execution limits, high personal operational sensitivity, private local model exposure, and
+  external adapter denial. Manager, HR, and System workspace calls remain denied.
+- Every tool call runs the repeatable-read Insight Service again, so combined roles, prior results,
+  prior tool success, browser state, and later model output cannot carry authority across calls.
+  Tool schemas use the API-only `@workledger/contracts/insight-tools` entry point and remain absent
+  from the browser graph.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -2898,17 +2907,40 @@ remains an unnumbered draft.
   sub-gate with provider mode disabled. No dependency, migration, provider, model, prompt,
   conversation, write action, audit event, manifest version, or external egress was added.
 
+**2026-08-27 — WL-1505 read-only Insight tool registry (complete)**
+
+- Added four purpose-specific Employee tool contracts with strict date or month arguments. Balance
+  change is limited to 366 inclusive calendar days; no tool accepts authority claims, employee
+  collections, raw filters, arbitrary fields, SQL, query text, files, network, shell, or writes.
+- Added an immutable deny-by-default registry with exact authorization actions, native kind,
+  workspace, result fields, fact, source, limitation, action and freshness allowlists, execution
+  limits, sensitivity, private model exposure, and explicit external adapter denial.
+- Every tool execution creates one existing Employee Insight request and runs the repeatable-read
+  service again. Database evidence proves current self scope for a combined Employee, Manager and
+  HR account, Manager workspace denial before handler execution, and immediate deactivation or
+  account revocation denial on the next call.
+- Added the API-only `@workledger/contracts/insight-tools` entry point and executable repository
+  guards that keep it out of the browser graph. The production browser totals remain at the
+  accepted 1,037,620 raw and 267,297 gzip JavaScript byte baseline.
+- Formatting, lint, strict TypeScript, 54 tooling tests, 436 unit and component tests, 13 broad
+  integration tests, the 15-file PostgreSQL suite with 28 passes and one historical skip, 48
+  browser tests with one historical skip, and the production and workspace build pass. Source
+  boundaries cover 334 files and 1,903 imports.
+- Added `docs/156-wl-1505-read-only-insight-tool-registry.md`. No provider, model request,
+  endpoint, dependency, migration, database table, write action, audit event, prompt persistence,
+  manifest version, external adapter, or egress path was added.
+
 ## Current blockers
 
 Phase 15 has no scheduling blocker. The deterministic Insights foundation sub-gate is complete.
-`WL-1505` may implement the bounded read-only Insight tool registry. Provider, manager,
-report-builder, HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
-environment-independent integration command and the canonical isolated `pnpm db:test` gate are
-green. Exact partial-day work-versus-absence overlap, calculation-to-ledger mismatch, and
-break-duration warning signals still require authoritative domain or repository facts; Today does
-not guess them from minute totals or an otherwise valid overnight session. The earlier Phase 12 and
-task-specific Phase 13 images remain historical and intentionally differ from the current green
-`WL-1312` visual gate.
+`WL-1506` may implement the disabled-by-default provider abstraction and optional private Ollama
+adapter. Interpretation, manager, report-builder, HR, system, and MCP tasks remain blocked by their
+named sub-gates. The broad environment-independent integration command and the canonical isolated
+`pnpm db:test` gate are green. Exact partial-day work-versus-absence overlap,
+calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
+domain or repository facts; Today does not guess them from minute totals or an otherwise valid
+overnight session. The earlier Phase 12 and task-specific Phase 13 images remain historical and
+intentionally differ from the current green `WL-1312` visual gate.
 `D-502` remains the broader exact retail assistive-technology matrix rather than a whole-product
 conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for Testing and Safari.
 The temporary Astro backup is recoverable at
@@ -2917,10 +2949,12 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1505`: implement a reusable read-only Insight tool registry with independent
-authorization, deny-by-default policy metadata, active-workspace scope, combined-role isolation,
-and no generic query or SQL capability. The portfolio presentation scope remains preserved in
-`docs/drafts/portfolio-presentation.md` as a separate unnumbered draft.
+Execute `WL-1506`: implement the provider abstraction and optional local Ollama adapter with
+disabled-by-default configuration, exact private origin and pinned digest validation, capability
+and health checks, public and cloud egress denial, bounded timeout and cancellation, and safe
+content-free diagnostics. Deterministic Insights must remain usable during every provider failure.
+The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
+separate unnumbered draft.
 
 ## Update rules
 

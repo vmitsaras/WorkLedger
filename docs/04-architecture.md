@@ -397,6 +397,11 @@ schema, workspace, authorization policy, result projection, sensitivity, limits,
 later adapter may expose it. There is no generic query, SQL, database, filesystem, network, shell,
 export, notification, audit, or mutation tool.
 
+The browser uses only `@workledger/contracts/insights`. Internal tool call schemas use the separate
+`@workledger/contracts/insight-tools` entry point, which repository boundaries permit only in
+`apps/api`. This keeps provider orchestration contracts out of the browser graph while preserving
+contract ownership in `packages/contracts`.
+
 The provider adapter receives only minimized typed tool results. It cannot import database access
 or bypass the Insight Service. WorkLedger validates tool selection and arguments, reauthorizes each
 execution, validates the final structured response, and renders fact values, sources, limitations,

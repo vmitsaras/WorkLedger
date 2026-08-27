@@ -28,8 +28,8 @@ const negativeFixtures = [
 test('accepts every current workspace source import', async () => {
   assert.deepEqual(await checkWorkspaceBoundaries(repositoryRoot), {
     errors: [],
-    fileCount: 331,
-    importCount: 1889,
+    fileCount: 334,
+    importCount: 1903,
   });
 });
 
@@ -62,12 +62,18 @@ test('allows the i18n pseudo-locale only in test source', async () => {
   assert.equal(rejected.errors[0]?.code, 'production-i18n-testing-import');
 });
 
-test('allows the explicit Insights contract surface without allowing other deep imports', async () => {
+test('allows explicit Insight contract surfaces without allowing other deep imports', async () => {
   const accepted = await validateSourceImports({
     projectDirectory: 'apps/api',
     relativeFile: 'src/insights.ts',
     repositoryDirectory: repositoryRoot,
     source: "import { insightRequestSchema } from '@workledger/contracts/insights';",
+  });
+  const acceptedTools = await validateSourceImports({
+    projectDirectory: 'apps/api',
+    relativeFile: 'src/insight-tools.ts',
+    repositoryDirectory: repositoryRoot,
+    source: "import { insightToolCallSchema } from '@workledger/contracts/insight-tools';",
   });
   const rejected = await validateSourceImports({
     projectDirectory: 'apps/api',
@@ -75,9 +81,17 @@ test('allows the explicit Insights contract surface without allowing other deep 
     repositoryDirectory: repositoryRoot,
     source: "import { privateSchema } from '@workledger/contracts/private';",
   });
+  const rejectedBrowserTools = await validateSourceImports({
+    projectDirectory: 'apps/web',
+    relativeFile: 'src/insight-tools.ts',
+    repositoryDirectory: repositoryRoot,
+    source: "import { insightToolCallSchema } from '@workledger/contracts/insight-tools';",
+  });
 
   assert.deepEqual(accepted, { errors: [], importCount: 1 });
+  assert.deepEqual(acceptedTools, { errors: [], importCount: 1 });
   assert.equal(rejected.errors[0]?.code, 'deep-import');
+  assert.equal(rejectedBrowserTools.errors[0]?.code, 'deep-import');
 });
 
 for (const [fixtureName, projectDirectory, relativeFile, expectedCode] of negativeFixtures) {

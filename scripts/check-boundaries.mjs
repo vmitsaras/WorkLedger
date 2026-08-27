@@ -164,7 +164,9 @@ function validateInternalImport({ project, relativeFile, specifier, line }) {
     packageName === '@workledger/i18n' &&
     (specifier === '@workledger/i18n/react' || isI18nTestingSurface);
   const isAcceptedContractSurface =
-    packageName === '@workledger/contracts' && specifier === '@workledger/contracts/insights';
+    packageName === '@workledger/contracts' &&
+    (specifier === '@workledger/contracts/insights' ||
+      (specifier === '@workledger/contracts/insight-tools' && project.directory === 'apps/api'));
   if (segments.length > 2 && !isAcceptedI18nSurface && !isAcceptedContractSurface) {
     return createError(
       'deep-import',

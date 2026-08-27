@@ -10,6 +10,7 @@ import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workle
 
 import { createEmployeeInsightHandlers } from '../src/insights/employee-insight-handlers.js';
 import { createInsightService } from '../src/insights/insight-service.js';
+import { createInsightToolRegistry } from '../src/insights/insight-tool-registry.js';
 
 const databaseHarness = createDatabaseHarnessState(process.env);
 const integrationTest = databaseHarness.enabled ? test : test.skip;
@@ -58,32 +59,28 @@ integrationTest(
       await createInsightFacts(fixture.client, employee);
       const service = createInsightService(database, createEmployeeInsightHandlers());
       const identity = Object.freeze({ accountId: employee.accountId, sessionFresh: true });
+      const registry = createInsightToolRegistry(service);
+      const toolContext = Object.freeze({
+        activeWorkspace: 'EMPLOYEE' as const,
+        capturedAt: CAPTURED_AT,
+        identity,
+      });
 
       const balance = insightNativeResultSchema.parse(
-        await service.run(
-          identity,
-          request({
-            kind: 'balance-change',
-            period: { endDate: '2026-02-03', kind: 'DATE_RANGE', startDate: '2026-02-01' },
-            workspace: 'EMPLOYEE',
-          }),
-          CAPTURED_AT,
-        ),
+        await registry.execute(toolContext, {
+          arguments: { endDate: '2026-02-03', startDate: '2026-02-01' },
+          code: 'employee_balance_change',
+        }),
       );
       expect(factValue(balance, 'BALANCE_OPENING_MINUTES', 'POSTED')).toBe(600);
       expect(factValue(balance, 'BALANCE_CHANGE_MINUTES', 'POSTED')).toBe(30);
       expect(factValue(balance, 'BALANCE_CHANGE_MINUTES', 'PROJECTED')).toBe(45);
 
       const leave = insightNativeResultSchema.parse(
-        await service.run(
-          identity,
-          request({
-            kind: 'leave-projection',
-            period: { date: '2026-02-05', kind: 'DATE' },
-            workspace: 'EMPLOYEE',
-          }),
-          CAPTURED_AT,
-        ),
+        await registry.execute(toolContext, {
+          arguments: { date: '2026-02-05' },
+          code: 'employee_leave_projection',
+        }),
       );
       expect(leave.sources).toContainEqual(
         expect.objectContaining({ kind: 'LEAVE_ENTITLEMENT_LEDGER', label: 'Vacation' }),
@@ -93,15 +90,10 @@ integrationTest(
       expect(factValue(leave, 'LEAVE_PROJECTED_REMAINING_MINUTES', 'PROJECTED')).toBe(4_080);
 
       const submission = insightNativeResultSchema.parse(
-        await service.run(
-          identity,
-          request({
-            kind: 'submission-blockers',
-            period: { kind: 'MONTH', monthStart: '2026-02-01' },
-            workspace: 'EMPLOYEE',
-          }),
-          CAPTURED_AT,
-        ),
+        await registry.execute(toolContext, {
+          arguments: { monthStart: '2026-02-01' },
+          code: 'employee_submission_blockers',
+        }),
       );
       expect(submission.facts).toMatchObject([
         {
@@ -115,15 +107,10 @@ integrationTest(
       ]);
 
       const today = insightNativeResultSchema.parse(
-        await service.run(
-          identity,
-          request({
-            kind: 'today-explanation',
-            period: { date: '2026-02-03', kind: 'DATE' },
-            workspace: 'EMPLOYEE',
-          }),
-          CAPTURED_AT,
-        ),
+        await registry.execute(toolContext, {
+          arguments: { date: '2026-02-03' },
+          code: 'employee_today_explanation',
+        }),
       );
       expect(factValue(today, 'TODAY_ATTENDANCE_STATE', 'CURRENT')).toBe('WORKING');
       expect(factValue(today, 'TODAY_WORKED_MINUTES', 'PROVISIONAL')).toBe(195);
@@ -235,15 +222,10 @@ integrationTest(
       }
 
       await expect(
-        service.run(
-          identity,
-          request({
-            kind: 'balance-change',
-            period: { endDate: '2026-02-03', kind: 'DATE_RANGE', startDate: '2026-02-01' },
-            workspace: 'EMPLOYEE',
-          }),
-          CAPTURED_AT,
-        ),
+        registry.execute(toolContext, {
+          arguments: { endDate: '2026-02-03', startDate: '2026-02-01' },
+          code: 'employee_balance_change',
+        }),
       ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
     } finally {
       await database.close();
@@ -397,10 +379,6 @@ function factValue(
     throw new Error(`Expected ${code} value.`);
   }
   return fact.value.value;
-}
-
-function request(input: InsightRequest): InsightRequest {
-  return input;
 }
 
 function balanceRequest(): InsightRequest {

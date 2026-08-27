@@ -66,12 +66,12 @@ export interface InsightService {
   ): Promise<InsightNativeResult>;
 }
 
-const requiredEmployeeActions = {
+export const EMPLOYEE_INSIGHT_REQUIRED_ACTIONS = Object.freeze({
   'balance-change': ['TIME_BALANCE_READ'],
   'leave-projection': ['LEAVE_BALANCE_READ'],
   'submission-blockers': ['MONTHLY_PERIOD_READ'],
   'today-explanation': ['ATTENDANCE_READ', 'TIME_BALANCE_READ'],
-} as const satisfies Readonly<Record<InsightKind, readonly EmployeeTargetAction[]>>;
+} as const satisfies Readonly<Record<InsightKind, readonly EmployeeTargetAction[]>>);
 
 export function createInsightService(
   database: WorkLedgerDatabase,
@@ -171,7 +171,7 @@ function authorizeInsightRequest(
     organizationId: context.organization.id,
     roles: context.roles,
   } as const;
-  for (const action of requiredEmployeeActions[kind]) {
+  for (const action of EMPLOYEE_INSIGHT_REQUIRED_ACTIONS[kind]) {
     const authorization = authorizeEmployeeTarget({
       action,
       actor,
