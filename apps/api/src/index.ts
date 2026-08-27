@@ -13,6 +13,31 @@ export {
 } from './config.js';
 export { createApiServer } from './server.js';
 export {
+  AI_PROVIDER_REQUIRED_CAPABILITIES,
+  AiProviderError,
+  type AiProvider,
+  type AiProviderCapability,
+  type AiProviderConfig,
+  type AiProviderErrorCode,
+  type AiProviderHealth,
+  type AiProviderHealthReasonCode,
+  type AiProviderHealthStatus,
+  type AiProviderMessage,
+  type AiProviderRequest,
+  type AiProviderResponse,
+  type AiProviderTool,
+  type AiProviderToolCall,
+  type DisabledAiProviderConfig,
+  type OllamaAiProviderConfig,
+} from './ai/contracts.js';
+export { createAiProvider, type AiProviderDependencies } from './ai/provider.js';
+export {
+  createOllamaAiProvider,
+  type OllamaAiProviderDependencies,
+  type ResolvedHostAddress,
+} from './ai/ollama-adapter.js';
+export { checkAiProviderAtStartup } from './ai/startup.js';
+export {
   createTodayAttendanceService,
   parseTodayAttendanceIdentity,
   type TodayAttendanceIdentity,

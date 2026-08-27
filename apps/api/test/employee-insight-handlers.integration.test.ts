@@ -19,6 +19,7 @@ const AUTH_SECRET = 'employee-insight-route-secret-with-thirty-two-bytes';
 const EMAIL = 'insight-employee@example.test';
 const ORIGIN = 'https://ledger.example.test';
 const PASSWORD = 'safe employee insight passphrase 2026';
+const LOCAL_MODEL_DIGEST = 'a'.repeat(64);
 const repositoryDirectory = fileURLToPath(new URL('../../..', import.meta.url));
 const migrationFiles = [
   '0000_initial_schema.sql',
@@ -141,6 +142,10 @@ integrationTest(
           WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
           WORKLEDGER_ENVIRONMENT: 'test',
           WORKLEDGER_ORIGIN: ORIGIN,
+          WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
+          WORKLEDGER_OLLAMA_ORIGIN: 'http://127.0.0.1:1',
+          WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
+          WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
         }),
         { now: () => '2026-02-03T10:30:45Z' },
       );

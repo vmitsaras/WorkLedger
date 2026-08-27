@@ -3,6 +3,8 @@ import { loadRuntimeEnvironment } from './runtime-environment.js';
 import { createApiServer } from './server.js';
 import { createWorkLedgerLogger } from './logging/logger.js';
 import { WORKLEDGER_VERSION } from './version.js';
+import { createAiProvider } from './ai/provider.js';
+import { checkAiProviderAtStartup } from './ai/startup.js';
 
 async function main() {
   const environment = await loadRuntimeEnvironment(process.env);
@@ -13,6 +15,7 @@ async function main() {
     service: 'workledger-api',
     version: WORKLEDGER_VERSION,
   });
+  const aiProvider = createAiProvider(config.aiProvider);
 
   const server = createApiServer(config, { logger });
 
@@ -24,6 +27,7 @@ async function main() {
     port,
     environment: config.environment,
   });
+  void checkAiProviderAtStartup(aiProvider, logger);
 }
 
 main().catch((err) => {

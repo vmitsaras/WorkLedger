@@ -16,6 +16,7 @@ const PRODUCTION_ENVIRONMENT = {
   WORKLEDGER_ORGANIZATION_FAVICON_PATH: '/identity/northstar.svg',
   WORKLEDGER_ORGANIZATION_ACCENT_COLOR: '#14532d',
 } as const;
+const LOCAL_MODEL_DIGEST = 'a'.repeat(64);
 
 test('uses loopback defaults and returns a secret-free configuration summary for development', () => {
   const config = createRuntimeConfig({});
@@ -30,6 +31,7 @@ test('uses loopback defaults and returns a secret-free configuration summary for
       organizationName: 'WorkLedger',
     },
     trustedProxyAddresses: [],
+    aiProvider: { mode: 'disabled' },
   });
   expect(summarizeRuntimeConfig(config)).toEqual({
     environment: 'development',
@@ -39,6 +41,9 @@ test('uses loopback defaults and returns a secret-free configuration summary for
     organizationIdentityConfigured: false,
     organizationLogoConfigured: false,
     trustedProxyAddressCount: 0,
+    aiProviderMode: 'disabled',
+    aiProviderTimeoutMs: null,
+    aiProviderConcurrencyLimit: null,
     databaseConfigured: false,
     authSecretConfigured: false,
   });
@@ -164,4 +169,92 @@ test('builds external links only from the configured canonical origin', () => {
   expect(() => resolveCanonicalUrl(config, '//attacker.example.test/reset')).toThrow(
     'same-origin absolute path',
   );
+});
+
+test('enables only a complete bounded private Ollama configuration', () => {
+  const config = createRuntimeConfig({
+    WORKLEDGER_ENVIRONMENT: 'test',
+    WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
+    WORKLEDGER_OLLAMA_ORIGIN: 'http://127.0.0.1:11434',
+    WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
+    WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
+    WORKLEDGER_OLLAMA_TIMEOUT_SECONDS: '45',
+    WORKLEDGER_OLLAMA_CONCURRENCY: '4',
+  });
+
+  expect(config.aiProvider).toEqual({
+    mode: 'ollama',
+    origin: 'http://127.0.0.1:11434',
+    model: 'workledger-insights:local',
+    modelDigest: LOCAL_MODEL_DIGEST,
+    timeoutMs: 45_000,
+    concurrencyLimit: 4,
+    requiredCapabilities: ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
+  });
+  expect(summarizeRuntimeConfig(config)).toMatchObject({
+    aiProviderMode: 'ollama',
+    aiProviderTimeoutMs: 45_000,
+    aiProviderConcurrencyLimit: 4,
+  });
+});
+
+test('keeps the provider disabled by default and rejects stale provider specific values', () => {
+  expect(createRuntimeConfig({ WORKLEDGER_ENVIRONMENT: 'test' }).aiProvider).toEqual({
+    mode: 'disabled',
+  });
+  expect(() =>
+    createRuntimeConfig({
+      WORKLEDGER_ENVIRONMENT: 'test',
+      WORKLEDGER_OLLAMA_ORIGIN: 'http://127.0.0.1:11434',
+    }),
+  ).toThrow('may be set only when WORKLEDGER_AI_PROVIDER_MODE=ollama');
+});
+
+test('rejects public, credentialed, cloud, incomplete, and unbounded provider configuration', () => {
+  const unsafeOrigin = 'https://operator:secret@ollama.com/api?token=secret';
+  const unsafeDigest = 'not-a-local-model-digest';
+  try {
+    createRuntimeConfig({
+      WORKLEDGER_ENVIRONMENT: 'test',
+      WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
+      WORKLEDGER_OLLAMA_ORIGIN: unsafeOrigin,
+      WORKLEDGER_OLLAMA_MODEL: 'gpt-oss:cloud',
+      WORKLEDGER_OLLAMA_MODEL_DIGEST: unsafeDigest,
+      WORKLEDGER_OLLAMA_TIMEOUT_SECONDS: '121',
+      WORKLEDGER_OLLAMA_CONCURRENCY: '9',
+    });
+    throw new Error('Expected provider configuration to fail.');
+  } catch (error) {
+    expect(error).toBeInstanceOf(RuntimeConfigError);
+    if (error instanceof RuntimeConfigError) {
+      expect(error.message).toContain('WORKLEDGER_OLLAMA_ORIGIN');
+      expect(error.message).toContain('WORKLEDGER_OLLAMA_MODEL');
+      expect(error.message).toContain('WORKLEDGER_OLLAMA_MODEL_DIGEST');
+      expect(error.message).toContain('WORKLEDGER_OLLAMA_TIMEOUT_SECONDS');
+      expect(error.message).toContain('WORKLEDGER_OLLAMA_CONCURRENCY');
+      expect(error.message).not.toContain('operator:secret');
+      expect(error.message).not.toContain(unsafeDigest);
+    }
+  }
+});
+
+test('rejects public literal provider addresses and applies safe provider bounds', () => {
+  expect(() =>
+    createRuntimeConfig({
+      WORKLEDGER_ENVIRONMENT: 'test',
+      WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
+      WORKLEDGER_OLLAMA_ORIGIN: 'http://203.0.113.10:11434',
+      WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
+      WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
+    }),
+  ).toThrow('loopback or private network address');
+
+  const config = createRuntimeConfig({
+    WORKLEDGER_ENVIRONMENT: 'test',
+    WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
+    WORKLEDGER_OLLAMA_ORIGIN: 'http://ollama.internal:11434',
+    WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
+    WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
+  });
+  expect(config.aiProvider).toMatchObject({ timeoutMs: 30_000, concurrencyLimit: 2 });
 });

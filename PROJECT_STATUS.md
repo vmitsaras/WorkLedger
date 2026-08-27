@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 6 of 17 tasks complete
+**Phase progress:** Phase 15 in progress — 7 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
-**Active task:** `WL-1506` — Implement the provider abstraction and optional private Ollama adapter
-**Status:** `WL-1505` completed the deny-by-default read-only Insight tool registry with current authority and combined-role isolation
+**Active task:** `WL-1507` — Implement employee-only Ask My Ledger interpretation
+**Status:** `WL-1506` completed the disabled-by-default provider abstraction and private Ollama adapter with pinned origin, address, digest, capability, timeout, cancellation, and safe health controls
 **Last verified:** 2026-08-27
 
 ## Current objective
@@ -23,12 +23,16 @@ bounded, visible, removable, request-memory-only context from Today, My Time, My
 and employee-authorized Reports and passes the deterministic foundation sub-gate with no provider.
 Completed `WL-1505` now supplies four strict Employee Insight tools, current self authorization on
 every execution, exact purpose output allowlists, combined-role workspace isolation, and explicit
-external adapter denial. `WL-1506` may now implement only the provider abstraction and optional
-private Ollama adapter. Provider mode remains disabled by default, pinned to one local model digest,
-and blocked from public or cloud egress. Manager, report-builder, privacy-suppressed HR, isolated
-System Insights, and optional MCP evaluation remain behind their named gates. General chat,
-natural-language SQL, unrestricted tools, scoring, prediction, recommendations, autonomous
-actions, and model-authored domain decisions remain excluded.
+external adapter denial. Completed `WL-1506` now supplies the disabled-by-default provider
+abstraction and an optional private Ollama adapter. It pins the exact origin, resolved private
+address set, local model name and digest, chat/tool/structured-output capability, timeout, and
+installation concurrency; it rejects redirects, proxy routing, public/cloud models, reasoning
+content, model drift, and generation before a successful health check. `WL-1507` may now add only
+employee-self Ask My Ledger interpretation through that adapter and the existing tool registry.
+Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
+evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
+tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
+decisions remain excluded.
 
 Phase 14 remains complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
 foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
@@ -161,6 +165,10 @@ remains an unnumbered draft.
 - Optional Phase 15 model interpretation is disabled by default and limited to a private,
   operator-controlled Ollama origin with a pinned local model digest. Public or cloud provider
   egress requires a superseding ADR and full privacy/security gate.
+- The API uses direct nonproxy HTTP or HTTPS only for `/api/tags`, `/api/show`, and `/api/chat`.
+  Every connection revalidates the complete pinned loopback/private address set, rejects redirects,
+  and checks the exact local digest before protected generation. Provider health is optional and
+  never enters core readiness or deterministic Insight authority.
 - Insight questions, conversations, tool content, model input/output, and reasoning traces are not
   persisted. Each tool reauthorizes current scope, and model output cannot calculate, authorize,
   decide, score, recommend, or write.
@@ -2930,13 +2938,40 @@ remains an unnumbered draft.
   endpoint, dependency, migration, database table, write action, audit event, prompt persistence,
   manifest version, external adapter, or egress path was added.
 
+**2026-08-27 — WL-1506 AI provider and private Ollama adapter (complete)**
+
+- Added strict startup-owned `disabled` and `ollama` configuration. Disabled mode is the default
+  and rejects stray provider values. Ollama mode requires one exact origin, local model name and
+  64-character lowercase digest, a 5–120 second timeout, and a 1–8 installation concurrency limit.
+- Added a direct Node HTTP/HTTPS transport with a three-path allowlist, no environment proxy use,
+  no redirects, fresh private DNS validation before every connection, and a health-pinned address
+  set. Public, changed-private, cloud-metadata, missing-model, digest-drift, and capability failures
+  fail closed before protected generation.
+- Added `/api/tags` digest checks, `/api/show` completion/tool checks, and a synthetic
+  nonstreaming structured-output `/api/chat` probe with thinking disabled. Generation requires a
+  prior ready check, revalidates the digest, enforces cancellation, one operation deadline, fixed
+  request/response byte ceilings, and bounded concurrency without retry or an unbounded queue.
+- Startup health runs after core listen and logs only mode, state, safe capability/reason codes,
+  check time, and latency. The database-enabled Employee Insight route passes with provider mode
+  enabled and an unreachable private endpoint, proving deterministic native results remain usable.
+- Runtime, production Compose, and operator examples document `OLLAMA_NO_CLOUD=1`, no cloud sign
+  in, no public port, blocked provider internet, and out-of-band model provisioning. WorkLedger
+  adds no Ollama image, dependency, model pull, database state, prompt persistence, endpoint, or UI.
+- Configuration, production deployment, formatting, lint, strict TypeScript, 54 tooling tests, 456
+  unit and component tests, 13 broad integration tests, the 15-file PostgreSQL suite with 28 passes
+  and one historical skip, and the workspace build pass. Source boundaries cover 340 files and
+  1,933 imports; the production browser bundle is unchanged.
+- Added `docs/157-wl-1506-ai-provider-private-ollama-adapter.md`. No manifest version changed because
+  the Phase 15 release gate remains open.
+
 ## Current blockers
 
 Phase 15 has no scheduling blocker. The deterministic Insights foundation sub-gate is complete.
-`WL-1506` may implement the disabled-by-default provider abstraction and optional private Ollama
-adapter. Interpretation, manager, report-builder, HR, system, and MCP tasks remain blocked by their
-named sub-gates. The broad environment-independent integration command and the canonical isolated
-`pnpm db:test` gate are green. Exact partial-day work-versus-absence overlap,
+`WL-1506` is complete. `WL-1507` may implement only the employee-self interpretation endpoint,
+session-only orchestration, structured grounding, cancellation, and source attribution. The local
+AI pilot remains open until `WL-1508`; manager, report-builder, HR, system, and MCP tasks remain
+blocked by their named sub-gates. The broad environment-independent integration command and the
+canonical isolated `pnpm db:test` gate are green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
 domain or repository facts; Today does not guess them from minute totals or an otherwise valid
 overnight session. The earlier Phase 12 and task-specific Phase 13 images remain historical and
@@ -2949,10 +2984,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1506`: implement the provider abstraction and optional local Ollama adapter with
-disabled-by-default configuration, exact private origin and pinned digest validation, capability
-and health checks, public and cloud egress denial, bounded timeout and cancellation, and safe
-content-free diagnostics. Deterministic Insights must remain usable during every provider failure.
+Execute `WL-1507`: implement employee-only Ask My Ledger interpretation with request-memory-only
+question and prior-turn context, one current Employee workspace, independently reauthorized tools,
+bounded tool rounds and calls, validated provider-independent structured output, cancellation,
+safe retry, and exact native fact/source/limitation/action attribution. Provider failure or invalid
+output must preserve the complete deterministic result.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

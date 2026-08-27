@@ -196,7 +196,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1503` Build the accessible, role-scoped Insights route and native result presentation.
 - [x] `WL-1504` Add bounded contextual entry points from Today, My Time, My Balances, Requests, and Reports, then pass the Insights foundation sub-gate.
 - [x] `WL-1505` Implement a reusable read-only Insight tool registry with independent authorization and active-workspace scope.
-- [ ] `WL-1506` Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks.
+- [x] `WL-1506` Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks.
 - [ ] `WL-1507` Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution.
 - [ ] `WL-1508` Add the employee golden-question evaluation set, bounded traces, privacy/security tests, model-failure handling, and accessibility verification, then pass the local AI pilot sub-gate.
 - [ ] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.

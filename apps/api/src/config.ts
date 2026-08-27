@@ -10,6 +10,9 @@ import {
   type CompanyIdentity,
 } from '@workledger/contracts';
 
+import { AI_PROVIDER_REQUIRED_CAPABILITIES, type AiProviderConfig } from './ai/contracts.js';
+import { isPrivateNetworkAddress, normalizeUrlHostname } from './ai/private-network.js';
+
 export const RUNTIME_ENVIRONMENT_VARIABLES = {
   environment: 'WORKLEDGER_ENVIRONMENT',
   origin: 'WORKLEDGER_ORIGIN',
@@ -20,6 +23,12 @@ export const RUNTIME_ENVIRONMENT_VARIABLES = {
   organizationLogoPath: 'WORKLEDGER_ORGANIZATION_LOGO_PATH',
   organizationFaviconPath: 'WORKLEDGER_ORGANIZATION_FAVICON_PATH',
   organizationAccentColor: 'WORKLEDGER_ORGANIZATION_ACCENT_COLOR',
+  aiProviderMode: 'WORKLEDGER_AI_PROVIDER_MODE',
+  ollamaOrigin: 'WORKLEDGER_OLLAMA_ORIGIN',
+  ollamaModel: 'WORKLEDGER_OLLAMA_MODEL',
+  ollamaModelDigest: 'WORKLEDGER_OLLAMA_MODEL_DIGEST',
+  ollamaTimeoutSeconds: 'WORKLEDGER_OLLAMA_TIMEOUT_SECONDS',
+  ollamaConcurrency: 'WORKLEDGER_OLLAMA_CONCURRENCY',
 } as const;
 
 export type RuntimeEnvironment = 'development' | 'test' | 'production';
@@ -29,6 +38,7 @@ export interface RuntimeConfig {
   readonly canonicalOrigin: string;
   readonly companyIdentity: CompanyIdentity;
   readonly trustedProxyAddresses: readonly string[];
+  readonly aiProvider: AiProviderConfig;
   readonly databaseUrl?: string;
   readonly authSecret?: string;
 }
@@ -41,6 +51,9 @@ export interface RuntimeConfigSummary {
   readonly organizationIdentityConfigured: boolean;
   readonly organizationLogoConfigured: boolean;
   readonly trustedProxyAddressCount: number;
+  readonly aiProviderMode: AiProviderConfig['mode'];
+  readonly aiProviderTimeoutMs: number | null;
+  readonly aiProviderConcurrencyLimit: number | null;
   readonly databaseConfigured: boolean;
   readonly authSecretConfigured: boolean;
 }
@@ -60,6 +73,12 @@ type EnvironmentSource = Readonly<Record<string, string | undefined>>;
 const DEFAULT_ENVIRONMENT: RuntimeEnvironment = 'development';
 const DEFAULT_ORIGIN = 'http://127.0.0.1:5173';
 const PRODUCTION_ENVIRONMENT: RuntimeEnvironment = 'production';
+const DEFAULT_OLLAMA_ORIGIN = 'http://127.0.0.1:11434';
+const DEFAULT_OLLAMA_TIMEOUT_SECONDS = 30;
+const DEFAULT_OLLAMA_CONCURRENCY = 2;
+const OLLAMA_MODEL_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._/-]*(?::[a-zA-Z0-9][a-zA-Z0-9._-]*)?$/u;
+const OLLAMA_MODEL_DIGEST_PATTERN = /^[a-f0-9]{64}$/u;
+const OLLAMA_CLOUD_MODEL_PATTERN = /(?:^|[:._-])cloud$/iu;
 const COMPANY_IDENTITY_MINIMUM_BOUNDARY_CONTRAST = 3;
 const COMPANY_IDENTITY_REFERENCE_SURFACES = ['#ffffff', '#f5f7f9'] as const;
 const UNSAFE_DISPLAY_NAME_CHARACTERS = /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u;
@@ -378,6 +397,158 @@ function relativeLuminance(color: string): number {
   return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 }
 
+function parseAiProviderConfig(source: EnvironmentSource, issues: string[]): AiProviderConfig {
+  const modeVariable = RUNTIME_ENVIRONMENT_VARIABLES.aiProviderMode;
+  const configuredMode = readOptionalValue(source, modeVariable) ?? 'disabled';
+  const providerSpecificVariables = [
+    RUNTIME_ENVIRONMENT_VARIABLES.ollamaOrigin,
+    RUNTIME_ENVIRONMENT_VARIABLES.ollamaModel,
+    RUNTIME_ENVIRONMENT_VARIABLES.ollamaModelDigest,
+    RUNTIME_ENVIRONMENT_VARIABLES.ollamaTimeoutSeconds,
+    RUNTIME_ENVIRONMENT_VARIABLES.ollamaConcurrency,
+  ] as const;
+
+  if (configuredMode !== 'disabled' && configuredMode !== 'ollama') {
+    issues.push(`${modeVariable} must be disabled or ollama.`);
+    return Object.freeze({ mode: 'disabled' as const });
+  }
+
+  if (configuredMode === 'disabled') {
+    const unexpectedVariables = providerSpecificVariables.filter(
+      (variableName) => readOptionalValue(source, variableName) !== undefined,
+    );
+    if (unexpectedVariables.length > 0) {
+      issues.push(`${unexpectedVariables.join(', ')} may be set only when ${modeVariable}=ollama.`);
+    }
+    return Object.freeze({ mode: 'disabled' as const });
+  }
+
+  const origin = parseOllamaOrigin(source, issues);
+  const model = parseOllamaModel(source, issues);
+  const modelDigest = parseOllamaModelDigest(source, issues);
+  const timeoutMs =
+    parseBoundedInteger({
+      source,
+      issues,
+      variableName: RUNTIME_ENVIRONMENT_VARIABLES.ollamaTimeoutSeconds,
+      defaultValue: DEFAULT_OLLAMA_TIMEOUT_SECONDS,
+      minimum: 5,
+      maximum: 120,
+    }) * 1_000;
+  const concurrencyLimit = parseBoundedInteger({
+    source,
+    issues,
+    variableName: RUNTIME_ENVIRONMENT_VARIABLES.ollamaConcurrency,
+    defaultValue: DEFAULT_OLLAMA_CONCURRENCY,
+    minimum: 1,
+    maximum: 8,
+  });
+
+  return Object.freeze({
+    mode: 'ollama' as const,
+    origin,
+    model,
+    modelDigest,
+    timeoutMs,
+    concurrencyLimit,
+    requiredCapabilities: Object.freeze([...AI_PROVIDER_REQUIRED_CAPABILITIES]),
+  });
+}
+
+function parseOllamaOrigin(source: EnvironmentSource, issues: string[]): string {
+  const variableName = RUNTIME_ENVIRONMENT_VARIABLES.ollamaOrigin;
+  const configuredOrigin = readOptionalValue(source, variableName);
+  if (configuredOrigin === undefined) {
+    issues.push(`${variableName} is required when the AI provider mode is ollama.`);
+    return DEFAULT_OLLAMA_ORIGIN;
+  }
+
+  try {
+    const origin = new URL(configuredOrigin);
+    const hostname = normalizeUrlHostname(origin.hostname);
+    const hasOnlyOriginParts =
+      origin.pathname === '/' &&
+      origin.search === '' &&
+      origin.hash === '' &&
+      origin.username === '' &&
+      origin.password === '';
+    if (!hasOnlyOriginParts || (origin.protocol !== 'http:' && origin.protocol !== 'https:')) {
+      issues.push(
+        `${variableName} must be an http(s) origin without a path, query, fragment, or credentials.`,
+      );
+    }
+    if (hostname === 'ollama.com' || hostname.endsWith('.ollama.com')) {
+      issues.push(`${variableName} must not use a public Ollama origin.`);
+    }
+    if (isIP(hostname) !== 0 && !isPrivateNetworkAddress(hostname)) {
+      issues.push(`${variableName} must use a loopback or private network address.`);
+    }
+    return origin.origin;
+  } catch {
+    issues.push(`${variableName} must be a valid absolute URL.`);
+    return DEFAULT_OLLAMA_ORIGIN;
+  }
+}
+
+function parseOllamaModel(source: EnvironmentSource, issues: string[]): string {
+  const variableName = RUNTIME_ENVIRONMENT_VARIABLES.ollamaModel;
+  const model = readOptionalValue(source, variableName);
+  if (model === undefined) {
+    issues.push(`${variableName} is required when the AI provider mode is ollama.`);
+    return 'invalid:local';
+  }
+  if (
+    model.length > 200 ||
+    !OLLAMA_MODEL_NAME_PATTERN.test(model) ||
+    OLLAMA_CLOUD_MODEL_PATTERN.test(model)
+  ) {
+    issues.push(`${variableName} must name one exact local Ollama model and tag.`);
+  }
+  return model;
+}
+
+function parseOllamaModelDigest(source: EnvironmentSource, issues: string[]): string {
+  const variableName = RUNTIME_ENVIRONMENT_VARIABLES.ollamaModelDigest;
+  const digest = readOptionalValue(source, variableName);
+  if (digest === undefined) {
+    issues.push(`${variableName} is required when the AI provider mode is ollama.`);
+    return '0'.repeat(64);
+  }
+  if (!OLLAMA_MODEL_DIGEST_PATTERN.test(digest)) {
+    issues.push(`${variableName} must be the exact 64 character lowercase model digest.`);
+  }
+  return digest;
+}
+
+function parseBoundedInteger({
+  source,
+  issues,
+  variableName,
+  defaultValue,
+  minimum,
+  maximum,
+}: {
+  readonly source: EnvironmentSource;
+  readonly issues: string[];
+  readonly variableName: string;
+  readonly defaultValue: number;
+  readonly minimum: number;
+  readonly maximum: number;
+}): number {
+  const configuredValue = readOptionalValue(source, variableName);
+  if (configuredValue === undefined) return defaultValue;
+  if (!/^\d+$/u.test(configuredValue)) {
+    issues.push(`${variableName} must be an integer from ${minimum} through ${maximum}.`);
+    return defaultValue;
+  }
+  const value = Number(configuredValue);
+  if (!Number.isSafeInteger(value) || value < minimum || value > maximum) {
+    issues.push(`${variableName} must be an integer from ${minimum} through ${maximum}.`);
+    return defaultValue;
+  }
+  return value;
+}
+
 export function createRuntimeConfig(environment: EnvironmentSource): RuntimeConfig {
   const issues: string[] = [];
   const runtimeEnvironment = parseEnvironment(environment, issues);
@@ -406,6 +577,7 @@ export function createRuntimeConfig(environment: EnvironmentSource): RuntimeConf
     issues,
     source: environment,
   });
+  const aiProvider = parseAiProviderConfig(environment, issues);
 
   if (issues.length > 0) throw new RuntimeConfigError(issues);
 
@@ -414,6 +586,7 @@ export function createRuntimeConfig(environment: EnvironmentSource): RuntimeConf
     canonicalOrigin,
     companyIdentity,
     trustedProxyAddresses,
+    aiProvider,
     ...(databaseUrl ? { databaseUrl } : {}),
     ...(authSecret ? { authSecret } : {}),
   });
@@ -430,6 +603,10 @@ export function summarizeRuntimeConfig(config: RuntimeConfig): RuntimeConfigSumm
       config.companyIdentity.organizationName !== DEFAULT_COMPANY_IDENTITY.organizationName,
     organizationLogoConfigured: config.companyIdentity.logoPath !== null,
     trustedProxyAddressCount: config.trustedProxyAddresses.length,
+    aiProviderMode: config.aiProvider.mode,
+    aiProviderTimeoutMs: config.aiProvider.mode === 'ollama' ? config.aiProvider.timeoutMs : null,
+    aiProviderConcurrencyLimit:
+      config.aiProvider.mode === 'ollama' ? config.aiProvider.concurrencyLimit : null,
     databaseConfigured: Boolean(config.databaseUrl),
     authSecretConfigured: Boolean(config.authSecret),
   });
@@ -446,6 +623,9 @@ export function formatRuntimeConfigSummary(config: RuntimeConfig): string {
     `organizationFavicon=${summary.organizationFaviconConfigured ? 'configured' : 'fallback'};`,
     `organizationAccent=${summary.organizationAccentConfigured ? 'configured' : 'fallback'};`,
     `trustedProxyAddresses=${summary.trustedProxyAddressCount};`,
+    `aiProvider=${summary.aiProviderMode};`,
+    `aiProviderTimeoutMs=${summary.aiProviderTimeoutMs ?? 'not-configured'};`,
+    `aiProviderConcurrency=${summary.aiProviderConcurrencyLimit ?? 'not-configured'};`,
     `database=${summary.databaseConfigured ? 'configured' : 'not-configured'};`,
     `authSecret=${summary.authSecretConfigured ? 'configured' : 'not-configured'}.`,
   ].join(' ');
