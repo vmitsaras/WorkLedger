@@ -222,6 +222,41 @@
       "description": "Übernehmen Sie nur den Namen dieser Seite und, falls vorhanden, den sichtbaren Zeitraum in eine gezielte schreibgeschützte Erklärung.",
       "heading": "Diese Seite verstehen"
     },
+    "interpretation": {
+      "description": "Der generierte Wortlaut ist optional. Jeder angezeigte Wert, Status, jede Quelle, Grenze und Aktion unten stammt aus dem aktuellen nativen Ergebnis.",
+      "error": {
+        "offline": "Die optionale Erklärung wurde beendet, weil Sie offenbar offline sind",
+        "rateLimited": "Optionale Erklärungen sind für dieses Konto vorübergehend begrenzt",
+        "unavailable": "Die optionale Erklärung ist nicht verfügbar"
+      },
+      "form": {
+        "cancel": "Erklärung abbrechen",
+        "clear": "Fragen und Erklärungen löschen",
+        "count": "{{count}} von {{maximum}} Zeichen verwendet",
+        "description": "Fragen Sie nach dem nativen Ergebnis oben. Bis zu vier letzte Austausche bleiben nur im Speicher dieser Seite und werden beim Verlassen oder Neuladen gelöscht.",
+        "heading": "Mein Zeitkonto fragen",
+        "question": "Frage zu diesem Ergebnis",
+        "running": "Erklärung wird vorbereitet…",
+        "submit": "Dieses Ergebnis erklären"
+      },
+      "heading": "Optionale generierte Erklärung",
+      "limitations": "In dieser Aussage genannte Grenzen",
+      "optionalLabel": "Privates lokales Modell",
+      "question": "Frage",
+      "sources": "Maßgebliche Quellen",
+      "status": {
+        "cancelled": "Die optionale Erklärung wurde abgebrochen. Das native Ergebnis bleibt verfügbar.",
+        "ready": "Die optionale Erklärung ist bereit.",
+        "running": "Eine optionale Erklärung aus dem aktuell autorisierten Ergebnis wird vorbereitet…",
+        "viewResult": "Erklärung anzeigen"
+      },
+      "validation": {
+        "correct": "Korrigieren Sie die Frage, bevor Sie eine Erklärung anfordern.",
+        "required": "Geben Sie eine Frage zu diesem Ergebnis ein.",
+        "scopeChanged": "Der ausgewählte Einblick hat sich geändert. Erstellen Sie den nativen Einblick erneut, bevor Sie eine Frage stellen.",
+        "tooLong": "Beschränken Sie die Frage auf höchstens 500 Zeichen."
+      }
+    },
     "error": {
       "denied": "Sie haben keinen Zugriff auf Einblicke für Mitarbeitende",
       "offline": "Sie scheinen offline zu sein",
@@ -317,8 +352,10 @@
     },
     "period": { "range": "{{start}} bis {{end}}" },
     "provider": {
+      "awaitingNative": "Erstellen Sie zuerst einen nativen Einblick. Die optionale Interpretation startet niemals beim Laden der Route, beim Tippen oder im Hintergrund.",
       "disabled": "Optionale generierte Erklärungen sind nicht aktiviert. Das native Ergebnis oben bleibt verfügbar und maßgeblich.",
-      "heading": "Optionale Erklärung"
+      "heading": "Optionale Erklärung",
+      "unavailable": "Der private Anbieter ist nicht bereit. Das native Ergebnis oben bleibt verfügbar und maßgeblich. Sie können den nativen Einblick erneut erstellen, sobald der Anbieter fehlerfrei arbeitet."
     },
     "qualifier": {
       "current": "Aktuell",

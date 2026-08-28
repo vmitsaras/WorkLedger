@@ -139,7 +139,13 @@ import {
   systemDiagnosticsResponseSchema,
   type SystemDiagnosticsResponse,
 } from '@workledger/contracts';
-import type { InsightNativeResult, InsightRequest } from '@workledger/contracts/insights';
+import type {
+  InsightInterpretationAvailability,
+  InsightInterpretationRequest,
+  InsightInterpretationResult,
+  InsightNativeResult,
+  InsightRequest,
+} from '@workledger/contracts/insights';
 
 import { clearPendingInsightContext } from './insight-context.js';
 
@@ -154,6 +160,13 @@ export class ApiClientError extends Error {
   ) {
     super(code);
     this.name = 'ApiClientError';
+  }
+}
+
+export class ApiClientCancellationError extends Error {
+  constructor() {
+    super('The request was cancelled.');
+    this.name = 'ApiClientCancellationError';
   }
 }
 
@@ -384,8 +397,13 @@ export async function loadReport(
   return parsed.data.data;
 }
 
-export async function runEmployeeInsight(input: InsightRequest): Promise<InsightNativeResult> {
-  const { insightNativeResultEnvelopeSchema, insightRequestSchema } =
+export type EmployeeInsightRun = Readonly<{
+  interpretationAvailability: InsightInterpretationAvailability;
+  nativeResult: InsightNativeResult;
+}>;
+
+export async function runEmployeeInsight(input: InsightRequest): Promise<EmployeeInsightRun> {
+  const { insightRequestSchema, insightRunResponseEnvelopeSchema } =
     await import('@workledger/contracts/insights');
   const parsedInput = insightRequestSchema.safeParse(input);
   if (!parsedInput.success) throw new ApiClientError('VALIDATION_FAILED', 422);
@@ -395,7 +413,30 @@ export async function runEmployeeInsight(input: InsightRequest): Promise<Insight
     headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
     method: 'POST',
   });
-  const parsed = insightNativeResultEnvelopeSchema.safeParse(body);
+  const parsed = insightRunResponseEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return Object.freeze({
+    interpretationAvailability: parsed.data.meta.interpretationAvailability,
+    nativeResult: parsed.data.data,
+  });
+}
+
+export async function interpretEmployeeInsight(
+  input: InsightInterpretationRequest,
+  signal: AbortSignal,
+): Promise<InsightInterpretationResult> {
+  const { insightInterpretationRequestSchema, insightInterpretationResultEnvelopeSchema } =
+    await import('@workledger/contracts/insights');
+  const parsedInput = insightInterpretationRequestSchema.safeParse(input);
+  if (!parsedInput.success) throw new ApiClientError('VALIDATION_FAILED', 422);
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/insights/interpret', {
+    body: JSON.stringify(parsedInput.data),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+    signal,
+  });
+  const parsed = insightInterpretationResultEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }
@@ -1233,6 +1274,7 @@ async function requestJson(path: string, init: RequestInit = {}): Promise<unknow
       headers: { accept: 'application/json', ...init.headers },
     });
   } catch {
+    if (init.signal?.aborted === true) throw new ApiClientCancellationError();
     throw new ApiClientError('DEPENDENCY_FAILURE', 0);
   }
   const body = await safeJson(response);

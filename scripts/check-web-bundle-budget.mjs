@@ -14,14 +14,21 @@ export const INTERNATIONALIZATION_RUNTIME_ALLOWANCE = Object.freeze({
   totalJavaScriptGzipBytes: 22_000,
 });
 
+export const EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE = Object.freeze({
+  totalJavaScriptBytes: 14_000,
+  totalJavaScriptGzipBytes: 5_000,
+});
+
 export const BUNDLE_BUDGETS = Object.freeze({
   ...APPLICATION_BUNDLE_BASELINE,
   totalJavaScriptBytes:
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptBytes +
-    INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes,
+    INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
+    EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes,
   totalJavaScriptGzipBytes:
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes +
-    INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes,
+    INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
+    EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes,
 });
 
 export const LOCALE_BUNDLE_BUDGETS = Object.freeze({
@@ -56,18 +63,22 @@ export function assertBundleBudget(entries, budgets = BUNDLE_BUDGETS) {
   return values;
 }
 
-export function measureInternationalizationRuntimeAllowance(values) {
+export function measureRuntimeAllowances(values) {
   return {
     rawBytes: Math.max(
       0,
       values.totalJavaScriptBytes - APPLICATION_BUNDLE_BASELINE.totalJavaScriptBytes,
     ),
-    rawBudget: INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes,
+    rawBudget:
+      INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
+      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes,
     gzipBytes: Math.max(
       0,
       values.totalJavaScriptGzipBytes - APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes,
     ),
-    gzipBudget: INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes,
+    gzipBudget:
+      INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
+      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes,
   };
 }
 
@@ -127,10 +138,10 @@ async function main() {
       }),
   );
   const application = assertBundleBudget(entries);
-  const internationalizationRuntime = measureInternationalizationRuntimeAllowance(application);
+  const runtimeAllowances = measureRuntimeAllowances(application);
   const locales = assertLocaleBundleBudget(entries);
   console.log(
-    `Web bundle budget valid: ${JSON.stringify({ application, internationalizationRuntime, locales })}.`,
+    `Web bundle budget valid: ${JSON.stringify({ application, runtimeAllowances, locales })}.`,
   );
 }
 

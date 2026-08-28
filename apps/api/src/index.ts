@@ -114,12 +114,21 @@ export {
   createInsightService,
   parseInsightIdentity,
   type EmployeeInsightAuthority,
+  type EmployeeInsightInterpretationSource,
+  type EmployeeInsightRun,
   type InsightHandler,
   type InsightHandlerInput,
   type InsightHandlers,
   type InsightIdentity,
   type InsightService,
 } from './insights/insight-service.js';
+export {
+  createEmployeeInsightInterpretationService,
+  EMPLOYEE_INSIGHT_INTERPRETATION_RATE_LIMIT,
+  MAXIMUM_MODEL_TOOL_EXECUTIONS,
+  MAXIMUM_MODEL_TOOL_ROUNDS,
+  type EmployeeInsightInterpretationService,
+} from './insights/employee-insight-interpretation.js';
 export {
   balanceChangeInsightHandler,
   createBalanceChangePayload,

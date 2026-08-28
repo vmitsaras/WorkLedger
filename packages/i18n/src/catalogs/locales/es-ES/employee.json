@@ -228,6 +228,41 @@
       "description": "Lleva solo el nombre de esta página y, cuando esté disponible, su periodo visible a una explicación concreta de solo lectura.",
       "heading": "Entender esta página"
     },
+    "interpretation": {
+      "description": "El texto generado es opcional. Cada valor, estado, fuente, límite y acción que aparece abajo procede del resultado nativo actual.",
+      "error": {
+        "offline": "La explicación opcional se detuvo porque parece que no tienes conexión",
+        "rateLimited": "Las explicaciones opcionales están limitadas temporalmente para esta cuenta",
+        "unavailable": "La explicación opcional no está disponible"
+      },
+      "form": {
+        "cancel": "Cancelar explicación",
+        "clear": "Borrar preguntas y explicaciones",
+        "count": "{{count}} de {{maximum}} caracteres usados",
+        "description": "Pregunta por el resultado nativo anterior. Como máximo, los cuatro intercambios recientes permanecen solo en la memoria de esta página y se borran al salir o recargar.",
+        "heading": "Preguntar a mi registro",
+        "question": "Pregunta sobre este resultado",
+        "running": "Preparando explicación…",
+        "submit": "Explicar este resultado"
+      },
+      "heading": "Explicación generada opcional",
+      "limitations": "Límites citados por esta afirmación",
+      "optionalLabel": "Modelo local privado",
+      "question": "Pregunta",
+      "sources": "Fuentes oficiales",
+      "status": {
+        "cancelled": "Se canceló la explicación opcional. El resultado nativo sigue disponible.",
+        "ready": "La explicación opcional está lista.",
+        "running": "Preparando una explicación opcional a partir del resultado autorizado actual…",
+        "viewResult": "Ver explicación"
+      },
+      "validation": {
+        "correct": "Corrige la pregunta antes de solicitar una explicación.",
+        "required": "Escribe una pregunta sobre este resultado.",
+        "scopeChanged": "La consulta elegida ha cambiado. Ejecuta de nuevo la consulta nativa antes de hacer una pregunta.",
+        "tooLong": "Limita la pregunta a 500 caracteres como máximo."
+      }
+    },
     "error": {
       "denied": "No tienes acceso a la información para empleados",
       "offline": "Parece que no tienes conexión",
@@ -323,8 +358,10 @@
     },
     "period": { "range": "Del {{start}} al {{end}}" },
     "provider": {
+      "awaitingNative": "Ejecuta primero una consulta nativa. La interpretación opcional nunca se inicia al cargar la ruta, al escribir ni mediante trabajo en segundo plano.",
       "disabled": "Las explicaciones generadas opcionales no están activadas. El resultado nativo anterior sigue disponible y es el oficial.",
-      "heading": "Explicación opcional"
+      "heading": "Explicación opcional",
+      "unavailable": "El proveedor privado no está listo. El resultado nativo anterior sigue disponible y es el oficial. Puedes volver a ejecutar la consulta nativa cuando el proveedor esté disponible."
     },
     "qualifier": {
       "current": "Actual",

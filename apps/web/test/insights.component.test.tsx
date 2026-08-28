@@ -37,7 +37,7 @@ test('runs only after submit, keeps safe URL context, and presents typed native 
       if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
       if (url.pathname === '/v1/insights/run') {
         requests.push({ body: JSON.parse(String(init?.body)) as unknown, url: url.pathname });
-        return successResponse(RESULT);
+        return insightRunResponse(RESULT, 'DISABLED');
       }
       throw new Error(`Unexpected request: ${url.pathname}`);
     }),
@@ -156,6 +156,118 @@ test('clears page context when insight permission is lost', async () => {
   expect(screen.queryByRole('heading', { name: 'Page context' })).not.toBeInTheDocument();
 });
 
+test('keeps Ask My Ledger in route memory and renders grounded native citations after the native result', async () => {
+  const interpretationRequests: unknown[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = requestUrl(input);
+      if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (url.pathname === '/v1/insights/run') return insightRunResponse(RESULT, 'READY');
+      if (url.pathname === '/v1/insights/interpret') {
+        interpretationRequests.push(JSON.parse(String(init?.body)) as unknown);
+        return successResponse({ interpretation: INTERPRETATION, nativeResult: RESULT });
+      }
+      throw new Error(`Unexpected request: ${url.pathname}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const rendered = renderInsights('/insights');
+  await user.selectOptions(
+    await screen.findByLabelText('What would you like to understand?'),
+    'today-explanation',
+  );
+  await user.type(screen.getByLabelText('Date'), '2026-08-27');
+  await user.click(screen.getByRole('button', { name: 'Run insight' }));
+
+  const nativeHeading = await screen.findByRole('heading', { name: 'How was today calculated?' });
+  const question = screen.getByLabelText('Question about this result');
+  expect(nativeHeading.compareDocumentPosition(question) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+  await user.type(question, 'Why does this result look this way?');
+  await user.click(screen.getByRole('button', { name: 'Explain this result' }));
+
+  const interpretationHeading = await screen.findByRole('heading', {
+    name: 'Optional generated explanation',
+  });
+  expect(nativeHeading.compareDocumentPosition(interpretationHeading)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+  expect(screen.getByText(INTERPRETATION.statements[0].text)).toBeVisible();
+  expect(screen.getAllByText('7h 30m').length).toBeGreaterThan(1);
+  expect(screen.getAllByRole('link', { name: 'Open Today attendance source' })).toHaveLength(2);
+  expect(screen.getAllByText('Today’s values are provisional until they are posted.').length).toBe(
+    2,
+  );
+  expect(interpretationRequests).toEqual([
+    {
+      insight: {
+        kind: 'today-explanation',
+        period: { date: '2026-08-27', kind: 'DATE' },
+        workspace: 'EMPLOYEE',
+      },
+      priorTurns: [],
+      question: 'Why does this result look this way?',
+    },
+  ]);
+  expect(rendered.router.state.location.search).toBe('?kind=today-explanation&date=2026-08-27');
+  expect(rendered.router.state.location.search).not.toContain('Why');
+  expect(localStorage).toHaveLength(0);
+  expect(sessionStorage).toHaveLength(0);
+  await waitFor(() => {
+    const mutationState = JSON.stringify(
+      rendered.queryClient
+        .getMutationCache()
+        .getAll()
+        .map(({ state }) => ({ data: state.data, error: state.error, variables: state.variables })),
+    );
+    expect(mutationState).not.toContain('Why does this result look this way?');
+    expect(mutationState).not.toContain(INTERPRETATION.statements[0].text);
+  });
+  await expectNoAxeViolations(rendered.container);
+});
+
+test('cancels pending interpretation without removing the native result or losing focus', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = requestUrl(input);
+      if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (url.pathname === '/v1/insights/run') return insightRunResponse(RESULT, 'READY');
+      if (url.pathname === '/v1/insights/interpret') {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            'abort',
+            () => reject(new DOMException('Aborted', 'AbortError')),
+            { once: true },
+          );
+        });
+      }
+      throw new Error(`Unexpected request: ${url.pathname}`);
+    }),
+  );
+  const user = userEvent.setup();
+  renderInsights('/insights');
+  await user.selectOptions(
+    await screen.findByLabelText('What would you like to understand?'),
+    'today-explanation',
+  );
+  await user.type(screen.getByLabelText('Date'), '2026-08-27');
+  await user.click(screen.getByRole('button', { name: 'Run insight' }));
+  const question = await screen.findByLabelText('Question about this result');
+  await user.type(question, 'Explain the current evidence.');
+  await user.click(screen.getByRole('button', { name: 'Explain this result' }));
+  await user.click(await screen.findByRole('button', { name: 'Cancel explanation' }));
+
+  await waitFor(() => expect(question).toHaveFocus());
+  expect(screen.getByRole('status')).toHaveTextContent('The optional explanation was cancelled');
+  expect(screen.getByRole('heading', { name: 'How was today calculated?' })).toBeVisible();
+  expect(
+    screen.queryByRole('heading', { name: 'Optional generated explanation' }),
+  ).not.toBeInTheDocument();
+});
+
 function renderInsights(initialEntry: string) {
   if (runtime === undefined) throw new Error('Expected initialized i18n runtime.');
   const queryClient = createWorkLedgerQueryClient();
@@ -178,7 +290,7 @@ function renderInsights(initialEntry: string) {
       </QueryClientProvider>
     </WorkLedgerI18nProvider>,
   );
-  return { ...rendered, router };
+  return { ...rendered, queryClient, router };
 }
 
 const RESULT: InsightNativeResult = {
@@ -233,6 +345,19 @@ const RESULT: InsightNativeResult = {
   workspace: 'EMPLOYEE',
 };
 
+const INTERPRETATION = {
+  locale: 'en-GB' as const,
+  statements: [
+    {
+      actionReferences: ['action_today'],
+      factReferences: ['fact_worked'],
+      limitationReferences: ['limit_provisional'],
+      sourceReferences: ['source_today'],
+      text: 'The current evidence explains how recorded work contributes to this result.',
+    },
+  ],
+};
+
 function requestUrl(input: RequestInfo | URL): URL {
   if (typeof input === 'string') return new URL(input, 'https://workledger.test');
   if (input instanceof URL) return input;
@@ -241,4 +366,14 @@ function requestUrl(input: RequestInfo | URL): URL {
 
 function successResponse(data: unknown): Response {
   return Response.json({ data, meta: { requestId: REQUEST_ID } });
+}
+
+function insightRunResponse(
+  data: unknown,
+  interpretationAvailability: 'DISABLED' | 'READY' | 'UNAVAILABLE',
+): Response {
+  return Response.json({
+    data,
+    meta: { interpretationAvailability, requestId: REQUEST_ID },
+  });
 }

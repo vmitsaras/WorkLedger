@@ -5,9 +5,14 @@ import {
   insightToolCallSchema,
 } from '../src/insight-tools.js';
 import {
+  MAX_INSIGHT_PRIOR_TURNS,
+  MAX_INSIGHT_QUESTION_CODE_POINTS,
+  insightInterpretationRequestSchema,
+  insightInterpretationSchema,
   insightNativePayloadSchema,
   insightNativeResultSchema,
   insightRequestSchema,
+  insightRunResponseEnvelopeSchema,
 } from '../src/insights.js';
 
 const source = Object.freeze({
@@ -335,5 +340,75 @@ describe('Insight contracts', () => {
         },
       }).success,
     ).toBe(false);
+  });
+
+  it('bounds employee interpretation questions and prior turns in request memory', () => {
+    const request = {
+      insight: {
+        kind: 'balance-change',
+        period: source.period,
+        workspace: 'EMPLOYEE',
+      },
+      priorTurns: Array.from({ length: MAX_INSIGHT_PRIOR_TURNS }, (_, index) => ({
+        answer: `Grounded answer ${index}`,
+        question: `Follow up ${index}`,
+      })),
+      question: 'Why did this change?',
+    };
+    expect(insightInterpretationRequestSchema.parse(request)).toEqual(request);
+    expect(
+      insightInterpretationRequestSchema.safeParse({
+        ...request,
+        question: '🕘'.repeat(MAX_INSIGHT_QUESTION_CODE_POINTS),
+      }).success,
+    ).toBe(true);
+
+    for (const invalid of [
+      { ...request, question: '' },
+      { ...request, question: 'x'.repeat(MAX_INSIGHT_QUESTION_CODE_POINTS + 1) },
+      {
+        ...request,
+        priorTurns: [...request.priorTurns, { answer: 'Another answer', question: 'Another' }],
+      },
+      { ...request, employeeId: 'employee-1' },
+    ]) {
+      expect(insightInterpretationRequestSchema.safeParse(invalid).success).toBe(false);
+    }
+  });
+
+  it('accepts only strict provider independent interpretation references and safe availability', () => {
+    const interpretation = {
+      locale: 'en-GB',
+      statements: [
+        {
+          actionReferences: ['action_balance_history'],
+          factReferences: ['fact_closing_balance'],
+          limitationReferences: [],
+          sourceReferences: ['source_balance_ledger'],
+          text: 'The current evidence explains the change.',
+        },
+      ],
+    };
+    expect(insightInterpretationSchema.parse(interpretation)).toEqual(interpretation);
+    expect(
+      insightInterpretationSchema.safeParse({
+        ...interpretation,
+        statements: [
+          {
+            ...interpretation.statements[0],
+            factReferences: ['fact_closing_balance', 'fact_closing_balance'],
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      insightRunResponseEnvelopeSchema.safeParse({
+        data: validBalanceChangeResult(),
+        meta: {
+          interpretationAvailability: 'READY',
+          requestId: '123e4567-e89b-42d3-a456-426614174000',
+        },
+      }).success,
+    ).toBe(true);
   });
 });

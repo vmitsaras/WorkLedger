@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-import { createSuccessEnvelopeSchema } from './api.js';
+import { apiResponseMetaSchema, createSuccessEnvelopeSchema } from './api.js';
+import { supportedLocaleSchema } from './locales.js';
+
+export const MAX_INSIGHT_QUESTION_CODE_POINTS = 500;
+export const MAX_INSIGHT_PRIOR_TURNS = 4;
+export const MAX_INSIGHT_CONVERSATION_CODE_POINTS = 8_000;
+export const MAX_INSIGHT_INTERPRETATION_STATEMENTS = 8;
+export const MAX_INSIGHT_INTERPRETATION_PROSE_CODE_POINTS = 2_000;
 
 export const INSIGHT_WORKSPACES = ['EMPLOYEE', 'MANAGER', 'HR', 'SYSTEM'] as const;
 export const INSIGHT_SCOPE_KINDS = [
@@ -411,6 +418,151 @@ export const insightNativeResultSchema = z
 export const insightNativeResultEnvelopeSchema =
   createSuccessEnvelopeSchema(insightNativeResultSchema);
 
+export const insightInterpretationAvailabilitySchema = z.enum(['DISABLED', 'READY', 'UNAVAILABLE']);
+
+const insightQuestionSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_INSIGHT_QUESTION_CODE_POINTS * 2)
+  .refine(
+    (value) => codePointLength(value) <= MAX_INSIGHT_QUESTION_CODE_POINTS,
+    `An Insight question must not exceed ${MAX_INSIGHT_QUESTION_CODE_POINTS} Unicode code points.`,
+  );
+
+const insightPriorAnswerSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_INSIGHT_INTERPRETATION_PROSE_CODE_POINTS * 2)
+  .refine(
+    (value) => codePointLength(value) <= MAX_INSIGHT_INTERPRETATION_PROSE_CODE_POINTS,
+    `A prior Insight answer must not exceed ${MAX_INSIGHT_INTERPRETATION_PROSE_CODE_POINTS} Unicode code points.`,
+  );
+
+export const insightPriorTurnSchema = z.strictObject({
+  answer: insightPriorAnswerSchema,
+  question: insightQuestionSchema,
+});
+
+export const insightInterpretationRequestSchema = z
+  .strictObject({
+    insight: insightRequestSchema,
+    priorTurns: z.array(insightPriorTurnSchema).max(MAX_INSIGHT_PRIOR_TURNS),
+    question: insightQuestionSchema,
+  })
+  .superRefine((request, context) => {
+    const totalCodePoints = [
+      request.question,
+      ...request.priorTurns.flatMap((turn) => [turn.question, turn.answer]),
+    ].reduce((total, value) => total + codePointLength(value), 0);
+    if (totalCodePoints > MAX_INSIGHT_CONVERSATION_CODE_POINTS) {
+      context.addIssue({
+        code: 'custom',
+        message: `Insight conversation text must not exceed ${MAX_INSIGHT_CONVERSATION_CODE_POINTS} Unicode code points.`,
+        path: ['priorTurns'],
+      });
+    }
+  });
+
+const interpretationReferenceArraySchema = z
+  .array(opaqueInsightReferenceSchema)
+  .max(20)
+  .superRefine((references, context) => {
+    if (new Set(references).size !== references.length) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Interpretation references must be unique.',
+      });
+    }
+  });
+
+export const insightInterpretationStatementSchema = z.strictObject({
+  actionReferences: interpretationReferenceArraySchema,
+  factReferences: interpretationReferenceArraySchema.min(1),
+  limitationReferences: interpretationReferenceArraySchema,
+  sourceReferences: interpretationReferenceArraySchema.min(1),
+  text: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1_000)
+    .refine(
+      (value) => codePointLength(value) <= 500,
+      'An Insight interpretation statement must not exceed 500 Unicode code points.',
+    ),
+});
+
+export const insightInterpretationSchema = z
+  .strictObject({
+    locale: supportedLocaleSchema,
+    statements: z
+      .array(insightInterpretationStatementSchema)
+      .min(1)
+      .max(MAX_INSIGHT_INTERPRETATION_STATEMENTS),
+  })
+  .superRefine((interpretation, context) => {
+    const proseCodePoints = interpretation.statements.reduce(
+      (total, statement) => total + codePointLength(statement.text),
+      0,
+    );
+    if (proseCodePoints > MAX_INSIGHT_INTERPRETATION_PROSE_CODE_POINTS) {
+      context.addIssue({
+        code: 'custom',
+        message: `Insight interpretation prose must not exceed ${MAX_INSIGHT_INTERPRETATION_PROSE_CODE_POINTS} Unicode code points.`,
+        path: ['statements'],
+      });
+    }
+  });
+
+export const INSIGHT_INTERPRETATION_OUTPUT_JSON_SCHEMA = Object.freeze({
+  type: 'object',
+  additionalProperties: false,
+  properties: Object.freeze({
+    locale: Object.freeze({ enum: ['en-GB', 'de-DE', 'es-ES'], type: 'string' }),
+    statements: Object.freeze({
+      type: 'array',
+      minItems: 1,
+      maxItems: MAX_INSIGHT_INTERPRETATION_STATEMENTS,
+      items: Object.freeze({
+        type: 'object',
+        additionalProperties: false,
+        properties: Object.freeze({
+          actionReferences: interpretationReferenceJsonSchema(),
+          factReferences: interpretationReferenceJsonSchema(1),
+          limitationReferences: interpretationReferenceJsonSchema(),
+          sourceReferences: interpretationReferenceJsonSchema(1),
+          text: Object.freeze({ type: 'string', minLength: 1, maxLength: 500 }),
+        }),
+        required: Object.freeze([
+          'actionReferences',
+          'factReferences',
+          'limitationReferences',
+          'sourceReferences',
+          'text',
+        ]),
+      }),
+    }),
+  }),
+  required: Object.freeze(['locale', 'statements']),
+});
+
+export const insightRunResponseEnvelopeSchema = z.strictObject({
+  data: insightNativeResultSchema,
+  meta: apiResponseMetaSchema.extend({
+    interpretationAvailability: insightInterpretationAvailabilitySchema,
+  }),
+});
+
+export const insightInterpretationResultSchema = z.strictObject({
+  interpretation: insightInterpretationSchema,
+  nativeResult: insightNativeResultSchema,
+});
+
+export const insightInterpretationResultEnvelopeSchema = createSuccessEnvelopeSchema(
+  insightInterpretationResultSchema,
+);
+
 export type InsightWorkspace = z.infer<typeof insightWorkspaceSchema>;
 export type InsightScopeKind = z.infer<typeof insightScopeKindSchema>;
 export type InsightKind = z.infer<typeof insightKindSchema>;
@@ -431,3 +583,30 @@ export type InsightNativeAction = z.infer<typeof insightNativeActionSchema>;
 export type InsightFreshnessBoundary = z.infer<typeof insightFreshnessBoundarySchema>;
 export type InsightNativePayload = z.infer<typeof insightNativePayloadSchema>;
 export type InsightNativeResult = z.infer<typeof insightNativeResultSchema>;
+export type InsightInterpretationAvailability = z.infer<
+  typeof insightInterpretationAvailabilitySchema
+>;
+export type InsightPriorTurn = z.infer<typeof insightPriorTurnSchema>;
+export type InsightInterpretationRequest = z.infer<typeof insightInterpretationRequestSchema>;
+export type InsightInterpretationStatement = z.infer<typeof insightInterpretationStatementSchema>;
+export type InsightInterpretation = z.infer<typeof insightInterpretationSchema>;
+export type InsightInterpretationResult = z.infer<typeof insightInterpretationResultSchema>;
+
+function codePointLength(value: string): number {
+  return Array.from(value).length;
+}
+
+function interpretationReferenceJsonSchema(minItems = 0) {
+  return Object.freeze({
+    type: 'array',
+    minItems,
+    maxItems: 20,
+    uniqueItems: true,
+    items: Object.freeze({
+      type: 'string',
+      minLength: 1,
+      maxLength: 128,
+      pattern: '^[A-Za-z0-9_-]+$',
+    }),
+  });
+}

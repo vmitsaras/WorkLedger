@@ -65,6 +65,9 @@ export interface WorkLedgerAuthentication {
     token: string,
     clientAddress: string,
   ): Promise<Readonly<{ allowed: boolean; retryAfter: number | null }>>;
+  consumeInsightInterpretationRateLimit(
+    accountId: string,
+  ): Promise<Readonly<{ allowed: boolean; retryAfter: number | null }>>;
   hashCredentialPassword(password: string): Promise<string>;
   revokeUserSessions(userId: string): Promise<void>;
   verifyCsrfToken(headers: Headers, candidate: string): Promise<boolean>;
@@ -143,6 +146,13 @@ export function createWorkLedgerAuthentication(
       });
       if (!client.allowed) return client;
       return authDatabase.consumeRateLimit(`invitation-token:${tokenHash}`, { max: 5, window: 60 });
+    },
+    async consumeInsightInterpretationRateLimit(accountId: string) {
+      const accountHash = createHash('sha256').update(accountId, 'utf8').digest('hex');
+      return authDatabase.consumeRateLimit(`insight-interpretation:${accountHash}`, {
+        max: 12,
+        window: 10 * MINUTE_SECONDS,
+      });
     },
     hashCredentialPassword(password: string) {
       return hashPassword(validateCredentialPassword(password));

@@ -222,6 +222,41 @@
       "description": "Carry only this page’s name and, when available, its visible period into a focused, read only explanation.",
       "heading": "Understand this page"
     },
+    "interpretation": {
+      "description": "Generated wording is optional. Every displayed value, status, source, limit, and action below comes from the current native result.",
+      "error": {
+        "offline": "The optional explanation stopped because you appear to be offline",
+        "rateLimited": "Optional explanations are temporarily limited for this account",
+        "unavailable": "The optional explanation is unavailable"
+      },
+      "form": {
+        "cancel": "Cancel explanation",
+        "clear": "Clear questions and explanations",
+        "count": "{{count}} of {{maximum}} characters used",
+        "description": "Ask about the native result above. Up to four recent exchanges stay only in this page memory and clear when you leave or reload.",
+        "heading": "Ask My Ledger",
+        "question": "Question about this result",
+        "running": "Preparing explanation…",
+        "submit": "Explain this result"
+      },
+      "heading": "Optional generated explanation",
+      "limitations": "Limits referenced by this statement",
+      "optionalLabel": "Private local model",
+      "question": "Question",
+      "sources": "Authoritative sources",
+      "status": {
+        "cancelled": "The optional explanation was cancelled. The native result remains available.",
+        "ready": "The optional explanation is ready.",
+        "running": "Preparing an optional explanation from the current authorized result…",
+        "viewResult": "View explanation"
+      },
+      "validation": {
+        "correct": "Correct the question before requesting an explanation.",
+        "required": "Enter a question about this result.",
+        "scopeChanged": "The selected Insight changed. Run the native Insight again before asking a question.",
+        "tooLong": "Keep the question to 500 characters or fewer."
+      }
+    },
     "error": {
       "denied": "You do not have access to employee insights",
       "offline": "You appear to be offline",
@@ -317,8 +352,10 @@
     },
     "period": { "range": "{{start}} to {{end}}" },
     "provider": {
+      "awaitingNative": "Run a native Insight first. Optional interpretation never starts from route load, typing, or background work.",
       "disabled": "Optional generated explanations are not enabled. The native result above remains available and authoritative.",
-      "heading": "Optional explanation"
+      "heading": "Optional explanation",
+      "unavailable": "The private provider is not ready. The native result above remains available and authoritative. You can run the native Insight again after the provider is healthy."
     },
     "qualifier": {
       "current": "Current",

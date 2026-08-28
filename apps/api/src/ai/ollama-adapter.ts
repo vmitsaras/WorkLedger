@@ -23,6 +23,7 @@ import { isPrivateNetworkAddress, normalizeUrlHostname } from './private-network
 const ALLOWED_OLLAMA_PATHS = new Set(['/api/chat', '/api/show', '/api/tags']);
 const MAXIMUM_REQUEST_BYTES = 256 * 1_024;
 const MAXIMUM_RESPONSE_BYTES = 1_024 * 1_024;
+const MAXIMUM_MESSAGE_CODE_UNITS = 64_000;
 const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/u;
 const MISCONFIGURATION_CODES = new Set<AiProviderErrorCode>([
   'ADDRESS_MISMATCH',
@@ -56,6 +57,13 @@ export function createOllamaAiProvider(
   const now = dependencies.now ?? (() => new Date().toISOString());
   let activeRequests = 0;
   let readyAddresses: readonly ResolvedHostAddress[] | null = null;
+  let currentHealth = createHealth({
+    checkedAt: now(),
+    mode: 'ollama',
+    status: 'unavailable',
+    capabilities: [],
+    reasonCode: null,
+  });
 
   async function runOperation<T>(
     signal: AbortSignal | undefined,
@@ -110,24 +118,26 @@ export function createOllamaAiProvider(
         readyAddresses = Object.freeze([...startupAddresses]);
       });
 
-      return createHealth({
+      currentHealth = createHealth({
         checkedAt: now(),
         mode: 'ollama',
         status: 'ready',
         capabilities: config.requiredCapabilities,
         reasonCode: null,
       });
+      return currentHealth;
     } catch (error) {
       readyAddresses = null;
       const providerError = normalizeProviderError(error);
       const reasonCode = healthReasonCode(providerError.code);
-      return createHealth({
+      currentHealth = createHealth({
         checkedAt: now(),
         mode: 'ollama',
         status: MISCONFIGURATION_CODES.has(providerError.code) ? 'misconfigured' : 'unavailable',
         capabilities: [],
         reasonCode,
       });
+      return currentHealth;
     }
   }
 
@@ -138,31 +148,51 @@ export function createOllamaAiProvider(
     const approvedAddresses = readyAddresses;
     if (approvedAddresses === null) throw new AiProviderError('PROVIDER_NOT_READY');
     validateGenerateRequest(request);
-    return runOperation(options.signal, async (signal) => {
-      const tags = await requestJson(
-        origin,
-        resolveHost,
-        '/api/tags',
-        'GET',
-        undefined,
-        signal,
-        approvedAddresses,
-      );
-      validateModelDigest(tags, config);
-      const response = await requestJson(
-        origin,
-        resolveHost,
-        '/api/chat',
-        'POST',
-        createChatRequest(config.model, request),
-        signal,
-        approvedAddresses,
-      );
-      return parseChatResponse(response);
-    });
+    try {
+      return await runOperation(options.signal, async (signal) => {
+        const tags = await requestJson(
+          origin,
+          resolveHost,
+          '/api/tags',
+          'GET',
+          undefined,
+          signal,
+          approvedAddresses,
+        );
+        validateModelDigest(tags, config);
+        const response = await requestJson(
+          origin,
+          resolveHost,
+          '/api/chat',
+          'POST',
+          createChatRequest(config.model, request),
+          signal,
+          approvedAddresses,
+        );
+        return parseChatResponse(response);
+      });
+    } catch (error) {
+      const providerError = normalizeProviderError(error);
+      if (MISCONFIGURATION_CODES.has(providerError.code)) {
+        readyAddresses = null;
+        currentHealth = createHealth({
+          checkedAt: now(),
+          mode: 'ollama',
+          status: 'misconfigured',
+          capabilities: [],
+          reasonCode: healthReasonCode(providerError.code),
+        });
+      }
+      throw providerError;
+    }
   }
 
-  return Object.freeze({ mode: 'ollama' as const, checkHealth, generate });
+  return Object.freeze({
+    mode: 'ollama' as const,
+    checkHealth,
+    getHealth: () => currentHealth,
+    generate,
+  });
 }
 
 async function defaultResolveHost(hostname: string): Promise<readonly ResolvedHostAddress[]> {
@@ -466,7 +496,7 @@ function validateGenerateRequest(request: AiProviderRequest): void {
     request.tools.length > 8 ||
     request.messages.some(
       (message) =>
-        message.content.length > 8_000 ||
+        message.content.length > MAXIMUM_MESSAGE_CODE_UNITS ||
         (message.role === 'tool' &&
           (message.toolName === undefined || !TOOL_NAME_PATTERN.test(message.toolName))) ||
         (message.role !== 'tool' && message.toolName !== undefined) ||

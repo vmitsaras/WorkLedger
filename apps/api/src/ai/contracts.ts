@@ -99,6 +99,7 @@ export interface AiProviderRequestOptions {
 export interface AiProvider {
   readonly mode: AiProviderConfig['mode'];
   checkHealth(options?: AiProviderRequestOptions): Promise<AiProviderHealth>;
+  getHealth(): AiProviderHealth;
   generate(
     request: AiProviderRequest,
     options?: AiProviderRequestOptions,

@@ -624,7 +624,13 @@ test('runs an employee insight only on request with accessible narrow and forced
       period: { date: '2026-08-11', kind: 'DATE' },
       workspace: 'EMPLOYEE',
     });
-    await route.fulfill({ json: success(INSIGHT_RESULT), status: 200 });
+    await route.fulfill({
+      json: {
+        data: INSIGHT_RESULT,
+        meta: { interpretationAvailability: 'DISABLED', requestId: REQUEST_ID },
+      },
+      status: 200,
+    });
   });
   await page.setViewportSize({ height: 800, width: 320 });
   await page.goto('/today');

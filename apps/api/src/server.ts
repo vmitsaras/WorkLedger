@@ -36,6 +36,8 @@ import { createWorkLedgerLogger, type WorkLedgerLogger } from './logging/logger.
 import { registerCompanyIdentityRoutes } from './identity/routes.js';
 import { registerPersonalRequestRoutes } from './requests/routes.js';
 import { registerInsightRoutes } from './insights/routes.js';
+import { createAiProvider } from './ai/provider.js';
+import type { AiProvider } from './ai/contracts.js';
 import { WORKLEDGER_VERSION } from './version.js';
 
 const HEALTH_RESPONSE_SCHEMA = z.strictObject({ status: z.literal('ok') });
@@ -48,6 +50,7 @@ export function createApiServer(
     notificationDelivery?: NotificationDeliveryAdapter;
     now?: ApiClock;
     logger?: WorkLedgerLogger;
+    aiProvider?: AiProvider;
   }> = {},
 ): FastifyInstance {
   const logger =
@@ -64,6 +67,7 @@ export function createApiServer(
     requestIdHeader: false,
     trustProxy: config.trustedProxyAddresses.length > 0 ? [...config.trustedProxyAddresses] : false,
   });
+  const aiProvider = dependencies.aiProvider ?? createAiProvider(config.aiProvider);
 
   registerHttpFoundation(app);
 
@@ -92,7 +96,7 @@ export function createApiServer(
       registerMyTimeRoutes(app, authentication, database, dependencies.now);
       registerCorrectionRequestRoutes(app, config, authentication, database, dependencies.now);
       registerPersonalRequestRoutes(app, authentication, database, dependencies.now);
-      registerInsightRoutes(app, config, authentication, database, dependencies.now);
+      registerInsightRoutes(app, config, authentication, database, aiProvider, dependencies.now);
       registerCorrectionReviewRoutes(app, config, authentication, database, dependencies.now);
       registerApprovalInboxRoutes(
         app,

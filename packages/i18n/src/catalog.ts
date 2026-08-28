@@ -235,6 +235,31 @@ export type MessageParameterMap = Readonly<{
   'employee.insights.entry.action': undefined;
   'employee.insights.entry.description': undefined;
   'employee.insights.entry.heading': undefined;
+  'employee.insights.interpretation.description': undefined;
+  'employee.insights.interpretation.error.offline': undefined;
+  'employee.insights.interpretation.error.rateLimited': undefined;
+  'employee.insights.interpretation.error.unavailable': undefined;
+  'employee.insights.interpretation.form.cancel': undefined;
+  'employee.insights.interpretation.form.clear': undefined;
+  'employee.insights.interpretation.form.count': Readonly<{ count: number; maximum: number }>;
+  'employee.insights.interpretation.form.description': undefined;
+  'employee.insights.interpretation.form.heading': undefined;
+  'employee.insights.interpretation.form.question': undefined;
+  'employee.insights.interpretation.form.running': undefined;
+  'employee.insights.interpretation.form.submit': undefined;
+  'employee.insights.interpretation.heading': undefined;
+  'employee.insights.interpretation.limitations': undefined;
+  'employee.insights.interpretation.optionalLabel': undefined;
+  'employee.insights.interpretation.question': undefined;
+  'employee.insights.interpretation.sources': undefined;
+  'employee.insights.interpretation.status.cancelled': undefined;
+  'employee.insights.interpretation.status.ready': undefined;
+  'employee.insights.interpretation.status.running': undefined;
+  'employee.insights.interpretation.status.viewResult': undefined;
+  'employee.insights.interpretation.validation.correct': undefined;
+  'employee.insights.interpretation.validation.required': undefined;
+  'employee.insights.interpretation.validation.scopeChanged': undefined;
+  'employee.insights.interpretation.validation.tooLong': undefined;
   'employee.insights.error.denied': undefined;
   'employee.insights.error.offline': undefined;
   'employee.insights.error.returnToday': undefined;
@@ -309,8 +334,10 @@ export type MessageParameterMap = Readonly<{
   'employee.insights.page.description': undefined;
   'employee.insights.page.eyebrow': undefined;
   'employee.insights.period.range': Readonly<{ end: string; start: string }>;
+  'employee.insights.provider.awaitingNative': undefined;
   'employee.insights.provider.disabled': undefined;
   'employee.insights.provider.heading': undefined;
+  'employee.insights.provider.unavailable': undefined;
   'employee.insights.qualifier.current': undefined;
   'employee.insights.qualifier.incomplete': undefined;
   'employee.insights.qualifier.posted': undefined;
@@ -2547,6 +2574,31 @@ export const MESSAGE_KEYS = [
   'employee.insights.entry.action',
   'employee.insights.entry.description',
   'employee.insights.entry.heading',
+  'employee.insights.interpretation.description',
+  'employee.insights.interpretation.error.offline',
+  'employee.insights.interpretation.error.rateLimited',
+  'employee.insights.interpretation.error.unavailable',
+  'employee.insights.interpretation.form.cancel',
+  'employee.insights.interpretation.form.clear',
+  'employee.insights.interpretation.form.count',
+  'employee.insights.interpretation.form.description',
+  'employee.insights.interpretation.form.heading',
+  'employee.insights.interpretation.form.question',
+  'employee.insights.interpretation.form.running',
+  'employee.insights.interpretation.form.submit',
+  'employee.insights.interpretation.heading',
+  'employee.insights.interpretation.limitations',
+  'employee.insights.interpretation.optionalLabel',
+  'employee.insights.interpretation.question',
+  'employee.insights.interpretation.sources',
+  'employee.insights.interpretation.status.cancelled',
+  'employee.insights.interpretation.status.ready',
+  'employee.insights.interpretation.status.running',
+  'employee.insights.interpretation.status.viewResult',
+  'employee.insights.interpretation.validation.correct',
+  'employee.insights.interpretation.validation.required',
+  'employee.insights.interpretation.validation.scopeChanged',
+  'employee.insights.interpretation.validation.tooLong',
   'employee.insights.error.denied',
   'employee.insights.error.offline',
   'employee.insights.error.returnToday',
@@ -2621,8 +2673,10 @@ export const MESSAGE_KEYS = [
   'employee.insights.page.description',
   'employee.insights.page.eyebrow',
   'employee.insights.period.range',
+  'employee.insights.provider.awaitingNative',
   'employee.insights.provider.disabled',
   'employee.insights.provider.heading',
+  'employee.insights.provider.unavailable',
   'employee.insights.qualifier.current',
   'employee.insights.qualifier.incomplete',
   'employee.insights.qualifier.posted',

@@ -162,7 +162,7 @@ export function InsightNativeResult({ result }: Readonly<{ result: InsightNative
             <li key={source.reference}>
               <Panel as="article" className="h-full content-between" density="compact">
                 <div>
-                  <h4 className="m-0 text-base font-bold">{sourceName(source, t)}</h4>
+                  <h4 className="m-0 text-base font-bold">{insightSourceName(source, t)}</h4>
                   <p className="m-0 mt-1 text-sm text-[var(--wl-text-muted)]">
                     {formatInsightPeriod(source.period, runtime.locale, t)}
                   </p>
@@ -171,7 +171,9 @@ export function InsightNativeResult({ result }: Readonly<{ result: InsightNative
                   className={`${buttonVariants({ variant: 'secondary' })} mt-3 w-fit`}
                   to={insightDestinationPath(source.destination, source.period)}
                 >
-                  {t('employee.insights.source.open', { source: sourceName(source, t) })}
+                  {t('employee.insights.source.open', {
+                    source: insightSourceName(source, t),
+                  })}
                 </Link>
               </Panel>
             </li>
@@ -220,7 +222,7 @@ function FactCard({
             {insightFactLabel(fact.code, t)}
           </dt>
           <dd className="m-0 mt-1 text-xl font-bold">
-            {formatFactValue(fact, result, runtime, t)}
+            {formatInsightFactValue(fact, result, runtime, t)}
           </dd>
         </div>
       </dl>
@@ -247,7 +249,7 @@ function ResultMetadata({ label, value }: Readonly<{ label: string; value: strin
   );
 }
 
-function formatFactValue(
+export function formatInsightFactValue(
   fact: InsightFact,
   result: InsightNativeResult,
   runtime: I18nRuntime,
@@ -278,14 +280,17 @@ function sourceNames(
 ): string {
   const names = references.flatMap((reference) => {
     const source = sources.get(reference);
-    return source === undefined ? [] : [sourceName(source, t)];
+    return source === undefined ? [] : [insightSourceName(source, t)];
   });
   return t('employee.insights.result.sourceEvidence', {
     sources: formatList(locale, names),
   });
 }
 
-function sourceName(source: InsightSource, t: ReturnType<typeof useWorkLedgerMessage>): string {
+export function insightSourceName(
+  source: InsightSource,
+  t: ReturnType<typeof useWorkLedgerMessage>,
+): string {
   return source.label ?? insightSourceKindLabel(source.kind, t);
 }
 

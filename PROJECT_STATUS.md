@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 7 of 17 tasks complete
+**Phase progress:** Phase 15 in progress — 8 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
-**Active task:** `WL-1507` — Implement employee-only Ask My Ledger interpretation
-**Status:** `WL-1506` completed the disabled-by-default provider abstraction and private Ollama adapter with pinned origin, address, digest, capability, timeout, cancellation, and safe health controls
+**Active task:** `WL-1508` — Evaluate and pass the employee local AI pilot sub-gate
+**Status:** `WL-1507` completed employee-only Ask My Ledger with transient context, current self-tool authorization, bounded orchestration, cancellation, strict grounding, native value rendering, and source attribution
 **Last verified:** 2026-08-27
 
 ## Current objective
@@ -27,8 +27,14 @@ external adapter denial. Completed `WL-1506` now supplies the disabled-by-defaul
 abstraction and an optional private Ollama adapter. It pins the exact origin, resolved private
 address set, local model name and digest, chat/tool/structured-output capability, timeout, and
 installation concurrency; it rejects redirects, proxy routing, public/cloud models, reasoning
-content, model drift, and generation before a successful health check. `WL-1507` may now add only
-employee-self Ask My Ledger interpretation through that adapter and the existing tool registry.
+content, model drift, and generation before a successful health check. Completed `WL-1507` now
+supplies optional employee-self Ask My Ledger interpretation through that adapter and the existing
+tool registry. Questions and prior turns remain request memory only; every tool reauthorizes current
+self scope; structured output maps to validated native facts, limitations, actions, and exact
+sources; native values are rendered outside model prose; and cancellation or provider failure
+preserves the complete deterministic result. `WL-1508` must now evaluate the pinned model,
+prompt-injection and privacy boundaries, degraded behavior, content-free traces, and accessibility
+before the local AI pilot sub-gate may pass.
 Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
 evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
@@ -2964,14 +2970,44 @@ remains an unnumbered draft.
 - Added `docs/157-wl-1506-ai-provider-private-ollama-adapter.md`. No manifest version changed because
   the Phase 15 release gate remains open.
 
+**2026-08-27 — WL-1507 employee Ask My Ledger interpretation (complete)**
+
+- Added strict request-memory contracts for one Employee Insight, a 500-code-point question, four
+  prior turns, an 8,000-code-point conversation ceiling, and eight structured statements. The
+  authenticated no-store interpretation endpoint reports provider availability only after a
+  deterministic native run and uses the authoritative account locale.
+- Added a bounded orchestration service with one exact visible-scope Employee tool, current self
+  authorization on every execution, one in-flight request per account, 12 attempts per rolling 10
+  minutes, two tool rounds, four executions, caller/server cancellation, and no retry. Public,
+  cloud, manager, HR, System, MCP, arbitrary query, and write capabilities remain absent.
+- Added strict reference grounding. Every statement must cite at least one validated fact and the
+  exact native sources supporting its fact, limitation, and action references. Every material
+  limitation is required. Model prose cannot carry native numeric values, dates, statuses, labels,
+  codes, or identifiers; the localized UI renders those values from the current native result.
+- Added the optional labelled question form after the complete native result, Unicode-aware
+  counting, linked error summary, explicit pending, cancel and clear controls, polite status,
+  focus restoration, normal document semantics, native source/action links, and complete English,
+  German, and Spanish copy. Context clears on scope, route, session, and permission loss.
+- `pnpm verify` passes 54 tooling tests, 464 unit and component tests, 13 broad integration tests
+  with 48 expected database opt-outs, 48 Playwright scenarios with one historical skip, and the
+  production/workspace build. The canonical PostgreSQL suite passes 15 files with 28 tests and one
+  historical skip. Source boundaries cover 343 files and 1,967 imports.
+- Added a separate 14,000 raw and 5,000 gzip JavaScript-byte employee local AI pilot allowance.
+  The production graph uses 1,050,183 raw and 270,383 gzip non-locale bytes within the combined
+  1,052,000 and 282,000 ceilings. Largest-chunk, CSS, and locale budgets are unchanged.
+- Added `docs/158-wl-1507-employee-ask-my-ledger-interpretation.md` and regenerated OpenAPI. No
+  dependency, migration, table, persisted question or answer, audit content, external egress path,
+  or manifest version changed.
+
 ## Current blockers
 
 Phase 15 has no scheduling blocker. The deterministic Insights foundation sub-gate is complete.
-`WL-1506` is complete. `WL-1507` may implement only the employee-self interpretation endpoint,
-session-only orchestration, structured grounding, cancellation, and source attribution. The local
-AI pilot remains open until `WL-1508`; manager, report-builder, HR, system, and MCP tasks remain
-blocked by their named sub-gates. The broad environment-independent integration command and the
-canonical isolated `pnpm db:test` gate are green. Exact partial-day work-versus-absence overlap,
+`WL-1507` is complete. The local AI pilot remains open until `WL-1508` proves the multilingual
+golden-question set, pinned-model behavior, prompt-injection and leakage controls, bounded
+content-free traces, degraded-provider behavior, and accessibility matrix. Manager, report-builder,
+HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
+environment-independent integration command and the canonical isolated `pnpm db:test` gate are
+green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
 domain or repository facts; Today does not guess them from minute totals or an otherwise valid
 overnight session. The earlier Phase 12 and task-specific Phase 13 images remain historical and
@@ -2984,11 +3020,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1507`: implement employee-only Ask My Ledger interpretation with request-memory-only
-question and prior-turn context, one current Employee workspace, independently reauthorized tools,
-bounded tool rounds and calls, validated provider-independent structured output, cancellation,
-safe retry, and exact native fact/source/limitation/action attribution. Provider failure or invalid
-output must preserve the complete deterministic result.
+Execute `WL-1508`: add the 20 to 30 question multilingual employee evaluation set, bounded
+content-free operational traces, privacy, permission, injection, leakage, invalid-output and
+provider-failure evidence, exact native fact/source/action correctness checks, and accessibility
+verification, then decide the local AI pilot sub-gate. Provider mode remains disabled by default
+until that evidence passes for the exact pinned model digest.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

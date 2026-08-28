@@ -9,6 +9,7 @@ import { createWorkLedgerDatabase } from '@workledger/database';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createEmployeeInsightHandlers } from '../src/insights/employee-insight-handlers.js';
+import type { AiProvider, AiProviderRequest, AiProviderResponse } from '../src/ai/contracts.js';
 import { createInsightService } from '../src/insights/insight-service.js';
 import { createInsightToolRegistry } from '../src/insights/insight-tool-registry.js';
 
@@ -136,6 +137,39 @@ integrationTest(
         expect(serialized).not.toContain(employee.organizationId);
       }
 
+      const interpretationFact = balance.facts[0];
+      if (interpretationFact === undefined) throw new Error('Expected an Insight fact.');
+      const materialLimitations = balance.limitations.filter(({ material }) => material);
+      const interpretationSources = [
+        ...interpretationFact.sourceReferences,
+        ...materialLimitations.flatMap(({ sourceReferences }) => sourceReferences),
+      ].filter((reference, index, references) => references.indexOf(reference) === index);
+      const providerHarness = createReadyProvider([
+        {
+          content: '',
+          toolCalls: [
+            {
+              arguments: { endDate: '2026-02-03', startDate: '2026-02-01' },
+              name: 'employee_balance_change',
+            },
+          ],
+        },
+        {
+          content: JSON.stringify({
+            locale: 'en-GB',
+            statements: [
+              {
+                actionReferences: [],
+                factReferences: [interpretationFact.reference],
+                limitationReferences: materialLimitations.map(({ reference }) => reference),
+                sourceReferences: interpretationSources,
+                text: 'The requested evidence explains the recorded balance result.',
+              },
+            ],
+          }),
+          toolCalls: [],
+        },
+      ]);
       const app = createApiServer(
         createRuntimeConfig({
           WORKLEDGER_AUTH_SECRET: AUTH_SECRET,
@@ -147,7 +181,7 @@ integrationTest(
           WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
           WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
         }),
-        { now: () => '2026-02-03T10:30:45Z' },
+        { aiProvider: providerHarness.provider, now: () => '2026-02-03T10:30:45Z' },
       );
       try {
         const unauthenticated = await app.inject({
@@ -205,10 +239,48 @@ integrationTest(
             scope: { kind: 'SELF' },
             workspace: 'EMPLOYEE',
           },
+          meta: { interpretationAvailability: 'READY' },
         });
         expect(response.payload).not.toContain(employee.accountId);
         expect(response.payload).not.toContain(employee.employeeId);
         expect(response.payload).not.toContain(employee.organizationId);
+
+        const question = 'What does this balance evidence mean?';
+        const interpreted = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/interpret',
+          headers: { cookie, origin: ORIGIN, 'x-workledger-csrf': csrf },
+          payload: { insight: balanceRequest(), priorTurns: [], question },
+        });
+        expect(interpreted.statusCode).toBe(200);
+        expect(interpreted.headers['cache-control']).toBe('private, no-store');
+        expect(interpreted.json()).toMatchObject({
+          data: {
+            interpretation: {
+              locale: 'en-GB',
+              statements: [
+                {
+                  factReferences: [interpretationFact.reference],
+                  sourceReferences: interpretationSources,
+                },
+              ],
+            },
+            nativeResult: {
+              kind: 'balance-change',
+              scope: { kind: 'SELF' },
+              workspace: 'EMPLOYEE',
+            },
+          },
+        });
+        expect(interpreted.payload).not.toContain(question);
+        expect(interpreted.payload).not.toContain(employee.accountId);
+        expect(interpreted.payload).not.toContain(employee.employeeId);
+        expect(interpreted.payload).not.toContain(employee.organizationId);
+        expect(providerHarness.requests).toHaveLength(2);
+        expect(JSON.stringify(providerHarness.requests[0])).not.toContain(
+          interpretationFact.reference,
+        );
+        expect(JSON.stringify(providerHarness.requests[1])).toContain(interpretationFact.reference);
 
         await fixture.client.query(`update employees set status = 'INACTIVE' where id = $1`, [
           employee.employeeId,
@@ -392,6 +464,34 @@ function balanceRequest(): InsightRequest {
     period: { endDate: '2026-02-03', kind: 'DATE_RANGE', startDate: '2026-02-01' },
     workspace: 'EMPLOYEE',
   };
+}
+
+function createReadyProvider(responses: readonly AiProviderResponse[]): Readonly<{
+  provider: AiProvider;
+  requests: AiProviderRequest[];
+}> {
+  const requests: AiProviderRequest[] = [];
+  let responseIndex = 0;
+  const health = Object.freeze({
+    capabilities: Object.freeze(['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'] as const),
+    checkedAt: '2026-02-03T10:00:00Z',
+    mode: 'ollama' as const,
+    reasonCode: null,
+    status: 'ready' as const,
+  });
+  const provider: AiProvider = Object.freeze({
+    mode: 'ollama',
+    checkHealth: async () => health,
+    generate: async (request) => {
+      requests.push(request);
+      const response = responses[responseIndex];
+      responseIndex += 1;
+      if (response === undefined) throw new Error('Unexpected provider request.');
+      return response;
+    },
+    getHealth: () => health,
+  });
+  return Object.freeze({ provider, requests });
 }
 
 async function signIn(app: ReturnType<typeof createApiServer>): Promise<string> {

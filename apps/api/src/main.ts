@@ -17,7 +17,7 @@ async function main() {
   });
   const aiProvider = createAiProvider(config.aiProvider);
 
-  const server = createApiServer(config, { logger });
+  const server = createApiServer(config, { aiProvider, logger });
 
   const envPort = process.env['PORT'];
   const port = envPort ? parseInt(envPort, 10) : 3000;
