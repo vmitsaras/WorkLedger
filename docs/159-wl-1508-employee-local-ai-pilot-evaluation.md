@@ -81,6 +81,42 @@ origin rule, proxy/redirect rule, egress path, retention path, dependency, or ma
 Provider mode remains disabled by default. `qwen3-coder:latest`/`qwen3-coder:30b` and their shared
 digest were not needed after the smaller candidate passed and remain unevaluated.
 
+## `WL-1508B` known-failure regression screen
+
+`WL-1508B` started on 2026-08-28 against the exact qualified `qwen2.5-coder:14b` digest. The
+evaluator retained the accepted inference configuration: temperature `0`, thinking disabled,
+1,024 maximum generated tokens, 30-second request deadline, and concurrency `1`. Its startup health
+check reverified the exact digest and required capabilities before the first case.
+
+The first required semantic group failed, so the task stopped at its defined checkpoint:
+
+| Evidence | Result |
+|---|---|
+| Semantic question | `submission-actions` |
+| Planned runs in this group | 3 locales × 3 repetitions = 9 |
+| Completed runs | 9 |
+| Passed | 0 |
+| Failed | 9 |
+| Locale distribution | `en-GB` 3/3 failed; `de-DE` 3/3 failed; `es-ES` 3/3 failed |
+| Safe outcome | `PROVIDER_INVALID_OUTPUT` × 9 |
+| Provider failure | `INVALID_RESPONSE` × 9 |
+| Validation failure | `TOOL_REQUIRED` × 9 |
+| Tool rounds / executions | 0 / 0 |
+| Input / output tokens | 4,464 / 333 |
+| Latency range | 1,319–5,093 milliseconds |
+| Retained artifact | Ignored local `output/insights/wl1508-employee-local-ai-smoke.json`, 4,882 bytes |
+
+All nine responses failed before a required tool call. This is a repeatable model-behavior failure,
+not a health, timeout, scope, permission, source, or native-fallback success. The artifact contains
+only the existing allowlisted model/digest, inference settings, semantic ID, locale, repetition,
+disposition, safe error and trace codes, latency, token counts, and tool counters.
+
+The `today-posted` group was not run because `WL-1508B` requires stopping on any candidate failure.
+The 216-case matrix did not run. No prompt, tool context, schema, validator, threshold, evaluator,
+provider implementation, native fallback, dependency, runtime default, manifest, or version
+changed. `WL-1508B` remains open, `WL-1508C` remains blocked, and provider mode remains disabled by
+default.
+
 ## Golden set and evaluator
 
 The repository-owned set contains exactly six semantic questions for each Employee Insight:
@@ -197,7 +233,7 @@ the next child.
   behavior, or provider security controls in this task.
 - If no candidate qualifies, stop with `WL-1508A` open and keep the parent gate blocked.
 
-### `WL-1508B` — Screen the known failure modes
+### `WL-1508B` — Screen the known failure modes (failed candidate; open)
 
 - Run only the `submission-actions` and `today-posted` semantic questions in all three locales and
   all three repetitions against the exact `WL-1508A` digest: 18 runs total.
@@ -230,8 +266,9 @@ the next child.
 
 ## Required next task
 
-Start `WL-1508B` only. Configure the test-only evaluator for the qualified
-`qwen2.5-coder:14b` digest and run the `submission-actions` and `today-posted` semantic questions in
-all three locales and all three repetitions: 18 runs total. Do not start the complete matrix,
-change prompts, tool context, schemas, validators, thresholds, or native fallback, mark `WL-1508`
-complete, enable provider mode by default, or advance to `WL-1509` in the same task.
+Keep `WL-1508B` open and stop. The qualified `qwen2.5-coder:14b` digest is not eligible for
+`WL-1508C`. Before another model is loaded or evaluated, register a new bounded replacement-model
+qualification child in `TODO.md` and `docs/08-task-board.md`, then execute only that child. Do not
+rerun this failed candidate, run `today-posted` or the complete matrix, change prompts, tool context,
+schemas, validators, thresholds, or native fallback, mark `WL-1508` complete, enable provider mode
+by default, or advance to `WL-1509` without a passing replacement screen.
