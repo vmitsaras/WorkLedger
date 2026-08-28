@@ -618,7 +618,7 @@ and operations evidence.
   correctness, scope, source, action, unsupported claim, and leakage threshold in ADR 0014.
 - [x] Timeout, cancellation, invalid output, model drift, and provider failure leave the native
   result usable and accessible.
-- [ ] `WL-1508F` replaces redundant model tool selection without changing the endpoint, native
+- [x] `WL-1508F` replaces redundant model tool selection without changing the endpoint, native
   authority, provider security controls, runtime validators, or zero-tolerance gate, before the
   bounded model screen resumes.
 

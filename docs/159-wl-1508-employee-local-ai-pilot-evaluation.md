@@ -28,8 +28,8 @@ pilot remain blocked by the named roadmap gate. No manifest version changes.
 
 The accepted `WL-1508F` recovery is now implemented and deterministically verified. WorkLedger
 replaces redundant model tool selection with one exact server-owned registry execution and one
-tool-free schema-constrained provider response. No real model case ran. Task closure remains a
-separate review decision, so `WL-1508B` remains blocked until `WL-1508F` is marked complete.
+tool-free schema-constrained provider response. No real model case ran. `WL-1508F` is complete and
+`WL-1508B` is ready to resume only for the exact qualified `qwen2.5-coder:14b` digest.
 
 ## Exact evaluated provider
 
@@ -160,8 +160,8 @@ validator, threshold, evaluator, provider implementation, native fallback, depen
 default, manifest, or version changed. `WL-1508B` remains open, `WL-1508C` remains blocked, and
 provider mode remains disabled by default. Both qualified replacement candidates have now failed
 the first required semantic group. The accepted bounded recovery decision is recorded under
-`WL-1508F` below. No model execution is permitted until its implementation and deterministic
-verification complete.
+`WL-1508F` below. Its implementation and deterministic verification are complete. Only the exact
+qualified `qwen2.5-coder:14b` candidate may resume the bounded `WL-1508B` screen.
 
 ## `WL-1508E` recovery qualification task (complete)
 
@@ -245,7 +245,7 @@ retag, source change, dependency, runtime default, manifest, or version was intr
 execution. A failed probe requires no runtime rollback because provider mode stays disabled and no
 model or application state is persisted by WorkLedger.
 
-## `WL-1508F` server-owned Employee Insight orchestration (implemented; closure pending)
+## `WL-1508F` server-owned Employee Insight orchestration (complete)
 
 The failing candidates exposed a redundant model decision. Before provider generation, WorkLedger
 already knows the active workspace, Insight kind, exact visible period, exact Employee registry
@@ -253,7 +253,7 @@ tool, and exact tool arguments. Asking the model to repeat that selection adds n
 created the first candidate's complete failure mode.
 
 The accepted decision is specified in
-`docs/specs/_root/0001-server-owned-insight-orchestration.md`. `WL-1508F` now executes the derived
+`docs/specs/_root/0001-server-owned-insight-orchestration/index.md`. `WL-1508F` now executes the derived
 registry call once with current Employee self authorization, uses that fresh result for minimized
 model context and final validation, and makes one provider request with no tools and the existing
 strict structured-output contract. The request schema is narrowed to the current locale, current
@@ -298,11 +298,10 @@ scope, provider security, native authority, or the zero-tolerance gate.
 - [x] Focused unit, database authorization, cancellation, provider failure, configuration,
       redaction, formatting, phase, and repository checks pass without a real model request.
 
-**Checkpoint:** Deterministic verification is complete. If review accepts closure, mark only
-`WL-1508F` complete and make `WL-1508B` ready for its existing 18-run screen against exact
-qualified `qwen2.5-coder:14b` digest
-`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. Do not run that screen in
-this task.
+**Checkpoint:** Review accepted closure. `WL-1508F` is complete and `WL-1508B` is ready for its
+existing 18-run screen against exact qualified `qwen2.5-coder:14b` digest
+`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. No model screen ran in this
+task.
 
 **Rollback note:** Provider mode remains disabled. Before any new model screen, the orchestration
 change can be reverted as one bounded source and test change with no data migration or persisted
@@ -410,7 +409,7 @@ Gate result:
 - `pnpm test:ai:employee`: **failed** the zero-tolerance pilot threshold. The best retained strict
   configuration completed 207/216; nine deterministic semantic cases remained invalid.
 - `WL-1508F` made no real model request and produced no evaluator artifact. Its deterministic and
-  database evidence is green, while the task remains in progress pending the closure decision.
+  database evidence is green, and the task is complete.
 
 ## Recovery task decomposition
 
@@ -429,7 +428,7 @@ the next child.
   behavior, or provider security controls in this task.
 - If no candidate qualifies, stop with `WL-1508A` open and keep the parent gate blocked.
 
-### `WL-1508B` — Screen the known failure modes (failed candidates; open)
+### `WL-1508B` — Screen the known failure modes (ready; prior candidates failed)
 
 - Run only the `submission-actions` and `today-posted` semantic questions in all three locales and
   all three repetitions against one exact qualified candidate digest: 18 runs total.
@@ -444,7 +443,7 @@ the next child.
 - Execute only the recovery qualification contract above.
 - Stop before any employee semantic case whether qualification passes or fails.
 
-### `WL-1508F` — Move the known registry call under server control (implementation verified)
+### `WL-1508F` — Move the known registry call under server control (complete)
 
 - Execute the exact Employee registry call once from validated request intent and current
   authorization before provider generation.
@@ -476,8 +475,9 @@ the next child.
 
 ## Required next task
 
-Review and, if accepted, close `WL-1508F`; then make `WL-1508B` ready. Resume only the existing
-18-run `submission-actions` and `today-posted` screen against exact qualified
-`qwen2.5-coder:14b`. Do not run a model case as part of `WL-1508F`, weaken runtime validators or
-the accepted threshold, change the provider capability contract, or advance to `WL-1508C`,
-`WL-1508D`, or `WL-1509` unless the named prerequisite passes.
+Run only the existing 18-run `submission-actions` and `today-posted` `WL-1508B` screen against
+exact qualified `qwen2.5-coder:14b` digest
+`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. Preserve temperature `0`,
+thinking disabled, 1,024 generated tokens, the 30-second request deadline, concurrency `1`, and
+the existing health and validation contracts. Do not weaken the accepted threshold or advance to
+`WL-1508C`, `WL-1508D`, or `WL-1509` unless the named prerequisite passes.

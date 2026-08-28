@@ -23,7 +23,7 @@ concurrency, reasoning, retention, or disabled default, and does not weaken the 
 After it completes, only exact qualified `qwen2.5-coder:14b` digest
 `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` may resume the 18 case
 `WL-1508B` screen. Any failure stops before `WL-1508C`. See
-`docs/specs/_root/0001-server-owned-insight-orchestration.md`.
+`docs/specs/_root/0001-server-owned-insight-orchestration/index.md`.
 
 ### 2026-08-27 — WL-1500 accepts deterministic Insights before local AI
 
