@@ -90,7 +90,7 @@ const INTERPRETATION = {
       factReferences: ['fact_worked'],
       limitationReferences: ['limit_provisional'],
       sourceReferences: ['source_today'],
-      text: 'The current evidence explains how recorded work contributes to this result.',
+      text: 'The cited records explain how the components contribute to the result.',
     },
   ],
 };
@@ -126,6 +126,7 @@ test('orchestrates the exact employee tool and returns grounded current sources'
   expect(consumeRateLimit).toHaveBeenCalledWith(ACCOUNT_ID);
   expect(provider.generate).toHaveBeenCalledTimes(2);
   const firstRequest = vi.mocked(provider.generate).mock.calls[0]?.[0];
+  expect(firstRequest?.outputSchema).toBeUndefined();
   expect(firstRequest?.tools).toEqual([
     expect.objectContaining({
       name: 'employee_today_explanation',
@@ -137,8 +138,176 @@ test('orchestrates the exact employee tool and returns grounded current sources'
   expect(JSON.stringify(firstRequest)).not.toContain('450');
   expect(JSON.stringify(firstRequest)).not.toContain('source_today');
   const secondRequest = vi.mocked(provider.generate).mock.calls[1]?.[0];
+  expect(secondRequest?.tools).toEqual([]);
+  expect(secondRequest?.outputSchema).toBeUndefined();
   expect(JSON.stringify(secondRequest)).toContain('source_today');
+  const toolMessage = secondRequest?.messages.find((message) => message.role === 'tool');
+  expect(toolMessage).toBeDefined();
+  expect(JSON.parse(toolMessage?.content ?? '')).toMatchObject({
+    limitations: [
+      {
+        relatedActionReferences: ['action_today'],
+        relatedFactReferences: ['fact_worked'],
+        relatedSourceReferences: ['source_today'],
+      },
+    ],
+  });
+  expect(JSON.stringify(secondRequest)).not.toContain('"qualifiers"');
+  expect(JSON.stringify(secondRequest)).not.toContain('450');
   expect(JSON.stringify(secondRequest)).not.toContain('employeeId');
+});
+
+test('records one content free operational trace with bounded token and tool counts', async () => {
+  const insightService = createInsightServiceStub();
+  const provider = createProvider([
+    {
+      content: '',
+      toolCalls: [
+        {
+          name: 'employee_today_explanation',
+          arguments: { date: '2026-08-27' },
+        },
+      ],
+      usage: { inputTokens: 30, outputTokens: 4 },
+    },
+    {
+      content: JSON.stringify(INTERPRETATION),
+      toolCalls: [],
+      usage: { inputTokens: 50, outputTokens: 12 },
+    },
+  ]);
+  const traces: unknown[] = [];
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+
+  await service.interpret(identity(), REQUEST, CAPTURED_AT, {
+    recordTrace: (trace) => traces.push(trace),
+  });
+
+  expect(traces).toEqual([
+    {
+      inputTokens: 80,
+      latencyMs: expect.any(Number),
+      outcome: 'SUCCESS',
+      outputTokens: 16,
+      providerFailureCode: null,
+      validationFailureCode: null,
+      toolExecutions: 1,
+      toolRounds: 1,
+    },
+  ]);
+  const serialized = JSON.stringify(traces);
+  expect(serialized).not.toContain(REQUEST.question);
+  expect(serialized).not.toContain(INTERPRETATION.statements[0].text);
+  expect(serialized).not.toContain('source_today');
+  expect(serialized).not.toContain(ACCOUNT_ID);
+});
+
+test('normalizes an exact JSON response fence before applying the full grounding validator', async () => {
+  const insightService = createInsightServiceStub();
+  const provider = createProvider([
+    {
+      content: '',
+      toolCalls: [
+        {
+          name: 'employee_today_explanation',
+          arguments: { date: '2026-08-27' },
+        },
+      ],
+    },
+    { content: `\`\`\`json\n${JSON.stringify(INTERPRETATION)}\n\`\`\``, toolCalls: [] },
+  ]);
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+
+  await expect(service.interpret(identity(), REQUEST, CAPTURED_AT)).resolves.toEqual({
+    interpretation: INTERPRETATION,
+    nativeResult: RESULT,
+  });
+});
+
+test('rejects a fenced JSON response with any surrounding prose', async () => {
+  const insightService = createInsightServiceStub();
+  const provider = createProvider([
+    {
+      content: '',
+      toolCalls: [
+        {
+          name: 'employee_today_explanation',
+          arguments: { date: '2026-08-27' },
+        },
+      ],
+    },
+    {
+      content: `Here is the result:\n\`\`\`json\n${JSON.stringify(INTERPRETATION)}\n\`\`\``,
+      toolCalls: [],
+    },
+  ]);
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+
+  await expect(service.interpret(identity(), REQUEST, CAPTURED_AT)).rejects.toMatchObject({
+    code: 'INTERNAL_ERROR',
+    statusCode: 503,
+  });
+});
+
+test('rejects otherwise grounded prose outside the locale safe allowlist', async () => {
+  const insightService = createInsightServiceStub();
+  const provider = createProvider([
+    {
+      content: '',
+      toolCalls: [
+        {
+          name: 'employee_today_explanation',
+          arguments: { date: '2026-08-27' },
+        },
+      ],
+    },
+    {
+      content: JSON.stringify({
+        ...INTERPRETATION,
+        statements: [
+          {
+            ...INTERPRETATION.statements[0],
+            text: 'The evidence proves that a policy conclusion applies.',
+          },
+        ],
+      }),
+      toolCalls: [],
+    },
+  ]);
+  const traces: unknown[] = [];
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+
+  await expect(
+    service.interpret(identity(), REQUEST, CAPTURED_AT, {
+      recordTrace: (trace) => traces.push(trace),
+    }),
+  ).rejects.toMatchObject({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  expect(traces).toEqual([
+    expect.objectContaining({
+      outcome: 'PROVIDER_INVALID_OUTPUT',
+      validationFailureCode: 'FINAL_PROSE_NOT_ALLOWLISTED',
+    }),
+  ]);
 });
 
 test('rejects model selected scope changes and ungrounded final output', async () => {
@@ -189,6 +358,80 @@ test('rejects model selected scope changes and ungrounded final output', async (
   }
 });
 
+test.each([
+  { code: 'TIMEOUT' as const, expectedOutcome: 'PROVIDER_FAILURE' },
+  { code: 'PROVIDER_BUSY' as const, expectedOutcome: 'PROVIDER_FAILURE' },
+  { code: 'INVALID_RESPONSE' as const, expectedOutcome: 'PROVIDER_INVALID_OUTPUT' },
+])(
+  'records safe degraded handling for provider failure $code',
+  async ({ code, expectedOutcome }) => {
+    const insightService = createInsightServiceStub();
+    const provider = readyProvider(async () => {
+      throw new AiProviderError(code);
+    });
+    const traces: unknown[] = [];
+    const service = createEmployeeInsightInterpretationService(
+      insightService,
+      createInsightToolRegistry(insightService),
+      provider,
+      async () => ({ allowed: true, retryAfter: null }),
+    );
+
+    await expect(
+      service.interpret(identity(), REQUEST, CAPTURED_AT, {
+        recordTrace: (trace) => traces.push(trace),
+      }),
+    ).rejects.toMatchObject({ code: 'INTERNAL_ERROR', statusCode: 503 });
+    expect(traces).toEqual([
+      expect.objectContaining({
+        outcome: expectedOutcome,
+        providerFailureCode: code,
+        toolExecutions: 0,
+        toolRounds: 0,
+      }),
+    ]);
+    expect(JSON.stringify(traces)).not.toContain(REQUEST.question);
+    expect(insightService.runWithLocale).toHaveBeenCalledOnce();
+  },
+);
+
+test('does not call an unavailable provider and records the native fallback path', async () => {
+  const insightService = createInsightServiceStub();
+  const unavailableHealth = Object.freeze({
+    mode: 'ollama' as const,
+    status: 'unavailable' as const,
+    capabilities: Object.freeze([]),
+    checkedAt: '2026-08-27T11:00:00Z',
+    reasonCode: 'CONNECTION_FAILED' as const,
+  });
+  const provider: AiProvider = {
+    mode: 'ollama',
+    checkHealth: vi.fn(async () => unavailableHealth),
+    generate: vi.fn(async () => {
+      throw new Error('The unavailable provider must not be called.');
+    }),
+    getHealth: () => unavailableHealth,
+  };
+  const traces: unknown[] = [];
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+
+  await expect(
+    service.interpret(identity(), REQUEST, CAPTURED_AT, {
+      recordTrace: (trace) => traces.push(trace),
+    }),
+  ).rejects.toMatchObject({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  expect(provider.generate).not.toHaveBeenCalled();
+  expect(insightService.runWithLocale).toHaveBeenCalledOnce();
+  expect(traces).toEqual([
+    expect.objectContaining({ outcome: 'PROVIDER_UNAVAILABLE', providerFailureCode: null }),
+  ]);
+});
+
 test('enforces one in flight interpretation and propagates caller cancellation', async () => {
   let providerStarted: (() => void) | undefined;
   const started = new Promise<void>((resolve) => {
@@ -210,17 +453,47 @@ test('enforces one in flight interpretation and propagates caller cancellation',
     async () => ({ allowed: true, retryAfter: null }),
   );
   const controller = new AbortController();
+  const traces: unknown[] = [];
   const first = service.interpret(identity(), REQUEST, CAPTURED_AT, {
+    recordTrace: (trace) => traces.push(trace),
     signal: controller.signal,
   });
   await started;
 
-  await expect(service.interpret(identity(), REQUEST, CAPTURED_AT)).rejects.toMatchObject({
+  await expect(
+    service.interpret(identity(), REQUEST, CAPTURED_AT, {
+      recordTrace: (trace) => traces.push(trace),
+    }),
+  ).rejects.toMatchObject({
+    code: 'RATE_LIMITED',
+    statusCode: 429,
+  });
+  await expect(
+    service.interpret(identity(), REQUEST, CAPTURED_AT, {
+      recordTrace: (trace) => traces.push(trace),
+    }),
+  ).rejects.toMatchObject({
     code: 'RATE_LIMITED',
     statusCode: 429,
   });
   controller.abort();
   await expect(first).rejects.toMatchObject({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  expect(traces).toEqual([
+    expect.objectContaining({
+      outcome: 'RATE_LIMITED',
+      providerFailureCode: null,
+      toolExecutions: 0,
+    }),
+    expect.objectContaining({
+      outcome: 'RATE_LIMITED',
+      providerFailureCode: null,
+      toolExecutions: 0,
+    }),
+    expect.objectContaining({
+      outcome: 'PROVIDER_CANCELLED',
+      providerFailureCode: 'CANCELLED',
+    }),
+  ]);
 });
 
 test('preserves permission loss and rejects missing material limitation citations', async () => {

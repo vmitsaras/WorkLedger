@@ -519,20 +519,44 @@ export const INSIGHT_INTERPRETATION_OUTPUT_JSON_SCHEMA = Object.freeze({
   type: 'object',
   additionalProperties: false,
   properties: Object.freeze({
-    locale: Object.freeze({ enum: ['en-GB', 'de-DE', 'es-ES'], type: 'string' }),
+    locale: Object.freeze({
+      description: 'Copy the exact requested account locale.',
+      enum: ['en-GB', 'de-DE', 'es-ES'],
+      type: 'string',
+    }),
     statements: Object.freeze({
+      description:
+        'Return exactly one grounded explanation statement in the requested account locale.',
       type: 'array',
       minItems: 1,
-      maxItems: MAX_INSIGHT_INTERPRETATION_STATEMENTS,
+      maxItems: 1,
       items: Object.freeze({
         type: 'object',
         additionalProperties: false,
         properties: Object.freeze({
-          actionReferences: interpretationReferenceJsonSchema(),
-          factReferences: interpretationReferenceJsonSchema(1),
-          limitationReferences: interpretationReferenceJsonSchema(),
-          sourceReferences: interpretationReferenceJsonSchema(1),
-          text: Object.freeze({ type: 'string', minLength: 1, maxLength: 500 }),
+          actionReferences: interpretationReferenceJsonSchema(
+            0,
+            'Copy only action references used by this statement.',
+          ),
+          factReferences: interpretationReferenceJsonSchema(
+            1,
+            'Copy every native fact reference used by this statement.',
+          ),
+          limitationReferences: interpretationReferenceJsonSchema(
+            0,
+            'Copy every native limitation reference used by this statement.',
+          ),
+          sourceReferences: interpretationReferenceJsonSchema(
+            1,
+            'Copy exactly the set union of sourceReferences on every fact, limitation, and action cited by this statement. Do not omit or add a source.',
+          ),
+          text: Object.freeze({
+            description:
+              'Explain only the relationship between cited native references. Do not copy numbers, dates, identifiers, statuses, source labels, limitation labels, action labels, or native reference strings.',
+            type: 'string',
+            minLength: 1,
+            maxLength: 500,
+          }),
         }),
         required: Object.freeze([
           'actionReferences',
@@ -596,8 +620,9 @@ function codePointLength(value: string): number {
   return Array.from(value).length;
 }
 
-function interpretationReferenceJsonSchema(minItems = 0) {
+function interpretationReferenceJsonSchema(minItems = 0, description?: string) {
   return Object.freeze({
+    ...(description === undefined ? {} : { description }),
     type: 'array',
     minItems,
     maxItems: 20,

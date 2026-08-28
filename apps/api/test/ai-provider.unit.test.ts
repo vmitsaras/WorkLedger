@@ -8,7 +8,7 @@ import {
   type AiProviderRequest,
   type OllamaAiProviderConfig,
 } from '../src/ai/contracts.js';
-import { createOllamaAiProvider } from '../src/ai/ollama-adapter.js';
+import { OLLAMA_MAX_GENERATED_TOKENS, createOllamaAiProvider } from '../src/ai/ollama-adapter.js';
 import { createAiProvider } from '../src/ai/provider.js';
 import { checkAiProviderAtStartup } from '../src/ai/startup.js';
 import type { WorkLedgerLogger } from '../src/logging/logger.js';
@@ -266,6 +266,8 @@ describe('private Ollama adapter', () => {
         model: MODEL,
         done: true,
         total_duration: 1234,
+        prompt_eval_count: 42,
+        eval_count: 9,
         message: {
           role: 'assistant',
           content: '',
@@ -305,12 +307,13 @@ describe('private Ollama adapter', () => {
             arguments: { date: '2026-08-27' },
           },
         ],
+        usage: { inputTokens: 42, outputTokens: 9 },
       });
       expect(receivedBody).toMatchObject({
         model: MODEL,
         stream: false,
         think: false,
-        options: { temperature: 0 },
+        options: { temperature: 0, num_predict: OLLAMA_MAX_GENERATED_TOKENS },
         tools: [{ type: 'function' }],
       });
       expect(JSON.stringify(receivedBody)).not.toContain('digest');

@@ -5,8 +5,8 @@
 **Phase progress:** Phase 15 in progress — 8 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
 **Active task:** `WL-1508` — Evaluate and pass the employee local AI pilot sub-gate
-**Status:** `WL-1507` completed employee-only Ask My Ledger with transient context, current self-tool authorization, bounded orchestration, cancellation, strict grounding, native value rendering, and source attribution
-**Last verified:** 2026-08-27
+**Status:** `WL-1508` evaluation infrastructure and non-model evidence are complete; the exact evaluated model failed the zero-tolerance gate at 207/216, so the task and pilot sub-gate remain open
+**Last verified:** 2026-08-28
 
 ## Current objective
 
@@ -34,7 +34,12 @@ self scope; structured output maps to validated native facts, limitations, actio
 sources; native values are rendered outside model prose; and cancellation or provider failure
 preserves the complete deterministic result. `WL-1508` must now evaluate the pinned model,
 prompt-injection and privacy boundaries, degraded behavior, content-free traces, and accessibility
-before the local AI pilot sub-gate may pass.
+before the local AI pilot sub-gate may pass. `WL-1508` now supplies the 24-question, three-locale,
+three-repetition evaluator, content-free traces, privacy and security regressions, degraded-provider
+coverage, and accessibility evidence. The exact evaluated `gemma4:12b` digest reached 207 of 216
+strict cases: six `submission-actions` cases returned provider-invalid structured output and three
+German `today-posted` cases omitted the required posted-balance fact. The zero-tolerance pilot gate
+therefore remains open and provider mode remains disabled by default.
 Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
 evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
@@ -2999,13 +3004,38 @@ remains an unnumbered draft.
   dependency, migration, table, persisted question or answer, audit content, external egress path,
   or manifest version changed.
 
+**2026-08-28 — WL-1508 employee local AI pilot evaluation (in progress; gate open)**
+
+- Added an exact 24-question synthetic employee golden set across British English, German, and
+  Spanish with three deterministic repetitions, all four Employee Insight kinds, ambiguity,
+  incomplete and provisional evidence, injection, prohibited advice, and cross-employee scope.
+- Added the real-provider evaluator, bounded token and latency evidence, content-free operational
+  traces, strict reference and source-union validation, locale-safe prose, provider invalid-output
+  handling, account-concurrency regression, and minimized tool-to-model context.
+- Added component and browser evidence that the deterministic native result remains first and
+  usable through success, retry, cancellation, and provider failure; interpretation state stays
+  out of URL and browser persistence; and the flow passes axe, 320-pixel reflow, forced colors,
+  reduced motion, document structure, and announcement checks.
+- `pnpm verify` passes formatting, lint, strict TypeScript, 54 tooling tests, 477 unit/component
+  tests, 13 environment-independent integration tests, 49 Playwright tests with one historical
+  skip, i18n, bundle, production, and workspace gates. `pnpm db:test` passes 28 tests with one
+  historical skip. Boundaries cover 346 files and 1,988 imports.
+- The exact `gemma4:12b` digest
+  `4eb23ef187e2c5462566d6a1d3bbbc2f1346d0b4327cbb66d58fffbcc9b2b05c` reached 207/216. Six
+  `submission-actions` cases returned provider-invalid structured output and three German
+  `today-posted` cases omitted the required posted-balance fact. A broader action-to-fact hint
+  regressed to 171/216 and was discarded.
+- Added `docs/159-wl-1508-employee-local-ai-pilot-evaluation.md`. The task remains unchecked, the
+  pilot and dependent tasks remain blocked, provider mode remains disabled, and no manifest
+  version changed.
+
 ## Current blockers
 
-Phase 15 has no scheduling blocker. The deterministic Insights foundation sub-gate is complete.
-`WL-1507` is complete. The local AI pilot remains open until `WL-1508` proves the multilingual
-golden-question set, pinned-model behavior, prompt-injection and leakage controls, bounded
-content-free traces, degraded-provider behavior, and accessibility matrix. Manager, report-builder,
-HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
+The deterministic Insights foundation sub-gate is complete. `WL-1508` infrastructure, privacy,
+security, degraded-provider, trace, and accessibility evidence are complete, but its exact pinned
+model is the active blocker: the best strict run reached 207/216 instead of the accepted 216/216.
+Provider mode remains disabled. Manager, report-builder, HR, system, and MCP tasks remain blocked
+by their named sub-gates. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3020,11 +3050,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1508`: add the 20 to 30 question multilingual employee evaluation set, bounded
-content-free operational traces, privacy, permission, injection, leakage, invalid-output and
-provider-failure evidence, exact native fact/source/action correctness checks, and accessibility
-verification, then decide the local AI pilot sub-gate. Provider mode remains disabled by default
-until that evidence passes for the exact pinned model digest.
+Continue `WL-1508`: select a different exact private model digest that becomes ready within the
+accepted health boundary, then rerun all 24 questions across three locales and three repetitions.
+The replacement must pass all 216 cases without weakening source, fact, action, limitation,
+locale, unsupported-claim, leakage, or native-fallback thresholds. Provider mode remains disabled
+and `WL-1509` remains blocked until that exact-model gate passes.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

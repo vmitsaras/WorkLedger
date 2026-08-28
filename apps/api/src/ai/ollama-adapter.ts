@@ -24,6 +24,7 @@ const ALLOWED_OLLAMA_PATHS = new Set(['/api/chat', '/api/show', '/api/tags']);
 const MAXIMUM_REQUEST_BYTES = 256 * 1_024;
 const MAXIMUM_RESPONSE_BYTES = 1_024 * 1_024;
 const MAXIMUM_MESSAGE_CODE_UNITS = 64_000;
+export const OLLAMA_MAX_GENERATED_TOKENS = 1_024;
 const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/u;
 const MISCONFIGURATION_CODES = new Set<AiProviderErrorCode>([
   'ADDRESS_MISMATCH',
@@ -538,8 +539,11 @@ function createChatRequest(
         }),
     stream: false,
     think: false,
-    format: request.outputSchema,
-    options: Object.freeze({ temperature: 0 }),
+    ...(request.outputSchema === undefined ? {} : { format: request.outputSchema }),
+    options: Object.freeze({
+      temperature: 0,
+      num_predict: OLLAMA_MAX_GENERATED_TOKENS,
+    }),
   });
 }
 
@@ -582,7 +586,20 @@ function parseChatResponse(response: unknown): AiProviderResponse {
     throw new AiProviderError('INVALID_RESPONSE');
   }
   const toolCalls = (rawToolCalls ?? []).map(parseToolCall);
-  return Object.freeze({ content, toolCalls: Object.freeze(toolCalls) });
+  const inputTokens = readOptionalTokenCount(object['prompt_eval_count']);
+  const outputTokens = readOptionalTokenCount(object['eval_count']);
+  return Object.freeze({
+    content,
+    toolCalls: Object.freeze(toolCalls),
+    ...(inputTokens === undefined && outputTokens === undefined
+      ? {}
+      : {
+          usage: Object.freeze({
+            inputTokens: inputTokens ?? null,
+            outputTokens: outputTokens ?? null,
+          }),
+        }),
+  });
 }
 
 function parseToolCall(value: unknown): AiProviderToolCall {
@@ -614,6 +631,14 @@ function readObject(value: unknown): Record<string, unknown> | undefined {
 
 function readOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function readOptionalTokenCount(value: unknown): number | undefined {
+  if (value === undefined) return undefined;
+  if (!Number.isSafeInteger(value) || (value as number) < 0) {
+    throw new AiProviderError('INVALID_RESPONSE');
+  }
+  return value as number;
 }
 
 function hasThinkingContent(value: unknown): boolean {

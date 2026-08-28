@@ -1,6 +1,7 @@
+import { performance } from 'node:perf_hooks';
+
 import type { SupportedLocale } from '@workledger/contracts';
 import {
-  INSIGHT_INTERPRETATION_OUTPUT_JSON_SCHEMA,
   insightInterpretationRequestSchema,
   insightInterpretationSchema,
   type InsightInterpretation,
@@ -16,6 +17,7 @@ import type { Instant } from '@workledger/domain';
 import {
   AiProviderError,
   type AiProvider,
+  type AiProviderErrorCode,
   type AiProviderMessage,
   type AiProviderTool,
   type AiProviderToolCall,
@@ -30,8 +32,82 @@ export const EMPLOYEE_INSIGHT_INTERPRETATION_RATE_LIMIT = Object.freeze({
 });
 export const MAXIMUM_MODEL_TOOL_ROUNDS = 2;
 export const MAXIMUM_MODEL_TOOL_EXECUTIONS = 4;
+export const EMPLOYEE_INSIGHT_SAFE_PROSE: Readonly<Record<SupportedLocale, string>> = Object.freeze(
+  {
+    'de-DE': 'Die angeführten Datensätze erklären, wie die Bestandteile zum Ergebnis beitragen.',
+    'en-GB': 'The cited records explain how the components contribute to the result.',
+    'es-ES': 'Los registros citados explican cómo contribuyen los componentes al resultado.',
+  },
+);
 
 type RateLimitResult = Readonly<{ allowed: boolean; retryAfter: number | null }>;
+type EmployeeInsightInterpretationOutcome =
+  | 'NATIVE_FAILURE'
+  | 'PERMISSION_DENIED'
+  | 'PROVIDER_CANCELLED'
+  | 'PROVIDER_FAILURE'
+  | 'PROVIDER_INVALID_OUTPUT'
+  | 'PROVIDER_UNAVAILABLE'
+  | 'RATE_LIMITED'
+  | 'SUCCESS'
+  | 'VALIDATION_FAILED';
+
+export type EmployeeInsightValidationFailureCode =
+  | 'FINAL_CONTENT_MISSING'
+  | 'FINAL_JSON_FENCED'
+  | 'FINAL_JSON_OBJECT_INVALID'
+  | 'FINAL_JSON_OTHER'
+  | 'FINAL_JSON_STRING'
+  | 'FINAL_JSON_TRUNCATED'
+  | 'FINAL_LIMITATION_MISSING'
+  | 'FINAL_PROSE_NATIVE_ACTION'
+  | 'FINAL_PROSE_NATIVE_FACT_CODE'
+  | 'FINAL_PROSE_NATIVE_LIMITATION'
+  | 'FINAL_PROSE_NATIVE_QUALIFIER'
+  | 'FINAL_PROSE_NATIVE_REFERENCE'
+  | 'FINAL_PROSE_NATIVE_SOURCE'
+  | 'FINAL_PROSE_NATIVE_STATE'
+  | 'FINAL_PROSE_NOT_ALLOWLISTED'
+  | 'FINAL_PROSE_NUMBER'
+  | 'FINAL_REFERENCE_UNKNOWN'
+  | 'FINAL_SCHEMA_LOCALE_INVALID'
+  | 'FINAL_SCHEMA_OR_LOCALE_INVALID'
+  | 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID'
+  | 'FINAL_SCHEMA_REFERENCES_INVALID'
+  | 'FINAL_SCHEMA_REFERENCES_DUPLICATE'
+  | 'FINAL_SCHEMA_ROOT_KEYS_INVALID'
+  | 'FINAL_SCHEMA_ROOT_TYPE_INVALID'
+  | 'FINAL_SCHEMA_STATEMENT_COUNT_INVALID'
+  | 'FINAL_SCHEMA_STATEMENT_INVALID'
+  | 'FINAL_SCHEMA_TEXT_INVALID'
+  | 'FINAL_SOURCE_MISMATCH'
+  | 'MESSAGE_LIMIT_EXCEEDED'
+  | 'TOOL_CALL_INVALID'
+  | 'TOOL_EXECUTION_LIMIT_EXCEEDED'
+  | 'TOOL_REQUIRED'
+  | 'TOOL_RESPONSE_MIXED'
+  | 'TOOL_ROUND_LIMIT_EXCEEDED'
+  | null;
+
+export interface EmployeeInsightOperationalTrace {
+  readonly inputTokens: number;
+  readonly latencyMs: number;
+  readonly outcome: EmployeeInsightInterpretationOutcome;
+  readonly outputTokens: number;
+  readonly providerFailureCode: AiProviderErrorCode | null;
+  readonly validationFailureCode: EmployeeInsightValidationFailureCode;
+  readonly toolExecutions: number;
+  readonly toolRounds: number;
+}
+
+type TraceAccumulator = {
+  inputTokens: number;
+  outputTokens: number;
+  providerFailureCode: AiProviderErrorCode | null;
+  validationFailureCode: EmployeeInsightValidationFailureCode;
+  toolExecutions: number;
+  toolRounds: number;
+};
 
 export interface EmployeeInsightInterpretationService {
   availability(): InsightInterpretationAvailability;
@@ -39,7 +115,10 @@ export interface EmployeeInsightInterpretationService {
     identity: InsightIdentity,
     request: InsightInterpretationRequest,
     capturedAt: Instant,
-    options?: Readonly<{ signal?: AbortSignal }>,
+    options?: Readonly<{
+      recordTrace?: (trace: EmployeeInsightOperationalTrace) => void;
+      signal?: AbortSignal;
+    }>,
   ): Promise<InsightInterpretationResult>;
 }
 
@@ -57,29 +136,53 @@ export function createEmployeeInsightInterpretationService(
       identity: InsightIdentity,
       input: InsightInterpretationRequest,
       capturedAt: Instant,
-      options: Readonly<{ signal?: AbortSignal }> = {},
+      options: Readonly<{
+        recordTrace?: (trace: EmployeeInsightOperationalTrace) => void;
+        signal?: AbortSignal;
+      }> = {},
     ) {
-      const request = insightInterpretationRequestSchema.safeParse(input);
-      if (!request.success) {
-        throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
-      }
-
-      const accountKey = identity.accountId as string;
-      if (activeAccounts.has(accountKey)) throw rateLimited();
-      activeAccounts.add(accountKey);
+      const startedAt = performance.now();
+      const trace: TraceAccumulator = {
+        inputTokens: 0,
+        outputTokens: 0,
+        providerFailureCode: null,
+        validationFailureCode: null,
+        toolExecutions: 0,
+        toolRounds: 0,
+      };
+      let accountKey: string | undefined;
+      let ownsActiveAccount = false;
+      let outcome: EmployeeInsightInterpretationOutcome = 'NATIVE_FAILURE';
       try {
+        const request = insightInterpretationRequestSchema.safeParse(input);
+        if (!request.success) {
+          outcome = 'VALIDATION_FAILED';
+          throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
+        }
+
+        accountKey = identity.accountId as string;
+        if (activeAccounts.has(accountKey)) {
+          outcome = 'RATE_LIMITED';
+          throw rateLimited();
+        }
+        activeAccounts.add(accountKey);
+        ownsActiveAccount = true;
         const initial = await insightService.runWithLocale(
           identity,
           request.data.insight,
           capturedAt,
         );
         if (interpretationAvailability(provider) !== 'READY') {
+          outcome = 'PROVIDER_UNAVAILABLE';
           throw unavailable();
         }
         const rate = await consumeRateLimit(accountKey);
-        if (!rate.allowed) throw rateLimited(rate.retryAfter);
+        if (!rate.allowed) {
+          outcome = 'RATE_LIMITED';
+          throw rateLimited(rate.retryAfter);
+        }
 
-        return await orchestrateEmployeeInterpretation({
+        const result = await orchestrateEmployeeInterpretation({
           capturedAt,
           identity,
           initialNativeResult: initial.nativeResult,
@@ -87,10 +190,28 @@ export function createEmployeeInsightInterpretationService(
           provider,
           request: request.data,
           ...(options.signal === undefined ? {} : { signal: options.signal }),
+          trace,
           toolRegistry,
         });
+        outcome = 'SUCCESS';
+        return result;
+      } catch (error) {
+        outcome = classifyTraceOutcome(error, outcome, trace.providerFailureCode);
+        throw error;
       } finally {
-        activeAccounts.delete(accountKey);
+        if (accountKey !== undefined && ownsActiveAccount) activeAccounts.delete(accountKey);
+        options.recordTrace?.(
+          Object.freeze({
+            inputTokens: trace.inputTokens,
+            latencyMs: Math.round(performance.now() - startedAt),
+            outcome,
+            outputTokens: trace.outputTokens,
+            providerFailureCode: trace.providerFailureCode,
+            validationFailureCode: trace.validationFailureCode,
+            toolExecutions: trace.toolExecutions,
+            toolRounds: trace.toolRounds,
+          }),
+        );
       }
     },
   });
@@ -113,6 +234,7 @@ async function orchestrateEmployeeInterpretation(
     provider: AiProvider;
     request: InsightInterpretationRequest;
     signal?: AbortSignal;
+    trace: TraceAccumulator;
     toolRegistry: InsightToolRegistry;
   }>,
 ): Promise<InsightInterpretationResult> {
@@ -140,17 +262,24 @@ async function orchestrateEmployeeInterpretation(
 
   try {
     while (true) {
+      const awaitingTool = toolExecutions === 0;
       const response = await input.provider.generate(
         Object.freeze({
           messages: Object.freeze([...messages]),
-          outputSchema: INSIGHT_INTERPRETATION_OUTPUT_JSON_SCHEMA,
-          tools: Object.freeze([tool]),
+          ...(awaitingTool
+            ? { tools: Object.freeze([tool]) }
+            : {
+                tools: Object.freeze([]),
+              }),
         }),
         input.signal === undefined ? {} : { signal: input.signal },
       );
+      input.trace.inputTokens += response.usage?.inputTokens ?? 0;
+      input.trace.outputTokens += response.usage?.outputTokens ?? 0;
 
       if (response.toolCalls.length === 0) {
-        if (toolExecutions === 0 || response.content.trim() === '') throw invalidProviderOutput();
+        if (awaitingTool) throw invalidProviderOutput('TOOL_REQUIRED');
+        if (response.content.trim() === '') throw invalidProviderOutput('FINAL_CONTENT_MISSING');
         const interpretation = validateGroundedInterpretation(
           parseInterpretation(response.content),
           nativeResult,
@@ -159,14 +288,19 @@ async function orchestrateEmployeeInterpretation(
         return Object.freeze({ interpretation, nativeResult });
       }
 
-      if (response.content.trim() !== '' || toolRounds >= MAXIMUM_MODEL_TOOL_ROUNDS) {
-        throw invalidProviderOutput();
+      if (!awaitingTool || response.content.trim() !== '') {
+        throw invalidProviderOutput('TOOL_RESPONSE_MIXED');
+      }
+      if (toolRounds >= MAXIMUM_MODEL_TOOL_ROUNDS) {
+        throw invalidProviderOutput('TOOL_ROUND_LIMIT_EXCEEDED');
       }
       if (toolExecutions + response.toolCalls.length > MAXIMUM_MODEL_TOOL_EXECUTIONS) {
-        throw invalidProviderOutput();
+        throw invalidProviderOutput('TOOL_EXECUTION_LIMIT_EXCEEDED');
       }
       toolRounds += 1;
       toolExecutions += response.toolCalls.length;
+      input.trace.toolRounds = toolRounds;
+      input.trace.toolExecutions = toolExecutions;
       messages.push(
         Object.freeze({
           role: 'assistant',
@@ -193,10 +327,20 @@ async function orchestrateEmployeeInterpretation(
           }),
         );
       }
+      messages.push(
+        Object.freeze({
+          role: 'system',
+          content: finalResponseInstruction(input.locale),
+        }),
+      );
 
-      if (messages.length > 16) throw invalidProviderOutput();
+      if (messages.length > 16) throw invalidProviderOutput('MESSAGE_LIMIT_EXCEEDED');
     }
   } catch (error) {
+    if (error instanceof AiProviderError) input.trace.providerFailureCode = error.code;
+    if (error instanceof InsightInterpretationValidationError) {
+      input.trace.validationFailureCode = error.validationFailureCode;
+    }
     if (
       error instanceof WorkLedgerApiError &&
       (error.statusCode === 401 || error.statusCode === 403)
@@ -209,6 +353,25 @@ async function orchestrateEmployeeInterpretation(
   }
 }
 
+function classifyTraceOutcome(
+  error: unknown,
+  current: EmployeeInsightInterpretationOutcome,
+  providerFailureCode: AiProviderErrorCode | null,
+): EmployeeInsightInterpretationOutcome {
+  if (current !== 'NATIVE_FAILURE') return current;
+  if (providerFailureCode === 'CANCELLED') return 'PROVIDER_CANCELLED';
+  if (providerFailureCode === 'INVALID_RESPONSE' || providerFailureCode === 'REQUEST_INVALID') {
+    return 'PROVIDER_INVALID_OUTPUT';
+  }
+  if (providerFailureCode !== null) return 'PROVIDER_FAILURE';
+  if (error instanceof WorkLedgerApiError) {
+    if (error.statusCode === 401 || error.statusCode === 403) return 'PERMISSION_DENIED';
+    if (error.statusCode === 429) return 'RATE_LIMITED';
+    if (error.statusCode === 422) return 'VALIDATION_FAILED';
+  }
+  return 'NATIVE_FAILURE';
+}
+
 function systemInstruction(): string {
   return [
     'You explain one employee self scoped WorkLedger Insight.',
@@ -216,8 +379,26 @@ function systemInstruction(): string {
     'Call the one available tool before answering. Never request another period or workspace.',
     'Use only facts returned by that tool. Never calculate, infer a missing rule, give legal or health advice, rank, score, recommend a decision, or propose a write action.',
     'Return only the required JSON object in the requested locale.',
-    'Each statement must reference at least one fact and every source that supports its referenced facts, limitations, or actions.',
+    'Return exactly one statement. Cite every native fact needed to answer the question and every material limitation.',
+    'For every material limitation, cite every relatedFactReference supplied with that limitation.',
+    'For every material limitation, cite every relatedActionReference supplied with that limitation.',
+    'For every material limitation, copy every relatedSourceReference supplied with that limitation.',
+    'The JSON object has exactly locale and statements. statements has exactly one object with exactly text, factReferences, sourceReferences, limitationReferences, and actionReferences. Every reference field is an array of unique copied native reference strings with no duplicates.',
+    'For each statement, sourceReferences must be exactly the set union of sourceReferences on every cited fact, limitation, and action. Copy every required source and no other source.',
     'Reference every material limitation. Do not place numbers, dates, identifiers, statuses, source labels, limitation labels, or action labels in statement text. WorkLedger renders those values from native references.',
+  ].join(' ');
+}
+
+function finalResponseInstruction(locale: SupportedLocale): string {
+  const proseExample = EMPLOYEE_INSIGHT_SAFE_PROSE[locale];
+  return [
+    'Return the final answer now as one JSON object and nothing else.',
+    'Do not add a wrapper, schema, explanation, or Markdown fence.',
+    `Use this exact property structure: {"locale":"${locale}","statements":[{"actionReferences":[],"factReferences":[],"limitationReferences":[],"sourceReferences":[],"text":""}]}.`,
+    'Replace the empty arrays with copied native references required for the statement. Keep every property and add no properties.',
+    'For each material limitation, copy its reference to limitationReferences, all of its relatedFactReferences to factReferences, all of its relatedActionReferences to actionReferences, and all of its relatedSourceReferences to sourceReferences.',
+    'Add source references only when another cited fact or action requires them. Never copy an uncited source.',
+    `Set text to exactly this sentence, including punctuation: ${proseExample}`,
   ].join(' ');
 }
 
@@ -284,9 +465,11 @@ function requireExpectedToolCall(
     arguments: providerCall.arguments,
     code: providerCall.name,
   });
-  if (!parsed.success || parsed.data.code !== expected.code) throw invalidProviderOutput();
+  if (!parsed.success || parsed.data.code !== expected.code) {
+    throw invalidProviderOutput('TOOL_CALL_INVALID');
+  }
   if (JSON.stringify(parsed.data.arguments) !== JSON.stringify(expected.arguments)) {
-    throw invalidProviderOutput();
+    throw invalidProviderOutput('TOOL_CALL_INVALID');
   }
   return parsed.data;
 }
@@ -301,29 +484,60 @@ function minimizeNativeResultForModel(result: InsightNativeResult) {
     })),
     facts: result.facts.map((fact) => ({
       code: fact.code,
-      qualifiers: fact.qualifiers,
       reference: fact.reference,
       sourceReferences: fact.sourceReferences,
-      value: fact.value,
     })),
-    freshness: result.freshness,
     kind: result.kind,
-    limitations: result.limitations,
-    period: result.period,
+    limitations: result.limitations.map((limitation) => {
+      const relatedActions = result.actions.filter((action) =>
+        action.sourceReferences.some((reference) =>
+          limitation.sourceReferences.includes(reference),
+        ),
+      );
+      const relatedFacts = result.facts.filter((fact) =>
+        fact.sourceReferences.some((reference) => limitation.sourceReferences.includes(reference)),
+      );
+      return {
+        code: limitation.code,
+        material: limitation.material,
+        reference: limitation.reference,
+        relatedActionReferences: relatedActions.map((action) => action.reference),
+        relatedFactReferences: relatedFacts.map((fact) => fact.reference),
+        relatedSourceReferences: [
+          ...new Set([
+            ...limitation.sourceReferences,
+            ...relatedActions.flatMap((action) => action.sourceReferences),
+            ...relatedFacts.flatMap((fact) => fact.sourceReferences),
+          ]),
+        ],
+        sourceReferences: limitation.sourceReferences,
+      };
+    }),
     sources: result.sources.map((source) => ({
       destination: source.destination,
       kind: source.kind,
-      ...(source.label === undefined ? {} : { label: source.label }),
       reference: source.reference,
     })),
   });
 }
 
 function parseInterpretation(content: string): unknown {
+  const trimmed = content.trim();
+  const fencedJson = /^```json[\t ]*\r?\n([\s\S]*?)\r?\n```$/iu.exec(trimmed);
+  const candidate = fencedJson?.[1] ?? content;
+
   try {
-    return JSON.parse(content) as unknown;
+    return JSON.parse(candidate) as unknown;
   } catch {
-    throw invalidProviderOutput();
+    if (trimmed.startsWith('```')) throw invalidProviderOutput('FINAL_JSON_FENCED');
+    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+      throw invalidProviderOutput('FINAL_JSON_STRING');
+    }
+    if (trimmed.startsWith('{') && !trimmed.endsWith('}')) {
+      throw invalidProviderOutput('FINAL_JSON_TRUNCATED');
+    }
+    if (trimmed.startsWith('{')) throw invalidProviderOutput('FINAL_JSON_OBJECT_INVALID');
+    throw invalidProviderOutput('FINAL_JSON_OTHER');
   }
 }
 
@@ -333,7 +547,12 @@ export function validateGroundedInterpretation(
   locale: SupportedLocale,
 ): InsightInterpretation {
   const parsed = insightInterpretationSchema.safeParse(candidate);
-  if (!parsed.success || parsed.data.locale !== locale) throw invalidProviderOutput();
+  if (!parsed.success) {
+    throw invalidProviderOutput(classifyInterpretationSchemaFailure(candidate, locale));
+  }
+  if (parsed.data.locale !== locale) {
+    throw invalidProviderOutput('FINAL_SCHEMA_LOCALE_INVALID');
+  }
 
   const facts = new Map(nativeResult.facts.map((item) => [item.reference, item]));
   const sources = new Map(nativeResult.sources.map((item) => [item.reference, item]));
@@ -354,7 +573,7 @@ export function validateGroundedInterpretation(
       referencedActions.some((item) => item === undefined) ||
       statement.sourceReferences.some((reference) => !sources.has(reference))
     ) {
-      throw invalidProviderOutput();
+      throw invalidProviderOutput('FINAL_REFERENCE_UNKNOWN');
     }
 
     const requiredSources = new Set([
@@ -366,12 +585,17 @@ export function validateGroundedInterpretation(
       requiredSources.size !== statement.sourceReferences.length ||
       statement.sourceReferences.some((reference) => !requiredSources.has(reference))
     ) {
-      throw invalidProviderOutput();
+      throw invalidProviderOutput('FINAL_SOURCE_MISMATCH');
     }
 
     for (const reference of statement.limitationReferences) citedLimitations.add(reference);
-    if (/\p{N}/u.test(statement.text) || containsGroundingToken(statement.text, prohibitedTokens)) {
-      throw invalidProviderOutput();
+    if (/\p{N}/u.test(statement.text)) throw invalidProviderOutput('FINAL_PROSE_NUMBER');
+    const prohibitedTokenKind = groundingTokenKind(statement.text, prohibitedTokens);
+    if (prohibitedTokenKind !== null) {
+      throw invalidProviderOutput(proseTokenFailureCode(prohibitedTokenKind));
+    }
+    if (statement.text !== EMPLOYEE_INSIGHT_SAFE_PROSE[locale]) {
+      throw invalidProviderOutput('FINAL_PROSE_NOT_ALLOWLISTED');
     }
   }
 
@@ -380,37 +604,158 @@ export function validateGroundedInterpretation(
       (limitation) => limitation.material && !citedLimitations.has(limitation.reference),
     )
   ) {
-    throw invalidProviderOutput();
+    throw invalidProviderOutput('FINAL_LIMITATION_MISSING');
   }
   return parsed.data;
 }
 
-function groundingTokens(result: InsightNativeResult): readonly string[] {
-  const values = [
-    ...result.facts.flatMap((fact) => [
-      fact.reference,
-      fact.code,
-      ...fact.qualifiers,
-      ...(fact.value?.kind === 'STATE' ? [fact.value.value] : []),
-    ]),
-    ...result.sources.flatMap((source) => [source.reference, source.kind]),
-    ...result.limitations.flatMap((limitation) => [limitation.reference, limitation.code]),
-    ...result.actions.flatMap((action) => [action.reference, action.code, action.destination]),
-  ];
-  return Object.freeze(values.map(normalizeGroundingToken).filter((value) => value.length >= 4));
+function classifyInterpretationSchemaFailure(
+  candidate: unknown,
+  locale: SupportedLocale,
+): Exclude<EmployeeInsightValidationFailureCode, null> {
+  if (!isRecord(candidate)) return 'FINAL_SCHEMA_ROOT_TYPE_INVALID';
+  if (!hasExactKeys(candidate, ['locale', 'statements'])) return 'FINAL_SCHEMA_ROOT_KEYS_INVALID';
+  if (candidate['locale'] !== locale) return 'FINAL_SCHEMA_LOCALE_INVALID';
+  const statements = candidate['statements'];
+  if (!Array.isArray(statements) || statements.length !== 1) {
+    return 'FINAL_SCHEMA_STATEMENT_COUNT_INVALID';
+  }
+  const statement = statements[0];
+  if (
+    !isRecord(statement) ||
+    !hasExactKeys(statement, [
+      'actionReferences',
+      'factReferences',
+      'limitationReferences',
+      'sourceReferences',
+      'text',
+    ])
+  ) {
+    return 'FINAL_SCHEMA_STATEMENT_INVALID';
+  }
+  if (typeof statement['text'] !== 'string' || statement['text'].trim() === '') {
+    return 'FINAL_SCHEMA_TEXT_INVALID';
+  }
+  for (const key of [
+    'actionReferences',
+    'factReferences',
+    'limitationReferences',
+    'sourceReferences',
+  ] as const) {
+    const references = statement[key];
+    if (
+      !Array.isArray(references) ||
+      references.some((reference) => typeof reference !== 'string')
+    ) {
+      return 'FINAL_SCHEMA_REFERENCES_INVALID';
+    }
+    if (new Set(references).size !== references.length) {
+      return 'FINAL_SCHEMA_REFERENCES_DUPLICATE';
+    }
+  }
+  if (
+    !hasReferenceCardinality(statement['factReferences'], 1) ||
+    !hasReferenceCardinality(statement['sourceReferences'], 1) ||
+    !hasReferenceCardinality(statement['actionReferences']) ||
+    !hasReferenceCardinality(statement['limitationReferences'])
+  ) {
+    return 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID';
+  }
+  return 'FINAL_SCHEMA_OR_LOCALE_INVALID';
 }
 
-function containsGroundingToken(text: string, tokens: readonly string[]): boolean {
+function hasReferenceCardinality(value: unknown, minimum = 0): boolean {
+  return Array.isArray(value) && value.length >= minimum && value.length <= 20;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function hasExactKeys(value: Record<string, unknown>, expectedKeys: readonly string[]): boolean {
+  const keys = Object.keys(value).sort();
+  return (
+    keys.length === expectedKeys.length &&
+    keys.every((key, index) => key === [...expectedKeys].sort()[index])
+  );
+}
+
+type GroundingTokenKind =
+  'ACTION' | 'FACT_CODE' | 'LIMITATION' | 'QUALIFIER' | 'REFERENCE' | 'SOURCE' | 'STATE';
+
+type GroundingToken = Readonly<{ kind: GroundingTokenKind; value: string }>;
+
+function groundingTokens(result: InsightNativeResult): readonly GroundingToken[] {
+  const values: readonly GroundingToken[] = [
+    ...result.facts.flatMap((fact): readonly GroundingToken[] => [
+      { kind: 'REFERENCE', value: fact.reference },
+      { kind: 'FACT_CODE', value: fact.code },
+      ...fact.qualifiers.map((value): GroundingToken => ({ kind: 'QUALIFIER', value })),
+      ...(fact.value?.kind === 'STATE'
+        ? ([{ kind: 'STATE', value: fact.value.value }] satisfies readonly GroundingToken[])
+        : []),
+    ]),
+    ...result.sources.flatMap((source): readonly GroundingToken[] => [
+      { kind: 'REFERENCE', value: source.reference },
+      { kind: 'SOURCE', value: source.kind },
+    ]),
+    ...result.limitations.flatMap((limitation): readonly GroundingToken[] => [
+      { kind: 'REFERENCE', value: limitation.reference },
+      { kind: 'LIMITATION', value: limitation.code },
+    ]),
+    ...result.actions.flatMap((action): readonly GroundingToken[] => [
+      { kind: 'REFERENCE', value: action.reference },
+      { kind: 'ACTION', value: action.code },
+      { kind: 'ACTION', value: action.destination },
+    ]),
+  ];
+  return Object.freeze(
+    values
+      .map(({ kind, value }) => ({ kind, value: normalizeGroundingToken(value) }))
+      .filter(({ value }) => value.length >= 4),
+  );
+}
+
+function groundingTokenKind(
+  text: string,
+  tokens: readonly GroundingToken[],
+): GroundingTokenKind | null {
   const normalized = normalizeGroundingToken(text);
-  return tokens.some((token) => normalized.includes(token));
+  return tokens.find(({ value }) => normalized.includes(value))?.kind ?? null;
+}
+
+function proseTokenFailureCode(
+  kind: GroundingTokenKind,
+): Exclude<EmployeeInsightValidationFailureCode, null> {
+  return {
+    ACTION: 'FINAL_PROSE_NATIVE_ACTION',
+    FACT_CODE: 'FINAL_PROSE_NATIVE_FACT_CODE',
+    LIMITATION: 'FINAL_PROSE_NATIVE_LIMITATION',
+    QUALIFIER: 'FINAL_PROSE_NATIVE_QUALIFIER',
+    REFERENCE: 'FINAL_PROSE_NATIVE_REFERENCE',
+    SOURCE: 'FINAL_PROSE_NATIVE_SOURCE',
+    STATE: 'FINAL_PROSE_NATIVE_STATE',
+  }[kind] as Exclude<EmployeeInsightValidationFailureCode, null>;
 }
 
 function normalizeGroundingToken(value: string): string {
   return value.toLocaleLowerCase('en-US').replaceAll('_', ' ').replace(/\s+/gu, ' ').trim();
 }
 
-function invalidProviderOutput(): AiProviderError {
-  return new AiProviderError('INVALID_RESPONSE');
+class InsightInterpretationValidationError extends AiProviderError {
+  readonly validationFailureCode: Exclude<EmployeeInsightValidationFailureCode, null>;
+
+  constructor(validationFailureCode: Exclude<EmployeeInsightValidationFailureCode, null>) {
+    super('INVALID_RESPONSE');
+    this.name = 'InsightInterpretationValidationError';
+    this.validationFailureCode = validationFailureCode;
+  }
+}
+
+function invalidProviderOutput(
+  validationFailureCode: Exclude<EmployeeInsightValidationFailureCode, null>,
+): AiProviderError {
+  return new InsightInterpretationValidationError(validationFailureCode);
 }
 
 function unavailable(): WorkLedgerApiError {

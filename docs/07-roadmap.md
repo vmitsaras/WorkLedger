@@ -606,15 +606,15 @@ and operations evidence.
 ## Employee local AI pilot sub gate
 
 - [ ] `WL-1505` through `WL-1508` are complete after the foundation sub gate.
-- [ ] The provider remains disabled by default and uses only one exact private operator controlled
+- [x] The provider remains disabled by default and uses only one exact private operator controlled
   Ollama origin plus one pinned local model digest when enabled.
-- [ ] Every tool is purpose specific, read only, schema validated, and reauthorized from current
+- [x] Every tool is purpose specific, read only, schema validated, and reauthorized from current
   employee self scope on every call.
-- [ ] Questions and bounded prior turns remain session only. Prompt, tool, result, output, and
+- [x] Questions and bounded prior turns remain session only. Prompt, tool, result, output, and
   reasoning content is absent from storage, logs, audit, backup, and analytics.
 - [ ] The 24 question, three locale, three repetition golden set meets every zero tolerance
   correctness, scope, source, action, unsupported claim, and leakage threshold in ADR 0014.
-- [ ] Timeout, cancellation, invalid output, model drift, and provider failure leave the native
+- [x] Timeout, cancellation, invalid output, model drift, and provider failure leave the native
   result usable and accessible.
 
 ## Phase 15 release gate

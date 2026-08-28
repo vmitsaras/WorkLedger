@@ -96,7 +96,15 @@ export function createApiServer(
       registerMyTimeRoutes(app, authentication, database, dependencies.now);
       registerCorrectionRequestRoutes(app, config, authentication, database, dependencies.now);
       registerPersonalRequestRoutes(app, authentication, database, dependencies.now);
-      registerInsightRoutes(app, config, authentication, database, aiProvider, dependencies.now);
+      registerInsightRoutes(
+        app,
+        config,
+        authentication,
+        database,
+        aiProvider,
+        logger,
+        dependencies.now,
+      );
       registerCorrectionReviewRoutes(app, config, authentication, database, dependencies.now);
       registerApprovalInboxRoutes(
         app,

@@ -268,6 +268,57 @@ test('cancels pending interpretation without removing the native result or losin
   ).not.toBeInTheDocument();
 });
 
+test('keeps native evidence and prior grounded output when the provider fails', async () => {
+  let interpretationCount = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = requestUrl(input);
+      if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (url.pathname === '/v1/insights/run') return insightRunResponse(RESULT, 'READY');
+      if (url.pathname === '/v1/insights/interpret') {
+        interpretationCount += 1;
+        if (interpretationCount === 1) {
+          return successResponse({ interpretation: INTERPRETATION, nativeResult: RESULT });
+        }
+        return Response.json(
+          { error: { code: 'INTERNAL_ERROR', requestId: REQUEST_ID } },
+          { status: 503 },
+        );
+      }
+      throw new Error(`Unexpected request: ${url.pathname}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const rendered = renderInsights('/insights');
+  await user.selectOptions(
+    await screen.findByLabelText('What would you like to understand?'),
+    'today-explanation',
+  );
+  await user.type(screen.getByLabelText('Date'), '2026-08-27');
+  await user.click(screen.getByRole('button', { name: 'Run insight' }));
+  const question = await screen.findByLabelText('Question about this result');
+  await user.type(question, 'Explain the current evidence.');
+  await user.click(screen.getByRole('button', { name: 'Explain this result' }));
+  expect(
+    await screen.findByRole('heading', { name: 'Optional generated explanation' }),
+  ).toBeVisible();
+
+  await user.type(question, ' Try again safely.');
+  await user.click(screen.getByRole('button', { name: 'Explain this result' }));
+
+  expect(
+    await screen.findByRole('heading', { name: 'The optional explanation is unavailable' }),
+  ).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'How was today calculated?' })).toBeVisible();
+  expect(screen.getByText(INTERPRETATION.statements[0].text)).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
+  expect(rendered.router.state.location.search).not.toContain('Explain');
+  expect(localStorage).toHaveLength(0);
+  expect(sessionStorage).toHaveLength(0);
+  await expectNoAxeViolations(rendered.container);
+});
+
 function renderInsights(initialEntry: string) {
   if (runtime === undefined) throw new Error('Expected initialized i18n runtime.');
   const queryClient = createWorkLedgerQueryClient();

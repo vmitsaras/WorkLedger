@@ -56,6 +56,13 @@ const ALLOWLISTED_LOG_FIELDS = new Set([
   'providerCapabilities',
   'providerReasonCode',
   'checkedAt',
+  'outcome',
+  'toolRounds',
+  'toolExecutions',
+  'inputTokens',
+  'outputTokens',
+  'providerFailureCode',
+  'validationFailureCode',
 ]);
 
 export function createWorkLedgerLogger(options: {

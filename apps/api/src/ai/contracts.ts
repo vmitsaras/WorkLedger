@@ -84,12 +84,16 @@ export interface AiProviderTool {
 export interface AiProviderRequest {
   readonly messages: readonly AiProviderMessage[];
   readonly tools: readonly AiProviderTool[];
-  readonly outputSchema: Readonly<Record<string, unknown>>;
+  readonly outputSchema?: Readonly<Record<string, unknown>>;
 }
 
 export interface AiProviderResponse {
   readonly content: string;
   readonly toolCalls: readonly AiProviderToolCall[];
+  readonly usage?: Readonly<{
+    readonly inputTokens: number | null;
+    readonly outputTokens: number | null;
+  }>;
 }
 
 export interface AiProviderRequestOptions {

@@ -20,6 +20,7 @@ import {
 } from '../auth/request-session.js';
 import type { RuntimeConfig } from '../config.js';
 import { WorkLedgerApiError } from '../http/errors.js';
+import type { WorkLedgerLogger } from '../logging/logger.js';
 import { createEmployeeInsightHandlers } from './employee-insight-handlers.js';
 import { createEmployeeInsightInterpretationService } from './employee-insight-interpretation.js';
 import { createInsightService, parseInsightIdentity } from './insight-service.js';
@@ -33,6 +34,7 @@ export function registerInsightRoutes(
   authentication: WorkLedgerAuthentication,
   database: WorkLedgerDatabase,
   aiProvider: AiProvider,
+  logger: WorkLedgerLogger,
   now: InsightApiClock = () => new Date().toISOString(),
 ): void {
   const api = app.withTypeProvider<ZodTypeProvider>();
@@ -129,7 +131,17 @@ export function registerInsightRoutes(
           parseInsightIdentity(session.userId, session.fresh),
           request.body,
           capturedAt.value,
-          { signal: controller.signal },
+          {
+            signal: controller.signal,
+            recordTrace: (trace) =>
+              logger.info('Employee Insight interpretation completed', {
+                requestId: request.id,
+                dependency: 'ai-provider',
+                operation: 'employee-insight-interpretation',
+                success: trace.outcome === 'SUCCESS',
+                ...trace,
+              }),
+          },
         );
         reply.header('cache-control', 'private, no-store');
         return { data, meta: { requestId: request.id } };

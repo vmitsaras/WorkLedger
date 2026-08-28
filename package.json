@@ -46,6 +46,7 @@
     "test:build": "tsc --build --pretty false --force",
     "test": "pnpm run workspace:check && pnpm run test:build && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs scripts/check-phase-version.test.mjs scripts/check-css-contract.test.mjs scripts/check-i18n.test.mjs scripts/check-web-bundle-budget.test.mjs scripts/backup-crypto.test.mjs scripts/backup-restore-contract.test.mjs && vitest run --project unit --project component",
     "test:integration": "pnpm run workspace:check && pnpm run test:build && vitest run --project integration",
+    "test:ai:employee": "pnpm run workspace:check && pnpm run test:build && WORKLEDGER_RUN_AI_EVALUATION=1 vitest run apps/api/test/employee-insight-evaluation.integration.test.ts --project integration",
     "test:e2e": "pnpm run workspace:check && pnpm run test:build && playwright test",
     "test:visual": "pnpm run workspace:check && pnpm run test:build && WORKLEDGER_ASSERT_PHASE_13_VISUALS=1 playwright test apps/web/e2e/application-shell.spec.ts --project=chromium",
     "test:visual:i18n": "pnpm run workspace:check && pnpm run test:build && WORKLEDGER_ASSERT_PHASE_14_I18N_VISUALS=1 playwright test apps/web/e2e/application-shell.spec.ts --project=chromium --grep 'critical employee routes|responsive manager, HR, and system workflows'",

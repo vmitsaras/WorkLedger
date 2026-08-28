@@ -124,6 +124,14 @@ sensitive disclosure; any unvalidated schema; or any loss of the native fallback
 counts, cancellation time, and provider failures are recorded as content free operational evidence.
 They do not replace correctness thresholds.
 
+`WL-1508` executed this gate on 2026-08-28. The evaluation infrastructure, privacy and security
+tests, degraded-provider evidence, content-free traces, and accessibility matrix are complete, but
+the exact evaluated `gemma4:12b` digest reached 207 of 216 cases. Six `submission-actions` cases
+returned invalid structured output and three German `today-posted` cases omitted the required
+posted-balance fact reference. The zero-tolerance gate therefore remains open; provider mode stays
+disabled and later dependent tasks remain blocked. See
+`docs/159-wl-1508-employee-local-ai-pilot-evaluation.md`.
+
 ### Later role and release gates
 
 - Manager work repeats the scope, former manager, self exclusion, neutral availability, and

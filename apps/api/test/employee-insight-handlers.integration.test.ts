@@ -9,6 +9,7 @@ import { createWorkLedgerDatabase } from '@workledger/database';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createEmployeeInsightHandlers } from '../src/insights/employee-insight-handlers.js';
+import { EMPLOYEE_INSIGHT_SAFE_PROSE } from '../src/insights/employee-insight-interpretation.js';
 import type { AiProvider, AiProviderRequest, AiProviderResponse } from '../src/ai/contracts.js';
 import { createInsightService } from '../src/insights/insight-service.js';
 import { createInsightToolRegistry } from '../src/insights/insight-tool-registry.js';
@@ -163,7 +164,7 @@ integrationTest(
                 factReferences: [interpretationFact.reference],
                 limitationReferences: materialLimitations.map(({ reference }) => reference),
                 sourceReferences: interpretationSources,
-                text: 'The requested evidence explains the recorded balance result.',
+                text: EMPLOYEE_INSIGHT_SAFE_PROSE['en-GB'],
               },
             ],
           }),
