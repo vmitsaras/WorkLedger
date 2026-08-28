@@ -8,6 +8,12 @@ WorkLedger Insights is a read only explanation layer over authorized WorkLedger 
 results remain complete without a model. Optional local AI may explain those results, but it cannot
 calculate balances, choose permissions, make decisions, or write domain data.
 
+**Pilot outcome, 2026-08-28:** The optional employee local AI pilot closed without passing after no
+qualified model met the zero-tolerance evaluation gate. Provider mode remains disabled and no model
+is approved for deployment. The deterministic Employee Insights foundation remains the supported
+path. This outcome preserves this ADR as the boundary for the inactive implementation; it does not
+mark `WL-1508` complete or satisfy later task dependencies.
+
 ## Context
 
 WorkLedger can answer useful questions from its existing attendance, balance, absence, request,

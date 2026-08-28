@@ -165,10 +165,14 @@ address, digest, proxy, redirect, cloud, and outbound network controls remain un
 
 ## Follow up
 
-* [ ] After `WL-1508F` passes without a real model run, resume `WL-1508B` only for the 18 accepted
+* [x] After `WL-1508F` passes without a real model run, resume `WL-1508B` only for the 18 accepted
   `submission-actions` and `today-posted` cases against exact qualified `qwen2.5-coder:14b` digest
   `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`.
-* [ ] If any case fails, stop before `WL-1508C` and decide whether to close the optional model pilot.
+* [x] If any case fails, stop before `WL-1508C` and decide whether to close the optional model pilot.
+
+The resumed screen stopped after six of the first nine cases failed. The user closed the optional
+model pilot without passing it on 2026-08-28. No further model work is authorized in the current
+Phase 15 scope.
 
 ## Migration plan
 

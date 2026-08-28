@@ -607,6 +607,10 @@ and operations evidence.
 
 ## Employee local AI pilot sub gate
 
+**Outcome:** Closed without passing on 2026-08-28. No qualified model met the zero-tolerance gate,
+provider mode remains disabled, and no model is approved for deployment. The unchecked criteria
+remain unmet and do not count as completed work.
+
 - [ ] `WL-1505` through `WL-1508` are complete after the foundation sub gate.
 - [x] The provider remains disabled by default and uses only one exact private operator controlled
   Ollama origin plus one pinned local model digest when enabled.
@@ -622,7 +626,15 @@ and operations evidence.
   authority, provider security controls, runtime validators, or zero-tolerance gate, before the
   bounded model screen resumes.
 
+The pilot closure ends model qualification and evaluation in the current Phase 15 scope. It does
+not satisfy dependencies on `WL-1508`. No later Phase 15 task is authorized until a separate
+accepted roadmap decision rescopes the remaining deterministic and model-dependent work.
+
 ## Phase 15 release gate
+
+The current release gate is blocked by the closed employee model pilot. It cannot advance the
+workspace version until Phase 15 is explicitly rescoped and every accepted replacement prerequisite
+passes.
 
 - [ ] Every accepted Phase 15 role and provider disabled/enabled path passes its named prerequisite
   and evidence gate.

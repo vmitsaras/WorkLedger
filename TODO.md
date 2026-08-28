@@ -198,13 +198,17 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1505` Implement a reusable read-only Insight tool registry with independent authorization and active-workspace scope.
 - [x] `WL-1506` Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks.
 - [x] `WL-1507` Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution.
-- [ ] `WL-1508` Add the employee golden-question evaluation set, bounded traces, privacy/security tests, model-failure handling, and accessibility verification, then pass the local AI pilot sub-gate.
+- [ ] `WL-1508` Add the employee golden-question evaluation set, bounded traces, privacy/security tests, model-failure handling, and accessibility verification, then pass the local AI pilot sub-gate. Closed without passing on 2026-08-28 after no qualified model met the zero-tolerance screen; this task does not count as complete.
 - [x] `WL-1508A` Qualify one replacement private model name and exact digest against the accepted startup-health, capability, privacy, and deployment boundaries.
-- [ ] `WL-1508B` Pass the bounded `submission-actions` and `today-posted` regression screen without changing prompts, schemas, or thresholds. The post `WL-1508F` `qwen2.5-coder:14b` rerun stopped at 3/9 after all English and German cases omitted the required pending request action reference; no qualified candidate is ready.
+- [ ] `WL-1508B` Pass the bounded `submission-actions` and `today-posted` regression screen without changing prompts, schemas, or thresholds. Closed after the post `WL-1508F` `qwen2.5-coder:14b` rerun stopped at 3/9; the task did not pass.
 - [x] `WL-1508E` Qualify the remaining installed `qwen3-coder:30b` digest against the unchanged cold-start health, capability, privacy, and deployment boundaries before resuming `WL-1508B`.
 - [x] `WL-1508F` Replace model-selected Employee tool invocation with one server-owned, currently authorized registry execution and one schema-constrained provider response; run no real model case in this task.
-- [ ] `WL-1508C` Execute the complete 24-question, three-locale, three-repetition zero-tolerance evaluation for the qualified replacement digest.
-- [ ] `WL-1508D` Reconfirm the completed non-model evidence, synchronize the evaluation record and project memory, and close `WL-1508` only if the replacement records 216/216.
+- [ ] `WL-1508C` Execute the complete 24-question, three-locale, three-repetition zero-tolerance evaluation for the qualified replacement digest. Closed without execution because `WL-1508B` did not pass.
+- [ ] `WL-1508D` Reconfirm the completed non-model evidence, synchronize the evaluation record and project memory, and close `WL-1508` only if the replacement records 216/216. Closed without execution because `WL-1508C` did not run.
+
+The optional employee local AI pilot is closed without passing. Provider mode remains disabled and
+no model is approved for deployment. `WL-1509` through `WL-1516` retain their current unmet
+dependencies and are not authorized until a separate roadmap decision rescopes Phase 15.
 - [ ] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.
 - [ ] `WL-1510` Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations.
 - [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions.

@@ -128,8 +128,10 @@ They do not replace correctness thresholds.
 tests, degraded-provider evidence, content-free traces, and accessibility matrix are complete, but
 the exact evaluated `gemma4:12b` digest reached 207 of 216 cases. Six `submission-actions` cases
 returned invalid structured output and three German `today-posted` cases omitted the required
-posted-balance fact reference. The zero-tolerance gate therefore remains open; provider mode stays
-disabled and later dependent tasks remain blocked. See
+posted-balance fact reference. Later qualified candidates also failed the bounded known-failure
+screen. The user closed the optional pilot without passing it on 2026-08-28. Provider mode stays
+disabled, no model is approved for deployment, and later dependent tasks remain blocked until a
+separate roadmap decision rescopes them. See
 `docs/159-wl-1508-employee-local-ai-pilot-evaluation.md`.
 
 ### Later role and release gates
@@ -159,6 +161,10 @@ disabled and later dependent tasks remain blocked. See
 
 No later row may bypass an earlier gate. A later task may be removed from Phase 15 without weakening
 an earlier completed gate.
+
+The employee pilot row closed without satisfying its exit evidence on 2026-08-28. This is a
+fail-closed outcome, not a gate pass. The staged dependencies remain unchanged until a separate
+accepted roadmap decision replaces them.
 
 ## Required implementation checks
 

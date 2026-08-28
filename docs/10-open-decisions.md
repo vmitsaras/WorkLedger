@@ -4,6 +4,26 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-28 — Employee local AI pilot closes without passing
+
+The user explicitly closed the optional employee local AI pilot after the final qualified
+`qwen2.5-coder:14b` recovery screen passed 3 of 9 attempted `submission-actions` cases and failed
+the other 6. This decision ends model qualification, prompt or schema recovery, and real model
+evaluation work in the current Phase 15 scope. It does not convert the failed zero-tolerance gate
+into a pass.
+
+Provider mode remains disabled. The complete deterministic Employee Insights foundation remains
+the supported product path, and the completed provider, orchestration, privacy, failure, trace, and
+accessibility work remains in the repository as inactive evidence. No model is approved for
+deployment, and no model file, source, configuration, database object, dependency, or manifest is
+removed or changed by this closure.
+
+The assumption used for the short instruction to “close it” is that it closes the optional model
+pilot only. It does not silently rescope or authorize later Manager, report-builder, HR, System, or
+MCP work. Their existing dependencies remain unsatisfied. Continuing Phase 15 requires a separate
+accepted roadmap decision that either removes model-dependent tasks or defines a new scope; it
+cannot treat this closure as completion of `WL-1508`.
+
 ### 2026-08-28 — WL-1508F accepts server-owned Employee tool execution
 
 Both exact qualified replacement models failed the first `WL-1508B` semantic group. The smaller

@@ -1,8 +1,8 @@
 # WL-1508 employee local AI pilot evaluation
 
-**Status:** Evaluation infrastructure complete; employee local AI pilot sub-gate remains open  
+**Status:** Employee local AI pilot closed without passing
 **Evaluated:** 2026-08-28  
-**Decision:** Fail closed for the evaluated model digest
+**Decision:** End model qualification and evaluation; keep provider mode disabled
 
 ## Outcome
 
@@ -23,8 +23,10 @@ An attempted action-to-fact hint widened provider instructions and regressed the
 contract that produced the 207-of-216 result. WorkLedger does not weaken source, action, fact,
 locale, limitation, prose, or leakage validation to convert the result into a pass.
 
-`WL-1508` therefore remains in progress. `WL-1509` and every task that depends on the employee
-pilot remain blocked by the named roadmap gate. No manifest version changes.
+`WL-1508` did not pass and does not count as complete. After the final recovery screen below also
+failed, the user closed the optional employee model pilot on 2026-08-28. `WL-1509` and every task
+that depends on the employee pilot remain blocked by the named roadmap gate until a separate
+accepted rescoping decision. No manifest version changes.
 
 The accepted `WL-1508F` recovery is now implemented and deterministically verified. WorkLedger
 replaces redundant model tool selection with one exact server-owned registry execution and one
@@ -32,8 +34,9 @@ provider response with no tools and a constrained schema. The bounded real model
 the exact qualified `qwen2.5-coder:14b` digest. All three Spanish `submission-actions` repetitions
 passed, while all six English and German repetitions omitted the required
 `action_submission_requests` reference. The stop rule prevented `today-posted` and the complete
-matrix from running. `WL-1508B` remains open, and no qualified candidate is ready for another
-model execution task.
+matrix from running. `WL-1508B` is closed after the failed screen. `WL-1508C` and `WL-1508D` are
+closed without execution, and no further model execution task is authorized in the current Phase
+15 scope.
 
 ## Exact evaluated provider
 
@@ -468,7 +471,7 @@ the next child.
   behavior, or provider security controls in this task.
 - If no candidate qualifies, stop with `WL-1508A` open and keep the parent gate blocked.
 
-### `WL-1508B` — Screen the known failure modes (open; no candidate ready)
+### `WL-1508B` — Screen the known failure modes (closed after failed screen)
 
 - Run only the `submission-actions` and `today-posted` semantic questions in all three locales and
   all three repetitions against one exact qualified candidate digest: 18 runs total.
@@ -492,7 +495,7 @@ the next child.
 - Use mocked and database-backed verification only. Run no real model case in this task.
 - On completion, make only exact qualified `qwen2.5-coder:14b` eligible to resume `WL-1508B`.
 
-### `WL-1508C` — Run the mandatory complete matrix
+### `WL-1508C` — Run the mandatory complete matrix (closed without execution)
 
 - Execute one uninterrupted `pnpm test:ai:employee` run for the qualified digest with no semantic
   or run-limit controls.
@@ -502,7 +505,7 @@ the next child.
 - Any provider, evaluator, grounding, privacy, or correctness failure stops the sequence. A partial
   or resumed run cannot decide the gate.
 
-### `WL-1508D` — Reconfirm evidence and close the parent gate
+### `WL-1508D` — Reconfirm evidence and close the parent gate (closed without execution)
 
 - Review the already completed privacy/security, degraded-provider, trace, and accessibility
   evidence for drift and rerun the applicable repository gates.
@@ -513,11 +516,14 @@ the next child.
   `WL-1508C` records 216/216. Provider mode remains disabled by default and no manifest version is
   changed by this sub-gate.
 
-## Required next task
+This closing condition was not met. `WL-1508` is closed without passing and remains unchecked in
+the canonical task list.
 
-No model execution task is ready. `WL-1508B` remains open after the post `WL-1508F`
-`qwen2.5-coder:14b` rerun passed 3 of 9 `submission-actions` cases and failed the other 6. A new
-bounded roadmap decision is required before another candidate can be qualified or evaluated. Do
-not run `today-posted`, the complete matrix, `WL-1508C`, `WL-1508D`, or `WL-1509`. Do not install,
-pull, retag, tune, or weaken a model, prompt, schema, validator, threshold, provider control, or
-native fallback without a separately accepted task.
+## Closure
+
+The optional employee local AI pilot is closed without passing. Provider mode remains disabled and
+no exact model digest is approved for deployment. Do not run `today-posted`, the complete matrix,
+`WL-1508C`, or `WL-1508D`, and do not qualify, install, pull, retag, tune, or evaluate another model
+in the current Phase 15 scope. The deterministic Employee Insights foundation remains complete and
+usable. Any later Phase 15 work requires a separate accepted roadmap rescoping decision because the
+existing employee-pilot dependencies remain unsatisfied.

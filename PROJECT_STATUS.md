@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights and local AI
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 8 of 17 tasks complete
-**Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
-**Active task:** `WL-1508B` — Resolve the failed recovery screen for known failures
-**Status:** The exact qualified `qwen2.5-coder:14b` rerun stopped at 3/9; no qualified model candidate is ready
+**Phase progress:** Phase 15 paused — 8 of 17 tasks complete; employee local AI pilot closed
+**Current milestone:** Phase 15 employee local AI pilot closed without passing
+**Active task:** None — Phase 15 continuation requires an explicit rescoping decision
+**Status:** The optional model pilot is closed; provider mode remains disabled and no model work is authorized
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -32,14 +32,14 @@ supplies optional employee-self Ask My Ledger interpretation through that adapte
 tool registry. Questions and prior turns remain request memory only; every tool reauthorizes current
 self scope; structured output maps to validated native facts, limitations, actions, and exact
 sources; native values are rendered outside model prose; and cancellation or provider failure
-preserves the complete deterministic result. `WL-1508` must now evaluate the pinned model,
+preserves the complete deterministic result. `WL-1508` evaluated the pinned model,
 prompt-injection and privacy boundaries, degraded behavior, content-free traces, and accessibility
 before the local AI pilot sub-gate may pass. `WL-1508` now supplies the 24-question, three-locale,
 three-repetition evaluator, content-free traces, privacy and security regressions, degraded-provider
 coverage, and accessibility evidence. The exact evaluated `gemma4:12b` digest reached 207 of 216
 strict cases: six `submission-actions` cases returned provider-invalid structured output and three
 German `today-posted` cases omitted the required posted-balance fact. The zero-tolerance pilot gate
-therefore remains open and provider mode remains disabled by default. The remaining work is now
+therefore did not pass and provider mode remains disabled by default. Recovery work was
 bounded as completed replacement-digest qualification (`WL-1508A`), an 18-run known-failure
 screen (`WL-1508B`), the uninterrupted 216-run gate (`WL-1508C`), and evidence/project-memory
 closure (`WL-1508D`). `WL-1508A` rejected `devstral-small-2:latest` after the unchanged cold-start
@@ -69,9 +69,13 @@ all three Spanish `submission-actions` repetitions, while all six English and Ge
 omitted the required pending request action reference. Every provider response and runtime
 validation succeeded, every trace recorded one registry execution owned by the server and zero
 model tool rounds, and the stop rule prevented `today-posted` and the full matrix from running.
-`WL-1508B` remains open with no qualified candidate ready.
+The user then closed the optional model pilot without passing it. `WL-1508B` is closed after the
+failed screen; `WL-1508C` and `WL-1508D` are closed without execution. No further candidate
+qualification, evaluation, prompt, schema, validator, or provider work is authorized in the
+current Phase 15 scope.
 Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
-evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
+evaluation remain behind their unsatisfied named gates until a separate roadmap rescoping
+decision. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
 decisions remain excluded.
 
@@ -3198,20 +3202,25 @@ trace. The ignored 4,408 byte artifact remains content free. The required stop r
 `today-posted` and the 216 case matrix from running. No source, prompt, schema, validator, threshold,
 provider control, native fallback, dependency, runtime default, manifest, or version changed.
 
+**2026-08-28: Employee local AI pilot closed without passing**
+
+The user ended the optional model pilot after the final bounded recovery screen failed the accepted
+zero-tolerance threshold. `WL-1508`, `WL-1508B`, `WL-1508C`, and `WL-1508D` are closed without a
+passing model gate and do not count as completed roadmap tasks. Provider mode remains disabled, no
+model is approved for deployment, and no further candidate or model evaluation work is authorized.
+The deterministic Employee Insights foundation remains complete and supported. Later Phase 15
+tasks remain behind their existing dependencies until a separate roadmap decision explicitly
+rescopes them. No source, runtime configuration, model installation, dependency, database,
+manifest, or version changed.
+
 ## Current blockers
 
-The deterministic Insights foundation sub-gate is complete. `WL-1508` infrastructure, privacy,
-security, degraded-provider, trace, and accessibility evidence are complete, but its exact pinned
-model is the active blocker: the best strict run reached 207/216 instead of the accepted 216/216.
-`WL-1508A` is complete. After the accepted `WL-1508F` recovery, its exact qualified
-`qwen2.5-coder:14b` candidate passed 3/9 and failed 6/9 in the first `WL-1508B` group because every
-English and German response omitted the pending request action reference. `WL-1508E` is complete
-with exact qualified `qwen3-coder:30b`, but that candidate failed the same group at 0/9 through safe
-provider timeouts. No model candidate has passed the known failure screen. Accepted `WL-1508F` is
-complete with implemented source and green deterministic evidence. `WL-1508B` remains open, but no
-model execution child is ready. `WL-1508C` and `WL-1508D` remain blocked. Provider mode remains
-disabled. Manager, report builder,
-HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
+The deterministic Insights foundation sub-gate is complete. The optional employee local AI pilot
+is closed without passing after the best strict full run reached 207/216 and the final qualified
+`qwen2.5-coder:14b` recovery screen reached 3/9. Provider mode remains disabled and no model is
+approved for deployment. Manager, report builder, HR, system, MCP, and the Phase 15 release task
+remain blocked by their named dependencies until a separate roadmap decision rescopes the phase.
+The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3226,11 +3235,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-No model execution task is ready. Decide whether to register a new bounded qualification child for
-another exact private candidate or keep the employee local AI pilot gate blocked. Do not run
-`today-posted`, the complete matrix, `WL-1508C`, `WL-1508D`, or `WL-1509`. Do not install, pull,
-retag, tune, or weaken a model, prompt, schema, validator, threshold, provider control, or native
-fallback without a separately accepted task.
+No task is active. The employee local AI pilot is closed, so do not qualify, install, pull, retag,
+tune, or evaluate another model and do not run `today-posted`, the complete matrix, `WL-1508C`, or
+`WL-1508D`. Continuing with deterministic Manager, report, HR, System, MCP, or Phase 15 release work
+requires a separate accepted roadmap rescoping task because their current prerequisites remain
+unsatisfied.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 
