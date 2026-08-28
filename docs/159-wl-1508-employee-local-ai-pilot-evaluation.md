@@ -144,9 +144,58 @@ Gate result:
 - `pnpm test:ai:employee`: **failed** the zero-tolerance pilot threshold. The best retained strict
   configuration completed 207/216; nine deterministic semantic cases remained invalid.
 
-## Required next decision
+## Recovery task decomposition
 
-Keep provider mode disabled and evaluate a different exact private model digest that becomes ready
-within the accepted health boundary and passes all 216 runs. Do not mark `WL-1508` complete, enable
-the pilot, advance to `WL-1509`, cite every native fact indiscriminately, or weaken the accepted
-zero-tolerance thresholds without an explicit superseding architecture decision.
+The remaining work is split into bounded child tasks. Each child is a separate review and stop
+point; a failed model check does not authorize implementation changes or automatic continuation to
+the next child.
+
+### `WL-1508A` — Qualify one replacement digest
+
+- Inspect operator-available private models and select one exact model name and digest.
+- Require readiness within the accepted 120-second startup boundary and prove the existing chat,
+  structured-output, and tool capability contract.
+- Preserve the private exact-origin, proxy, redirect, cloud/public model, disabled-by-default,
+  retention, and content-free diagnostic boundaries.
+- Record the exact candidate and evidence. Do not change prompts, schemas, validators, product
+  behavior, or provider security controls in this task.
+- If no candidate qualifies, stop with `WL-1508A` open and keep the parent gate blocked.
+
+### `WL-1508B` — Screen the known failure modes
+
+- Run only the `submission-actions` and `today-posted` semantic questions in all three locales and
+  all three repetitions against the exact `WL-1508A` digest: 18 runs total.
+- Require every run to pass the current source, fact, action, limitation, locale,
+  unsupported-claim, leakage, and native-fallback validation.
+- Retain only the existing content-free smoke artifact and safe operational traces.
+- Do not tune the prompt, widen the tool context, loosen structured output, or change evaluation
+  criteria. Any failure stops the sequence and leaves `WL-1508B` open.
+
+### `WL-1508C` — Run the mandatory complete matrix
+
+- Execute one uninterrupted `pnpm test:ai:employee` run for the qualified digest with no semantic
+  or run-limit controls.
+- Require all 24 semantic questions, three locales, and three repetitions to complete at 216/216.
+- Verify the full artifact identifies the exact digest, is marked complete, and contains only the
+  accepted content-free fields.
+- Any provider, evaluator, grounding, privacy, or correctness failure stops the sequence. A partial
+  or resumed run cannot decide the gate.
+
+### `WL-1508D` — Reconfirm evidence and close the parent gate
+
+- Review the already completed privacy/security, degraded-provider, trace, and accessibility
+  evidence for drift and rerun the applicable repository gates.
+- Update this record, `PROJECT_STATUS.md`, `TODO.md`, `docs/07-roadmap.md`,
+  `docs/08-task-board.md`, and any directly affected operations/configuration documentation with
+  the exact passing model evidence.
+- Close `WL-1508` and its pilot checklist only after `WL-1508A` through `WL-1508D` are complete and
+  `WL-1508C` records 216/216. Provider mode remains disabled by default and no manifest version is
+  changed by this sub-gate.
+
+## Required next task
+
+Start `WL-1508A` only. Keep provider mode disabled and qualify one different exact private model
+digest within the accepted health and security boundary. Do not run the regression or full matrix
+in the same task, mark `WL-1508` complete, enable the pilot, advance to `WL-1509`, cite every native
+fact indiscriminately, or weaken the accepted zero-tolerance thresholds without an explicit
+superseding architecture decision.

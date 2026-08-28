@@ -199,6 +199,10 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1506` Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks.
 - [x] `WL-1507` Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution.
 - [ ] `WL-1508` Add the employee golden-question evaluation set, bounded traces, privacy/security tests, model-failure handling, and accessibility verification, then pass the local AI pilot sub-gate.
+- [ ] `WL-1508A` Qualify one replacement private model name and exact digest against the accepted startup-health, capability, privacy, and deployment boundaries.
+- [ ] `WL-1508B` Run the replacement candidate through the bounded `submission-actions` and `today-posted` regression screen without changing prompts, schemas, or thresholds.
+- [ ] `WL-1508C` Execute the complete 24-question, three-locale, three-repetition zero-tolerance evaluation for the qualified replacement digest.
+- [ ] `WL-1508D` Reconfirm the completed non-model evidence, synchronize the evaluation record and project memory, and close `WL-1508` only if the replacement records 216/216.
 - [ ] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.
 - [ ] `WL-1510` Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations.
 - [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions.
