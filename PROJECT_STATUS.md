@@ -5,7 +5,7 @@
 **Phase progress:** Phase 15 in progress — 8 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
 **Active task:** `WL-1508F` — Implement server-owned Employee Insight orchestration
-**Status:** Recovery decision accepted and registered; source implementation and deterministic verification have not started, and no further model case is authorized
+**Status:** Source implementation and deterministic verification are complete without a real model case; task closure remains under review, and no further model case is authorized yet
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -57,13 +57,15 @@ every employee semantic case. The separate `WL-1508B` screen then ran all nine r
 `submission-actions` locale/repetition cases at the unchanged 120-second request deadline and
 concurrency `1`. Every case failed safely with provider `TIMEOUT`: six before a tool call and three
 after one tool execution while awaiting final output. The `today-posted` group and complete matrix
-did not run. No model candidate now satisfies the screen, so a new bounded recovery path requires
-an explicit roadmap decision before more model execution. `WL-1508F` now records that decision:
-WorkLedger will execute the exact registry call from validated Employee request intent, reauthorize
-current self scope before model context exists, and make one tool-free schema-constrained provider
-request. The existing runtime validators, provider capability and security contract, native
-fallback, zero-tolerance gate, and disabled default remain unchanged. `WL-1508F` runs no real model
-case. After it completes, only exact qualified `qwen2.5-coder:14b` may resume `WL-1508B`.
+did not run. No model candidate now satisfies the screen. `WL-1508F` implements the accepted
+bounded recovery: WorkLedger executes the exact registry call from validated Employee request
+intent, reauthorizes current self scope before model context exists, and makes one tool-free
+provider request whose JSON Schema is constrained to the current locale, current authorized
+references, and locale-safe prose. The existing runtime validators, provider capability and
+security contract, native fallback, zero-tolerance gate, and disabled default remain unchanged.
+Mocked, cancellation, provider-failure, database-authorization, and repository checks pass without
+a real model case. After review closes `WL-1508F`, only exact qualified `qwen2.5-coder:14b` may
+resume `WL-1508B`.
 Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
 evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
@@ -245,8 +247,8 @@ remains an unnumbered draft.
   from the browser graph.
 - Accepted `WL-1508F` makes the server derive and execute the exact Employee registry call before
   provider generation. The model receives no tools and returns one schema-constrained response;
-  runtime grounding validation remains authoritative. This is a registered decision, not yet an
-  implemented or model-evaluated result.
+  runtime grounding validation remains authoritative. The implementation and deterministic
+  verification are complete without a model evaluation; task closure remains under review.
 - Framework-independent domain engine before UI feature development.
 - WCAG 2.2 AA baseline.
 - Immutable punch events, ledger-based balances, effective-dated policies, and monthly locking.
@@ -3155,6 +3157,28 @@ remains an unnumbered draft.
   model request, artifact, dependency, migration, runtime configuration, manifest, or version
   changed.
 
+**2026-08-28 — WL-1508F server-owned orchestration implementation (closure pending)**
+
+- Replaced model-selected tool invocation with one exact call derived from the validated Employee
+  Insight request and executed through the existing registry with current `SELF` authorization,
+  fixed Employee workspace, identity, and trusted capture instant before provider generation.
+- Replaced the two-phase provider exchange with one `tools: []` request containing only the bounded
+  question history, selected descriptor, locale, and minimized fresh registry result. Its JSON
+  Schema reuses the shared interpretation contract while narrowing locale, fact, source,
+  limitation, action, and safe-prose values to the current authorized result.
+- Kept runtime parsing and grounding validation final, including exact source unions, material
+  limitations, duplicate and unknown reference rejection, safe prose, native rendering, and
+  unexpected tool-call rejection. Provider readiness, rate, concurrency, cancellation, deadline,
+  private origin, digest, no-retry, disabled default, and native fallback remain unchanged.
+- Added focused service evidence for fresh-result replacement, optional empty-reference schemas,
+  cancellation, provider failures, permission loss, invalid registry output, content-free trace
+  counters, and a PostgreSQL scope-loss case that makes zero provider calls.
+- Passed 16 focused interpretation tests, the 15-file PostgreSQL suite with 28 passes and one
+  historical skip, and `pnpm verify` with 54 tooling, 481 unit/component, 13 broad integration,
+  and 49 Playwright passes plus one historical skip. No `pnpm test:ai:employee`, semantic smoke
+  case, or real model request ran. No endpoint, UI, database, dependency, runtime setting,
+  manifest, or version changed.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. `WL-1508` infrastructure, privacy,
@@ -3163,9 +3187,9 @@ model is the active blocker: the best strict run reached 207/216 instead of the 
 `WL-1508A` is complete, although its qualified `qwen2.5-coder:14b` candidate failed the first
 `WL-1508B` group at 0/9. `WL-1508E` is complete with exact qualified `qwen3-coder:30b`, but that
 candidate also failed the first `WL-1508B` group at 0/9 through safe provider timeouts. No model
-candidate has passed the known-failure screen. Accepted `WL-1508F` is now the only ready recovery
-task, but its source and deterministic evidence do not yet exist. `WL-1508B` is blocked by
-`WL-1508F`; no model-execution child is ready. `WL-1508C` and `WL-1508D` remain blocked. Provider
+candidate has passed the known-failure screen. Accepted `WL-1508F` now has implemented source and
+green deterministic evidence, but its task-closure decision remains open. `WL-1508B` is blocked by
+that closure; no model-execution child is ready. `WL-1508C` and `WL-1508D` remain blocked. Provider
 mode remains disabled. Manager, report-builder,
 HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
@@ -3182,13 +3206,10 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Implement `WL-1508F` only from
-`docs/specs/_root/0001-server-owned-insight-orchestration.md`. Replace model-selected tool
-invocation with one exact server-owned registry execution and one schema-constrained provider
-response. Run focused mocked, database authorization, cancellation, provider failure, redaction,
-and repository checks, then stop. Do not run a real model case, resume `WL-1508B`, run
-`today-posted` or the complete matrix, advance to `WL-1509`, or enable provider mode by default in
-the same task.
+Review the completed `WL-1508F` implementation and deterministic evidence. If accepted, mark only
+`WL-1508F` complete and make `WL-1508B` ready for its existing 18-run screen against exact
+qualified `qwen2.5-coder:14b`. Do not run a model case while closing `WL-1508F`, run the complete
+matrix, advance to `WL-1509`, weaken validators or thresholds, or enable provider mode by default.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

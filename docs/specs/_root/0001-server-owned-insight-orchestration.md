@@ -1,7 +1,7 @@
 # 0001. Server owned employee Insight orchestration
 
 **Date**: 2026-08-28
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -228,13 +228,13 @@ address, digest, proxy, redirect, cloud, and outbound network controls remain un
 
 ## Build plan
 
-1. Replace model selected tool orchestration with one derived registry execution and one final
+1. [x] Replace model selected tool orchestration with one derived registry execution and one final
    provider request in the Employee interpretation service, satisfies **AC-1**, **AC-2**, **AC-3**.
-2. Add a bounded dynamic JSON Schema builder that reuses current contract limits and authorized
+2. [x] Add a bounded dynamic JSON Schema builder that reuses current contract limits and authorized
    references, while retaining all runtime validators, satisfies **AC-3**, **AC-4**.
-3. Update content free trace counters and focused service, provider, cancellation, and permission
+3. [x] Update content free trace counters and focused service, provider, cancellation, and permission
    tests, satisfies **AC-2**, **AC-5**, **AC-6**, **AC-7**.
-4. Run the applicable repository and database checks, update `WL-1507`, `WL-1508`, operations, and
+4. [x] Run the applicable repository and database checks, update `WL-1507`, `WL-1508`, operations, and
    project memory documentation, and stop before real model execution, satisfies **AC-6**, **AC-7**,
    **AC-8**.
 

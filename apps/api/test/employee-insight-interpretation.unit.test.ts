@@ -97,18 +97,16 @@ const INTERPRETATION = {
 
 test('orchestrates the exact employee tool and returns grounded current sources', async () => {
   const insightService = createInsightServiceStub();
-  const provider = createProvider([
-    {
-      content: '',
-      toolCalls: [
-        {
-          name: 'employee_today_explanation',
-          arguments: { date: '2026-08-27' },
-        },
-      ],
+  const currentFact = RESULT.facts[0];
+  if (currentFact === undefined) throw new Error('Expected a current Insight fact.');
+  vi.mocked(insightService.runWithLocale).mockResolvedValueOnce({
+    locale: 'en-GB',
+    nativeResult: {
+      ...RESULT,
+      facts: [{ ...currentFact, reference: 'stale_initial_fact' }],
     },
-    { content: JSON.stringify(INTERPRETATION), toolCalls: [] },
-  ]);
+  });
+  const provider = createProvider([{ content: JSON.stringify(INTERPRETATION), toolCalls: [] }]);
   const consumeRateLimit = vi.fn(async () => ({ allowed: true, retryAfter: null }));
   const service = createEmployeeInsightInterpretationService(
     insightService,
@@ -124,52 +122,88 @@ test('orchestrates the exact employee tool and returns grounded current sources'
   expect(insightService.runWithLocale).toHaveBeenCalledOnce();
   expect(insightService.run).toHaveBeenCalledOnce();
   expect(consumeRateLimit).toHaveBeenCalledWith(ACCOUNT_ID);
-  expect(provider.generate).toHaveBeenCalledTimes(2);
-  const firstRequest = vi.mocked(provider.generate).mock.calls[0]?.[0];
-  expect(firstRequest?.outputSchema).toBeUndefined();
-  expect(firstRequest?.tools).toEqual([
-    expect.objectContaining({
-      name: 'employee_today_explanation',
-      parameters: expect.objectContaining({
-        properties: { date: { const: '2026-08-27', type: 'string' } },
-      }),
-    }),
-  ]);
-  expect(JSON.stringify(firstRequest)).not.toContain('450');
-  expect(JSON.stringify(firstRequest)).not.toContain('source_today');
-  const secondRequest = vi.mocked(provider.generate).mock.calls[1]?.[0];
-  expect(secondRequest?.tools).toEqual([]);
-  expect(secondRequest?.outputSchema).toBeUndefined();
-  expect(JSON.stringify(secondRequest)).toContain('source_today');
-  const toolMessage = secondRequest?.messages.find((message) => message.role === 'tool');
-  expect(toolMessage).toBeDefined();
-  expect(JSON.parse(toolMessage?.content ?? '')).toMatchObject({
-    limitations: [
-      {
-        relatedActionReferences: ['action_today'],
-        relatedFactReferences: ['fact_worked'],
-        relatedSourceReferences: ['source_today'],
+  expect(provider.generate).toHaveBeenCalledOnce();
+  const providerRequest = vi.mocked(provider.generate).mock.calls[0]?.[0];
+  expect(providerRequest?.tools).toEqual([]);
+  expect(providerRequest?.outputSchema).toMatchObject({
+    additionalProperties: false,
+    properties: {
+      locale: { enum: ['en-GB'] },
+      statements: {
+        items: {
+          properties: {
+            actionReferences: { items: { enum: ['action_today'] } },
+            factReferences: { items: { enum: ['fact_worked'] } },
+            limitationReferences: { items: { enum: ['limit_provisional'] } },
+            sourceReferences: { items: { enum: ['source_today'] } },
+            text: { const: INTERPRETATION.statements[0].text },
+          },
+        },
       },
-    ],
+    },
   });
-  expect(JSON.stringify(secondRequest)).not.toContain('"qualifiers"');
-  expect(JSON.stringify(secondRequest)).not.toContain('450');
-  expect(JSON.stringify(secondRequest)).not.toContain('employeeId');
+  const serializedRequest = JSON.stringify(providerRequest);
+  expect(serializedRequest).toContain('source_today');
+  expect(serializedRequest).toContain('relatedFactReferences');
+  expect(serializedRequest).not.toContain('stale_initial_fact');
+  expect(serializedRequest).not.toContain('"qualifiers"');
+  expect(serializedRequest).not.toContain('450');
+  expect(serializedRequest).not.toContain('employeeId');
+});
+
+test('requires empty arrays when the current result has no optional references', async () => {
+  const resultWithoutOptionalReferences: InsightNativeResult = {
+    ...RESULT,
+    actions: [],
+    limitations: [],
+  };
+  const insightService = createInsightServiceStub();
+  vi.mocked(insightService.run).mockResolvedValueOnce(resultWithoutOptionalReferences);
+  const provider = createProvider([
+    {
+      content: JSON.stringify({
+        ...INTERPRETATION,
+        statements: [
+          {
+            ...INTERPRETATION.statements[0],
+            actionReferences: [],
+            limitationReferences: [],
+          },
+        ],
+      }),
+      toolCalls: [],
+    },
+  ]);
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+
+  await expect(service.interpret(identity(), REQUEST, CAPTURED_AT)).resolves.toMatchObject({
+    nativeResult: resultWithoutOptionalReferences,
+  });
+  expect(vi.mocked(provider.generate).mock.calls[0]?.[0].outputSchema).toMatchObject({
+    properties: {
+      statements: {
+        items: {
+          properties: {
+            actionReferences: { maxItems: 0 },
+            limitationReferences: { maxItems: 0 },
+          },
+        },
+      },
+    },
+  });
+  expect(
+    JSON.stringify(vi.mocked(provider.generate).mock.calls[0]?.[0].outputSchema),
+  ).not.toContain('"enum":[]');
 });
 
 test('records one content free operational trace with bounded token and tool counts', async () => {
   const insightService = createInsightServiceStub();
   const provider = createProvider([
-    {
-      content: '',
-      toolCalls: [
-        {
-          name: 'employee_today_explanation',
-          arguments: { date: '2026-08-27' },
-        },
-      ],
-      usage: { inputTokens: 30, outputTokens: 4 },
-    },
     {
       content: JSON.stringify(INTERPRETATION),
       toolCalls: [],
@@ -190,14 +224,14 @@ test('records one content free operational trace with bounded token and tool cou
 
   expect(traces).toEqual([
     {
-      inputTokens: 80,
+      inputTokens: 50,
       latencyMs: expect.any(Number),
       outcome: 'SUCCESS',
-      outputTokens: 16,
+      outputTokens: 12,
       providerFailureCode: null,
       validationFailureCode: null,
       toolExecutions: 1,
-      toolRounds: 1,
+      toolRounds: 0,
     },
   ]);
   const serialized = JSON.stringify(traces);
@@ -210,15 +244,6 @@ test('records one content free operational trace with bounded token and tool cou
 test('normalizes an exact JSON response fence before applying the full grounding validator', async () => {
   const insightService = createInsightServiceStub();
   const provider = createProvider([
-    {
-      content: '',
-      toolCalls: [
-        {
-          name: 'employee_today_explanation',
-          arguments: { date: '2026-08-27' },
-        },
-      ],
-    },
     { content: `\`\`\`json\n${JSON.stringify(INTERPRETATION)}\n\`\`\``, toolCalls: [] },
   ]);
   const service = createEmployeeInsightInterpretationService(
@@ -237,15 +262,6 @@ test('normalizes an exact JSON response fence before applying the full grounding
 test('rejects a fenced JSON response with any surrounding prose', async () => {
   const insightService = createInsightServiceStub();
   const provider = createProvider([
-    {
-      content: '',
-      toolCalls: [
-        {
-          name: 'employee_today_explanation',
-          arguments: { date: '2026-08-27' },
-        },
-      ],
-    },
     {
       content: `Here is the result:\n\`\`\`json\n${JSON.stringify(INTERPRETATION)}\n\`\`\``,
       toolCalls: [],
@@ -267,15 +283,6 @@ test('rejects a fenced JSON response with any surrounding prose', async () => {
 test('rejects otherwise grounded prose outside the locale safe allowlist', async () => {
   const insightService = createInsightServiceStub();
   const provider = createProvider([
-    {
-      content: '',
-      toolCalls: [
-        {
-          name: 'employee_today_explanation',
-          arguments: { date: '2026-08-27' },
-        },
-      ],
-    },
     {
       content: JSON.stringify({
         ...INTERPRETATION,
@@ -310,52 +317,62 @@ test('rejects otherwise grounded prose outside the locale safe allowlist', async
   ]);
 });
 
-test('rejects model selected scope changes and ungrounded final output', async () => {
-  for (const responses of [
-    [
-      {
-        content: '',
-        toolCalls: [
-          {
-            name: 'employee_today_explanation',
-            arguments: { date: '2026-08-26' },
-          },
-        ],
-      },
-    ],
-    [
-      {
-        content: '',
-        toolCalls: [
-          {
-            name: 'employee_today_explanation',
-            arguments: { date: '2026-08-27' },
-          },
-        ],
-      },
-      {
-        content: JSON.stringify({
-          ...INTERPRETATION,
-          statements: [{ ...INTERPRETATION.statements[0], text: 'The result is 450 minutes.' }],
-        }),
-        toolCalls: [],
-      },
-    ],
-  ] satisfies readonly (readonly AiProviderResponse[])[]) {
-    const insightService = createInsightServiceStub();
-    const provider = createProvider(responses);
-    const service = createEmployeeInsightInterpretationService(
-      insightService,
-      createInsightToolRegistry(insightService),
-      provider,
-      async () => ({ allowed: true, retryAfter: null }),
-    );
+test.each([
+  {
+    name: 'an unexpected model tool call',
+    response: {
+      content: '',
+      toolCalls: [
+        {
+          name: 'employee_today_explanation',
+          arguments: { date: '2026-08-26' },
+        },
+      ],
+    },
+    validationFailureCode: 'FINAL_TOOL_CALL_UNEXPECTED',
+  },
+  {
+    name: 'ungrounded final output',
+    response: {
+      content: JSON.stringify({
+        ...INTERPRETATION,
+        statements: [{ ...INTERPRETATION.statements[0], text: 'The result is 450 minutes.' }],
+      }),
+      toolCalls: [],
+    },
+    validationFailureCode: 'FINAL_PROSE_NUMBER',
+  },
+] satisfies readonly {
+  name: string;
+  response: AiProviderResponse;
+  validationFailureCode: string;
+}[])('rejects $name after one server selected registry execution', async (testCase) => {
+  const insightService = createInsightServiceStub();
+  const provider = createProvider([testCase.response]);
+  const traces: unknown[] = [];
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
 
-    await expect(service.interpret(identity(), REQUEST, CAPTURED_AT)).rejects.toMatchObject({
-      code: 'INTERNAL_ERROR',
-      statusCode: 503,
-    });
-  }
+  await expect(
+    service.interpret(identity(), REQUEST, CAPTURED_AT, {
+      recordTrace: (trace) => traces.push(trace),
+    }),
+  ).rejects.toMatchObject({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  expect(provider.generate).toHaveBeenCalledOnce();
+  expect(vi.mocked(provider.generate).mock.calls[0]?.[0].tools).toEqual([]);
+  expect(insightService.run).toHaveBeenCalledOnce();
+  expect(traces).toEqual([
+    expect.objectContaining({
+      outcome: 'PROVIDER_INVALID_OUTPUT',
+      toolExecutions: 1,
+      toolRounds: 0,
+      validationFailureCode: testCase.validationFailureCode,
+    }),
+  ]);
 });
 
 test.each([
@@ -386,7 +403,7 @@ test.each([
       expect.objectContaining({
         outcome: expectedOutcome,
         providerFailureCode: code,
-        toolExecutions: 0,
+        toolExecutions: 1,
         toolRounds: 0,
       }),
     ]);
@@ -427,6 +444,7 @@ test('does not call an unavailable provider and records the native fallback path
   ).rejects.toMatchObject({ code: 'INTERNAL_ERROR', statusCode: 503 });
   expect(provider.generate).not.toHaveBeenCalled();
   expect(insightService.runWithLocale).toHaveBeenCalledOnce();
+  expect(insightService.run).not.toHaveBeenCalled();
   expect(traces).toEqual([
     expect.objectContaining({ outcome: 'PROVIDER_UNAVAILABLE', providerFailureCode: null }),
   ]);
@@ -492,11 +510,75 @@ test('enforces one in flight interpretation and propagates caller cancellation',
     expect.objectContaining({
       outcome: 'PROVIDER_CANCELLED',
       providerFailureCode: 'CANCELLED',
+      toolExecutions: 1,
+      toolRounds: 0,
     }),
   ]);
 });
 
-test('preserves permission loss and rejects missing material limitation citations', async () => {
+test('stops before provider generation when current registry authorization is lost', async () => {
+  const deniedService = createInsightServiceStub();
+  vi.mocked(deniedService.run).mockRejectedValueOnce(
+    new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 }),
+  );
+  const provider = createProvider([]);
+  const traces: unknown[] = [];
+  const service = createEmployeeInsightInterpretationService(
+    deniedService,
+    createInsightToolRegistry(deniedService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+
+  await expect(
+    service.interpret(identity(), REQUEST, CAPTURED_AT, {
+      recordTrace: (trace) => traces.push(trace),
+    }),
+  ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
+  expect(deniedService.runWithLocale).toHaveBeenCalledOnce();
+  expect(deniedService.run).toHaveBeenCalledOnce();
+  expect(provider.generate).not.toHaveBeenCalled();
+  expect(traces).toEqual([
+    expect.objectContaining({
+      outcome: 'PERMISSION_DENIED',
+      providerFailureCode: null,
+      toolExecutions: 0,
+      toolRounds: 0,
+      validationFailureCode: null,
+    }),
+  ]);
+});
+
+test('stops before provider generation when the current registry result is invalid', async () => {
+  const invalidService = createInsightServiceStub();
+  vi.mocked(invalidService.run).mockResolvedValueOnce({ ...RESULT, workspace: 'MANAGER' });
+  const provider = createProvider([]);
+  const traces: unknown[] = [];
+  const service = createEmployeeInsightInterpretationService(
+    invalidService,
+    createInsightToolRegistry(invalidService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+
+  await expect(
+    service.interpret(identity(), REQUEST, CAPTURED_AT, {
+      recordTrace: (trace) => traces.push(trace),
+    }),
+  ).rejects.toMatchObject({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  expect(provider.generate).not.toHaveBeenCalled();
+  expect(traces).toEqual([
+    expect.objectContaining({
+      outcome: 'NATIVE_FAILURE',
+      providerFailureCode: null,
+      toolExecutions: 0,
+      toolRounds: 0,
+      validationFailureCode: null,
+    }),
+  ]);
+});
+
+test('preserves initial permission loss and rejects missing material limitation citations', async () => {
   const deniedService = createInsightServiceStub();
   vi.mocked(deniedService.runWithLocale).mockRejectedValueOnce(
     new WorkLedgerApiError({ code: 'ACCESS_DENIED', statusCode: 403 }),

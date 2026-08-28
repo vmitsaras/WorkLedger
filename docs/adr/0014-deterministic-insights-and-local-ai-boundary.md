@@ -182,16 +182,19 @@ server setting, and no outbound proxy. The adapter uses `/api/tags` to verify th
 `/api/chat` only for interpretation. Any other Ollama endpoint is outside its allowlist.
 
 The adapter uses nonstreaming structured output. Thinking or reasoning traces are disabled and are
-never returned, stored, or logged. Requests have a bounded timeout, bounded tool rounds, account
-rate limits, concurrency limits, and user cancellation. Provider failure never blocks native
-Insights or another WorkLedger workflow.
+never returned, stored, or logged. Requests have a bounded timeout, one server-owned registry
+execution, account rate limits, concurrency limits, and user cancellation. Provider failure never
+blocks native Insights or another WorkLedger workflow.
 
 One account may have one interpretation in flight and may start at most 12 interpretations in a
 rolling 10 minute window. The installation defaults to two provider requests in flight and may be
-configured from one through eight. One interpretation may use at most two model tool rounds, four
-tool executions, eight grounded statements, and 2,000 Unicode code points of model prose. The
-provider timeout defaults to 30 seconds and may be configured from 5 through 120 seconds. WorkLedger
-does not retry a model call automatically; only an explicit safe user retry starts another call.
+configured from one through eight. Employee interpretation performs exactly one current-authorized
+registry execution followed by one tool-free provider generation, with zero model tool rounds,
+eight grounded statements, and 2,000 Unicode code points of model prose. The provider timeout
+defaults to 30 seconds and may be configured from 5 through 120 seconds. WorkLedger does not retry
+a model call automatically; only an explicit safe user retry starts another call. The provider
+health contract remains conservative and still requires chat, structured-output, and tool
+capability; changing that contract requires a separate decision.
 
 An external or cloud model provider requires a superseding ADR, a data processing and egress
 review, explicit operator enablement, new retention rules, and a complete threat and evaluation
@@ -200,10 +203,11 @@ gate. This ADR does not authorize one.
 ### Context minimization and retention
 
 The model receives only the current bounded question, resolved account locale, fixed system
-instructions, allowlisted tool definitions, and the smallest authorized typed facts needed to
-answer. It never receives a DOM snapshot, whole API response, export, audit record, attachment,
-password or session material, notes, reasons, diagnosis, unrestricted user text from stored
-records, or hidden page content.
+instructions, the smallest current-authorized typed facts needed to answer, and a response schema
+narrowed to that locale and those transient references. It receives no tool definitions and never
+receives a DOM snapshot, whole API response, export, audit record, attachment, password or session
+material, notes, reasons, diagnosis, unrestricted user text from stored records, or hidden page
+content.
 
 Identity is removed when it is not needed. Manager context uses transient aliases where a name is
 not required for the explanation. Source identifiers are mapped to transient references before the
@@ -215,7 +219,8 @@ hold at most the bounded current conversation in memory. It clears that state on
 change, sign out, session expiry, permission loss, or explicit clear.
 
 Operational diagnostics may retain only provider kind, configured model digest, safe outcome code,
-request ID, timing, token counts, tool codes, validation outcome, cancellation, and retry count.
+request ID, timing, token counts, registry execution and model tool-round counts, validation
+outcome, cancellation, and retry count.
 They contain no question, answer, prompt, tool argument, tool result, source reference, employee
 identity, or domain value. These facts use the existing `OPERATIONAL_LOGS` retention class.
 Evaluation fixtures are synthetic repository files. Production records cannot be copied into the
@@ -223,9 +228,12 @@ evaluation set.
 
 ### Grounded interpretation
 
-The model selects only declared tools. WorkLedger validates every tool name and argument, runs each
-tool through current authorization, and supplies the result as untrusted data rather than
-instructions. Stored user text does not enter model context.
+WorkLedger selects the one Employee registry call from validated request intent, fixes its
+arguments to the requested visible period, and runs it through current authorization before the
+provider receives context. The model receives no tools and cannot select a different tool,
+argument, period, workspace, employee, network destination, or write operation. The minimized
+registry result is supplied as untrusted data rather than instructions. Stored user text does not
+enter model context.
 
 The final model response must match the provider independent schema and reference native fact,
 source, limitation, and action codes that actually exist in the current result. WorkLedger renders

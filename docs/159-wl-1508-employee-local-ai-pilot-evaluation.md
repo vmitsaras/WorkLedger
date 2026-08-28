@@ -26,10 +26,10 @@ locale, limitation, prose, or leakage validation to convert the result into a pa
 `WL-1508` therefore remains in progress. `WL-1509` and every task that depends on the employee
 pilot remain blocked by the named roadmap gate. No manifest version changes.
 
-The accepted recovery decision is now `WL-1508F`. WorkLedger will replace redundant model tool
-selection with one exact server-owned registry execution and one schema-constrained provider
-response. The implementation task runs no real model case. `WL-1508B` remains blocked until that
-task completes.
+The accepted `WL-1508F` recovery is now implemented and deterministically verified. WorkLedger
+replaces redundant model tool selection with one exact server-owned registry execution and one
+tool-free schema-constrained provider response. No real model case ran. Task closure remains a
+separate review decision, so `WL-1508B` remains blocked until `WL-1508F` is marked complete.
 
 ## Exact evaluated provider
 
@@ -245,7 +245,7 @@ retag, source change, dependency, runtime default, manifest, or version was intr
 execution. A failed probe requires no runtime rollback because provider mode stays disabled and no
 model or application state is persisted by WorkLedger.
 
-## `WL-1508F` server-owned Employee Insight orchestration (registered)
+## `WL-1508F` server-owned Employee Insight orchestration (implemented; closure pending)
 
 The failing candidates exposed a redundant model decision. Before provider generation, WorkLedger
 already knows the active workspace, Insight kind, exact visible period, exact Employee registry
@@ -253,11 +253,12 @@ tool, and exact tool arguments. Asking the model to repeat that selection adds n
 created the first candidate's complete failure mode.
 
 The accepted decision is specified in
-`docs/specs/_root/0001-server-owned-insight-orchestration.md`. `WL-1508F` will execute the derived
-registry call once with current Employee self authorization, use that fresh result for minimized
-model context and final validation, and make one provider request with no tools and the existing
-strict structured-output schema. Runtime parsing, source-union validation, material limitations,
-safe prose, native actions, and exact-reference checks remain authoritative.
+`docs/specs/_root/0001-server-owned-insight-orchestration.md`. `WL-1508F` now executes the derived
+registry call once with current Employee self authorization, uses that fresh result for minimized
+model context and final validation, and makes one provider request with no tools and the existing
+strict structured-output contract. The request schema is narrowed to the current locale, current
+authorized references, and locale-safe prose. Runtime parsing, source-union validation, material
+limitations, native actions, safe prose, and exact-reference checks remain authoritative.
 
 **Goal:** Remove model control over an already known data-access choice without changing product
 scope, provider security, native authority, or the zero-tolerance gate.
@@ -282,25 +283,26 @@ scope, provider security, native authority, or the zero-tolerance gate.
 
 **Acceptance criteria:**
 
-- [ ] The server derives the exact registry call from the validated Employee Insight and executes
+- [x] The server derives the exact registry call from the validated Employee Insight and executes
       it once with fixed `EMPLOYEE` workspace, current identity, and trusted capture instant before
       provider generation.
-- [ ] Permission loss or invalid registry output causes zero provider calls and returns the existing
+- [x] Permission loss or invalid registry output causes zero provider calls and returns the existing
       safe outcome.
-- [ ] The provider receives one request with `tools: []`, minimized context from the fresh registry
+- [x] The provider receives one request with `tools: []`, minimized context from the fresh registry
       result, and a JSON schema bounded by the current locale, current authorized references, and
       existing interpretation contract.
-- [ ] Existing parsing and grounding validation remains final. Unknown, duplicate, missing, or
+- [x] Existing parsing and grounding validation remains final. Unknown, duplicate, missing, or
       wrong source, fact, limitation, or action references still fail closed.
-- [ ] A successful trace records zero model tool rounds and one completed registry execution;
+- [x] A successful trace records zero model tool rounds and one completed registry execution;
       failed traces retain only existing safe content-free fields.
-- [ ] Focused unit, database authorization, cancellation, provider failure, configuration,
+- [x] Focused unit, database authorization, cancellation, provider failure, configuration,
       redaction, formatting, phase, and repository checks pass without a real model request.
 
-**Checkpoint:** Mark only `WL-1508F` complete after deterministic verification. Then make
-`WL-1508B` ready for its existing 18-run screen against exact qualified `qwen2.5-coder:14b` digest
+**Checkpoint:** Deterministic verification is complete. If review accepts closure, mark only
+`WL-1508F` complete and make `WL-1508B` ready for its existing 18-run screen against exact
+qualified `qwen2.5-coder:14b` digest
 `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. Do not run that screen in
-the same task.
+this task.
 
 **Rollback note:** Provider mode remains disabled. Before any new model screen, the orchestration
 change can be reverted as one bounded source and test change with no data migration or persisted
@@ -334,10 +336,12 @@ semantic-ID controls support smoke diagnosis but cannot mark the 216-run gate co
 
 - Ollama token usage is parsed into bounded input/output counters; malformed counters fail closed.
 - Generation is deterministic, non-streaming, thinking-disabled, and capped at 1,024 tokens.
-- Tool selection and final output are separate provider phases. The first phase exposes exactly
-  one purpose-specific read-only tool; the final phase exposes no tool.
-- Current employee self authorization is rerun for the exact visible scope. Model-selected tool,
-  argument, period, workspace, second-tool, mixed-content, and execution-limit changes fail closed.
+- The server derives one purpose-specific read-only registry call from validated request intent,
+  runs it with current Employee self authorization, and only then makes one provider generation.
+- The provider receives `tools: []`. Any returned tool call fails closed, and the model cannot
+  select another tool, argument, period, workspace, employee, network destination, or write.
+- The output schema narrows locale, references, and safe prose to the fresh authorized result. It
+  supplements rather than replaces the full provider-independent runtime validator.
 - Tool context omits native numeric values, dates, freshness timestamps, source labels, actor,
   employee, organization, roles, stored free text, and credentials. It carries only the bounded
   codes and references needed for grounding plus precomputed material-limitation relationships.
@@ -390,9 +394,10 @@ Automated component and Chromium coverage proves that:
 Passed:
 
 - focused API unit evaluation: 32 tests;
+- focused `WL-1508F` orchestration evaluation: 16 tests;
 - focused Insights component evaluation: 7 tests;
 - `pnpm verify`: configuration, OpenAPI reproducibility, formatting, ESLint, 346-file/1,988-import
-  boundaries, CSS ownership, strict TypeScript, 54 tooling tests, 477 unit/component tests, 13
+  boundaries, CSS ownership, strict TypeScript, 54 tooling tests, 481 unit/component tests, 13
   environment-independent integrations with 49 expected database opt-outs, 49 Playwright passes
   with one historical skip, i18n, bundle budgets, production build, and workspace build;
 - `pnpm db:test`: 15 files, 28 tests passed, one historical skip; and
@@ -404,6 +409,8 @@ Gate result:
 
 - `pnpm test:ai:employee`: **failed** the zero-tolerance pilot threshold. The best retained strict
   configuration completed 207/216; nine deterministic semantic cases remained invalid.
+- `WL-1508F` made no real model request and produced no evaluator artifact. Its deterministic and
+  database evidence is green, while the task remains in progress pending the closure decision.
 
 ## Recovery task decomposition
 
@@ -437,7 +444,7 @@ the next child.
 - Execute only the recovery qualification contract above.
 - Stop before any employee semantic case whether qualification passes or fails.
 
-### `WL-1508F` — Move the known registry call under server control
+### `WL-1508F` — Move the known registry call under server control (implementation verified)
 
 - Execute the exact Employee registry call once from validated request intent and current
   authorization before provider generation.
@@ -469,9 +476,8 @@ the next child.
 
 ## Required next task
 
-Implement `WL-1508F` only from the accepted server-owned orchestration specification. Run focused
-mocked, database authorization, cancellation, provider failure, redaction, and repository checks.
-Do not run a real model case, `submission-actions`, `today-posted`, or the complete matrix in the
-same task. Do not change the provider capability contract, timeout, prompt persistence, runtime
-validators, golden fixtures, accepted threshold, native fallback, or disabled default; do not mark
-`WL-1508B` or `WL-1508` complete or advance to `WL-1509`.
+Review and, if accepted, close `WL-1508F`; then make `WL-1508B` ready. Resume only the existing
+18-run `submission-actions` and `today-posted` screen against exact qualified
+`qwen2.5-coder:14b`. Do not run a model case as part of `WL-1508F`, weaken runtime validators or
+the accepted threshold, change the provider capability contract, or advance to `WL-1508C`,
+`WL-1508D`, or `WL-1509` unless the named prerequisite passes.

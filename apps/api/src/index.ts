@@ -125,8 +125,6 @@ export {
 export {
   createEmployeeInsightInterpretationService,
   EMPLOYEE_INSIGHT_INTERPRETATION_RATE_LIMIT,
-  MAXIMUM_MODEL_TOOL_EXECUTIONS,
-  MAXIMUM_MODEL_TOOL_ROUNDS,
   type EmployeeInsightInterpretationService,
 } from './insights/employee-insight-interpretation.js';
 export {

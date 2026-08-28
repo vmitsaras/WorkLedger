@@ -9,9 +9,15 @@ import { createWorkLedgerDatabase } from '@workledger/database';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createEmployeeInsightHandlers } from '../src/insights/employee-insight-handlers.js';
-import { EMPLOYEE_INSIGHT_SAFE_PROSE } from '../src/insights/employee-insight-interpretation.js';
+import {
+  createEmployeeInsightInterpretationService,
+  EMPLOYEE_INSIGHT_SAFE_PROSE,
+} from '../src/insights/employee-insight-interpretation.js';
 import type { AiProvider, AiProviderRequest, AiProviderResponse } from '../src/ai/contracts.js';
-import { createInsightService } from '../src/insights/insight-service.js';
+import {
+  createInsightService,
+  type EmployeeInsightInterpretationSource,
+} from '../src/insights/insight-service.js';
 import { createInsightToolRegistry } from '../src/insights/insight-tool-registry.js';
 
 const databaseHarness = createDatabaseHarnessState(process.env);
@@ -147,15 +153,6 @@ integrationTest(
       ].filter((reference, index, references) => references.indexOf(reference) === index);
       const providerHarness = createReadyProvider([
         {
-          content: '',
-          toolCalls: [
-            {
-              arguments: { endDate: '2026-02-03', startDate: '2026-02-01' },
-              name: 'employee_balance_change',
-            },
-          ],
-        },
-        {
           content: JSON.stringify({
             locale: 'en-GB',
             statements: [
@@ -277,15 +274,55 @@ integrationTest(
         expect(interpreted.payload).not.toContain(employee.accountId);
         expect(interpreted.payload).not.toContain(employee.employeeId);
         expect(interpreted.payload).not.toContain(employee.organizationId);
-        expect(providerHarness.requests).toHaveLength(2);
-        expect(JSON.stringify(providerHarness.requests[0])).not.toContain(
-          interpretationFact.reference,
-        );
-        expect(JSON.stringify(providerHarness.requests[1])).toContain(interpretationFact.reference);
+        expect(providerHarness.requests).toHaveLength(1);
+        expect(providerHarness.requests[0]).toMatchObject({
+          tools: [],
+          outputSchema: {
+            properties: {
+              locale: { enum: ['en-GB'] },
+              statements: {
+                items: {
+                  properties: {
+                    factReferences: {
+                      items: { enum: balance.facts.map(({ reference }) => reference) },
+                    },
+                    sourceReferences: {
+                      items: { enum: balance.sources.map(({ reference }) => reference) },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+        expect(JSON.stringify(providerHarness.requests[0])).toContain(interpretationFact.reference);
 
-        await fixture.client.query(`update employees set status = 'INACTIVE' where id = $1`, [
-          employee.employeeId,
-        ]);
+        const permissionLossProvider = createReadyProvider([]);
+        const permissionLossSource: EmployeeInsightInterpretationSource = {
+          run: service.run,
+          async runWithLocale(...arguments_) {
+            const initial = await service.runWithLocale(...arguments_);
+            await fixture.client.query(`update employees set status = 'INACTIVE' where id = $1`, [
+              employee.employeeId,
+            ]);
+            return initial;
+          },
+        };
+        const permissionLossInterpretation = createEmployeeInsightInterpretationService(
+          permissionLossSource,
+          createInsightToolRegistry(permissionLossSource),
+          permissionLossProvider.provider,
+          async () => ({ allowed: true, retryAfter: null }),
+        );
+        await expect(
+          permissionLossInterpretation.interpret(
+            identity,
+            { insight: balanceRequest(), priorTurns: [], question },
+            CAPTURED_AT,
+          ),
+        ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
+        expect(permissionLossProvider.requests).toEqual([]);
+
         const denied = await app.inject({
           method: 'POST',
           url: '/v1/insights/run',

@@ -402,10 +402,14 @@ The browser uses only `@workledger/contracts/insights`. Internal tool call schem
 `apps/api`. This keeps provider orchestration contracts out of the browser graph while preserving
 contract ownership in `packages/contracts`.
 
-The provider adapter receives only minimized typed tool results. It cannot import database access
-or bypass the Insight Service. WorkLedger validates tool selection and arguments, reauthorizes each
-execution, validates the final structured response, and renders fact values, sources, limitations,
-and actions from the native result rather than model prose.
+For Employee interpretation, the application derives the exact tool call from the validated
+request and executes it through the registry before provider generation. The registry reauthorizes
+current self scope, and its fresh result replaces the initial native read for provider context and
+final validation. The provider adapter receives only the minimized typed result, no tool
+definitions, and one output schema narrowed to the current locale and authorized references. It
+cannot import database access or bypass the Insight Service. WorkLedger keeps runtime parsing and
+grounding validation authoritative and renders fact values, sources, limitations, and actions from
+the native result rather than model prose.
 
 No prompt, conversation, result, tool trace, or model output table is part of Phase 15. Provider
 diagnostics use the existing operational log boundary and contain no content. A future second

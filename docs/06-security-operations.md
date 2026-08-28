@@ -50,7 +50,7 @@ PostgreSQL is the authoritative store for account/session records and domain fac
 |---|---|---|---:|---|---|---|---|---|
 | Native Insight request and result | Authenticated actor plus authorized domain sources | Same-origin POST, API memory, browser memory | High personal operational | Explain one purpose-specific question | Request/current page only | Explicit submit, remove context, navigate away | URL, cache, log, or excess-field disclosure | Strict schema, current scope, purpose DTO, no-store, no body logging |
 | Question and bounded prior turns | Actor | Browser memory, API memory, optional private Ollama request | High personal operational | Optional natural-language interpretation | Current browser session and request only | Clear, reload, workspace change, sign out | Prompt persistence or egress | No URL, database, audit, log, cache, analytics, backup, or external provider |
-| Tool arguments and results | API registry and authorized Insight Service | API memory, minimized private Ollama request | High personal operational | Ground optional interpretation | Request only | Indirect through visible context and question | Model-directed scope expansion or stored-text injection | Allowlist, strict schema, authorization per call, no generic query, no stored free text |
+| Registry arguments and results | API registry and authorized Insight Service | API memory, minimized private Ollama request | High personal operational | Ground optional interpretation | Request only | Indirect through visible context and question | Prompt attempts to widen scope or inject stored text | Exact server-selected call, strict schema, current authorization before provider context, no model tool, no generic query, no stored free text |
 | Model output | Private operator-controlled Ollama | API memory, validated browser DTO | High personal operational | Optional explanation | Current browser session only | Cancel, clear, retry | Unsupported claim, source fabrication, or reasoning trace disclosure | Structured output, native references, server grounding, no reasoning trace, safe rejection |
 | Provider diagnostics | Provider adapter | Content-free structured operational log | Low/moderate technical | Health and failure diagnosis | Operational logs | Deployment retention profile | Prompt, model, endpoint, or domain value leakage | Safe codes, timings, counts, digest state, and redaction only |
 
@@ -137,7 +137,7 @@ Severity reflects plausible impact before controls: `Critical` can enable broad 
 | T-019 | Notification/reset email leaks domain detail, allows header/content injection, or retries duplicate domain action | High | Generic fixed templates, validated address/header handling, no raw note/reason/type, one-time link controls, delivery record separate from outcome | Message snapshot/privacy tests, SMTP failure/retry, malicious display name/address fixtures |
 | T-020 | Host, database-superuser, mailbox, endpoint device, or deployment-owner compromise bypasses application controls | Critical residual | Least privilege, host hardening, encryption, operator separation, backup protection, incident/rotation docs | Documented trust assumption; cannot be eliminated by application authorization alone |
 | T-021 | Combined roles, stale workspace, or prior turns blend employee, manager, HR, or system data | Critical | One active workspace, current authorization on every tool, no partial mixed result, clear context on workspace or role change | Exhaustive role/workspace/scope-loss integration and browser tests |
-| T-022 | Prompt injection or model-selected arguments invoke an undeclared tool, widen scope, or trigger a write | Critical | Read-only deny-by-default registry, strict tool/argument schema, authorization per execution, bounded rounds, no generic query or write tool | Hostile question and tool-result fixtures, unknown tool/argument denial, loop and limit tests |
+| T-022 | Prompt injection attempts to widen the selected period, workspace, employee, data access, or operation | Critical | Exact server-selected read-only registry call, strict fixed arguments, current authorization before provider context, no model tool, no generic query or write tool | Hostile question and registry-result fixtures, exact derived-call tests, scope-loss tests, and unexpected model-tool rejection |
 | T-023 | Local model configuration silently sends protected data to a public or cloud service | Critical | Provider disabled by default; exact private origin allowlist; no redirects; reject public provider origins; signed-out Ollama; blocked provider internet; exact local model digest | Startup/config, DNS/IP, redirect, proxy, cloud-model, network-isolation, and digest-drift evidence |
 | T-024 | Prompt, tool data, answer, or reasoning trace enters URL, browser persistence, database, logs, audit, backup, or restored environment | High | POST body and memory only state; no transcript table; no-store; content-free diagnostics; no reasoning trace | URL/storage/cache/log/audit/backup/restore inspection and field-absence tests |
 | T-025 | Structured model output contains wrong facts, sources, limitations, statuses, or actions | High | Native result authority; provider-independent schema; reference validation; native value rendering; reject unreferenced claims | Golden evaluation, malformed/hostile output, number/date/source/action fabrication tests |
@@ -292,8 +292,9 @@ Never log raw request URL/query, bodies, responses, cookies/headers containing s
 - The Ollama deployment sets `OLLAMA_NO_CLOUD=1` or the equivalent server setting, has no outbound
   proxy or internet route, and exposes no public port. WorkLedger rechecks loopback/private address
   resolution at connection time, permits only `/api/tags`, `/api/show`, and `/api/chat`, and never
-  follows redirects. The exact request, tool, concurrency, rate, and timeout ceilings come from ADR
-  0014 and must be enforced before the pilot can be enabled.
+  follows redirects. The exact request, single registry execution, tool-free generation,
+  concurrency, rate, and timeout ceilings come from ADR 0014 and must be enforced before the pilot
+  can be enabled.
 
 ## 15. Self-hosting and reverse-proxy contract
 
@@ -376,10 +377,11 @@ The profile records the duration/expiry rule, deletion versus minimization behav
 - When the configured domain retention period ends, the `WL-1007` process minimizes/anonymizes personal identity and sensitive free text where permitted while preserving referential, ledger, snapshot, and audit integrity. It records the action without copying removed content into audit.
 - Backup copies retain removed data only until their configured expiry; restore procedures must reapply retention jobs before any restored environment becomes active.
 - Legal-hold/case-management automation is not an MVP feature. A deployment that requires it must define an operational procedure and later product work rather than assuming WorkLedger provides legal compliance.
-- Phase 15 creates no prompt, conversation, tool trace, native result, or model output retention
-  class because those contents are not persisted. Content-free provider timing, token count, tool
-  code, validation outcome, cancellation, and safe failure facts use `OPERATIONAL_LOGS`. Synthetic
-  evaluation fixtures are repository artifacts and may not contain copied production records.
+- Phase 15 creates no prompt, conversation, registry trace, native result, or model output retention
+  class because those contents are not persisted. Content-free provider timing, token counts,
+  registry execution and model tool-round counts, validation outcome, cancellation, and safe
+  failure facts use `OPERATIONAL_LOGS`. Synthetic evaluation fixtures are repository artifacts and
+  may not contain copied production records.
 
 ## 20. Verification and release controls
 
