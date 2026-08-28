@@ -1,11 +1,11 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 15 — WorkLedger Insights and local AI
+**Current phase:** Phase 15 — WorkLedger Insights (local AI pilot closed)
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 paused — 8 of 17 tasks complete; employee local AI pilot closed
-**Current milestone:** Phase 15 employee local AI pilot closed without passing
-**Active task:** None — Phase 15 continuation requires an explicit rescoping decision
-**Status:** The optional model pilot is closed; provider mode remains disabled and no model work is authorized
+**Phase progress:** Phase 15 in progress — 5 of 10 accepted deterministic tasks complete
+**Current milestone:** Deterministic Manager Insights (`WL-1509`)
+**Active task:** `WL-1509` — Implement manager action summaries and team coverage
+**Status:** `WL-1509` is ready after completed deterministic rescope `WL-1508G`
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -73,9 +73,12 @@ The user then closed the optional model pilot without passing it. `WL-1508B` is 
 failed screen; `WL-1508C` and `WL-1508D` are closed without execution. No further candidate
 qualification, evaluation, prompt, schema, validator, or provider work is authorized in the
 current Phase 15 scope.
-Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
-evaluation remain behind their unsatisfied named gates until a separate roadmap rescoping
-decision. General chat, natural-language SQL, unrestricted
+Completed `WL-1508G` reconciles the remaining phase around deterministic, provider-independent
+Insights. `WL-1509` Manager Insights is ready. Reframed `WL-1512` and `WL-1513` retain deterministic
+privacy-suppressed HR aggregates, `WL-1514` retains isolated deterministic System Insights, and
+`WL-1516` now owns a provider-disabled release gate. Manager model interpretation (`WL-1510`),
+natural-language report generation (`WL-1511`), and optional MCP evaluation (`WL-1515`) are obsolete
+and removed from the accepted Phase 15 scope. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
 decisions remain excluded.
 
@@ -3213,14 +3216,23 @@ tasks remain behind their existing dependencies until a separate roadmap decisio
 rescopes them. No source, runtime configuration, model installation, dependency, database,
 manifest, or version changed.
 
+**2026-08-28: WL-1508G deterministic Phase 15 continuation accepted**
+
+Reconciled the remaining Phase 15 plan against the completed provider-independent foundation and
+the closed employee model pilot. `WL-1509`, deterministic `WL-1512` and `WL-1513`, deterministic
+`WL-1514`, and provider-disabled `WL-1516` are the accepted continuation. `WL-1510`, `WL-1511`, and
+`WL-1515` are obsolete and removed from the phase. `WL-1508` remains closed without passing and is
+not a prerequisite for the revised deterministic sequence. `WL-1509` is ready. No source, runtime
+configuration, model installation, dependency, database, manifest, or version changed.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. The optional employee local AI pilot
 is closed without passing after the best strict full run reached 207/216 and the final qualified
 `qwen2.5-coder:14b` recovery screen reached 3/9. Provider mode remains disabled and no model is
-approved for deployment. Manager, report builder, HR, system, MCP, and the Phase 15 release task
-remain blocked by their named dependencies until a separate roadmap decision rescopes the phase.
-The broad
+approved for deployment. No roadmap blocker prevents `WL-1509`; its implementation must preserve
+current-direct-report scope, self exclusion, neutral availability, exact timezone and date
+semantics, native source actions, accessibility, and zero provider calls. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3235,11 +3247,10 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-No task is active. The employee local AI pilot is closed, so do not qualify, install, pull, retag,
-tune, or evaluate another model and do not run `today-posted`, the complete matrix, `WL-1508C`, or
-`WL-1508D`. Continuing with deterministic Manager, report, HR, System, MCP, or Phase 15 release work
-requires a separate accepted roadmap rescoping task because their current prerequisites remain
-unsatisfied.
+Implement `WL-1509` as the smallest complete deterministic Manager Insights slice. Read the Manager
+permission, team availability, Insight Service, domain, UX, security, and test evidence before
+editing. Do not add provider calls, model interpretation, staffing or approval recommendations,
+sickness detail, former-report access, self scope, or write actions.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

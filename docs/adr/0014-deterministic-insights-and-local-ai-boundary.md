@@ -1,6 +1,6 @@
 # ADR 0014: Deterministic Insights and Local AI Boundary
 
-**Status:** Accepted by `WL-1500`
+**Status:** Accepted by `WL-1500`; deterministic continuation accepted by `WL-1508G`
 
 ## Summary
 
@@ -11,8 +11,9 @@ calculate balances, choose permissions, make decisions, or write domain data.
 **Pilot outcome, 2026-08-28:** The optional employee local AI pilot closed without passing after no
 qualified model met the zero-tolerance evaluation gate. Provider mode remains disabled and no model
 is approved for deployment. The deterministic Employee Insights foundation remains the supported
-path. This outcome preserves this ADR as the boundary for the inactive implementation; it does not
-mark `WL-1508` complete or satisfy later task dependencies.
+path. Completed `WL-1508G` continues Phase 15 with deterministic Manager, HR aggregate, and System
+Insights plus a provider-disabled release gate. This outcome preserves this ADR as the boundary for
+the inactive implementation; it does not mark `WL-1508` complete or approve model use.
 
 ## Context
 
@@ -124,10 +125,10 @@ combined role never grant scope.
 
 | Workspace | Permitted scope | Phase boundary |
 |---|---|---|
-| Employee | The actor's active employee link only | Native foundation and employee local AI pilot |
-| Manager | Current effective direct reports only, with self scope excluded from manager results | Native manager work after both earlier sub gates; AI only after its separate task |
+| Employee | The actor's active employee link only | Native foundation; model pilot closed without passing |
+| Manager | Current effective direct reports only, with self scope excluded from manager results | Deterministic manager work after `WL-1508G`; no model interpretation in Phase 15 |
 | HR | Purpose specific organization aggregates only | Disabled until the dedicated aggregate and privacy gate passes |
-| System | Allowlisted technical diagnostics only | Isolated from employee, attendance, balance, absence, request, report, and HR data |
+| System | Allowlisted technical diagnostics only | Deterministic and isolated from employee, attendance, balance, absence, request, report, and HR data |
 
 Changing workspace clears browser conversation state, context, pending provider work, and cached
 Insight results. A tool call that loses authority fails closed and no partial result is returned.
@@ -137,7 +138,7 @@ notes, reasons, entitlement history, or medical inference. HR aggregate work has
 down. Before any HR value exists, its fixed purpose specific cohort must contain at least 10
 eligible people and at least 3 contributing cases where a case count applies. The complementary
 group for a comparison must also contain at least 10 people. Smaller or differenced results are
-suppressed before any model context is created. `WL-1512` may select stricter thresholds but cannot
+suppressed before any native result is created. `WL-1512` may select stricter thresholds but cannot
 weaken these floors without a superseding ADR and privacy review.
 
 ### Tool registry
@@ -158,8 +159,9 @@ filters, unrestricted date ranges, or user supplied employee collections. Each e
 from the authenticated account and active workspace. There is no generic database tool, natural
 language SQL, arbitrary report query, file access, network fetch, shell action, or write tool.
 
-An MCP adapter is not accepted by this ADR. It requires its own allowlist, authentication,
-transport, rate, audit, and threat decision after the native and local AI gates pass.
+An MCP adapter is not accepted by this ADR and is removed from the Phase 15 scope. Any future
+proposal requires its own roadmap decision, allowlist, authentication, transport, rate, audit, and
+threat decision.
 
 ### Provider and egress boundary
 
@@ -293,9 +295,11 @@ attempted prohibited use. Every run must achieve:
 - 100 percent schema and grounding validation or a safe rejection, and
 - 100 percent preservation of the native result during timeout, cancellation, or provider failure.
 
-Manager, report builder, HR aggregate, System Insights, and MCP work keep their task dependencies
-and separate gates. `WL-1516` repeats deterministic and enabled provider paths across every
-accepted role and locale before version `0.16.0`.
+`WL-1508G` supersedes the downstream sequencing after the pilot closure. Deterministic Manager, HR
+aggregate, and System Insights keep their revised task dependencies and separate gates. Manager
+model interpretation, natural-language report generation, and MCP evaluation are removed from
+Phase 15. `WL-1516` repeats provider-disabled deterministic paths across every accepted role and
+locale before version `0.16.0`.
 
 ### Operations
 

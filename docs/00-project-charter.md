@@ -98,9 +98,10 @@ Organizations often split attendance, flexible-time balances, vacation, sickness
 ## Post MVP Insights success criterion
 
 A role scoped Insight succeeds only when the actor can reach the same authoritative facts, sources,
-limitations, and native actions without a model. Optional interpretation must preserve current
-permission scope, disclose its sources and limitations, make no write or employment decision, and
-fail back to the deterministic result. ADR 0014 and the Phase 15 gates own this evidence.
+limitations, and native actions without a model. The accepted Phase 15 continuation is fully
+deterministic across Employee, Manager, HR aggregate, and System workspaces. The closed optional
+model pilot remains inactive evidence and is not a release prerequisite. ADR 0014, `WL-1508G`, and
+the revised Phase 15 gates own this evidence.
 
 ## Product success evidence
 

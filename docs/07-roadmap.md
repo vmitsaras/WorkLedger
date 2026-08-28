@@ -556,14 +556,14 @@ the same product-quality gate.
 
 ---
 
-# Phase 15 — WorkLedger Insights and Local AI
+# Phase 15 — WorkLedger Insights (local AI pilot closed)
 
 ## Objective
 
 Add role scoped, read only WorkLedger Insights whose deterministic native facts remain complete
-without a model. Permit optional private Ollama interpretation only after a separate employee pilot
-gate, then add later roles through purpose specific permission, privacy, evaluation, accessibility,
-and operations evidence.
+without a model. Continue from the completed Employee foundation into deterministic Manager, HR
+aggregate, and System work through purpose specific permission, privacy, evaluation, accessibility,
+and operations evidence. The optional local AI pilot is closed and is not a release prerequisite.
 
 ## Dependencies
 
@@ -573,8 +573,9 @@ and operations evidence.
   gate contracts.
 - Existing domain, immutable history, ledger, permission, privacy, localization, route state,
   accessibility, operations, and self hosting contracts remain authoritative.
-- No provider, manager, HR, system, report builder, or MCP task may bypass its listed prerequisite
-  gate.
+- `WL-1508G` and `docs/160-wl-1508g-phase-15-deterministic-continuation.md` define the current
+  accepted sequence after the optional model pilot closed.
+- No Manager, HR, System, or release task may bypass its revised deterministic prerequisite gate.
 
 ## Deliverables
 
@@ -584,25 +585,23 @@ and operations evidence.
 - A dedicated accessible Insights route plus visible bounded contextual entry points.
 - A deny by default read only Insight tool registry with active workspace authorization on every
   execution.
-- An optional private Ollama adapter that is disabled by default and fails without affecting native
-  Insights.
-- Grounded employee interpretation with sources, limitations, native actions, and a synthetic
-  multilingual golden evaluation set.
-- Server-owned execution of the exact authorized Employee Insight registry tool before one
-  schema-constrained model response, with model execution unable to choose data access.
-- Later current manager summaries, allowlisted report specifications, privacy suppressed HR
-  aggregates, isolated technical diagnostics, and optional MCP evaluation behind separate gates.
+- Deterministic current-manager action summaries and team coverage.
+- Deterministic privacy-suppressed HR aggregates with no row drilldown or model context.
+- Deterministic isolated System diagnostics with no employee or HR data.
+- A provider-disabled Phase 15 release path in which no accepted route depends on Ollama.
+- Retained inactive provider, orchestration, failure, privacy, and evaluation evidence from the
+  closed optional employee pilot.
 
 ## Insights foundation sub gate
 
-- [ ] `WL-1500` through `WL-1504` are complete.
-- [ ] Provider mode `disabled` is the complete and tested product path, with no model request,
+- [x] `WL-1500` through `WL-1504` are complete.
+- [x] Provider mode `disabled` is the complete and tested product path, with no model request,
   prompt persistence, or provider dependency.
-- [ ] Exact domain values, scope, period, freshness, sources, limitations, and native actions pass
+- [x] Exact domain values, scope, period, freshness, sources, limitations, and native actions pass
   deterministic fixtures.
-- [ ] Context is visible, removable, bounded, and absent from sensitive URL or persistent browser
+- [x] Context is visible, removable, bounded, and absent from sensitive URL or persistent browser
   state.
-- [ ] The Insights route passes every supported locale, keyboard, focus, announcement, reflow,
+- [x] The Insights route passes every supported locale, keyboard, focus, announcement, reflow,
   forced color, reduced motion, touch, offline, partial, stale, empty, denied, and failure state.
 
 ## Employee local AI pilot sub gate
@@ -627,23 +626,35 @@ remain unmet and do not count as completed work.
   bounded model screen resumes.
 
 The pilot closure ends model qualification and evaluation in the current Phase 15 scope. It does
-not satisfy dependencies on `WL-1508`. No later Phase 15 task is authorized until a separate
-accepted roadmap decision rescopes the remaining deterministic and model-dependent work.
+not satisfy `WL-1508`. Completed `WL-1508G` replaces the downstream dependencies for accepted
+deterministic work only.
+
+## Deterministic continuation gate
+
+- [x] `WL-1508G` reconciles Phase 15 around provider-independent Insights and records obsolete work.
+- [ ] `WL-1509` completes deterministic Manager action summaries and team coverage.
+- [ ] `WL-1512` and `WL-1513` accept and implement deterministic privacy-suppressed HR aggregates.
+- [ ] `WL-1514` completes deterministic isolated System Insights.
+- [ ] No accepted continuation route calls a provider or depends on model availability.
+
+`WL-1510`, `WL-1511`, and `WL-1515` are obsolete and removed from the accepted Phase 15 scope. A
+future model interpretation, natural-language report, or MCP proposal requires a new roadmap
+decision and the applicable ADR, privacy, security, evaluation, and threat gates.
 
 ## Phase 15 release gate
 
-The current release gate is blocked by the closed employee model pilot. It cannot advance the
-workspace version until Phase 15 is explicitly rescoped and every accepted replacement prerequisite
-passes.
+The release gate follows only the accepted deterministic continuation. It cannot advance the
+workspace version until `WL-1509`, `WL-1512`, `WL-1513`, and `WL-1514` pass.
 
-- [ ] Every accepted Phase 15 role and provider disabled/enabled path passes its named prerequisite
+- [ ] Every accepted Phase 15 role and provider-disabled path passes its named prerequisite
   and evidence gate.
-- [ ] Manager scope is current reports only, HR aggregation is suppressed before model context, and
+- [ ] Manager scope is current reports only, HR aggregation is suppressed before result construction, and
   System Insights contains technical data only.
 - [ ] No unrestricted query, SQL, write, scoring, prediction, recommendation, autonomous action,
   public provider, cloud model, or unreviewed MCP surface exists.
-- [ ] Multilingual, accessibility, security, privacy, retention, operations, model failure, upgrade,
-  rollback, and browser privacy evidence has no open P0/P1 or unresolved Critical/High finding.
+- [ ] Multilingual, accessibility, security, privacy, retention, operations, provider-disabled
+  configuration, upgrade, rollback, and browser privacy evidence has no open P0/P1 or unresolved
+  Critical/High finding.
 - [ ] Project status, roadmap, task board, ADR, product, permission, architecture, accessibility,
   security, retention, evaluation, and operations documentation is current.
 - [ ] The gate advances every workspace manifest to `0.16.0` only after every accepted Phase 15 task

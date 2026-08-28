@@ -188,7 +188,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1409` Execute multilingual integration, accessibility, responsive, visual, usability, security, and upgrade verification.
 - [x] `WL-1410` Pass the Phase 14 release gate, update evidence and documentation, and bump all workspace manifests to `0.15.0`.
 
-## Phase 15 — WorkLedger Insights and local AI
+## Phase 15 — WorkLedger Insights (local AI pilot closed)
 
 - [x] `WL-1500` Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts.
 - [x] `WL-1501` Implement the deterministic Insight Service and typed native-result contracts.
@@ -203,17 +203,18 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [ ] `WL-1508B` Pass the bounded `submission-actions` and `today-posted` regression screen without changing prompts, schemas, or thresholds. Closed after the post `WL-1508F` `qwen2.5-coder:14b` rerun stopped at 3/9; the task did not pass.
 - [x] `WL-1508E` Qualify the remaining installed `qwen3-coder:30b` digest against the unchanged cold-start health, capability, privacy, and deployment boundaries before resuming `WL-1508B`.
 - [x] `WL-1508F` Replace model-selected Employee tool invocation with one server-owned, currently authorized registry execution and one schema-constrained provider response; run no real model case in this task.
+- [x] `WL-1508G` Reconcile the remaining Phase 15 roadmap around deterministic, provider-independent Insights after the employee local AI pilot closed without passing.
 - [ ] `WL-1508C` Execute the complete 24-question, three-locale, three-repetition zero-tolerance evaluation for the qualified replacement digest. Closed without execution because `WL-1508B` did not pass.
 - [ ] `WL-1508D` Reconfirm the completed non-model evidence, synchronize the evaluation record and project memory, and close `WL-1508` only if the replacement records 216/216. Closed without execution because `WL-1508C` did not run.
 
 The optional employee local AI pilot is closed without passing. Provider mode remains disabled and
-no model is approved for deployment. `WL-1509` through `WL-1516` retain their current unmet
-dependencies and are not authorized until a separate roadmap decision rescopes Phase 15.
+no model is approved for deployment. Completed `WL-1508G` removes the failed pilot from the
+accepted deterministic continuation dependencies. Model-dependent tasks remain excluded.
 - [ ] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.
-- [ ] `WL-1510` Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations.
-- [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions.
-- [ ] `WL-1512` Define purpose-specific HR aggregate contracts, privacy thresholds, cohort suppression, and model-context minimization.
+- [ ] `WL-1510` Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
+- [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
+- [ ] `WL-1512` Define purpose-specific deterministic HR aggregate contracts, value sources, privacy thresholds, cohort and complement suppression, and repeated-query controls.
 - [ ] `WL-1513` Add HR aggregate Insights only after the dedicated privacy and authorization gate passes.
-- [ ] `WL-1514` Add isolated System Insights using technical diagnostics only and no employee or HR data.
-- [ ] `WL-1515` Evaluate an optional MCP adapter over explicitly allowlisted Insight tools; do not expose HR aggregate tools by default.
-- [ ] `WL-1516` Pass multilingual, accessibility, security, privacy, usability, model-failure, upgrade, and release gates and bump all workspace manifests to `0.16.0`.
+- [ ] `WL-1514` Add deterministic isolated System Insights using allowlisted technical diagnostics only and no employee or HR data.
+- [ ] `WL-1515` Evaluate an optional MCP adapter over explicitly allowlisted Insight tools; do not expose HR aggregate tools by default. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
+- [ ] `WL-1516` Pass the deterministic multilingual, accessibility, security, privacy, usability, provider-disabled, upgrade, and release gates and bump all workspace manifests to `0.16.0`.

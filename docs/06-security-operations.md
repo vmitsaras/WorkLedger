@@ -2,7 +2,7 @@
 
 ## 1. Security posture and classification
 
-WorkLedger is a self-hosted web application that processes high-sensitivity authentication, employment, attendance, benefit, health-related absence, approval, and audit data. Its primary data flow is browser → same-origin reverse proxy → web/API → PostgreSQL, with optional outbound email carrying generic notification or one-time account links. Phase 15 may add one disabled-by-default API → private Ollama flow only under ADR 0014.
+WorkLedger is a self-hosted web application that processes high-sensitivity authentication, employment, attendance, benefit, health-related absence, approval, and audit data. Its primary data flow is browser → same-origin reverse proxy → web/API → PostgreSQL, with optional outbound email carrying generic notification or one-time account links. Phase 15 retains an inactive API → private Ollama adapter under ADR 0014, but its pilot closed without passing, provider mode remains disabled, and no accepted deployment configuration enables it.
 
 The privacy status is **conditionally acceptable for implementation**. Production release remains blocked until the controls and tests in this document are implemented, a deployment-specific retention profile is configured, and backup/restore plus authorization evidence passes the production gate.
 
@@ -54,6 +54,10 @@ PostgreSQL is the authoritative store for account/session records and domain fac
 | Model output | Private operator-controlled Ollama | API memory, validated browser DTO | High personal operational | Optional explanation | Current browser session only | Cancel, clear, retry | Unsupported claim, source fabrication, or reasoning trace disclosure | Structured output, native references, server grounding, no reasoning trace, safe rejection |
 | Provider diagnostics | Provider adapter | Content-free structured operational log | Low/moderate technical | Health and failure diagnosis | Operational logs | Deployment retention profile | Prompt, model, endpoint, or domain value leakage | Safe codes, timings, counts, digest state, and redaction only |
 
+The question, registry-to-provider, model-output, and provider-diagnostic rows describe retained
+inactive implementation from the closed employee pilot. Accepted Phase 15 continuation routes use
+only the native request and result flow.
+
 ## 3. Privacy boundary matrix
 
 | Area | Data involved | Prohibited behavior | Severity | Required behavior |
@@ -66,8 +70,8 @@ PostgreSQL is the authoritative store for account/session records and domain fac
 | Notification/email | Request/decision outcome | Subject/preview reveals sickness, type, reason, entitlement, or full employee data | High | Generic attention/outcome copy; restricted detail fetched after current authorization; optional SMTP cannot determine transaction success |
 | Logs/technical audit | HTTP/auth/domain activity | Request/response bodies, raw query strings, cookies, authorization/CSRF/idempotency/reset tokens, passwords, notes/reasons, sickness codes, entitlement values | Critical/High | Generic route template, safe code/status, request ID, latency, opaque actor/account ID only where justified; redaction tests and restricted access |
 | Export/print/clipboard | Report/domain data | Automatic export/copy, hidden fields/metadata, sickness-specific export, formula-active cells | High | Explicit user action and included-field explanation; same authorization/DTO as screen; safe filename; formula neutralization; success/failure feedback |
-| Analytics/network | Any employee/domain/browser activity | Third-party analytics, pixels, remote error payloads, external AI/decision calls, undisclosed webhooks | High | No telemetry by default and no third-party runtime scripts; only configured WorkLedger API, optional privacy-safe SMTP, and the ADR 0014 private model path after its gate |
-| Insights/local AI | Questions, context, domain facts, model output | DOM capture, persistent transcript, public provider, cloud model, unrestricted tool, cross-workspace context, ungrounded claim | Critical/High | Native result first; explicit memory-only question; exact private origin; local model digest; current authorization per read-only tool; structured grounding and safe rejection |
+| Analytics/network | Any employee/domain/browser activity | Third-party analytics, pixels, remote error payloads, external AI/decision calls, undisclosed webhooks | High | No telemetry by default and no third-party runtime scripts; only configured WorkLedger API and optional privacy-safe SMTP; provider mode remains disabled |
+| Insights/local AI | Questions, context, domain facts, model output | DOM capture, persistent transcript, public provider, cloud model, unrestricted tool, cross-workspace context, ungrounded claim | Critical/High | Inactive provider mode; retained exact-origin, digest, authorization, grounding, and safe-rejection controls; any future enablement requires a new accepted gate |
 | Retention/deletion | All persisted classes | Universal legal claim, cascade history deletion, silent indefinite retention, backup exemption | High | Deployment-configured class profile, documented user control, source-preserving anonymization/minimization, backup expiry, tested retention job |
 | Host/backup | Complete database and secrets | Public storage, unencrypted portable copy, production restore exposed to network/email, restoring valid sessions/grants | Critical | Least-privilege operators, encryption/access isolation, clean restore network, new secrets, revoke sessions/grants, verify ledger/snapshot/audit integrity |
 
@@ -89,7 +93,7 @@ WorkLedger API/auth process
 PostgreSQL authority
 
 WorkLedger process ── generic one-time/outcome mail ──► optional SMTP relay
-WorkLedger API ── minimized structured request ──► optional private Ollama
+WorkLedger API ── inactive disabled adapter ──► private Ollama boundary
 host operator ── explicit backup/restore/migrate ──► protected backup store
 ```
 
@@ -101,8 +105,9 @@ host operator ── explicit backup/restore/migrate ──► protected backup 
 - The API port and PostgreSQL are not publicly reachable. Only the configured reverse proxy reaches the application; only the application/authorized operator reaches PostgreSQL.
 - The canonical public origin is validated configuration, not inferred from an arbitrary `Host` or forwarded header. Proxy headers are trusted only from exact configured proxy addresses, and the proxy overwrites client-supplied forwarded values.
 - SMTP is an outbound adapter. It receives only the destination and generic message or a single-use account link; delivery failure never changes a domain decision.
-- Ollama is an optional interpretation adapter. It is disabled by default, receives only minimized
-  authorized typed facts, and never becomes a calculation, permission, decision, or write service.
+- Ollama exists as an inactive interpretation adapter after the pilot closure. It remains disabled,
+  receives no accepted Phase 15 request, and never becomes a calculation, permission, decision, or
+  write service.
   Its exact origin, model digest, private network, and blocked outbound internet are operator-owned
   production evidence.
 - Browser requests, model output, tool arguments, redirects, and environment proxy variables cannot
@@ -141,12 +146,12 @@ Severity reflects plausible impact before controls: `Critical` can enable broad 
 | T-023 | Local model configuration silently sends protected data to a public or cloud service | Critical | Provider disabled by default; exact private origin allowlist; no redirects; reject public provider origins; signed-out Ollama; blocked provider internet; exact local model digest | Startup/config, DNS/IP, redirect, proxy, cloud-model, network-isolation, and digest-drift evidence |
 | T-024 | Prompt, tool data, answer, or reasoning trace enters URL, browser persistence, database, logs, audit, backup, or restored environment | High | POST body and memory only state; no transcript table; no-store; content-free diagnostics; no reasoning trace | URL/storage/cache/log/audit/backup/restore inspection and field-absence tests |
 | T-025 | Structured model output contains wrong facts, sources, limitations, statuses, or actions | High | Native result authority; provider-independent schema; reference validation; native value rendering; reject unreferenced claims | Golden evaluation, malformed/hostile output, number/date/source/action fabrication tests |
-| T-026 | Small HR cohort or differenced aggregate reveals sickness or identity | Critical | Fixed-purpose aggregates, suppression before model context, minimum cohort/case/complement floors, no row drilldown or free text | Cohort boundary, complement, repeated query, differencing, and model-context absence tests |
+| T-026 | Small HR cohort or differenced aggregate reveals sickness or identity | Critical | Fixed-purpose aggregates, suppression before result construction, minimum cohort/case/complement floors, no row drilldown or free text | Cohort boundary, complement, repeated query, differencing, and provider-context absence tests |
 | T-027 | Provider slowness, cancellation, model drift, or invalid output removes the usable deterministic result | High | Native result first; timeout, cancellation, rate/concurrency bounds, safe failure state, pinned digest and reevaluation | Dependency failure, cancellation, drift, rollback-to-disabled, accessibility, and recovery tests |
 
 ### Deferred-surface triggers
 
-Attachments, public API/webhooks, OIDC/LDAP, telemetry, S3, Redis/queues, multi-organization SaaS, mobile/native clients, cross-origin app hosting, external or cloud AI, and MCP exposure are outside the MVP. ADR 0014 accepts only the staged private local model path after the deterministic gate. Introducing another surface requires an ADR plus a new data-flow/threat review before implementation. No dormant attachment URL, upload, remote-script, analytics, webhook, public model, or MCP code is included in the MVP.
+Attachments, public API/webhooks, OIDC/LDAP, telemetry, S3, Redis/queues, multi-organization SaaS, mobile/native clients, cross-origin app hosting, model enablement, external or cloud AI, and MCP exposure are outside the accepted scope. The ADR 0014 private local model pilot closed without passing. Introducing or reviving another surface requires a new roadmap decision, an ADR where applicable, and a new data-flow/threat review before implementation. No dormant attachment URL, upload, remote-script, analytics, webhook, public model, or MCP code is included in the MVP.
 
 ## 6. Credential and account security contract
 
@@ -293,8 +298,8 @@ Never log raw request URL/query, bodies, responses, cookies/headers containing s
   proxy or internet route, and exposes no public port. WorkLedger rechecks loopback/private address
   resolution at connection time, permits only `/api/tags`, `/api/show`, and `/api/chat`, and never
   follows redirects. The exact request, single registry execution, tool-free generation,
-  concurrency, rate, and timeout ceilings come from ADR 0014 and must be enforced before the pilot
-  can be enabled.
+  concurrency, rate, and timeout ceilings come from ADR 0014. They remain retained controls for the
+  inactive adapter and do not authorize enablement after the pilot closure.
 
 ## 15. Self-hosting and reverse-proxy contract
 
@@ -318,10 +323,10 @@ Caddy reference proxy
 - Apply request/body/header limits, timeouts, HSTS and security headers consistently. Do not disable upstream TLS verification when TLS is used between proxy and application.
 - Production containers run as non-root where supported, use minimal pinned images, avoid host Docker socket/mutable source mounts, use health/readiness checks and resource limits, and persist only documented database/backup volumes.
 - Optional SMTP is configured separately. Redis, workers, S3, attachment storage, and analytics are not part of the MVP reference deployment.
-- Optional Ollama uses a separate private service or operator-controlled private endpoint only after
-  the Phase 15 foundation gate. The provider has no public port, no WorkLedger database access, no
-  mounted application secrets, no cloud sign-in, and no outbound internet. The operator provisions
-  and pins the model out of band.
+- The inactive Ollama adapter is not part of the accepted Phase 15 deployment path. Any future
+  separately approved deployment must use a private service or operator-controlled private
+  endpoint with no public port, WorkLedger database access, mounted application secrets, cloud
+  sign-in, or outbound internet. The operator would provision and pin the model out of band.
 - Optional company media is mounted read-only at `/srv/web/identity` through the explicit identity
   Compose override. Runtime configuration accepts only `/identity/` image paths and approved file
   extensions; remote origins, traversal, query/fragment content, custom CSS, and executable HTML

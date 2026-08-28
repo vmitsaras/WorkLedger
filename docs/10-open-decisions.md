@@ -4,6 +4,25 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-28 — WL-1508G accepts deterministic Phase 15 continuation
+
+The user continued with the next documented step after closing the optional employee model pilot.
+`WL-1508G` reconciles Phase 15 around the already completed provider-independent foundation. The
+instruction is interpreted as authorization to update the local roadmap and project memory, not to
+start `WL-1509` implementation in the same task.
+
+The accepted continuation keeps deterministic Manager, privacy-suppressed HR aggregate, and
+isolated System Insights. It removes Manager model interpretation (`WL-1510`), natural-language
+report generation (`WL-1511`), and optional MCP evaluation (`WL-1515`) from the accepted Phase 15
+scope. `WL-1509`, reframed `WL-1512` and `WL-1514`, `WL-1513`, and the provider-disabled `WL-1516`
+release gate no longer depend on the failed `WL-1508` pilot. Their replacement dependencies are
+recorded in `docs/160-wl-1508g-phase-15-deterministic-continuation.md`.
+
+This sequencing decision does not enable the inactive provider implementation, approve a model,
+weaken any privacy or security boundary, mark `WL-1508` complete, remove a model file, or change
+runtime behavior. A future model, natural-language report, or MCP proposal requires a new roadmap
+decision and the applicable ADR, privacy, security, evaluation, and threat gates.
+
 ### 2026-08-28 — Employee local AI pilot closes without passing
 
 The user explicitly closed the optional employee local AI pilot after the final qualified
@@ -825,5 +844,8 @@ regression contract for `WL-1008`.
 - General chat, natural-language SQL, unrestricted tools, scoring, prediction, approval or staffing
   recommendations, legal conclusions, autonomous action, and model-authored domain decisions are
   excluded.
-- The deterministic foundation and employee local AI pilot are separate gates. Later manager,
-  report, HR, system, and MCP work cannot bypass them or their own named privacy and threat reviews.
+- The deterministic foundation and employee local AI pilot were separate gates. The pilot later
+  closed without passing. Completed `WL-1508G` supersedes only the downstream sequence: deterministic
+  Manager, HR aggregate, and System work may proceed from the completed foundation through their
+  revised gates, while Manager model interpretation, natural-language reports, and MCP are removed
+  from Phase 15. The inactive provider boundary remains unchanged.

@@ -111,7 +111,7 @@ merged Insight context, and changing work area clears pending and prior model in
 | `/monthly-periods/:periodId` | Self, current manager, or HR reviews a scoped monthly period, blockers/warnings, per-date totals, workflow decisions, immutable approved record, and post-lock adjustments according to current state. | `WL-800`–`WL-803` |
 | `/notifications` | Authenticated actor reads or dismisses their generic in-app outcome/attention records and follows an authorized link to restricted detail. Notification copy does not reveal sickness/type/reason on this generic surface. | `WL-704` |
 | `/profile` | Authenticated actor views account/session information, revokes their own sessions, and signs out. An actor with an employee link also sees a read-only employee summary; HR-owned identity, employment, team, schedule, and role facts are not editable here. | `WL-302`, `WL-400` |
-| `/insights` | Authenticated actor runs only the deterministic Insights permitted by the active Employee, Manager, HR, or System workspace. Native facts, freshness, sources, limitations, and actions remain primary. Optional model interpretation appears only when its workspace gate and provider checks pass. | `WL-1501`–`WL-1514` |
+| `/insights` | Authenticated actor runs only the deterministic Insights permitted by the active Employee, Manager, HR, or System workspace. Native facts, freshness, sources, limitations, and actions remain primary. Model interpretation is unavailable in the accepted Phase 15 scope. | `WL-1501`–`WL-1514`, `WL-1508G` |
 
 ### Manager routes
 

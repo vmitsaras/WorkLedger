@@ -24,9 +24,9 @@ contract that produced the 207-of-216 result. WorkLedger does not weaken source,
 locale, limitation, prose, or leakage validation to convert the result into a pass.
 
 `WL-1508` did not pass and does not count as complete. After the final recovery screen below also
-failed, the user closed the optional employee model pilot on 2026-08-28. `WL-1509` and every task
-that depends on the employee pilot remain blocked by the named roadmap gate until a separate
-accepted rescoping decision. No manifest version changes.
+failed, the user closed the optional employee model pilot on 2026-08-28. Those downstream tasks
+remained blocked until completed `WL-1508G` accepted a deterministic-only continuation. This model
+evaluation remains closed and is not a prerequisite for that sequence. No manifest version changes.
 
 The accepted `WL-1508F` recovery is now implemented and deterministically verified. WorkLedger
 replaces redundant model tool selection with one exact server-owned registry execution and one
@@ -525,5 +525,6 @@ The optional employee local AI pilot is closed without passing. Provider mode re
 no exact model digest is approved for deployment. Do not run `today-posted`, the complete matrix,
 `WL-1508C`, or `WL-1508D`, and do not qualify, install, pull, retag, tune, or evaluate another model
 in the current Phase 15 scope. The deterministic Employee Insights foundation remains complete and
-usable. Any later Phase 15 work requires a separate accepted roadmap rescoping decision because the
-existing employee-pilot dependencies remain unsatisfied.
+usable. Completed `WL-1508G` now replaces the downstream dependencies for deterministic Manager, HR
+aggregate, System, and provider-disabled release work. It does not resume this evaluation or make
+any model path eligible.

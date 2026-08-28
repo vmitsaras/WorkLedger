@@ -360,7 +360,10 @@ Create or update an ADR before:
 
 ## 13. Phase 15 Insights architecture
 
-ADR 0014 adds a model optional explanation layer without changing the existing workspace graph.
+ADR 0014 added a model optional explanation layer without changing the existing workspace graph.
+That pilot closed without passing. `WL-1508G` accepts only the deterministic path for the remaining
+Phase 15 work. The provider branch below is retained inactive implementation and evidence; provider
+mode remains disabled and no accepted route may depend on it.
 
 ```text
 apps/web /insights
@@ -371,8 +374,8 @@ apps/api Insight Service
         ├── purpose specific repositories and read models
         ├── packages/domain deterministic rules
         ├── packages/contracts native result and tool schemas
-        └── optional provider adapter
-                    │ exact private origin, disabled by default
+        └── inactive provider adapter
+                    │ retained controls, provider disabled
                     ▼
              operator controlled Ollama
 ```
@@ -411,7 +414,11 @@ cannot import database access or bypass the Insight Service. WorkLedger keeps ru
 grounding validation authoritative and renders fact values, sources, limitations, and actions from
 the native result rather than model prose.
 
+The Employee interpretation path above is not approved for deployment. Manager, HR, and System
+Insights remain entirely native. Natural-language report generation and MCP are outside the Phase
+15 architecture.
+
 No prompt, conversation, result, tool trace, or model output table is part of Phase 15. Provider
 diagnostics use the existing operational log boundary and contain no content. A future second
-internal consumer may justify extracting a shared registry package, but MCP evaluation alone does
-not authorize that dependency or exposure.
+internal consumer or MCP adapter requires a new roadmap decision and applicable ADR and threat
+review; the closed proposal does not authorize that dependency or exposure.

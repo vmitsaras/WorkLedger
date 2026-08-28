@@ -109,12 +109,13 @@ The MVP is the complete set of capabilities listed below. A capability is not co
 ## Accepted Phase 15 extension
 
 WorkLedger Insights is a post MVP, role scoped, read only extension governed by ADR 0014. The
-deterministic native result is complete without a model. Optional private Ollama interpretation is
-disabled by default, begins with employee self scope only after the native foundation gate, and may
-explain but never calculate, decide, score, or write.
+deterministic native result is complete without a model. The optional private Ollama pilot closed
+without passing and remains disabled. Completed `WL-1508G` accepts deterministic Employee, Manager,
+privacy-suppressed HR aggregate, and isolated System Insights as the Phase 15 product scope.
 
-Later manager, report, HR aggregate, system, and MCP surfaces remain outside the accepted boundary
-until their named Phase 15 dependencies and separate privacy or threat gates pass.
+Manager model interpretation, natural-language report generation, and MCP exposure are removed
+from Phase 15. Any future proposal requires a new roadmap decision and the applicable privacy,
+security, evaluation, architecture, and threat gates.
 
 ### Phase 15 non-goals
 
@@ -124,6 +125,8 @@ until their named Phase 15 dependencies and separate privacy or threat gates pas
 - Employee ranking, productivity or absence scoring, illness prediction, performance, discipline,
   staffing, approval, or policy recommendations.
 - Model authored calculations, legal conclusions, workflow transitions, or autonomous HR actions.
+- Model interpretation for any accepted Phase 15 workspace, natural-language report generation,
+  and MCP exposure.
 - Stored prompts, conversation history, reasoning traces, or production data evaluation fixtures.
 - External or cloud model providers, cloud Ollama models, and public provider egress without a
   superseding ADR and complete privacy, security, retention, and operations review.
