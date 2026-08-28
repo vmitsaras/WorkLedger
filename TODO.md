@@ -200,7 +200,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1507` Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution.
 - [ ] `WL-1508` Add the employee golden-question evaluation set, bounded traces, privacy/security tests, model-failure handling, and accessibility verification, then pass the local AI pilot sub-gate.
 - [x] `WL-1508A` Qualify one replacement private model name and exact digest against the accepted startup-health, capability, privacy, and deployment boundaries.
-- [ ] `WL-1508B` Run the replacement candidate through the bounded `submission-actions` and `today-posted` regression screen without changing prompts, schemas, or thresholds.
+- [ ] `WL-1508B` Pass the bounded `submission-actions` and `today-posted` regression screen without changing prompts, schemas, or thresholds. The post `WL-1508F` `qwen2.5-coder:14b` rerun stopped at 3/9 after all English and German cases omitted the required pending request action reference; no qualified candidate is ready.
 - [x] `WL-1508E` Qualify the remaining installed `qwen3-coder:30b` digest against the unchanged cold-start health, capability, privacy, and deployment boundaries before resuming `WL-1508B`.
 - [x] `WL-1508F` Replace model-selected Employee tool invocation with one server-owned, currently authorized registry execution and one schema-constrained provider response; run no real model case in this task.
 - [ ] `WL-1508C` Execute the complete 24-question, three-locale, three-repetition zero-tolerance evaluation for the qualified replacement digest.

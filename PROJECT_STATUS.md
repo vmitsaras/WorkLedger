@@ -4,8 +4,8 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 in progress — 8 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
-**Active task:** `WL-1508B` — Resume the qualified candidate known-failure regression screen
-**Status:** `WL-1508F` is complete without a real model case; `WL-1508B` is ready only for the exact qualified `qwen2.5-coder:14b` digest
+**Active task:** `WL-1508B` — Resolve the failed recovery screen for known failures
+**Status:** The exact qualified `qwen2.5-coder:14b` rerun stopped at 3/9; no qualified model candidate is ready
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -64,8 +64,12 @@ provider request whose JSON Schema is constrained to the current locale, current
 references, and locale-safe prose. The existing runtime validators, provider capability and
 security contract, native fallback, zero-tolerance gate, and disabled default remain unchanged.
 Mocked, cancellation, provider-failure, database-authorization, and repository checks pass without
-a real model case. `WL-1508F` is complete, and only exact qualified `qwen2.5-coder:14b` may now
-resume `WL-1508B`.
+a real model case. `WL-1508F` is complete. The exact qualified `qwen2.5-coder:14b` rerun then passed
+all three Spanish `submission-actions` repetitions, while all six English and German repetitions
+omitted the required pending request action reference. Every provider response and runtime
+validation succeeded, every trace recorded one registry execution owned by the server and zero
+model tool rounds, and the stop rule prevented `today-posted` and the full matrix from running.
+`WL-1508B` remains open with no qualified candidate ready.
 Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
 evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
@@ -3182,18 +3186,31 @@ remains an unnumbered draft.
   `verify.md`, marked `WL-1508F` complete, and made only the exact qualified
   `qwen2.5-coder:14b` candidate ready to resume `WL-1508B`.
 
+**2026-08-28: WL-1508B post recovery qwen2.5-coder screen stopped**
+
+The exact qualified `qwen2.5-coder:14b` digest passed its startup health and capability check, then
+completed the nine `submission-actions` locale and repetition cases with the unchanged temperature
+`0`, thinking disabled, 1,024 token, 30 second, and concurrency `1` settings. All three Spanish
+cases passed. All six English and German cases failed the zero tolerance evaluation because the
+structured interpretation omitted `action_submission_requests`. Provider outcome was `SUCCESS`
+for all nine cases, with one current authorized registry execution and zero model tool rounds per
+trace. The ignored 4,408 byte artifact remains content free. The required stop rule prevented
+`today-posted` and the 216 case matrix from running. No source, prompt, schema, validator, threshold,
+provider control, native fallback, dependency, runtime default, manifest, or version changed.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. `WL-1508` infrastructure, privacy,
 security, degraded-provider, trace, and accessibility evidence are complete, but its exact pinned
 model is the active blocker: the best strict run reached 207/216 instead of the accepted 216/216.
-`WL-1508A` is complete, although its qualified `qwen2.5-coder:14b` candidate failed the first
-`WL-1508B` group at 0/9. `WL-1508E` is complete with exact qualified `qwen3-coder:30b`, but that
-candidate also failed the first `WL-1508B` group at 0/9 through safe provider timeouts. No model
-candidate has passed the known-failure screen. Accepted `WL-1508F` is complete with implemented
-source and green deterministic evidence. `WL-1508B` is the only ready model-execution child and may
-run only against exact qualified `qwen2.5-coder:14b`. `WL-1508C` and `WL-1508D` remain blocked. Provider
-mode remains disabled. Manager, report-builder,
+`WL-1508A` is complete. After the accepted `WL-1508F` recovery, its exact qualified
+`qwen2.5-coder:14b` candidate passed 3/9 and failed 6/9 in the first `WL-1508B` group because every
+English and German response omitted the pending request action reference. `WL-1508E` is complete
+with exact qualified `qwen3-coder:30b`, but that candidate failed the same group at 0/9 through safe
+provider timeouts. No model candidate has passed the known failure screen. Accepted `WL-1508F` is
+complete with implemented source and green deterministic evidence. `WL-1508B` remains open, but no
+model execution child is ready. `WL-1508C` and `WL-1508D` remain blocked. Provider mode remains
+disabled. Manager, report builder,
 HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
@@ -3209,12 +3226,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Run the existing 18-case `WL-1508B` `submission-actions` and `today-posted` screen only against
-exact qualified `qwen2.5-coder:14b` digest
-`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. Preserve temperature `0`,
-thinking disabled, 1,024 generated tokens, the 30-second request deadline, concurrency `1`, exact
-digest health verification, current validators, native fallback, and disabled default. Any failure
-stops before `WL-1508C`. Do not run the complete matrix or advance to `WL-1509` in the same task.
+No model execution task is ready. Decide whether to register a new bounded qualification child for
+another exact private candidate or keep the employee local AI pilot gate blocked. Do not run
+`today-posted`, the complete matrix, `WL-1508C`, `WL-1508D`, or `WL-1509`. Do not install, pull,
+retag, tune, or weaken a model, prompt, schema, validator, threshold, provider control, or native
+fallback without a separately accepted task.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

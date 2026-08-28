@@ -28,8 +28,12 @@ pilot remain blocked by the named roadmap gate. No manifest version changes.
 
 The accepted `WL-1508F` recovery is now implemented and deterministically verified. WorkLedger
 replaces redundant model tool selection with one exact server-owned registry execution and one
-tool-free schema-constrained provider response. No real model case ran. `WL-1508F` is complete and
-`WL-1508B` is ready to resume only for the exact qualified `qwen2.5-coder:14b` digest.
+provider response with no tools and a constrained schema. The bounded real model rerun is now complete for
+the exact qualified `qwen2.5-coder:14b` digest. All three Spanish `submission-actions` repetitions
+passed, while all six English and German repetitions omitted the required
+`action_submission_requests` reference. The stop rule prevented `today-posted` and the complete
+matrix from running. `WL-1508B` remains open, and no qualified candidate is ready for another
+model execution task.
 
 ## Exact evaluated provider
 
@@ -160,8 +164,45 @@ validator, threshold, evaluator, provider implementation, native fallback, depen
 default, manifest, or version changed. `WL-1508B` remains open, `WL-1508C` remains blocked, and
 provider mode remains disabled by default. Both qualified replacement candidates have now failed
 the first required semantic group. The accepted bounded recovery decision is recorded under
-`WL-1508F` below. Its implementation and deterministic verification are complete. Only the exact
-qualified `qwen2.5-coder:14b` candidate may resume the bounded `WL-1508B` screen.
+`WL-1508F` below. Its implementation and deterministic verification made only the exact qualified
+`qwen2.5-coder:14b` candidate eligible for the next bounded `WL-1508B` screen. The following
+evidence records that rerun.
+
+After `WL-1508F` completed, the bounded screen resumed against exact `qwen2.5-coder:14b` digest
+`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. The startup health check
+again verified the exact digest and required capabilities. The evaluator retained temperature
+`0`, thinking disabled, 1,024 maximum generated tokens, a 30 second request deadline, and
+concurrency `1`.
+
+The first required semantic group still failed at its checkpoint:
+
+| Evidence | Result |
+|---|---|
+| Semantic question | `submission-actions` |
+| Planned runs in this group | 3 locales × 3 repetitions = 9 |
+| Completed runs | 9 |
+| Passed | 3 |
+| Failed | 6 |
+| Locale distribution | `en-GB` 3/3 failed; `de-DE` 3/3 failed; `es-ES` 3/3 passed |
+| Evaluation failure | Missing `action_submission_requests` × 6 |
+| Provider outcome | `SUCCESS` × 9 |
+| Provider / validation failure | None |
+| Tool rounds / executions | 0 / 9 |
+| Input / output tokens | 6,774 / 969 |
+| Latency range | 3,464 to 6,934 milliseconds |
+| Retained artifact | Ignored local `output/insights/wl1508-employee-local-ai-smoke.json`, 4,408 bytes |
+
+All nine responses passed the runtime structured output and exact reference union validators. Each
+trace recorded one current authorized registry execution and zero model tool rounds. The English
+and German responses then failed the strict semantic requirement because they omitted the pending
+request action reference. This is a repeatable grounding failure under the accepted zero tolerance
+evaluation contract. It is not a provider, health, timeout, scope, permission, or native fallback
+failure.
+
+The `today-posted` group and 216 case matrix did not run. No prompt, schema, validator, threshold,
+evaluator, provider implementation, native fallback, dependency, runtime default, manifest, or
+version changed. `WL-1508B` remains open, `WL-1508C` remains blocked, and provider mode remains
+disabled by default. No qualified model candidate now satisfies the known failure screen.
 
 ## `WL-1508E` recovery qualification task (complete)
 
@@ -298,10 +339,9 @@ scope, provider security, native authority, or the zero-tolerance gate.
 - [x] Focused unit, database authorization, cancellation, provider failure, configuration,
       redaction, formatting, phase, and repository checks pass without a real model request.
 
-**Checkpoint:** Review accepted closure. `WL-1508F` is complete and `WL-1508B` is ready for its
-existing 18-run screen against exact qualified `qwen2.5-coder:14b` digest
-`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. No model screen ran in this
-task.
+**Checkpoint:** `WL-1508F` is complete. Its exact qualified `qwen2.5-coder:14b` follow up screen
+ran after this task and failed at the first semantic checkpoint, as recorded in the `WL-1508B`
+evidence above.
 
 **Rollback note:** Provider mode remains disabled. Before any new model screen, the orchestration
 change can be reverted as one bounded source and test change with no data migration or persisted
@@ -428,7 +468,7 @@ the next child.
   behavior, or provider security controls in this task.
 - If no candidate qualifies, stop with `WL-1508A` open and keep the parent gate blocked.
 
-### `WL-1508B` — Screen the known failure modes (ready; prior candidates failed)
+### `WL-1508B` — Screen the known failure modes (open; no candidate ready)
 
 - Run only the `submission-actions` and `today-posted` semantic questions in all three locales and
   all three repetitions against one exact qualified candidate digest: 18 runs total.
@@ -475,9 +515,9 @@ the next child.
 
 ## Required next task
 
-Run only the existing 18-run `submission-actions` and `today-posted` `WL-1508B` screen against
-exact qualified `qwen2.5-coder:14b` digest
-`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. Preserve temperature `0`,
-thinking disabled, 1,024 generated tokens, the 30-second request deadline, concurrency `1`, and
-the existing health and validation contracts. Do not weaken the accepted threshold or advance to
-`WL-1508C`, `WL-1508D`, or `WL-1509` unless the named prerequisite passes.
+No model execution task is ready. `WL-1508B` remains open after the post `WL-1508F`
+`qwen2.5-coder:14b` rerun passed 3 of 9 `submission-actions` cases and failed the other 6. A new
+bounded roadmap decision is required before another candidate can be qualified or evaluated. Do
+not run `today-posted`, the complete matrix, `WL-1508C`, `WL-1508D`, or `WL-1509`. Do not install,
+pull, retag, tune, or weaken a model, prompt, schema, validator, threshold, provider control, or
+native fallback without a separately accepted task.
