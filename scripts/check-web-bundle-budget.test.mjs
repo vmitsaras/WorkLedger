@@ -8,6 +8,7 @@ import {
   HR_AGGREGATE_INSIGHTS_ALLOWANCE,
   INTERNATIONALIZATION_RUNTIME_ALLOWANCE,
   MANAGER_INSIGHTS_ALLOWANCE,
+  SYSTEM_INSIGHTS_ALLOWANCE,
   assertBundleBudget,
   assertLocaleBundleBudget,
   localeForChunk,
@@ -41,7 +42,8 @@ test('adds only the governed runtime allowances to application totals', () => {
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
       EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes +
       MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes +
-      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
+      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptBytes +
+      SYSTEM_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
   );
   assert.equal(
     BUNDLE_BUDGETS.totalJavaScriptGzipBytes,
@@ -49,7 +51,8 @@ test('adds only the governed runtime allowances to application totals', () => {
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
       EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes +
       MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes +
-      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
+      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes +
+      SYSTEM_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
   );
   assert.equal(
     BUNDLE_BUDGETS.largestJavaScriptBytes,
@@ -62,7 +65,7 @@ test('adds only the governed runtime allowances to application totals', () => {
       totalJavaScriptBytes: 948_728,
       totalJavaScriptGzipBytes: 256_840,
     }),
-    { rawBytes: 6_728, rawBudget: 125_000, gzipBytes: 1_840, gzipBudget: 32_000 },
+    { rawBytes: 6_728, rawBudget: 135_000, gzipBytes: 1_840, gzipBudget: 35_000 },
   );
 });
 
@@ -70,10 +73,10 @@ test('rejects totals above the combined application and runtime ceiling', () => 
   const entriesAtLimit = [
     { name: 'app-a.js', bytes: 500_000, gzipBytes: 120_000 },
     { name: 'app-b.js', bytes: 500_000, gzipBytes: 120_000 },
-    { name: 'app-c.js', bytes: 67_000, gzipBytes: 47_000 },
+    { name: 'app-c.js', bytes: 77_000, gzipBytes: 50_000 },
   ];
 
-  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 1_067_000);
+  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 1_077_000);
   assert.throws(
     () =>
       assertBundleBudget([

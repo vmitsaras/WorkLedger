@@ -115,8 +115,8 @@ The cells describe what each role alone grants. Managers and HR administrators m
 | Run deterministic employee Insight | `Self` | `Self` | `No`; a separate active employee role may grant `Self` | `No` |
 | Run deterministic manager Insight | `No` | `Reports`, not self, after the manager Insights gate | `No` | `No` |
 | Run privacy-suppressed HR aggregate Insight | `No` | `No` | `Org HR` aggregate only after the dedicated privacy gate | `No` |
-| Run isolated System Insight | `No` | `No` | `No` | `Technical` after the System Insights gate |
-| Request local model interpretation | `Self` after the employee pilot gate | Active workspace scope only after its later gate | Active HR workspace only after the aggregate gate | Active System workspace only after the isolated system gate |
+| Run isolated System Insight | `No` | `No` | `No` | `Technical` |
+| Request local model interpretation | `Self` after the employee pilot gate | Active workspace scope only after its later gate | Active HR workspace only after the aggregate gate | `No`; unavailable in the accepted Phase 15 scope |
 | Use unrestricted AI, SQL, write, approval, scoring, or recommendation tool | `No` | `No` | `No` | `No` |
 | Export or print monthly-time, balance, or leave records | `Self` | `Reports` | `Org HR` | `No` |
 | View record history/domain audit information | `Self` embedded history | `Reports` embedded history | `Org HR` audit explorer | `No` |

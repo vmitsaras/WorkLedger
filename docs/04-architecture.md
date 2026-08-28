@@ -366,7 +366,7 @@ Phase 15 work. The provider branch below is retained inactive implementation and
 mode remains disabled and no accepted route may depend on it.
 
 ```text
-apps/web /insights
+apps/web role-specific Insights routes
         │ same origin, authenticated POST, no-store
         ▼
 apps/api Insight Service
@@ -417,6 +417,12 @@ the native result rather than model prose.
 The Employee interpretation path above is not approved for deployment. Manager, HR, and System
 Insights remain entirely native. Natural-language report generation and MCP are outside the Phase
 15 architecture.
+
+The System path is a separate strict service under System operations. It accepts one fixed
+technical-overview request, reauthorizes current technical authority, reads only the application
+manifest, database readiness, host-operator backup boundary, mail-adapter configuration, and
+authentication security profile, and has no provider dependency. Backup runtime and restore-test
+state remain unavailable because the application does not own an authoritative source.
 
 No prompt, conversation, result, tool trace, or model output table is part of Phase 15. Provider
 diagnostics use the existing operational log boundary and contain no content. A future second

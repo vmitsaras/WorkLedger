@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights (local AI pilot closed)
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 8 of 10 accepted deterministic tasks complete
-**Current milestone:** Deterministic isolated System Insights (`WL-1514`)
-**Active task:** `WL-1514` — Add allowlisted technical diagnostics without employee or HR data
-**Status:** `WL-1514` is ready after completed deterministic HR aggregates `WL-1513`
+**Phase progress:** Phase 15 in progress — 9 of 10 accepted deterministic tasks complete
+**Current milestone:** Deterministic provider-disabled release gate (`WL-1516`)
+**Active task:** `WL-1516` — Execute the Phase 15 release gates and advance manifests to `0.16.0`
+**Status:** `WL-1514` is complete; `WL-1516` is ready
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -84,8 +84,11 @@ complement floors, a closed query algebra against differencing, generic suppress
 actions, and zero provider context. Completed `WL-1513` implements that contract through strict
 requests, server-owned PostgreSQL aggregation and suppression, repeatable-read HR authorization, a
 no-store endpoint, and an accessible multilingual native route with zero provider dependency.
-`WL-1514` retains isolated deterministic System Insights, and
-`WL-1516` now owns a provider-disabled release gate. Manager model interpretation (`WL-1510`),
+Completed `WL-1514` adds one isolated technical System Insight with strict version, readiness,
+schema, host-owned backup-boundary, mail-configuration, and session-policy facts. It reauthorizes
+current System scope, exposes no employee or HR field, states that backup runtime truth is
+unavailable to the application, and has no provider dependency. `WL-1516` now owns the
+provider-disabled release gate. Manager model interpretation (`WL-1510`),
 natural-language report generation (`WL-1511`), and optional MCP evaluation (`WL-1515`) are obsolete
 and removed from the accepted Phase 15 scope. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
@@ -270,6 +273,15 @@ remains an unnumbered draft.
 - `/hr-insights` keeps requests and results in memory, emits no query state or persistent storage,
   provides only the same-month Monthly time report or Team calendar action after suppression passes,
   and has no interpretation or provider path.
+- System Insights accept only the fixed `SYSTEM_TECHNICAL_OVERVIEW` request. The result must contain
+  exactly the application version, service/database readiness, expected-schema status,
+  host-operator backup boundary, mail-adapter configuration, and authentication session-policy
+  facts from five closed technical sources.
+- `/system/insights` reauthorizes current `TECHNICAL_OPERATIONS_MANAGE` scope for every explicit
+  run, retains request and result state only in browser memory, and offers only the native
+  `/system/operations` action. Backup runtime and restore-test status remain materially unavailable
+  because WorkLedger owns no authoritative in-application source. No provider, employee, HR, or
+  other domain path enters the service.
 - The read-only Insight registry contains only four strict Employee tools. Each tool records its
   current `SELF` authorization actions, purpose, source and result allowlists, freshness rules,
   execution limits, high personal operational sensitivity, private local model exposure, and
@@ -3283,13 +3295,30 @@ fixtures, same-month source actions, three locales, keyboard use, 320-pixel refl
 reduced motion, and axe. The full repository gates and canonical PostgreSQL harness are green. No
 dependency, migration, provider request, manifest, or version changed. `WL-1514` is ready.
 
+**2026-08-28: WL-1514 deterministic isolated System Insights complete**
+
+Implemented one fixed System technical overview through a strict contract, repeatable-read current
+technical authorization, and a same-origin CSRF-protected private no-store endpoint. The result
+contains exactly ten facts from five closed sources: application version, service/database
+readiness, expected-schema state, the host-owned backup boundary, mail-adapter configuration, and
+the authentication session profile. Backup execution and restore-test truth are explicitly
+unavailable rather than inferred. The multilingual `/system/insights` route runs only after an
+explicit button submission, renders grouped definition lists, textual states, a material warning,
+sources, and the native System operations action, and stores no request or result in URL or browser
+persistence. Contract, PostgreSQL route, three-locale component, shell, accessibility, OpenAPI,
+i18n, and repository gates are green. The path has no provider dependency or call and exposes no
+employee, HR, attendance, absence, request, report, identity, or other domain field. No dependency,
+migration, persistence model, manifest, or version changed. Its lazy 6.59 kB raw / 2.13 kB gzip
+route is governed by a separate 10,000-byte raw / 3,000-byte gzip allowance without changing the
+application, largest-chunk, CSS, locale, or earlier runtime baselines. `WL-1516` is ready.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. The optional employee local AI pilot
 is closed without passing after the best strict full run reached 207/216 and the final qualified
 `qwen2.5-coder:14b` recovery screen reached 3/9. Provider mode remains disabled and no model is
-approved for deployment. No roadmap blocker prevents `WL-1514`; it may implement only allowlisted
-technical diagnostics and must not expose employee or HR data. The broad
+approved for deployment. No roadmap blocker prevents the provider-disabled `WL-1516` release gate.
+The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3304,10 +3333,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Implement `WL-1514` as the smallest complete deterministic System Insight slice. Use only the
-allowlisted technical health, migration, backup, mail, session-policy, and version facts accepted by
-the task board; preserve public diagnostic minimization, current System authorization, and zero
-provider calls. Do not expose employee, HR, attendance, absence, request, or other domain data.
+Execute `WL-1516` as the deterministic Phase 15 release gate. Reconfirm every accepted workspace,
+provider-disabled path, multilingual and accessibility boundary, security/privacy contract,
+upgrade and rollback procedure, and browser-storage/cache constraint; close any P0/P1 defect,
+synchronize the final checklist, and advance all ten manifests to `0.16.0` only when the gate
+passes.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

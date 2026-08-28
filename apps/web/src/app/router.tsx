@@ -394,6 +394,16 @@ export function createWorkLedgerRoutes(
               handle: { title: routeTitle('/system/accounts') },
             },
             {
+              path: 'system/insights',
+              loader: createAreaLoader(queryClient, 'SYSTEM'),
+              lazy: async () => {
+                const { SystemInsightsPage } = await import('../routes/system-insights-page.js');
+                return { Component: SystemInsightsPage };
+              },
+              errorElement: <RouteBoundary />,
+              handle: { title: routeTitle('/system/insights') },
+            },
+            {
               path: 'system/operations',
               loader: createSystemOperationsLoader(queryClient),
               element: <SystemOperationsPage />,

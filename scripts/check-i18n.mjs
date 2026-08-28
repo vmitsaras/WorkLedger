@@ -49,6 +49,7 @@ const governedSourcePaths = [
   path.join(repositoryRoot, 'apps/web/src/routes/audit-page.tsx'),
   path.join(repositoryRoot, 'apps/web/src/routes/system-audit-page.tsx'),
   path.join(repositoryRoot, 'apps/web/src/routes/system-operations-page.tsx'),
+  path.join(repositoryRoot, 'apps/web/src/routes/system-insights-page.tsx'),
   path.join(repositoryRoot, 'apps/web/src/routes/system-account-administration-page.tsx'),
   path.join(repositoryRoot, 'apps/web/src/routes/reports-page.tsx'),
   path.join(repositoryRoot, 'apps/web/src/routes/report-detail-page.tsx'),

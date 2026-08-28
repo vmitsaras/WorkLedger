@@ -215,6 +215,6 @@ accepted deterministic continuation dependencies. Model-dependent tasks remain e
 - [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
 - [x] `WL-1512` Define purpose-specific deterministic HR aggregate contracts, value sources, privacy thresholds, cohort and complement suppression, and repeated-query controls.
 - [x] `WL-1513` Add HR aggregate Insights only after the dedicated privacy and authorization gate passes.
-- [ ] `WL-1514` Add deterministic isolated System Insights using allowlisted technical diagnostics only and no employee or HR data.
+- [x] `WL-1514` Add deterministic isolated System Insights using allowlisted technical diagnostics only and no employee or HR data.
 - [ ] `WL-1515` Evaluate an optional MCP adapter over explicitly allowlisted Insight tools; do not expose HR aggregate tools by default. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
 - [ ] `WL-1516` Pass the deterministic multilingual, accessibility, security, privacy, usability, provider-disabled, upgrade, and release gates and bump all workspace manifests to `0.16.0`.

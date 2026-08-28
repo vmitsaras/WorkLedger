@@ -2107,6 +2107,10 @@ test('renders semantic system diagnostics with textual, token-owned states', asy
   expect(screen.getByText('Unavailable')).toBeVisible();
   expect(screen.getByText('Healthy')).toBeVisible();
   expect(screen.getByText(/Database connection timed out/u)).toHaveClass('wl-technical-error');
+  expect(screen.getByRole('link', { name: 'Insights' })).toHaveAttribute(
+    'href',
+    '/system/insights',
+  );
 
   const terms = container.querySelectorAll('dt');
   expect(terms).toHaveLength(9);

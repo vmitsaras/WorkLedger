@@ -27,6 +27,7 @@ test('defines one canonical label for every shell destination', () => {
     '/settings/time': 'Time settings',
     '/system/accounts': 'Accounts and sessions',
     '/system/audit': 'Technical audit',
+    '/system/insights': 'Insights',
     '/system/operations': 'Operations',
     '/team': 'Team status',
     '/team-calendar': 'Team calendar',

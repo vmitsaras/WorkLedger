@@ -2118,6 +2118,50 @@ export type MessageParameterMap = Readonly<{
   'system.audit.technical.page.filterTitle': undefined;
   'system.audit.technical.page.resultsTitle': undefined;
   'system.audit.technical.page.scrollLabel': undefined;
+  'system.insights.action.openOperations': undefined;
+  'system.insights.error.denied': undefined;
+  'system.insights.error.heading': undefined;
+  'system.insights.error.unavailable': undefined;
+  'system.insights.fact.applicationVersion': undefined;
+  'system.insights.fact.backupManagement': undefined;
+  'system.insights.fact.databaseHealth': undefined;
+  'system.insights.fact.expectedSchemaStatus': undefined;
+  'system.insights.fact.mailDeliveryConfiguration': undefined;
+  'system.insights.fact.persistentRememberMe': undefined;
+  'system.insights.fact.serviceHealth': undefined;
+  'system.insights.fact.sessionAbsoluteTimeout': undefined;
+  'system.insights.fact.sessionFreshWindow': undefined;
+  'system.insights.fact.sessionIdleTimeout': undefined;
+  'system.insights.form.description': undefined;
+  'system.insights.form.heading': undefined;
+  'system.insights.form.run': undefined;
+  'system.insights.form.running': undefined;
+  'system.insights.group.operations': undefined;
+  'system.insights.group.readiness': undefined;
+  'system.insights.group.service': undefined;
+  'system.insights.group.sessionPolicy': undefined;
+  'system.insights.limitation.backup.description': undefined;
+  'system.insights.limitation.backup.heading': undefined;
+  'system.insights.page.description': undefined;
+  'system.insights.page.eyebrow': undefined;
+  'system.insights.result.capturedAt': Readonly<{ value: string }>;
+  'system.insights.result.heading': undefined;
+  'system.insights.source.applicationManifest': undefined;
+  'system.insights.source.authenticationProfile': undefined;
+  'system.insights.source.databaseReadiness': undefined;
+  'system.insights.source.hostOperatorProcedures': undefined;
+  'system.insights.source.mailAdapterConfiguration': undefined;
+  'system.insights.sources.description': undefined;
+  'system.insights.sources.heading': undefined;
+  'system.insights.status.ready': undefined;
+  'system.insights.status.running': undefined;
+  'system.insights.value.configured': undefined;
+  'system.insights.value.disabled': undefined;
+  'system.insights.value.hostOperatorManaged': undefined;
+  'system.insights.value.minutes': Readonly<{ count: number }>;
+  'system.insights.value.notConfigured': undefined;
+  'system.insights.value.notReady': undefined;
+  'system.insights.value.ready': undefined;
   'system.operations.alert.criticalTitle': undefined;
   'system.operations.alert.degradedTitle': undefined;
   'system.operations.alert.description': undefined;
@@ -4428,6 +4472,50 @@ export const MESSAGE_KEYS = [
   'system.audit.technical.page.filterTitle',
   'system.audit.technical.page.resultsTitle',
   'system.audit.technical.page.scrollLabel',
+  'system.insights.action.openOperations',
+  'system.insights.error.denied',
+  'system.insights.error.heading',
+  'system.insights.error.unavailable',
+  'system.insights.fact.applicationVersion',
+  'system.insights.fact.backupManagement',
+  'system.insights.fact.databaseHealth',
+  'system.insights.fact.expectedSchemaStatus',
+  'system.insights.fact.mailDeliveryConfiguration',
+  'system.insights.fact.persistentRememberMe',
+  'system.insights.fact.serviceHealth',
+  'system.insights.fact.sessionAbsoluteTimeout',
+  'system.insights.fact.sessionFreshWindow',
+  'system.insights.fact.sessionIdleTimeout',
+  'system.insights.form.description',
+  'system.insights.form.heading',
+  'system.insights.form.run',
+  'system.insights.form.running',
+  'system.insights.group.operations',
+  'system.insights.group.readiness',
+  'system.insights.group.service',
+  'system.insights.group.sessionPolicy',
+  'system.insights.limitation.backup.description',
+  'system.insights.limitation.backup.heading',
+  'system.insights.page.description',
+  'system.insights.page.eyebrow',
+  'system.insights.result.capturedAt',
+  'system.insights.result.heading',
+  'system.insights.source.applicationManifest',
+  'system.insights.source.authenticationProfile',
+  'system.insights.source.databaseReadiness',
+  'system.insights.source.hostOperatorProcedures',
+  'system.insights.source.mailAdapterConfiguration',
+  'system.insights.sources.description',
+  'system.insights.sources.heading',
+  'system.insights.status.ready',
+  'system.insights.status.running',
+  'system.insights.value.configured',
+  'system.insights.value.disabled',
+  'system.insights.value.hostOperatorManaged',
+  'system.insights.value.minutes',
+  'system.insights.value.notConfigured',
+  'system.insights.value.notReady',
+  'system.insights.value.ready',
   'system.operations.alert.criticalTitle',
   'system.operations.alert.degradedTitle',
   'system.operations.alert.description',

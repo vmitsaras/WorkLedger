@@ -15,6 +15,8 @@ import {
   insightRunResponseEnvelopeSchema,
   hrInsightRequestSchema,
   hrInsightRunResponseEnvelopeSchema,
+  systemInsightNativeResultSchema,
+  systemInsightRequestSchema,
 } from '../src/insights.js';
 
 const source = Object.freeze({
@@ -77,6 +79,107 @@ function validBalanceChangeResult() {
 }
 
 describe('Insight contracts', () => {
+  it('accepts only the complete allowlisted System technical overview', () => {
+    const request = { kind: 'SYSTEM_TECHNICAL_OVERVIEW', workspace: 'SYSTEM' } as const;
+    expect(systemInsightRequestSchema.parse(request)).toEqual(request);
+    expect(
+      systemInsightRequestSchema.safeParse({ ...request, employeeId: 'employee-1' }).success,
+    ).toBe(false);
+
+    const sourceCodes = [
+      'APPLICATION_MANIFEST',
+      'DATABASE_READINESS',
+      'HOST_OPERATOR_PROCEDURES',
+      'MAIL_ADAPTER_CONFIGURATION',
+      'AUTHENTICATION_SECURITY_PROFILE',
+    ] as const;
+    const result = {
+      actions: [
+        {
+          code: 'OPEN_SYSTEM_OPERATIONS',
+          destination: 'SYSTEM_OPERATIONS',
+          sourceCodes,
+        },
+      ],
+      facts: [
+        { code: 'APPLICATION_VERSION', source: 'APPLICATION_MANIFEST', value: '0.15.0' },
+        { code: 'SERVICE_HEALTH', source: 'DATABASE_READINESS', value: 'HEALTHY' },
+        { code: 'DATABASE_HEALTH', source: 'DATABASE_READINESS', value: 'HEALTHY' },
+        { code: 'EXPECTED_SCHEMA_STATUS', source: 'DATABASE_READINESS', value: 'READY' },
+        {
+          code: 'BACKUP_MANAGEMENT',
+          source: 'HOST_OPERATOR_PROCEDURES',
+          value: 'HOST_OPERATOR_MANAGED',
+        },
+        {
+          code: 'MAIL_DELIVERY_CONFIGURATION',
+          source: 'MAIL_ADAPTER_CONFIGURATION',
+          value: 'NOT_CONFIGURED',
+        },
+        {
+          code: 'SESSION_IDLE_TIMEOUT_MINUTES',
+          source: 'AUTHENTICATION_SECURITY_PROFILE',
+          value: 30,
+        },
+        {
+          code: 'SESSION_ABSOLUTE_TIMEOUT_MINUTES',
+          source: 'AUTHENTICATION_SECURITY_PROFILE',
+          value: 720,
+        },
+        {
+          code: 'SESSION_FRESH_WINDOW_MINUTES',
+          source: 'AUTHENTICATION_SECURITY_PROFILE',
+          value: 15,
+        },
+        {
+          code: 'PERSISTENT_REMEMBER_ME',
+          source: 'AUTHENTICATION_SECURITY_PROFILE',
+          value: false,
+        },
+      ],
+      freshness: { capturedAt: '2026-08-28T12:00:00Z' },
+      kind: request.kind,
+      limitations: [
+        {
+          code: 'BACKUP_RUNTIME_STATUS_HOST_OWNED',
+          material: true,
+          source: 'HOST_OPERATOR_PROCEDURES',
+        },
+      ],
+      scope: { kind: 'TECHNICAL_DIAGNOSTICS', workspace: request.workspace },
+      sources: sourceCodes.map((code) => ({ code, destination: 'SYSTEM_OPERATIONS' })),
+      workspace: request.workspace,
+    } as const;
+
+    expect(systemInsightNativeResultSchema.parse(result)).toEqual(result);
+    expect(
+      systemInsightNativeResultSchema.safeParse({ ...result, facts: result.facts.slice(1) })
+        .success,
+    ).toBe(false);
+    expect(
+      systemInsightNativeResultSchema.safeParse({
+        ...result,
+        facts: [...result.facts.slice(0, -1), result.facts[0]],
+      }).success,
+    ).toBe(false);
+    const serialized = JSON.stringify(result);
+    for (const forbidden of [
+      'employee',
+      'attendance',
+      'absence',
+      'balance',
+      'requestId',
+      'organizationId',
+      'email',
+      'prompt',
+      'model',
+    ]) {
+      expect(serialized.toLocaleLowerCase('en-US')).not.toContain(
+        forbidden.toLocaleLowerCase('en-US'),
+      );
+    }
+  });
+
   it('accepts only the four purpose specific tool calls with strict bounded arguments', () => {
     const calls = [
       {

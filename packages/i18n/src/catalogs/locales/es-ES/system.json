@@ -182,6 +182,80 @@
       }
     }
   },
+  "insights": {
+    "action": {
+      "openOperations": "Abrir operaciones del sistema"
+    },
+    "error": {
+      "denied": "Tu cuenta actual ya no tiene autorización para el espacio de trabajo Sistema.",
+      "heading": "Información técnica no disponible",
+      "unavailable": "WorkLedger no ha podido reunir los diagnósticos permitidos actuales. Inténtalo de nuevo cuando el servicio esté disponible."
+    },
+    "fact": {
+      "applicationVersion": "Versión de la aplicación",
+      "backupManagement": "Gestión de copias de seguridad",
+      "databaseHealth": "Estado de la base de datos",
+      "expectedSchemaStatus": "Esquema esperado",
+      "mailDeliveryConfiguration": "Entrega de correo",
+      "persistentRememberMe": "Recordarme de forma persistente",
+      "serviceHealth": "Estado del servicio",
+      "sessionAbsoluteTimeout": "Límite absoluto de sesión",
+      "sessionFreshWindow": "Periodo de sesión reciente",
+      "sessionIdleTimeout": "Límite de inactividad de la sesión"
+    },
+    "form": {
+      "description": "Crea un resumen técnico actual a partir de una lista fija de diagnósticos. No se leen registros de empleados, asistencia, ausencias, solicitudes, informes ni RR. HH.",
+      "heading": "Ejecutar resumen técnico",
+      "run": "Ejecutar información",
+      "running": "Ejecutando información…"
+    },
+    "group": {
+      "operations": "Límites del operador",
+      "readiness": "Disponibilidad",
+      "service": "Servicio",
+      "sessionPolicy": "Política de sesiones"
+    },
+    "limitation": {
+      "backup": {
+        "description": "La creación, caducidad, pruebas de restauración y pruebas de recuperación de las copias de seguridad siguen siendo registros del operador del host fuera de WorkLedger. Este resultado no afirma que exista una copia actual ni que haya superado la verificación.",
+        "heading": "El estado de ejecución de las copias no está disponible"
+      }
+    },
+    "page": {
+      "description": "Revisa un resumen técnico determinista sin exponer datos de empleados ni de RR. HH.",
+      "eyebrow": "Administración del sistema"
+    },
+    "result": {
+      "capturedAt": "Capturado el {{value}}",
+      "heading": "Resumen técnico"
+    },
+    "source": {
+      "applicationManifest": "Manifiesto validado de la aplicación",
+      "authenticationProfile": "Perfil fijo de seguridad de autenticación",
+      "databaseReadiness": "Comprobación de la base de datos y del esquema esperado",
+      "hostOperatorProcedures": "Procedimientos documentados del operador del host para copias y restauración",
+      "mailAdapterConfiguration": "Configuración de entrega de correo controlada por el servidor"
+    },
+    "sources": {
+      "description": "Cada dato mostrado procede de una de estas fuentes técnicas permitidas.",
+      "heading": "Fuentes"
+    },
+    "status": {
+      "ready": "La información técnica está lista.",
+      "running": "Ejecutando información técnica."
+    },
+    "value": {
+      "configured": "Configurado",
+      "disabled": "Desactivado",
+      "hostOperatorManaged": "Gestionado por el operador del host",
+      "minutes_many": "{{count}} minutos",
+      "minutes_one": "{{count}} minuto",
+      "minutes_other": "{{count}} minutos",
+      "notConfigured": "No configurado",
+      "notReady": "No disponible",
+      "ready": "Disponible"
+    }
+  },
   "operations": {
     "alert": {
       "criticalTitle": "El servicio requiere atención inmediata",

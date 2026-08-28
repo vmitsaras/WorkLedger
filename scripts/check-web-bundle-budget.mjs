@@ -29,6 +29,11 @@ export const HR_AGGREGATE_INSIGHTS_ALLOWANCE = Object.freeze({
   totalJavaScriptGzipBytes: 3_000,
 });
 
+export const SYSTEM_INSIGHTS_ALLOWANCE = Object.freeze({
+  totalJavaScriptBytes: 10_000,
+  totalJavaScriptGzipBytes: 3_000,
+});
+
 export const BUNDLE_BUDGETS = Object.freeze({
   ...APPLICATION_BUNDLE_BASELINE,
   totalJavaScriptBytes:
@@ -36,13 +41,15 @@ export const BUNDLE_BUDGETS = Object.freeze({
     INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
     EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes +
     MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes +
-    HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
+    HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptBytes +
+    SYSTEM_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
   totalJavaScriptGzipBytes:
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes +
     INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
     EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes +
     MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes +
-    HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
+    HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes +
+    SYSTEM_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
 });
 
 export const LOCALE_BUNDLE_BUDGETS = Object.freeze({
@@ -87,7 +94,8 @@ export function measureRuntimeAllowances(values) {
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
       EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes +
       MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes +
-      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
+      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptBytes +
+      SYSTEM_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
     gzipBytes: Math.max(
       0,
       values.totalJavaScriptGzipBytes - APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes,
@@ -96,7 +104,8 @@ export function measureRuntimeAllowances(values) {
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
       EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes +
       MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes +
-      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
+      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes +
+      SYSTEM_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
   };
 }
 

@@ -144,6 +144,7 @@ export function createApiServer(
         authentication,
         database,
         logger,
+        (dependencies.notificationDelivery ?? disabledNotificationDeliveryAdapter).configured,
         dependencies.now,
       );
       app.addHook('onClose', async () => {

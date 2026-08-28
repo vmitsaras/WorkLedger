@@ -182,6 +182,79 @@
       }
     }
   },
+  "insights": {
+    "action": {
+      "openOperations": "Open system operations"
+    },
+    "error": {
+      "denied": "Your current account no longer has System workspace authority.",
+      "heading": "Technical insight unavailable",
+      "unavailable": "WorkLedger could not assemble the current allowlisted diagnostics. Try again after the service is available."
+    },
+    "fact": {
+      "applicationVersion": "Application version",
+      "backupManagement": "Backup management",
+      "databaseHealth": "Database health",
+      "expectedSchemaStatus": "Expected schema",
+      "mailDeliveryConfiguration": "Mail delivery",
+      "persistentRememberMe": "Persistent remember me",
+      "serviceHealth": "Service health",
+      "sessionAbsoluteTimeout": "Absolute session limit",
+      "sessionFreshWindow": "Fresh-session window",
+      "sessionIdleTimeout": "Idle session limit"
+    },
+    "form": {
+      "description": "Create a current technical overview from a fixed diagnostic allowlist. No employee, attendance, absence, request, report, or HR records are read.",
+      "heading": "Run technical overview",
+      "run": "Run insight",
+      "running": "Running insight…"
+    },
+    "group": {
+      "operations": "Operator boundaries",
+      "readiness": "Readiness",
+      "service": "Service",
+      "sessionPolicy": "Session policy"
+    },
+    "limitation": {
+      "backup": {
+        "description": "Backup creation, expiry, restore tests, and recovery evidence remain host-operator records outside WorkLedger. This result does not claim that a current backup exists or passed verification.",
+        "heading": "Backup runtime status is not available"
+      }
+    },
+    "page": {
+      "description": "Review a deterministic technical overview without exposing employee or HR data.",
+      "eyebrow": "System administration"
+    },
+    "result": {
+      "capturedAt": "Captured {{value}}",
+      "heading": "Technical overview"
+    },
+    "source": {
+      "applicationManifest": "Validated application manifest",
+      "authenticationProfile": "Fixed authentication security profile",
+      "databaseReadiness": "Database and expected-schema readiness check",
+      "hostOperatorProcedures": "Documented host-operator backup and restore procedures",
+      "mailAdapterConfiguration": "Server-owned mail delivery adapter configuration"
+    },
+    "sources": {
+      "description": "Every displayed fact comes from one of these allowlisted technical sources.",
+      "heading": "Sources"
+    },
+    "status": {
+      "ready": "Technical insight ready.",
+      "running": "Running technical insight."
+    },
+    "value": {
+      "configured": "Configured",
+      "disabled": "Disabled",
+      "hostOperatorManaged": "Managed by the host operator",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "notConfigured": "Not configured",
+      "notReady": "Not ready",
+      "ready": "Ready"
+    }
+  },
   "operations": {
     "alert": {
       "criticalTitle": "Service needs immediate attention",

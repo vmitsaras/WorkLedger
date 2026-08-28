@@ -3,7 +3,10 @@ import { mkdir } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 
 import type { MonthlyPeriod, TodayAttendance } from '@workledger/contracts';
-import type { InsightNativeResult } from '@workledger/contracts/insights';
+import type {
+  InsightNativeResult,
+  SystemInsightNativeResult,
+} from '@workledger/contracts/insights';
 import { COHERENT_TODAY_ATTENDANCE, expectPageToHaveNoAxeViolations } from '@workledger/test-utils';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
@@ -34,6 +37,15 @@ const HR_CONTEXT = {
   organization: { name: 'Northstar Studio' },
   roles: ['EMPLOYEE', 'HR_ADMINISTRATOR'],
 };
+const SYSTEM_CONTEXT = {
+  account: { email: 'system@northstar.test', name: 'System Administrator' },
+  defaultPath: '/system/operations',
+  locale: 'en-GB',
+  employee: null,
+  navigationAreas: ['SYSTEM'],
+  organization: { name: 'Northstar Studio' },
+  roles: ['SYSTEM_ADMINISTRATOR'],
+};
 const COMBINED_CONTEXT = {
   account: { email: 'alex@northstar.test', name: 'Alex Morgan' },
   defaultPath: '/today',
@@ -42,6 +54,73 @@ const COMBINED_CONTEXT = {
   navigationAreas: ['EMPLOYEE', 'MANAGER', 'HR', 'SYSTEM'],
   organization: { name: 'Northstar Studio' },
   roles: ['EMPLOYEE', 'MANAGER', 'HR_ADMINISTRATOR', 'SYSTEM_ADMINISTRATOR'],
+};
+const SYSTEM_INSIGHT_SOURCE_CODES = [
+  'APPLICATION_MANIFEST',
+  'DATABASE_READINESS',
+  'HOST_OPERATOR_PROCEDURES',
+  'MAIL_ADAPTER_CONFIGURATION',
+  'AUTHENTICATION_SECURITY_PROFILE',
+] as const;
+const SYSTEM_INSIGHT_RESULT: SystemInsightNativeResult = {
+  actions: [
+    {
+      code: 'OPEN_SYSTEM_OPERATIONS',
+      destination: 'SYSTEM_OPERATIONS',
+      sourceCodes: SYSTEM_INSIGHT_SOURCE_CODES,
+    },
+  ],
+  facts: [
+    { code: 'APPLICATION_VERSION', source: 'APPLICATION_MANIFEST', value: '0.15.0' },
+    { code: 'SERVICE_HEALTH', source: 'DATABASE_READINESS', value: 'CRITICAL' },
+    { code: 'DATABASE_HEALTH', source: 'DATABASE_READINESS', value: 'UNAVAILABLE' },
+    { code: 'EXPECTED_SCHEMA_STATUS', source: 'DATABASE_READINESS', value: 'NOT_READY' },
+    {
+      code: 'BACKUP_MANAGEMENT',
+      source: 'HOST_OPERATOR_PROCEDURES',
+      value: 'HOST_OPERATOR_MANAGED',
+    },
+    {
+      code: 'MAIL_DELIVERY_CONFIGURATION',
+      source: 'MAIL_ADAPTER_CONFIGURATION',
+      value: 'NOT_CONFIGURED',
+    },
+    {
+      code: 'SESSION_IDLE_TIMEOUT_MINUTES',
+      source: 'AUTHENTICATION_SECURITY_PROFILE',
+      value: 30,
+    },
+    {
+      code: 'SESSION_ABSOLUTE_TIMEOUT_MINUTES',
+      source: 'AUTHENTICATION_SECURITY_PROFILE',
+      value: 720,
+    },
+    {
+      code: 'SESSION_FRESH_WINDOW_MINUTES',
+      source: 'AUTHENTICATION_SECURITY_PROFILE',
+      value: 15,
+    },
+    {
+      code: 'PERSISTENT_REMEMBER_ME',
+      source: 'AUTHENTICATION_SECURITY_PROFILE',
+      value: false,
+    },
+  ],
+  freshness: { capturedAt: '2026-08-28T12:00:00Z' },
+  kind: 'SYSTEM_TECHNICAL_OVERVIEW',
+  limitations: [
+    {
+      code: 'BACKUP_RUNTIME_STATUS_HOST_OWNED',
+      material: true,
+      source: 'HOST_OPERATOR_PROCEDURES',
+    },
+  ],
+  scope: { kind: 'TECHNICAL_DIAGNOSTICS', workspace: 'SYSTEM' },
+  sources: SYSTEM_INSIGHT_SOURCE_CODES.map((code) => ({
+    code,
+    destination: 'SYSTEM_OPERATIONS',
+  })),
+  workspace: 'SYSTEM',
 };
 const APPROVAL_TEAM_ID = '123e4567-e89b-42d3-a456-426614174500';
 const CORRECTION_APPROVAL_ID = '123e4567-e89b-42d3-a456-426614174501';
@@ -2839,6 +2918,7 @@ test('keeps combined-role work areas and account utilities reachable in a short 
   for (const [name, href] of [
     ['Accounts and sessions', '/system/accounts'],
     ['Operations', '/system/operations'],
+    ['Insights', '/system/insights'],
     ['Technical audit', '/system/audit'],
   ]) {
     await expect(systemNavigation.getByRole('link', { name, exact: true })).toHaveAttribute(
@@ -2908,6 +2988,55 @@ test('keeps system operations semantic and contained across desktop, mobile, and
     ).toBe(true);
     await capturePhase11Surface(page, `operations-${viewport.name}`);
   }
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('runs the isolated System Insight only on request without persistent or domain state', async ({
+  page,
+}) => {
+  const requests: unknown[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(SYSTEM_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'c'.repeat(64) }), status: 200 });
+  });
+  await page.route('**/v1/insights/system/run', async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({ json: success(SYSTEM_INSIGHT_RESULT), status: 200 });
+  });
+
+  await page.setViewportSize({ height: 900, width: 320 });
+  await page.goto('/system/insights');
+  await expect(page.getByRole('heading', { exact: true, name: 'Insights' })).toBeFocused();
+  expect(requests).toEqual([]);
+
+  await page.getByRole('button', { name: 'Run insight' }).focus();
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByRole('heading', { name: 'Technical overview' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Backup runtime status is not available' }),
+  ).toBeVisible();
+  await expect(page.getByText('0.15.0')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open system operations' })).toHaveAttribute(
+    'href',
+    '/system/operations',
+  );
+  expect(requests).toEqual([{ kind: 'SYSTEM_TECHNICAL_OVERVIEW', workspace: 'SYSTEM' }]);
+  await expect(page).toHaveURL('/system/insights');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  const storage = await page.evaluate(() => ({
+    local: JSON.stringify(localStorage),
+    session: JSON.stringify(sessionStorage),
+  }));
+  expect(JSON.stringify(storage)).not.toContain('SYSTEM_TECHNICAL_OVERVIEW');
+
+  await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+  await expect(page.getByText('Critical')).toBeVisible();
+  await expect(page.getByText('Unavailable')).toBeVisible();
   await expectPageToHaveNoAxeViolations(page);
 });
 

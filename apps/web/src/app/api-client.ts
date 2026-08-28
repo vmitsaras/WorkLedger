@@ -148,6 +148,8 @@ import type {
   HrInsightRunResult,
   InsightNativeResult,
   InsightRequest,
+  SystemInsightNativeResult,
+  SystemInsightRequest,
 } from '@workledger/contracts/insights';
 
 import { clearPendingInsightContext } from './insight-context.js';
@@ -455,6 +457,24 @@ export async function runHrInsight(input: HrInsightRequest): Promise<HrInsightRu
     method: 'POST',
   });
   const parsed = hrInsightRunResponseEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
+}
+
+export async function runSystemInsight(
+  input: SystemInsightRequest,
+): Promise<SystemInsightNativeResult> {
+  const { systemInsightRequestSchema, systemInsightRunResponseEnvelopeSchema } =
+    await import('@workledger/contracts/insights');
+  const parsedInput = systemInsightRequestSchema.safeParse(input);
+  if (!parsedInput.success) throw new ApiClientError('VALIDATION_FAILED', 422);
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/insights/system/run', {
+    body: JSON.stringify(parsedInput.data),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+  });
+  const parsed = systemInsightRunResponseEnvelopeSchema.safeParse(body);
   if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
   return parsed.data.data;
 }

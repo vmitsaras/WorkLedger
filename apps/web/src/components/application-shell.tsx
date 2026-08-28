@@ -47,6 +47,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   { area: 'HR', label: canonicalRouteMessageKey('/settings/holidays'), to: '/settings/holidays' },
   { area: 'HR', label: canonicalRouteMessageKey('/audit'), to: '/audit' },
   { area: 'SYSTEM', label: canonicalRouteMessageKey('/system/accounts'), to: '/system/accounts' },
+  { area: 'SYSTEM', label: canonicalRouteMessageKey('/system/insights'), to: '/system/insights' },
   {
     area: 'SYSTEM',
     label: canonicalRouteMessageKey('/system/operations'),

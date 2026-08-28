@@ -182,6 +182,79 @@
       }
     }
   },
+  "insights": {
+    "action": {
+      "openOperations": "Systembetrieb öffnen"
+    },
+    "error": {
+      "denied": "Ihr aktuelles Konto hat keine Berechtigung mehr für den System-Arbeitsbereich.",
+      "heading": "Technischer Einblick nicht verfügbar",
+      "unavailable": "WorkLedger konnte die aktuellen erlaubten Diagnosedaten nicht zusammenstellen. Versuchen Sie es erneut, wenn der Dienst verfügbar ist."
+    },
+    "fact": {
+      "applicationVersion": "Anwendungsversion",
+      "backupManagement": "Datensicherungsverwaltung",
+      "databaseHealth": "Datenbankzustand",
+      "expectedSchemaStatus": "Erwartetes Schema",
+      "mailDeliveryConfiguration": "E-Mail-Zustellung",
+      "persistentRememberMe": "Dauerhaft angemeldet bleiben",
+      "serviceHealth": "Dienstzustand",
+      "sessionAbsoluteTimeout": "Absolute Sitzungsgrenze",
+      "sessionFreshWindow": "Zeitfenster für aktuelle Sitzungen",
+      "sessionIdleTimeout": "Inaktivitätsgrenze der Sitzung"
+    },
+    "form": {
+      "description": "Erstellt eine aktuelle technische Übersicht aus einer festen Diagnoseliste. Es werden keine Mitarbeiter-, Zeiterfassungs-, Abwesenheits-, Antrags-, Berichts- oder HR-Datensätze gelesen.",
+      "heading": "Technische Übersicht ausführen",
+      "run": "Einblick ausführen",
+      "running": "Einblick wird ausgeführt…"
+    },
+    "group": {
+      "operations": "Betreibergrenzen",
+      "readiness": "Betriebsbereitschaft",
+      "service": "Dienst",
+      "sessionPolicy": "Sitzungsrichtlinie"
+    },
+    "limitation": {
+      "backup": {
+        "description": "Erstellung, Ablauf, Wiederherstellungstests und Nachweise von Datensicherungen bleiben Aufzeichnungen des Host-Betreibers außerhalb von WorkLedger. Dieses Ergebnis behauptet nicht, dass eine aktuelle Datensicherung existiert oder erfolgreich geprüft wurde.",
+        "heading": "Laufzeitstatus der Datensicherung ist nicht verfügbar"
+      }
+    },
+    "page": {
+      "description": "Prüfen Sie eine deterministische technische Übersicht, ohne Mitarbeiter- oder HR-Daten offenzulegen.",
+      "eyebrow": "Systemadministration"
+    },
+    "result": {
+      "capturedAt": "Erfasst: {{value}}",
+      "heading": "Technische Übersicht"
+    },
+    "source": {
+      "applicationManifest": "Validiertes Anwendungsmanifest",
+      "authenticationProfile": "Feste Sicherheitskonfiguration der Authentifizierung",
+      "databaseReadiness": "Prüfung von Datenbank und erwartetem Schema",
+      "hostOperatorProcedures": "Dokumentierte Verfahren des Host-Betreibers für Datensicherung und Wiederherstellung",
+      "mailAdapterConfiguration": "Serverseitige Konfiguration der E-Mail-Zustellung"
+    },
+    "sources": {
+      "description": "Jede angezeigte Angabe stammt aus einer dieser erlaubten technischen Quellen.",
+      "heading": "Quellen"
+    },
+    "status": {
+      "ready": "Technischer Einblick ist bereit.",
+      "running": "Technischer Einblick wird ausgeführt."
+    },
+    "value": {
+      "configured": "Konfiguriert",
+      "disabled": "Deaktiviert",
+      "hostOperatorManaged": "Vom Host-Betreiber verwaltet",
+      "minutes_one": "{{count}} Minute",
+      "minutes_other": "{{count}} Minuten",
+      "notConfigured": "Nicht konfiguriert",
+      "notReady": "Nicht bereit",
+      "ready": "Bereit"
+    }
+  },
   "operations": {
     "alert": {
       "criticalTitle": "Der Dienst benötigt sofortige Aufmerksamkeit",

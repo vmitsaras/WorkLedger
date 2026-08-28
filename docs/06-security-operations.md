@@ -49,6 +49,7 @@ PostgreSQL is the authoritative store for account/session records and domain fac
 | Data | Source | Storage / transfer | Sensitivity | Purpose | Retention class | User control | Main risk | Required control |
 |---|---|---|---:|---|---|---|---|---|
 | Native Insight request and result | Authenticated actor plus authorized domain sources | Same-origin POST, API memory, browser memory | High personal operational | Explain one purpose-specific question | Request/current page only | Explicit submit, remove context, navigate away | URL, cache, log, or excess-field disclosure | Strict schema, current scope, purpose DTO, no-store, no body logging |
+| System technical Insight result | Authorized System actor plus application readiness/configuration sources | Same-origin POST, API memory, browser memory | Moderate technical | Explain one technical readiness snapshot | Request/current page only | Explicit submit and navigate away | Domain/HR leakage, secrets, false backup assurance, or public diagnostic expansion | Exact fact/source allowlist, current technical authorization, no-store, host-owned backup limitation, no provider path |
 | Question and bounded prior turns | Actor | Browser memory, API memory, optional private Ollama request | High personal operational | Optional natural-language interpretation | Current browser session and request only | Clear, reload, workspace change, sign out | Prompt persistence or egress | No URL, database, audit, log, cache, analytics, backup, or external provider |
 | Registry arguments and results | API registry and authorized Insight Service | API memory, minimized private Ollama request | High personal operational | Ground optional interpretation | Request only | Indirect through visible context and question | Prompt attempts to widen scope or inject stored text | Exact server-selected call, strict schema, current authorization before provider context, no model tool, no generic query, no stored free text |
 | Model output | Private operator-controlled Ollama | API memory, validated browser DTO | High personal operational | Optional explanation | Current browser session only | Cancel, clear, retry | Unsupported claim, source fabrication, or reasoning trace disclosure | Structured output, native references, server grounding, no reasoning trace, safe rejection |
@@ -338,6 +339,10 @@ Caddy reference proxy
 - Public liveness answers only whether the service process can respond. It contains no dependency version, database state, migration identifier, organization/employee count, host/path, or exception.
 - Readiness verifies required dependencies and compatible migrations but exposes detail only to the orchestrator/host operator or authorized `/system/operations` DTO. A non-ready instance does not accept normal traffic.
 - Detailed diagnostics use request IDs and safe categories. They never return environment variables, connection strings, SQL, secrets, protected counts, or domain payloads.
+- `POST /v1/insights/system/run` exposes only the closed version, service/database readiness,
+  expected-schema, host-owned backup boundary, mail-adapter configuration, and session-policy
+  allowlist to a currently authorized System administrator. It never exposes backup runtime or
+  restore-test state because WorkLedger has no authoritative in-application source for either.
 - Optional model diagnostics expose only `disabled`, `ready`, `unavailable`, or `misconfigured`,
   safe capability categories, last check time, and a safe reason code. Provider failure does not
   make deterministic Insights or the core application unavailable.

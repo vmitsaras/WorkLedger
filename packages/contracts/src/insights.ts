@@ -26,6 +26,26 @@ export const INSIGHT_KINDS = [
   'HR_MONTHLY_CLOSURE_READINESS',
   'HR_NEUTRAL_ABSENCE_COVERAGE',
 ] as const;
+export const SYSTEM_INSIGHT_KINDS = ['SYSTEM_TECHNICAL_OVERVIEW'] as const;
+export const SYSTEM_INSIGHT_FACT_CODES = [
+  'APPLICATION_VERSION',
+  'SERVICE_HEALTH',
+  'DATABASE_HEALTH',
+  'EXPECTED_SCHEMA_STATUS',
+  'BACKUP_MANAGEMENT',
+  'MAIL_DELIVERY_CONFIGURATION',
+  'SESSION_IDLE_TIMEOUT_MINUTES',
+  'SESSION_ABSOLUTE_TIMEOUT_MINUTES',
+  'SESSION_FRESH_WINDOW_MINUTES',
+  'PERSISTENT_REMEMBER_ME',
+] as const;
+export const SYSTEM_INSIGHT_SOURCE_CODES = [
+  'APPLICATION_MANIFEST',
+  'DATABASE_READINESS',
+  'HOST_OPERATOR_PROCEDURES',
+  'MAIL_ADAPTER_CONFIGURATION',
+  'AUTHENTICATION_SECURITY_PROFILE',
+] as const;
 export const INSIGHT_CONTEXT_KINDS = [
   'TODAY',
   'MY_TIME',
@@ -216,6 +236,13 @@ export const hrInsightRequestSchema = z.discriminatedUnion('kind', [
   hrMonthlyClosureReadinessInsightRequestSchema,
   hrNeutralAbsenceCoverageInsightRequestSchema,
 ]);
+
+export const systemTechnicalOverviewInsightRequestSchema = z.strictObject({
+  kind: z.literal('SYSTEM_TECHNICAL_OVERVIEW'),
+  workspace: z.literal('SYSTEM'),
+});
+
+export const systemInsightRequestSchema = systemTechnicalOverviewInsightRequestSchema;
 
 export const insightRequestSchema = z.discriminatedUnion('kind', [
   balanceChangeInsightRequestSchema,
@@ -656,6 +683,120 @@ export const hrInsightRunResultSchema = z.union([
 export const hrInsightRunResponseEnvelopeSchema =
   createSuccessEnvelopeSchema(hrInsightRunResultSchema);
 
+const systemInsightSourceCodeSchema = z.enum(SYSTEM_INSIGHT_SOURCE_CODES);
+
+export const systemInsightFactSchema = z.discriminatedUnion('code', [
+  z.strictObject({
+    code: z.literal('APPLICATION_VERSION'),
+    source: z.literal('APPLICATION_MANIFEST'),
+    value: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+){2}(?:-[0-9A-Za-z.-]+)?$/u),
+  }),
+  z.strictObject({
+    code: z.literal('SERVICE_HEALTH'),
+    source: z.literal('DATABASE_READINESS'),
+    value: z.enum(['HEALTHY', 'CRITICAL']),
+  }),
+  z.strictObject({
+    code: z.literal('DATABASE_HEALTH'),
+    source: z.literal('DATABASE_READINESS'),
+    value: z.enum(['HEALTHY', 'UNAVAILABLE']),
+  }),
+  z.strictObject({
+    code: z.literal('EXPECTED_SCHEMA_STATUS'),
+    source: z.literal('DATABASE_READINESS'),
+    value: z.enum(['READY', 'NOT_READY']),
+  }),
+  z.strictObject({
+    code: z.literal('BACKUP_MANAGEMENT'),
+    source: z.literal('HOST_OPERATOR_PROCEDURES'),
+    value: z.literal('HOST_OPERATOR_MANAGED'),
+  }),
+  z.strictObject({
+    code: z.literal('MAIL_DELIVERY_CONFIGURATION'),
+    source: z.literal('MAIL_ADAPTER_CONFIGURATION'),
+    value: z.enum(['CONFIGURED', 'NOT_CONFIGURED']),
+  }),
+  z.strictObject({
+    code: z.literal('SESSION_IDLE_TIMEOUT_MINUTES'),
+    source: z.literal('AUTHENTICATION_SECURITY_PROFILE'),
+    value: z.number().int().positive(),
+  }),
+  z.strictObject({
+    code: z.literal('SESSION_ABSOLUTE_TIMEOUT_MINUTES'),
+    source: z.literal('AUTHENTICATION_SECURITY_PROFILE'),
+    value: z.number().int().positive(),
+  }),
+  z.strictObject({
+    code: z.literal('SESSION_FRESH_WINDOW_MINUTES'),
+    source: z.literal('AUTHENTICATION_SECURITY_PROFILE'),
+    value: z.number().int().positive(),
+  }),
+  z.strictObject({
+    code: z.literal('PERSISTENT_REMEMBER_ME'),
+    source: z.literal('AUTHENTICATION_SECURITY_PROFILE'),
+    value: z.literal(false),
+  }),
+]);
+
+export const systemInsightSourceSchema = z.strictObject({
+  code: systemInsightSourceCodeSchema,
+  destination: z.literal('SYSTEM_OPERATIONS'),
+});
+
+export const systemInsightLimitationSchema = z.strictObject({
+  code: z.literal('BACKUP_RUNTIME_STATUS_HOST_OWNED'),
+  material: z.literal(true),
+  source: z.literal('HOST_OPERATOR_PROCEDURES'),
+});
+
+export const systemInsightActionSchema = z.strictObject({
+  code: z.literal('OPEN_SYSTEM_OPERATIONS'),
+  destination: z.literal('SYSTEM_OPERATIONS'),
+  sourceCodes: z
+    .array(systemInsightSourceCodeSchema)
+    .min(1)
+    .max(SYSTEM_INSIGHT_SOURCE_CODES.length),
+});
+
+export const systemInsightNativeResultSchema = z
+  .strictObject({
+    actions: z.array(systemInsightActionSchema).length(1),
+    facts: z.array(systemInsightFactSchema).length(SYSTEM_INSIGHT_FACT_CODES.length),
+    freshness: z.strictObject({ capturedAt: instantSchema }),
+    kind: z.literal('SYSTEM_TECHNICAL_OVERVIEW'),
+    limitations: z.array(systemInsightLimitationSchema).length(1),
+    scope: z.strictObject({
+      kind: z.literal('TECHNICAL_DIAGNOSTICS'),
+      workspace: z.literal('SYSTEM'),
+    }),
+    sources: z.array(systemInsightSourceSchema).length(SYSTEM_INSIGHT_SOURCE_CODES.length),
+    workspace: z.literal('SYSTEM'),
+  })
+  .superRefine((result, context) => {
+    requireExactSystemCodes(
+      result.facts.map(({ code }) => code),
+      SYSTEM_INSIGHT_FACT_CODES,
+      ['facts'],
+      context,
+    );
+    requireExactSystemCodes(
+      result.sources.map(({ code }) => code),
+      SYSTEM_INSIGHT_SOURCE_CODES,
+      ['sources'],
+      context,
+    );
+    requireExactSystemCodes(
+      result.actions[0]?.sourceCodes ?? [],
+      SYSTEM_INSIGHT_SOURCE_CODES,
+      ['actions', 0, 'sourceCodes'],
+      context,
+    );
+  });
+
+export const systemInsightRunResponseEnvelopeSchema = createSuccessEnvelopeSchema(
+  systemInsightNativeResultSchema,
+);
+
 export const insightInterpretationResultSchema = z.strictObject({
   interpretation: insightInterpretationSchema,
   nativeResult: insightNativeResultSchema,
@@ -716,9 +857,35 @@ export type InsightInterpretationStatement = z.infer<typeof insightInterpretatio
 export type InsightInterpretation = z.infer<typeof insightInterpretationSchema>;
 export type InsightInterpretationResult = z.infer<typeof insightInterpretationResultSchema>;
 export type HrInsightRunResult = z.infer<typeof hrInsightRunResultSchema>;
+export type SystemTechnicalOverviewInsightRequest = z.infer<
+  typeof systemTechnicalOverviewInsightRequestSchema
+>;
+export type SystemInsightRequest = z.infer<typeof systemInsightRequestSchema>;
+export type SystemInsightFact = z.infer<typeof systemInsightFactSchema>;
+export type SystemInsightSource = z.infer<typeof systemInsightSourceSchema>;
+export type SystemInsightNativeResult = z.infer<typeof systemInsightNativeResultSchema>;
 
 function codePointLength(value: string): number {
   return Array.from(value).length;
+}
+
+function requireExactSystemCodes(
+  actual: readonly string[],
+  expected: readonly string[],
+  path: PropertyKey[],
+  context: z.RefinementCtx,
+): void {
+  if (
+    actual.length !== expected.length ||
+    new Set(actual).size !== actual.length ||
+    expected.some((code) => !actual.includes(code))
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: 'A System Insight must contain every allowlisted technical code exactly once.',
+      path,
+    });
+  }
 }
 
 function interpretationReferenceJsonSchema(minItems = 0, description?: string) {

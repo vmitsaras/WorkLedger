@@ -11,11 +11,16 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import {
+  apiErrorEnvelopeSchema,
   systemDiagnosticsResponseSchema,
   readinessStatusResponseSchema,
   type SystemDiagnosticsResponse,
   type ReadinessStatusResponse,
 } from '@workledger/contracts';
+import {
+  systemInsightRequestSchema,
+  systemInsightRunResponseEnvelopeSchema,
+} from '@workledger/contracts/insights';
 import {
   parseDomainId,
   parseInstant,
@@ -28,10 +33,17 @@ import type { WorkLedgerAuthentication } from '../auth/authentication.js';
 import type { WorkLedgerDatabase } from '@workledger/database';
 import type { WorkLedgerLogger } from '../logging/logger.js';
 import { authorizeInstallationAction } from '../authorization/policy.js';
-import { requestAuthenticationHeaders } from '../auth/request-session.js';
+import {
+  requestAuthenticationHeaders,
+  requireRequestCsrf,
+  requireRequestSession,
+  requireSameOrigin,
+} from '../auth/request-session.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import { DEFAULT_RETENTION_PROFILE, validateRetentionProfile } from '../retention/config.js';
 import { WORKLEDGER_VERSION } from '../version.js';
+import { parseInsightIdentity } from '../insights/insight-service.js';
+import { createSystemInsightService } from '../insights/system-insight-service.js';
 
 export function registerSystemOperationsRoutes(
   app: FastifyInstance,
@@ -39,8 +51,49 @@ export function registerSystemOperationsRoutes(
   authentication: WorkLedgerAuthentication,
   database: WorkLedgerDatabase,
   logger: WorkLedgerLogger,
+  mailDeliveryConfigured: boolean = false,
   now: () => string = () => new Date().toISOString(),
 ): void {
+  const api = app.withTypeProvider<ZodTypeProvider>();
+  const systemInsightService = createSystemInsightService(database, mailDeliveryConfigured);
+
+  api.post(
+    '/v1/insights/system/run',
+    {
+      schema: {
+        body: systemInsightRequestSchema,
+        description:
+          'Returns the allowlisted technical System Insight only. The result contains no employee, attendance, absence, request, report, or HR data.',
+        operationId: 'runSystemInsight',
+        response: {
+          200: systemInsightRunResponseEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'Run the technical System Insight',
+        tags: ['Insights'],
+      },
+    },
+    async (request, reply) => {
+      requireSameOrigin(request, config.canonicalOrigin);
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      await requireRequestCsrf(request, authentication, headers);
+      const capturedAt = parseInstant(now());
+      if (!capturedAt.ok) {
+        throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+      }
+      const data = await systemInsightService.run(
+        parseInsightIdentity(session.userId, session.fresh),
+        request.body,
+        capturedAt.value,
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
+  );
+
   app.withTypeProvider<ZodTypeProvider>().get(
     '/v1/system/operations',
     {

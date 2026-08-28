@@ -73,7 +73,7 @@ same origin API to the authorized Insight Service. Provider mode remains disable
 | Manager in Employee workspace | Own employee facts | Unavailable in the accepted Phase 15 scope | Current reports and manager queue |
 | Manager in Manager workspace | Current direct report summary after `WL-1509` | Unavailable in the accepted Phase 15 scope | Self data, former reports, sickness subtype, reasons, notes |
 | HR in HR workspace | Fixed purpose aggregates only after `WL-1513` | Unavailable in the accepted Phase 15 scope | Row data, free text, small cohorts, technical data |
-| System administrator in System workspace | Technical diagnostics after `WL-1514` | Unavailable in the accepted Phase 15 scope | Employee, attendance, balance, absence, request, report, HR data |
+| System administrator in System workspace | Fixed technical diagnostics from completed `WL-1514` | Unavailable in the accepted Phase 15 scope | Employee, attendance, balance, absence, request, report, HR data |
 | Combined role with no matching active workspace | Denied | Denied | All other role scopes |
 
 Collection scope, aggregation, suppression, totals, native result construction, and source actions
@@ -163,7 +163,7 @@ separate roadmap decision rescopes them. See
 | Deterministic reconciliation | `WL-1508G` | Employee pilot closure recorded | Accepted remaining scope, obsolete tasks, revised dependencies, and provider-disabled release boundary |
 | Manager | `WL-1509` | Foundation and `WL-1508G` complete | Current direct report scope, self exclusion, neutral availability, exact facts, native actions, accessibility, and zero provider calls |
 | HR aggregate | `WL-1512` and `WL-1513` | `WL-1509` and `WL-1508G` complete | Accepted deterministic privacy decision, suppression before result construction, no row data or inference leak |
-| System | `WL-1514` | Foundation and `WL-1508G` complete | Technical facts remain isolated from all employee and HR data with zero provider calls |
+| System | `WL-1514` | Complete | `docs/164-wl-1514-system-insights.md`; technical facts remain isolated from all employee and HR data with zero provider calls |
 | Removed work | `WL-1510`, `WL-1511`, `WL-1515` | Closed employee pilot | Obsolete in Phase 15; revival requires a new roadmap and applicable decision gates |
 | Phase release | `WL-1516` | `WL-1509`, `WL-1512`, `WL-1513`, and `WL-1514` complete | Full deterministic multilingual, accessibility, privacy, security, operations, upgrade, rollback, and provider-disabled gates; version `0.16.0` |
 

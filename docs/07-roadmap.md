@@ -635,8 +635,8 @@ deterministic work only.
 - [x] `WL-1509` completes deterministic Manager action summaries and team coverage.
 - [x] `WL-1512` accepts fixed deterministic HR aggregate purposes and suppression controls.
 - [x] `WL-1513` implements the accepted privacy-suppressed HR aggregates.
-- [ ] `WL-1514` completes deterministic isolated System Insights.
-- [ ] No accepted continuation route calls a provider or depends on model availability.
+- [x] `WL-1514` completes deterministic isolated System Insights.
+- [x] No accepted continuation route calls a provider or depends on model availability.
 
 `WL-1510`, `WL-1511`, and `WL-1515` are obsolete and removed from the accepted Phase 15 scope. A
 future model interpretation, natural-language report, or MCP proposal requires a new roadmap

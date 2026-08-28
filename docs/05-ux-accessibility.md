@@ -111,7 +111,7 @@ merged Insight context, and changing work area clears pending and prior model in
 | `/monthly-periods/:periodId` | Self, current manager, or HR reviews a scoped monthly period, blockers/warnings, per-date totals, workflow decisions, immutable approved record, and post-lock adjustments according to current state. | `WL-800`–`WL-803` |
 | `/notifications` | Authenticated actor reads or dismisses their generic in-app outcome/attention records and follows an authorized link to restricted detail. Notification copy does not reveal sickness/type/reason on this generic surface. | `WL-704` |
 | `/profile` | Authenticated actor views account/session information, revokes their own sessions, and signs out. An actor with an employee link also sees a read-only employee summary; HR-owned identity, employment, team, schedule, and role facts are not editable here. | `WL-302`, `WL-400` |
-| `/insights` | Authenticated actor runs only the deterministic Insights permitted by the active Employee, Manager, HR, or System workspace. Native facts, freshness, sources, limitations, and actions remain primary. Model interpretation is unavailable in the accepted Phase 15 scope. | `WL-1501`–`WL-1514`, `WL-1508G` |
+| `/insights` | Active employee runs only the deterministic self Insights permitted by the Employee workspace. Native facts, freshness, sources, limitations, and actions remain primary. Model interpretation is unavailable in the accepted Phase 15 scope. | `WL-1501`–`WL-1508G` |
 
 ### Manager routes
 
@@ -121,6 +121,7 @@ merged Insight context, and changing work area clears pending and prior model in
 | `/approvals` | Current manager or HR reviews a scoped, paginated queue with URL-owned non-sensitive generic-status, broad-workflow-category, current-team, affected-date, sort, and page state; counts and pagination are calculated after authorization scope. | `WL-504`, `WL-700`–`WL-701`, `WL-802` |
 | `/approvals/:approvalId` | Current eligible non-self decision maker reviews one type-neutral correction, absence, or cancellation item and performs only actions valid for its policy and state. Monthly rows link to `/monthly-periods/:periodId`. | `WL-504`, `WL-701`, `WL-802` |
 | `/team-calendar` | Current manager or HR views neutral availability for authorized employees in equivalent calendar and agenda/list presentations. | `WL-703` |
+| `/team-insights` | Current manager explicitly runs a deterministic action summary or neutral team-coverage Insight for current direct reports. | `WL-1509` |
 
 ### HR-administration routes
 
@@ -136,6 +137,7 @@ merged Insight context, and changing work area clears pending and prior model in
 | `/settings/absence` | HR manages absence-type versions and employee entitlement ledger adjustments without exposing sickness records as configuration. | `WL-904` |
 | `/settings/holidays` | HR manages organization holiday calendars and sees affected-date/recalculation impact before saving. | `WL-905` |
 | `/audit` | HR searches authorized domain audit events through redacted summaries and purpose-specific detail. | `WL-906` |
+| `/hr-insights` | HR explicitly runs one fixed monthly aggregate purpose; the whole result is suppressed when any cohort, case, or complement privacy floor fails. | `WL-1512`–`WL-1513` |
 
 ### System-administration and operator routes
 
@@ -143,6 +145,7 @@ merged Insight context, and changing work area clears pending and prior model in
 |---|---|---|
 | `/system/accounts` | System administrator manages technical accounts, system-administrator role assignment, and session revocation without HR/domain fields. Employee-linked account lifecycle remains HR-owned on `/employees/:employeeId`. | `WL-900` |
 | `/system/operations` | System administrator sees safe service version, dependency/health, and migration-status diagnostics plus links to deployment procedures; it does not expose secrets, HR payloads, or browser-triggered restore/upgrade controls. | `WL-1003`, `WL-1005`–`WL-1006` |
+| `/system/insights` | System administrator explicitly runs one deterministic technical overview containing only the closed health, schema, backup-boundary, mail-configuration, session-policy, and version allowlist. | `WL-1514` |
 | `/system/audit` | System administrator searches limited security/technical metadata without domain payloads or notification content. | `WL-1006` |
 | Install/configure secrets and reverse proxy | Authorized host operator follows validated environment and Docker/reverse-proxy procedures outside the application UI. | `WL-105`, `WL-1003` |
 | Back up and restore | Authorized host operator runs documented, verified PostgreSQL procedures outside the application UI. | `WL-1004` |
@@ -457,7 +460,7 @@ Under reduced motion, preserve immediate state feedback and remove spatial trave
 | Calendar routes (`/calendar`, `/team-calendar`) | Initial loading; background refresh; empty; partial/stale data; permission denied; network/dependency failure; equivalent grid/agenda loading and selection state. |
 | Report/export routes | Initial loading; background refresh; empty/zero-result filters; partial data; permission denied; stale data; export pending/success/failure; dependency failure; session expiry. |
 | `/profile` | Initial loading; employee-linked and technical-only account variants; own-session revocation pending/success/conflict; session expiry; dependency failure; read-only employee facts. |
-| `/insights` | Initial loading; native ready; no applicable Insight; partial, provisional, stale, or suppressed evidence; question validation; provider disabled, pending, cancelled, timed out, unavailable, invalid, or rate limited; permission and workspace loss; offline; session expiry. |
+| `/insights`, `/team-insights`, `/hr-insights`, and `/system/insights` | Initial loading; native ready; no applicable Insight; partial, provisional, stale, suppressed, or materially unavailable evidence as applicable; validation; permission and workspace loss; offline; session expiry. The retained inactive Employee provider path additionally covers disabled, pending, cancelled, timed out, unavailable, invalid, and rate-limited states. |
 | `/system/operations` and host-operator workflows | Initial loading; healthy/degraded/unavailable dependency states; migration/version mismatch; permission denied; stale diagnostic data; safe documentation-only recovery path. |
 
 ## 17. Accessibility test matrix
