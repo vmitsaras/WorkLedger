@@ -41,12 +41,12 @@ const INSIGHT_KIND_KEYS = {
     title: 'employee.insights.kind.todayExplanation.title',
   },
   'manager-action-summary': {
-    description: 'employee.insights.kind.submissionBlockers.description',
-    title: 'shared.route.title.approvalInbox',
+    description: 'manager.insights.kind.actionSummary.description',
+    title: 'manager.insights.kind.actionSummary.title',
   },
   'team-coverage': {
-    description: 'employee.insights.kind.todayExplanation.description',
-    title: 'shared.route.title.teamStatus',
+    description: 'manager.insights.kind.teamCoverage.description',
+    title: 'manager.insights.kind.teamCoverage.title',
   },
 } as const satisfies Readonly<
   Record<InsightKind, Readonly<{ description: MessageKey; title: MessageKey }>>
@@ -89,6 +89,14 @@ const FACT_LABEL_KEYS: Readonly<Record<string, MessageKey>> = {
   TODAY_REMAINING_EXPECTED_MINUTES: 'employee.insights.fact.todayRemainingExpected',
   TODAY_SCHEDULED_MINUTES: 'employee.insights.fact.todayScheduled',
   TODAY_WORKED_MINUTES: 'employee.insights.fact.todayWorked',
+  MANAGER_ACTION_REQUIRED_COUNT: 'manager.insights.fact.actionRequired',
+  MANAGER_INSIGHT_AVAILABLE: 'manager.insights.fact.available',
+  TEAM_MEMBER_COUNT: 'manager.insights.fact.teamMembers',
+  TEAM_OFF_WORK_COUNT: 'manager.insights.fact.offWork',
+  TEAM_ON_BREAK_COUNT: 'manager.insights.fact.onBreak',
+  TEAM_UNAVAILABLE_COUNT: 'manager.insights.fact.unavailable',
+  TEAM_UNRESOLVED_RECORD_COUNT: 'manager.insights.fact.unresolvedRecords',
+  TEAM_WORKING_COUNT: 'manager.insights.fact.working',
 };
 
 const QUALIFIER_KEYS = {
@@ -146,6 +154,8 @@ const LIMITATION_KEYS: Readonly<Record<string, MessageKey>> = {
   TODAY_CALCULATION_INCOMPLETE: 'employee.insights.limitation.todayCalculationIncomplete',
   TODAY_TIMELINE_TRUNCATED: 'employee.insights.limitation.todayTimelineTruncated',
   TODAY_VALUES_PROVISIONAL: 'employee.insights.limitation.todayValuesProvisional',
+  ACTION_SUMMARY_DATE_NOT_CURRENT: 'manager.insights.limitation.currentDateOnly',
+  TEAM_COVERAGE_DATE_NOT_CURRENT: 'manager.insights.limitation.currentDateOnly',
 };
 
 const STATE_KEYS: Readonly<Record<string, MessageKey>> = {

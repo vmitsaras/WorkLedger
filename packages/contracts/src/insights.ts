@@ -630,6 +630,7 @@ export type ManagerActionSummaryInsightRequest = z.infer<
   typeof managerActionSummaryInsightRequestSchema
 >;
 export type TeamCoverageInsightRequest = z.infer<typeof teamCoverageInsightRequestSchema>;
+export type ManagerInsightRequest = ManagerActionSummaryInsightRequest | TeamCoverageInsightRequest;
 export type InsightRequest = z.infer<typeof insightRequestSchema>;
 export type EmployeeInsightKind = Extract<
   InsightKind,

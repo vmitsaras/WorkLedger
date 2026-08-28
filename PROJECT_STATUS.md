@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights (local AI pilot closed)
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 5 of 10 accepted deterministic tasks complete
-**Current milestone:** Deterministic Manager Insights (`WL-1509`)
-**Active task:** `WL-1509` — Implement manager action summaries and team coverage
-**Status:** `WL-1509` is ready after completed deterministic rescope `WL-1508G`
+**Phase progress:** Phase 15 in progress — 6 of 10 accepted deterministic tasks complete
+**Current milestone:** Deterministic HR aggregate privacy contract (`WL-1512`)
+**Active task:** `WL-1512` — Define purpose-specific HR aggregate contracts and privacy controls
+**Status:** `WL-1512` is ready after completed deterministic Manager Insights `WL-1509`
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -74,7 +74,10 @@ failed screen; `WL-1508C` and `WL-1508D` are closed without execution. No furthe
 qualification, evaluation, prompt, schema, validator, or provider work is authorized in the
 current Phase 15 scope.
 Completed `WL-1508G` reconciles the remaining phase around deterministic, provider-independent
-Insights. `WL-1509` Manager Insights is ready. Reframed `WL-1512` and `WL-1513` retain deterministic
+Insights. Completed `WL-1509` adds strict deterministic Manager action summaries and neutral team
+coverage for current direct reports through a multilingual accessible Manager route, native source
+actions, repeatable-read authorization, exact organization-local date semantics, and zero provider
+calls. Reframed `WL-1512` and `WL-1513` retain deterministic
 privacy-suppressed HR aggregates, `WL-1514` retains isolated deterministic System Insights, and
 `WL-1516` now owns a provider-disabled release gate. Manager model interpretation (`WL-1510`),
 natural-language report generation (`WL-1511`), and optional MCP evaluation (`WL-1515`) are obsolete
@@ -3225,14 +3228,23 @@ the closed employee model pilot. `WL-1509`, deterministic `WL-1512` and `WL-1513
 not a prerequisite for the revised deterministic sequence. `WL-1509` is ready. No source, runtime
 configuration, model installation, dependency, database, manifest, or version changed.
 
+**2026-08-28: WL-1509 deterministic Manager Insights complete**
+
+Added strict Manager action-summary and team-coverage requests, a repeatable-read service that
+reauthorizes current Manager capability and direct-report scope, a CSRF-protected no-store endpoint,
+and the multilingual `/team-insights` route. Results contain factual counts only, preserve neutral
+`UNAVAILABLE`, disclose no employee identity or absence detail, and link only to the native Approval
+inbox or Team status. Contract and component tests cover request routing, current-report scope,
+native actions, the provider-free interface, and automated accessibility. No provider, persistence,
+write, dependency, migration, manifest, or version changed.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. The optional employee local AI pilot
 is closed without passing after the best strict full run reached 207/216 and the final qualified
 `qwen2.5-coder:14b` recovery screen reached 3/9. Provider mode remains disabled and no model is
-approved for deployment. No roadmap blocker prevents `WL-1509`; its implementation must preserve
-current-direct-report scope, self exclusion, neutral availability, exact timezone and date
-semantics, native source actions, accessibility, and zero provider calls. The broad
+approved for deployment. No roadmap blocker prevents `WL-1512`; it must define purpose-specific HR
+aggregates and suppression before any result construction or implementation begins. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3247,10 +3259,10 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Implement `WL-1509` as the smallest complete deterministic Manager Insights slice. Read the Manager
-permission, team availability, Insight Service, domain, UX, security, and test evidence before
-editing. Do not add provider calls, model interpretation, staffing or approval recommendations,
-sickness detail, former-report access, self scope, or write actions.
+Define `WL-1512` as the bounded deterministic HR aggregate privacy contract. Specify each purpose,
+authoritative value source, cohort and complement floor, suppression order, repeated-query controls,
+and permitted native action before implementing `WL-1513`. Do not add row data, free text, sickness
+detail, model context, recommendations, predictions, or write actions.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

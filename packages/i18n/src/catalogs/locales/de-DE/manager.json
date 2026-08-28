@@ -403,6 +403,43 @@
       }
     }
   },
+  "insights": {
+    "error": {
+      "denied": "Ihr aktuelles Konto kann Manager Einblicke nicht verwenden. Es wurden keine Teamdaten offengelegt."
+    },
+    "fact": {
+      "actionRequired": "Genehmigungsdatensätze mit Handlungsbedarf",
+      "available": "Manager Einblick verfügbar",
+      "offWork": "Arbeitet derzeit nicht",
+      "onBreak": "In Pause",
+      "teamMembers": "Aktuell direkt unterstellte Mitarbeitende",
+      "unavailable": "Heute nicht verfügbar",
+      "unresolvedRecords": "Personen mit ungeklärten Datensätzen",
+      "working": "Arbeitet derzeit"
+    },
+    "form": {
+      "description": "Wählen Sie eine aktuelle, sachliche Zusammenfassung. Ergebnisse enthalten keine Namen, Abwesenheitsarten, Gründe oder Empfehlungen.",
+      "heading": "Manager Einblick auswählen"
+    },
+    "kind": {
+      "actionSummary": {
+        "description": "Zählt Datensätze im Genehmigungseingang, die aktuell Ihre Handlung benötigen.",
+        "title": "Handlungsübersicht"
+      },
+      "teamCoverage": {
+        "description": "Zählt aktuell direkt unterstellte Mitarbeitende nach neutraler Verfügbarkeit und ungeklärtem Datensatzstatus.",
+        "title": "Teamabdeckung"
+      }
+    },
+    "limitation": {
+      "currentDateOnly": "Aktuelle Manager Zusammenfassungen sind nur für heute in der Zeitzone der Organisation verfügbar."
+    },
+    "page": {
+      "description": "Prüfen Sie sachliche Handlungs und Abdeckungsübersichten für aktuell direkt unterstellte Mitarbeitende.",
+      "eyebrow": "Teamarbeitsbereich"
+    },
+    "scope": { "currentReports": "Aktuell direkt unterstellte Mitarbeitende" }
+  },
   "team": {
     "calendar": {
       "agenda": {

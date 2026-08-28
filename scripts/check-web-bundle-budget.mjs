@@ -19,16 +19,23 @@ export const EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE = Object.freeze({
   totalJavaScriptGzipBytes: 5_000,
 });
 
+export const MANAGER_INSIGHTS_ALLOWANCE = Object.freeze({
+  totalJavaScriptBytes: 7_000,
+  totalJavaScriptGzipBytes: 2_000,
+});
+
 export const BUNDLE_BUDGETS = Object.freeze({
   ...APPLICATION_BUNDLE_BASELINE,
   totalJavaScriptBytes:
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptBytes +
     INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
-    EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes,
+    EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes +
+    MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
   totalJavaScriptGzipBytes:
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes +
     INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
-    EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes,
+    EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes +
+    MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
 });
 
 export const LOCALE_BUNDLE_BUDGETS = Object.freeze({
@@ -71,14 +78,16 @@ export function measureRuntimeAllowances(values) {
     ),
     rawBudget:
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
-      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes,
+      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes +
+      MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
     gzipBytes: Math.max(
       0,
       values.totalJavaScriptGzipBytes - APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes,
     ),
     gzipBudget:
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
-      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes,
+      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes +
+      MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
   };
 }
 

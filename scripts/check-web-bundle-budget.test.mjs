@@ -6,6 +6,7 @@ import {
   BUNDLE_BUDGETS,
   EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE,
   INTERNATIONALIZATION_RUNTIME_ALLOWANCE,
+  MANAGER_INSIGHTS_ALLOWANCE,
   assertBundleBudget,
   assertLocaleBundleBudget,
   localeForChunk,
@@ -37,13 +38,15 @@ test('adds only the governed runtime allowances to application totals', () => {
     BUNDLE_BUDGETS.totalJavaScriptBytes,
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptBytes +
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
-      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes,
+      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes +
+      MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
   );
   assert.equal(
     BUNDLE_BUDGETS.totalJavaScriptGzipBytes,
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes +
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
-      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes,
+      EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes +
+      MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
   );
   assert.equal(
     BUNDLE_BUDGETS.largestJavaScriptBytes,
@@ -56,7 +59,7 @@ test('adds only the governed runtime allowances to application totals', () => {
       totalJavaScriptBytes: 948_728,
       totalJavaScriptGzipBytes: 256_840,
     }),
-    { rawBytes: 6_728, rawBudget: 110_000, gzipBytes: 1_840, gzipBudget: 27_000 },
+    { rawBytes: 6_728, rawBudget: 117_000, gzipBytes: 1_840, gzipBudget: 29_000 },
   );
 });
 
@@ -64,10 +67,10 @@ test('rejects totals above the combined application and runtime ceiling', () => 
   const entriesAtLimit = [
     { name: 'app-a.js', bytes: 500_000, gzipBytes: 120_000 },
     { name: 'app-b.js', bytes: 500_000, gzipBytes: 120_000 },
-    { name: 'app-c.js', bytes: 52_000, gzipBytes: 42_000 },
+    { name: 'app-c.js', bytes: 59_000, gzipBytes: 44_000 },
   ];
 
-  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 1_052_000);
+  assert.equal(assertBundleBudget(entriesAtLimit).totalJavaScriptBytes, 1_059_000);
   assert.throws(
     () =>
       assertBundleBudget([

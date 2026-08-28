@@ -14,6 +14,7 @@ import { clearSessionMemory } from '../src/app/api-client.js';
 import { setPendingInsightContext, takePendingInsightContext } from '../src/app/insight-context.js';
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { InsightsPage } from '../src/routes/insights-page.js';
+import { ManagerInsightsPage } from '../src/routes/manager-insights-page.js';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 let runtime: I18nRuntime | undefined;
@@ -90,6 +91,46 @@ test('runs only after submit, keeps safe URL context, and presents typed native 
   expect(screen.queryByRole('heading', { name: 'Page context' })).not.toBeInTheDocument();
   expect(screen.getByLabelText('What would you like to understand?')).toHaveFocus();
   expect(screen.getByRole('status')).toHaveTextContent('Page context removed.');
+  await expectNoAxeViolations(rendered.container);
+});
+
+test('runs a Manager Insight without interpretation and presents current report scope', async () => {
+  const requests: unknown[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = requestUrl(input);
+      if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (url.pathname === '/v1/insights/manager/run') {
+        requests.push(JSON.parse(String(init?.body)) as unknown);
+        return insightRunResponse(MANAGER_RESULT, 'DISABLED');
+      }
+      throw new Error(`Unexpected request: ${url.pathname}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const rendered = renderManagerInsights();
+
+  expect(fetch).not.toHaveBeenCalled();
+  await user.selectOptions(
+    screen.getByLabelText('What would you like to understand?'),
+    'team-coverage',
+  );
+  await user.type(screen.getByLabelText('Date'), '2026-08-27');
+  await user.click(screen.getByRole('button', { name: 'Run insight' }));
+
+  expect(await screen.findByRole('heading', { name: 'Team coverage' })).toBeVisible();
+  expect(screen.getByText('Current direct reports')).toBeVisible();
+  expect(screen.getByText('Working now')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Team status' })).toHaveAttribute('href', '/team');
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  expect(requests).toEqual([
+    {
+      kind: 'team-coverage',
+      period: { date: '2026-08-27', kind: 'DATE' },
+      workspace: 'MANAGER',
+    },
+  ]);
   await expectNoAxeViolations(rendered.container);
 });
 
@@ -344,6 +385,27 @@ function renderInsights(initialEntry: string) {
   return { ...rendered, queryClient, router };
 }
 
+function renderManagerInsights() {
+  if (runtime === undefined) throw new Error('Expected initialized i18n runtime.');
+  const queryClient = createWorkLedgerQueryClient();
+  const router = createMemoryRouter(
+    [
+      { path: '/team-insights', element: <ManagerInsightsPage /> },
+      { path: '/team', element: <h1>Team status</h1> },
+      { path: '/sign-in', element: <h1>Sign in</h1> },
+    ],
+    { initialEntries: ['/team-insights'] },
+  );
+  const rendered = render(
+    <WorkLedgerI18nProvider runtime={runtime}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </WorkLedgerI18nProvider>,
+  );
+  return { ...rendered, queryClient, router };
+}
+
 const RESULT: InsightNativeResult = {
   actions: [
     {
@@ -394,6 +456,50 @@ const RESULT: InsightNativeResult = {
   ],
   timeZone: 'Europe/Berlin',
   workspace: 'EMPLOYEE',
+};
+
+const MANAGER_RESULT: InsightNativeResult = {
+  actions: [
+    {
+      code: 'OPEN_TEAM_STATUS',
+      destination: 'TEAM_STATUS',
+      reference: 'action_source_team_status',
+      sourceReferences: ['source_team_status'],
+    },
+  ],
+  facts: [
+    {
+      code: 'TEAM_WORKING_COUNT',
+      qualifiers: ['CURRENT'],
+      reference: 'fact_team_working_count',
+      sourceReferences: ['source_team_status'],
+      value: { kind: 'COUNT', value: 2 },
+    },
+  ],
+  freshness: {
+    boundaries: [
+      {
+        kind: 'CALCULATED_THROUGH',
+        localDate: '2026-08-27',
+        sourceReferences: ['source_team_status'],
+      },
+    ],
+    capturedAt: '2026-08-27T12:00:00Z',
+  },
+  kind: 'team-coverage',
+  limitations: [],
+  period: { date: '2026-08-27', kind: 'DATE' },
+  scope: { kind: 'CURRENT_DIRECT_REPORTS', workspace: 'MANAGER' },
+  sources: [
+    {
+      destination: 'TEAM_STATUS',
+      kind: 'TEAM_STATUS',
+      period: { date: '2026-08-27', kind: 'DATE' },
+      reference: 'source_team_status',
+    },
+  ],
+  timeZone: 'Europe/Berlin',
+  workspace: 'MANAGER',
 };
 
 const INTERPRETATION = {

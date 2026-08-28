@@ -143,6 +143,7 @@ import type {
   InsightInterpretationAvailability,
   InsightInterpretationRequest,
   InsightInterpretationResult,
+  ManagerInsightRequest,
   InsightNativeResult,
   InsightRequest,
 } from '@workledger/contracts/insights';
@@ -409,6 +410,25 @@ export async function runEmployeeInsight(input: InsightRequest): Promise<Employe
   if (!parsedInput.success) throw new ApiClientError('VALIDATION_FAILED', 422);
   const token = await getCsrfToken();
   const body = await requestJson('/v1/insights/run', {
+    body: JSON.stringify(parsedInput.data),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+  });
+  const parsed = insightRunResponseEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return Object.freeze({
+    interpretationAvailability: parsed.data.meta.interpretationAvailability,
+    nativeResult: parsed.data.data,
+  });
+}
+
+export async function runManagerInsight(input: ManagerInsightRequest): Promise<EmployeeInsightRun> {
+  const { insightRequestSchema, insightRunResponseEnvelopeSchema } =
+    await import('@workledger/contracts/insights');
+  const parsedInput = insightRequestSchema.safeParse(input);
+  if (!parsedInput.success) throw new ApiClientError('VALIDATION_FAILED', 422);
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/insights/manager/run', {
     body: JSON.stringify(parsedInput.data),
     headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
     method: 'POST',

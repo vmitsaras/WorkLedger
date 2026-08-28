@@ -403,6 +403,43 @@
       }
     }
   },
+  "insights": {
+    "error": {
+      "denied": "Your current account cannot use Manager Insights. No team data was disclosed."
+    },
+    "fact": {
+      "actionRequired": "Approval records needing action",
+      "available": "Manager Insight available",
+      "offWork": "Not working now",
+      "onBreak": "On break",
+      "teamMembers": "Current direct reports",
+      "unavailable": "Unavailable today",
+      "unresolvedRecords": "People with unresolved records",
+      "working": "Working now"
+    },
+    "form": {
+      "description": "Choose a current, factual summary. Results never include names, absence types, reasons, or recommendations.",
+      "heading": "Choose a Manager Insight"
+    },
+    "kind": {
+      "actionSummary": {
+        "description": "Count approval inbox records that currently need your action.",
+        "title": "Action summary"
+      },
+      "teamCoverage": {
+        "description": "Count current direct reports by neutral availability and unresolved record state.",
+        "title": "Team coverage"
+      }
+    },
+    "limitation": {
+      "currentDateOnly": "Current manager summaries are available only for today in the organisation timezone."
+    },
+    "page": {
+      "description": "Review factual action and coverage summaries for your current direct reports.",
+      "eyebrow": "Team workspace"
+    },
+    "scope": { "currentReports": "Current direct reports" }
+  },
   "team": {
     "calendar": {
       "agenda": {

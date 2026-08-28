@@ -403,6 +403,43 @@
       }
     }
   },
+  "insights": {
+    "error": {
+      "denied": "Tu cuenta actual no puede usar los análisis de gestión. No se han revelado datos del equipo."
+    },
+    "fact": {
+      "actionRequired": "Registros de aprobación que requieren acción",
+      "available": "Análisis de gestión disponible",
+      "offWork": "Sin jornada activa",
+      "onBreak": "En pausa",
+      "teamMembers": "Empleados subordinados directos actuales",
+      "unavailable": "No disponible hoy",
+      "unresolvedRecords": "Personas con registros sin resolver",
+      "working": "Con jornada activa"
+    },
+    "form": {
+      "description": "Elige un resumen actual y objetivo. Los resultados nunca incluyen nombres, tipos de ausencia, motivos ni recomendaciones.",
+      "heading": "Elegir un análisis de gestión"
+    },
+    "kind": {
+      "actionSummary": {
+        "description": "Cuenta los registros del buzón de aprobaciones que requieren tu acción.",
+        "title": "Resumen de acciones"
+      },
+      "teamCoverage": {
+        "description": "Cuenta los empleados subordinados directos actuales por disponibilidad neutral y estado de registros sin resolver.",
+        "title": "Cobertura del equipo"
+      }
+    },
+    "limitation": {
+      "currentDateOnly": "Los resúmenes actuales para responsables solo están disponibles para hoy en la zona horaria de la organización."
+    },
+    "page": {
+      "description": "Consulta resúmenes objetivos de acciones y cobertura para tus empleados subordinados directos actuales.",
+      "eyebrow": "Área de trabajo del equipo"
+    },
+    "scope": { "currentReports": "Empleados subordinados directos actuales" }
+  },
   "team": {
     "calendar": {
       "agenda": {

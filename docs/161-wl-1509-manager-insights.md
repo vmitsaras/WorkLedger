@@ -1,7 +1,7 @@
 # WL-1509 Deterministic Manager Insights
 
-**Task:** `WL-1509`  
-**Status:** In implementation  
+**Task:** `WL-1509`
+**Status:** Complete
 **Decision:** ADR 0014 and `docs/160-wl-1508g-phase-15-deterministic-continuation.md`
 
 ## Contract
@@ -27,3 +27,20 @@ to the existing Approval inbox and Team status routes.
 There are no provider calls, model interpretation, recommendation, staffing judgement, approval
 decision, write, audit event, stored query, or persistent result. HR scope does not substitute for
 the Manager workspace, and former managers lose access on the next request.
+
+## Implementation evidence
+
+The Manager workspace exposes `/team-insights` through its authorized navigation area. The page
+accepts only the two strict Manager request contracts, sends them only to
+`POST /v1/insights/manager/run`, and reuses the accessible native result presentation without an
+interpretation control. English, German, and Spanish catalogs include purpose, fact, limitation,
+scope, and privacy copy.
+
+Contract and component tests cover strict request shapes, current direct report scope, the native
+Team status action, absence of interpretation UI, explicit request routing, and automated axe
+verification. The service keeps authorization, organization local date derivation, current report
+queries, and result validation inside one repeatable read transaction. It has no AI provider
+dependency and cannot call one.
+
+The lazy Manager route has a bounded 7,000 byte raw and 2,000 byte gzip application allowance.
+Locale chunks remain governed by the existing per locale limits.

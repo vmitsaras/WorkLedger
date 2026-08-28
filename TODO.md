@@ -210,7 +210,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 The optional employee local AI pilot is closed without passing. Provider mode remains disabled and
 no model is approved for deployment. Completed `WL-1508G` removes the failed pilot from the
 accepted deterministic continuation dependencies. Model-dependent tasks remain excluded.
-- [ ] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.
+- [x] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.
 - [ ] `WL-1510` Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
 - [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
 - [ ] `WL-1512` Define purpose-specific deterministic HR aggregate contracts, value sources, privacy thresholds, cohort and complement suppression, and repeated-query controls.

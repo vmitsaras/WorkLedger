@@ -75,7 +75,11 @@ export function InsightNativeResult({ result }: Readonly<{ result: InsightNative
           />
           <ResultMetadata
             label={t('employee.insights.result.scope')}
-            value={t('employee.insights.result.scopeSelf')}
+            value={
+              result.scope.kind === 'CURRENT_DIRECT_REPORTS'
+                ? t('manager.insights.scope.currentReports')
+                : t('employee.insights.result.scopeSelf')
+            }
           />
         </dl>
       </Panel>

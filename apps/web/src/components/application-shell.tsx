@@ -36,6 +36,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   { area: 'EMPLOYEE', label: canonicalRouteMessageKey('/calendar'), to: '/calendar' },
   { area: 'EMPLOYEE', label: canonicalRouteMessageKey('/insights'), to: '/insights' },
   { area: 'MANAGER', label: canonicalRouteMessageKey('/team'), to: '/team' },
+  { area: 'MANAGER', label: canonicalRouteMessageKey('/team-insights'), to: '/team-insights' },
   { area: 'MANAGER', label: canonicalRouteMessageKey('/approvals'), to: '/approvals' },
   { area: 'MANAGER', label: canonicalRouteMessageKey('/team-calendar'), to: '/team-calendar' },
   { area: 'HR', label: canonicalRouteMessageKey('/employees'), to: '/employees' },
@@ -412,6 +413,7 @@ function areaForPath(
   }
   if (
     pathname === '/team' ||
+    pathname === '/team-insights' ||
     pathname === '/team-calendar' ||
     pathname === '/approvals' ||
     pathname.startsWith('/approvals/')

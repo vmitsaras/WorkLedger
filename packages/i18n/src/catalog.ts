@@ -1557,6 +1557,25 @@ export type MessageParameterMap = Readonly<{
   'admin.timeSettings.weekday.thursday': undefined;
   'admin.timeSettings.weekday.tuesday': undefined;
   'admin.timeSettings.weekday.wednesday': undefined;
+  'manager.insights.error.denied': undefined;
+  'manager.insights.fact.actionRequired': undefined;
+  'manager.insights.fact.available': undefined;
+  'manager.insights.fact.offWork': undefined;
+  'manager.insights.fact.onBreak': undefined;
+  'manager.insights.fact.teamMembers': undefined;
+  'manager.insights.fact.unavailable': undefined;
+  'manager.insights.fact.unresolvedRecords': undefined;
+  'manager.insights.fact.working': undefined;
+  'manager.insights.form.description': undefined;
+  'manager.insights.form.heading': undefined;
+  'manager.insights.kind.actionSummary.description': undefined;
+  'manager.insights.kind.actionSummary.title': undefined;
+  'manager.insights.kind.teamCoverage.description': undefined;
+  'manager.insights.kind.teamCoverage.title': undefined;
+  'manager.insights.limitation.currentDateOnly': undefined;
+  'manager.insights.page.description': undefined;
+  'manager.insights.page.eyebrow': undefined;
+  'manager.insights.scope.currentReports': undefined;
   'manager.approval.common.status.actionRequired': undefined;
   'manager.approval.common.status.allRecords': undefined;
   'manager.approval.common.status.completed': undefined;
@@ -3845,6 +3864,25 @@ export const MESSAGE_KEYS = [
   'admin.timeSettings.weekday.thursday',
   'admin.timeSettings.weekday.tuesday',
   'admin.timeSettings.weekday.wednesday',
+  'manager.insights.error.denied',
+  'manager.insights.fact.actionRequired',
+  'manager.insights.fact.available',
+  'manager.insights.fact.offWork',
+  'manager.insights.fact.onBreak',
+  'manager.insights.fact.teamMembers',
+  'manager.insights.fact.unavailable',
+  'manager.insights.fact.unresolvedRecords',
+  'manager.insights.fact.working',
+  'manager.insights.form.description',
+  'manager.insights.form.heading',
+  'manager.insights.kind.actionSummary.description',
+  'manager.insights.kind.actionSummary.title',
+  'manager.insights.kind.teamCoverage.description',
+  'manager.insights.kind.teamCoverage.title',
+  'manager.insights.limitation.currentDateOnly',
+  'manager.insights.page.description',
+  'manager.insights.page.eyebrow',
+  'manager.insights.scope.currentReports',
   'manager.approval.common.status.actionRequired',
   'manager.approval.common.status.allRecords',
   'manager.approval.common.status.completed',

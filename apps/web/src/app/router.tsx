@@ -270,6 +270,15 @@ export function createWorkLedgerRoutes(
               handle: { title: routeTitle('/team') },
             },
             {
+              path: 'team-insights',
+              lazy: async () => {
+                const { ManagerInsightsPage } = await import('../routes/manager-insights-page.js');
+                return { Component: ManagerInsightsPage };
+              },
+              errorElement: <RouteBoundary />,
+              handle: { title: routeTitle('/team-insights') },
+            },
+            {
               path: 'team-calendar',
               loader: createTeamCalendarLoader(queryClient),
               element: <TeamCalendarPage />,
