@@ -48,6 +48,14 @@ const INSIGHT_KIND_KEYS = {
     description: 'manager.insights.kind.teamCoverage.description',
     title: 'manager.insights.kind.teamCoverage.title',
   },
+  HR_MONTHLY_CLOSURE_READINESS: {
+    description: 'admin.insights.kind.closureReadiness.description',
+    title: 'admin.insights.kind.closureReadiness.title',
+  },
+  HR_NEUTRAL_ABSENCE_COVERAGE: {
+    description: 'admin.insights.kind.absenceCoverage.description',
+    title: 'admin.insights.kind.absenceCoverage.title',
+  },
 } as const satisfies Readonly<
   Record<InsightKind, Readonly<{ description: MessageKey; title: MessageKey }>>
 >;
@@ -97,6 +105,17 @@ const FACT_LABEL_KEYS: Readonly<Record<string, MessageKey>> = {
   TEAM_UNAVAILABLE_COUNT: 'manager.insights.fact.unavailable',
   TEAM_UNRESOLVED_RECORD_COUNT: 'manager.insights.fact.unresolvedRecords',
   TEAM_WORKING_COUNT: 'manager.insights.fact.working',
+  HR_ELIGIBLE_EMPLOYEE_COUNT: 'admin.insights.fact.eligibleEmployees',
+  HR_LOCKED_EMPLOYEE_COUNT: 'admin.insights.fact.lockedEmployees',
+  HR_OPEN_EMPLOYEE_COUNT: 'admin.insights.fact.openEmployees',
+  HR_SUBMITTED_EMPLOYEE_COUNT: 'admin.insights.fact.submittedEmployees',
+  HR_CHANGES_REQUESTED_EMPLOYEE_COUNT: 'admin.insights.fact.changesRequestedEmployees',
+  HR_APPROVED_EMPLOYEE_COUNT: 'admin.insights.fact.approvedEmployees',
+  HR_INCOMPLETE_EMPLOYEE_DAY_COUNT: 'admin.insights.fact.incompleteEmployeeDays',
+  HR_COVERED_EMPLOYEE_COUNT: 'admin.insights.fact.coveredEmployees',
+  HR_COVERAGE_CASE_COUNT: 'admin.insights.fact.coverageCases',
+  HR_COVERED_EMPLOYEE_DAY_COUNT: 'admin.insights.fact.coveredEmployeeDays',
+  HR_COVERED_SCHEDULED_MINUTES: 'admin.insights.fact.coveredScheduledMinutes',
 };
 
 const QUALIFIER_KEYS = {
@@ -113,12 +132,14 @@ const QUALIFIER_KEYS = {
 const SOURCE_KIND_KEYS = {
   DAILY_TIME_RECORD: 'employee.insights.source.dailyTimeRecord',
   LEAVE_ENTITLEMENT_LEDGER: 'employee.insights.source.leaveEntitlementLedger',
+  MONTHLY_TIME_REPORT: 'admin.insights.source.monthlyTimeReport',
   MONTHLY_PERIOD: 'employee.insights.source.monthlyPeriod',
   PERSONAL_REQUEST: 'employee.insights.source.personalRequest',
   REPORT: 'employee.insights.source.report',
   TIME_ACCOUNT_LEDGER: 'employee.insights.source.timeAccountLedger',
   TODAY_ATTENDANCE: 'employee.insights.source.todayAttendance',
   APPROVAL_INBOX: 'shared.route.title.approvalInbox',
+  TEAM_CALENDAR: 'shared.route.title.teamCalendar',
   TEAM_STATUS: 'shared.route.title.teamStatus',
 } as const satisfies Readonly<Record<InsightSourceKind, MessageKey>>;
 
@@ -130,6 +151,8 @@ const DESTINATION_KEYS = {
   REPORTS: 'employee.insights.destination.reports',
   TODAY: 'employee.insights.destination.today',
   APPROVAL_INBOX: 'shared.route.title.approvalInbox',
+  MONTHLY_TIME_REPORT: 'admin.insights.destination.monthlyTimeReport',
+  TEAM_CALENDAR: 'shared.route.title.teamCalendar',
   TEAM_STATUS: 'shared.route.title.teamStatus',
 } as const satisfies Readonly<Record<InsightNativeActionDestination, MessageKey>>;
 
@@ -273,6 +296,24 @@ export function insightDestinationPath(
 ): string {
   if (destination === 'MY_REQUESTS') return '/requests';
   if (destination === 'APPROVAL_INBOX') return '/approvals';
+  if (destination === 'TEAM_CALENDAR') {
+    const month = period?.kind === 'MONTH' ? period.monthStart.slice(0, 7) : undefined;
+    return month === undefined ? '/team-calendar' : `/team-calendar?month=${month}`;
+  }
+  if (destination === 'MONTHLY_TIME_REPORT') {
+    if (period?.kind !== 'MONTH') return '/reports/monthly-time';
+    const monthStart = period.monthStart;
+    const monthEnd = endOfMonth(monthStart);
+    const search = new URLSearchParams({
+      direction: 'ASC',
+      from: monthStart,
+      limit: '20',
+      page: '1',
+      sort: 'EMPLOYEE',
+      to: monthEnd,
+    });
+    return `/reports/monthly-time?${search.toString()}`;
+  }
   if (destination === 'TEAM_STATUS') return '/team';
   if (destination === 'REPORTS') return '/reports';
   if (destination === 'TODAY') return '/today';
@@ -287,4 +328,12 @@ export function insightDestinationPath(
   const view = period.kind === 'MONTH' ? 'MONTH' : 'WEEK';
   const search = new URLSearchParams({ date, limit: '20', page: '1', view });
   return `${base}?${search.toString()}`;
+}
+
+function endOfMonth(monthStart: string): string {
+  const year = Number(monthStart.slice(0, 4));
+  const month = Number(monthStart.slice(5, 7));
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const lastDay = month === 2 ? (leapYear ? 29 : 28) : [4, 6, 9, 11].includes(month) ? 30 : 31;
+  return `${monthStart.slice(0, 8)}${String(lastDay).padStart(2, '0')}`;
 }

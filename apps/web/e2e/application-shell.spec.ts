@@ -687,6 +687,59 @@ test('runs an employee insight only on request with accessible narrow and forced
   await expectPageToHaveNoAxeViolations(page);
 });
 
+test('keeps an HR aggregate suppressed, private, and accessible at reflow', async ({ page }) => {
+  const requests: unknown[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(HR_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'c'.repeat(64) }), status: 200 });
+  });
+  await page.route('**/v1/insights/hr/run', async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({
+      json: success({
+        capturedAt: '2026-08-28T12:00:00Z',
+        kind: 'HR_MONTHLY_CLOSURE_READINESS',
+        month: '2026-08',
+        reason: 'PRIVACY_THRESHOLD_NOT_MET',
+      }),
+      status: 200,
+    });
+  });
+
+  await page.setViewportSize({ height: 900, width: 320 });
+  await page.goto('/hr-insights');
+  await expect(page.getByRole('heading', { exact: true, name: 'Insights' })).toBeFocused();
+  await page.getByLabel('Month').fill('2026-08');
+  await page.getByRole('button', { name: 'Run insight' }).focus();
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByRole('heading', { name: 'Aggregate unavailable' })).toBeVisible();
+  await expect(page.getByText(/does not reveal which requirement/iu)).toBeVisible();
+  await expect(page.getByText('Eligible employees')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Monthly time report' })).toHaveCount(0);
+  await expect(page).toHaveURL('/hr-insights');
+  expect(requests).toEqual([
+    {
+      kind: 'HR_MONTHLY_CLOSURE_READINESS',
+      month: '2026-08',
+      workspace: 'HR',
+    },
+  ]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  const storage = await page.evaluate(() => ({
+    local: JSON.stringify(localStorage),
+    session: JSON.stringify(sessionStorage),
+  }));
+  expect(JSON.stringify(storage)).not.toContain('HR_MONTHLY_CLOSURE_READINESS');
+
+  await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+  await expectPageToHaveNoAxeViolations(page);
+});
+
 test('keeps Ask My Ledger native first, private, recoverable, and accessible', async ({ page }) => {
   let interpretationCount = 0;
   await mockContext(page, () => true);

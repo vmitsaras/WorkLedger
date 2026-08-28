@@ -78,7 +78,9 @@ export function InsightNativeResult({ result }: Readonly<{ result: InsightNative
             value={
               result.scope.kind === 'CURRENT_DIRECT_REPORTS'
                 ? t('manager.insights.scope.currentReports')
-                : t('employee.insights.result.scopeSelf')
+                : result.scope.kind === 'ORGANIZATION_AGGREGATE'
+                  ? t('admin.insights.scope.organizationAggregate')
+                  : t('employee.insights.result.scopeSelf')
             }
           />
         </dl>

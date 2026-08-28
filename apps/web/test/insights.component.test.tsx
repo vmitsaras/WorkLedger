@@ -15,6 +15,7 @@ import { setPendingInsightContext, takePendingInsightContext } from '../src/app/
 import { createWorkLedgerQueryClient } from '../src/app/query.js';
 import { InsightsPage } from '../src/routes/insights-page.js';
 import { ManagerInsightsPage } from '../src/routes/manager-insights-page.js';
+import { HrInsightsPage } from '../src/routes/hr-insights-page.js';
 
 const REQUEST_ID = '123e4567-e89b-42d3-a456-426614174000';
 let runtime: I18nRuntime | undefined;
@@ -132,6 +133,111 @@ test('runs a Manager Insight without interpretation and presents current report 
     },
   ]);
   await expectNoAxeViolations(rendered.container);
+});
+
+test('runs only a fixed HR aggregate and renders available and generic suppressed states', async () => {
+  const requests: unknown[] = [];
+  let requestCount = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = requestUrl(input);
+      if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      if (url.pathname === '/v1/insights/hr/run') {
+        requests.push(JSON.parse(String(init?.body)) as unknown);
+        requestCount += 1;
+        return requestCount === 1
+          ? successResponse({ nativeResult: HR_RESULT })
+          : successResponse({
+              capturedAt: '2026-08-28T12:00:00Z',
+              kind: 'HR_NEUTRAL_ABSENCE_COVERAGE',
+              month: '2026-08',
+              reason: 'PRIVACY_THRESHOLD_NOT_MET',
+            });
+      }
+      throw new Error(`Unexpected request: ${url.pathname}`);
+    }),
+  );
+  const user = userEvent.setup();
+  const rendered = renderHrInsights();
+
+  expect(fetch).not.toHaveBeenCalled();
+  expect(screen.getByText(/Filters, comparisons, subgroups/iu)).toBeVisible();
+  await user.type(screen.getByLabelText('Month'), '2026-08');
+  await user.click(screen.getByRole('button', { name: 'Run insight' }));
+
+  expect(await screen.findByRole('heading', { name: 'Monthly closure readiness' })).toBeVisible();
+  expect(screen.getByText('Organisation aggregate')).toBeVisible();
+  expect(screen.getByText('Eligible employees')).toBeVisible();
+  expect(screen.getByText('13')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Monthly time report' })).toHaveAttribute(
+    'href',
+    '/reports/monthly-time?direction=ASC&from=2026-08-01&limit=20&page=1&sort=EMPLOYEE&to=2026-08-31',
+  );
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+
+  await user.selectOptions(
+    screen.getByLabelText('What would you like to understand?'),
+    'HR_NEUTRAL_ABSENCE_COVERAGE',
+  );
+  await user.click(screen.getByRole('button', { name: 'Run insight' }));
+  expect(await screen.findByText('Aggregate unavailable')).toBeVisible();
+  expect(screen.getByText(/does not reveal which requirement/iu)).toBeVisible();
+  expect(screen.queryByText('Eligible employees')).not.toBeInTheDocument();
+  expect(requests).toEqual([
+    {
+      kind: 'HR_MONTHLY_CLOSURE_READINESS',
+      month: '2026-08',
+      workspace: 'HR',
+    },
+    {
+      kind: 'HR_NEUTRAL_ABSENCE_COVERAGE',
+      month: '2026-08',
+      workspace: 'HR',
+    },
+  ]);
+  expect(rendered.router.state.location.search).toBe('');
+  expect(localStorage).toHaveLength(0);
+  expect(sessionStorage).toHaveLength(0);
+  await expectNoAxeViolations(rendered.container);
+});
+
+test('renders the privacy-suppressed HR state in every supported locale', async () => {
+  const headings = {
+    'de-DE': 'Aggregat nicht verfügbar',
+    'en-GB': 'Aggregate unavailable',
+    'es-ES': 'Agregado no disponible',
+  } as const;
+  for (const locale of ['en-GB', 'de-DE', 'es-ES'] as const) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = requestUrl(input);
+        if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+        if (url.pathname === '/v1/insights/hr/run') {
+          return successResponse({
+            capturedAt: '2026-08-28T12:00:00Z',
+            kind: 'HR_MONTHLY_CLOSURE_READINESS',
+            month: '2026-08',
+            reason: 'PRIVACY_THRESHOLD_NOT_MET',
+          });
+        }
+        throw new Error(`Unexpected request: ${url.pathname}`);
+      }),
+    );
+    const localizedRuntime = await initializeI18n(locale);
+    const user = userEvent.setup();
+    const rendered = renderHrInsights(localizedRuntime);
+    const month = rendered.container.querySelector<HTMLInputElement>('input[type="month"]');
+    const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (month === null || submit === null) throw new Error('Expected localized HR form controls.');
+    await user.type(month, '2026-08');
+    await user.click(submit);
+    expect(await screen.findByText(headings[locale])).toBeVisible();
+    await expectNoAxeViolations(rendered.container);
+    rendered.unmount();
+    vi.unstubAllGlobals();
+  }
 });
 
 test('does not rerun restored URL state and focuses a useful validation summary', async () => {
@@ -406,6 +512,28 @@ function renderManagerInsights() {
   return { ...rendered, queryClient, router };
 }
 
+function renderHrInsights(selectedRuntime = runtime) {
+  if (selectedRuntime === undefined) throw new Error('Expected initialized i18n runtime.');
+  const queryClient = createWorkLedgerQueryClient();
+  const router = createMemoryRouter(
+    [
+      { path: '/hr-insights', element: <HrInsightsPage /> },
+      { path: '/reports/monthly-time', element: <h1>Monthly time report</h1> },
+      { path: '/team-calendar', element: <h1>Team calendar</h1> },
+      { path: '/sign-in', element: <h1>Sign in</h1> },
+    ],
+    { initialEntries: ['/hr-insights'] },
+  );
+  const rendered = render(
+    <WorkLedgerI18nProvider runtime={selectedRuntime}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </WorkLedgerI18nProvider>,
+  );
+  return { ...rendered, queryClient, router };
+}
+
 const RESULT: InsightNativeResult = {
   actions: [
     {
@@ -500,6 +628,51 @@ const MANAGER_RESULT: InsightNativeResult = {
   ],
   timeZone: 'Europe/Berlin',
   workspace: 'MANAGER',
+};
+
+const HR_RESULT: InsightNativeResult = {
+  actions: [
+    {
+      code: 'OPEN_MONTHLY_TIME_REPORT',
+      destination: 'MONTHLY_TIME_REPORT',
+      period: { kind: 'MONTH', monthStart: '2026-08-01' },
+      reference: 'action_source_monthly_time_report',
+      sourceReferences: ['source_monthly_time_report'],
+    },
+  ],
+  facts: [
+    {
+      code: 'HR_ELIGIBLE_EMPLOYEE_COUNT',
+      qualifiers: ['CURRENT'],
+      reference: 'fact_hr_eligible_employees',
+      sourceReferences: ['source_monthly_time_report'],
+      value: { kind: 'COUNT', value: 13 },
+    },
+  ],
+  freshness: {
+    boundaries: [
+      {
+        kind: 'CALCULATED_THROUGH',
+        localDate: '2026-08-31',
+        sourceReferences: ['source_monthly_time_report'],
+      },
+    ],
+    capturedAt: '2026-08-28T12:00:00Z',
+  },
+  kind: 'HR_MONTHLY_CLOSURE_READINESS',
+  limitations: [],
+  period: { kind: 'MONTH', monthStart: '2026-08-01' },
+  scope: { kind: 'ORGANIZATION_AGGREGATE', workspace: 'HR' },
+  sources: [
+    {
+      destination: 'MONTHLY_TIME_REPORT',
+      kind: 'MONTHLY_TIME_REPORT',
+      period: { kind: 'MONTH', monthStart: '2026-08-01' },
+      reference: 'source_monthly_time_report',
+    },
+  ],
+  timeZone: 'Europe/Berlin',
+  workspace: 'HR',
 };
 
 const INTERPRETATION = {

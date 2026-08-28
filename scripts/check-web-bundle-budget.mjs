@@ -24,18 +24,25 @@ export const MANAGER_INSIGHTS_ALLOWANCE = Object.freeze({
   totalJavaScriptGzipBytes: 2_000,
 });
 
+export const HR_AGGREGATE_INSIGHTS_ALLOWANCE = Object.freeze({
+  totalJavaScriptBytes: 8_000,
+  totalJavaScriptGzipBytes: 3_000,
+});
+
 export const BUNDLE_BUDGETS = Object.freeze({
   ...APPLICATION_BUNDLE_BASELINE,
   totalJavaScriptBytes:
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptBytes +
     INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
     EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes +
-    MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
+    MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes +
+    HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
   totalJavaScriptGzipBytes:
     APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes +
     INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
     EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes +
-    MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
+    MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes +
+    HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
 });
 
 export const LOCALE_BUNDLE_BUDGETS = Object.freeze({
@@ -79,7 +86,8 @@ export function measureRuntimeAllowances(values) {
     rawBudget:
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptBytes +
       EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptBytes +
-      MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
+      MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptBytes +
+      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptBytes,
     gzipBytes: Math.max(
       0,
       values.totalJavaScriptGzipBytes - APPLICATION_BUNDLE_BASELINE.totalJavaScriptGzipBytes,
@@ -87,7 +95,8 @@ export function measureRuntimeAllowances(values) {
     gzipBudget:
       INTERNATIONALIZATION_RUNTIME_ALLOWANCE.totalJavaScriptGzipBytes +
       EMPLOYEE_LOCAL_AI_PILOT_ALLOWANCE.totalJavaScriptGzipBytes +
-      MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
+      MANAGER_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes +
+      HR_AGGREGATE_INSIGHTS_ALLOWANCE.totalJavaScriptGzipBytes,
   };
 }
 

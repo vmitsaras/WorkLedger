@@ -14,6 +14,7 @@ test('defines one canonical label for every shell destination', () => {
     '/audit': 'Domain audit',
     '/calendar': 'Calendar',
     '/employees': 'Employees',
+    '/hr-insights': 'Insights',
     '/insights': 'Insights',
     '/my-balances': 'My balances',
     '/my-time': 'My time',

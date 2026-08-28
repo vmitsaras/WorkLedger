@@ -1423,6 +1423,41 @@ export interface ReportRepository {
   listMonthlyTime(input: ReportRangeInput): Promise<MonthlyTimeReportPage>;
 }
 
+export type HrAggregateSuppressedRecord = Readonly<{ kind: 'SUPPRESSED' }>;
+
+export type HrMonthlyClosureAggregateRecord = Readonly<{
+  approvedEmployeeCount: number;
+  changesRequestedEmployeeCount: number;
+  eligibleEmployeeCount: number;
+  incompleteDayCount: number;
+  kind: 'AVAILABLE';
+  lockedEmployeeCount: number;
+  openEmployeeCount: number;
+  submittedEmployeeCount: number;
+}>;
+
+export type HrNeutralAbsenceAggregateRecord = Readonly<{
+  coverageCaseCount: number;
+  coveredDayCount: number;
+  coveredEmployeeCount: number;
+  coveredScheduledMinutes: number;
+  eligibleEmployeeCount: number;
+  kind: 'AVAILABLE';
+}>;
+
+export interface HrInsightAggregateRepository {
+  monthlyClosureReadiness(
+    organizationId: DomainId<'Organization'>,
+    monthStart: LocalDate,
+    monthEnd: LocalDate,
+  ): Promise<HrAggregateSuppressedRecord | HrMonthlyClosureAggregateRecord>;
+  neutralAbsenceCoverage(
+    organizationId: DomainId<'Organization'>,
+    monthStart: LocalDate,
+    monthEnd: LocalDate,
+  ): Promise<HrAggregateSuppressedRecord | HrNeutralAbsenceAggregateRecord>;
+}
+
 export interface TeamStatusRepository {
   listCalendar(input: ListTeamCalendarInput): Promise<readonly TeamCalendarEntryRecord[]>;
   listCurrent(input: ListTeamStatusInput): Promise<readonly TeamStatusMemberRecord[]>;

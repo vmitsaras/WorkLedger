@@ -23,6 +23,8 @@ export const INSIGHT_KINDS = [
   'today-explanation',
   'manager-action-summary',
   'team-coverage',
+  'HR_MONTHLY_CLOSURE_READINESS',
+  'HR_NEUTRAL_ABSENCE_COVERAGE',
 ] as const;
 export const INSIGHT_CONTEXT_KINDS = [
   'TODAY',
@@ -53,12 +55,14 @@ export const INSIGHT_FRESHNESS_BOUNDARY_KINDS = ['CALCULATED_THROUGH', 'POSTED_T
 export const INSIGHT_SOURCE_KINDS = [
   'DAILY_TIME_RECORD',
   'LEAVE_ENTITLEMENT_LEDGER',
+  'MONTHLY_TIME_REPORT',
   'MONTHLY_PERIOD',
   'PERSONAL_REQUEST',
   'REPORT',
   'TIME_ACCOUNT_LEDGER',
   'TODAY_ATTENDANCE',
   'APPROVAL_INBOX',
+  'TEAM_CALENDAR',
   'TEAM_STATUS',
 ] as const;
 export const INSIGHT_NATIVE_ACTION_DESTINATIONS = [
@@ -69,6 +73,8 @@ export const INSIGHT_NATIVE_ACTION_DESTINATIONS = [
   'REPORTS',
   'TODAY',
   'APPROVAL_INBOX',
+  'MONTHLY_TIME_REPORT',
+  'TEAM_CALENDAR',
   'TEAM_STATUS',
 ] as const;
 
@@ -77,6 +83,7 @@ const instantSchema = z.iso.datetime({ offset: true });
 const signedMinuteSchema = z.number().int().safe();
 const countSchema = z.number().int().safe().min(0);
 const timeZoneSchema = z.string().min(1).max(255);
+const isoMonthSchema = z.string().regex(/^(?:20\d{2}|2[1-9]\d{2}|[3-9]\d{3})-(?:0[1-9]|1[0-2])$/u);
 const insightCodeSchema = z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/u);
 const opaqueInsightReferenceSchema = z
   .string()
@@ -189,6 +196,26 @@ export const teamCoverageInsightRequestSchema = z.strictObject({
   kind: z.literal('team-coverage'),
   period: insightDatePeriodSchema,
 });
+
+const hrRequestShape = {
+  month: isoMonthSchema,
+  workspace: z.literal('HR'),
+};
+
+export const hrMonthlyClosureReadinessInsightRequestSchema = z.strictObject({
+  ...hrRequestShape,
+  kind: z.literal('HR_MONTHLY_CLOSURE_READINESS'),
+});
+
+export const hrNeutralAbsenceCoverageInsightRequestSchema = z.strictObject({
+  ...hrRequestShape,
+  kind: z.literal('HR_NEUTRAL_ABSENCE_COVERAGE'),
+});
+
+export const hrInsightRequestSchema = z.discriminatedUnion('kind', [
+  hrMonthlyClosureReadinessInsightRequestSchema,
+  hrNeutralAbsenceCoverageInsightRequestSchema,
+]);
 
 export const insightRequestSchema = z.discriminatedUnion('kind', [
   balanceChangeInsightRequestSchema,
@@ -333,6 +360,8 @@ export const insightNativeResultSchema = z
       'today-explanation': 'DATE',
       'manager-action-summary': 'DATE',
       'team-coverage': 'DATE',
+      HR_MONTHLY_CLOSURE_READINESS: 'MONTH',
+      HR_NEUTRAL_ABSENCE_COVERAGE: 'MONTH',
     }[result.kind];
     const expectedScopeKind = {
       EMPLOYEE: 'SELF',
@@ -374,12 +403,14 @@ export const insightNativeResultSchema = z
     const expectedSourceDestination = {
       DAILY_TIME_RECORD: 'MY_TIME',
       LEAVE_ENTITLEMENT_LEDGER: 'MY_BALANCES',
+      MONTHLY_TIME_REPORT: 'MONTHLY_TIME_REPORT',
       MONTHLY_PERIOD: 'MONTHLY_REVIEW',
       PERSONAL_REQUEST: 'MY_REQUESTS',
       REPORT: 'REPORTS',
       TIME_ACCOUNT_LEDGER: 'MY_BALANCES',
       TODAY_ATTENDANCE: 'TODAY',
       APPROVAL_INBOX: 'APPROVAL_INBOX',
+      TEAM_CALENDAR: 'TEAM_CALENDAR',
       TEAM_STATUS: 'TEAM_STATUS',
     } as const;
     for (const [index, source] of result.sources.entries()) {
@@ -606,6 +637,25 @@ export const insightRunResponseEnvelopeSchema = z.strictObject({
   }),
 });
 
+export const hrInsightSuppressedResultSchema = z.strictObject({
+  capturedAt: instantSchema,
+  kind: z.enum(['HR_MONTHLY_CLOSURE_READINESS', 'HR_NEUTRAL_ABSENCE_COVERAGE']),
+  month: isoMonthSchema,
+  reason: z.literal('PRIVACY_THRESHOLD_NOT_MET'),
+});
+
+export const hrInsightAvailableResultSchema = z.strictObject({
+  nativeResult: insightNativeResultSchema,
+});
+
+export const hrInsightRunResultSchema = z.union([
+  hrInsightAvailableResultSchema,
+  hrInsightSuppressedResultSchema,
+]);
+
+export const hrInsightRunResponseEnvelopeSchema =
+  createSuccessEnvelopeSchema(hrInsightRunResultSchema);
+
 export const insightInterpretationResultSchema = z.strictObject({
   interpretation: insightInterpretationSchema,
   nativeResult: insightNativeResultSchema,
@@ -631,6 +681,14 @@ export type ManagerActionSummaryInsightRequest = z.infer<
 >;
 export type TeamCoverageInsightRequest = z.infer<typeof teamCoverageInsightRequestSchema>;
 export type ManagerInsightRequest = ManagerActionSummaryInsightRequest | TeamCoverageInsightRequest;
+export type HrMonthlyClosureReadinessInsightRequest = z.infer<
+  typeof hrMonthlyClosureReadinessInsightRequestSchema
+>;
+export type HrNeutralAbsenceCoverageInsightRequest = z.infer<
+  typeof hrNeutralAbsenceCoverageInsightRequestSchema
+>;
+export type HrInsightRequest =
+  HrMonthlyClosureReadinessInsightRequest | HrNeutralAbsenceCoverageInsightRequest;
 export type InsightRequest = z.infer<typeof insightRequestSchema>;
 export type EmployeeInsightKind = Extract<
   InsightKind,
@@ -657,6 +715,7 @@ export type InsightInterpretationRequest = z.infer<typeof insightInterpretationR
 export type InsightInterpretationStatement = z.infer<typeof insightInterpretationStatementSchema>;
 export type InsightInterpretation = z.infer<typeof insightInterpretationSchema>;
 export type InsightInterpretationResult = z.infer<typeof insightInterpretationResultSchema>;
+export type HrInsightRunResult = z.infer<typeof hrInsightRunResultSchema>;
 
 function codePointLength(value: string): number {
   return Array.from(value).length;

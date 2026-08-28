@@ -560,6 +560,67 @@
       "name": "Geben Sie einen Teamnamen ein."
     }
   },
+  "insights": {
+    "destination": {
+      "monthlyTimeReport": "Monatlicher Zeitbericht"
+    },
+    "error": {
+      "denied": "Ihr aktuelles Konto kann HR Einblicke nicht verwenden. Es wurde kein Organisationsaggregat offengelegt.",
+      "invalidMonth": "Wählen Sie einen Monat von Januar 2000 bis zum aktuellen Organisationsmonat."
+    },
+    "fact": {
+      "approvedEmployees": "Genehmigte Mitarbeitende",
+      "changesRequestedEmployees": "Mitarbeitende mit angeforderten Änderungen",
+      "coverageCases": "Wirksame Abdeckungsfälle",
+      "coveredEmployeeDays": "Abgedeckte Personentage",
+      "coveredEmployees": "Mitarbeitende mit wirksamer Abdeckung",
+      "coveredScheduledMinutes": "Abgedeckte Sollminuten",
+      "eligibleEmployees": "Berücksichtigte Mitarbeitende",
+      "incompleteEmployeeDays": "Fehlende oder unvollständige Personentage",
+      "lockedEmployees": "Gesperrte Mitarbeitende",
+      "openEmployees": "Offene Mitarbeitende",
+      "submittedEmployees": "Eingereichte Mitarbeitende"
+    },
+    "form": {
+      "description": "Wählen Sie einen festen organisationsweiten Zweck und einen Kalendermonat. Filter, Vergleiche, Untergruppen und Aufschlüsselungen nach Mitarbeitenden sind nicht verfügbar.",
+      "heading": "HR Aggregat Einblick auswählen"
+    },
+    "kind": {
+      "absenceCoverage": {
+        "description": "Prüfen Sie neutrale wirksame Abwesenheitsabdeckung ohne Abwesenheitsarten, Gründe, Identitäten oder Mitarbeiterzeilen.",
+        "title": "Neutrale Abwesenheitsabdeckung"
+      },
+      "closureReadiness": {
+        "description": "Prüfen Sie den organisationsweiten Monatsabschluss ohne Mitarbeiterzeilen oder Zeitsummen.",
+        "title": "Bereitschaft zum Monatsabschluss"
+      }
+    },
+    "page": {
+      "description": "Prüfen Sie feste monatliche Belegschaftsaggregate, die nicht verfügbar bleiben, wenn die Datenschutzgrenzen nicht erfüllt sind.",
+      "eyebrow": "Arbeitsbereich Personal und Richtlinien"
+    },
+    "privacy": {
+      "description": "WorkLedger prüft Mindestgrößen für Kohorte, beitragende Fälle und nicht beitragende Ergänzung, bevor Fakten oder Quellverweise entstehen. Ergebnisse bleiben nur in dieser Anfrage und verwenden nie den optionalen KI Anbieter.",
+      "heading": "Datenschutzgeschütztes Organisationsaggregat"
+    },
+    "scope": {
+      "organizationAggregate": "Organisationsaggregat"
+    },
+    "source": {
+      "monthlyTimeReport": "Monatlicher Zeitbericht"
+    },
+    "status": {
+      "suppressed": "Das HR Aggregat ist nicht verfügbar, weil die Datenschutzanforderungen nicht erfüllt wurden."
+    },
+    "suppressed": {
+      "description": "Dieses Ergebnis ist nicht verfügbar, weil die festen Datenschutzanforderungen nicht erfüllt wurden. WorkLedger legt weder die Ursache der Unterdrückung noch den Abstand zu einem Schwellenwert offen.",
+      "heading": "Aggregat nicht verfügbar"
+    },
+    "validation": {
+      "correct": "Prüfen Sie Zweck und Monat des Einblicks.",
+      "month": "Wählen Sie einen Monat."
+    }
+  },
   "timeSettings": {
     "common": {
       "historical": "Historische Version",

@@ -560,6 +560,67 @@
       "name": "Introduce un nombre de equipo."
     }
   },
+  "insights": {
+    "destination": {
+      "monthlyTimeReport": "Informe mensual de tiempo"
+    },
+    "error": {
+      "denied": "Tu cuenta actual no puede usar los análisis de RR. HH. No se ha revelado ningún agregado de la organización.",
+      "invalidMonth": "Elige un mes entre enero de 2000 y el mes actual de la organización."
+    },
+    "fact": {
+      "approvedEmployees": "Empleados aprobados",
+      "changesRequestedEmployees": "Empleados con cambios solicitados",
+      "coverageCases": "Casos de cobertura efectiva",
+      "coveredEmployeeDays": "Días de empleado cubiertos",
+      "coveredEmployees": "Empleados con cobertura efectiva",
+      "coveredScheduledMinutes": "Minutos previstos cubiertos",
+      "eligibleEmployees": "Empleados incluidos",
+      "incompleteEmployeeDays": "Días de empleado ausentes o incompletos",
+      "lockedEmployees": "Empleados bloqueados",
+      "openEmployees": "Empleados abiertos",
+      "submittedEmployees": "Empleados enviados"
+    },
+    "form": {
+      "description": "Elige un objetivo fijo para toda la organización y un mes natural. No se permiten filtros, comparaciones, subgrupos ni detalles por empleado.",
+      "heading": "Elegir un análisis agregado de RR. HH."
+    },
+    "kind": {
+      "absenceCoverage": {
+        "description": "Consulta la cobertura efectiva de ausencias con semántica neutral, sin tipos de ausencia, motivos, identidades ni filas de empleados.",
+        "title": "Cobertura neutral de ausencias"
+      },
+      "closureReadiness": {
+        "description": "Consulta el progreso del cierre mensual de toda la organización sin filas de empleados ni totales de tiempo.",
+        "title": "Preparación del cierre mensual"
+      }
+    },
+    "page": {
+      "description": "Consulta agregados mensuales fijos de la plantilla que no están disponibles cuando no se cumplen los límites de privacidad.",
+      "eyebrow": "Área de personas y políticas"
+    },
+    "privacy": {
+      "description": "WorkLedger comprueba los mínimos de cohorte, casos contribuyentes y complemento no contribuyente antes de crear datos o enlaces de origen. Los resultados solo permanecen en esta solicitud y nunca usan el proveedor de IA opcional.",
+      "heading": "Agregado de la organización protegido por privacidad"
+    },
+    "scope": {
+      "organizationAggregate": "Agregado de la organización"
+    },
+    "source": {
+      "monthlyTimeReport": "Informe mensual de tiempo"
+    },
+    "status": {
+      "suppressed": "El agregado de RR. HH. no está disponible porque no se cumplieron los requisitos de privacidad."
+    },
+    "suppressed": {
+      "description": "Este resultado no está disponible porque no se cumplieron los requisitos fijos de privacidad. WorkLedger no revela qué requisito causó la supresión ni la proximidad del agregado a un umbral.",
+      "heading": "Agregado no disponible"
+    },
+    "validation": {
+      "correct": "Revisa el objetivo y el mes del análisis.",
+      "month": "Elige un mes."
+    }
+  },
   "timeSettings": {
     "common": {
       "historical": "Versión histórica",

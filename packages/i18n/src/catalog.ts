@@ -1458,6 +1458,37 @@ export type MessageParameterMap = Readonly<{
   'admin.holidaySettings.preview.heading': undefined;
   'admin.holidaySettings.preview.summary': Readonly<{ employees: number; projections: number }>;
   'admin.holidaySettings.validation.required': undefined;
+  'admin.insights.destination.monthlyTimeReport': undefined;
+  'admin.insights.error.denied': undefined;
+  'admin.insights.error.invalidMonth': undefined;
+  'admin.insights.fact.approvedEmployees': undefined;
+  'admin.insights.fact.changesRequestedEmployees': undefined;
+  'admin.insights.fact.coverageCases': undefined;
+  'admin.insights.fact.coveredEmployeeDays': undefined;
+  'admin.insights.fact.coveredEmployees': undefined;
+  'admin.insights.fact.coveredScheduledMinutes': undefined;
+  'admin.insights.fact.eligibleEmployees': undefined;
+  'admin.insights.fact.incompleteEmployeeDays': undefined;
+  'admin.insights.fact.lockedEmployees': undefined;
+  'admin.insights.fact.openEmployees': undefined;
+  'admin.insights.fact.submittedEmployees': undefined;
+  'admin.insights.form.description': undefined;
+  'admin.insights.form.heading': undefined;
+  'admin.insights.kind.absenceCoverage.description': undefined;
+  'admin.insights.kind.absenceCoverage.title': undefined;
+  'admin.insights.kind.closureReadiness.description': undefined;
+  'admin.insights.kind.closureReadiness.title': undefined;
+  'admin.insights.page.description': undefined;
+  'admin.insights.page.eyebrow': undefined;
+  'admin.insights.privacy.description': undefined;
+  'admin.insights.privacy.heading': undefined;
+  'admin.insights.scope.organizationAggregate': undefined;
+  'admin.insights.source.monthlyTimeReport': undefined;
+  'admin.insights.status.suppressed': undefined;
+  'admin.insights.suppressed.description': undefined;
+  'admin.insights.suppressed.heading': undefined;
+  'admin.insights.validation.correct': undefined;
+  'admin.insights.validation.month': undefined;
   'admin.team.action.activate': Readonly<{ team: string }>;
   'admin.team.action.blocked': undefined;
   'admin.team.action.deactivate': Readonly<{ team: string }>;
@@ -3765,6 +3796,37 @@ export const MESSAGE_KEYS = [
   'admin.holidaySettings.preview.heading',
   'admin.holidaySettings.preview.summary',
   'admin.holidaySettings.validation.required',
+  'admin.insights.destination.monthlyTimeReport',
+  'admin.insights.error.denied',
+  'admin.insights.error.invalidMonth',
+  'admin.insights.fact.approvedEmployees',
+  'admin.insights.fact.changesRequestedEmployees',
+  'admin.insights.fact.coverageCases',
+  'admin.insights.fact.coveredEmployeeDays',
+  'admin.insights.fact.coveredEmployees',
+  'admin.insights.fact.coveredScheduledMinutes',
+  'admin.insights.fact.eligibleEmployees',
+  'admin.insights.fact.incompleteEmployeeDays',
+  'admin.insights.fact.lockedEmployees',
+  'admin.insights.fact.openEmployees',
+  'admin.insights.fact.submittedEmployees',
+  'admin.insights.form.description',
+  'admin.insights.form.heading',
+  'admin.insights.kind.absenceCoverage.description',
+  'admin.insights.kind.absenceCoverage.title',
+  'admin.insights.kind.closureReadiness.description',
+  'admin.insights.kind.closureReadiness.title',
+  'admin.insights.page.description',
+  'admin.insights.page.eyebrow',
+  'admin.insights.privacy.description',
+  'admin.insights.privacy.heading',
+  'admin.insights.scope.organizationAggregate',
+  'admin.insights.source.monthlyTimeReport',
+  'admin.insights.status.suppressed',
+  'admin.insights.suppressed.description',
+  'admin.insights.suppressed.heading',
+  'admin.insights.validation.correct',
+  'admin.insights.validation.month',
   'admin.team.action.activate',
   'admin.team.action.blocked',
   'admin.team.action.deactivate',

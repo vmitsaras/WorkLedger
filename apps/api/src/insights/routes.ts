@@ -5,6 +5,8 @@ import { apiErrorEnvelopeSchema } from '@workledger/contracts';
 import {
   insightInterpretationRequestSchema,
   insightInterpretationResultEnvelopeSchema,
+  hrInsightRequestSchema,
+  hrInsightRunResponseEnvelopeSchema,
   insightRequestSchema,
   insightRunResponseEnvelopeSchema,
 } from '@workledger/contracts/insights';
@@ -27,6 +29,7 @@ import { createEmployeeInsightInterpretationService } from './employee-insight-i
 import { createInsightService, parseInsightIdentity } from './insight-service.js';
 import { createInsightToolRegistry } from './insight-tool-registry.js';
 import { createManagerInsightService } from './manager-insight-service.js';
+import { createHrInsightService } from './hr-insight-service.js';
 
 export type InsightApiClock = () => string;
 
@@ -42,11 +45,47 @@ export function registerInsightRoutes(
   const api = app.withTypeProvider<ZodTypeProvider>();
   const service = createInsightService(database, createEmployeeInsightHandlers());
   const managerService = createManagerInsightService(database);
+  const hrService = createHrInsightService(database);
   const interpretationService = createEmployeeInsightInterpretationService(
     service,
     createInsightToolRegistry(service),
     aiProvider,
     (accountId) => authentication.consumeInsightInterpretationRateLimit(accountId),
+  );
+
+  api.post(
+    '/v1/insights/hr/run',
+    {
+      schema: {
+        body: hrInsightRequestSchema,
+        description:
+          'Returns one privacy-suppressed organization aggregate for the current HR workspace. Suppression occurs before any native result or source action is constructed.',
+        operationId: 'runHrInsight',
+        response: {
+          200: hrInsightRunResponseEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'Run an HR aggregate Insight',
+        tags: ['Insights'],
+      },
+    },
+    async (request, reply) => {
+      requireSameOrigin(request, config.canonicalOrigin);
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      await requireRequestCsrf(request, authentication, headers);
+      const capturedAt = parseInstant(now());
+      if (!capturedAt.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+      const data = await hrService.run(
+        parseInsightIdentity(session.userId, session.fresh),
+        request.body,
+        capturedAt.value,
+      );
+      reply.header('cache-control', 'private, no-store');
+      return { data, meta: { requestId: request.id } };
+    },
   );
 
   api.post(

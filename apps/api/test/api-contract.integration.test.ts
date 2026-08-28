@@ -176,6 +176,7 @@ test('keeps authentication internals and runtime secrets out of OpenAPI', async 
     expect(document.paths).toHaveProperty('/v1/me/attendance/today');
     expect(document.paths).toHaveProperty('/v1/insights/run');
     expect(document.paths).toHaveProperty('/v1/insights/interpret');
+    expect(document.paths).toHaveProperty('/v1/insights/hr/run');
     for (const path of [
       '/v1/me/attendance/clock-in',
       '/v1/me/attendance/start-break',

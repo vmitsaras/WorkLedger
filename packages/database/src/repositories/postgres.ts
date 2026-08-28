@@ -166,6 +166,9 @@ import type {
   NotificationListItemRecord,
   NotificationRepository,
   ReportRepository,
+  HrInsightAggregateRepository,
+  HrMonthlyClosureAggregateRecord,
+  HrNeutralAbsenceAggregateRecord,
   ReportRangeInput,
   MonthlyTimeReportPage,
   MonthlyTimeReportRecord,
@@ -249,6 +252,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
   notifications: NotificationRepository;
   personalRequests: PersonalRequestRepository;
   reports: ReportRepository;
+  hrInsightAggregates: HrInsightAggregateRepository;
   monthlyPeriods: MonthlyPeriodRepository;
   retention: RetentionRepository;
   timeAccount: TimeAccountRepository;
@@ -272,6 +276,7 @@ export function createTransactionRepositories(transaction: RepositoryTransaction
     notifications: new PostgresNotificationRepository(transaction),
     personalRequests: new PostgresPersonalRequestRepository(transaction),
     reports: new PostgresReportRepository(transaction),
+    hrInsightAggregates: new PostgresHrInsightAggregateRepository(transaction),
     monthlyPeriods: new PostgresMonthlyPeriodRepository(transaction),
     retention: new PostgresRetentionRepository(transaction),
     timeAccount: new PostgresTimeAccountRepository(transaction),
@@ -3190,6 +3195,265 @@ function sortPersonalRequestHistory(
   return Object.freeze(
     [...history].sort((left, right) => left.occurredAt.localeCompare(right.occurredAt)),
   );
+}
+
+const HR_AGGREGATE_COHORT_FLOOR = 10;
+const HR_AGGREGATE_CASE_FLOOR = 3;
+const HR_AGGREGATE_COMPLEMENT_FLOOR = 10;
+
+class PostgresHrInsightAggregateRepository implements HrInsightAggregateRepository {
+  constructor(private readonly transaction: RepositoryTransaction) {}
+
+  async monthlyClosureReadiness(
+    organizationId: DomainId<'Organization'>,
+    monthStart: LocalDate,
+    monthEnd: LocalDate,
+  ) {
+    const result = await this.transaction.execute<{
+      approved_employee_count: number | string;
+      changes_requested_employee_count: number | string;
+      eligible_employee_count: number | string;
+      incomplete_day_count: number | string;
+      locked_employee_count: number | string;
+      open_employee_count: number | string;
+      submitted_employee_count: number | string;
+    }>(sql`
+      with month_dates as (
+        select day::date as local_date
+        from generate_series(${monthStart}::date, ${monthEnd}::date, interval '1 day') as day
+      ), eligible as (
+        select distinct ${employees.id} as employee_id
+        from ${employees}
+        where ${employees.organizationId} = ${organizationId}
+          and ${employees.status} = 'ACTIVE'
+          and exists (
+            select 1 from ${employmentPeriods}
+            where ${employmentPeriods.organizationId} = ${organizationId}
+              and ${employmentPeriods.employeeId} = ${employees.id}
+              and ${employmentPeriods.startsOn} <= ${monthEnd}
+              and (${employmentPeriods.endsOn} is null or ${employmentPeriods.endsOn} > ${monthStart})
+          )
+          and exists (
+            select 1 from ${dailyProjections}
+            where ${dailyProjections.organizationId} = ${organizationId}
+              and ${dailyProjections.employeeId} = ${employees.id}
+              and ${dailyProjections.localDate} between ${monthStart} and ${monthEnd}
+              and ${dailyProjections.expectedMinutes} > 0
+          )
+      ), employee_states as (
+        select eligible.employee_id,
+          coalesce(${monthlyPeriods.status}, 'OPEN') as workflow_status
+        from eligible
+        left join ${monthlyPeriods}
+          on ${monthlyPeriods.organizationId} = ${organizationId}
+          and ${monthlyPeriods.employeeId} = eligible.employee_id
+          and ${monthlyPeriods.monthStart} = ${monthStart}
+      ), incomplete_days as (
+        select count(*)::integer as value
+        from eligible
+        cross join month_dates
+        left join ${dailyProjections}
+          on ${dailyProjections.organizationId} = ${organizationId}
+          and ${dailyProjections.employeeId} = eligible.employee_id
+          and ${dailyProjections.localDate} = month_dates.local_date
+        where exists (
+          select 1 from ${employmentPeriods}
+          where ${employmentPeriods.organizationId} = ${organizationId}
+            and ${employmentPeriods.employeeId} = eligible.employee_id
+            and ${employmentPeriods.startsOn} <= month_dates.local_date
+            and (${employmentPeriods.endsOn} is null or ${employmentPeriods.endsOn} > month_dates.local_date)
+        )
+          and (${dailyProjections.id} is null or ${dailyProjections.calculationStatus} = 'INCOMPLETE')
+      )
+      select
+        count(*)::integer as eligible_employee_count,
+        count(*) filter (where workflow_status = 'LOCKED')::integer as locked_employee_count,
+        count(*) filter (where workflow_status = 'OPEN')::integer as open_employee_count,
+        count(*) filter (where workflow_status = 'SUBMITTED')::integer as submitted_employee_count,
+        count(*) filter (where workflow_status = 'CHANGES_REQUESTED')::integer as changes_requested_employee_count,
+        count(*) filter (where workflow_status = 'APPROVED')::integer as approved_employee_count,
+        (select value from incomplete_days)::integer as incomplete_day_count
+      from employee_states
+    `);
+    const row = result.rows[0];
+    if (row === undefined) throw new DatabaseValueError('hr_insight_aggregate', 'closure');
+    const eligibleEmployeeCount = aggregateCount(
+      row.eligible_employee_count,
+      'eligible_employee_count',
+    );
+    const lockedEmployeeCount = aggregateCount(row.locked_employee_count, 'locked_employee_count');
+    const openEmployeeCount = aggregateCount(row.open_employee_count, 'open_employee_count');
+    const submittedEmployeeCount = aggregateCount(
+      row.submitted_employee_count,
+      'submitted_employee_count',
+    );
+    const changesRequestedEmployeeCount = aggregateCount(
+      row.changes_requested_employee_count,
+      'changes_requested_employee_count',
+    );
+    const approvedEmployeeCount = aggregateCount(
+      row.approved_employee_count,
+      'approved_employee_count',
+    );
+    const incompleteDayCount = aggregateCount(row.incomplete_day_count, 'incomplete_day_count');
+    const unlockedEmployeeCount = eligibleEmployeeCount - lockedEmployeeCount;
+    if (
+      unlockedEmployeeCount < 0 ||
+      lockedEmployeeCount +
+        openEmployeeCount +
+        submittedEmployeeCount +
+        changesRequestedEmployeeCount +
+        approvedEmployeeCount !==
+        eligibleEmployeeCount
+    ) {
+      throw new DatabaseValueError('hr_insight_aggregate', 'closure_state_counts');
+    }
+    if (
+      eligibleEmployeeCount < HR_AGGREGATE_COHORT_FLOOR ||
+      unlockedEmployeeCount < HR_AGGREGATE_CASE_FLOOR ||
+      lockedEmployeeCount < HR_AGGREGATE_COMPLEMENT_FLOOR
+    ) {
+      return Object.freeze({ kind: 'SUPPRESSED' as const });
+    }
+    return Object.freeze({
+      approvedEmployeeCount,
+      changesRequestedEmployeeCount,
+      eligibleEmployeeCount,
+      incompleteDayCount,
+      kind: 'AVAILABLE' as const,
+      lockedEmployeeCount,
+      openEmployeeCount,
+      submittedEmployeeCount,
+    }) satisfies HrMonthlyClosureAggregateRecord;
+  }
+
+  async neutralAbsenceCoverage(
+    organizationId: DomainId<'Organization'>,
+    monthStart: LocalDate,
+    monthEnd: LocalDate,
+  ) {
+    const result = await this.transaction.execute<{
+      contributor_employee_count: number | string;
+      coverage_case_count: number | string;
+      covered_day_count: number | string;
+      covered_employee_count: number | string;
+      covered_scheduled_minutes: number | string;
+      eligible_employee_count: number | string;
+    }>(sql`
+      with month_dates as (
+        select day::date as local_date,
+          extract(isodow from day)::integer as weekday
+        from generate_series(${monthStart}::date, ${monthEnd}::date, interval '1 day') as day
+      ), eligible as (
+        select distinct ${employees.id} as employee_id
+        from ${employees}
+        where ${employees.organizationId} = ${organizationId}
+          and ${employees.status} = 'ACTIVE'
+          and exists (
+            select 1
+            from month_dates
+            inner join ${employmentPeriods}
+              on ${employmentPeriods.organizationId} = ${organizationId}
+              and ${employmentPeriods.employeeId} = ${employees.id}
+              and ${employmentPeriods.startsOn} <= month_dates.local_date
+              and (${employmentPeriods.endsOn} is null or ${employmentPeriods.endsOn} > month_dates.local_date)
+            inner join ${scheduleAssignments}
+              on ${scheduleAssignments.organizationId} = ${organizationId}
+              and ${scheduleAssignments.employeeId} = ${employees.id}
+              and ${scheduleAssignments.startsOn} <= month_dates.local_date
+              and (${scheduleAssignments.endsOn} is null or ${scheduleAssignments.endsOn} > month_dates.local_date)
+            inner join ${weeklySchedules}
+              on ${weeklySchedules.organizationId} = ${organizationId}
+              and ${weeklySchedules.id} = ${scheduleAssignments.scheduleId}
+            where case month_dates.weekday
+              when 1 then ${weeklySchedules.mondayMinutes}
+              when 2 then ${weeklySchedules.tuesdayMinutes}
+              when 3 then ${weeklySchedules.wednesdayMinutes}
+              when 4 then ${weeklySchedules.thursdayMinutes}
+              when 5 then ${weeklySchedules.fridayMinutes}
+              when 6 then ${weeklySchedules.saturdayMinutes}
+              else ${weeklySchedules.sundayMinutes}
+            end > 0
+          )
+      ), latest_effects as (
+        select distinct on (${absenceEffects.absenceCoverageSegmentId})
+          ${absenceEffects.absenceCoverageSegmentId} as coverage_segment_id,
+          ${absenceEffects.absenceRequestId} as absence_request_id,
+          ${absenceEffects.employeeId} as employee_id,
+          ${absenceEffects.localDate} as local_date,
+          ${absenceEffects.entitlementMinutes} as scheduled_minutes,
+          ${absenceEffects.effectVersion} as effect_version
+        from ${absenceEffects}
+        inner join ${absenceRequests}
+          on ${absenceRequests.organizationId} = ${organizationId}
+          and ${absenceRequests.id} = ${absenceEffects.absenceRequestId}
+          and ${absenceRequests.status} = 'APPROVED'
+        where ${absenceEffects.organizationId} = ${organizationId}
+          and ${absenceEffects.localDate} between ${monthStart} and ${monthEnd}
+        order by ${absenceEffects.absenceCoverageSegmentId}, ${absenceEffects.effectVersion} desc
+      ), effective_coverage as (
+        select latest_effects.*
+        from latest_effects
+        inner join eligible on eligible.employee_id = latest_effects.employee_id
+        where latest_effects.effect_version = 1
+      )
+      select
+        (select count(*) from eligible)::integer as eligible_employee_count,
+        count(distinct employee_id)::integer as contributor_employee_count,
+        count(distinct employee_id)::integer as covered_employee_count,
+        count(distinct absence_request_id)::integer as coverage_case_count,
+        count(distinct (employee_id, local_date)) filter (where scheduled_minutes > 0)::integer as covered_day_count,
+        coalesce(sum(scheduled_minutes), 0)::integer as covered_scheduled_minutes
+      from effective_coverage
+    `);
+    const row = result.rows[0];
+    if (row === undefined) throw new DatabaseValueError('hr_insight_aggregate', 'absence');
+    const eligibleEmployeeCount = aggregateCount(
+      row.eligible_employee_count,
+      'eligible_employee_count',
+    );
+    const contributorEmployeeCount = aggregateCount(
+      row.contributor_employee_count,
+      'contributor_employee_count',
+    );
+    const coveredEmployeeCount = aggregateCount(
+      row.covered_employee_count,
+      'covered_employee_count',
+    );
+    const coverageCaseCount = aggregateCount(row.coverage_case_count, 'coverage_case_count');
+    const coveredDayCount = aggregateCount(row.covered_day_count, 'covered_day_count');
+    const coveredScheduledMinutes = aggregateCount(
+      row.covered_scheduled_minutes,
+      'covered_scheduled_minutes',
+    );
+    const complementCount = eligibleEmployeeCount - contributorEmployeeCount;
+    if (complementCount < 0 || contributorEmployeeCount !== coveredEmployeeCount) {
+      throw new DatabaseValueError('hr_insight_aggregate', 'absence_contributor_counts');
+    }
+    if (
+      eligibleEmployeeCount < HR_AGGREGATE_COHORT_FLOOR ||
+      coverageCaseCount < HR_AGGREGATE_CASE_FLOOR ||
+      complementCount < HR_AGGREGATE_COMPLEMENT_FLOOR
+    ) {
+      return Object.freeze({ kind: 'SUPPRESSED' as const });
+    }
+    return Object.freeze({
+      coverageCaseCount,
+      coveredDayCount,
+      coveredEmployeeCount,
+      coveredScheduledMinutes,
+      eligibleEmployeeCount,
+      kind: 'AVAILABLE' as const,
+    }) satisfies HrNeutralAbsenceAggregateRecord;
+  }
+}
+
+function aggregateCount(value: number | string, column: string): number {
+  const count = Number(value);
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new DatabaseValueError('hr_insight_aggregate', column);
+  }
+  return count;
 }
 
 class PostgresReportRepository implements ReportRepository {

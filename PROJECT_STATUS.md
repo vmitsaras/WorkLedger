@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights (local AI pilot closed)
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 7 of 10 accepted deterministic tasks complete
-**Current milestone:** Deterministic HR aggregate implementation (`WL-1513`)
-**Active task:** `WL-1513` — Implement the accepted privacy-suppressed HR aggregate Insights
-**Status:** `WL-1513` is ready after completed HR privacy contract `WL-1512`
+**Phase progress:** Phase 15 in progress — 8 of 10 accepted deterministic tasks complete
+**Current milestone:** Deterministic isolated System Insights (`WL-1514`)
+**Active task:** `WL-1514` — Add allowlisted technical diagnostics without employee or HR data
+**Status:** `WL-1514` is ready after completed deterministic HR aggregates `WL-1513`
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -77,13 +77,14 @@ Completed `WL-1508G` reconciles the remaining phase around deterministic, provid
 Insights. Completed `WL-1509` adds strict deterministic Manager action summaries and neutral team
 coverage for current direct reports through a multilingual accessible Manager route, native source
 actions, repeatable-read authorization, exact organization-local date semantics, and zero provider
-calls. Reframed `WL-1512` and `WL-1513` retain deterministic
-privacy-suppressed HR aggregates. Completed `WL-1512` accepts exactly two fixed HR purposes:
+calls. Completed `WL-1512` accepts exactly two fixed HR purposes:
 organization-wide monthly closure readiness and neutral absence coverage for one canonical month.
 It fixes sources and units, whole-result suppression at the 10-person cohort, 3-case, and 10-person
 complement floors, a closed query algebra against differencing, generic suppression, bounded source
-actions, and zero provider context. `WL-1513` may implement only that contract. `WL-1514` retains
-isolated deterministic System Insights, and
+actions, and zero provider context. Completed `WL-1513` implements that contract through strict
+requests, server-owned PostgreSQL aggregation and suppression, repeatable-read HR authorization, a
+no-store endpoint, and an accessible multilingual native route with zero provider dependency.
+`WL-1514` retains isolated deterministic System Insights, and
 `WL-1516` now owns a provider-disabled release gate. Manager model interpretation (`WL-1510`),
 natural-language report generation (`WL-1511`), and optional MCP evaluation (`WL-1515`) are obsolete
 and removed from the accepted Phase 15 scope. General chat, natural-language SQL, unrestricted
@@ -256,6 +257,19 @@ remains an unnumbered draft.
   session clearing, route denial, API permission loss, reload, and process loss. Only the existing
   allowlisted question kind and period may appear in the URL.
 - The deterministic Insights foundation gate is complete with provider mode disabled.
+- HR Insights accept only one fixed purpose and one canonical month. The server derives current
+  organization, timezone, authority, cohort, and boundaries inside one repeatable-read transaction;
+  caller filters, comparisons, groups, identities, and arbitrary ranges are rejected.
+- HR aggregate repositories return only a safe aggregate or an internal suppression decision.
+  The complete result is suppressed before facts, sources, and actions exist when the fixed cohort,
+  contributing-case, or non-contributing-complement floor fails.
+- Neutral absence coverage reads only current approved effective sources and returns employees,
+  cases, employee-days, and scheduled minutes without subtype, name, note, reason, attachment,
+  identity, team, manager, or row identifiers. Monthly closure returns workflow employee counts and
+  missing or incomplete employee-days without work, balance, absence, or correction minutes.
+- `/hr-insights` keeps requests and results in memory, emits no query state or persistent storage,
+  provides only the same-month Monthly time report or Team calendar action after suppression passes,
+  and has no interpretation or provider path.
 - The read-only Insight registry contains only four strict Employee tools. Each tool records its
   current `SELF` authorization actions, purpose, source and result allowlists, freshness rules,
   execution limits, high personal operational sensitivity, private local model exposure, and
@@ -3253,13 +3267,29 @@ arbitrary ranges, comparisons, and row drilldown; and suppresses the complete re
 construction when the 10-person cohort, 3-case, or 10-person complement floor fails. No runtime,
 provider, persistence, dependency, migration, manifest, or version changed. `WL-1513` is ready.
 
+**2026-08-28: WL-1513 deterministic HR aggregate Insights complete**
+
+Implemented the two fixed HR purposes accepted by `WL-1512`. Strict contracts and a same-origin,
+CSRF-protected, private no-store endpoint feed one repeatable-read service that reloads current HR
+authority and organization-local month boundaries. PostgreSQL performs the fixed aggregation and
+returns only a safe aggregate or an internal suppression decision; facts, source links, and native
+actions are not constructed when any cohort, case, or complement floor fails. Neutral absence
+coverage filters to currently approved effective sources without selecting subtype or private
+content. The multilingual `/hr-insights` route has no filters, row drilldown, interpretation,
+provider, persistence, export, or write path. Contract, database, component, and focused browser
+evidence covers exact privacy boundaries, repeated queries, cancellation and supersession,
+zero-schedule and holiday cases, authority loss and cross-organization isolation, hostile private
+fixtures, same-month source actions, three locales, keyboard use, 320-pixel reflow, forced colors,
+reduced motion, and axe. The full repository gates and canonical PostgreSQL harness are green. No
+dependency, migration, provider request, manifest, or version changed. `WL-1514` is ready.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. The optional employee local AI pilot
 is closed without passing after the best strict full run reached 207/216 and the final qualified
 `qwen2.5-coder:14b` recovery screen reached 3/9. Provider mode remains disabled and no model is
-approved for deployment. No roadmap blocker prevents `WL-1513`; it may implement only the two
-purpose-specific HR aggregates and suppression contract accepted by `WL-1512`. The broad
+approved for deployment. No roadmap blocker prevents `WL-1514`; it may implement only allowlisted
+technical diagnostics and must not expose employee or HR data. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3274,12 +3304,10 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Implement `WL-1513` as the smallest complete HR aggregate slice described by
-`docs/162-wl-1512-hr-aggregate-privacy-contract.md`. Add only the fixed monthly closure-readiness
-and neutral absence-coverage purposes, suppress the whole result before construction, and prove
-cohort, case, complement, repeated-query, authorization, unit, source-action, localization, and
-provider-absence behavior. Do not add row data, free text, sickness detail, model context,
-recommendations, predictions, or write actions.
+Implement `WL-1514` as the smallest complete deterministic System Insight slice. Use only the
+allowlisted technical health, migration, backup, mail, session-policy, and version facts accepted by
+the task board; preserve public diagnostic minimization, current System authorization, and zero
+provider calls. Do not expose employee, HR, attendance, absence, request, or other domain data.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

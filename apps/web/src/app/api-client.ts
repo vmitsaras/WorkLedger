@@ -144,6 +144,8 @@ import type {
   InsightInterpretationRequest,
   InsightInterpretationResult,
   ManagerInsightRequest,
+  HrInsightRequest,
+  HrInsightRunResult,
   InsightNativeResult,
   InsightRequest,
 } from '@workledger/contracts/insights';
@@ -439,6 +441,22 @@ export async function runManagerInsight(input: ManagerInsightRequest): Promise<E
     interpretationAvailability: parsed.data.meta.interpretationAvailability,
     nativeResult: parsed.data.data,
   });
+}
+
+export async function runHrInsight(input: HrInsightRequest): Promise<HrInsightRunResult> {
+  const { hrInsightRequestSchema, hrInsightRunResponseEnvelopeSchema } =
+    await import('@workledger/contracts/insights');
+  const parsedInput = hrInsightRequestSchema.safeParse(input);
+  if (!parsedInput.success) throw new ApiClientError('VALIDATION_FAILED', 422);
+  const token = await getCsrfToken();
+  const body = await requestJson('/v1/insights/hr/run', {
+    body: JSON.stringify(parsedInput.data),
+    headers: { 'content-type': 'application/json', 'x-workledger-csrf': token },
+    method: 'POST',
+  });
+  const parsed = hrInsightRunResponseEnvelopeSchema.safeParse(body);
+  if (!parsed.success) throw new ApiClientError('DEPENDENCY_FAILURE', 502);
+  return parsed.data.data;
 }
 
 export async function interpretEmployeeInsight(

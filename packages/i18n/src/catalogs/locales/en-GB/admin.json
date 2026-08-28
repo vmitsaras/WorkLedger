@@ -560,6 +560,67 @@
       "name": "Enter a team name."
     }
   },
+  "insights": {
+    "destination": {
+      "monthlyTimeReport": "Monthly time report"
+    },
+    "error": {
+      "denied": "Your current account cannot use HR Insights. No organisation aggregate was disclosed.",
+      "invalidMonth": "Choose a month from January 2000 through the current organisation month."
+    },
+    "fact": {
+      "approvedEmployees": "Employees approved",
+      "changesRequestedEmployees": "Employees with changes requested",
+      "coverageCases": "Effective coverage cases",
+      "coveredEmployeeDays": "Covered employee days",
+      "coveredEmployees": "Employees with effective coverage",
+      "coveredScheduledMinutes": "Covered scheduled minutes",
+      "eligibleEmployees": "Eligible employees",
+      "incompleteEmployeeDays": "Missing or incomplete employee days",
+      "lockedEmployees": "Employees locked",
+      "openEmployees": "Employees open",
+      "submittedEmployees": "Employees submitted"
+    },
+    "form": {
+      "description": "Choose one fixed organisation wide purpose and one calendar month. Filters, comparisons, subgroups, and employee drilldown are not available.",
+      "heading": "Choose an HR aggregate Insight"
+    },
+    "kind": {
+      "absenceCoverage": {
+        "description": "Review neutral effective absence coverage without absence types, reasons, identities, or employee rows.",
+        "title": "Neutral absence coverage"
+      },
+      "closureReadiness": {
+        "description": "Review organisation wide monthly closure progress without employee rows or time totals.",
+        "title": "Monthly closure readiness"
+      }
+    },
+    "page": {
+      "description": "Review fixed monthly workforce aggregates that remain unavailable when privacy floors are not met.",
+      "eyebrow": "People and policy workspace"
+    },
+    "privacy": {
+      "description": "WorkLedger checks cohort, contributing case, and non-contributing complement floors before it creates any facts or source links. Results stay in this request only and never use the optional AI provider.",
+      "heading": "Privacy protected organisation aggregate"
+    },
+    "scope": {
+      "organizationAggregate": "Organisation aggregate"
+    },
+    "source": {
+      "monthlyTimeReport": "Monthly time report"
+    },
+    "status": {
+      "suppressed": "The HR aggregate is unavailable because privacy requirements were not met."
+    },
+    "suppressed": {
+      "description": "This result is unavailable because the fixed privacy requirements were not met. WorkLedger does not reveal which requirement caused suppression or how close the aggregate was to a threshold.",
+      "heading": "Aggregate unavailable"
+    },
+    "validation": {
+      "correct": "Review the Insight purpose and month.",
+      "month": "Choose a month."
+    }
+  },
   "timeSettings": {
     "common": {
       "historical": "Historical version",

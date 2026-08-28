@@ -15,6 +15,7 @@ import type {
   NotificationRepository,
   PersonalRequestRepository,
   ReportRepository,
+  HrInsightAggregateRepository,
   MonthlyPeriodRepository,
   RetentionRepository,
   TimeAccountRepository,
@@ -51,6 +52,7 @@ export interface WorkLedgerTransaction {
   readonly notifications: NotificationRepository;
   readonly personalRequests: PersonalRequestRepository;
   readonly reports: ReportRepository;
+  readonly hrInsightAggregates: HrInsightAggregateRepository;
   readonly monthlyPeriods: MonthlyPeriodRepository;
   readonly retention: RetentionRepository;
   readonly timeAccount: TimeAccountRepository;

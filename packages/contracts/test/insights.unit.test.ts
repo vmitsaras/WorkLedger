@@ -13,6 +13,8 @@ import {
   insightNativeResultSchema,
   insightRequestSchema,
   insightRunResponseEnvelopeSchema,
+  hrInsightRequestSchema,
+  hrInsightRunResponseEnvelopeSchema,
 } from '../src/insights.js';
 
 const source = Object.freeze({
@@ -467,5 +469,48 @@ describe('Insight contracts', () => {
         workspace: 'MANAGER',
       }).success,
     ).toBe(true);
+  });
+
+  it('accepts only fixed HR purposes and keeps suppression free of metrics and actions', () => {
+    const request = {
+      kind: 'HR_NEUTRAL_ABSENCE_COVERAGE',
+      month: '2026-08',
+      workspace: 'HR',
+    } as const;
+    expect(hrInsightRequestSchema.parse(request)).toEqual(request);
+    for (const invalid of [
+      { ...request, employeeId: 'employee-1' },
+      { ...request, month: '2026-08-01' },
+      { ...request, month: '1999-12' },
+      { ...request, workspace: 'MANAGER' },
+      { ...request, absenceType: 'SICKNESS' },
+      { ...request, comparisonMonth: '2026-07' },
+    ]) {
+      expect(hrInsightRequestSchema.safeParse(invalid).success).toBe(false);
+    }
+    expect(
+      hrInsightRunResponseEnvelopeSchema.safeParse({
+        data: {
+          capturedAt: '2026-08-28T08:15:30Z',
+          kind: request.kind,
+          month: request.month,
+          reason: 'PRIVACY_THRESHOLD_NOT_MET',
+        },
+        meta: { requestId: '123e4567-e89b-42d3-a456-426614174000' },
+      }).success,
+    ).toBe(true);
+    expect(
+      hrInsightRunResponseEnvelopeSchema.safeParse({
+        data: {
+          actions: [],
+          capturedAt: '2026-08-28T08:15:30Z',
+          eligibleEmployeeCount: 9,
+          kind: request.kind,
+          month: request.month,
+          reason: 'PRIVACY_THRESHOLD_NOT_MET',
+        },
+        meta: { requestId: '123e4567-e89b-42d3-a456-426614174000' },
+      }).success,
+    ).toBe(false);
   });
 });

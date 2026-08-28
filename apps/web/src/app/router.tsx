@@ -328,6 +328,16 @@ export function createWorkLedgerRoutes(
               handle: { title: routeTitle('/employees') },
             },
             {
+              path: 'hr-insights',
+              loader: createAreaLoader(queryClient, 'HR'),
+              lazy: async () => {
+                const { HrInsightsPage } = await import('../routes/hr-insights-page.js');
+                return { Component: HrInsightsPage };
+              },
+              errorElement: <RouteBoundary />,
+              handle: { title: routeTitle('/hr-insights') },
+            },
+            {
               path: 'employees/new',
               loader: createAreaLoader(queryClient, 'HR'),
               element: <NewEmployeeAdministrationPage />,
