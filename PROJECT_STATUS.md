@@ -4,8 +4,8 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 in progress — 8 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
-**Active task:** `WL-1508B` — Run the qualified replacement through the 18-case known-failure regression screen
-**Status:** `WL-1508B` stopped after qualified `qwen2.5-coder:14b` failed all nine `submission-actions` cases with `TOOL_REQUIRED`; `today-posted` and the full matrix did not run, so the task and pilot gate remain open
+**Active task:** `WL-1508E` — Qualify the remaining installed `qwen3-coder:30b` candidate
+**Status:** Recovery qualification is registered but unexecuted; `WL-1508B` remains open after `qwen2.5-coder:14b` failed 0/9 `submission-actions`, and no other model has been loaded or evaluated
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -50,6 +50,9 @@ changing prompts, schemas, validators, or accepted thresholds. `WL-1508B` applie
 all nine `submission-actions` locale/repetition cases for the qualified digest failed before a tool
 call with safe `PROVIDER_INVALID_OUTPUT` / `INVALID_RESPONSE` / `TOOL_REQUIRED` evidence. The
 `today-posted` half and the full matrix did not run.
+The remaining installed inventory now has one unique untested tool-capable digest,
+`qwen3-coder:30b`. `WL-1508E` owns only its cold-start exact-digest health and capability
+qualification. It must stop before any employee semantic case whether the probe passes or fails.
 Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
 evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
@@ -3082,16 +3085,28 @@ remains an unnumbered draft.
   validator, threshold, evaluator, provider implementation, native fallback, dependency, runtime
   default, manifest, or version changed.
 
+**2026-08-28 — WL-1508E recovery qualification registration (planning only)**
+
+- Registered one bounded child for the remaining installed unique tool-capable digest,
+  `qwen3-coder:30b`; its `latest` alias shares the same digest but is not the accepted task name.
+- Limited the child to exact local tag/digest inventory, an empty pre-probe loaded-model state, and
+  the existing fixed synthetic WorkLedger health path within 120 seconds at concurrency `1`.
+- Required a stop before every employee question and golden case whether health passes or fails.
+  `WL-1508B` is blocked by `WL-1508E`; `WL-1508C` and later tasks remain blocked.
+- Updated planning and project-memory documents only. No model was loaded, probed, pulled, retagged,
+  or evaluated, and no source, provider/configuration contract, dependency, manifest, or version
+  changed.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. `WL-1508` infrastructure, privacy,
 security, degraded-provider, trace, and accessibility evidence are complete, but its exact pinned
 model is the active blocker: the best strict run reached 207/216 instead of the accepted 216/216.
-`WL-1508A` is complete with one exact qualified replacement digest. `WL-1508B` is active but its
-qualified candidate failed the first required group at 0/9; no child is ready for further model
-execution until another bounded qualification task is registered. `WL-1508C` and `WL-1508D` remain
-blocked. Provider mode remains disabled. Manager, report-builder, HR, system, and MCP tasks remain
-blocked by their named sub-gates. The broad
+`WL-1508A` is complete with one exact qualified replacement digest. `WL-1508B` is open but its
+qualified candidate failed the first required group at 0/9. `WL-1508E` is now the only ready child
+and is limited to a cold synthetic health qualification; `WL-1508B`, `WL-1508C`, and `WL-1508D`
+remain blocked behind it. Provider mode remains disabled. Manager, report-builder, HR, system, and
+MCP tasks remain blocked by their named sub-gates. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3106,10 +3121,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Keep `WL-1508B` open and stop. Before any other installed model is loaded or evaluated, register a
-new bounded replacement-model qualification child in `TODO.md` and `docs/08-task-board.md`; do not
-reuse the failed `qwen2.5-coder:14b` candidate, run the `today-posted` half or full matrix, change
-prompts or validators, enable provider mode by default, or advance to `WL-1509`.
+Execute `WL-1508E` only: qualify already-installed `qwen3-coder:30b` from an empty loaded-model
+state through the unchanged exact-digest, 120-second, fixed synthetic WorkLedger health path. Stop
+before any employee question or golden case whether it passes or fails; do not resume `WL-1508B`,
+run the full matrix, change prompts or validators, enable provider mode by default, or advance to
+`WL-1509` in the same task.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

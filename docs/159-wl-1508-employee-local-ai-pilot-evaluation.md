@@ -117,6 +117,66 @@ provider implementation, native fallback, dependency, runtime default, manifest,
 changed. `WL-1508B` remains open, `WL-1508C` remains blocked, and provider mode remains disabled by
 default.
 
+## `WL-1508E` recovery qualification task
+
+The failed `qwen2.5-coder:14b` screen leaves one installed, unique, tool-capable digest that has not
+been health qualified: `qwen3-coder:30b`. Its `qwen3-coder:latest` alias points to the same digest,
+but the explicit `30b` tag is the only accepted name for this recovery task. `WL-1508E` is
+registered before any further model load or probe and is the only ready model-execution child.
+
+**Goal:** Decide whether the already-installed `qwen3-coder:30b` exact name and digest satisfy the
+unchanged provider health and capability boundary. This task does not evaluate employee semantics.
+
+**Likely files to inspect:**
+
+- `apps/api/src/ai/ollama-adapter.ts`
+- `apps/api/src/ai/contracts.ts`
+- `apps/api/src/config.ts`
+- `docs/157-wl-1506-ai-provider-private-ollama-adapter.md`
+- this evaluation record
+
+**Files allowed to change:**
+
+- `PROJECT_STATUS.md`
+- `TODO.md`
+- `docs/08-task-board.md`
+- this evaluation record
+
+**Risk and constraints:**
+
+- Model supply-chain and egress risk remain high. Use only the already-installed local explicit tag
+  and exact digest; do not pull, copy, publish, delete, retag, or contact a public/cloud provider.
+- Readiness risk is high because the model is 18.6 GB. Start from an empty `ollama ps` state and do
+  not extend the accepted 120-second deadline.
+- Privacy risk is low only while the fixed synthetic health probe is used. Do not run an employee
+  question, golden fixture, `submission-actions`, `today-posted`, or the complete matrix.
+- Preserve the exact-origin, private-address pinning, proxy/redirect denial, thinking rejection,
+  content-free diagnostics, concurrency, retention, and disabled-by-default controls.
+
+**Acceptance criteria:**
+
+- [ ] `/api/tags` identifies `qwen3-coder:30b` at one recorded 64-character local digest with no
+      remote metadata.
+- [ ] An empty loaded-model state is recorded immediately before the WorkLedger health probe.
+- [ ] The unchanged health path completes within 120 seconds and returns `ready` with `CHAT`,
+      `STRUCTURED_OUTPUT`, and `TOOLS`.
+- [ ] Only fixed synthetic capability content reaches Ollama; no employee or domain data is used.
+- [ ] Provider mode remains disabled by default and no source, dependency, runtime default,
+      manifest, version, prompt, schema, validator, or threshold changes.
+
+**Verification and checkpoint:**
+
+- Run `pnpm test:build`, the existing WorkLedger health path with timeout `120` and concurrency `1`,
+  the focused provider/config/redaction unit suite, Prettier, `pnpm phase:check`, and
+  `git diff --check`.
+- If health is not `ready` within 120 seconds, record the safe reason code, leave `WL-1508E` open,
+  and stop. If it passes, mark only `WL-1508E` complete and make `WL-1508B` ready; do not run a
+  golden case in the same task.
+
+**Rollback note:** Documentation-only registration can be reverted as one bounded change before
+execution. A failed probe requires no runtime rollback because provider mode stays disabled and no
+model or application state is persisted by WorkLedger.
+
 ## Golden set and evaluator
 
 The repository-owned set contains exactly six semantic questions for each Employee Insight:
@@ -243,6 +303,11 @@ the next child.
 - Do not tune the prompt, widen the tool context, loosen structured output, or change evaluation
   criteria. Any failure stops the sequence and leaves `WL-1508B` open.
 
+### `WL-1508E` — Qualify the remaining installed candidate
+
+- Execute only the recovery qualification contract above.
+- Stop before any employee semantic case whether qualification passes or fails.
+
 ### `WL-1508C` — Run the mandatory complete matrix
 
 - Execute one uninterrupted `pnpm test:ai:employee` run for the qualified digest with no semantic
@@ -260,15 +325,15 @@ the next child.
 - Update this record, `PROJECT_STATUS.md`, `TODO.md`, `docs/07-roadmap.md`,
   `docs/08-task-board.md`, and any directly affected operations/configuration documentation with
   the exact passing model evidence.
-- Close `WL-1508` and its pilot checklist only after `WL-1508A` through `WL-1508D` are complete and
+- Close `WL-1508` and its pilot checklist only after `WL-1508A` through `WL-1508E` are complete and
   `WL-1508C` records 216/216. Provider mode remains disabled by default and no manifest version is
   changed by this sub-gate.
 
 ## Required next task
 
-Keep `WL-1508B` open and stop. The qualified `qwen2.5-coder:14b` digest is not eligible for
-`WL-1508C`. Before another model is loaded or evaluated, register a new bounded replacement-model
-qualification child in `TODO.md` and `docs/08-task-board.md`, then execute only that child. Do not
-rerun this failed candidate, run `today-posted` or the complete matrix, change prompts, tool context,
-schemas, validators, thresholds, or native fallback, mark `WL-1508` complete, enable provider mode
-by default, or advance to `WL-1509` without a passing replacement screen.
+Execute `WL-1508E` only. Qualify the already-installed explicit `qwen3-coder:30b` tag from a cold
+state through the unchanged 120-second WorkLedger health and capability path. Do not run an
+employee question, `submission-actions`, `today-posted`, or the complete matrix in the same task;
+do not pull or retag a model, change prompts, tool context, schemas, validators, thresholds, or
+native fallback, mark `WL-1508B` or `WL-1508` complete, enable provider mode by default, or advance
+to `WL-1509`.
