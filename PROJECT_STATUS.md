@@ -2,10 +2,10 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights (local AI pilot closed)
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 6 of 10 accepted deterministic tasks complete
-**Current milestone:** Deterministic HR aggregate privacy contract (`WL-1512`)
-**Active task:** `WL-1512` — Define purpose-specific HR aggregate contracts and privacy controls
-**Status:** `WL-1512` is ready after completed deterministic Manager Insights `WL-1509`
+**Phase progress:** Phase 15 in progress — 7 of 10 accepted deterministic tasks complete
+**Current milestone:** Deterministic HR aggregate implementation (`WL-1513`)
+**Active task:** `WL-1513` — Implement the accepted privacy-suppressed HR aggregate Insights
+**Status:** `WL-1513` is ready after completed HR privacy contract `WL-1512`
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -78,7 +78,12 @@ Insights. Completed `WL-1509` adds strict deterministic Manager action summaries
 coverage for current direct reports through a multilingual accessible Manager route, native source
 actions, repeatable-read authorization, exact organization-local date semantics, and zero provider
 calls. Reframed `WL-1512` and `WL-1513` retain deterministic
-privacy-suppressed HR aggregates, `WL-1514` retains isolated deterministic System Insights, and
+privacy-suppressed HR aggregates. Completed `WL-1512` accepts exactly two fixed HR purposes:
+organization-wide monthly closure readiness and neutral absence coverage for one canonical month.
+It fixes sources and units, whole-result suppression at the 10-person cohort, 3-case, and 10-person
+complement floors, a closed query algebra against differencing, generic suppression, bounded source
+actions, and zero provider context. `WL-1513` may implement only that contract. `WL-1514` retains
+isolated deterministic System Insights, and
 `WL-1516` now owns a provider-disabled release gate. Manager model interpretation (`WL-1510`),
 natural-language report generation (`WL-1511`), and optional MCP evaluation (`WL-1515`) are obsolete
 and removed from the accepted Phase 15 scope. General chat, natural-language SQL, unrestricted
@@ -3238,13 +3243,23 @@ inbox or Team status. Contract and component tests cover request routing, curren
 native actions, the provider-free interface, and automated accessibility. No provider, persistence,
 write, dependency, migration, manifest, or version changed.
 
+**2026-08-28: WL-1512 deterministic HR aggregate privacy contract accepted**
+
+Accepted `docs/162-wl-1512-hr-aggregate-privacy-contract.md` as the HR addendum to ADR 0014. Phase
+15 HR Insights are limited to organization-wide monthly closure readiness and neutral absence
+coverage for one canonical organization-local month. The contract distinguishes employees, cases,
+employee-days, and integer scheduled minutes; prohibits caller-defined cohorts, subtype breakdowns,
+arbitrary ranges, comparisons, and row drilldown; and suppresses the complete result before result
+construction when the 10-person cohort, 3-case, or 10-person complement floor fails. No runtime,
+provider, persistence, dependency, migration, manifest, or version changed. `WL-1513` is ready.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. The optional employee local AI pilot
 is closed without passing after the best strict full run reached 207/216 and the final qualified
 `qwen2.5-coder:14b` recovery screen reached 3/9. Provider mode remains disabled and no model is
-approved for deployment. No roadmap blocker prevents `WL-1512`; it must define purpose-specific HR
-aggregates and suppression before any result construction or implementation begins. The broad
+approved for deployment. No roadmap blocker prevents `WL-1513`; it may implement only the two
+purpose-specific HR aggregates and suppression contract accepted by `WL-1512`. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3259,10 +3274,12 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Define `WL-1512` as the bounded deterministic HR aggregate privacy contract. Specify each purpose,
-authoritative value source, cohort and complement floor, suppression order, repeated-query controls,
-and permitted native action before implementing `WL-1513`. Do not add row data, free text, sickness
-detail, model context, recommendations, predictions, or write actions.
+Implement `WL-1513` as the smallest complete HR aggregate slice described by
+`docs/162-wl-1512-hr-aggregate-privacy-contract.md`. Add only the fixed monthly closure-readiness
+and neutral absence-coverage purposes, suppress the whole result before construction, and prove
+cohort, case, complement, repeated-query, authorization, unit, source-action, localization, and
+provider-absence behavior. Do not add row data, free text, sickness detail, model context,
+recommendations, predictions, or write actions.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

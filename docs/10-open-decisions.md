@@ -1,5 +1,24 @@
 # Open Decisions and Accepted Defaults
 
+### 2026-08-28 — WL-1512 accepts two fixed HR aggregate purposes
+
+`docs/162-wl-1512-hr-aggregate-privacy-contract.md` is accepted as the HR aggregate addendum to ADR
+0014. Phase 15 permits only organization-wide monthly closure readiness and neutral absence
+coverage for one canonical organization-local month. Requests cannot select a person, team,
+manager, location, schedule, employment attribute, absence type, state, range, group, comparison,
+or sort.
+
+Both purposes suppress the complete result before facts, sources, actions, limitations, logs, or
+provider context exist unless the cohort contains at least 10 eligible people, a case-derived
+purpose has at least 3 contributing cases, and at least 10 people remain in the non-contributing
+complement. Suppression returns one generic unavailable reason and no hidden count or action.
+Employees, cases, employee-days, and integer scheduled minutes remain separate units.
+
+This does not authorize work beyond `WL-1513`, model/MCP exposure, persistence, export, subtype
+breakdowns, row drilldown, recommendations, predictions, scoring, or writes. A new purpose, cohort
+dimension, comparison, threshold weakening, or alternate privacy mechanism requires a superseding
+decision.
+
 Codex must not silently invent a rule in this file. Resolve blocking items before their listed phase.
 
 ## Task coordination notes

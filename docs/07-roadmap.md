@@ -633,7 +633,8 @@ deterministic work only.
 
 - [x] `WL-1508G` reconciles Phase 15 around provider-independent Insights and records obsolete work.
 - [x] `WL-1509` completes deterministic Manager action summaries and team coverage.
-- [ ] `WL-1512` and `WL-1513` accept and implement deterministic privacy-suppressed HR aggregates.
+- [x] `WL-1512` accepts fixed deterministic HR aggregate purposes and suppression controls.
+- [ ] `WL-1513` implements the accepted privacy-suppressed HR aggregates.
 - [ ] `WL-1514` completes deterministic isolated System Insights.
 - [ ] No accepted continuation route calls a provider or depends on model availability.
 

@@ -17,6 +17,12 @@ the inactive implementation; it does not mark `WL-1508` complete or approve mode
 
 ## Context
 
+`WL-1512` accepts `docs/162-wl-1512-hr-aggregate-privacy-contract.md` as this ADR's HR aggregate
+addendum. Phase 15 HR Insights are limited to fixed organization-wide monthly closure-readiness and
+neutral absence-coverage purposes. Caller-defined cohorts, subtype breakdowns, arbitrary ranges,
+comparisons, and row drilldown are prohibited. The 10-person cohort, 3-case, and 10-person
+complement floors suppress the whole result before native result or provider-context construction.
+
 WorkLedger can answer useful questions from its existing attendance, balance, absence, request,
 report, monthly period, and operations sources. Natural language can improve explanation and
 navigation, but employment and health related data make a broad chat or unrestricted model context

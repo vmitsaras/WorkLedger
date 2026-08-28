@@ -101,8 +101,10 @@ purposes.
 | `AI-R15` | Reuse | Internal tools are exposed through MCP without equivalent controls | Critical | MCP excluded; separate ADR, metadata allowlist, auth and threat gate | `WL-1515` |
 
 Overall privacy status is acceptable for deterministic implementation. Provider work is closed and
-remains disabled. HR work remains blocked until `WL-1512` accepts its purpose contracts, value
-sources, and suppression tests.
+remains disabled. Completed `WL-1512` accepts
+`docs/162-wl-1512-hr-aggregate-privacy-contract.md`: exactly two organization-wide calendar-month
+purposes, fixed sources and units, whole-result suppression, a closed query algebra against
+differencing, and no provider context. `WL-1513` may implement only that contract.
 
 ## Evaluation contract
 
