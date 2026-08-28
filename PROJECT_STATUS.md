@@ -4,8 +4,8 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 in progress — 8 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
-**Active task:** `WL-1508A` — Qualify one replacement private model name and exact digest
-**Status:** `WL-1508` evaluation infrastructure and non-model evidence are complete; the exact evaluated model failed at 207/216, so the remaining recovery is split into `WL-1508A`–`WL-1508D` and no replacement-model execution has started
+**Active task:** `WL-1508B` — Run the qualified replacement through the 18-case known-failure regression screen
+**Status:** `WL-1508A` qualified `qwen2.5-coder:14b` digest `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` through the unchanged WorkLedger health boundary; no employee evaluation case has run against it yet
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -40,10 +40,13 @@ coverage, and accessibility evidence. The exact evaluated `gemma4:12b` digest re
 strict cases: six `submission-actions` cases returned provider-invalid structured output and three
 German `today-posted` cases omitted the required posted-balance fact. The zero-tolerance pilot gate
 therefore remains open and provider mode remains disabled by default. The remaining work is now
-bounded as replacement-digest qualification (`WL-1508A`), an 18-run known-failure screen
-(`WL-1508B`), the uninterrupted 216-run gate (`WL-1508C`), and evidence/project-memory closure
-(`WL-1508D`). Each failed model check stops the sequence without changing prompts, schemas,
-validators, or accepted thresholds.
+bounded as completed replacement-digest qualification (`WL-1508A`), an 18-run known-failure
+screen (`WL-1508B`), the uninterrupted 216-run gate (`WL-1508C`), and evidence/project-memory
+closure (`WL-1508D`). `WL-1508A` rejected `devstral-small-2:latest` after the unchanged cold-start
+health check timed out at 120.257 seconds, then qualified `qwen2.5-coder:14b` digest
+`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` in 4.623 seconds with chat,
+structured-output, and tool capability. Each failed model check stops the sequence without
+changing prompts, schemas, validators, or accepted thresholds.
 Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
 evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
@@ -3045,14 +3048,30 @@ remains an unnumbered draft.
 - Updated planning and project-memory documents only. No evaluator, provider, product code,
   dependency, runtime configuration, model execution, manifest, or version changed.
 
+**2026-08-28 — WL-1508A replacement-model qualification (complete)**
+
+- Inventoried seven already-installed Ollama names across six unique digests without pulling,
+  copying, deleting, or publishing a model. Excluded the failed `gemma4:12b` digest, the earlier
+  `qwen3.6:27b` readiness failure, and `qwen2.5vl:7b` because it lacks tool capability.
+- Rejected `devstral-small-2:latest` after WorkLedger's unchanged cold-start health probe reached
+  120.257 seconds and returned safe `TIMEOUT`; the deadline and capability contract were not
+  weakened.
+- Qualified cold `qwen2.5-coder:14b` digest
+  `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` in 4.623 seconds. Exact
+  tags, local metadata, and the fixed synthetic structured-output probe produced `ready` with
+  `CHAT`, `STRUCTURED_OUTPUT`, and `TOOLS`.
+- Ran no employee question or golden evaluation case. Provider mode remains disabled by default;
+  no prompt, schema, validator, provider/security control, runtime configuration, dependency,
+  manifest, or version changed.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. `WL-1508` infrastructure, privacy,
 security, degraded-provider, trace, and accessibility evidence are complete, but its exact pinned
 model is the active blocker: the best strict run reached 207/216 instead of the accepted 216/216.
-`WL-1508A` is the only ready child; `WL-1508B`–`WL-1508D` are ordered behind it. Provider mode
-remains disabled. Manager, report-builder, HR, system, and MCP tasks remain blocked by their named
-sub-gates. The broad
+`WL-1508A` is complete with one exact qualified replacement digest. `WL-1508B` is the only ready
+child; `WL-1508C` and `WL-1508D` remain ordered behind it. Provider mode remains disabled. Manager,
+report-builder, HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3067,10 +3086,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1508A` only: inspect operator-available private model candidates and qualify one exact
-model name and digest that becomes ready within the accepted 120-second health boundary with the
-required chat, structured-output, and tool capabilities. Do not run `WL-1508B` or the full matrix,
-change prompts or validators, enable provider mode, or advance to `WL-1509` in the same task.
+Execute `WL-1508B` only: configure the test-only evaluator for qualified `qwen2.5-coder:14b`
+digest `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`, then run only
+`submission-actions` and `today-posted` across three locales and three repetitions. Stop after the
+18-run screen; do not run the full matrix, change prompts or validators, enable provider mode by
+default, or advance to `WL-1509` in the same task.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 

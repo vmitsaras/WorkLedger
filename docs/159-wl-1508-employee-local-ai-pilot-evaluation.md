@@ -45,6 +45,42 @@ configuration and a successful digest/capability health check. A locally install
 `qwen3.6:27b` candidate did not become ready within the maximum 120-second startup health window,
 so it was not treated as an eligible replacement pilot model.
 
+## `WL-1508A` replacement-model qualification
+
+`WL-1508A` completed on 2026-08-28 without running an employee question or golden evaluation case.
+The operator inventory contained seven local names representing six unique digests. The failed
+`gemma4:12b` digest was excluded, `qwen3.6:27b` retained its earlier 120-second readiness failure,
+and `qwen2.5vl:7b` was ineligible because it did not declare tool capability.
+
+The first selected replacement, `devstral-small-2:latest`, declared completion and tool capability
+but failed WorkLedger's unchanged cold-start health check at 120.257 seconds with safe reason code
+`TIMEOUT`. The model was not accepted and no deadline was extended.
+
+The qualified replacement is:
+
+| Setting | Qualified value |
+|---|---|
+| Model | `qwen2.5-coder:14b` |
+| Digest | `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` |
+| Local size | 8,988,124,298 bytes |
+| Declared Ollama capabilities | `completion`, `tools`, `insert` |
+| WorkLedger health result | `ready` |
+| WorkLedger capabilities | `CHAT`, `STRUCTURED_OUTPUT`, `TOOLS` |
+| Cold-start elapsed time | 4.623 seconds |
+| Qualification deadline | 120 seconds |
+| Qualification concurrency | 1 |
+
+An empty `ollama ps` result immediately before the probe established that the candidate was not
+already loaded. The existing WorkLedger health path then verified the exact local name and digest
+through `/api/tags`, completion and tool metadata through `/api/show`, and a fixed synthetic
+nonstreaming structured-output response through `/api/chat`. The probe contained no employee
+question, prior turn, tool argument/result, source, identity, or domain value.
+
+No prompt, tool context, schema, validator, threshold, provider implementation, runtime default,
+origin rule, proxy/redirect rule, egress path, retention path, dependency, or manifest changed.
+Provider mode remains disabled by default. `qwen3-coder:latest`/`qwen3-coder:30b` and their shared
+digest were not needed after the smaller candidate passed and remain unevaluated.
+
 ## Golden set and evaluator
 
 The repository-owned set contains exactly six semantic questions for each Employee Insight:
@@ -150,7 +186,7 @@ The remaining work is split into bounded child tasks. Each child is a separate r
 point; a failed model check does not authorize implementation changes or automatic continuation to
 the next child.
 
-### `WL-1508A` — Qualify one replacement digest
+### `WL-1508A` — Qualify one replacement digest (complete)
 
 - Inspect operator-available private models and select one exact model name and digest.
 - Require readiness within the accepted 120-second startup boundary and prove the existing chat,
@@ -194,8 +230,8 @@ the next child.
 
 ## Required next task
 
-Start `WL-1508A` only. Keep provider mode disabled and qualify one different exact private model
-digest within the accepted health and security boundary. Do not run the regression or full matrix
-in the same task, mark `WL-1508` complete, enable the pilot, advance to `WL-1509`, cite every native
-fact indiscriminately, or weaken the accepted zero-tolerance thresholds without an explicit
-superseding architecture decision.
+Start `WL-1508B` only. Configure the test-only evaluator for the qualified
+`qwen2.5-coder:14b` digest and run the `submission-actions` and `today-posted` semantic questions in
+all three locales and all three repetitions: 18 runs total. Do not start the complete matrix,
+change prompts, tool context, schemas, validators, thresholds, or native fallback, mark `WL-1508`
+complete, enable provider mode by default, or advance to `WL-1509` in the same task.
