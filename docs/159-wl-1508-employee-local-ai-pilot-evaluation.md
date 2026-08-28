@@ -79,9 +79,10 @@ question, prior turn, tool argument/result, source, identity, or domain value.
 No prompt, tool context, schema, validator, threshold, provider implementation, runtime default,
 origin rule, proxy/redirect rule, egress path, retention path, dependency, or manifest changed.
 Provider mode remains disabled by default. `qwen3-coder:latest`/`qwen3-coder:30b` and their shared
-digest were not needed after the smaller candidate passed and remain unevaluated.
+digest were not needed by `WL-1508A`; the later `WL-1508E` qualification and `WL-1508B` screen are
+recorded below.
 
-## `WL-1508B` known-failure regression screen
+## `WL-1508B` known-failure regression screens
 
 `WL-1508B` started on 2026-08-28 against the exact qualified `qwen2.5-coder:14b` digest. The
 evaluator retained the accepted inference configuration: temperature `0`, thinking disabled,
@@ -117,15 +118,76 @@ provider implementation, native fallback, dependency, runtime default, manifest,
 changed. `WL-1508B` remains open, `WL-1508C` remains blocked, and provider mode remains disabled by
 default.
 
-## `WL-1508E` recovery qualification task
+After the separate `WL-1508E` health qualification, `WL-1508B` resumed in a new bounded run against
+exact `qwen3-coder:30b` digest
+`06c1097efce0431c2045fe7b2e5108366e43bee1b4603a7aded8f21689e90bca`. The evaluator retained
+temperature `0`, thinking disabled, 1,024 maximum generated tokens, a 120-second request deadline,
+and concurrency `1`. Its startup health check reverified the exact digest and required capabilities
+before the first case.
 
-The failed `qwen2.5-coder:14b` screen leaves one installed, unique, tool-capable digest that has not
+The first required semantic group again failed at its checkpoint:
+
+| Evidence | Result |
+|---|---|
+| Semantic question | `submission-actions` |
+| Planned runs in this group | 3 locales × 3 repetitions = 9 |
+| Completed runs | 9 |
+| Passed | 0 |
+| Failed | 9 |
+| Locale distribution | `en-GB` 3/3 failed; `de-DE` 3/3 failed; `es-ES` 3/3 failed |
+| Safe outcome | `PROVIDER_FAILURE` × 9 |
+| Provider failure | `TIMEOUT` × 9 |
+| Validation failure | None |
+| First-phase timeouts | 6, with 0 tool rounds and executions |
+| Final-phase timeouts | 3, after 1 tool round and execution each |
+| Input / output tokens | 1,845 / 105 |
+| Latency range | 120,518–234,969 milliseconds |
+| Retained artifact | Ignored local `output/insights/wl1508-employee-local-ai-smoke.json`, 4,638 bytes |
+
+Every response failed closed through the provider deadline. Six cases produced no tool call; one
+case in each locale completed the required tool execution before the final structured-output phase
+timed out. The artifact contains only the existing allowlisted model/digest, inference settings,
+semantic ID, locale, repetition, disposition, safe error and trace codes, latency, token counts,
+and tool counters.
+
+The `today-posted` group and 216-case matrix did not run. No prompt, tool context, schema,
+validator, threshold, evaluator, provider implementation, native fallback, dependency, runtime
+default, manifest, or version changed. `WL-1508B` remains open, `WL-1508C` remains blocked, and
+provider mode remains disabled by default. Both qualified replacement candidates have now failed
+the first required semantic group, so more model execution requires an explicit bounded recovery
+decision.
+
+## `WL-1508E` recovery qualification task (complete)
+
+The failed `qwen2.5-coder:14b` screen left one installed, unique, tool-capable digest that had not
 been health qualified: `qwen3-coder:30b`. Its `qwen3-coder:latest` alias points to the same digest,
-but the explicit `30b` tag is the only accepted name for this recovery task. `WL-1508E` is
-registered before any further model load or probe and is the only ready model-execution child.
+but the explicit `30b` tag was the only accepted name for this recovery task. `WL-1508E` was
+registered before any further model load or probe and completed without an employee case. That
+qualification made `WL-1508B` the only ready model-evaluation child at the checkpoint.
 
 **Goal:** Decide whether the already-installed `qwen3-coder:30b` exact name and digest satisfy the
 unchanged provider health and capability boundary. This task does not evaluate employee semantics.
+
+`WL-1508E` completed on 2026-08-28:
+
+| Setting | Qualified value |
+|---|---|
+| Exact model name | `qwen3-coder:30b` |
+| Digest | `06c1097efce0431c2045fe7b2e5108366e43bee1b4603a7aded8f21689e90bca` |
+| Local size | 18,556,700,761 bytes |
+| Declared Ollama capabilities | `completion`, `tools` |
+| Pre-probe loaded-model state | Empty |
+| WorkLedger health result | `ready` |
+| WorkLedger capabilities | `CHAT`, `STRUCTURED_OUTPUT`, `TOOLS` |
+| Cold-start elapsed time | 45.570 seconds |
+| Qualification deadline | 120 seconds |
+| Qualification concurrency | 1 |
+
+The unchanged WorkLedger path verified the exact local tag and digest through `/api/tags`, local
+completion and tool metadata through `/api/show`, and fixed synthetic nonstreaming structured
+output through `/api/chat`. The probe contained no employee question, golden fixture, prior turn,
+tool argument/result, source, identity, or domain value. No public/cloud request, model pull,
+retag, source change, dependency, runtime default, manifest, or version was introduced.
 
 **Likely files to inspect:**
 
@@ -155,13 +217,13 @@ unchanged provider health and capability boundary. This task does not evaluate e
 
 **Acceptance criteria:**
 
-- [ ] `/api/tags` identifies `qwen3-coder:30b` at one recorded 64-character local digest with no
+- [x] `/api/tags` identifies `qwen3-coder:30b` at one recorded 64-character local digest with no
       remote metadata.
-- [ ] An empty loaded-model state is recorded immediately before the WorkLedger health probe.
-- [ ] The unchanged health path completes within 120 seconds and returns `ready` with `CHAT`,
+- [x] An empty loaded-model state is recorded immediately before the WorkLedger health probe.
+- [x] The unchanged health path completes within 120 seconds and returns `ready` with `CHAT`,
       `STRUCTURED_OUTPUT`, and `TOOLS`.
-- [ ] Only fixed synthetic capability content reaches Ollama; no employee or domain data is used.
-- [ ] Provider mode remains disabled by default and no source, dependency, runtime default,
+- [x] Only fixed synthetic capability content reaches Ollama; no employee or domain data is used.
+- [x] Provider mode remains disabled by default and no source, dependency, runtime default,
       manifest, version, prompt, schema, validator, or threshold changes.
 
 **Verification and checkpoint:**
@@ -293,17 +355,17 @@ the next child.
   behavior, or provider security controls in this task.
 - If no candidate qualifies, stop with `WL-1508A` open and keep the parent gate blocked.
 
-### `WL-1508B` — Screen the known failure modes (failed candidate; open)
+### `WL-1508B` — Screen the known failure modes (failed candidates; open)
 
 - Run only the `submission-actions` and `today-posted` semantic questions in all three locales and
-  all three repetitions against the exact `WL-1508A` digest: 18 runs total.
+  all three repetitions against one exact qualified candidate digest: 18 runs total.
 - Require every run to pass the current source, fact, action, limitation, locale,
   unsupported-claim, leakage, and native-fallback validation.
 - Retain only the existing content-free smoke artifact and safe operational traces.
 - Do not tune the prompt, widen the tool context, loosen structured output, or change evaluation
   criteria. Any failure stops the sequence and leaves `WL-1508B` open.
 
-### `WL-1508E` — Qualify the remaining installed candidate
+### `WL-1508E` — Qualify the remaining installed candidate (complete)
 
 - Execute only the recovery qualification contract above.
 - Stop before any employee semantic case whether qualification passes or fails.
@@ -331,9 +393,9 @@ the next child.
 
 ## Required next task
 
-Execute `WL-1508E` only. Qualify the already-installed explicit `qwen3-coder:30b` tag from a cold
-state through the unchanged 120-second WorkLedger health and capability path. Do not run an
-employee question, `submission-actions`, `today-posted`, or the complete matrix in the same task;
-do not pull or retag a model, change prompts, tool context, schemas, validators, thresholds, or
-native fallback, mark `WL-1508B` or `WL-1508` complete, enable provider mode by default, or advance
-to `WL-1509`.
+Record an explicit bounded recovery decision before any further model execution. Both exact
+qualified replacement candidates failed all nine `submission-actions` runs, one through invalid
+tool-selection output and one through provider timeouts. A different candidate, request deadline,
+prompt, tool context, schema, validator, threshold, or accepted gate requires a named task or an
+updated accepted decision. Do not run `today-posted`, the complete matrix, or a partial substitute;
+do not mark `WL-1508` complete, enable provider mode by default, or advance to `WL-1509`.

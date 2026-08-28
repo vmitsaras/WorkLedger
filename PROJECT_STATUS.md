@@ -4,8 +4,8 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 in progress — 8 of 17 tasks complete
 **Current milestone:** Phase 15 employee local AI pilot sub-gate (`WL-1505`–`WL-1508`)
-**Active task:** `WL-1508E` — Qualify the remaining installed `qwen3-coder:30b` candidate
-**Status:** Recovery qualification is registered but unexecuted; `WL-1508B` remains open after `qwen2.5-coder:14b` failed 0/9 `submission-actions`, and no other model has been loaded or evaluated
+**Active task:** `WL-1508B` — Resolve the failed replacement-model regression screen
+**Status:** Exact `qwen3-coder:30b` failed all nine `submission-actions` cases with safe provider `TIMEOUT` evidence; `today-posted` and the complete matrix did not run
 **Last verified:** 2026-08-28
 
 ## Current objective
@@ -50,9 +50,15 @@ changing prompts, schemas, validators, or accepted thresholds. `WL-1508B` applie
 all nine `submission-actions` locale/repetition cases for the qualified digest failed before a tool
 call with safe `PROVIDER_INVALID_OUTPUT` / `INVALID_RESPONSE` / `TOOL_REQUIRED` evidence. The
 `today-posted` half and the full matrix did not run.
-The remaining installed inventory now has one unique untested tool-capable digest,
-`qwen3-coder:30b`. `WL-1508E` owns only its cold-start exact-digest health and capability
-qualification. It must stop before any employee semantic case whether the probe passes or fails.
+The remaining installed inventory supplied one unique untested tool-capable digest,
+`qwen3-coder:30b`. Completed `WL-1508E` qualified its exact explicit tag and digest from an empty
+loaded-model state in 45.570 seconds with `CHAT`, `STRUCTURED_OUTPUT`, and `TOOLS`. It stopped before
+every employee semantic case. The separate `WL-1508B` screen then ran all nine required
+`submission-actions` locale/repetition cases at the unchanged 120-second request deadline and
+concurrency `1`. Every case failed safely with provider `TIMEOUT`: six before a tool call and three
+after one tool execution while awaiting final output. The `today-posted` group and complete matrix
+did not run. No model candidate now satisfies the screen, so a new bounded recovery path requires
+an explicit roadmap decision before more model execution.
 Manager, report-builder, privacy-suppressed HR, isolated System Insights, and optional MCP
 evaluation remain behind their named gates. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
@@ -3097,16 +3103,44 @@ remains an unnumbered draft.
   or evaluated, and no source, provider/configuration contract, dependency, manifest, or version
   changed.
 
+**2026-08-28 — WL-1508E qwen3-coder recovery qualification (complete)**
+
+- Reconfirmed already-installed explicit `qwen3-coder:30b` at exact digest
+  `06c1097efce0431c2045fe7b2e5108366e43bee1b4603a7aded8f21689e90bca`, 18,556,700,761 bytes,
+  with local completion and tool metadata and no remote fields.
+- Recorded an empty `ollama ps` state immediately before the existing fixed synthetic WorkLedger
+  health path. The cold probe returned `ready` with `CHAT`, `STRUCTURED_OUTPUT`, and `TOOLS` in
+  45.570 seconds within the unchanged 120-second deadline at concurrency `1`.
+- Ran no employee question or golden case and stopped before resuming `WL-1508B`. Provider mode
+  remains disabled by default; no model pull/retag, prompt, schema, validator, threshold, source,
+  dependency, runtime default, manifest, or version changed.
+
+**2026-08-28 — WL-1508B qwen3-coder known-failure screen (failed; open)**
+
+- Reverified exact `qwen3-coder:30b` digest
+  `06c1097efce0431c2045fe7b2e5108366e43bee1b4603a7aded8f21689e90bca` and ran only the nine
+  `submission-actions` cases across `en-GB`, `de-DE`, and `es-ES`, three repetitions each, with the
+  unchanged temperature `0`, thinking-disabled, 1,024-token, 120-second, concurrency-1 settings.
+- All nine cases failed with content-free `PROVIDER_FAILURE` and provider `TIMEOUT` evidence. Six
+  timed out before a tool call; three completed one tool round and execution before the final
+  provider phase timed out. Latency ranged from 120,518 to 234,969 milliseconds.
+- Retained the ignored 4,638-byte content-free smoke artifact and stopped before `today-posted` and
+  the complete matrix. `WL-1508B` remains unchecked, `WL-1508C` remains blocked, and provider mode
+  remains disabled by default. No prompt, tool context, schema, validator, threshold, evaluator,
+  provider implementation, native fallback, dependency, runtime default, manifest, or version
+  changed.
+
 ## Current blockers
 
 The deterministic Insights foundation sub-gate is complete. `WL-1508` infrastructure, privacy,
 security, degraded-provider, trace, and accessibility evidence are complete, but its exact pinned
 model is the active blocker: the best strict run reached 207/216 instead of the accepted 216/216.
-`WL-1508A` is complete with one exact qualified replacement digest. `WL-1508B` is open but its
-qualified candidate failed the first required group at 0/9. `WL-1508E` is now the only ready child
-and is limited to a cold synthetic health qualification; `WL-1508B`, `WL-1508C`, and `WL-1508D`
-remain blocked behind it. Provider mode remains disabled. Manager, report-builder, HR, system, and
-MCP tasks remain blocked by their named sub-gates. The broad
+`WL-1508A` is complete, although its qualified `qwen2.5-coder:14b` candidate failed the first
+`WL-1508B` group at 0/9. `WL-1508E` is complete with exact qualified `qwen3-coder:30b`, but that
+candidate also failed the first `WL-1508B` group at 0/9 through safe provider timeouts. No model
+candidate has passed the known-failure screen and no further model-execution child is ready.
+`WL-1508C` and `WL-1508D` remain blocked. Provider mode remains disabled. Manager, report-builder,
+HR, system, and MCP tasks remain blocked by their named sub-gates. The broad
 environment-independent integration command and the canonical isolated `pnpm db:test` gate are
 green. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
@@ -3121,11 +3155,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1508E` only: qualify already-installed `qwen3-coder:30b` from an empty loaded-model
-state through the unchanged exact-digest, 120-second, fixed synthetic WorkLedger health path. Stop
-before any employee question or golden case whether it passes or fails; do not resume `WL-1508B`,
-run the full matrix, change prompts or validators, enable provider mode by default, or advance to
-`WL-1509` in the same task.
+Record an explicit bounded recovery decision for `WL-1508B` before any further model execution.
+Both qualified replacement candidates failed the first required semantic group, and changing the
+model, request deadline, prompt, tool context, schema, validator, threshold, or accepted gate now
+requires a named task or updated accepted decision. Do not run `today-posted`, the complete matrix,
+or advance to `WL-1509`; do not enable provider mode by default.
 The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
 separate unnumbered draft.
 
