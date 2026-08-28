@@ -26,6 +26,11 @@ locale, limitation, prose, or leakage validation to convert the result into a pa
 `WL-1508` therefore remains in progress. `WL-1509` and every task that depends on the employee
 pilot remain blocked by the named roadmap gate. No manifest version changes.
 
+The accepted recovery decision is now `WL-1508F`. WorkLedger will replace redundant model tool
+selection with one exact server-owned registry execution and one schema-constrained provider
+response. The implementation task runs no real model case. `WL-1508B` remains blocked until that
+task completes.
+
 ## Exact evaluated provider
 
 | Setting | Evaluated value |
@@ -154,8 +159,9 @@ The `today-posted` group and 216-case matrix did not run. No prompt, tool contex
 validator, threshold, evaluator, provider implementation, native fallback, dependency, runtime
 default, manifest, or version changed. `WL-1508B` remains open, `WL-1508C` remains blocked, and
 provider mode remains disabled by default. Both qualified replacement candidates have now failed
-the first required semantic group, so more model execution requires an explicit bounded recovery
-decision.
+the first required semantic group. The accepted bounded recovery decision is recorded under
+`WL-1508F` below. No model execution is permitted until its implementation and deterministic
+verification complete.
 
 ## `WL-1508E` recovery qualification task (complete)
 
@@ -238,6 +244,67 @@ retag, source change, dependency, runtime default, manifest, or version was intr
 **Rollback note:** Documentation-only registration can be reverted as one bounded change before
 execution. A failed probe requires no runtime rollback because provider mode stays disabled and no
 model or application state is persisted by WorkLedger.
+
+## `WL-1508F` server-owned Employee Insight orchestration (registered)
+
+The failing candidates exposed a redundant model decision. Before provider generation, WorkLedger
+already knows the active workspace, Insight kind, exact visible period, exact Employee registry
+tool, and exact tool arguments. Asking the model to repeat that selection adds no product value and
+created the first candidate's complete failure mode.
+
+The accepted decision is specified in
+`docs/specs/_root/0001-server-owned-insight-orchestration.md`. `WL-1508F` will execute the derived
+registry call once with current Employee self authorization, use that fresh result for minimized
+model context and final validation, and make one provider request with no tools and the existing
+strict structured-output schema. Runtime parsing, source-union validation, material limitations,
+safe prose, native actions, and exact-reference checks remain authoritative.
+
+**Goal:** Remove model control over an already known data-access choice without changing product
+scope, provider security, native authority, or the zero-tolerance gate.
+
+**Likely files to change:**
+
+- `apps/api/src/insights/employee-insight-interpretation.ts`
+- `apps/api/test/employee-insight-interpretation.unit.test.ts`
+- `apps/api/test/ai-provider.unit.test.ts` only if request serialization coverage needs expansion
+- the current database-backed Insight route suite
+- `docs/158-wl-1507-employee-ask-my-ledger-interpretation.md`
+- this evaluation record and project-memory files
+
+**Explicitly unchanged:**
+
+- `POST /v1/insights/interpret`, browser behavior, native result presentation, database schema,
+  migrations, dependencies, runtime environment variables, provider timeout and concurrency bounds;
+- private origin and address pinning, redirect and proxy denial, exact model digest, reasoning
+  rejection, request-memory-only content, content-free traces, and provider disabled by default;
+- the provider capability health contract, strict runtime validators, golden fixtures, evaluator,
+  accepted thresholds, and native fallback.
+
+**Acceptance criteria:**
+
+- [ ] The server derives the exact registry call from the validated Employee Insight and executes
+      it once with fixed `EMPLOYEE` workspace, current identity, and trusted capture instant before
+      provider generation.
+- [ ] Permission loss or invalid registry output causes zero provider calls and returns the existing
+      safe outcome.
+- [ ] The provider receives one request with `tools: []`, minimized context from the fresh registry
+      result, and a JSON schema bounded by the current locale, current authorized references, and
+      existing interpretation contract.
+- [ ] Existing parsing and grounding validation remains final. Unknown, duplicate, missing, or
+      wrong source, fact, limitation, or action references still fail closed.
+- [ ] A successful trace records zero model tool rounds and one completed registry execution;
+      failed traces retain only existing safe content-free fields.
+- [ ] Focused unit, database authorization, cancellation, provider failure, configuration,
+      redaction, formatting, phase, and repository checks pass without a real model request.
+
+**Checkpoint:** Mark only `WL-1508F` complete after deterministic verification. Then make
+`WL-1508B` ready for its existing 18-run screen against exact qualified `qwen2.5-coder:14b` digest
+`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`. Do not run that screen in
+the same task.
+
+**Rollback note:** Provider mode remains disabled. Before any new model screen, the orchestration
+change can be reverted as one bounded source and test change with no data migration or persisted
+model state.
 
 ## Golden set and evaluator
 
@@ -370,6 +437,15 @@ the next child.
 - Execute only the recovery qualification contract above.
 - Stop before any employee semantic case whether qualification passes or fails.
 
+### `WL-1508F` — Move the known registry call under server control
+
+- Execute the exact Employee registry call once from validated request intent and current
+  authorization before provider generation.
+- Send one tool-free, schema-constrained provider request using only the minimized fresh result.
+- Preserve every accepted provider, privacy, grounding, native fallback, and evaluation control.
+- Use mocked and database-backed verification only. Run no real model case in this task.
+- On completion, make only exact qualified `qwen2.5-coder:14b` eligible to resume `WL-1508B`.
+
 ### `WL-1508C` — Run the mandatory complete matrix
 
 - Execute one uninterrupted `pnpm test:ai:employee` run for the qualified digest with no semantic
@@ -387,15 +463,15 @@ the next child.
 - Update this record, `PROJECT_STATUS.md`, `TODO.md`, `docs/07-roadmap.md`,
   `docs/08-task-board.md`, and any directly affected operations/configuration documentation with
   the exact passing model evidence.
-- Close `WL-1508` and its pilot checklist only after `WL-1508A` through `WL-1508E` are complete and
+- Close `WL-1508` and its pilot checklist only after `WL-1508A` through `WL-1508F` are complete and
   `WL-1508C` records 216/216. Provider mode remains disabled by default and no manifest version is
   changed by this sub-gate.
 
 ## Required next task
 
-Record an explicit bounded recovery decision before any further model execution. Both exact
-qualified replacement candidates failed all nine `submission-actions` runs, one through invalid
-tool-selection output and one through provider timeouts. A different candidate, request deadline,
-prompt, tool context, schema, validator, threshold, or accepted gate requires a named task or an
-updated accepted decision. Do not run `today-posted`, the complete matrix, or a partial substitute;
-do not mark `WL-1508` complete, enable provider mode by default, or advance to `WL-1509`.
+Implement `WL-1508F` only from the accepted server-owned orchestration specification. Run focused
+mocked, database authorization, cancellation, provider failure, redaction, and repository checks.
+Do not run a real model case, `submission-actions`, `today-posted`, or the complete matrix in the
+same task. Do not change the provider capability contract, timeout, prompt persistence, runtime
+validators, golden fixtures, accepted threshold, native fallback, or disabled default; do not mark
+`WL-1508B` or `WL-1508` complete or advance to `WL-1509`.

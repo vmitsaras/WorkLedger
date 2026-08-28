@@ -4,6 +4,27 @@ Codex must not silently invent a rule in this file. Resolve blocking items befor
 
 ## Task coordination notes
 
+### 2026-08-28 — WL-1508F accepts server-owned Employee tool execution
+
+Both exact qualified replacement models failed the first `WL-1508B` semantic group. The smaller
+candidate returned no required tool call in nine of nine cases. The larger candidate timed out in
+nine of nine cases, including three after a successful tool execution. No further model execution
+was authorized at that checkpoint.
+
+The accepted recovery decision moves the already known Employee registry call under application
+control. WorkLedger derives the exact tool code and arguments from the validated Insight request,
+executes it once through the current self-authorizing registry, and uses that fresh result for all
+model context and final validation. The model receives no tools. It returns one response constrained
+by the current output schema, while the existing parser and grounding validators remain final.
+
+`WL-1508F` owns this implementation and deterministic verification. It runs no real model case,
+changes no endpoint, database schema, UI state, provider origin, digest rule, timeout, rate,
+concurrency, reasoning, retention, or disabled default, and does not weaken the 216 of 216 gate.
+After it completes, only exact qualified `qwen2.5-coder:14b` digest
+`9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` may resume the 18 case
+`WL-1508B` screen. Any failure stops before `WL-1508C`. See
+`docs/specs/_root/0001-server-owned-insight-orchestration.md`.
+
 ### 2026-08-27 — WL-1500 accepts deterministic Insights before local AI
 
 The accepted Phase 14 gate remains complete at `0.15.0`. `WL-1500` now accepts ADR 0014 and the
