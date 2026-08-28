@@ -3,10 +3,10 @@ import {
   insightNativeResultSchema,
   insightRequestSchema,
   type BalanceChangeInsightRequest,
-  type InsightKind,
+  type EmployeeInsightKind,
+  type EmployeeInsightRequest,
   type InsightNativePayload,
   type InsightNativeResult,
-  type InsightRequest,
   type LeaveProjectionInsightRequest,
   type SubmissionBlockersInsightRequest,
   type TodayExplanationInsightRequest,
@@ -41,14 +41,14 @@ export type EmployeeInsightAuthority = Readonly<{
   workspace: 'EMPLOYEE';
 }>;
 
-export type InsightHandlerInput<Request extends InsightRequest> = Readonly<{
+export type InsightHandlerInput<Request extends EmployeeInsightRequest> = Readonly<{
   authority: EmployeeInsightAuthority;
   capturedAt: Instant;
   request: Request;
   transaction: WorkLedgerTransaction;
 }>;
 
-export type InsightHandler<Request extends InsightRequest> = (
+export type InsightHandler<Request extends EmployeeInsightRequest> = (
   input: InsightHandlerInput<Request>,
 ) => Promise<InsightNativePayload>;
 
@@ -67,7 +67,7 @@ export type EmployeeInsightRun = Readonly<{
 export interface InsightService {
   run(
     identity: InsightIdentity,
-    request: InsightRequest,
+    request: EmployeeInsightRequest,
     capturedAt: Instant,
   ): Promise<InsightNativeResult>;
 }
@@ -75,7 +75,7 @@ export interface InsightService {
 export interface EmployeeInsightInterpretationSource extends InsightService {
   runWithLocale(
     identity: InsightIdentity,
-    request: InsightRequest,
+    request: EmployeeInsightRequest,
     capturedAt: Instant,
   ): Promise<EmployeeInsightRun>;
 }
@@ -85,7 +85,7 @@ export const EMPLOYEE_INSIGHT_REQUIRED_ACTIONS = Object.freeze({
   'leave-projection': ['LEAVE_BALANCE_READ'],
   'submission-blockers': ['MONTHLY_PERIOD_READ'],
   'today-explanation': ['ATTENDANCE_READ', 'TIME_BALANCE_READ'],
-} as const satisfies Readonly<Record<InsightKind, readonly EmployeeTargetAction[]>>);
+} as const satisfies Readonly<Record<EmployeeInsightKind, readonly EmployeeTargetAction[]>>);
 
 export function createInsightService(
   database: WorkLedgerDatabase,
@@ -93,7 +93,7 @@ export function createInsightService(
 ): EmployeeInsightInterpretationSource {
   async function runWithLocale(
     identity: InsightIdentity,
-    requestInput: InsightRequest,
+    requestInput: EmployeeInsightRequest,
     capturedAt: Instant,
   ): Promise<EmployeeInsightRun> {
     const parsedRequest = insightRequestSchema.safeParse(requestInput);
@@ -101,6 +101,9 @@ export function createInsightService(
       throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
     }
     const request = parsedRequest.data;
+    if (request.workspace !== 'EMPLOYEE') {
+      throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
+    }
 
     return database.transaction(
       async (transaction) => {
@@ -183,7 +186,7 @@ export function parseInsightIdentity(
 function authorizeInsightRequest(
   identity: InsightIdentity,
   context: AccountSelfContextRecord,
-  kind: InsightKind,
+  kind: EmployeeInsightKind,
 ): void {
   const employee = context.employee;
   if (employee === null) {
@@ -214,7 +217,7 @@ function authorizeInsightRequest(
 
 async function executeInsightHandler(
   handlers: InsightHandlers,
-  input: InsightHandlerInput<InsightRequest>,
+  input: InsightHandlerInput<EmployeeInsightRequest>,
 ): Promise<InsightNativePayload> {
   switch (input.request.kind) {
     case 'balance-change':
@@ -236,7 +239,7 @@ async function executeInsightHandler(
   }
 }
 
-function requireHandler<Request extends InsightRequest>(
+function requireHandler<Request extends EmployeeInsightRequest>(
   handler: InsightHandler<Request> | undefined,
 ): InsightHandler<Request> {
   if (handler === undefined) {

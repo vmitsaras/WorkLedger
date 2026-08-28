@@ -10,7 +10,7 @@ import {
   type InsightInterpretationRequest,
   type InsightInterpretationResult,
   type InsightNativeResult,
-  type InsightRequest,
+  type EmployeeInsightRequest,
 } from '@workledger/contracts/insights';
 import type { InsightToolCall } from '@workledger/contracts/insight-tools';
 import type { Instant } from '@workledger/domain';
@@ -38,6 +38,8 @@ export const EMPLOYEE_INSIGHT_SAFE_PROSE: Readonly<Record<SupportedLocale, strin
 );
 
 type RateLimitResult = Readonly<{ allowed: boolean; retryAfter: number | null }>;
+type EmployeeInsightInterpretationRequest = Omit<InsightInterpretationRequest, 'insight'> &
+  Readonly<{ insight: EmployeeInsightRequest }>;
 type EmployeeInsightInterpretationOutcome =
   | 'NATIVE_FAILURE'
   | 'PERMISSION_DENIED'
@@ -151,6 +153,10 @@ export function createEmployeeInsightInterpretationService(
           outcome = 'VALIDATION_FAILED';
           throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
         }
+        if (request.data.insight.workspace !== 'EMPLOYEE') {
+          outcome = 'VALIDATION_FAILED';
+          throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
+        }
 
         accountKey = identity.accountId as string;
         if (activeAccounts.has(accountKey)) {
@@ -159,9 +165,10 @@ export function createEmployeeInsightInterpretationService(
         }
         activeAccounts.add(accountKey);
         ownsActiveAccount = true;
+        const employeeInput = requireEmployeeInterpretationRequest(request.data);
         const initial = await insightService.runWithLocale(
           identity,
-          request.data.insight,
+          employeeInput.insight,
           capturedAt,
         );
         if (interpretationAvailability(provider) !== 'READY') {
@@ -179,7 +186,7 @@ export function createEmployeeInsightInterpretationService(
           identity,
           locale: initial.locale,
           provider,
-          request: request.data,
+          request: employeeInput,
           ...(options.signal === undefined ? {} : { signal: options.signal }),
           trace,
           toolRegistry,
@@ -222,7 +229,7 @@ async function orchestrateEmployeeInterpretation(
     identity: InsightIdentity;
     locale: SupportedLocale;
     provider: AiProvider;
-    request: InsightInterpretationRequest;
+    request: EmployeeInsightInterpretationRequest;
     signal?: AbortSignal;
     trace: TraceAccumulator;
     toolRegistry: InsightToolRegistry;
@@ -358,7 +365,7 @@ function createProviderMessages(
   ]);
 }
 
-function toolCallForRequest(request: InsightRequest): InsightToolCall {
+function toolCallForRequest(request: EmployeeInsightRequest): InsightToolCall {
   switch (request.kind) {
     case 'balance-change':
       return Object.freeze({
@@ -384,6 +391,15 @@ function toolCallForRequest(request: InsightRequest): InsightToolCall {
         code: 'employee_today_explanation' as const,
       });
   }
+}
+
+function requireEmployeeInterpretationRequest(
+  request: InsightInterpretationRequest,
+): EmployeeInsightInterpretationRequest {
+  if (request.insight.workspace !== 'EMPLOYEE') {
+    throw new WorkLedgerApiError({ code: 'VALIDATION_FAILED', statusCode: 422 });
+  }
+  return Object.freeze({ ...request, insight: request.insight });
 }
 
 function createInterpretationOutputSchema(

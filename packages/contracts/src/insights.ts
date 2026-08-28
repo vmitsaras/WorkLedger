@@ -21,6 +21,8 @@ export const INSIGHT_KINDS = [
   'submission-blockers',
   'leave-projection',
   'today-explanation',
+  'manager-action-summary',
+  'team-coverage',
 ] as const;
 export const INSIGHT_CONTEXT_KINDS = [
   'TODAY',
@@ -56,6 +58,8 @@ export const INSIGHT_SOURCE_KINDS = [
   'REPORT',
   'TIME_ACCOUNT_LEDGER',
   'TODAY_ATTENDANCE',
+  'APPROVAL_INBOX',
+  'TEAM_STATUS',
 ] as const;
 export const INSIGHT_NATIVE_ACTION_DESTINATIONS = [
   'MONTHLY_REVIEW',
@@ -64,6 +68,8 @@ export const INSIGHT_NATIVE_ACTION_DESTINATIONS = [
   'MY_TIME',
   'REPORTS',
   'TODAY',
+  'APPROVAL_INBOX',
+  'TEAM_STATUS',
 ] as const;
 
 const dateSchema = z.iso.date();
@@ -168,11 +174,29 @@ export const todayExplanationInsightRequestSchema = z.strictObject({
   period: insightDatePeriodSchema,
 });
 
+const managerRequestShape = {
+  workspace: z.literal('MANAGER'),
+};
+
+export const managerActionSummaryInsightRequestSchema = z.strictObject({
+  ...managerRequestShape,
+  kind: z.literal('manager-action-summary'),
+  period: insightDatePeriodSchema,
+});
+
+export const teamCoverageInsightRequestSchema = z.strictObject({
+  ...managerRequestShape,
+  kind: z.literal('team-coverage'),
+  period: insightDatePeriodSchema,
+});
+
 export const insightRequestSchema = z.discriminatedUnion('kind', [
   balanceChangeInsightRequestSchema,
   submissionBlockersInsightRequestSchema,
   leaveProjectionInsightRequestSchema,
   todayExplanationInsightRequestSchema,
+  managerActionSummaryInsightRequestSchema,
+  teamCoverageInsightRequestSchema,
 ]);
 
 export const insightFactValueSchema = z.discriminatedUnion('kind', [
@@ -307,6 +331,8 @@ export const insightNativeResultSchema = z
       'leave-projection': 'DATE',
       'submission-blockers': 'MONTH',
       'today-explanation': 'DATE',
+      'manager-action-summary': 'DATE',
+      'team-coverage': 'DATE',
     }[result.kind];
     const expectedScopeKind = {
       EMPLOYEE: 'SELF',
@@ -314,7 +340,7 @@ export const insightNativeResultSchema = z
       MANAGER: 'CURRENT_DIRECT_REPORTS',
       SYSTEM: 'TECHNICAL_DIAGNOSTICS',
     }[result.workspace];
-    if (result.workspace !== 'EMPLOYEE' || result.scope.workspace !== result.workspace) {
+    if (result.scope.workspace !== result.workspace) {
       context.addIssue({
         code: 'custom',
         message: 'The Insight scope must match its active workspace.',
@@ -353,6 +379,8 @@ export const insightNativeResultSchema = z
       REPORT: 'REPORTS',
       TIME_ACCOUNT_LEDGER: 'MY_BALANCES',
       TODAY_ATTENDANCE: 'TODAY',
+      APPROVAL_INBOX: 'APPROVAL_INBOX',
+      TEAM_STATUS: 'TEAM_STATUS',
     } as const;
     for (const [index, source] of result.sources.entries()) {
       if (source.destination !== expectedSourceDestination[source.kind]) {
@@ -598,7 +626,20 @@ export type SubmissionBlockersInsightRequest = z.infer<
 >;
 export type LeaveProjectionInsightRequest = z.infer<typeof leaveProjectionInsightRequestSchema>;
 export type TodayExplanationInsightRequest = z.infer<typeof todayExplanationInsightRequestSchema>;
+export type ManagerActionSummaryInsightRequest = z.infer<
+  typeof managerActionSummaryInsightRequestSchema
+>;
+export type TeamCoverageInsightRequest = z.infer<typeof teamCoverageInsightRequestSchema>;
 export type InsightRequest = z.infer<typeof insightRequestSchema>;
+export type EmployeeInsightKind = Extract<
+  InsightKind,
+  'balance-change' | 'submission-blockers' | 'leave-projection' | 'today-explanation'
+>;
+export type EmployeeInsightRequest =
+  | BalanceChangeInsightRequest
+  | SubmissionBlockersInsightRequest
+  | LeaveProjectionInsightRequest
+  | TodayExplanationInsightRequest;
 export type InsightFactValue = z.infer<typeof insightFactValueSchema>;
 export type InsightFact = z.infer<typeof insightFactSchema>;
 export type InsightSource = z.infer<typeof insightSourceSchema>;

@@ -411,4 +411,61 @@ describe('Insight contracts', () => {
       }).success,
     ).toBe(true);
   });
+
+  it('keeps manager purposes date-scoped, current-direct-report scoped, and source-bound', () => {
+    const request = {
+      kind: 'team-coverage',
+      period: { date: '2026-08-28', kind: 'DATE' },
+      workspace: 'MANAGER',
+    } as const;
+    expect(insightRequestSchema.parse(request)).toEqual(request);
+    expect(insightRequestSchema.safeParse({ ...request, employeeId: 'employee-1' }).success).toBe(
+      false,
+    );
+
+    const source = {
+      destination: 'TEAM_STATUS',
+      kind: 'TEAM_STATUS',
+      period: request.period,
+      reference: 'source_team_status',
+    } as const;
+    expect(
+      insightNativeResultSchema.safeParse({
+        actions: [
+          {
+            code: 'OPEN_TEAM_STATUS',
+            destination: 'TEAM_STATUS',
+            reference: 'action_team_status',
+            sourceReferences: [source.reference],
+          },
+        ],
+        facts: [
+          {
+            code: 'TEAM_UNAVAILABLE_COUNT',
+            qualifiers: ['CURRENT'],
+            reference: 'fact_team_unavailable',
+            sourceReferences: [source.reference],
+            value: { kind: 'COUNT', value: 2 },
+          },
+        ],
+        freshness: {
+          boundaries: [
+            {
+              kind: 'CALCULATED_THROUGH',
+              localDate: request.period.date,
+              sourceReferences: [source.reference],
+            },
+          ],
+          capturedAt: '2026-08-28T08:15:30Z',
+        },
+        kind: request.kind,
+        limitations: [],
+        period: request.period,
+        scope: { kind: 'CURRENT_DIRECT_REPORTS', workspace: 'MANAGER' },
+        sources: [source],
+        timeZone: 'Europe/Berlin',
+        workspace: 'MANAGER',
+      }).success,
+    ).toBe(true);
+  });
 });

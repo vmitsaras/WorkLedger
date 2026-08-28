@@ -8,10 +8,10 @@ import {
 import {
   insightNativeResultSchema,
   insightWorkspaceSchema,
-  type InsightKind,
+  type EmployeeInsightKind,
   type InsightNativeAction,
   type InsightNativeResult,
-  type InsightRequest,
+  type EmployeeInsightRequest,
   type InsightSource,
   type InsightWorkspace,
 } from '@workledger/contracts/insights';
@@ -79,7 +79,7 @@ export type InsightToolDefinition = Readonly<{
   }>;
   minimumResultFields: readonly InsightToolResultField[];
   modelExposure: 'PRIVATE_LOCAL_MINIMIZED';
-  nativeKind: InsightKind;
+  nativeKind: EmployeeInsightKind;
   outputAllowlist: Readonly<{
     actions: readonly InsightToolActionRule[];
     factCodes: readonly string[];
@@ -271,7 +271,7 @@ function defineEmployeeTool(
     code: InsightToolCode;
     factCodes: readonly string[];
     freshnessBoundaryKinds: readonly InsightNativeResult['freshness']['boundaries'][number]['kind'][];
-    insightKind: InsightKind;
+    insightKind: EmployeeInsightKind;
     limitationCodes: readonly string[];
     limits: Readonly<{
       actions: number;
@@ -320,7 +320,7 @@ function defineEmployeeTool(
   });
 }
 
-function requestForToolCall(call: InsightToolCall): InsightRequest {
+function requestForToolCall(call: InsightToolCall): EmployeeInsightRequest {
   switch (call.code) {
     case 'employee_balance_change':
       return Object.freeze({
@@ -352,7 +352,7 @@ function requestForToolCall(call: InsightToolCall): InsightRequest {
 function resultMatchesDefinition(
   result: InsightNativeResult,
   definition: InsightToolDefinition,
-  request: InsightRequest,
+  request: EmployeeInsightRequest,
   capturedAt: Instant,
 ): boolean {
   if (
@@ -401,7 +401,7 @@ function resultMatchesDefinition(
 
 function periodsMatch(
   left: InsightNativeResult['period'],
-  right: InsightRequest['period'],
+  right: EmployeeInsightRequest['period'],
 ): boolean {
   if (left.kind !== right.kind) return false;
   switch (left.kind) {

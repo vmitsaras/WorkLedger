@@ -40,6 +40,14 @@ const INSIGHT_KIND_KEYS = {
     description: 'employee.insights.kind.todayExplanation.description',
     title: 'employee.insights.kind.todayExplanation.title',
   },
+  'manager-action-summary': {
+    description: 'employee.insights.kind.submissionBlockers.description',
+    title: 'shared.route.title.approvalInbox',
+  },
+  'team-coverage': {
+    description: 'employee.insights.kind.todayExplanation.description',
+    title: 'shared.route.title.teamStatus',
+  },
 } as const satisfies Readonly<
   Record<InsightKind, Readonly<{ description: MessageKey; title: MessageKey }>>
 >;
@@ -102,6 +110,8 @@ const SOURCE_KIND_KEYS = {
   REPORT: 'employee.insights.source.report',
   TIME_ACCOUNT_LEDGER: 'employee.insights.source.timeAccountLedger',
   TODAY_ATTENDANCE: 'employee.insights.source.todayAttendance',
+  APPROVAL_INBOX: 'shared.route.title.approvalInbox',
+  TEAM_STATUS: 'shared.route.title.teamStatus',
 } as const satisfies Readonly<Record<InsightSourceKind, MessageKey>>;
 
 const DESTINATION_KEYS = {
@@ -111,6 +121,8 @@ const DESTINATION_KEYS = {
   MY_TIME: 'employee.insights.destination.myTime',
   REPORTS: 'employee.insights.destination.reports',
   TODAY: 'employee.insights.destination.today',
+  APPROVAL_INBOX: 'shared.route.title.approvalInbox',
+  TEAM_STATUS: 'shared.route.title.teamStatus',
 } as const satisfies Readonly<Record<InsightNativeActionDestination, MessageKey>>;
 
 const CONTEXT_KEYS = {
@@ -250,6 +262,8 @@ export function insightDestinationPath(
   period: InsightPeriod | undefined,
 ): string {
   if (destination === 'MY_REQUESTS') return '/requests';
+  if (destination === 'APPROVAL_INBOX') return '/approvals';
+  if (destination === 'TEAM_STATUS') return '/team';
   if (destination === 'REPORTS') return '/reports';
   if (destination === 'TODAY') return '/today';
   const base = destination === 'MY_BALANCES' ? '/my-balances' : '/my-time';
