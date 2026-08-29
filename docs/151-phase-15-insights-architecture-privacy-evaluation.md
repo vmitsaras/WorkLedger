@@ -165,7 +165,7 @@ separate roadmap decision rescopes them. See
 | HR aggregate | `WL-1512` and `WL-1513` | `WL-1509` and `WL-1508G` complete | Accepted deterministic privacy decision, suppression before result construction, no row data or inference leak |
 | System | `WL-1514` | Complete | `docs/164-wl-1514-system-insights.md`; technical facts remain isolated from all employee and HR data with zero provider calls |
 | Removed work | `WL-1510`, `WL-1511`, `WL-1515` | Closed employee pilot | Obsolete in Phase 15; revival requires a new roadmap and applicable decision gates |
-| Phase release | `WL-1516` | `WL-1509`, `WL-1512`, `WL-1513`, and `WL-1514` complete | Full deterministic multilingual, accessibility, privacy, security, operations, upgrade, rollback, and provider-disabled gates; version `0.16.0` |
+| Phase release | `WL-1516` | Complete | `docs/165-wl-1516-phase-15-gate-review.md`; full deterministic multilingual, accessibility, privacy, security, operations, upgrade, rollback, and provider-disabled gates; version `0.16.0` |
 
 No deterministic row may bypass its revised prerequisite. `WL-1508G` replaces downstream task
 sequencing only; it does not mark the employee pilot complete or weaken its privacy, security, or

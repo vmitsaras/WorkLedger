@@ -116,9 +116,9 @@ combined named runtime allowances consume 134,442 of 135,000 raw bytes and 24,11
 bytes; the largest JavaScript chunk, CSS, and all three locale chunks remain within their unchanged
 limits.
 
-No dependency, migration, persistence model, manifest, or workspace version changed. `WL-1514` is
-not the Phase 15 exit gate, so `WL-1516` retains the `0.16.0` version bump and final release
-checklist.
+No dependency, migration, persistence model, manifest, or workspace version changed during
+`WL-1514`. The later `WL-1516` exit gate completed the final release checklist and advanced all
+workspace manifests to `0.16.0`; see `docs/165-wl-1516-phase-15-gate-review.md`.
 
 ## Residual limits
 

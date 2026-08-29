@@ -44,3 +44,12 @@ dependency and cannot call one.
 
 The lazy Manager route has a bounded 7,000 byte raw and 2,000 byte gzip application allowance.
 Locale chunks remain governed by the existing per locale limits.
+
+## Phase 15 gate confirmation
+
+`WL-1516` added the Manager route to the canonical PostgreSQL command and confirmed authenticated
+and CSRF-protected transport, strict input, current direct-report scope, exact minimized counts,
+provider-disabled execution, and immediate denial after assignment or role revocation. That gate
+also fixed final native-result construction so the internal freshness-boundary field is converted
+only into the strict public `freshness` object. See
+`docs/165-wl-1516-phase-15-gate-review.md`.

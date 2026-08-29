@@ -2,15 +2,19 @@
 
 **Current phase:** Phase 15 — WorkLedger Insights (local AI pilot closed)
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
-**Phase progress:** Phase 15 in progress — 9 of 10 accepted deterministic tasks complete
-**Current milestone:** Deterministic provider-disabled release gate (`WL-1516`)
-**Active task:** `WL-1516` — Execute the Phase 15 release gates and advance manifests to `0.16.0`
-**Status:** `WL-1514` is complete; `WL-1516` is ready
-**Last verified:** 2026-08-28
+**Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
+**Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
+**Active task:** None; no later numbered roadmap task is assigned
+**Status:** `WL-1516` complete; provider mode remains disabled and no model is approved
+**Last verified:** 2026-08-29
 
 ## Current objective
 
-Phase 15 is a staged, post-MVP extension. Completed `WL-1500` accepts ADR 0014 and
+Phase 15 is complete at internal milestone `0.16.0`. `WL-1516` reconciles the accepted
+deterministic Employee, Manager, privacy-suppressed HR aggregate, and isolated System paths; closes
+the final database route-coverage and native-result validation defects; passes repository,
+PostgreSQL, upgrade, production, browser, accessibility, privacy, and reviewed visual gates; and
+keeps provider mode disabled with no approved model. Completed `WL-1500` accepts ADR 0014 and
 `docs/151-phase-15-insights-architecture-privacy-evaluation.md`. Completed `WL-1501` now supplies
 strict typed Employee Insight requests, closed native result validation, and a repeatable-read
 service that reloads current PostgreSQL authority before every handler. Deterministic native facts
@@ -87,14 +91,14 @@ no-store endpoint, and an accessible multilingual native route with zero provide
 Completed `WL-1514` adds one isolated technical System Insight with strict version, readiness,
 schema, host-owned backup-boundary, mail-configuration, and session-policy facts. It reauthorizes
 current System scope, exposes no employee or HR field, states that backup runtime truth is
-unavailable to the application, and has no provider dependency. `WL-1516` now owns the
-provider-disabled release gate. Manager model interpretation (`WL-1510`),
+unavailable to the application, and has no provider dependency. Completed `WL-1516` records the
+provider-disabled release gate in `docs/165-wl-1516-phase-15-gate-review.md`. Manager model interpretation (`WL-1510`),
 natural-language report generation (`WL-1511`), and optional MCP evaluation (`WL-1515`) are obsolete
 and removed from the accepted Phase 15 scope. General chat, natural-language SQL, unrestricted
 tools, scoring, prediction, recommendations, autonomous actions, and model-authored domain
 decisions remain excluded.
 
-Phase 14 remains complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
+Phase 15 is complete at `0.16.0`; Phase 14 remains complete at `0.15.0`. `WL-1400` accepted ADR 0013, `WL-1401` provides the typed runtime
 foundation, and completed `WL-1402` persists authoritative account and invitation locales plus the
 bounded signed-out device preference. `WL-1403` supplies language-neutral API descriptors for its
 bounded migration set. Completed `WL-1404` now localizes the shared and authenticated foundation,
@@ -3312,19 +3316,30 @@ migration, persistence model, manifest, or version changed. Its lazy 6.59 kB raw
 route is governed by a separate 10,000-byte raw / 3,000-byte gzip allowance without changing the
 application, largest-chunk, CSS, locale, or earlier runtime baselines. `WL-1516` is ready.
 
+**2026-08-29: WL-1516 deterministic Phase 15 release gate complete**
+
+Passed the accepted multilingual, accessibility, security, privacy, retention, usability,
+provider-disabled, PostgreSQL, upgrade, production, browser, and reviewed visual gates. The review
+found and fixed strict public-result construction in Manager and HR services, added both route
+tests to the canonical PostgreSQL command, repaired the HR migration fixture, and added missing
+Manager multilingual and provider-disabled browser evidence. Reviewed Phase 13 and Phase 14
+baselines now include the intentional native-first Insights surface, navigation, locale formatting,
+and translated labels; clean comparison-mode reruns pass. Provider mode remains disabled, no model
+is approved, and no accepted route depends on Ollama. `docs/165-wl-1516-phase-15-gate-review.md`
+records the signed checklist. All ten manifests advance from `0.15.0` to `0.16.0`; no lockfile,
+dependency, migration, persistence model, tag, publication, deployment, or provider request is part
+of the milestone.
+
 ## Current blockers
 
-The deterministic Insights foundation sub-gate is complete. The optional employee local AI pilot
-is closed without passing after the best strict full run reached 207/216 and the final qualified
-`qwen2.5-coder:14b` recovery screen reached 3/9. Provider mode remains disabled and no model is
-approved for deployment. No roadmap blocker prevents the provider-disabled `WL-1516` release gate.
-The broad
-environment-independent integration command and the canonical isolated `pnpm db:test` gate are
-green. Exact partial-day work-versus-absence overlap,
+No blocker remains for the completed deterministic Phase 15 gate. The optional employee local AI
+pilot is closed without passing after the best strict full run reached 207/216 and the final
+qualified `qwen2.5-coder:14b` recovery screen reached 3/9. Provider mode remains disabled and no
+model is approved for deployment. Exact partial-day work-versus-absence overlap,
 calculation-to-ledger mismatch, and break-duration warning signals still require authoritative
 domain or repository facts; Today does not guess them from minute totals or an otherwise valid
-overnight session. The earlier Phase 12 and task-specific Phase 13 images remain historical and
-intentionally differ from the current green `WL-1312` visual gate.
+overnight session. Earlier task-specific images remain historical while the current cumulative
+Phase 13 and Phase 14 comparison gates are green.
 `D-502` remains the broader exact retail assistive-technology matrix rather than a whole-product
 conformance claim; `WL-1307` supplies bounded VoiceOver evidence in Chrome for Testing and Safari.
 The temporary Astro backup is recoverable at
@@ -3333,13 +3348,9 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-Execute `WL-1516` as the deterministic Phase 15 release gate. Reconfirm every accepted workspace,
-provider-disabled path, multilingual and accessibility boundary, security/privacy contract,
-upgrade and rollback procedure, and browser-storage/cache constraint; close any P0/P1 defect,
-synchronize the final checklist, and advance all ten manifests to `0.16.0` only when the gate
-passes.
-The portfolio presentation scope remains preserved in `docs/drafts/portfolio-presentation.md` as a
-separate unnumbered draft.
+No later numbered roadmap task is assigned. The portfolio presentation scope remains preserved in
+`docs/drafts/portfolio-presentation.md` as a separate unnumbered draft and requires an explicit
+scheduling decision before implementation begins.
 
 ## Update rules
 

@@ -60,14 +60,14 @@ test('runs the fixed System Insight accessibly in every supported locale without
     const rendered = renderSystemInsights(runtime);
 
     expect(fetch).not.toHaveBeenCalled();
-    expect(screen.queryByText('0.15.0')).not.toBeInTheDocument();
+    expect(screen.queryByText('0.16.0')).not.toBeInTheDocument();
     const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
     if (submit === null) throw new Error('Expected System Insight submit button.');
     await user.click(submit);
 
     expect(await screen.findByRole('heading', { name: expected[locale].heading })).toBeVisible();
     expect(screen.getByText(expected[locale].limitation)).toBeVisible();
-    expect(screen.getByText('0.15.0')).toBeVisible();
+    expect(screen.getByText('0.16.0')).toBeVisible();
     expect(rendered.container.querySelectorAll('dt')).toHaveLength(10);
     expect(rendered.container.querySelectorAll('li')).toHaveLength(5);
     expect(screen.getByRole('link')).toHaveAttribute('href', '/system/operations');
@@ -122,7 +122,7 @@ const SYSTEM_RESULT: SystemInsightNativeResult = {
     },
   ],
   facts: [
-    { code: 'APPLICATION_VERSION', source: 'APPLICATION_MANIFEST', value: '0.15.0' },
+    { code: 'APPLICATION_VERSION', source: 'APPLICATION_MANIFEST', value: '0.16.0' },
     { code: 'SERVICE_HEALTH', source: 'DATABASE_READINESS', value: 'HEALTHY' },
     { code: 'DATABASE_HEALTH', source: 'DATABASE_READINESS', value: 'HEALTHY' },
     { code: 'EXPECTED_SCHEMA_STATUS', source: 'DATABASE_READINESS', value: 'READY' },

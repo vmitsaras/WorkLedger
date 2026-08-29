@@ -5,10 +5,10 @@ requests, approvals, corrections, and auditable monthly records in small and med
 remote, and hybrid organizations.
 
 > **Project readiness: Stage 5 of 5 — Production and UI release gates complete**<br>
-> **Current phase progress: Phase 14 — 11 of 11 tasks complete**<br>
-> **Internal milestone: `0.15.0`**
+> **Current phase progress: Phase 15 — 10 of 10 accepted deterministic tasks complete**<br>
+> **Internal milestone: `0.16.0`**
 
-Phases 0–14 have passed their exit gates. The repository includes attendance, flexible-time and
+Phases 0–15 have passed their exit gates. The repository includes attendance, flexible-time and
 leave ledgers, correction and absence workflows, manager approvals and team availability, monthly
 review and locking, post-lock adjustments, reports and safe CSV export, HR administration,
 separate technical administration, production deployment and operations, and the Quiet Ledger UI
@@ -18,7 +18,7 @@ public project site, safe demo presentation, case study media, and final portfol
 remain an unnumbered draft without a task or version gate.
 
 The production reference deployment, backup/restore, migration/upgrade, retention, diagnostics,
-security, accessibility automation, and UI release gates are complete. `0.15.0` is an internal
+security, accessibility automation, and UI release gates are complete. `0.16.0` is an internal
 milestone, not a hosted service, package publication, container release, browser support warranty,
 or WCAG conformance statement.
 
@@ -26,7 +26,11 @@ Phase 14 has an accepted internationalization architecture, a typed local founda
 `en-GB`, `de-DE`, and `es-ES`, persisted account/invitation plus signed-out device locale
 preferences, descriptor-driven presentation, localized workflows and generated output,
 fluent-human German and Spanish approval, completed multilingual product-quality and database
-upgrade gates, and the signed `0.15.0` release milestone.
+upgrade gates, and the signed `0.15.0` release milestone. Phase 15 adds deterministic, read-only,
+role-scoped Employee, Manager, privacy-suppressed HR aggregate, and isolated System Insights. The
+optional private model pilot closed without passing; provider mode remains disabled, no model is
+approved, and every accepted Insight route remains complete without Ollama. The signed
+provider-disabled milestone is `0.16.0`.
 
 ## Current status
 

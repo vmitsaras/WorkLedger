@@ -71,7 +71,7 @@ const SYSTEM_INSIGHT_RESULT: SystemInsightNativeResult = {
     },
   ],
   facts: [
-    { code: 'APPLICATION_VERSION', source: 'APPLICATION_MANIFEST', value: '0.15.0' },
+    { code: 'APPLICATION_VERSION', source: 'APPLICATION_MANIFEST', value: '0.16.0' },
     { code: 'SERVICE_HEALTH', source: 'DATABASE_READINESS', value: 'CRITICAL' },
     { code: 'DATABASE_HEALTH', source: 'DATABASE_READINESS', value: 'UNAVAILABLE' },
     { code: 'EXPECTED_SCHEMA_STATUS', source: 'DATABASE_READINESS', value: 'NOT_READY' },
@@ -3119,7 +3119,7 @@ test('runs the isolated System Insight only on request without persistent or dom
   await expect(
     page.getByRole('heading', { name: 'Backup runtime status is not available' }),
   ).toBeVisible();
-  await expect(page.getByText('0.15.0')).toBeVisible();
+  await expect(page.getByText('0.16.0')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open system operations' })).toHaveAttribute(
     'href',
     '/system/operations',

@@ -37,14 +37,14 @@ only through a new roadmap decision and, where required, a superseding ADR and t
 | `WL-1508A`, `WL-1508E`, `WL-1508F` | Complete | Retained pilot recovery evidence |
 | `WL-1508B` | Closed after failed screen | Does not pass and will not resume |
 | `WL-1508C`, `WL-1508D` | Closed without execution | Obsolete after the pilot closure |
-| `WL-1509` | Planned | Ready after `WL-1504` and this reconciliation |
+| `WL-1509` | Complete | Deterministic current-direct-report Manager Insights |
 | `WL-1510` | Obsolete | Manager model interpretation removed from Phase 15 |
 | `WL-1511` | Obsolete | Natural-language report generation removed from Phase 15 |
-| `WL-1512` | Planned, reframed | Define deterministic HR aggregate contracts and privacy suppression |
-| `WL-1513` | Planned | Implement only the accepted deterministic HR aggregates |
-| `WL-1514` | Planned, reframed | Implement deterministic technical System Insights only |
+| `WL-1512` | Complete | Deterministic HR aggregate contracts and privacy suppression accepted |
+| `WL-1513` | Complete | Accepted deterministic HR aggregates implemented |
+| `WL-1514` | Complete | Deterministic technical System Insights implemented |
 | `WL-1515` | Obsolete | MCP evaluation removed from Phase 15 |
-| `WL-1516` | Planned, reframed | Verify only accepted deterministic and provider-disabled paths |
+| `WL-1516` | Complete | Accepted deterministic and provider-disabled paths verified at `0.16.0` |
 
 ## Revised dependencies
 
@@ -89,10 +89,10 @@ active. Phase 15 still follows the repository rule of one active roadmap task at
 
 ### 5. `WL-1516` deterministic Phase 15 release gate
 
-Run the applicable multilingual, accessibility, security, privacy, usability, upgrade, rollback,
-and provider-disabled evidence. Confirm no accepted route depends on Ollama, no model is approved,
-and provider mode remains disabled. Advance manifests to `0.16.0` only after every accepted
-deterministic task passes.
+Completed on 2026-08-29. The applicable multilingual, accessibility, security, privacy, usability,
+upgrade, rollback, provider-disabled, database, production, and visual evidence passes. No accepted
+route depends on Ollama, no model is approved, provider mode remains disabled, and all ten
+manifests advance to `0.16.0`. See `docs/165-wl-1516-phase-15-gate-review.md`.
 
 ## Non-goals
 

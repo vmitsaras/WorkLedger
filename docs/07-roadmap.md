@@ -647,16 +647,16 @@ decision and the applicable ADR, privacy, security, evaluation, and threat gates
 The release gate follows only the accepted deterministic continuation. It cannot advance the
 workspace version until `WL-1509`, `WL-1512`, `WL-1513`, and `WL-1514` pass.
 
-- [ ] Every accepted Phase 15 role and provider-disabled path passes its named prerequisite
+- [x] Every accepted Phase 15 role and provider-disabled path passes its named prerequisite
   and evidence gate.
-- [ ] Manager scope is current reports only, HR aggregation is suppressed before result construction, and
+- [x] Manager scope is current reports only, HR aggregation is suppressed before result construction, and
   System Insights contains technical data only.
-- [ ] No unrestricted query, SQL, write, scoring, prediction, recommendation, autonomous action,
+- [x] No unrestricted query, SQL, write, scoring, prediction, recommendation, autonomous action,
   public provider, cloud model, or unreviewed MCP surface exists.
-- [ ] Multilingual, accessibility, security, privacy, retention, operations, provider-disabled
+- [x] Multilingual, accessibility, security, privacy, retention, operations, provider-disabled
   configuration, upgrade, rollback, and browser privacy evidence has no open P0/P1 or unresolved
   Critical/High finding.
-- [ ] Project status, roadmap, task board, ADR, product, permission, architecture, accessibility,
+- [x] Project status, roadmap, task board, ADR, product, permission, architecture, accessibility,
   security, retention, evaluation, and operations documentation is current.
-- [ ] The gate advances every workspace manifest to `0.16.0` only after every accepted Phase 15 task
+- [x] The gate advances every workspace manifest to `0.16.0` only after every accepted Phase 15 task
   passes.
