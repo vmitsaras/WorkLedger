@@ -75,9 +75,10 @@ export function createHrInsightService(database: WorkLedgerDatabase): HrInsightS
             if (aggregate.kind === 'SUPPRESSED') return suppressed(request, capturedAt);
             payload = absencePayload(aggregate, monthStart, monthEnd);
           }
+          const { freshnessBoundaries, ...nativePayload } = payload;
           const result = insightNativeResultSchema.safeParse({
-            ...payload,
-            freshness: { boundaries: payload.freshnessBoundaries, capturedAt },
+            ...nativePayload,
+            freshness: { boundaries: freshnessBoundaries, capturedAt },
             kind: request.kind,
             period: { kind: 'MONTH', monthStart },
             scope: { kind: 'ORGANIZATION_AGGREGATE', workspace: 'HR' },

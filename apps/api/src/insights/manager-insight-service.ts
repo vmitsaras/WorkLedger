@@ -82,9 +82,10 @@ export function createManagerInsightService(database: WorkLedgerDatabase): Manag
                   request,
                   currentLocalDate,
                 );
+          const { freshnessBoundaries, ...nativePayload } = payload;
           const result = insightNativeResultSchema.safeParse({
-            ...payload,
-            freshness: { boundaries: payload.freshnessBoundaries, capturedAt },
+            ...nativePayload,
+            freshness: { boundaries: freshnessBoundaries, capturedAt },
             kind: request.kind,
             period: request.period,
             scope: { kind: 'CURRENT_DIRECT_REPORTS', workspace: 'MANAGER' },

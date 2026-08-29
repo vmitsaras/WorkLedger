@@ -135,6 +135,43 @@ test('runs a Manager Insight without interpretation and presents current report 
   await expectNoAxeViolations(rendered.container);
 });
 
+test('renders the Manager Insight result in every supported locale', async () => {
+  const headings = {
+    'de-DE': 'Teamabdeckung',
+    'en-GB': 'Team coverage',
+    'es-ES': 'Cobertura del equipo',
+  } as const;
+  for (const locale of ['en-GB', 'de-DE', 'es-ES'] as const) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = requestUrl(input);
+        if (url.pathname === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+        if (url.pathname === '/v1/insights/manager/run') {
+          return insightRunResponse(MANAGER_RESULT, 'DISABLED');
+        }
+        throw new Error(`Unexpected request: ${url.pathname}`);
+      }),
+    );
+    const localizedRuntime = await initializeI18n(locale);
+    const user = userEvent.setup();
+    const rendered = renderManagerInsights(localizedRuntime);
+    const kind = rendered.container.querySelector<HTMLSelectElement>('select');
+    const date = rendered.container.querySelector<HTMLInputElement>('input[type="date"]');
+    const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (kind === null || date === null || submit === null) {
+      throw new Error('Expected localized Manager form controls.');
+    }
+    await user.selectOptions(kind, 'team-coverage');
+    await user.type(date, '2026-08-27');
+    await user.click(submit);
+    expect(await screen.findByRole('heading', { name: headings[locale] })).toBeVisible();
+    await expectNoAxeViolations(rendered.container);
+    rendered.unmount();
+    vi.unstubAllGlobals();
+  }
+});
+
 test('runs only a fixed HR aggregate and renders available and generic suppressed states', async () => {
   const requests: unknown[] = [];
   let requestCount = 0;
@@ -491,8 +528,8 @@ function renderInsights(initialEntry: string) {
   return { ...rendered, queryClient, router };
 }
 
-function renderManagerInsights() {
-  if (runtime === undefined) throw new Error('Expected initialized i18n runtime.');
+function renderManagerInsights(selectedRuntime = runtime) {
+  if (selectedRuntime === undefined) throw new Error('Expected initialized i18n runtime.');
   const queryClient = createWorkLedgerQueryClient();
   const router = createMemoryRouter(
     [
@@ -503,7 +540,7 @@ function renderManagerInsights() {
     { initialEntries: ['/team-insights'] },
   );
   const rendered = render(
-    <WorkLedgerI18nProvider runtime={runtime}>
+    <WorkLedgerI18nProvider runtime={selectedRuntime}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

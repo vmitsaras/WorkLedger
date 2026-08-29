@@ -339,6 +339,49 @@ const INSIGHT_RESULT: InsightNativeResult = {
   timeZone: 'Europe/Berlin',
   workspace: 'EMPLOYEE',
 };
+const MANAGER_INSIGHT_RESULT: InsightNativeResult = {
+  actions: [
+    {
+      code: 'OPEN_TEAM_STATUS',
+      destination: 'TEAM_STATUS',
+      reference: 'action_source_team_status',
+      sourceReferences: ['source_team_status'],
+    },
+  ],
+  facts: [
+    {
+      code: 'TEAM_WORKING_COUNT',
+      qualifiers: ['CURRENT'],
+      reference: 'fact_team_working_count',
+      sourceReferences: ['source_team_status'],
+      value: { kind: 'COUNT', value: 2 },
+    },
+  ],
+  freshness: {
+    boundaries: [
+      {
+        kind: 'CALCULATED_THROUGH',
+        localDate: '2026-08-28',
+        sourceReferences: ['source_team_status'],
+      },
+    ],
+    capturedAt: '2026-08-28T12:00:00Z',
+  },
+  kind: 'team-coverage',
+  limitations: [],
+  period: { date: '2026-08-28', kind: 'DATE' },
+  scope: { kind: 'CURRENT_DIRECT_REPORTS', workspace: 'MANAGER' },
+  sources: [
+    {
+      destination: 'TEAM_STATUS',
+      kind: 'TEAM_STATUS',
+      period: { date: '2026-08-28', kind: 'DATE' },
+      reference: 'source_team_status',
+    },
+  ],
+  timeZone: 'Europe/Berlin',
+  workspace: 'MANAGER',
+};
 const INSIGHT_INTERPRETATION = {
   locale: 'en-GB' as const,
   statements: [
@@ -763,6 +806,64 @@ test('runs an employee insight only on request with accessible narrow and forced
 
   await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
   await expect(page.getByRole('button', { name: 'Run insight' })).toBeVisible();
+  await expectPageToHaveNoAxeViolations(page);
+});
+
+test('runs a provider-disabled Manager Insight privately and accessibly at reflow', async ({
+  page,
+}) => {
+  const requests: unknown[] = [];
+  await page.route('**/v1/me/context', async (route) => {
+    await route.fulfill({ json: success(MANAGER_CONTEXT), status: 200 });
+  });
+  await page.route('**/v1/me/csrf', async (route) => {
+    await route.fulfill({ json: success({ token: 'c'.repeat(64) }), status: 200 });
+  });
+  await page.route('**/v1/insights/manager/run', async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({
+      json: {
+        data: MANAGER_INSIGHT_RESULT,
+        meta: { interpretationAvailability: 'DISABLED', requestId: REQUEST_ID },
+      },
+      status: 200,
+    });
+  });
+
+  await page.setViewportSize({ height: 900, width: 320 });
+  await page.goto('/team-insights');
+  await expect(page.getByRole('heading', { exact: true, name: 'Insights' })).toBeFocused();
+  expect(requests).toHaveLength(0);
+  await page.getByLabel('What would you like to understand?').selectOption('team-coverage');
+  await page.getByLabel('Date').fill('2026-08-28');
+  await page.getByRole('button', { name: 'Run insight' }).focus();
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByRole('heading', { name: 'Team coverage' })).toBeVisible();
+  await expect(page.getByText('Current direct reports', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { exact: true, name: 'Team status' })).toHaveAttribute(
+    'href',
+    '/team',
+  );
+  await expect(page.getByLabel('Question about this result')).toHaveCount(0);
+  await expect(page).toHaveURL('/team-insights');
+  expect(requests).toEqual([
+    {
+      kind: 'team-coverage',
+      period: { date: '2026-08-28', kind: 'DATE' },
+      workspace: 'MANAGER',
+    },
+  ]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  const storage = await page.evaluate(() => ({
+    local: JSON.stringify(localStorage),
+    session: JSON.stringify(sessionStorage),
+  }));
+  expect(JSON.stringify(storage)).not.toContain('team-coverage');
+
+  await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
   await expectPageToHaveNoAxeViolations(page);
 });
 

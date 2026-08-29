@@ -21,27 +21,18 @@
 - ✅ System diagnostics integration (retention status in `/v1/system/operations`)
 - ✅ Documentation (this file)
 
-### Pending Repository Integration
+### Repository integration
 
-The following components require repository methods to be added to `WorkLedgerTransaction`:
+`WorkLedgerTransaction.retention` is implemented by `PostgresRetentionRepository`. Its bounded
+methods purge expired sessions, verification grants, notification deliveries, technical audit
+events, and export artifacts; minimize decision reasons and inactive employee display names; record
+content-free execution and minimization facts; report the latest job status; and query only the
+authorized employee rows needed to generate a user export.
 
-- ⏸️ Retention job execution (purge/minimization logic written, needs repository access)
-- ⏸️ User export generation (export structure defined, needs repository query methods)
-- ⏸️ Export route handlers (awaiting repository integration)
-
-Current WorkLedger architecture uses the repository pattern rather than direct SQL execution.
-Completing WL-1007 requires adding retention-specific methods to the transaction interface,
-similar to existing repositories like `attendance`, `absenceRequests`, etc.
-
-**Follow-up task**: Add `retention` repository to `WorkLedgerTransaction` with methods for:
-- `executeAuthTransientPurge(cutoffDate)`
-- `executeNotificationsPurge(cutoffDate)`  
-- `executeTechnicalAuditPurge(cutoffDate)`
-- `executeSensitiveHRMinimization(cutoffDate, jobExecutionId)`
-- `executeDomainHistoryMinimization(cutoffDate, jobExecutionId)`
-- `generateUserExport(employeeId, options)`
-- `purgeExpiredExports()`
-- `getJobExecutionStatus()`
+Retention jobs and user export services call those methods through database transactions. The
+same repository boundary supports the authenticated export routes and retention status exposed by
+System operations. PostgreSQL integration tests cover job execution, minimization, artifact
+generation, authorized download, expiry, and purge behavior.
 
 ## Retention Profile
 

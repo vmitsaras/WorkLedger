@@ -8,13 +8,16 @@
 
 WorkLedger uses zero-indexed phase-gate versioning: `0.<completed phase-gate count>.0`. Version
 `0.10.0` marks Phase 9 completion, `0.11.0` marks Phase 10 completion, `0.12.0` marks Phase 11
-UI-foundation completion, `0.13.0` marks Phase 12 completion, and `0.14.0` marks Phase 13
-completion. Phase 14 advances to `0.15.0` only after its release gate passes.
+UI-foundation completion, `0.13.0` marks Phase 12 completion, `0.14.0` marks Phase 13 completion,
+and `0.15.0` marks Phase 14 completion. Phase 15 advances to `0.16.0` only after its deterministic
+provider-disabled release gate passes.
 
 - **Schema migrations are cumulative and forward-only.** Each version includes all prior migrations.
 - **Backward compatibility within the current pre-1.0 line is not guaranteed.**
 - **Test upgrades from at least the prior supported release** before applying to production.
-- **Current tested fixture path:** `0.9.0` → `0.15.0` through the cumulative migration set.
+- **Current tested fixture path:** `0.9.0` → the current workspace version through the cumulative
+  migration set. The `WL-1516` rehearsal applies the Phase 9 checkpoint and all five later
+  migrations, then verifies row preservation, integrity, and authentication-profile compatibility.
 
 Future breaking changes to authentication, session handling, or core domain contracts will be documented in release notes with explicit migration procedures.
 
