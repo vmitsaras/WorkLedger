@@ -4,19 +4,20 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — diagnose failed Spanish submission-actions completeness
+**Active task:** WL-1508B — action omission diagnosed; question-relevant action coverage design next
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
 
-Fresh WL-1508B failed its first group in report 179: submission-actions passed 6/9, with all
-three Spanish cases omitting the required pending-request action. Runtime outcomes were SUCCESS
-with null provider/validation failure codes; independent golden acceptance rejected the omission.
-No retry, today-posted group or C run followed. Exact K-qualified controls, source hashes and
-isolation were unchanged; the owned candidate was stopped. B remains open for diagnosis, C/D
-gated and deployment disabled at 0.16.0. K remains complete in report 178; J's deterministic
-evidence remains in report 177.
+Report 180 completes the action-omission diagnosis: both navigation actions reach the model and
+positional decoding preserves them. The no-limitation fixture activates no material-action checks,
+while the prompt explicitly requires question-relevant facts but actions only through material
+limitations. The Spanish pending-request omission therefore passes runtime grounding and fails
+independent golden acceptance. Its locale-specific model cause is not established. No tests or
+inference ran during diagnosis. Next: design question-relevant action coverage without weakening
+privacy, optional-action semantics or golden checks. B stays failed/open at 6/9; today-posted/C/D
+remain gated, K complete and deployment disabled at 0.16.0.
 
 Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
 The accepted recovery contract remains spec 0003/D-512.
