@@ -77,3 +77,10 @@ Semantic pass, implementation pass and deployment approval are distinct.
 and the incomplete model attempt: 32 correct valid responses, then a 120-second deadline stop;
 27 cases unrun and partial p95 102.172 seconds. The accepted English-only feature contract remains,
 but the candidate has not passed its evaluation. No threshold is relaxed and no deployment follows.
+
+The subsequent context-size experiment in [report 200](../200-wl-1508n-runtime-performance-recovery.md)
+completed the unchanged 60-case matrix with context 8192: 40/40 supported English suggestions
+correct and p95 510 ms, but UNKNOWN only 12/20. The cold first suggestion took 20.754 seconds.
+This supersedes the incomplete run as current evaluation evidence while preserving it historically.
+The candidate still fails this ADR's strict acceptance criteria. A documented best-effort
+English-only support contract is proposed in report 200; no such amendment is accepted yet.

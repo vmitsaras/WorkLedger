@@ -30,7 +30,7 @@ Phases 0–15 have passed their accepted exit gates; the workspace version is `0
 [Report 165](165-wl-1516-phase-15-gate-review.md) records the deterministic Phase 15 release.
 The optional employee AI pilot has not passed and provider deployment remains disabled.
 
-**Current status: WL-1508N implemented and verified; candidate acceptance blocked on runtime performance (D-520 / ADR 0015).** Follow [report 199](199-english-local-ai-topic-suggestions.md)
+**Current status: WL-1508N implemented and verified; full evaluation passes English topics/latency but fails UNKNOWN acceptance (D-520 / ADR 0015).** Follow [report 200](200-wl-1508n-runtime-performance-recovery.md)
 and the task board. The earlier execution plan governs only the deferred legacy interpreter.
 Historical evaluation attempts do not reopen completed product phases.
 
@@ -632,10 +632,13 @@ then an independent native run with a user-selected period. [Report 199](199-eng
 records the implementation, fixed evaluation and verification. It does not close the legacy pilot
 or change a phase gate or version. Deployment stays disabled.
 
-The full local quality gate passed. The candidate returned 32 correct topics before request 33
-reached the 120-second deadline; 27 cases did not run. Partial-run p95 102.172 seconds exceeds the
-ten-second target. N implementation is complete, but its model acceptance remains blocked. A
-future performance recovery needs a fresh full evaluation; no automatic replay or model switch is queued.
+The full local quality gate passed. [Report 200](200-wl-1508n-runtime-performance-recovery.md)
+records a fresh context-8192 evaluation: all 60 responses valid, all 40 supported English cases
+correct and p95 510 ms. UNKNOWN was only 12/20, with ambiguity and three non-English input
+classes failing. The first cold suggestion took 20.754 seconds. N remains unchecked under the
+accepted strict criteria. The next step is the explicit abstention-contract decision in report 200;
+no unchanged replay, threshold amendment, model switch or deployment is queued. Earlier latency
+failures remain in report 199.
 
 ## Legacy employee interpretation pilot sub gate
 

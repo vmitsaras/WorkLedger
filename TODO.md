@@ -2,7 +2,7 @@
 
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
-**Current status: WL-1508N implemented and verified; model acceptance blocked by runtime latency and a deadline stop.** Phases 0–15 are complete at `0.16.0`; the remaining optional
+**Current status: WL-1508N implemented and verified; full evaluation passes English topics/latency but fails UNKNOWN acceptance.** Phases 0–15 are complete at `0.16.0`; the remaining optional
 employee pilot is listed in execution order under Phase 15. Excluded proposals are not queued.
 
 ## Phase-completion version rule
@@ -214,7 +214,7 @@ remaining sequence. Keep failed attempts in reports, not in task titles.
 
 ### English-only optional AI enhancement
 
-- [ ] `WL-1508N` Implement and evaluate optional local AI topic suggestions for Employee Insights. **Implementation verified; acceptance blocked on runtime performance.** Full local verification passed. The model returned 32 correct topics, then request 33 reached the 120-second deadline; 27 cases did not run. Partial-run p95 102.172 seconds exceeds the ten-second target. D-520 / ADR 0015 retain English-only confirmation and independent native execution. No automatic rerun or deployment. [Report 199](docs/199-english-local-ai-topic-suggestions.md).
+- [ ] `WL-1508N` Implement and evaluate optional local AI topic suggestions for Employee Insights. **Implementation verified; acceptance blocked on UNKNOWN behavior.** The fresh context-8192 run completed all 60 cases: 40/40 supported English correct, p95 510 ms, but UNKNOWN only 12/20. Ambiguous, German, Spanish and mixed-language cases failed both repetitions. Cold first request took 20.754 seconds. D-520 / ADR 0015 retain strict acceptance, confirmation and independent native execution. Next: resolve the abstention contract; no unchanged replay or deployment. [Report 200](docs/200-wl-1508n-runtime-performance-recovery.md) preserves the result and options; [report 199](docs/199-english-local-ai-topic-suggestions.md) retains earlier failures and full implementation verification.
 
 ### Legacy optional employee interpretation pilot — deferred
 

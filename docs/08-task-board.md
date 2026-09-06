@@ -1,6 +1,6 @@
 # WorkLedger Detailed Task Board
 
-**Current status: WL-1508N implemented and verified; model acceptance blocked on runtime performance.** D-520 authorizes this separate enhancement. Legacy M/B/C/D remain deferred.
+**Current status: WL-1508N implemented and verified; full evaluation passes English topics/latency but fails UNKNOWN acceptance.** D-520 authorizes this separate enhancement. Legacy M/B/C/D remain deferred.
 Completed phases and excluded proposals are not pending assignments.
 
 ## Status values
@@ -292,7 +292,7 @@ disabled, with no model approved.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 | --- | --- | --- | --- | --- |
-| WL-1508N | Implement and evaluate optional local AI topic suggestions for Employee Insights | User-approved D-520 / ADR 0015; completed deterministic Insights and provider controls | [Report 199](199-english-local-ai-topic-suggestions.md): implementation and full local verify passed; 32 correct responses then request 33 reached the 120-second deadline; 27 unrun; partial p95 102.172 seconds. No automatic replay or deployment | Blocked — implementation complete, model acceptance requires runtime performance recovery |
+| WL-1508N | Implement and evaluate optional local AI topic suggestions for Employee Insights | User-approved D-520 / ADR 0015; completed deterministic Insights and provider controls | [Report 200](200-wl-1508n-runtime-performance-recovery.md): context-8192 matrix 60/60 valid; 40/40 supported English; p95 510 ms; UNKNOWN 12/20 fails. Cold first request 20.754 seconds. Identity/source/cleanup pass. Earlier implementation verification and failures retained in report 199 | Blocked — implementation verified; strict abstention remains required pending the explicit contract decision |
 
 ### Legacy optional employee interpretation pilot — deferred
 

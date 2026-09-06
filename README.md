@@ -251,11 +251,14 @@ AI does not calculate balances or write answers; WorkLedger supplies the complet
 The application and native results retain English, German and Spanish localization.
 
 The feature uses the existing private, operator-controlled Ollama adapter and stays disabled by
-default. It is experimental: the evaluated candidate returned 32 correct topics, then timed out;
-it has not passed the complete acceptance matrix or responsiveness target. The earlier multilingual
-answer-generation pilot remains deferred. See
-[the feature and evaluation report](docs/199-english-local-ai-topic-suggestions.md) for exact candidate
-results, limitations and the distinction between evaluation and deployment approval.
+default. It is experimental: a fresh 60-request evaluation with a smaller context window returned
+40/40 correct supported English suggestions with 0.51-second p95 latency, but only 12/20 expected
+UNKNOWN responses. Ambiguous and non-English inputs can still receive a topic suggestion; the
+first cold suggestion took 20.8 seconds. The candidate has not passed the full acceptance criteria.
+The earlier multilingual answer-generation pilot remains deferred. See
+[the current runtime and evaluation report](docs/200-wl-1508n-runtime-performance-recovery.md) and
+[the feature report](docs/199-english-local-ai-topic-suggestions.md) for exact candidate results,
+limitations and the distinction between evaluation and deployment approval.
 
 ## License
 

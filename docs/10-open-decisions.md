@@ -1259,3 +1259,17 @@ cleanup passed. N remains unchecked for acceptance because latency, completion a
 criteria are unmet. This is evidence of working bounded suggestions with an unqualified local
 runtime, not a complete model acceptance or a recovery of the old answer contract. No automatic
 rerun, new candidate or deployment is scheduled.
+
+The user's subsequent instruction to continue WL-1508N authorized the bounded context-size
+experiment in [report 200](200-wl-1508n-runtime-performance-recovery.md). With process-local context
+8192, the fresh matrix completed all 60 valid responses: supported English 40/40, request p95
+510 ms, first cold request 20.754 seconds, and UNKNOWN 12/20. Identity/source/cleanup checks passed.
+Ollama also changed automatic memory placement; this run does not isolate context size as the sole
+cause of the speed improvement. No persistent setting or application source changed.
+
+Strict abstention is now the unmet N criterion: ambiguous, German, Spanish and mixed-language
+questions failed both repetitions. N stays unchecked. Report 200 proposes a user decision between
+retaining strict UNKNOWN acceptance and explicitly accepting best-effort suggestions supported in
+English, with unsupported/ambiguous behavior measured and disclosed. The latter is **not accepted**;
+the async preference question is pending. No elapsed time or default answer changes this ADR,
+thresholds or deployment state. No supported semantic repair or unchanged replay is queued.
