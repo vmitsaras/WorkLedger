@@ -171,31 +171,19 @@ test('builds external links only from the configured canonical origin', () => {
   );
 });
 
-test('enables only a complete bounded private Ollama configuration', () => {
-  const config = createRuntimeConfig({
-    WORKLEDGER_ENVIRONMENT: 'test',
-    WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
-    WORKLEDGER_OLLAMA_ORIGIN: 'http://127.0.0.1:11434',
-    WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
-    WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
-    WORKLEDGER_OLLAMA_TIMEOUT_SECONDS: '45',
-    WORKLEDGER_OLLAMA_CONCURRENCY: '4',
-  });
-
-  expect(config.aiProvider).toEqual({
-    mode: 'ollama',
-    origin: 'http://127.0.0.1:11434',
-    model: 'workledger-insights:local',
-    modelDigest: LOCAL_MODEL_DIGEST,
-    timeoutMs: 45_000,
-    concurrencyLimit: 4,
-    requiredCapabilities: ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
-  });
-  expect(summarizeRuntimeConfig(config)).toMatchObject({
-    aiProviderMode: 'ollama',
-    aiProviderTimeoutMs: 45_000,
-    aiProviderConcurrencyLimit: 4,
-  });
+test('rejects optional provider configuration until a reviewed profile exists', () => {
+  for (const profile of [undefined, 'fixture-only', 'unreviewed-secret-value']) {
+    expect(() =>
+      createRuntimeConfig({
+        WORKLEDGER_ENVIRONMENT: 'test',
+        WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
+        WORKLEDGER_OLLAMA_ORIGIN: 'http://127.0.0.1:11434',
+        WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
+        WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
+        ...(profile === undefined ? {} : { WORKLEDGER_OLLAMA_COMPATIBILITY_PROFILE: profile }),
+      }),
+    ).toThrow('WORKLEDGER_OLLAMA_COMPATIBILITY_PROFILE must identify a reviewed profile');
+  }
 });
 
 test('keeps the provider disabled by default and rejects stale provider specific values', () => {

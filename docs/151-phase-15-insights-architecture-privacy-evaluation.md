@@ -23,7 +23,7 @@ fails 210/216 (report 172) and provider deployment stays disabled.
 synthetic schema qualification, runtime material fact/action completeness, and request-memory
 qualifiers limited to POSTED, PROJECTED, PROVISIONAL and INCOMPLETE. J implements and verifies;
 K separately qualifies the provider before fresh B/C. Public DTOs, safe prose, authorization and
-retention exclusions remain unchanged. This is a design amendment, not implemented behavior.
+retention exclusions remain unchanged. J now implements these boundaries; report 174 records static checks and pending test execution.
 
 ## Outcome
 

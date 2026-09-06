@@ -1,3 +1,5 @@
+import { AI_PROVIDER_ERROR_CODES } from '../ai/contracts.js';
+import { EMPLOYEE_INSIGHT_VALIDATION_FAILURE_CODES } from './employee-insight-failure-codes.js';
 import { z } from 'zod';
 import { sanitizeInsightValidationDetail } from '../logging/insight-validation-detail.js';
 import { EMPLOYEE_INSIGHT_PROVIDER_OUTPUT_FORMAT } from './employee-insight-selection.js';
@@ -39,7 +41,12 @@ const recordShape = {
 };
 const legacyRecord = z.strictObject(recordShape);
 const currentRecord = z
-  .strictObject({ ...recordShape, validationDetail: z.unknown() })
+  .strictObject({
+    ...recordShape,
+    providerFailureCode: z.enum(AI_PROVIDER_ERROR_CODES).nullable(),
+    validationFailureCode: z.enum(EMPLOYEE_INSIGHT_VALIDATION_FAILURE_CODES).nullable(),
+    validationDetail: z.unknown(),
+  })
   .superRefine((record, context) => {
     if (record.validationDetail === null) return;
     const sanitized = sanitizeInsightValidationDetail(

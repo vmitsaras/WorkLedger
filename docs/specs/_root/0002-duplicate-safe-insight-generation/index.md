@@ -12,6 +12,10 @@ The requirements below describe the implemented slice and its separately gated m
 material completeness checks plus four semantic qualifiers. It narrows the unchanged-validator and
 unchanged-context assumptions below for future J implementation; selection-v1 and public DTOs remain.
 
+**Implementation follow-up:** J implements spec 0003's profile/version admission, material fact/action
+checks and four qualifiers. Report 174 records static evidence and the unexecuted deterministic tests.
+Selection-v1 and diagnostic detail shape remain unchanged.
+
 ## Scope
 
 Replace provider-generated reference strings with fixed boolean selections. Decode those selections

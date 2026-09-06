@@ -1,9 +1,11 @@
 # 0003. Employee Insight schema enforcement and completeness
 
 **Date:** 2026-09-06  
-**Status:** Design specified; implementation and provider qualification pending  
+**Status:** Implemented in J; deterministic test execution and K qualification pending
 **Decision:** D-512  
 **Evidence:** `docs/173-wl-1508c-selection-failure-diagnosis.md`
+
+Implementation evidence and outstanding checks: `docs/174-wl-1508j-schema-completeness-implementation.md`.
 
 ## Scope and selected approach
 

@@ -1,3 +1,4 @@
+import { findOllamaCompatibilityProfile } from './ai/ollama-compatibility.js';
 import { Buffer } from 'node:buffer';
 import { isIP } from 'node:net';
 import { URL } from 'node:url';
@@ -27,6 +28,7 @@ export const RUNTIME_ENVIRONMENT_VARIABLES = {
   ollamaOrigin: 'WORKLEDGER_OLLAMA_ORIGIN',
   ollamaModel: 'WORKLEDGER_OLLAMA_MODEL',
   ollamaModelDigest: 'WORKLEDGER_OLLAMA_MODEL_DIGEST',
+  ollamaCompatibilityProfile: 'WORKLEDGER_OLLAMA_COMPATIBILITY_PROFILE',
   ollamaTimeoutSeconds: 'WORKLEDGER_OLLAMA_TIMEOUT_SECONDS',
   ollamaConcurrency: 'WORKLEDGER_OLLAMA_CONCURRENCY',
 } as const;
@@ -406,6 +408,7 @@ function parseAiProviderConfig(source: EnvironmentSource, issues: string[]): AiP
     RUNTIME_ENVIRONMENT_VARIABLES.ollamaModelDigest,
     RUNTIME_ENVIRONMENT_VARIABLES.ollamaTimeoutSeconds,
     RUNTIME_ENVIRONMENT_VARIABLES.ollamaConcurrency,
+    RUNTIME_ENVIRONMENT_VARIABLES.ollamaCompatibilityProfile,
   ] as const;
 
   if (configuredMode !== 'disabled' && configuredMode !== 'ollama') {
@@ -426,6 +429,14 @@ function parseAiProviderConfig(source: EnvironmentSource, issues: string[]): AiP
   const origin = parseOllamaOrigin(source, issues);
   const model = parseOllamaModel(source, issues);
   const modelDigest = parseOllamaModelDigest(source, issues);
+  const compatibilityProfile =
+    readOptionalValue(source, RUNTIME_ENVIRONMENT_VARIABLES.ollamaCompatibilityProfile) ?? '';
+  const profile = findOllamaCompatibilityProfile(compatibilityProfile);
+  if (profile === undefined || profile.model !== model || profile.modelDigest !== modelDigest) {
+    issues.push(
+      'WORKLEDGER_OLLAMA_COMPATIBILITY_PROFILE must identify a reviewed profile matching the configured model and digest.',
+    );
+  }
   const timeoutMs =
     parseBoundedInteger({
       source,
@@ -449,6 +460,7 @@ function parseAiProviderConfig(source: EnvironmentSource, issues: string[]): AiP
     origin,
     model,
     modelDigest,
+    compatibilityProfile,
     timeoutMs,
     concurrencyLimit,
     requiredCapabilities: Object.freeze([...AI_PROVIDER_REQUIRED_CAPABILITIES]),

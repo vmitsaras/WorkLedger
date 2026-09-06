@@ -159,7 +159,9 @@ test('orchestrates the exact employee tool and returns grounded current sources'
   expect(serializedRequest).toContain('source_today');
   expect(serializedRequest).toContain('relatedFactReferences');
   expect(serializedRequest).not.toContain('stale_initial_fact');
-  expect(serializedRequest).not.toContain('"qualifiers"');
+  expect(providerRequest.messages.map((message) => message.content).join()).toContain(
+    '"qualifiers":["PROVISIONAL"]',
+  );
   expect(serializedRequest).not.toContain('450');
   expect(serializedRequest).not.toContain('employeeId');
 });
@@ -702,7 +704,7 @@ test('concurrent employees decode against their own authorized collection order'
 function createInsightServiceStub(): EmployeeInsightInterpretationSource {
   return {
     run: vi.fn(async () => RESULT),
-    runWithLocale: vi.fn(async () => ({ locale: 'en-GB', nativeResult: RESULT })),
+    runWithLocale: vi.fn(async () => ({ locale: 'en-GB' as const, nativeResult: RESULT })),
   };
 }
 
@@ -738,7 +740,7 @@ function identity() {
 
 function domainId<Entity extends string>(value: string) {
   const parsed = parseDomainId<Entity>(value);
-  if (!parsed.ok) throw new Error(`Invalid ${Entity} fixture ID.`);
+  if (!parsed.ok) throw new Error('Invalid fixture ID.');
   return parsed.value;
 }
 

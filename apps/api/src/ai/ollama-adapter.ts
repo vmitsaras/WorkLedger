@@ -1,3 +1,8 @@
+import { findOllamaCompatibilityProfile } from './ollama-compatibility.js';
+import {
+  createOllamaSchemaChallenge,
+  validateOllamaSchemaChallenge,
+} from './ollama-schema-challenges.js';
 import { Buffer } from 'node:buffer';
 import { lookup } from 'node:dns/promises';
 import { request as requestHttp } from 'node:http';
@@ -20,7 +25,7 @@ import {
 } from './contracts.js';
 import { isPrivateNetworkAddress, normalizeUrlHostname } from './private-network.js';
 
-const ALLOWED_OLLAMA_PATHS = new Set(['/api/chat', '/api/show', '/api/tags']);
+const ALLOWED_OLLAMA_PATHS = new Set(['/api/chat', '/api/show', '/api/tags', '/api/version']);
 const MAXIMUM_REQUEST_BYTES = 256 * 1_024;
 const MAXIMUM_RESPONSE_BYTES = 1_024 * 1_024;
 const MAXIMUM_MESSAGE_CODE_UNITS = 64_000;
@@ -30,6 +35,8 @@ const MISCONFIGURATION_CODES = new Set<AiProviderErrorCode>([
   'ADDRESS_MISMATCH',
   'CAPABILITY_MISSING',
   'CAPABILITY_PROBE_FAILED',
+  'PROVIDER_PROFILE_MISMATCH',
+  'SCHEMA_PROBE_FAILED',
   'CLOUD_MODEL_DENIED',
   'INVALID_RESPONSE',
   'MODEL_DIGEST_MISMATCH',
@@ -47,15 +54,43 @@ export interface ResolvedHostAddress {
 export interface OllamaAiProviderDependencies {
   readonly resolveHost?: (hostname: string) => Promise<readonly ResolvedHostAddress[]>;
   readonly now?: () => string;
+  /** Injection for isolated adapter tests; configuration never exposes this override. */
+  readonly findCompatibilityProfile?: typeof findOllamaCompatibilityProfile;
 }
 
 export function createOllamaAiProvider(
   config: OllamaAiProviderConfig,
   dependencies: OllamaAiProviderDependencies = {},
-): AiProvider {
+): AiProvider & { checkIdentity(options?: AiProviderRequestOptions): Promise<void> } {
   const origin = new URL(config.origin);
   const resolveHost = dependencies.resolveHost ?? defaultResolveHost;
   const now = dependencies.now ?? (() => new Date().toISOString());
+  const findProfile = dependencies.findCompatibilityProfile ?? findOllamaCompatibilityProfile;
+  async function verifyVersion(
+    signal: AbortSignal,
+    addresses: readonly ResolvedHostAddress[],
+  ): Promise<void> {
+    const profile = findProfile(config.compatibilityProfile);
+    if (
+      profile === undefined ||
+      profile.model !== config.model ||
+      profile.modelDigest !== config.modelDigest ||
+      profile.schemaSuiteRevision !== 'schema-v1'
+    ) {
+      throw new AiProviderError('PROVIDER_PROFILE_MISMATCH');
+    }
+    const version = await requestJson(
+      origin,
+      resolveHost,
+      '/api/version',
+      'GET',
+      undefined,
+      signal,
+      addresses,
+    );
+    if (readObject(version)?.['version'] !== profile.serverVersion)
+      throw new AiProviderError('PROVIDER_PROFILE_MISMATCH');
+  }
   let activeRequests = 0;
   let readyAddresses: readonly ResolvedHostAddress[] | null = null;
   let currentHealth = createHealth({
@@ -86,6 +121,7 @@ export function createOllamaAiProvider(
     try {
       await runOperation(options.signal, async (signal) => {
         const startupAddresses = await resolvePrivateAddresses(origin, resolveHost, signal);
+        await verifyVersion(signal, startupAddresses);
         const tags = await requestJson(
           origin,
           resolveHost,
@@ -116,6 +152,29 @@ export function createOllamaAiProvider(
           startupAddresses,
         );
         validateCapabilityProbe(probe);
+        const challenge = await requestJson(
+          origin,
+          resolveHost,
+          '/api/chat',
+          'POST',
+          {
+            ...createChatRequest(config.model, createOllamaSchemaChallenge('compact')),
+            keep_alive: 0,
+          },
+          signal,
+          startupAddresses,
+        );
+        try {
+          const parsed = parseChatResponse(challenge);
+          if (
+            parsed.toolCalls.length !== 0 ||
+            !validateOllamaSchemaChallenge('compact', parsed.content)
+          ) {
+            throw new AiProviderError('SCHEMA_PROBE_FAILED');
+          }
+        } catch {
+          throw new AiProviderError('SCHEMA_PROBE_FAILED');
+        }
         readyAddresses = Object.freeze([...startupAddresses]);
       });
 
@@ -151,6 +210,7 @@ export function createOllamaAiProvider(
     validateGenerateRequest(request);
     try {
       return await runOperation(options.signal, async (signal) => {
+        await verifyVersion(signal, approvedAddresses);
         const tags = await requestJson(
           origin,
           resolveHost,
@@ -188,7 +248,39 @@ export function createOllamaAiProvider(
     }
   }
 
+  async function checkIdentity(options: AiProviderRequestOptions = {}): Promise<void> {
+    const addresses = readyAddresses;
+    if (addresses === null) throw new AiProviderError('PROVIDER_NOT_READY');
+    try {
+      await runOperation(options.signal, async (signal) => {
+        await verifyVersion(signal, addresses);
+        const tags = await requestJson(
+          origin,
+          resolveHost,
+          '/api/tags',
+          'GET',
+          undefined,
+          signal,
+          addresses,
+        );
+        validateModelDigest(tags, config);
+      });
+    } catch (error) {
+      readyAddresses = null;
+      const failure = normalizeProviderError(error);
+      currentHealth = createHealth({
+        checkedAt: now(),
+        mode: 'ollama',
+        status: MISCONFIGURATION_CODES.has(failure.code) ? 'misconfigured' : 'unavailable',
+        capabilities: [],
+        reasonCode: healthReasonCode(failure.code),
+      });
+      throw failure;
+    }
+  }
+
   return Object.freeze({
+    checkIdentity,
     mode: 'ollama' as const,
     checkHealth,
     getHealth: () => currentHealth,
@@ -470,7 +562,11 @@ function validateCapabilityProbe(response: unknown): void {
   if (object?.['done'] !== true || message?.['role'] !== 'assistant') {
     throw new AiProviderError('CAPABILITY_PROBE_FAILED');
   }
-  if (hasThinkingContent(message['thinking'])) {
+  if (
+    hasThinkingContent(message['thinking']) ||
+    (message['tool_calls'] !== undefined &&
+      (!Array.isArray(message['tool_calls']) || message['tool_calls'].length !== 0))
+  ) {
     throw new AiProviderError('CAPABILITY_PROBE_FAILED');
   }
   const content = message['content'];

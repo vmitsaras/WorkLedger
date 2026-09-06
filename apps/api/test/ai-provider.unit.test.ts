@@ -8,13 +8,34 @@ import {
   type AiProviderRequest,
   type OllamaAiProviderConfig,
 } from '../src/ai/contracts.js';
-import { OLLAMA_MAX_GENERATED_TOKENS, createOllamaAiProvider } from '../src/ai/ollama-adapter.js';
+import {
+  OLLAMA_MAX_GENERATED_TOKENS,
+  createOllamaAiProvider as createRealOllamaAiProvider,
+} from '../src/ai/ollama-adapter.js';
 import { createAiProvider } from '../src/ai/provider.js';
 import { checkAiProviderAtStartup } from '../src/ai/startup.js';
 import type { WorkLedgerLogger } from '../src/logging/logger.js';
 
 const MODEL = 'workledger-insights:local';
 const MODEL_DIGEST = 'a'.repeat(64);
+const PROFILE = {
+  id: 'fixture-only',
+  model: MODEL,
+  modelDigest: MODEL_DIGEST,
+  modelConfigDigest: 'b'.repeat(64),
+  parser: 'fixture',
+  serverVersion: '1.2.3',
+  schemaSuiteRevision: 'schema-v1' as const,
+  sourceReviewReferences: [],
+};
+function createOllamaAiProvider(
+  ...[config, dependencies]: Parameters<typeof createRealOllamaAiProvider>
+) {
+  return createRealOllamaAiProvider(config, {
+    ...dependencies,
+    findCompatibilityProfile: (id) => (id === PROFILE.id ? PROFILE : undefined),
+  });
+}
 const CHECKED_AT = '2026-08-27T12:00:00.000Z';
 const GENERATE_REQUEST: AiProviderRequest = {
   messages: [{ role: 'user', content: 'Explain the supplied native facts.' }],
@@ -101,12 +122,14 @@ describe('private Ollama adapter', () => {
         reasonCode: null,
       });
       expect(received.map(({ method, path }) => `${method} ${path}`)).toEqual([
+        'GET /api/version',
         'GET /api/tags',
         'POST /api/show',
         'POST /api/chat',
+        'POST /api/chat',
       ]);
-      expect(received[1]?.body).toEqual({ model: MODEL, verbose: false });
-      expect(received[2]?.body).toMatchObject({
+      expect(received[2]?.body).toEqual({ model: MODEL, verbose: false });
+      expect(received[3]?.body).toMatchObject({
         model: MODEL,
         stream: false,
         think: false,
@@ -239,7 +262,11 @@ describe('private Ollama adapter', () => {
       },
     },
   ])('reports $name through a safe misconfiguration code', async ({ expectedReason, handler }) => {
-    const fake = await startFakeOllama((request, response) => handler(request, response));
+    const fake = await startFakeOllama((request, response) =>
+      request.url === '/api/version'
+        ? writeJson(response, 200, { version: PROFILE.serverVersion })
+        : handler(request, response),
+    );
     const provider = createOllamaAiProvider(createConfig(fake.origin), {
       now: () => CHECKED_AT,
     });
@@ -378,7 +405,7 @@ describe('private Ollama adapter', () => {
       });
       controller.abort();
       await expect(firstRequest).rejects.toMatchObject({ code: 'CANCELLED' });
-      expect(fake.requestCount()).toBe(5);
+      expect(fake.requestCount()).toBe(8);
     } finally {
       controller.abort();
       await fake.close();
@@ -441,6 +468,7 @@ function createConfig(origin: string): OllamaAiProviderConfig {
     origin,
     model: MODEL,
     modelDigest: MODEL_DIGEST,
+    compatibilityProfile: PROFILE.id,
     timeoutMs: 1_000,
     concurrencyLimit: 2,
     requiredCapabilities: ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
@@ -503,6 +531,35 @@ function respondWithHealthyOllama(
   response: ServerResponse,
   body: unknown,
 ): void {
+  if (request.url === '/api/version') {
+    writeJson(response, 200, { version: PROFILE.serverVersion });
+    return;
+  }
+  if (
+    request.url === '/api/chat' &&
+    readProperty(readProperty(body, 'format'), 'properties') &&
+    readProperty(readProperty(readProperty(body, 'format'), 'properties'), 'statements')
+  ) {
+    writeJson(response, 200, {
+      done: true,
+      message: {
+        role: 'assistant',
+        content: JSON.stringify({
+          locale: 'en-GB',
+          statements: [
+            {
+              actionSelections: [false],
+              factSelections: [false, false, false, false, false],
+              limitationSelections: [false],
+              sourceSelections: [false, false],
+              text: 'Synthetic schema check.',
+            },
+          ],
+        }),
+      },
+    });
+    return;
+  }
   if (request.url === '/api/tags') {
     writeJson(response, 200, {
       models: [{ name: MODEL, model: MODEL, digest: MODEL_DIGEST }],
@@ -550,4 +607,69 @@ test('provider errors never retain raw dependency text', () => {
   const error = new AiProviderError('CONNECTION_FAILED');
   expect(error.message).toBe('The AI provider request could not be completed.');
   expect(JSON.stringify(error)).not.toContain('ollama');
+});
+
+test('production adapter cannot admit the fixture profile without test injection', async () => {
+  const resolveHost = vi.fn(async () => [{ address: '127.0.0.1', family: 4 as const }]);
+  const provider = createRealOllamaAiProvider(createConfig('http://127.0.0.1:11434'), {
+    resolveHost,
+  });
+  await expect(provider.checkHealth()).resolves.toMatchObject({
+    status: 'misconfigured',
+    reasonCode: 'PROVIDER_PROFILE_MISMATCH',
+  });
+  await expect(provider.generate(GENERATE_REQUEST)).rejects.toMatchObject({
+    code: 'PROVIDER_NOT_READY',
+  });
+});
+
+test('server version drift invalidates readiness before employee generation', async () => {
+  let version = PROFILE.serverVersion;
+  let chats = 0;
+  const fake = await startFakeOllama((request, response, body) => {
+    if (request.url === '/api/version') return writeJson(response, 200, { version });
+    if (request.url === '/api/chat') chats += 1;
+    respondWithHealthyOllama(request, response, body);
+  });
+  const provider = createOllamaAiProvider(createConfig(fake.origin));
+  try {
+    await expect(provider.checkHealth()).resolves.toMatchObject({ status: 'ready' });
+    version = '1.2.4';
+    await expect(provider.generate(GENERATE_REQUEST)).rejects.toMatchObject({
+      code: 'PROVIDER_PROFILE_MISMATCH',
+    });
+    await expect(provider.generate(GENERATE_REQUEST)).rejects.toMatchObject({
+      code: 'PROVIDER_NOT_READY',
+    });
+    expect(chats).toBe(2);
+  } finally {
+    await fake.close();
+  }
+});
+
+test.each([
+  { content: '{"locale":"en-GB","statements":[]}' },
+  { content: '{}', thinking: 'SECRET' },
+  { content: '{}', tool_calls: [{ function: { name: 'unexpected', arguments: {} } }] },
+])('schema health failure never admits generation or retains provider detail', async (message) => {
+  let chats = 0;
+  const fake = await startFakeOllama((request, response, body) => {
+    if (request.url === '/api/chat' && ++chats === 2) {
+      writeJson(response, 200, { done: true, message: { role: 'assistant', ...message } });
+      return;
+    }
+    respondWithHealthyOllama(request, response, body);
+  });
+  const provider = createOllamaAiProvider(createConfig(fake.origin));
+  try {
+    const health = await provider.checkHealth();
+    expect(health).toMatchObject({ status: 'misconfigured', reasonCode: 'SCHEMA_PROBE_FAILED' });
+    expect(JSON.stringify(health)).not.toContain('SECRET');
+    await expect(provider.generate(GENERATE_REQUEST)).rejects.toMatchObject({
+      code: 'PROVIDER_NOT_READY',
+    });
+    expect(chats).toBe(2);
+  } finally {
+    await fake.close();
+  }
 });

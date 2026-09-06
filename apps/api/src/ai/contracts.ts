@@ -11,6 +11,7 @@ export interface OllamaAiProviderConfig {
   readonly origin: string;
   readonly model: string;
   readonly modelDigest: string;
+  readonly compatibilityProfile: string;
   readonly timeoutMs: number;
   readonly concurrencyLimit: number;
   readonly requiredCapabilities: readonly AiProviderCapability[];
@@ -20,22 +21,26 @@ export type AiProviderConfig = DisabledAiProviderConfig | OllamaAiProviderConfig
 
 export type AiProviderHealthStatus = 'disabled' | 'ready' | 'unavailable' | 'misconfigured';
 
-export type AiProviderHealthReasonCode =
-  | 'ADDRESS_MISMATCH'
-  | 'CANCELLED'
-  | 'CAPABILITY_MISSING'
-  | 'CAPABILITY_PROBE_FAILED'
-  | 'CLOUD_MODEL_DENIED'
-  | 'CONCURRENCY_LIMIT'
-  | 'CONNECTION_FAILED'
-  | 'DNS_RESOLUTION_FAILED'
-  | 'INVALID_RESPONSE'
-  | 'MODEL_DIGEST_MISMATCH'
-  | 'MODEL_NOT_FOUND'
-  | 'NON_PRIVATE_ADDRESS'
-  | 'REDIRECT_DENIED'
-  | 'TIMEOUT'
-  | 'UNEXPECTED_STATUS';
+export const AI_PROVIDER_HEALTH_REASON_CODES = [
+  'ADDRESS_MISMATCH',
+  'CANCELLED',
+  'CAPABILITY_MISSING',
+  'CAPABILITY_PROBE_FAILED',
+  'PROVIDER_PROFILE_MISMATCH',
+  'SCHEMA_PROBE_FAILED',
+  'CLOUD_MODEL_DENIED',
+  'CONCURRENCY_LIMIT',
+  'CONNECTION_FAILED',
+  'DNS_RESOLUTION_FAILED',
+  'INVALID_RESPONSE',
+  'MODEL_DIGEST_MISMATCH',
+  'MODEL_NOT_FOUND',
+  'NON_PRIVATE_ADDRESS',
+  'REDIRECT_DENIED',
+  'TIMEOUT',
+  'UNEXPECTED_STATUS',
+] as const;
+export type AiProviderHealthReasonCode = (typeof AI_PROVIDER_HEALTH_REASON_CODES)[number];
 
 export interface AiProviderHealth {
   readonly mode: AiProviderConfig['mode'];
@@ -45,12 +50,14 @@ export interface AiProviderHealth {
   readonly reasonCode: AiProviderHealthReasonCode | null;
 }
 
-export type AiProviderErrorCode =
-  | AiProviderHealthReasonCode
-  | 'PROVIDER_BUSY'
-  | 'PROVIDER_DISABLED'
-  | 'PROVIDER_NOT_READY'
-  | 'REQUEST_INVALID';
+export const AI_PROVIDER_ERROR_CODES = [
+  ...AI_PROVIDER_HEALTH_REASON_CODES,
+  'PROVIDER_BUSY',
+  'PROVIDER_DISABLED',
+  'PROVIDER_NOT_READY',
+  'REQUEST_INVALID',
+] as const;
+export type AiProviderErrorCode = (typeof AI_PROVIDER_ERROR_CODES)[number];
 
 export class AiProviderError extends Error {
   readonly code: AiProviderErrorCode;

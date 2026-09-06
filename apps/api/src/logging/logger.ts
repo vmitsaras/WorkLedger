@@ -1,3 +1,5 @@
+import { AI_PROVIDER_ERROR_CODES, AI_PROVIDER_HEALTH_REASON_CODES } from '../ai/contracts.js';
+import { EMPLOYEE_INSIGHT_VALIDATION_FAILURE_CODES } from '../insights/employee-insight-failure-codes.js';
 /**
  * Structured logging for WorkLedger API.
  *
@@ -204,6 +206,22 @@ function filterAllowlistedFields(data: Record<string, unknown>): Record<string, 
   const filtered: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     if (ALLOWLISTED_LOG_FIELDS.has(key)) {
+      const vocabulary: readonly string[] | undefined =
+        key === 'validationFailureCode'
+          ? EMPLOYEE_INSIGHT_VALIDATION_FAILURE_CODES
+          : key === 'providerFailureCode'
+            ? AI_PROVIDER_ERROR_CODES
+            : key === 'providerReasonCode'
+              ? AI_PROVIDER_HEALTH_REASON_CODES
+              : undefined;
+      if (
+        vocabulary !== undefined &&
+        value !== null &&
+        (typeof value !== 'string' || !vocabulary.includes(value))
+      ) {
+        filtered[key] = null;
+        continue;
+      }
       filtered[key] =
         key === 'validationDetail'
           ? sanitizeInsightValidationDetail(

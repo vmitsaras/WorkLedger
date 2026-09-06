@@ -8,6 +8,10 @@ reference representation and extend bounded operational diagnostics in WL-1508I.
 validators and server-owned authorization remain unchanged. Historical acceptance below describes
 WL-1508F; WL-1508I evidence is in report 170 and fresh B/C evidence is required for the new format.
 
+**D-512/J continuation:** Spec 0003 adds provider compatibility/schema qualification and material
+completeness to the one-registry/one-employee-generation path. Four safe qualifiers enter only
+request-memory context. Report 174 records implementation and pending deterministic execution.
+
 ## Summary
 
 WorkLedger will execute the exact authorized Employee Insight tool before it calls the model. The

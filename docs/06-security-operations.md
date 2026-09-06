@@ -2,6 +2,15 @@
 
 ## 1. Security posture and classification
 
+**Optional Employee Insight recovery, D-512/J:** Provider configuration now requires a reviewed
+compatibility profile matching the exact model/digest; health and generation check server version
+through the private adapter. No real profile is currently admitted. Material dependency omissions
+are rejected without repair; only POSTED, PROJECTED, PROVISIONAL and INCOMPLETE fact qualifiers
+are added to authorized request-memory model context. They are not retained diagnostic fields.
+New completeness failures have null detail, and provider/validation log codes use closed allowlists.
+Report 174 records the operational qualification tooling and outstanding test execution. Provider
+deployment remains disabled; no UI, public DTO, data retention or authorization scope is broadened.
+
 WorkLedger is a self-hosted web application that processes high-sensitivity authentication, employment, attendance, benefit, health-related absence, approval, and audit data. Its primary data flow is browser → same-origin reverse proxy → web/API → PostgreSQL, with optional outbound email carrying generic notification or one-time account links. Phase 15 retains an inactive API → private Ollama adapter under ADR 0014, but its pilot closed without passing, provider mode remains disabled, and no accepted deployment configuration enables it.
 
 The privacy status is **conditionally acceptable for implementation**. Production release remains blocked until the controls and tests in this document are implemented, a deployment-specific retention profile is configured, and backup/restore plus authorization evidence passes the production gate.

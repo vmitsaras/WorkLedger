@@ -994,3 +994,11 @@ design specifies admission and qualification criteria without authorizing instal
 No tests or inference ran. C/D stay open, provider deployment disabled and version 0.16.0 unchanged.
 See `docs/specs/_root/0003-insight-schema-enforcement-completeness/index.md` for exact contracts,
 failure precedence, qualification cases, privacy boundaries and acceptance evidence.
+
+**D-512 implementation continuation:** The user continued after design. J now implements exact
+compatibility profiles/version checks, compact schema health, the six-case qualification runner and
+strict artifact reader, shared material fact/action rejection and four request-memory qualifiers.
+Explicit failure vocabularies constrain v2 artifacts and logger fields. The real profile table remains
+empty; no candidate or installation is qualified. Report 174 records static verification and prepared
+regressions. No tests or inference ran under the earlier execution restriction, so J remains unchecked
+pending deterministic execution; K/B/C/D remain gated. This is not a passing pilot or phase change.

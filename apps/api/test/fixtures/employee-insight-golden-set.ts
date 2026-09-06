@@ -790,7 +790,7 @@ function fact(
     code,
     qualifiers,
     reference,
-    sourceReferences: Object.freeze([sourceReference]),
+    sourceReferences: [sourceReference],
     value,
   });
 }

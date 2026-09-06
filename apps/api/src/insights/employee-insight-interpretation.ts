@@ -1,3 +1,5 @@
+import { EMPLOYEE_INSIGHT_VALIDATION_FAILURE_CODES } from './employee-insight-failure-codes.js';
+import { insightLimitationDependencies } from './employee-insight-dependencies.js';
 import { performance } from 'node:perf_hooks';
 
 import type { SupportedLocale } from '@workledger/contracts';
@@ -56,37 +58,7 @@ type EmployeeInsightInterpretationOutcome =
   | 'VALIDATION_FAILED';
 
 export type EmployeeInsightValidationFailureCode =
-  | 'FINAL_CONTENT_MISSING'
-  | 'FINAL_JSON_FENCED'
-  | 'FINAL_JSON_OBJECT_INVALID'
-  | 'FINAL_JSON_OTHER'
-  | 'FINAL_JSON_STRING'
-  | 'FINAL_JSON_TRUNCATED'
-  | 'FINAL_LIMITATION_MISSING'
-  | 'FINAL_PROSE_NATIVE_ACTION'
-  | 'FINAL_PROSE_NATIVE_FACT_CODE'
-  | 'FINAL_PROSE_NATIVE_LIMITATION'
-  | 'FINAL_PROSE_NATIVE_QUALIFIER'
-  | 'FINAL_PROSE_NATIVE_REFERENCE'
-  | 'FINAL_PROSE_NATIVE_SOURCE'
-  | 'FINAL_PROSE_NATIVE_STATE'
-  | 'FINAL_PROSE_NOT_ALLOWLISTED'
-  | 'FINAL_PROSE_NUMBER'
-  | 'FINAL_REFERENCE_UNKNOWN'
-  | 'FINAL_SCHEMA_LOCALE_INVALID'
-  | 'FINAL_SCHEMA_OR_LOCALE_INVALID'
-  | 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID'
-  | 'FINAL_SCHEMA_REFERENCES_INVALID'
-  | 'FINAL_SCHEMA_REFERENCES_DUPLICATE'
-  | 'FINAL_SCHEMA_ROOT_KEYS_INVALID'
-  | 'FINAL_SCHEMA_ROOT_TYPE_INVALID'
-  | 'FINAL_SCHEMA_STATEMENT_COUNT_INVALID'
-  | 'FINAL_SCHEMA_STATEMENT_INVALID'
-  | 'FINAL_SCHEMA_TEXT_INVALID'
-  | 'FINAL_SELECTION_INVALID'
-  | 'FINAL_SOURCE_MISMATCH'
-  | 'FINAL_TOOL_CALL_UNEXPECTED'
-  | null;
+  (typeof EMPLOYEE_INSIGHT_VALIDATION_FAILURE_CODES)[number] | null;
 
 export interface EmployeeInsightOperationalTrace {
   readonly inputTokens: number;
@@ -345,6 +317,7 @@ function finalResponseInstruction(locale: SupportedLocale): string {
   const proseExample = EMPLOYEE_INSIGHT_SAFE_PROSE[locale];
   return [
     'Return the final answer now as one JSON object and nothing else.',
+    'Distinguish POSTED, PROJECTED and PROVISIONAL evidence; for comparisons select evidence for each requested category.',
     'Do not add a wrapper, schema, explanation, or Markdown fence.',
     `Use this exact property structure: {"locale":"${locale}","statements":[{"actionSelections":[],"factSelections":[],"limitationSelections":[],"sourceSelections":[],"text":""}]}.`,
     'Replace each empty array with exactly one boolean per current entry in that collection, ordered by selectionIndex. Use an empty array only for an empty collection. Keep every property and add no properties.',
@@ -435,36 +408,23 @@ function minimizeNativeResultForModel(result: InsightNativeResult) {
     facts: result.facts.map((fact, selectionIndex) => ({
       selectionIndex,
       code: fact.code,
+      qualifiers: (['POSTED', 'PROJECTED', 'PROVISIONAL', 'INCOMPLETE'] as const).filter(
+        (qualifier) => fact.qualifiers.includes(qualifier),
+      ),
       reference: fact.reference,
       sourceReferences: fact.sourceReferences,
     })),
     kind: result.kind,
-    limitations: result.limitations.map((limitation, selectionIndex) => {
-      const relatedActions = result.actions.filter((action) =>
-        action.sourceReferences.some((reference) =>
-          limitation.sourceReferences.includes(reference),
-        ),
-      );
-      const relatedFacts = result.facts.filter((fact) =>
-        fact.sourceReferences.some((reference) => limitation.sourceReferences.includes(reference)),
-      );
-      return {
-        selectionIndex,
-        code: limitation.code,
-        material: limitation.material,
-        reference: limitation.reference,
-        relatedActionReferences: relatedActions.map((action) => action.reference),
-        relatedFactReferences: relatedFacts.map((fact) => fact.reference),
-        relatedSourceReferences: [
-          ...new Set([
-            ...limitation.sourceReferences,
-            ...relatedActions.flatMap((action) => action.sourceReferences),
-            ...relatedFacts.flatMap((fact) => fact.sourceReferences),
-          ]),
-        ],
-        sourceReferences: limitation.sourceReferences,
-      };
-    }),
+    limitations: insightLimitationDependencies(result).map((dependency, selectionIndex) => ({
+      selectionIndex,
+      code: dependency.limitation.code,
+      material: dependency.limitation.material,
+      reference: dependency.limitation.reference,
+      relatedActionReferences: dependency.relatedActionReferences,
+      relatedFactReferences: dependency.relatedFactReferences,
+      relatedSourceReferences: dependency.relatedSourceReferences,
+      sourceReferences: dependency.limitation.sourceReferences,
+    })),
     sources: result.sources.map((source, selectionIndex) => ({
       selectionIndex,
       destination: source.destination,
@@ -562,6 +522,29 @@ export function validateGroundedInterpretation(
     )
   ) {
     throw invalidProviderOutput('FINAL_LIMITATION_MISSING');
+  }
+  const dependencies = insightLimitationDependencies(nativeResult).filter(
+    ({ limitation }) => limitation.material,
+  );
+  const citedFacts = new Set(
+    parsed.data.statements.flatMap((statement) => statement.factReferences),
+  );
+  const citedActions = new Set(
+    parsed.data.statements.flatMap((statement) => statement.actionReferences),
+  );
+  if (
+    dependencies.some((dependency) =>
+      dependency.relatedFactReferences.some((ref) => !citedFacts.has(ref)),
+    )
+  ) {
+    throw invalidProviderOutput('FINAL_MATERIAL_FACT_MISSING');
+  }
+  if (
+    dependencies.some((dependency) =>
+      dependency.relatedActionReferences.some((ref) => !citedActions.has(ref)),
+    )
+  ) {
+    throw invalidProviderOutput('FINAL_MATERIAL_ACTION_MISSING');
   }
   return parsed.data;
 }
