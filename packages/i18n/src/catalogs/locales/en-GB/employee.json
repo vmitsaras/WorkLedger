@@ -200,6 +200,27 @@
     }
   },
   "insights": {
+    "topics": {
+      "heading": "Find an Insight with AI — English only",
+      "description": "Optional local AI suggests a topic from an English question. It does not answer the question. Only your question and the supported topic descriptions are sent to the local provider. You can always choose a topic yourself.",
+      "question": "What would you like to find? (English)",
+      "invalid": "Enter an English question of 1 to 500 characters.",
+      "submit": "Suggest a topic",
+      "cancel": "Cancel suggestion",
+      "clear": "Clear question",
+      "running": "Finding a suggested topic…",
+      "ready": "A topic is suggested below. Check it before continuing.",
+      "unknown": "No single supported topic was identified. Ask one question in English, or choose a topic yourself.",
+      "cancelled": "Suggestion cancelled.",
+      "unavailable": "AI suggestions are unavailable. Choose a topic yourself below.",
+      "rateLimited": "Too many suggestion requests. Try later, or choose a topic yourself below.",
+      "confirm": "Use this topic",
+      "confirmDescription": "Check this suggestion. You will choose the date or period and run the Insight yourself.",
+      "balanceChange": "Suggested topic: Changes in my flexible-time balance",
+      "submissionBlockers": "Suggested topic: Monthly submission blockers",
+      "leaveProjection": "Suggested topic: Projected leave balance",
+      "todayExplanation": "Suggested topic: How my day is calculated"
+    },
     "destination": {
       "monthlyReview": "Review this month",
       "myBalances": "Open my balances",

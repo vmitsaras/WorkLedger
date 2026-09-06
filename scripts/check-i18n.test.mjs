@@ -56,7 +56,7 @@ test('accepts the repository locale, namespace, key, parameter, plural, and desc
   const values = await checkI18n();
   assert.equal(values.localeCount, 3);
   assert.equal(values.namespaceCount, 7);
-  assert.equal(values.messageCount, 2337);
+  assert.equal(values.messageCount, 2356);
   assert.equal(values.governedSourceCount, 41);
 });
 

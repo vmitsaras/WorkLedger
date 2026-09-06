@@ -2,7 +2,7 @@
 
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
-**Next task: none ready; WL-1508M is blocked and the optional pilot deferred.** Phases 0–15 are complete at `0.16.0`; the remaining optional
+**Current status: WL-1508N implemented and verified; model acceptance blocked by runtime latency and a deadline stop.** Phases 0–15 are complete at `0.16.0`; the remaining optional
 employee pilot is listed in execution order under Phase 15. Excluded proposals are not queued.
 
 ## Phase-completion version rule
@@ -212,9 +212,13 @@ remaining sequence. Keep failed attempts in reports, not in task titles.
 - [x] `WL-1514` Implement isolated deterministic System Insights.
 - [x] `WL-1516` Pass the deterministic Phase 15 release gate and synchronize manifests at `0.16.0`.
 
-### Optional employee pilot — execution order
+### English-only optional AI enhancement
 
-No task is ready. M's diagnostic review found no supported complete repair within the current
+- [ ] `WL-1508N` Implement and evaluate optional local AI topic suggestions for Employee Insights. **Implementation verified; acceptance blocked on runtime performance.** Full local verification passed. The model returned 32 correct topics, then request 33 reached the 120-second deadline; 27 cases did not run. Partial-run p95 102.172 seconds exceeds the ten-second target. D-520 / ADR 0015 retain English-only confirmation and independent native execution. No automatic rerun or deployment. [Report 199](docs/199-english-local-ai-topic-suggestions.md).
+
+### Legacy optional employee interpretation pilot — deferred
+
+No legacy interpretation task is ready. M's diagnostic review found no supported complete repair within the current
 contract; [report 198](docs/198-wl-1508m-fact-action-recovery-disposition.md) and D-519 record the
 deferral and decision needed to resume. L retains the full local verification evidence in report 197.
 Complete each task's entry and exit criteria in the task board and execution plan.

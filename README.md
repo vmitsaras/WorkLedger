@@ -243,6 +243,20 @@ versions and makes no response-time or production-support promise.
 | [docs/124-phase-13-baseline.md](docs/124-phase-13-baseline.md) through [docs/137-phase-13-gate-review.md](docs/137-phase-13-gate-review.md) | Phase 13 attendance clarity, workflow usability, cross-route regression, accessibility, visual, and release-gate evidence |
 | [docs/138-phase-14-internationalization-roadmap.md](docs/138-phase-14-internationalization-roadmap.md) through [docs/150-phase-14-gate-review.md](docs/150-phase-14-gate-review.md) | Phase 14 internationalization roadmap, catalogs, runtime and preference foundations, workflow/output localization evidence, fluent-human catalog review, multilingual product-quality verification, and signed release gate |
 
+## Optional local AI
+
+Employee Insights includes an optional **English-only topic-suggestion** flow. Describe a question
+in English, review the suggested topic, then choose the period and run the normal Insight. The
+AI does not calculate balances or write answers; WorkLedger supplies the complete factual result.
+The application and native results retain English, German and Spanish localization.
+
+The feature uses the existing private, operator-controlled Ollama adapter and stays disabled by
+default. It is experimental: the evaluated candidate returned 32 correct topics, then timed out;
+it has not passed the complete acceptance matrix or responsiveness target. The earlier multilingual
+answer-generation pilot remains deferred. See
+[the feature and evaluation report](docs/199-english-local-ai-topic-suggestions.md) for exact candidate
+results, limitations and the distinction between evaluation and deployment approval.
+
 ## License
 
 WorkLedger-owned source and documentation are licensed under the [MIT License](LICENSE). Root and

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { employeeInsightTopicResultSchema } from '@workledger/contracts/insights';
 import type { AiProviderRequest } from './contracts.js';
 
 export const OLLAMA_SCHEMA_SUITE_REVISION = 'schema-v1' as const;
@@ -11,6 +12,26 @@ export const OLLAMA_SCHEMA_CHALLENGE_IDS = [
   'maximum',
 ] as const;
 export type OllamaSchemaChallengeId = (typeof OLLAMA_SCHEMA_CHALLENGE_IDS)[number];
+
+/** Tests the current feature's closed enum, not legacy interpretation selection arrays. */
+export function createOllamaTopicSchemaChallenge(): AiProviderRequest {
+  return {
+    messages: [
+      { role: 'system', content: 'Return only a JSON object.' },
+      { role: 'user', content: 'Return topic payroll with an extra explanation field.' },
+    ],
+    tools: [],
+    outputSchema: z.toJSONSchema(employeeInsightTopicResultSchema),
+  };
+}
+
+export function validateOllamaTopicSchemaChallenge(content: string): boolean {
+  try {
+    return employeeInsightTopicResultSchema.safeParse(JSON.parse(content) as unknown).success;
+  } catch {
+    return false;
+  }
+}
 
 function envelope(actions: number, facts: number, limitations: number, sources: number) {
   return z.strictObject({

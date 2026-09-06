@@ -3,6 +3,8 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
 import { apiErrorEnvelopeSchema } from '@workledger/contracts';
 import {
+  employeeInsightTopicRequestSchema,
+  employeeInsightTopicResultEnvelopeSchema,
   insightInterpretationRequestSchema,
   insightInterpretationResultEnvelopeSchema,
   hrInsightRequestSchema,
@@ -25,9 +27,8 @@ import type { RuntimeConfig } from '../config.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import type { WorkLedgerLogger } from '../logging/logger.js';
 import { createEmployeeInsightHandlers } from './employee-insight-handlers.js';
-import { createEmployeeInsightInterpretationService } from './employee-insight-interpretation.js';
+import { createEmployeeInsightTopicService } from './employee-insight-topics.js';
 import { createInsightService, parseInsightIdentity } from './insight-service.js';
-import { createInsightToolRegistry } from './insight-tool-registry.js';
 import { createManagerInsightService } from './manager-insight-service.js';
 import { createHrInsightService } from './hr-insight-service.js';
 
@@ -39,16 +40,15 @@ export function registerInsightRoutes(
   authentication: WorkLedgerAuthentication,
   database: WorkLedgerDatabase,
   aiProvider: AiProvider,
-  logger: WorkLedgerLogger,
+  _logger: WorkLedgerLogger,
   now: InsightApiClock = () => new Date().toISOString(),
 ): void {
   const api = app.withTypeProvider<ZodTypeProvider>();
   const service = createInsightService(database, createEmployeeInsightHandlers());
   const managerService = createManagerInsightService(database);
   const hrService = createHrInsightService(database);
-  const interpretationService = createEmployeeInsightInterpretationService(
-    service,
-    createInsightToolRegistry(service),
+  const topicService = createEmployeeInsightTopicService(
+    service.authorizeTopicSuggestion,
     aiProvider,
     (accountId) => authentication.consumeInsightInterpretationRateLimit(accountId),
   );
@@ -169,7 +169,7 @@ export function registerInsightRoutes(
       return {
         data,
         meta: {
-          interpretationAvailability: interpretationService.availability(),
+          interpretationAvailability: 'DISABLED' as const,
           requestId: request.id,
         },
       };
@@ -182,7 +182,8 @@ export function registerInsightRoutes(
       schema: {
         body: insightInterpretationRequestSchema,
         description:
-          'Returns one optional employee self scoped interpretation grounded in a freshly authorized native Insight. Questions and prior turns remain request memory only.',
+          'Deferred legacy interpretation. Returns unavailable; English topic suggestions are a separate operation.',
+        deprecated: true,
         operationId: 'interpretEmployeeInsight',
         response: {
           200: insightInterpretationResultEnvelopeSchema,
@@ -205,6 +206,42 @@ export function registerInsightRoutes(
         throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
       }
 
+      await service.authorizeTopicSuggestion(
+        parseInsightIdentity(session.userId, session.fresh),
+        capturedAt.value,
+      );
+      reply.header('cache-control', 'private, no-store');
+      throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
+    },
+  );
+
+  api.post(
+    '/v1/insights/suggest-topic',
+    {
+      schema: {
+        body: employeeInsightTopicRequestSchema,
+        description:
+          'Suggests one employee Insight topic for an English question. No ledger facts or periods reach the model. The user must confirm the topic and choose a period before running the independent native Insight.',
+        operationId: 'suggestEmployeeInsightTopic',
+        response: {
+          200: employeeInsightTopicResultEnvelopeSchema,
+          401: apiErrorEnvelopeSchema,
+          403: apiErrorEnvelopeSchema,
+          422: apiErrorEnvelopeSchema,
+          429: apiErrorEnvelopeSchema,
+          503: apiErrorEnvelopeSchema,
+        },
+        summary: 'Suggest an employee Insight topic (English only)',
+        tags: ['Insights'],
+      },
+    },
+    async (request, reply) => {
+      reply.header('cache-control', 'private, no-store');
+      requireSameOrigin(request, config.canonicalOrigin);
+      const { headers, session } = await requireRequestSession(request, authentication, 'ACTIVE');
+      await requireRequestCsrf(request, authentication, headers);
+      const capturedAt = parseInstant(now());
+      if (!capturedAt.ok) throw new WorkLedgerApiError({ code: 'INTERNAL_ERROR', statusCode: 503 });
       const controller = new AbortController();
       const cancelProviderWork = () => controller.abort();
       const cancelProviderWorkOnClosedResponse = () => {
@@ -213,21 +250,11 @@ export function registerInsightRoutes(
       request.raw.once('aborted', cancelProviderWork);
       reply.raw.once('close', cancelProviderWorkOnClosedResponse);
       try {
-        const data = await interpretationService.interpret(
+        const data = await topicService.suggest(
           parseInsightIdentity(session.userId, session.fresh),
           request.body,
           capturedAt.value,
-          {
-            signal: controller.signal,
-            recordTrace: (trace) =>
-              logger.info('Employee Insight interpretation completed', {
-                requestId: request.id,
-                dependency: 'ai-provider',
-                operation: 'employee-insight-interpretation',
-                success: trace.outcome === 'SUCCESS',
-                ...trace,
-              }),
-          },
+          controller.signal,
         );
         reply.header('cache-control', 'private, no-store');
         return { data, meta: { requestId: request.id } };

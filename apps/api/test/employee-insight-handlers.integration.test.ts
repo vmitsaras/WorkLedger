@@ -9,10 +9,7 @@ import { createWorkLedgerDatabase } from '@workledger/database';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createEmployeeInsightHandlers } from '../src/insights/employee-insight-handlers.js';
-import {
-  createEmployeeInsightInterpretationService,
-  EMPLOYEE_INSIGHT_SAFE_PROSE,
-} from '../src/insights/employee-insight-interpretation.js';
+import { createEmployeeInsightInterpretationService } from '../src/insights/employee-insight-interpretation.js';
 import type { AiProvider, AiProviderRequest, AiProviderResponse } from '../src/ai/contracts.js';
 import {
   createInsightService,
@@ -143,35 +140,8 @@ integrationTest(
         expect(serialized).not.toContain(employee.organizationId);
       }
 
-      const interpretationFact = balance.facts[0];
-      if (interpretationFact === undefined) throw new Error('Expected an Insight fact.');
-      const materialLimitations = balance.limitations.filter(({ material }) => material);
-      const interpretationSources = [
-        ...interpretationFact.sourceReferences,
-        ...materialLimitations.flatMap(({ sourceReferences }) => sourceReferences),
-      ].filter((reference, index, references) => references.indexOf(reference) === index);
       const providerHarness = createReadyProvider([
-        {
-          content: JSON.stringify({
-            locale: 'en-GB',
-            statements: [
-              {
-                actionSelections: balance.actions.map(() => false),
-                factSelections: balance.facts.map(
-                  ({ reference }) => reference === interpretationFact.reference,
-                ),
-                limitationSelections: balance.limitations.map(({ reference }) =>
-                  materialLimitations.some((limitation) => limitation.reference === reference),
-                ),
-                sourceSelections: balance.sources.map(({ reference }) =>
-                  interpretationSources.includes(reference),
-                ),
-                text: EMPLOYEE_INSIGHT_SAFE_PROSE['en-GB'],
-              },
-            ],
-          }),
-          toolCalls: [],
-        },
+        { content: '{"topic":"balance-change"}', toolCalls: [] },
       ]);
       const app = createApiServer(
         createRuntimeConfig({
@@ -238,69 +208,63 @@ integrationTest(
             scope: { kind: 'SELF' },
             workspace: 'EMPLOYEE',
           },
-          meta: { interpretationAvailability: 'READY' },
+          meta: { interpretationAvailability: 'DISABLED' },
         });
         expect(response.payload).not.toContain(employee.accountId);
         expect(response.payload).not.toContain(employee.employeeId);
         expect(response.payload).not.toContain(employee.organizationId);
 
         const question = 'What does this balance evidence mean?';
-        const interpreted = await app.inject({
+        const legacy = await app.inject({
           method: 'POST',
           url: '/v1/insights/interpret',
           headers: { cookie, origin: ORIGIN, 'x-workledger-csrf': csrf },
           payload: { insight: balanceRequest(), priorTurns: [], question },
         });
-        expect(interpreted.statusCode).toBe(200);
-        expect(interpreted.headers['cache-control']).toBe('private, no-store');
-        expect(interpreted.json()).toMatchObject({
-          data: {
-            interpretation: {
-              locale: 'en-GB',
-              statements: [
-                {
-                  factReferences: [interpretationFact.reference],
-                  sourceReferences: interpretationSources,
-                },
-              ],
-            },
-            nativeResult: {
-              kind: 'balance-change',
-              scope: { kind: 'SELF' },
-              workspace: 'EMPLOYEE',
-            },
-          },
+        expect(legacy.statusCode).toBe(503);
+        expect(providerHarness.requests).toHaveLength(0);
+        const topicPayload = { language: 'en', question };
+        for (const headers of [
+          { origin: ORIGIN },
+          { cookie, origin: ORIGIN },
+          { cookie, origin: 'https://untrusted.example.test', 'x-workledger-csrf': csrf },
+        ]) {
+          const rejected = await app.inject({
+            method: 'POST',
+            url: '/v1/insights/suggest-topic',
+            headers,
+            payload: topicPayload,
+          });
+          expect([401, 403]).toContain(rejected.statusCode);
+        }
+        const invalidTopic = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/suggest-topic',
+          headers: { cookie, origin: ORIGIN, 'x-workledger-csrf': csrf },
+          payload: { ...topicPayload, employeeId: employee.employeeId },
         });
-        expect(interpreted.payload).not.toContain(question);
-        expect(interpreted.payload).not.toContain(employee.accountId);
-        expect(interpreted.payload).not.toContain(employee.employeeId);
-        expect(interpreted.payload).not.toContain(employee.organizationId);
+        expect(invalidTopic.statusCode).toBe(422);
+        expect(invalidTopic.payload).not.toContain(question);
+        const suggestion = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/suggest-topic',
+          headers: { cookie, origin: ORIGIN, 'x-workledger-csrf': csrf },
+          payload: topicPayload,
+        });
+        expect(suggestion.statusCode).toBe(200);
+        expect(suggestion.headers['cache-control']).toBe('private, no-store');
+        expect(suggestion.json()).toMatchObject({ data: { topic: 'balance-change' } });
+        expect(suggestion.payload).not.toContain(question);
         expect(providerHarness.requests).toHaveLength(1);
-        expect(providerHarness.requests[0]).toMatchObject({
-          tools: [],
-          outputSchema: {
-            properties: {
-              locale: { enum: ['en-GB'] },
-              statements: {
-                items: {
-                  properties: {
-                    factSelections: {
-                      items: { type: 'boolean' },
-                      minItems: balance.facts.length,
-                      maxItems: balance.facts.length,
-                    },
-                    sourceSelections: {
-                      items: { type: 'boolean' },
-                      minItems: balance.sources.length,
-                      maxItems: balance.sources.length,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        });
-        expect(JSON.stringify(providerHarness.requests[0])).toContain(interpretationFact.reference);
+        const sent = JSON.stringify(providerHarness.requests[0]);
+        for (const secret of [
+          employee.accountId,
+          employee.employeeId,
+          employee.organizationId,
+          'source_balance_ledger',
+          'nativeResult',
+        ])
+          expect(sent).not.toContain(secret);
 
         const permissionLossProvider = createReadyProvider([]);
         const permissionLossSource: EmployeeInsightInterpretationSource = {
@@ -327,6 +291,15 @@ integrationTest(
           ),
         ).rejects.toMatchObject({ code: 'ACCESS_DENIED', statusCode: 403 });
         expect(permissionLossProvider.requests).toEqual([]);
+
+        const deniedTopic = await app.inject({
+          method: 'POST',
+          url: '/v1/insights/suggest-topic',
+          headers: { cookie, origin: ORIGIN, 'x-workledger-csrf': csrf },
+          payload: topicPayload,
+        });
+        expect(deniedTopic.statusCode).toBe(403);
+        expect(providerHarness.requests).toHaveLength(1);
 
         const denied = await app.inject({
           method: 'POST',

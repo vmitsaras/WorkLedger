@@ -30,8 +30,9 @@ Phases 0–15 have passed their accepted exit gates; the workspace version is `0
 [Report 165](165-wl-1516-phase-15-gate-review.md) records the deterministic Phase 15 release.
 The optional employee AI pilot has not passed and provider deployment remains disabled.
 
-**Next task: none ready; M is blocked and the pilot deferred (D-519/report 198).** Follow [the bounded execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md)
-and the task board. Historical evaluation attempts do not reopen completed product phases.
+**Current status: WL-1508N implemented and verified; candidate acceptance blocked on runtime performance (D-520 / ADR 0015).** Follow [report 199](199-english-local-ai-topic-suggestions.md)
+and the task board. The earlier execution plan governs only the deferred legacy interpreter.
+Historical evaluation attempts do not reopen completed product phases.
 
 ---
 
@@ -623,11 +624,24 @@ and operations evidence. The optional employee pilot is reopened for future eval
 - [x] The Insights route passes every supported locale, keyboard, focus, announcement, reflow,
   forced color, reduced motion, touch, offline, partial, stale, empty, denied, and failure state.
 
-## Employee local AI pilot sub gate
+## English-only optional local AI topic suggestions
+
+D-520 / [ADR 0015](adr/0015-english-local-ai-topic-suggestions.md) authorize WL-1508N as a
+separate bounded enhancement: English question, suggested topic, explicit user confirmation,
+then an independent native run with a user-selected period. [Report 199](199-english-local-ai-topic-suggestions.md)
+records the implementation, fixed evaluation and verification. It does not close the legacy pilot
+or change a phase gate or version. Deployment stays disabled.
+
+The full local quality gate passed. The candidate returned 32 correct topics before request 33
+reached the 120-second deadline; 27 cases did not run. Partial-run p95 102.172 seconds exceeds the
+ten-second target. N implementation is complete, but its model acceptance remains blocked. A
+future performance recovery needs a fresh full evaluation; no automatic replay or model switch is queued.
+
+## Legacy employee interpretation pilot sub gate
 
 **Current state:** Optional, not passed and deferred under D-519. [Report 198](198-wl-1508m-fact-action-recovery-disposition.md)
 records M's completed diagnostic review and 101 passing boundary tests, with no supported complete
-repair in the current contract. M remains unchecked/blocked; no task is ready. An accepted bounded
+repair in the current contract. M remains unchecked/blocked; no legacy interpretation task is ready. An accepted bounded
 question-intent amendment or new causal defect evidence is needed to resume. The deterministic release is complete independently.
 Report 195 is the latest B attempt: health passed, submission-actions accepted 3/9, German selected
 no facts, and Spanish omitted the pending-request action. Today-posted and C did not run. Report

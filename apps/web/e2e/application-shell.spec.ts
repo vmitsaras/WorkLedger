@@ -382,18 +382,6 @@ const MANAGER_INSIGHT_RESULT: InsightNativeResult = {
   timeZone: 'Europe/Berlin',
   workspace: 'MANAGER',
 };
-const INSIGHT_INTERPRETATION = {
-  locale: 'en-GB' as const,
-  statements: [
-    {
-      actionReferences: ['action_today'],
-      factReferences: ['fact_worked'],
-      limitationReferences: ['limit_provisional'],
-      sourceReferences: ['source_today'],
-      text: 'The current authorized evidence explains how recorded work contributes to this result.',
-    },
-  ],
-};
 const PHASE_13_TODAY_BASELINE: TodayAttendance = {
   ...COHERENT_TODAY_ATTENDANCE,
   appliedCorrections: [
@@ -920,106 +908,87 @@ test('keeps an HR aggregate suppressed, private, and accessible at reflow', asyn
   await expectPageToHaveNoAxeViolations(page);
 });
 
-test('keeps Ask My Ledger native first, private, recoverable, and accessible', async ({ page }) => {
-  let interpretationCount = 0;
+test('keeps English AI topic suggestions explicit, private, recoverable, and accessible', async ({
+  page,
+}, testInfo) => {
+  let topicCount = 0;
+  let nativeCount = 0;
   await mockContext(page, () => true);
   await page.route('**/v1/me/csrf', async (route) => {
     await route.fulfill({ json: success({ token: 'c'.repeat(64) }), status: 200 });
   });
   await page.route('**/v1/insights/run', async (route) => {
-    await route.fulfill({
-      json: {
-        data: INSIGHT_RESULT,
-        meta: { interpretationAvailability: 'READY', requestId: REQUEST_ID },
-      },
-      status: 200,
-    });
-  });
-  await page.route('**/v1/insights/interpret', async (route) => {
-    interpretationCount += 1;
-    const body = route.request().postDataJSON();
-    expect(body.insight).toEqual({
+    nativeCount += 1;
+    expect(route.request().postDataJSON()).toEqual({
       kind: 'today-explanation',
       period: { date: '2026-08-11', kind: 'DATE' },
       workspace: 'EMPLOYEE',
     });
-    if (interpretationCount === 1) {
-      expect(body.priorTurns).toEqual([]);
-      await route.fulfill({
-        json: success({ interpretation: INSIGHT_INTERPRETATION, nativeResult: INSIGHT_RESULT }),
-        status: 200,
-      });
-      return;
-    }
-    expect(body.priorTurns).toEqual([
-      {
-        answer: INSIGHT_INTERPRETATION.statements[0].text,
-        question: 'Why is this result provisional?',
-      },
-    ]);
     await route.fulfill({
-      json: { error: { code: 'INTERNAL_ERROR', requestId: REQUEST_ID } },
-      status: 503,
+      json: {
+        data: INSIGHT_RESULT,
+        meta: { interpretationAvailability: 'DISABLED', requestId: REQUEST_ID },
+      },
+      status: 200,
     });
   });
-
+  await page.route('**/v1/insights/suggest-topic', async (route) => {
+    topicCount += 1;
+    expect(route.request().postDataJSON()).toEqual({
+      language: 'en',
+      question: 'How was my working time calculated?',
+    });
+    await route.fulfill(
+      topicCount === 1
+        ? { json: success({ topic: 'today-explanation' }), status: 200 }
+        : { json: { error: { code: 'INTERNAL_ERROR', requestId: REQUEST_ID } }, status: 503 },
+    );
+  });
   await page.setViewportSize({ height: 900, width: 320 });
   await page.goto('/insights');
-  await page.getByLabel('What would you like to understand?').selectOption('today-explanation');
+  const question = page.getByLabel('What would you like to find? (English)');
+  await question.fill('How was my working time calculated?');
+  await page.getByRole('button', { name: 'Suggest a topic' }).focus();
+  await page.keyboard.press('Enter');
+  const confirm = page.getByRole('button', { name: 'Use this topic' });
+  await expect(confirm).toBeVisible();
+  expect(nativeCount).toBe(0);
+  await expect(page.getByLabel('What would you like to understand?')).toHaveValue('');
+  await expectPageToHaveNoAxeViolations(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.screenshot({
+    path: testInfo.outputPath('english-topic-suggestion-320.png'),
+    fullPage: true,
+  });
+  await confirm.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('What would you like to understand?')).toBeFocused();
+  await expect(page.getByLabel('Date')).toHaveValue('');
+  expect(nativeCount).toBe(0);
   await page.getByLabel('Date').fill('2026-08-11');
   await page.getByRole('button', { name: 'Run insight' }).click();
   const nativeHeading = page.getByRole('heading', { name: 'How was today calculated?' });
   await expect(nativeHeading).toBeVisible();
-
-  const question = page.getByLabel('Question about this result');
-  await question.fill('Why is this result provisional?');
-  await page.getByRole('button', { name: 'Explain this result' }).click();
-  const generatedHeading = page.getByRole('heading', { name: 'Optional generated explanation' });
-  await expect(generatedHeading).toBeVisible();
-  await expect(page.getByRole('status')).toContainText('The optional explanation is ready.');
-  await expect(page.getByRole('link', { name: 'Open Today attendance source' })).toHaveCount(2);
-  expect(
-    await page.evaluate(() => {
-      const native = document.querySelector('#insight-result-heading');
-      const generated = document.querySelector('#insight-interpretation-heading');
-      return (
-        native !== null &&
-        generated !== null &&
-        Boolean(native.compareDocumentPosition(generated) & Node.DOCUMENT_POSITION_FOLLOWING)
-      );
-    }),
-  ).toBe(true);
-  const accessibilityTree = await page.getByRole('main').ariaSnapshot();
-  expect(accessibilityTree).toContain('heading "How was today calculated?"');
-  expect(accessibilityTree).toContain('heading "Ask My Ledger"');
-  expect(accessibilityTree).toContain('heading "Optional generated explanation"');
-  expect(accessibilityTree).not.toContain('log:');
-
-  await question.fill('Explain it again without losing the native result.');
-  await page.getByRole('button', { name: 'Explain this result' }).click();
+  await question.fill('How was my working time calculated?');
+  await page.getByRole('button', { name: 'Suggest a topic' }).click();
   await expect(
-    page.getByRole('heading', { name: 'The optional explanation is unavailable' }),
+    page.getByText('AI suggestions are unavailable. Choose a topic yourself below.'),
   ).toBeVisible();
   await expect(nativeHeading).toBeVisible();
-  await expect(generatedHeading).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
-
+  expect(nativeCount).toBe(1);
   await expect(page).toHaveURL('/insights?kind=today-explanation&date=2026-08-11');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
-    true,
+  const storage = await page.evaluate(() =>
+    JSON.stringify({ local: localStorage, session: sessionStorage }),
   );
-  const storage = await page.evaluate(() => ({
-    local: JSON.stringify(localStorage),
-    session: JSON.stringify(sessionStorage),
-  }));
-  expect(JSON.stringify(storage)).not.toContain('Why is this result provisional?');
-  expect(JSON.stringify(storage)).not.toContain(INSIGHT_INTERPRETATION.statements[0].text);
-
+  expect(storage).not.toContain('How was my working time calculated?');
   await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
   await expectPageToHaveNoAxeViolations(page);
   await page.reload();
-  await expect(generatedHeading).toHaveCount(0);
-  await expect(page.getByLabel('Question about this result')).toHaveCount(0);
+  await expect(question).toHaveValue('');
+  await expect(confirm).toHaveCount(0);
+  expect(topicCount).toBe(2);
 });
 
 test('prioritizes needs-review approvals with URL views, concise filters, pagination, and narrow records', async ({

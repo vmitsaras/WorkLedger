@@ -496,3 +496,18 @@ The profile records the duration/expiry rule, deletion versus minimization behav
   <https://docs.ollama.com/api/authentication>.
 
 The selected stable dependency versions and exact supported browser versions must be rechecked during implementation and before release; this document defines the security floor, not permission to trust a library default without verification.
+
+## English-only AI topic suggestions (D-520)
+
+Application startup qualifies the strict `english-topics-v1` output schema. The old selection-array
+challenge remains for historical qualification; it is not the topic runtime's health purpose.
+Exact provider/model identity, private destination checks, capability health, bounded deadlines,
+concurrency and strict no-tools/no-reasoning response handling remain enforced.
+
+ADR 0015 adds a strict English topic-suggestion POST with current Employee self authorization,
+same-origin/CSRF/session checks and private no-store transport. Only the question and static topic
+descriptions reach the existing private provider; no ledger values, identities, periods, context
+or tools are included. Typed questions can themselves contain sensitive information, so existing
+request-memory, egress and no-content-logging restrictions apply. Topic IDs are untrusted suggestions;
+explicit user selection and a separate authorized native run own the result. The legacy interpret
+endpoint is unavailable even when the provider is configured. Default deployment stays disabled.

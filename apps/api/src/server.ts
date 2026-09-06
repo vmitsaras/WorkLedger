@@ -67,7 +67,9 @@ export function createApiServer(
     requestIdHeader: false,
     trustProxy: config.trustedProxyAddresses.length > 0 ? [...config.trustedProxyAddresses] : false,
   });
-  const aiProvider = dependencies.aiProvider ?? createAiProvider(config.aiProvider);
+  const aiProvider =
+    dependencies.aiProvider ??
+    createAiProvider(config.aiProvider, { schemaHealthPurpose: 'english-topics-v1' });
 
   registerHttpFoundation(app);
 

@@ -1,6 +1,6 @@
 # WorkLedger Detailed Task Board
 
-**Next task: none ready.** WL-1508M is blocked; the optional pilot is deferred under D-519/report 198. The Phase 15 queue retains dependency order for any accepted resumption.
+**Current status: WL-1508N implemented and verified; model acceptance blocked on runtime performance.** D-520 authorizes this separate enhancement. Legacy M/B/C/D remain deferred.
 Completed phases and excluded proposals are not pending assignments.
 
 ## Status values
@@ -288,11 +288,17 @@ disabled, with no model approved.
 | WL-1514 | Add deterministic isolated System Insights using allowlisted technical diagnostics only and no employee or HR data | WL-1504, WL-1508G | `docs/164-wl-1514-system-insights.md`; strict technical fact and source allowlists; honest host-owned backup limitation; current System authorization; multilingual accessible `/system/insights`; public diagnostic minimization remains intact; zero provider calls | Done |
 | WL-1516 | Execute deterministic multilingual, accessibility, security, privacy, usability, provider-disabled, upgrade, and Phase 15 release gates | WL-1509, WL-1512–WL-1514 | `docs/165-wl-1516-phase-15-gate-review.md`; signed deterministic Phase 15 checklist; no accepted route depends on Ollama; provider remains disabled; no open P0/P1 defect; synchronized documentation; ten manifests at `0.16.0` | Done |
 
-### Optional employee pilot — execution order
+### English-only optional AI enhancement
+
+| ID | Task | Depends on | Acceptance evidence | Status |
+| --- | --- | --- | --- | --- |
+| WL-1508N | Implement and evaluate optional local AI topic suggestions for Employee Insights | User-approved D-520 / ADR 0015; completed deterministic Insights and provider controls | [Report 199](199-english-local-ai-topic-suggestions.md): implementation and full local verify passed; 32 correct responses then request 33 reached the 120-second deadline; 27 unrun; partial p95 102.172 seconds. No automatic replay or deployment | Blocked — implementation complete, model acceptance requires runtime performance recovery |
+
+### Legacy optional employee interpretation pilot — deferred
 
 [The execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md) defines the concrete
 files, entry criteria, verification, evidence reuse and failure exits for these tasks. L is complete
-with report 197; M is now blocked and the pilot deferred under D-519/report 198. No task is ready.
+with report 197; M is now blocked and the pilot deferred under D-519/report 198. No legacy interpretation task is ready.
 B/C/D retain their task IDs and original acceptance boundaries; C adds a historical
 regression preflight before its unchanged full matrix. A failed attempt does not automatically
 reopen completed work or authorize another attempt.

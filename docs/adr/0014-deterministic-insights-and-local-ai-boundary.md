@@ -1,5 +1,7 @@
 # ADR 0014: Deterministic Insights and Local AI Boundary
 
+**Current amendment:** [ADR 0015](0015-english-local-ai-topic-suggestions.md) accepts a separate English-only topic-suggestion flow under D-520. The legacy interpretation pilot below remains deferred and its evidence unchanged.
+
 **Reopening, 2026-09-06 (D-510):** The user reopened the employee pilot for a future test.
 The earlier closure remains historical failed evidence. `WL-1508H` prepares and requalifies one
 exact candidate before reopened `WL-1508B`, then gated `WL-1508C` and `WL-1508D`. No tests or

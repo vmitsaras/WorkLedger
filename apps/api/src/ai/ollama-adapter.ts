@@ -1,7 +1,9 @@
 import { findOllamaCompatibilityProfile } from './ollama-compatibility.js';
 import {
   createOllamaSchemaChallenge,
+  createOllamaTopicSchemaChallenge,
   validateOllamaSchemaChallenge,
+  validateOllamaTopicSchemaChallenge,
 } from './ollama-schema-challenges.js';
 import { Buffer } from 'node:buffer';
 import { lookup } from 'node:dns/promises';
@@ -54,6 +56,8 @@ export interface ResolvedHostAddress {
 }
 
 export interface OllamaAiProviderDependencies {
+  /** Closed application purpose; legacy qualification retains its original default probe. */
+  readonly schemaHealthPurpose?: 'english-topics-v1';
   readonly resolveHost?: (hostname: string) => Promise<readonly ResolvedHostAddress[]>;
   readonly now?: () => string;
   /** Injection for isolated adapter tests; configuration never exposes this override. */
@@ -160,7 +164,12 @@ export function createOllamaAiProvider(
           '/api/chat',
           'POST',
           {
-            ...createChatRequest(config.model, createOllamaSchemaChallenge('compact')),
+            ...createChatRequest(
+              config.model,
+              dependencies.schemaHealthPurpose === 'english-topics-v1'
+                ? createOllamaTopicSchemaChallenge()
+                : createOllamaSchemaChallenge('compact'),
+            ),
             keep_alive: 0,
           },
           signal,
@@ -170,7 +179,9 @@ export function createOllamaAiProvider(
           const parsed = parseChatResponse(challenge);
           if (
             parsed.toolCalls.length !== 0 ||
-            !validateOllamaSchemaChallenge('compact', parsed.content)
+            !(dependencies.schemaHealthPurpose === 'english-topics-v1'
+              ? validateOllamaTopicSchemaChallenge(parsed.content)
+              : validateOllamaSchemaChallenge('compact', parsed.content))
           ) {
             throw new AiProviderError('SCHEMA_PROBE_FAILED');
           }

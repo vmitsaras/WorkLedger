@@ -621,3 +621,13 @@ Under reduced motion, preserve immediate state feedback and remove spatial trave
 | System administration and operations | Component/axe for diagnostic states; role-separation and redaction integration; E2E for safe account/session operation only. | Keyboard/screen-reader diagnostics, degraded-state recovery, zoom/reflow, and confirmation that host-only actions are absent. |
 
 Exact supported browser versions remain owned by `D-502`. Until that production decision is accepted, each implementation phase uses the currently supported stable project targets while preserving these browser-independent behavioral criteria.
+
+## English-only AI topic suggestions (D-520)
+
+The optional Employee topic-suggestion section has explicit English-only labels and `lang="en"`
+in every account locale. Native forms/results retain account localization. A suggestion never
+changes the native form until Use this topic is activated; confirmation clears old period/context
+and focuses the topic field. The user chooses a period and separately runs the native Insight.
+One polite region reports progress, unknown, cancellation or failure; no tokens stream. Labels,
+linked field errors, cancellation focus and clear controls are keyboard complete. Late results
+after cancel, clear, scope change or unmount are discarded. See ADR 0015 and report 199.

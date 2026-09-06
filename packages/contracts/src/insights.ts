@@ -516,6 +516,27 @@ const insightQuestionSchema = z
     `An Insight question must not exceed ${MAX_INSIGHT_QUESTION_CODE_POINTS} Unicode code points.`,
   );
 
+export const EMPLOYEE_INSIGHT_TOPICS = [
+  'balance-change',
+  'submission-blockers',
+  'leave-projection',
+  'today-explanation',
+] as const;
+
+/** English is the supported interaction language, not an inferred language guarantee. */
+export const employeeInsightTopicRequestSchema = z.strictObject({
+  language: z.literal('en'),
+  question: insightQuestionSchema,
+});
+export const employeeInsightTopicResultSchema = z.strictObject({
+  topic: z.enum([...EMPLOYEE_INSIGHT_TOPICS, 'UNKNOWN']),
+});
+export const employeeInsightTopicResultEnvelopeSchema = createSuccessEnvelopeSchema(
+  employeeInsightTopicResultSchema,
+);
+export type EmployeeInsightTopicRequest = z.infer<typeof employeeInsightTopicRequestSchema>;
+export type EmployeeInsightTopicResult = z.infer<typeof employeeInsightTopicResultSchema>;
+
 const insightPriorAnswerSchema = z
   .string()
   .trim()

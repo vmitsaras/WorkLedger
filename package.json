@@ -47,6 +47,7 @@
     "test": "node scripts/run-verification.mjs test",
     "test:integration": "node scripts/run-verification.mjs test:integration",
     "test:ai:employee": "node scripts/run-pilot.mjs",
+    "test:ai:topics": "node scripts/evaluate-employee-topics.mjs",
     "test:e2e": "node scripts/run-verification.mjs test:e2e",
     "test:visual": "pnpm run workspace:check && pnpm run test:build && WORKLEDGER_ASSERT_PHASE_13_VISUALS=1 playwright test apps/web/e2e/application-shell.spec.ts --project=chromium",
     "test:visual:i18n": "pnpm run workspace:check && pnpm run test:build && WORKLEDGER_ASSERT_PHASE_14_I18N_VISUALS=1 playwright test apps/web/e2e/application-shell.spec.ts --project=chromium --grep 'critical employee routes|responsive manager, HR, and system workflows'",

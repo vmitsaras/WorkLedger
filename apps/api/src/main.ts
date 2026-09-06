@@ -15,7 +15,9 @@ async function main() {
     service: 'workledger-api',
     version: WORKLEDGER_VERSION,
   });
-  const aiProvider = createAiProvider(config.aiProvider);
+  const aiProvider = createAiProvider(config.aiProvider, {
+    schemaHealthPurpose: 'english-topics-v1',
+  });
 
   const server = createApiServer(config, { aiProvider, logger });
 

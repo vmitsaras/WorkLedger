@@ -30,6 +30,7 @@ const candidate = {
 };
 const hostileEnv = {
   WORKLEDGER_RUN_AI_EVALUATION: '1',
+  WORKLEDGER_RUN_TOPIC_EVALUATION: '1',
   WORKLEDGER_RUN_SCHEMA_QUALIFICATION: '1',
   WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
   WORKLEDGER_OLLAMA_ORIGIN: 'http://stale.invalid',
@@ -42,6 +43,7 @@ const hostileEnv = {
 test('ordinary verification disables every inherited model gate, filter and provider setting', async () => {
   const env = deterministicEnvironment(hostileEnv);
   assert.equal(env.WORKLEDGER_RUN_AI_EVALUATION, '0');
+  assert.equal(env.WORKLEDGER_RUN_TOPIC_EVALUATION, '0');
   assert.equal(env.WORKLEDGER_RUN_SCHEMA_QUALIFICATION, '0');
   assert.equal(env.WORKLEDGER_AI_PROVIDER_MODE, 'disabled');
   assert.equal(env.KEEP_ME, 'retained');

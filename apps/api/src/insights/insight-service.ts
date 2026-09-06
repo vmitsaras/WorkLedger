@@ -1,5 +1,6 @@
 import { isSupportedLocale, type SupportedLocale } from '@workledger/contracts';
 import {
+  EMPLOYEE_INSIGHT_TOPICS,
   insightNativeResultSchema,
   insightRequestSchema,
   type BalanceChangeInsightRequest,
@@ -90,7 +91,9 @@ export const EMPLOYEE_INSIGHT_REQUIRED_ACTIONS = Object.freeze({
 export function createInsightService(
   database: WorkLedgerDatabase,
   handlers: InsightHandlers,
-): EmployeeInsightInterpretationSource {
+): EmployeeInsightInterpretationSource & {
+  authorizeTopicSuggestion(identity: InsightIdentity, capturedAt: Instant): Promise<void>;
+} {
   async function runWithLocale(
     identity: InsightIdentity,
     requestInput: EmployeeInsightRequest,
@@ -163,8 +166,21 @@ export function createInsightService(
     );
   }
 
-  const service: EmployeeInsightInterpretationSource = {
-    async run(identity, requestInput, capturedAt) {
+  const service = {
+    async authorizeTopicSuggestion(identity: InsightIdentity, capturedAt: Instant) {
+      await database.transaction(async (transaction) => {
+        const context = requireActiveEmployeeContext(
+          await transaction.accountSelfService.findContext(identity.accountId, capturedAt),
+        );
+        for (const kind of EMPLOYEE_INSIGHT_TOPICS)
+          authorizeInsightRequest(identity, context, kind);
+      });
+    },
+    async run(
+      identity: InsightIdentity,
+      requestInput: EmployeeInsightRequest,
+      capturedAt: Instant,
+    ) {
       return (await runWithLocale(identity, requestInput, capturedAt)).nativeResult;
     },
     runWithLocale,

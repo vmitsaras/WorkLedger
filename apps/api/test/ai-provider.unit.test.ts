@@ -13,7 +13,10 @@ import {
   createOllamaAiProvider as createRealOllamaAiProvider,
 } from '../src/ai/ollama-adapter.js';
 import { createAiProvider } from '../src/ai/provider.js';
-import { createOllamaSchemaChallenge } from '../src/ai/ollama-schema-challenges.js';
+import {
+  createOllamaSchemaChallenge,
+  createOllamaTopicSchemaChallenge,
+} from '../src/ai/ollama-schema-challenges.js';
 import { checkAiProviderAtStartup } from '../src/ai/startup.js';
 import type { WorkLedgerLogger } from '../src/logging/logger.js';
 
@@ -85,6 +88,61 @@ describe('AI provider abstraction', () => {
 });
 
 describe('private Ollama adapter', () => {
+  test.each([
+    ['valid topic', { content: '{"topic":"UNKNOWN"}' }, true],
+    ['unsupported topic', { content: '{"topic":"payroll"}' }, false],
+    ['extra key', { content: '{"topic":"UNKNOWN","explanation":"x"}' }, false],
+    ['malformed', { content: 'not JSON' }, false],
+    ['reasoning', { content: '{"topic":"UNKNOWN"}', thinking: 'hidden reasoning' }, false],
+    [
+      'tool call',
+      {
+        content: '{"topic":"UNKNOWN"}',
+        tool_calls: [{ function: { name: 'read_records', arguments: {} } }],
+      },
+      false,
+    ],
+  ])('qualifies the topic schema independently: %s', async (_name, message, accepted) => {
+    let topicRequests = 0;
+    const fake = await startFakeOllama((request, response, body) => {
+      if (
+        request.url === '/api/chat' &&
+        readProperty(readProperty(readProperty(body, 'format'), 'properties'), 'topic')
+      ) {
+        topicRequests += 1;
+        const challenge = createOllamaTopicSchemaChallenge();
+        expect(body).toEqual({
+          model: MODEL,
+          messages: challenge.messages,
+          stream: false,
+          think: false,
+          keep_alive: 0,
+          format: challenge.outputSchema,
+          options: { temperature: 0, num_predict: OLLAMA_MAX_GENERATED_TOKENS },
+        });
+        writeJson(response, 200, { done: true, message: { role: 'assistant', ...message } });
+        return;
+      }
+      respondWithHealthyOllama(request, response, body);
+    });
+    const provider = createOllamaAiProvider(createConfig(fake.origin), {
+      schemaHealthPurpose: 'english-topics-v1',
+    });
+    try {
+      await expect(provider.checkHealth()).resolves.toMatchObject({
+        status: accepted ? 'ready' : 'misconfigured',
+        reasonCode: accepted ? null : 'SCHEMA_PROBE_FAILED',
+      });
+      expect(topicRequests).toBe(1);
+      if (!accepted)
+        await expect(provider.generate(GENERATE_REQUEST)).rejects.toMatchObject({
+          code: 'PROVIDER_NOT_READY',
+        });
+    } finally {
+      await fake.close();
+    }
+  });
+
   test('denies generation until the pinned model health check passes', async () => {
     const resolveHost = vi.fn(async () => [{ address: '127.0.0.1', family: 4 as const }]);
     const provider = createOllamaAiProvider(createConfig('http://127.0.0.1:11434'), {

@@ -1,6 +1,6 @@
 # Open Decisions and Accepted Defaults
 
-**Current scheduling decision:** [D-517](#d-517--reconcile-the-roadmap-and-bound-further-pilot-work).
+**Current scheduling decision:** D-520 — English-only local AI topic suggestions.
 Earlier next-step and authorization notes below are historical unless reaffirmed by current scope.
 
 ### 2026-08-28 — WL-1512 accepts two fixed HR aggregate purposes
@@ -1229,3 +1229,33 @@ retention behavior or deployment configuration changed. Existing qualification r
 recorded scope; future affected changes require impact review. B still requires fresh 9/9 then
 9/9 after a supported M recovery, C still requires 27-case preflight then uninterrupted 216-case
 acceptance, and D retains closure evidence. Provider deployment stays disabled.
+
+## D-520 — English-only local AI topic suggestions
+
+**Status:** Accepted by the user's 2026-09-06 instruction to continue with this smaller feature.
+[ADR 0015](adr/0015-english-local-ai-topic-suggestions.md) and [report 199](199-english-local-ai-topic-suggestions.md) define WL-1508N.
+
+This supersedes D-519's no-ready-task disposition only for a separate English topic-suggestion
+flow. The old semantic interpreter stays deferred. The model's topic is a suggestion; explicit user
+confirmation establishes native request intent. English-only questions and interaction copy are
+an accepted exception to the old AI multilingual scope. Native results and the application remain
+localized. Existing failures are preserved; no old gate passes by removing languages.
+
+Proceed with one implementation slice and its fixed 60-case evaluation under current provider
+isolation. No new package, migration, phase, model switch or provider deployment is authorized.
+
+The initial N attempt timed out in the legacy compact health challenge before any topic case ran.
+Within this smaller contract, application health now uses the closed `english-topics-v1` strict
+enum probe. This tests the feature's actual output shape while preserving identity, capability,
+private address, deadline, concurrency, output validation and unload controls. Legacy qualification
+keeps its original default probe; its result does not qualify this new purpose. Report 199 records
+the stopped attempt and cleanup separately. The topic prompt, 60-case matrix and thresholds remain
+unchanged for the fresh purpose-specific attempt.
+
+Report 199 records the outcome: implementation and full local verification passed; the model
+returned 32 correct topics, then request 33 reached the 120-second deadline. The remaining 27
+cases did not run; partial-run p95 was 102.172 seconds. Identity/source checks and owned process
+cleanup passed. N remains unchecked for acceptance because latency, completion and rejection-case
+criteria are unmet. This is evidence of working bounded suggestions with an unqualified local
+runtime, not a complete model acceptance or a recovery of the old answer contract. No automatic
+rerun, new candidate or deployment is scheduled.

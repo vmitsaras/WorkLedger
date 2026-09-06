@@ -387,6 +387,25 @@ export type MessageParameterMap = Readonly<{
   'employee.insights.validation.kind': undefined;
   'employee.insights.validation.month': undefined;
   'employee.insights.validation.range': undefined;
+  'employee.insights.topics.balanceChange': undefined;
+  'employee.insights.topics.cancel': undefined;
+  'employee.insights.topics.cancelled': undefined;
+  'employee.insights.topics.clear': undefined;
+  'employee.insights.topics.confirm': undefined;
+  'employee.insights.topics.confirmDescription': undefined;
+  'employee.insights.topics.description': undefined;
+  'employee.insights.topics.heading': undefined;
+  'employee.insights.topics.invalid': undefined;
+  'employee.insights.topics.leaveProjection': undefined;
+  'employee.insights.topics.question': undefined;
+  'employee.insights.topics.rateLimited': undefined;
+  'employee.insights.topics.ready': undefined;
+  'employee.insights.topics.running': undefined;
+  'employee.insights.topics.submissionBlockers': undefined;
+  'employee.insights.topics.submit': undefined;
+  'employee.insights.topics.todayExplanation': undefined;
+  'employee.insights.topics.unavailable': undefined;
+  'employee.insights.topics.unknown': undefined;
   'employee.insights.validation.to': undefined;
   'employee.insights.value.no': undefined;
   'employee.insights.value.unavailable': undefined;
@@ -2820,6 +2839,25 @@ export const MESSAGE_KEYS = [
   'employee.insights.validation.kind',
   'employee.insights.validation.month',
   'employee.insights.validation.range',
+  'employee.insights.topics.balanceChange',
+  'employee.insights.topics.cancel',
+  'employee.insights.topics.cancelled',
+  'employee.insights.topics.clear',
+  'employee.insights.topics.confirm',
+  'employee.insights.topics.confirmDescription',
+  'employee.insights.topics.description',
+  'employee.insights.topics.heading',
+  'employee.insights.topics.invalid',
+  'employee.insights.topics.leaveProjection',
+  'employee.insights.topics.question',
+  'employee.insights.topics.rateLimited',
+  'employee.insights.topics.ready',
+  'employee.insights.topics.running',
+  'employee.insights.topics.submissionBlockers',
+  'employee.insights.topics.submit',
+  'employee.insights.topics.todayExplanation',
+  'employee.insights.topics.unavailable',
+  'employee.insights.topics.unknown',
   'employee.insights.validation.to',
   'employee.insights.value.no',
   'employee.insights.value.unavailable',

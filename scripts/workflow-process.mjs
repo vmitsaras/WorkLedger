@@ -9,7 +9,7 @@ export function deterministicEnvironment(source) {
   const env = Object.fromEntries(
     Object.entries(source).filter(
       ([key]) =>
-        !/^(WORKLEDGER_(RUN_AI_EVALUATION|RUN_SCHEMA_QUALIFICATION|AI_EVALUATION_.*|AI_PROVIDER_MODE|OLLAMA_.*))$/iu.test(
+        !/^(WORKLEDGER_(RUN_AI_EVALUATION|RUN_TOPIC_EVALUATION|RUN_SCHEMA_QUALIFICATION|AI_EVALUATION_.*|AI_PROVIDER_MODE|OLLAMA_.*))$/iu.test(
           key,
         ),
     ),
@@ -17,6 +17,7 @@ export function deterministicEnvironment(source) {
   return {
     ...env,
     WORKLEDGER_RUN_AI_EVALUATION: '0',
+    WORKLEDGER_RUN_TOPIC_EVALUATION: '0',
     WORKLEDGER_RUN_SCHEMA_QUALIFICATION: '0',
     WORKLEDGER_AI_PROVIDER_MODE: 'disabled',
   };
