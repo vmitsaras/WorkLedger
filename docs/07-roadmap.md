@@ -30,7 +30,7 @@ Phases 0–15 have passed their accepted exit gates; the workspace version is `0
 [Report 165](165-wl-1516-phase-15-gate-review.md) records the deterministic Phase 15 release.
 The optional employee AI pilot has not passed and provider deployment remains disabled.
 
-**Next task: WL-1508M.** Follow [the bounded execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md)
+**Next task: none ready; M is blocked and the pilot deferred (D-519/report 198).** Follow [the bounded execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md)
 and the task board. Historical evaluation attempts do not reopen completed product phases.
 
 ---
@@ -625,7 +625,10 @@ and operations evidence. The optional employee pilot is reopened for future eval
 
 ## Employee local AI pilot sub gate
 
-**Current state:** Optional and not passed. The deterministic release is complete independently.
+**Current state:** Optional, not passed and deferred under D-519. [Report 198](198-wl-1508m-fact-action-recovery-disposition.md)
+records M's completed diagnostic review and 101 passing boundary tests, with no supported complete
+repair in the current contract. M remains unchecked/blocked; no task is ready. An accepted bounded
+question-intent amendment or new causal defect evidence is needed to resume. The deterministic release is complete independently.
 Report 195 is the latest B attempt: health passed, submission-actions accepted 3/9, German selected
 no facts, and Spanish omitted the pending-request action. Today-posted and C did not run. Report
 194's cold health and 18/18 schema qualification are separate evidence, not semantic acceptance.
@@ -635,7 +638,7 @@ D-517 replaces the accumulated rerun instructions with one ordered queue:
 | Order | Task | Required outcome |
 | --- | --- | --- |
 | 1 — Done | WL-1508L | [Report 197](197-wl-1508l-reproducible-verification.md): reproducible Windows verification, restored CI configuration and staged pilot invocation; full local verification passed without a real model |
-| 2 — Ready; next | WL-1508M | One complete, evidence-supported fact/action recovery with deterministic regressions, or an explicit blocker/defer decision |
+| 2 — Blocked; deferred | WL-1508M | Report 198 records the explicit blocked exit. Recovery is incomplete; resume only with an accepted question-intent amendment or new causal defect evidence |
 | 3 | WL-1508B | submission-actions 9/9, then today-posted 9/9, on one frozen qualified configuration |
 | 4 | WL-1508C | Historical full-matrix failure preflight 27/27, then one uninterrupted unfiltered 216/216 gate |
 | 5 | WL-1508D | Required non-model evidence and exact candidate reviewed before parent WL-1508 closes |

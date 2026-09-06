@@ -34,7 +34,7 @@ provider-disabled milestone is `0.16.0`.
 
 ## Current status
 
-- **Next task: WL-1508M.** WL-1508L is complete with [full local verification evidence](docs/197-wl-1508l-reproducible-verification.md).
+- **No implementation task is ready.** The optional pilot is deferred after [M's bounded review](docs/198-wl-1508m-fact-action-recovery-disposition.md); resumption needs an accepted question-intent amendment or new causal defect evidence. WL-1508L is complete with [full local verification evidence](docs/197-wl-1508l-reproducible-verification.md).
   The [bounded execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md)
   separates verification tooling, one fact/action recovery, acceptance screens and pilot closure.
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) records the completed milestone, verified decisions, and residuals.

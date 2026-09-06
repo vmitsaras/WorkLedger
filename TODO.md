@@ -2,7 +2,7 @@
 
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
-**Next task: WL-1508M.** Phases 0–15 are complete at `0.16.0`; the remaining optional
+**Next task: none ready; WL-1508M is blocked and the optional pilot deferred.** Phases 0–15 are complete at `0.16.0`; the remaining optional
 employee pilot is listed in execution order under Phase 15. Excluded proposals are not queued.
 
 ## Phase-completion version rule
@@ -214,11 +214,13 @@ remaining sequence. Keep failed attempts in reports, not in task titles.
 
 ### Optional employee pilot — execution order
 
-Only M is ready. L is complete with the full local verification evidence in report 197.
+No task is ready. M's diagnostic review found no supported complete repair within the current
+contract; [report 198](docs/198-wl-1508m-fact-action-recovery-disposition.md) and D-519 record the
+deferral and decision needed to resume. L retains the full local verification evidence in report 197.
 Complete each task's entry and exit criteria in the task board and execution plan.
 Planning these tasks does not start inference, authorize deployment, or claim a fix.
 
-- [ ] `WL-1508M` Resolve report-195 fact/action completeness in one bounded slice: focused diagnosis, one evidence-supported recovery, meaningful regressions and documentation. **Ready; next task.** If no defensible fix fits the accepted contract, record the blocker/defer decision instead of another experiment.
+- [ ] `WL-1508M` Resolve report-195 fact/action completeness in one bounded slice. **Blocked; pilot deferred (D-519/report 198).** Diagnostic review and 101 boundary tests completed, but no supported recovery fits the current contract. Resume only with an accepted bounded question-intent amendment or new causal defect evidence; do not repeat prompt experiments.
 - [ ] `WL-1508B` Run one fresh submission-actions 9/9 screen, then today-posted 9/9 only after the first group passes. **Blocked on M and current qualification.** Latest attempt failed 3/9 in report 195.
 - [ ] `WL-1508C` Pass balance-summary, balance-projection and balance-closing preflight (27 cases), then one unfiltered uninterrupted 216-case evaluation on the frozen configuration. **Blocked on fresh B.** Historical full runs failed; no combined partial passes.
 - [ ] `WL-1508D` Reconfirm applicable non-model privacy, security, fallback, localization and accessibility evidence and close the pilot. **Blocked on fresh C.** Deployment remains disabled.

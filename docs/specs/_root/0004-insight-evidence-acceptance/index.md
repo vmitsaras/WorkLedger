@@ -5,6 +5,11 @@
 **Decision:** D-515  
 **Evidence:** `docs/186-wl-1508b-evidence-selection-diagnosis.md`; `docs/188-wl-1508b-evidence-acceptance-implementation.md`; `docs/189-wl-1508b-acceptance-screen-health-timeout.md`
 
+**Current scheduling:** D-519 and [report 198](../../../198-wl-1508m-fact-action-recovery-disposition.md)
+defer the optional pilot after M's bounded review found no supported complete repair within this
+contract. M remains unchecked/blocked; no fresh screen or repeated diagnosis is queued. The design
+and historical outcomes below remain unchanged. A question-intent amendment is proposed, not accepted.
+
 ## Scope and selected approach
 
 Keep `submission-actions` as a navigation-only question. Do not add the blocker count to the

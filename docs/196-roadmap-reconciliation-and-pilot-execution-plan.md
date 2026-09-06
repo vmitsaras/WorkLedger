@@ -7,8 +7,11 @@
 **Scope:** Planning repair requested by the user; no runtime implementation or model execution.
 
 **Implementation update:** WL-1508L is complete with [report 197](197-wl-1508l-reproducible-verification.md).
-WL-1508M is now the single ready task. Findings and planning-only verification below retain their
-original audit scope; current status and observed implementation results are in the task board and report 197.
+WL-1508M subsequently took the explicit blocked exit: [report 198](198-wl-1508m-fact-action-recovery-disposition.md)
+and D-519 record the completed diagnostic review, 101 passing boundary tests and no supported complete
+repair within the current contract. M remains unchecked and the pilot deferred; no task is ready.
+Resumption needs an accepted question-intent amendment or new causal defect evidence. Findings and
+planning-only verification below retain their original audit scope; current status is in the task board.
 
 ## Findings
 
@@ -55,7 +58,8 @@ parent gate.
 
 ### WL-1508L — Make local verification and pilot invocation reproducible
 
-**Entry:** Completed J and implemented D-515/D-516; this task is ready and is the next assignment.
+**Entry:** Completed J and implemented D-515/D-516. L was the next assignment at planning time
+and is now complete; see report 197.
 
 **Deliverable:** One documented, checked-in workflow using the pinned manifest toolchain, with
 ordinary deterministic verification separated from explicit model stages. It must work from
@@ -184,7 +188,8 @@ not reopen the already completed Phase 15 gate or bump the version.
 
 ## Rules that prevent another loop
 
-- There is one next task. Current status records only the latest evidence, blockers, and next
+- There is at most one ready next task; explicit blocked/deferred outcomes do not invent one.
+  Current status records only the latest evidence, blockers, and next
   action; chronological reports retain history. Replace stale current prose instead of appending
   another outcome into B's task description.
 - A failed run ends that attempt, not the evidence trail. Do not automatically return to M,

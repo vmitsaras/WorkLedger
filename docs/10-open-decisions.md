@@ -1194,3 +1194,38 @@ L implements verification and these bounded deterministic repairs. It does not r
 model semantics or start any health, qualification or employee model run. L's complete local
 verification passed with the documented skips; M is the next ready pilot implementation.
 B/C/D still require fresh evidence, and the restored CI has not run remotely.
+
+## D-519 — Defer the optional pilot at M's unsupported-recovery exit
+
+**Status:** Accepted scheduling disposition within D-517/M's explicit blocked exit. No new runtime
+or product contract is accepted. [Report 198](198-wl-1508m-fact-action-recovery-disposition.md)
+records the failure traces, intervention review, verified artifact hash and 101 passing existing
+boundary tests.
+
+The user continued the ordered recovery after L. Current source and report 195 show that both
+requested destinations and related evidence reach the model, the positional codec preserves its
+choices, German fails the required fact minimum, and Spanish passes grounding while omitting a
+question-required action. D-515 already states the relevant obligations. No dropped field or
+indexing defect was identified. Tests with constructed selections establish mechanics, not a
+recovery of model semantics; another prompt-only experiment cannot close M.
+
+Apply the planned blocked/deferred exit instead of silently treating diagnostic completion as
+implementation completion. M and parent WL-1508 remain unchecked; B/C/D remain blocked; the
+optional pilot is deferred and no implementation task is ready. This supersedes D-518's and older
+reports' next-M/next-diagnosis scheduling statements without changing their recorded results.
+Do not create another approval/diagnosis/design sequence or replay the same model input on a routine
+continuation. Completed phases and L remain complete at `0.16.0`.
+
+The concrete product decision for resumption is whether to adopt an explicit user-selected,
+server-validated question-intent contract that can establish requested destinations and supporting
+evidence independently of provider output. Define free-text conflicts, non-navigation scope,
+ambiguity, authority and localized accessible controls before accepting that amendment to D-515
+and the request contract. This is a proposal, not approved implementation. Alternatively, new
+causal evidence of a concrete defect within the existing contract may justify reopening M. The
+default is continued native Insights with the optional pilot deferred, not a new model candidate.
+
+No prompt, context, schema, codec, evaluator, provider control, permission, privacy allowlist,
+retention behavior or deployment configuration changed. Existing qualification retains only its
+recorded scope; future affected changes require impact review. B still requires fresh 9/9 then
+9/9 after a supported M recovery, C still requires 27-case preflight then uninterrupted 216-case
+acceptance, and D retains closure evidence. Provider deployment stays disabled.
