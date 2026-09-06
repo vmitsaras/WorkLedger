@@ -4,7 +4,7 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — fresh schema qualification pending after cold health passed
+**Active task:** WL-1508B — fresh employee screen pending after D-516 qualification
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-09-06
 
@@ -21,8 +21,8 @@ were stopped; final process, listener, old-server and firewall checks pass. Repo
 the diagnosis: a second model load exhausted the shared deadline; host-level slowness remains
 unproven. Report 191/D-516 and spec 0005 complete the design: first-probe idle residency of 120
 seconds, second-probe zero keep-alive, finite expiry fallback, and the unchanged shared deadline.
-Report 192 implements this lifecycle and records deterministic verification with real-model flags disabled. Report 193 records the separately continued cold health-only pass in 25,828 ms, with exact identity, unchanged sources and verified cleanup. Next: separately continued fresh cold health plus 18-challenge schema qualification under spec 0005.
-No further model attempt ran; fresh schema qualification precedes B. B/C/D stay
+Report 192 implements this lifecycle and records deterministic verification with real-model flags disabled. Report 193 records the separately continued cold health-only pass in 25,828 ms, with exact identity, unchanged sources and verified cleanup. Report 194 records fresh cold health passed in 23,508 ms and 18/18 schema challenges, with identity, source and cleanup checks passed. Next: separately continued B submission-actions 9/9 then today-posted 9/9 with mandatory health.
+No employee cases ran during qualification. B/C/D stay
 open, K remains complete as historical qualification evidence, and deployment stays disabled at
 0.16.0.
 

@@ -1,7 +1,7 @@
 # 0005. Bounded synthetic health residency
 
 **Date:** 2026-09-06  
-**Status:** Implemented and deterministically verified in report 192; cold health passed in report 193; fresh 18-challenge qualification pending
+**Status:** Implemented and deterministically verified in report 192; cold health passed in report 193; fresh cold health and 18/18 qualification passed in report 194
 **Decision:** D-516  
 **Evidence:** Reports 189–191
 

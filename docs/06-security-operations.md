@@ -12,7 +12,7 @@ qualification requires an isolated owned candidate with no loaded models before 
 attempts use verified owned-process cleanup and stop if ownership or cleanup cannot be established.
 No adapter process control or extra endpoint is added. Fresh health-only evidence and then fresh
 18-challenge qualification are separately gated before B; historical K does not qualify this lifecycle.
-See spec 0005 and reports 192–193. Cold health passed; fresh 18-challenge qualification remains separately gated. Deployment remains disabled.
+See spec 0005 and reports 192–194. Fresh cold health and 18/18 schema qualification passed; B employee evidence remains separately gated. Deployment remains disabled.
 
 **Optional Employee Insight recovery, D-512/J:** Provider configuration now requires a reviewed
 compatibility profile matching the exact model/digest; health and generation check server version
