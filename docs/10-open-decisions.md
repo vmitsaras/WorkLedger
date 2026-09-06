@@ -955,3 +955,42 @@ as next. One uninterrupted selection-v1 matrix finished with 207 grounded answer
 safe rejections and six failed cases (210/216 accepted). Report 172 records the two failure modes,
 exact configuration and complete artifact review. C remains open and D blocked; no retry, tuning,
 model switch, threshold relaxation or deployment enablement followed. Next is scoped diagnosis.
+
+### D-512 — Provider schema enforcement and interpretation completeness recovery
+
+**Status:** Recovery design specified on user request; implementation pending, 2026-09-06.
+
+The user requested diagnosis of the two selection-v1 failure modes. Report 173 identifies a
+schema bypass in Ollama 0.24.0's chat path matching the installed qwen3.5 parser, thinking capability
+and think:false request. This refines D-511's generic grammar-support assumption: fixed vectors
+prevent duplicate references after strict decoding, but the candidate may generate an invalid shape.
+Separately, runtime grounding enforces material limitation presence without its related facts/actions;
+the minimized context also omits qualifiers distinguishing posted and projected change.
+
+The proposed next scope is a bounded recovery design: establish schema enforcement while retaining
+thinking=false and exact provider qualification; specify rejection of incomplete material dependency
+sets and review narrowly allowlisted semantic qualifiers. Question-specific comparison completeness
+remains a separate golden obligation. Do not silently fill selections, relax the gate or infer that
+fixing dependency closure alone guarantees the posted-change fact.
+
+This diagnosis changed documentation only. No inference, tests, installation changes or implementation
+were authorized by this task. Future repair and execution need their own scope; no candidate version
+or upgrade is selected here. C remains failed 210/216, D blocked and deployment provider-disabled.
+There is no new phase or version change. Exact output and locale-specific generation causes remain
+unknown under existing content-free retention.
+
+**D-512 design continuation:** The user requested the recovery design. Spec 0003 selects exact
+source-reviewed provider profiles and version checks, synthetic schema challenges with thinking
+disabled, a shared material-dependency calculation enforced after existing grounding checks, and
+request-memory fact qualifiers limited to POSTED, PROJECTED, PROVISIONAL and INCOMPLETE. New
+fact/action completeness failure codes carry null diagnostic detail; public DTOs and selection-v1
+stay unchanged. This explicitly amends spec 0002's unchanged-final-validator/context and adapter
+assumptions for the bounded implementation. It does not weaken golden comparison requirements.
+
+WL-1508J implements application safeguards/tooling and deterministic verification. WL-1508K
+separately chooses and qualifies a source-reviewed stable runtime/model before fresh B and C.
+The current known-bypassing tuple is ineligible; no replacement version is presumed fixed. The
+design specifies admission and qualification criteria without authorizing installation or execution.
+No tests or inference ran. C/D stay open, provider deployment disabled and version 0.16.0 unchanged.
+See `docs/specs/_root/0003-insight-schema-enforcement-completeness/index.md` for exact contracts,
+failure precedence, qualification cases, privacy boundaries and acceptance evidence.

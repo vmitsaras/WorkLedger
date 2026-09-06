@@ -85,6 +85,10 @@ Historical B/C evidence was preserved before the fixed output path was reused.
 
 ## Verification and stop decision
 
+**Subsequent diagnosis:** Report 173 completes the requested source/artifact review without new
+tests or inference. It identifies the pinned provider's schema bypass and the runtime completeness
+gap. The next proposed work is bounded recovery design under D-512; this run remains failed.
+
 Pinned workspace/toolchain/phase guards and TypeScript compilation passed before execution.
 The full evaluation failed its expected-zero-failures assertion. No separate non-model, database,
 browser or accessibility suite ran in this evidence-only task; report 170 retains those earlier

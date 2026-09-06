@@ -12,6 +12,12 @@ deployment change was made. This is a continuation of C, not a new phase or pass
 
 ## Confirmed findings
 
+**Subsequent correction:** Report 173 identifies a schema bypass before grammar conversion in the
+exact candidate's chat path. Missing uniqueItems support below remains true of the generic converter,
+but does not establish that this run used that converter. The new source/metadata diagnosis refines
+the earlier attribution; historical output cannot be reconstructed. Selection-v1 was subsequently
+implemented in I and evaluated in reports 171–172; C still failed.
+
 All three es-ES balance-summary repetitions returned FINAL_SCHEMA_REFERENCES_DUPLICATE. In
 `apps/api/src/insights/employee-insight-interpretation.ts`, the classifier checks each of
 actionReferences, factReferences, limitationReferences and sourceReferences separately. The code

@@ -19,6 +19,12 @@ Bounded field/count diagnostics are validated at the logger sink; no model conte
 are retained. Implementation evidence and verification limits are in report 170. Fresh selection-v1 B passes 18/18 (report 171); C
 fails 210/216 (report 172) and provider deployment stays disabled.
 
+**D-512 recovery design:** Spec 0003 adds proposed exact provider compatibility admission and
+synthetic schema qualification, runtime material fact/action completeness, and request-memory
+qualifiers limited to POSTED, PROJECTED, PROVISIONAL and INCOMPLETE. J implements and verifies;
+K separately qualifies the provider before fresh B/C. Public DTOs, safe prose, authorization and
+retention exclusions remain unchanged. This is a design amendment, not implemented behavior.
+
 ## Outcome
 
 The Phase 15 boundary is accepted. WorkLedger first shipped deterministic, role scoped native

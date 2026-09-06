@@ -8,6 +8,10 @@
 Implementation and deterministic verification: `docs/170-wl-1508i-duplicate-safe-generation.md`.
 The requirements below describe the implemented slice and its separately gated model verification.
 
+**Subsequent design amendment:** D-512/spec 0003 specifies provider compatibility admission and
+material completeness checks plus four semantic qualifiers. It narrows the unchanged-validator and
+unchanged-context assumptions below for future J implementation; selection-v1 and public DTOs remain.
+
 ## Scope
 
 Replace provider-generated reference strings with fixed boolean selections. Decode those selections
@@ -56,6 +60,11 @@ ordering is canonicalized without changing reference-set semantics.
 The [pinned Ollama 0.24.0 converter](https://github.com/ollama/ollama/blob/v0.24.0/llama/llama.cpp/common/json-schema-to-grammar.cpp#L865-L882)
 uses item rules and minItems/maxItems to generate bounded arrays. Its primitive rules include boolean.
 This source review supports the format choice; it is not an executed provider compatibility test.
+
+**Subsequent qualification finding (report 173):** Ollama 0.24.0 bypasses schema application in
+the installed qwen3.5 parser chat path with thinking disabled. Converter support does not establish
+that this path constrains generation. Strictly decoded vectors remain duplicate-safe, but provider
+shape enforcement needs separate recovery and qualification before C can pass.
 
 ## Runtime boundary and limits
 

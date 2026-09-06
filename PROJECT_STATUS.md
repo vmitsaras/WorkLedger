@@ -4,18 +4,31 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508C — selection-v1 failed 210/216; scoped diagnosis next; D blocked
+**Active task:** WL-1508J — schema-enforcement/completeness recovery designed; implementation next
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
+
+D-512 recovery design is specified in `docs/specs/_root/0003-insight-schema-enforcement-completeness/index.md`.
+WL-1508J owns compatibility admission, a stronger synthetic health check, shared material dependency
+validation and four allowlisted semantic qualifiers. WL-1508K separately selects and qualifies an
+exact source-reviewed provider before fresh B/C. No fixed release is assumed or installed. The design
+ran no tests or inference; deployment stays disabled and C/D remain open at version 0.16.0.
+
+Diagnosis is complete in `docs/173-wl-1508c-selection-failure-diagnosis.md`: pinned Ollama source
+bypasses the output schema for the installed qwen3.5 parser with thinking disabled; local metadata
+matches that path. Separately, runtime grounding does not enforce material fact/action dependencies,
+and minimized facts omit posted/projected qualifiers. Exact historical output remains unavailable.
+Only documentation and read-only inspection were performed; no tests or inference ran. Next is a
+bounded implementation under spec 0003, not a new phase.
 
 Selection-v1 C finished one uninterrupted matrix but failed: 210/216 accepted (207 grounded plus
 3 permitted safe rejections), with 6 failures. `docs/172-wl-1508c-selection-v1-full-evaluation.md`
 records de-DE balance-projection required-citation omissions and en-GB balance-closing fact-array
 length failures, three repetitions each. The former balance-summary duplicate cases now pass 9/9,
 but the zero-tolerance gate still fails. No retry/tuning followed. C stays open, D blocked and
-provider deployment disabled. Next is bounded diagnosis of these two failure modes.
+provider deployment disabled. Report 173 completes diagnosis of these two failure modes.
 
 Fresh selection-v1 B passed 18/18 in `docs/171-wl-1508b-selection-v1-screen.md`: submission-actions
 9/9 followed by today-posted 9/9. Exact model/isolation preflight, v2 artifacts, locale/repetition
@@ -33,7 +46,9 @@ its old 18/18 remains historical. C remains open and D blocked. Provider stays d
 
 The requested duplicate-reference diagnosis is complete in
 `docs/169-wl-1508c-duplicate-reference-diagnosis.md`. WorkLedger sends uniqueItems and correctly
-rejects duplicates; Ollama 0.24.0's array grammar does not enforce that keyword. No duplicate native
+rejects duplicates; Ollama 0.24.0's array grammar does not enforce that keyword. Report 173 now
+identifies an earlier schema bypass in this candidate's chat path, refining that causal attribution.
+No duplicate native
 fixture identifiers or Spanish-only reference construction were found. The exact repeated array
 cannot be recovered from content-free traces. The completed recovery design specifies safe field/count
 diagnostics and duplicate-safe generation, preserving strict validators. No tests or model calls ran
