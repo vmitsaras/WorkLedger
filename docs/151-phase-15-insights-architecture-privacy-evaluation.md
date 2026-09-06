@@ -16,8 +16,8 @@ natural-language reports, and MCP proposals remain unchanged. This bounded rerun
 **WL-1508I recovery (2026-09-06, D-511):** selection-v1 encodes citations as boolean positions in
 current authorized reference tables and decodes them before the unchanged public grounding checks.
 Bounded field/count diagnostics are validated at the logger sink; no model content or selection bits
-are retained. Implementation evidence and verification limits are in report 170. Fresh B/C model
-evidence is pending and provider deployment stays disabled.
+are retained. Implementation evidence and verification limits are in report 170. Fresh selection-v1 B passes 18/18 (report 171); C
+remains pending and provider deployment stays disabled.
 
 ## Outcome
 

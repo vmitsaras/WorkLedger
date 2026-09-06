@@ -944,3 +944,8 @@ stays in that existing final path to preserve specific failure codes. The determ
 baseline formatting/skipped-integration limits are recorded in report 170. B is reopened for the
 new format; prior evidence remains historical. No model call, browser E2E or provider enablement
 occurred. This is a bounded employee recovery, not a new phase or version milestone.
+
+**D-511 fresh-screen continuation:** The user continued after I completion and identification of B
+as the next task. Selection-v1 submission-actions passed 9/9, then today-posted passed 9/9, with
+unchanged pinned controls and validated v2 artifacts. B is complete; fresh C and D were not run.
+Report 171 preserves exact provenance, isolation checks, artifact paths and the remaining gate.

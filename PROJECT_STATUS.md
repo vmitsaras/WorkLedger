@@ -4,19 +4,25 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — fresh selection-v1 screen pending; I complete, C failed and D blocked
+**Active task:** WL-1508C — selection-v1 B passed 18/18; fresh full matrix pending; D blocked
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
+
+Fresh selection-v1 B passed 18/18 in `docs/171-wl-1508b-selection-v1-screen.md`: submission-actions
+9/9 followed by today-posted 9/9. Exact model/isolation preflight, v2 artifacts, locale/repetition
+coverage, null diagnostics and unchanged source hashes passed review. No retry or tuning occurred.
+C's new full matrix has not run; the old 213/216 remains failed evidence. D and the parent pilot
+remain open. Provider deployment remains disabled and no phase/version changed.
 
 WL-1508I is implemented and verified: `docs/170-wl-1508i-duplicate-safe-generation.md` records
 fixed boolean reference selections, unchanged final grounding validators, bounded field diagnostics,
 logger enforcement and versioned artifact validation. Typecheck, lint, build, 55 script tests,
 530 unit/component tests and 13 integration tests passed; 52 gated integration tests were skipped.
 Repository-wide formatting remains limited by baseline CRLF/user-settings issues; scoped formatting
-is checked. No model or browser E2E run occurred. B is reopened for fresh selection-v1 evidence;
-its old 18/18 remains historical. C remains failed and D blocked. Provider stays disabled at 0.16.0.
+is checked. I itself ran no model or browser E2E case. The subsequent fresh B now passes 18/18;
+its old 18/18 remains historical. C remains open and D blocked. Provider stays disabled at 0.16.0.
 
 The requested duplicate-reference diagnosis is complete in
 `docs/169-wl-1508c-duplicate-reference-diagnosis.md`. WorkLedger sends uniqueItems and correctly

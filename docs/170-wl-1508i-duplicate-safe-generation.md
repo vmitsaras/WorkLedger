@@ -79,6 +79,9 @@ Component tests cover existing UI behavior; no new browser/accessibility claim i
 
 ## Next gate
 
+**Subsequent B evidence:** Fresh selection-v1 B has now passed 18/18 in report 171, on separate
+user continuation. I's no-model boundary below remains historical; fresh C is still unexecuted.
+
 WL-1508I is complete. WL-1508B is reopened for selection-v1: the prior 18/18 remains valid historical
 evidence for the old format only. Separately authorized fresh B must pass 18/18 before uninterrupted
 C can run. C's historical 213/216 remains failed and D stays blocked. Check candidate and isolation
