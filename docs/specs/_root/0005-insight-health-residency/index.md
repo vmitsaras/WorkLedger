@@ -1,7 +1,7 @@
 # 0005. Bounded synthetic health residency
 
 **Date:** 2026-09-06  
-**Status:** Design accepted for implementation; no inference authorized  
+**Status:** Implemented and deterministically verified in report 192; fresh inference evidence pending
 **Decision:** D-516  
 **Evidence:** Reports 189–191
 

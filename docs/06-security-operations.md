@@ -2,6 +2,18 @@
 
 ## 1. Security posture and classification
 
+**D-516 synthetic health residency:** The first fixed capability probe requests `keep_alive: '120s'`;
+the following compact-schema probe requests `keep_alive: 0`. Both retain one configured deadline
+and concurrency slot. Failure returns promptly without retries or cleanup calls. If the second
+request never acquires a runner, finite idle expiry is the fallback. This interval begins when
+active runner references finish; it is neither a wall-clock bound nor verified unloading or erasure.
+Other clients can affect residency. Employee generation and retention are unchanged. Cold pilot
+qualification requires an isolated owned candidate with no loaded models before health; failed
+attempts use verified owned-process cleanup and stop if ownership or cleanup cannot be established.
+No adapter process control or extra endpoint is added. Fresh health-only evidence and then fresh
+18-challenge qualification are separately gated before B; historical K does not qualify this lifecycle.
+See spec 0005 and report 192. Deployment remains disabled.
+
 **Optional Employee Insight recovery, D-512/J:** Provider configuration now requires a reviewed
 compatibility profile matching the exact model/digest; health and generation check server version
 through the private adapter. K admits the source-reviewed 0.33.3/qwen3.6 profile for evaluation only;

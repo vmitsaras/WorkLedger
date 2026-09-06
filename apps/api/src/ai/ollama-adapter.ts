@@ -29,6 +29,8 @@ const ALLOWED_OLLAMA_PATHS = new Set(['/api/chat', '/api/show', '/api/tags', '/a
 const MAXIMUM_REQUEST_BYTES = 256 * 1_024;
 const MAXIMUM_RESPONSE_BYTES = 1_024 * 1_024;
 const MAXIMUM_MESSAGE_CODE_UNITS = 64_000;
+// Idle expiry fallback if health cannot reach the second probe's unload request.
+const SYNTHETIC_HEALTH_KEEP_ALIVE = '120s';
 export const OLLAMA_MAX_GENERATED_TOKENS = 1_024;
 const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/u;
 const MISCONFIGURATION_CODES = new Set<AiProviderErrorCode>([
@@ -552,7 +554,7 @@ function createCapabilityProbe(model: string): Readonly<Record<string, unknown>>
       additionalProperties: false,
     }),
     options: Object.freeze({ temperature: 0, num_predict: 16 }),
-    keep_alive: 0,
+    keep_alive: SYNTHETIC_HEALTH_KEEP_ALIVE,
   });
 }
 

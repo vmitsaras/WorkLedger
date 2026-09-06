@@ -4,7 +4,7 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — implement bounded synthetic health residency (D-516)
+**Active task:** WL-1508B — cold synthetic health evidence pending after D-516
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-09-06
 
@@ -21,7 +21,7 @@ were stopped; final process, listener, old-server and firewall checks pass. Repo
 the diagnosis: a second model load exhausted the shared deadline; host-level slowness remains
 unproven. Report 191/D-516 and spec 0005 complete the design: first-probe idle residency of 120
 seconds, second-probe zero keep-alive, finite expiry fallback, and the unchanged shared deadline.
-Next: implement and deterministically verify this lifecycle with real-model flags disabled.
+Report 192 implements this lifecycle and records deterministic verification with real-model flags disabled. Next: separately continued cold synthetic health-only evidence under spec 0005.
 No model attempt is authorized; fresh health and schema qualification precede B. B/C/D stay
 open, K remains complete as historical qualification evidence, and deployment stays disabled at
 0.16.0.
