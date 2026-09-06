@@ -3,6 +3,11 @@
 **Date**: 2026-08-28
 **Status**: Accepted
 
+**Implemented follow-up:** D-511 and spec 0002 replace only the provider wire
+reference representation and extend bounded operational diagnostics in WL-1508I. Final public
+validators and server-owned authorization remain unchanged. Historical acceptance below describes
+WL-1508F; WL-1508I evidence is in report 170 and fresh B/C evidence is required for the new format.
+
 ## Summary
 
 WorkLedger will execute the exact authorized Employee Insight tool before it calls the model. The

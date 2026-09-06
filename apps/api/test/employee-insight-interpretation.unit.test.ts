@@ -95,6 +95,19 @@ const INTERPRETATION = {
   ],
 };
 
+const WIRE = {
+  locale: INTERPRETATION.locale,
+  statements: [
+    {
+      actionSelections: [true],
+      factSelections: [true],
+      limitationSelections: [true],
+      sourceSelections: [true],
+      text: INTERPRETATION.statements[0].text,
+    },
+  ],
+};
+
 test('orchestrates the exact employee tool and returns grounded current sources', async () => {
   const insightService = createInsightServiceStub();
   const currentFact = RESULT.facts[0];
@@ -106,7 +119,7 @@ test('orchestrates the exact employee tool and returns grounded current sources'
       facts: [{ ...currentFact, reference: 'stale_initial_fact' }],
     },
   });
-  const provider = createProvider([{ content: JSON.stringify(INTERPRETATION), toolCalls: [] }]);
+  const provider = createProvider([{ content: JSON.stringify(WIRE), toolCalls: [] }]);
   const consumeRateLimit = vi.fn(async () => ({ allowed: true, retryAfter: null }));
   const service = createEmployeeInsightInterpretationService(
     insightService,
@@ -132,10 +145,10 @@ test('orchestrates the exact employee tool and returns grounded current sources'
       statements: {
         items: {
           properties: {
-            actionReferences: { items: { enum: ['action_today'] } },
-            factReferences: { items: { enum: ['fact_worked'] } },
-            limitationReferences: { items: { enum: ['limit_provisional'] } },
-            sourceReferences: { items: { enum: ['source_today'] } },
+            actionSelections: { items: { type: 'boolean' }, minItems: 1, maxItems: 1 },
+            factSelections: { items: { type: 'boolean' }, minItems: 1, maxItems: 1 },
+            limitationSelections: { items: { type: 'boolean' }, minItems: 1, maxItems: 1 },
+            sourceSelections: { items: { type: 'boolean' }, minItems: 1, maxItems: 1 },
             text: { const: INTERPRETATION.statements[0].text },
           },
         },
@@ -162,12 +175,12 @@ test('requires empty arrays when the current result has no optional references',
   const provider = createProvider([
     {
       content: JSON.stringify({
-        ...INTERPRETATION,
+        ...WIRE,
         statements: [
           {
-            ...INTERPRETATION.statements[0],
-            actionReferences: [],
-            limitationReferences: [],
+            ...WIRE.statements[0],
+            actionSelections: [],
+            limitationSelections: [],
           },
         ],
       }),
@@ -189,8 +202,8 @@ test('requires empty arrays when the current result has no optional references',
       statements: {
         items: {
           properties: {
-            actionReferences: { maxItems: 0 },
-            limitationReferences: { maxItems: 0 },
+            actionSelections: { maxItems: 0 },
+            limitationSelections: { maxItems: 0 },
           },
         },
       },
@@ -205,7 +218,7 @@ test('records one content free operational trace with bounded token and tool cou
   const insightService = createInsightServiceStub();
   const provider = createProvider([
     {
-      content: JSON.stringify(INTERPRETATION),
+      content: JSON.stringify(WIRE),
       toolCalls: [],
       usage: { inputTokens: 50, outputTokens: 12 },
     },
@@ -230,6 +243,7 @@ test('records one content free operational trace with bounded token and tool cou
       outputTokens: 12,
       providerFailureCode: null,
       validationFailureCode: null,
+      validationDetail: null,
       toolExecutions: 1,
       toolRounds: 0,
     },
@@ -244,7 +258,7 @@ test('records one content free operational trace with bounded token and tool cou
 test('normalizes an exact JSON response fence before applying the full grounding validator', async () => {
   const insightService = createInsightServiceStub();
   const provider = createProvider([
-    { content: `\`\`\`json\n${JSON.stringify(INTERPRETATION)}\n\`\`\``, toolCalls: [] },
+    { content: `\`\`\`json\n${JSON.stringify(WIRE)}\n\`\`\``, toolCalls: [] },
   ]);
   const service = createEmployeeInsightInterpretationService(
     insightService,
@@ -263,7 +277,7 @@ test('rejects a fenced JSON response with any surrounding prose', async () => {
   const insightService = createInsightServiceStub();
   const provider = createProvider([
     {
-      content: `Here is the result:\n\`\`\`json\n${JSON.stringify(INTERPRETATION)}\n\`\`\``,
+      content: `Here is the result:\n\`\`\`json\n${JSON.stringify(WIRE)}\n\`\`\``,
       toolCalls: [],
     },
   ]);
@@ -285,10 +299,10 @@ test('rejects otherwise grounded prose outside the locale safe allowlist', async
   const provider = createProvider([
     {
       content: JSON.stringify({
-        ...INTERPRETATION,
+        ...WIRE,
         statements: [
           {
-            ...INTERPRETATION.statements[0],
+            ...WIRE.statements[0],
             text: 'The evidence proves that a policy conclusion applies.',
           },
         ],
@@ -335,8 +349,8 @@ test.each([
     name: 'ungrounded final output',
     response: {
       content: JSON.stringify({
-        ...INTERPRETATION,
-        statements: [{ ...INTERPRETATION.statements[0], text: 'The result is 450 minutes.' }],
+        ...WIRE,
+        statements: [{ ...WIRE.statements[0], text: 'The result is 450 minutes.' }],
       }),
       toolCalls: [],
     },
@@ -545,6 +559,7 @@ test('stops before provider generation when current registry authorization is lo
       toolExecutions: 0,
       toolRounds: 0,
       validationFailureCode: null,
+      validationDetail: null,
     }),
   ]);
 });
@@ -574,6 +589,7 @@ test('stops before provider generation when the current registry result is inval
       toolExecutions: 0,
       toolRounds: 0,
       validationFailureCode: null,
+      validationDetail: null,
     }),
   ]);
 });
@@ -604,6 +620,83 @@ test('preserves initial permission loss and rejects missing material limitation 
       'en-GB',
     ),
   ).toThrowError();
+});
+
+test('does not retry malformed selections or carry failure detail into a later success', async () => {
+  const insightService = createInsightServiceStub();
+  const provider = createProvider([
+    {
+      content: JSON.stringify({
+        ...WIRE,
+        statements: [{ ...WIRE.statements[0], sourceSelections: ['private-canary'] }],
+      }),
+      toolCalls: [],
+    },
+    { content: JSON.stringify(WIRE), toolCalls: [] },
+  ]);
+  const traces: unknown[] = [];
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+  const options = { recordTrace: (trace: unknown) => traces.push(trace) };
+  await expect(service.interpret(identity(), REQUEST, CAPTURED_AT, options)).rejects.toMatchObject({
+    statusCode: 503,
+  });
+  expect(provider.generate).toHaveBeenCalledOnce();
+  await service.interpret(identity(), REQUEST, CAPTURED_AT, options);
+  expect(traces[0]).toMatchObject({
+    validationDetail: { kind: 'SELECTION_INVALID', field: 'sourceReferences', reason: 'ITEM_TYPE' },
+  });
+  expect(traces[1]).toMatchObject({ outcome: 'SUCCESS', validationDetail: null });
+  expect(JSON.stringify(traces)).not.toContain('private-canary');
+});
+
+test('concurrent employees decode against their own authorized collection order', async () => {
+  const fact = RESULT.facts[0];
+  if (!fact) throw new Error('Missing fact.');
+  const first = { ...RESULT, facts: [fact, { ...fact, reference: 'fact_second' }] };
+  const second = { ...first, facts: [...first.facts].reverse() };
+  const insightService = createInsightServiceStub();
+  vi.mocked(insightService.run).mockImplementation(async (actor) =>
+    actor.accountId === ACCOUNT_ID ? first : second,
+  );
+  let release: (() => void) | undefined;
+  const bothStarted = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let started = 0;
+  const provider = readyProvider(async () => {
+    started += 1;
+    if (started === 2) release?.();
+    await bothStarted;
+    return {
+      content: JSON.stringify({
+        ...WIRE,
+        statements: [{ ...WIRE.statements[0], factSelections: [true, false] }],
+      }),
+      toolCalls: [],
+    };
+  });
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+  const [one, two] = await Promise.all([
+    service.interpret(identity(), REQUEST, CAPTURED_AT),
+    service.interpret(
+      { ...identity(), accountId: domainId<'Account'>('0198ed4e-12dc-7000-8000-000000000002') },
+      REQUEST,
+      CAPTURED_AT,
+    ),
+  ]);
+  expect(one.interpretation.statements[0]?.factReferences).toEqual(['fact_worked']);
+  expect(two.interpretation.statements[0]?.factReferences).toEqual(['fact_second']);
+  expect(provider.generate).toHaveBeenCalledTimes(2);
 });
 
 function createInsightServiceStub(): EmployeeInsightInterpretationSource {

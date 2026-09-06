@@ -1,10 +1,72 @@
 # WL-1508 employee local AI pilot evaluation
 
-**Status:** Employee local AI pilot closed without passing
+**Status:** Employee local AI pilot reopened for future evaluation; no passing gate
 **Evaluated:** 2026-08-28  
-**Decision:** End model qualification and evaluation; keep provider mode disabled
+**Decision:** D-510 reopens the employee evaluation backlog; no tests now; provider disabled
 
-## Outcome
+## Current rerun plan — 2026-09-06
+
+**C result:** Failed, 213/216 in one uninterrupted complete matrix. All three es-ES
+balance-summary repetitions failed FINAL_SCHEMA_REFERENCES_DUPLICATE; all other cases passed.
+See `docs/168-wl-1508c-qwen36-full-evaluation.md`. C remains open and D is blocked. No retry,
+tuning, schema change, or validator relaxation followed.
+
+
+**B result:** Complete, 18/18 for the H-qualified qwen3.6 digest. See
+`docs/167-wl-1508b-qwen36-regression-screen.md` for the 9/9 submission-actions and 9/9 today-posted
+artifacts, unchanged controls, and initial zero-case launch correction. C subsequently failed; D
+remains unexecuted.
+
+
+**Reopening, 2026-09-06 (D-510):** The user reopened the employee pilot for a future test.
+The earlier closure remains historical failed evidence. `WL-1508H` prepares and requalifies one
+exact candidate before reopened `WL-1508B`, then gated `WL-1508C` and `WL-1508D`. No tests or
+model probes run in this planning task. Provider mode remains disabled; no model is approved.
+The completed deterministic Phase 15 gate, version `0.16.0`, and obsolete Manager interpretation,
+natural-language reports, and MCP proposals remain unchanged. This bounded rerun needs no new phase.
+
+### WL-1508H — Rerun preparation and fresh qualification (complete)
+
+Preparation evidence and the Windows runbook are in `docs/166-wl-1508h-employee-pilot-rerun-preparation.md`.
+Local manifest inventory provisionally selects `qwen3.6:latest`. A subsequent read-only recheck
+confirmed Ollama 0.24.0, the matching served digest, no loaded model, and advertised completion/tool
+capabilities. The pinned toolchain and static workspace guards now pass after a CRLF-only checker
+fix. The user subsequently authorized only the synthetic health probe, which passed in 29.265
+seconds with CHAT, STRUCTURED_OUTPUT, and TOOLS. Zero employee cases ran. H is now complete after
+verified operator isolation: cloud disabled, no proxy, loopback-only listening, and executable-scoped
+outbound firewall blocks across every profile. The health pass predates the isolation change;
+post-restart metadata was verified without a second H probe. The subsequent B screen is recorded
+above; deployment remains disabled.
+
+- Review current orchestration, golden fixtures, validators, and retained non-model evidence for
+  drift from the historical run. Record the code revision and relevant uncommitted changes.
+- Select and record one operator-available exact private model tag/digest and runtime/hardware
+  provenance. Historical qualification is not fresh health evidence and does not select a new
+  candidate automatically. Model installation, prompt tuning, and validator changes are separate scope.
+- In a later authorized test session, reconfirm cold-start health, chat/structured-output/tool
+  capabilities, private-origin controls, the 120-second deadline, and concurrency 1. Stop on failure.
+- Prepare a Windows-compatible invocation: the current `test:ai:employee` script uses POSIX inline
+  environment assignment, while this workspace uses PowerShell. Do not assume it runs unchanged.
+  Set evaluation variables only in the test process and preserve the disabled deployment default.
+- Preserve historical artifacts. The evaluator writes one fixed smoke filename, so retain separate
+  content-free copies for each screen group before the next invocation overwrites that filename.
+
+### Reopened execution dependencies (future work only)
+
+1. `WL-1508B`: after H passes, run `submission-actions` alone with all three locales and repetitions
+   (9 cases). Only if 9/9 pass, run `today-posted` alone (9 cases). Require 18/18 for B. The evaluator
+   collects failures through a group, so enforce the stop boundary between invocations.
+2. `WL-1508C`: after B passes, run one uninterrupted unfiltered 216-case matrix for the same exact
+   digest and configuration. Clear semantic-ID and run-limit controls; require complete 216/216.
+3. `WL-1508D`: after C passes, reconfirm applicable privacy, security, authorization, degraded-provider,
+   accessibility, and repository evidence; record the exact passing provenance and close the parent.
+
+Any failure blocks the next task. No automatic tuning or weaker thresholds. H preparation, the authorized health probe, operator isolation, and B (18/18) are complete. C
+failed 213/216 and remains open; D remains unexecuted. A passing pilot would not itself authorize deployment enablement.
+The earlier sections below are historical evidence and instructions superseded only as to closure
+by D-510; their security, evaluation, and native-fallback requirements continue to apply.
+
+## Historical outcome
 
 WorkLedger now has the required 24-question synthetic employee golden set, all three supported
 locales, three deterministic repetitions, a real-provider evaluator, content-free operational
@@ -26,7 +88,7 @@ locale, limitation, prose, or leakage validation to convert the result into a pa
 `WL-1508` did not pass and does not count as complete. After the final recovery screen below also
 failed, the user closed the optional employee model pilot on 2026-08-28. Those downstream tasks
 remained blocked until completed `WL-1508G` accepted a deterministic-only continuation. This model
-evaluation remains closed and is not a prerequisite for that sequence. No manifest version changes.
+evaluation was closed at that time and is not a prerequisite for that sequence. No manifest version changes.
 
 The accepted `WL-1508F` recovery is now implemented and deterministically verified. WorkLedger
 replaces redundant model tool selection with one exact server-owned registry execution and one
@@ -402,12 +464,18 @@ semantic-ID controls support smoke diagnosis but cannot mark the 216-run gate co
 
 ## Operational trace boundary
 
+**Implemented amendment (D-511/WL-1508I):** Spec 0002 adds a strictly validated nullable
+validationDetail containing only an allowlisted field and bounded duplicate counts or selection
+failure reason. The logger sink, v2 selection-v1 evaluation artifact and privacy checks are updated
+together. Evidence: `docs/170-wl-1508i-duplicate-safe-generation.md`.
+
 The API writes one allowlisted trace per interpretation with only:
 
 - request ID, dependency, operation, success;
 - outcome, latency, input/output token counts;
 - tool round and execution counts; and
-- provider and validation failure codes.
+- provider and validation failure codes; and
+- nullable strict validationDetail with fixed fields and bounded counts/reasons only.
 
 The logging allowlist excludes question, prior turns, prompts, generated prose, tool arguments,
 tool results, sources, account/employee/organization identity, and domain values. PostgreSQL,
@@ -471,7 +539,7 @@ the next child.
   behavior, or provider security controls in this task.
 - If no candidate qualifies, stop with `WL-1508A` open and keep the parent gate blocked.
 
-### `WL-1508B` — Screen the known failure modes (closed after failed screen)
+### `WL-1508B` — Screen the known failure modes (complete; 18/18 on 2026-09-06)
 
 - Run only the `submission-actions` and `today-posted` semantic questions in all three locales and
   all three repetitions against one exact qualified candidate digest: 18 runs total.
@@ -495,7 +563,7 @@ the next child.
 - Use mocked and database-backed verification only. Run no real model case in this task.
 - On completion, make only exact qualified `qwen2.5-coder:14b` eligible to resume `WL-1508B`.
 
-### `WL-1508C` — Run the mandatory complete matrix (closed without execution)
+### `WL-1508C` — Run the mandatory complete matrix (failed 213/216; remains open)
 
 - Execute one uninterrupted `pnpm test:ai:employee` run for the qualified digest with no semantic
   or run-limit controls.
@@ -505,7 +573,7 @@ the next child.
 - Any provider, evaluator, grounding, privacy, or correctness failure stops the sequence. A partial
   or resumed run cannot decide the gate.
 
-### `WL-1508D` — Reconfirm evidence and close the parent gate (closed without execution)
+### `WL-1508D` — Reconfirm evidence and close the parent gate (reopened; blocked on C)
 
 - Review the already completed privacy/security, degraded-provider, trace, and accessibility
   evidence for drift and rerun the applicable repository gates.
@@ -516,10 +584,9 @@ the next child.
   `WL-1508C` records 216/216. Provider mode remains disabled by default and no manifest version is
   changed by this sub-gate.
 
-This closing condition was not met. `WL-1508` is closed without passing and remains unchecked in
-the canonical task list.
+This closing condition was not met. `WL-1508` remained unchecked at closure and is now reopened under D-510 without a passing result.
 
-## Closure
+## Historical closure — 2026-08-28 (reopening supersedes the scheduling prohibition)
 
 The optional employee local AI pilot is closed without passing. Provider mode remains disabled and
 no exact model digest is approved for deployment. Do not run `today-posted`, the complete matrix,

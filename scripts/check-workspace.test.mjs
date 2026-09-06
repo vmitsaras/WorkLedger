@@ -156,6 +156,21 @@ test('accepts the exact private workspace and tooling graph', () => {
   });
 });
 
+test('accepts Windows workspace line endings without accepting configuration drift', () => {
+  const state = createState();
+  state.workspaceConfig = EXPECTED_WORKSPACE_CONFIG.replace(/\n/g, '\r\n');
+  assert.doesNotThrow(() => validateWorkspace(state));
+
+  state.workspaceConfig = state.workspaceConfig.replace(
+    'engineStrict: true',
+    'engineStrict: false',
+  );
+  assert.throws(
+    () => validateWorkspace(state),
+    /does not match the accepted WL-100 workspace contract/,
+  );
+});
+
 test('rejects malformed root versions and workspace-version drift', () => {
   const malformedRootVersion = createState();
   malformedRootVersion.rootManifest.version = '0.1';

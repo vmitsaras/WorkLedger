@@ -556,14 +556,14 @@ the same product-quality gate.
 
 ---
 
-# Phase 15 — WorkLedger Insights (local AI pilot closed)
+# Phase 15 — WorkLedger Insights (employee pilot reopened for future evaluation)
 
 ## Objective
 
 Add role scoped, read only WorkLedger Insights whose deterministic native facts remain complete
 without a model. Continue from the completed Employee foundation into deterministic Manager, HR
 aggregate, and System work through purpose specific permission, privacy, evaluation, accessibility,
-and operations evidence. The optional local AI pilot is closed and is not a release prerequisite.
+and operations evidence. The optional employee pilot is reopened for future evaluation and is not a release prerequisite.
 
 ## Dependencies
 
@@ -606,7 +606,26 @@ and operations evidence. The optional local AI pilot is closed and is not a rele
 
 ## Employee local AI pilot sub gate
 
-**Outcome:** Closed without passing on 2026-08-28. No qualified model met the zero-tolerance gate,
+H preparation is complete; `docs/166-wl-1508h-employee-pilot-rerun-preparation.md` records
+source review, provisional candidate inventory, the Windows invocation, and outstanding runtime
+qualification. The pinned toolchain and static workspace guards now pass after a Windows CRLF
+checker fix. The separately authorized synthetic health probe passed in 29.265 seconds; no employee
+cases ran. Cloud-disabled/proxy-free operation, loopback-only listening, and executable-scoped
+outbound firewall isolation are verified. H is complete. B subsequently passed 18/18 strict cases;
+`docs/167-wl-1508b-qwen36-regression-screen.md` records both groups. C then ran one complete
+216-case matrix and failed 213/216: all three Spanish balance-summary repetitions were rejected
+for duplicate references. `docs/168-wl-1508c-qwen36-full-evaluation.md` records the stop decision.
+C remains open, D is blocked, and no automatic remediation or rerun is authorized by that failure.
+
+
+**Reopening, 2026-09-06 (D-510):** The user reopened the employee pilot for a future test.
+The earlier closure remains historical failed evidence. `WL-1508H` prepares and requalifies one
+exact candidate before reopened `WL-1508B`, then gated `WL-1508C` and `WL-1508D`. No tests or
+model probes run in this planning task. Provider mode remains disabled; no model is approved.
+The completed deterministic Phase 15 gate, version `0.16.0`, and obsolete Manager interpretation,
+natural-language reports, and MCP proposals remain unchanged. This bounded rerun needs no new phase.
+
+**Historical outcome:** Closed without passing on 2026-08-28. No qualified model met the zero-tolerance gate,
 provider mode remains disabled, and no model is approved for deployment. The unchecked criteria
 remain unmet and do not count as completed work.
 
@@ -625,8 +644,8 @@ remain unmet and do not count as completed work.
   authority, provider security controls, runtime validators, or zero-tolerance gate, before the
   bounded model screen resumes.
 
-The pilot closure ends model qualification and evaluation in the current Phase 15 scope. It does
-not satisfy `WL-1508`. Completed `WL-1508G` replaces the downstream dependencies for accepted
+The historical closure did not satisfy `WL-1508`. Decision `D-510` reopens only the employee
+evaluation backlog in the order `WL-1508H` → `WL-1508B` → `WL-1508C` → `WL-1508D`. Completed `WL-1508G` replaces the downstream dependencies for accepted
 deterministic work only.
 
 ## Deterministic continuation gate
@@ -643,6 +662,11 @@ future model interpretation, natural-language report, or MCP proposal requires a
 decision and the applicable ADR, privacy, security, evaluation, and threat gates.
 
 ## Phase 15 release gate
+
+**Employee pilot recovery design (D-511, 2026-09-06):** WL-1508I now specifies fixed boolean
+reference selections and bounded content-free diagnostics in spec 0002. Implementation is complete in WL-1508I (report 170);
+fresh B/C evidence is still required for the changed format. Historical B remains complete for its
+original configuration; B is reopened for selection-v1, C remains failed, and D remains blocked. No new phase or release gate changes.
 
 The release gate follows only the accepted deterministic continuation. It cannot advance the
 workspace version until `WL-1509`, `WL-1512`, `WL-1513`, and `WL-1514` pass.

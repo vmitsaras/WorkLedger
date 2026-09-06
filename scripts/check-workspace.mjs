@@ -470,7 +470,7 @@ export function validateWorkspace(state) {
 
   addPublicationErrors(errors, 'Root manifest', rootManifest);
 
-  if (state.workspaceConfig !== EXPECTED_WORKSPACE_CONFIG) {
+  if (state.workspaceConfig.replace(/\r\n/g, '\n') !== EXPECTED_WORKSPACE_CONFIG) {
     errors.push('pnpm-workspace.yaml does not match the accepted WL-100 workspace contract.');
   }
   if (state.nodeVersion !== EXPECTED_NODE_VERSION) {

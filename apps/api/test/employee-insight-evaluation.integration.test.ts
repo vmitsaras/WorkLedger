@@ -1,3 +1,6 @@
+import { parseEmployeeInsightEvaluationArtifact } from '../src/insights/employee-insight-evaluation-artifact.js';
+import { sanitizeInsightValidationDetail } from '../src/logging/insight-validation-detail.js';
+import { EMPLOYEE_INSIGHT_PROVIDER_OUTPUT_FORMAT } from '../src/insights/employee-insight-selection.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -71,6 +74,8 @@ test.skipIf(!RUN_EVALUATION)(
     }
 
     const summary = Object.freeze({
+      artifactVersion: 2,
+      providerOutputFormat: EMPLOYEE_INSIGHT_PROVIDER_OUTPUT_FORMAT,
       evaluatedAt: new Date().toISOString(),
       inference: Object.freeze({
         concurrencyLimit: runtime.aiProvider.concurrencyLimit,
@@ -98,7 +103,7 @@ test.skipIf(!RUN_EVALUATION)(
           ? 'wl1508-employee-local-ai-evaluation.json'
           : 'wl1508-employee-local-ai-smoke.json',
       ),
-      `${JSON.stringify(summary, null, 2)}\n`,
+      `${JSON.stringify(parseEmployeeInsightEvaluationArtifact(summary), null, 2)}\n`,
       'utf8',
     );
 
@@ -166,6 +171,10 @@ async function evaluateQuestion(
     toolExecutions: trace?.toolExecutions ?? 0,
     toolRounds: trace?.toolRounds ?? 0,
     validationFailureCode: trace?.validationFailureCode ?? null,
+    validationDetail: sanitizeInsightValidationDetail(
+      trace?.validationDetail,
+      trace?.validationFailureCode,
+    ),
   });
 }
 
@@ -243,4 +252,5 @@ interface EvaluationRecord {
   readonly toolExecutions: number;
   readonly toolRounds: number;
   readonly validationFailureCode: EmployeeInsightOperationalTrace['validationFailureCode'];
+  readonly validationDetail: EmployeeInsightOperationalTrace['validationDetail'];
 }

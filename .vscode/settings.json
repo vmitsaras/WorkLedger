@@ -1,5 +1,8 @@
 {
   "chat.tools.terminal.autoApprove": {
-    "pnpm": true
+    "pnpm": true,
+    "winget": true,
+    "nvm": true,
+    "corepack": true
   }
 }

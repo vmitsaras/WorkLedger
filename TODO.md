@@ -188,7 +188,7 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1409` Execute multilingual integration, accessibility, responsive, visual, usability, security, and upgrade verification.
 - [x] `WL-1410` Pass the Phase 14 release gate, update evidence and documentation, and bump all workspace manifests to `0.15.0`.
 
-## Phase 15 — WorkLedger Insights (local AI pilot closed)
+## Phase 15 — WorkLedger Insights (employee pilot reopened for future evaluation)
 
 - [x] `WL-1500` Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts.
 - [x] `WL-1501` Implement the deterministic Insight Service and typed native-result contracts.
@@ -198,18 +198,21 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1505` Implement a reusable read-only Insight tool registry with independent authorization and active-workspace scope.
 - [x] `WL-1506` Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks.
 - [x] `WL-1507` Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution.
-- [ ] `WL-1508` Add the employee golden-question evaluation set, bounded traces, privacy/security tests, model-failure handling, and accessibility verification, then pass the local AI pilot sub-gate. Closed without passing on 2026-08-28 after no qualified model met the zero-tolerance screen; this task does not count as complete.
+- [ ] `WL-1508` Pass the employee local AI pilot sub-gate. Reopened on 2026-09-06 for a future evaluation; historical failures remain valid; old-format B passed 18/18; selection-v1 B is pending after completed I; C failed 213/216, and D remains blocked and unexecuted. Depends on `WL-1508H`, `WL-1508I`, `WL-1508B`, `WL-1508C`, and `WL-1508D`.
 - [x] `WL-1508A` Qualify one replacement private model name and exact digest against the accepted startup-health, capability, privacy, and deployment boundaries.
-- [ ] `WL-1508B` Pass the bounded `submission-actions` and `today-posted` regression screen without changing prompts, schemas, or thresholds. Closed after the post `WL-1508F` `qwen2.5-coder:14b` rerun stopped at 3/9; the task did not pass.
+- [ ] `WL-1508B` Pass a fresh bounded submission-actions and today-posted screen for selection-v1 after WL-1508I. Reopened; no new model case run. Historical qwen3.6 18/18 evidence for the previous format remains in `docs/167-wl-1508b-qwen36-regression-screen.md`.
 - [x] `WL-1508E` Qualify the remaining installed `qwen3-coder:30b` digest against the unchanged cold-start health, capability, privacy, and deployment boundaries before resuming `WL-1508B`.
 - [x] `WL-1508F` Replace model-selected Employee tool invocation with one server-owned, currently authorized registry execution and one schema-constrained provider response; run no real model case in this task.
 - [x] `WL-1508G` Reconcile the remaining Phase 15 roadmap around deterministic, provider-independent Insights after the employee local AI pilot closed without passing.
-- [ ] `WL-1508C` Execute the complete 24-question, three-locale, three-repetition zero-tolerance evaluation for the qualified replacement digest. Closed without execution because `WL-1508B` did not pass.
-- [ ] `WL-1508D` Reconfirm the completed non-model evidence, synchronize the evaluation record and project memory, and close `WL-1508` only if the replacement records 216/216. Closed without execution because `WL-1508C` did not run.
+- [x] `WL-1508H` Prepare and qualify the pinned qwen3.6 candidate. Completed: source review, Windows runbook, pinned toolchain/static guards, 29.265-second synthetic health probe, and verified cloud-disabled, proxy-free, loopback-only, executable-scoped outbound isolation. Evidence and rollback: `docs/166-wl-1508h-employee-pilot-rerun-preparation.md`. Zero employee cases ran.
+- [ ] `WL-1508C` Pass one uninterrupted 24-question, three-locale, three-repetition zero-tolerance evaluation. Executed 2026-09-06: qwen3.6 passed 213/216; all three Spanish balance-summary cases failed FINAL_SCHEMA_REFERENCES_DUPLICATE. Diagnosis complete: Ollama 0.24.0 does not enforce uniqueItems; exact repeated array unknown. WL-1508I implemented; fresh selection-v1 B required before C; no new model run. Evidence: `docs/168-wl-1508c-qwen36-full-evaluation.md` and `docs/169-wl-1508c-duplicate-reference-diagnosis.md`.
+- [x] `WL-1508I` Implement duplicate-safe provider selections and content-free field diagnostics under D-511/spec 0002. Completed: strict codec, unchanged final validators, safe logging/artifact validation, deterministic tests and build. Evidence and baseline formatting/integration limits: `docs/170-wl-1508i-duplicate-safe-generation.md`. No real model run; fresh B then C required.
+- [ ] `WL-1508D` Reconfirm non-model privacy, security, degraded-provider, trace, and accessibility evidence, synchronize project memory, and close `WL-1508` only after `WL-1508C` records 216/216. Reopened; blocked on `WL-1508C`.
 
-The optional employee local AI pilot is closed without passing. Provider mode remains disabled and
-no model is approved for deployment. Completed `WL-1508G` removes the failed pilot from the
-accepted deterministic continuation dependencies. Model-dependent tasks remain excluded.
+The employee pilot is reopened for future evaluation under decision `D-510`. No tests run in this
+planning task. Provider mode remains disabled and no model is approved for deployment. The completed
+deterministic `WL-1516` gate and `0.16.0` milestone remain intact. No new phase is needed for this
+bounded rerun; `WL-1510`, `WL-1511`, and `WL-1515` remain obsolete and excluded.
 - [x] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.
 - [ ] `WL-1510` Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
 - [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.

@@ -268,6 +268,13 @@ required event in the same transaction as its source action where applicable.
 
 ### Operational logs and diagnostics
 
+WL-1508I adds nullable Employee interpretation validationDetail under D-511. It contains only a
+fixed reference-field name plus bounded duplicate counts (at most 20), or a fixed selection-error
+reason. The logger validates the exact nested shape, failure code and outcome before serialization;
+no detail persists in child logger bindings. Invalid detail becomes null. Selection indices/bits,
+reference values and hashes, arbitrary parser paths and raw validation issues are not logged. This
+uses the existing operational retention class and adds no domain, audit or browser storage sink.
+
 Operational logs answer service-health questions, not employee activity questions. Allowlisted structured fields include timestamp, level, service/version family, generic route template, HTTP status, stable safe error code, request ID, latency, dependency category, and opaque actor/account ID only when necessary.
 
 Never log raw request URL/query, bodies, responses, cookies/headers containing secrets, passwords, session/reset/CSRF/idempotency values, notes/reasons, sickness/type/coverage, entitlement, report rows, exports, notification content, Insight questions, prompts, prior turns, tool arguments/results, model input/output/reasoning, source references, or database statements with bound personal values. Redaction occurs before serialization, including exceptions and dependency errors.

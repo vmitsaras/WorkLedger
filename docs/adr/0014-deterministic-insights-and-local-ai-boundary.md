@@ -1,5 +1,12 @@
 # ADR 0014: Deterministic Insights and Local AI Boundary
 
+**Reopening, 2026-09-06 (D-510):** The user reopened the employee pilot for a future test.
+The earlier closure remains historical failed evidence. `WL-1508H` prepares and requalifies one
+exact candidate before reopened `WL-1508B`, then gated `WL-1508C` and `WL-1508D`. No tests or
+model probes run in this planning task. Provider mode remains disabled; no model is approved.
+The completed deterministic Phase 15 gate, version `0.16.0`, and obsolete Manager interpretation,
+natural-language reports, and MCP proposals remain unchanged. This bounded rerun needs no new phase.
+
 **Status:** Accepted by `WL-1500`; deterministic continuation accepted by `WL-1508G`
 
 ## Summary

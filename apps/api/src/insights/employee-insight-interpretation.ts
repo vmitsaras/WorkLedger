@@ -2,7 +2,6 @@ import { performance } from 'node:perf_hooks';
 
 import type { SupportedLocale } from '@workledger/contracts';
 import {
-  INSIGHT_INTERPRETATION_OUTPUT_JSON_SCHEMA,
   insightInterpretationRequestSchema,
   insightInterpretationSchema,
   type InsightInterpretation,
@@ -21,6 +20,11 @@ import {
   type AiProviderErrorCode,
   type AiProviderMessage,
 } from '../ai/contracts.js';
+import { createEmployeeInsightSelectionCodec } from './employee-insight-selection.js';
+import {
+  sanitizeInsightValidationDetail,
+  type InsightValidationDetail,
+} from '../logging/insight-validation-detail.js';
 import { WorkLedgerApiError } from '../http/errors.js';
 import type { EmployeeInsightInterpretationSource, InsightIdentity } from './insight-service.js';
 import type { InsightToolRegistry } from './insight-tool-registry.js';
@@ -79,6 +83,7 @@ export type EmployeeInsightValidationFailureCode =
   | 'FINAL_SCHEMA_STATEMENT_COUNT_INVALID'
   | 'FINAL_SCHEMA_STATEMENT_INVALID'
   | 'FINAL_SCHEMA_TEXT_INVALID'
+  | 'FINAL_SELECTION_INVALID'
   | 'FINAL_SOURCE_MISMATCH'
   | 'FINAL_TOOL_CALL_UNEXPECTED'
   | null;
@@ -90,6 +95,7 @@ export interface EmployeeInsightOperationalTrace {
   readonly outputTokens: number;
   readonly providerFailureCode: AiProviderErrorCode | null;
   readonly validationFailureCode: EmployeeInsightValidationFailureCode;
+  readonly validationDetail: InsightValidationDetail | null;
   readonly toolExecutions: number;
   readonly toolRounds: number;
 }
@@ -99,6 +105,7 @@ type TraceAccumulator = {
   outputTokens: number;
   providerFailureCode: AiProviderErrorCode | null;
   validationFailureCode: EmployeeInsightValidationFailureCode;
+  validationDetail: InsightValidationDetail | null;
   toolExecutions: number;
   toolRounds: number;
 };
@@ -141,6 +148,7 @@ export function createEmployeeInsightInterpretationService(
         outputTokens: 0,
         providerFailureCode: null,
         validationFailureCode: null,
+        validationDetail: null,
         toolExecutions: 0,
         toolRounds: 0,
       };
@@ -206,6 +214,10 @@ export function createEmployeeInsightInterpretationService(
             outputTokens: trace.outputTokens,
             providerFailureCode: trace.providerFailureCode,
             validationFailureCode: trace.validationFailureCode,
+            validationDetail: sanitizeInsightValidationDetail(
+              trace.validationDetail,
+              trace.validationFailureCode,
+            ),
             toolExecutions: trace.toolExecutions,
             toolRounds: trace.toolRounds,
           }),
@@ -236,7 +248,7 @@ async function orchestrateEmployeeInterpretation(
   }>,
 ): Promise<InsightInterpretationResult> {
   try {
-    const nativeResult = await input.toolRegistry.execute(
+    const registryResult = await input.toolRegistry.execute(
       Object.freeze({
         activeWorkspace: 'EMPLOYEE',
         capturedAt: input.capturedAt,
@@ -245,11 +257,17 @@ async function orchestrateEmployeeInterpretation(
       toolCallForRequest(input.request.insight),
     );
     input.trace.toolExecutions = 1;
+    const nativeResult = structuredClone(registryResult);
+    const codec = createEmployeeInsightSelectionCodec(
+      nativeResult,
+      input.locale,
+      EMPLOYEE_INSIGHT_SAFE_PROSE[input.locale],
+    );
 
     const response = await input.provider.generate(
       Object.freeze({
         messages: createProviderMessages(input.request, input.locale, nativeResult),
-        outputSchema: createInterpretationOutputSchema(input.locale, nativeResult),
+        outputSchema: codec.outputSchema,
         tools: Object.freeze([]),
       }),
       input.signal === undefined ? {} : { signal: input.signal },
@@ -261,8 +279,10 @@ async function orchestrateEmployeeInterpretation(
       throw invalidProviderOutput('FINAL_TOOL_CALL_UNEXPECTED');
     }
     if (response.content.trim() === '') throw invalidProviderOutput('FINAL_CONTENT_MISSING');
+    const decoded = codec.decode(parseInterpretation(response.content));
+    if (!decoded.ok) throw invalidProviderOutput(decoded.code, decoded.detail);
     const interpretation = validateGroundedInterpretation(
-      parseInterpretation(response.content),
+      decoded.candidate,
       nativeResult,
       input.locale,
     );
@@ -271,6 +291,7 @@ async function orchestrateEmployeeInterpretation(
     if (error instanceof AiProviderError) input.trace.providerFailureCode = error.code;
     if (error instanceof InsightInterpretationValidationError) {
       input.trace.validationFailureCode = error.validationFailureCode;
+      input.trace.validationDetail = error.validationDetail;
     }
     if (
       error instanceof WorkLedgerApiError &&
@@ -313,9 +334,9 @@ function systemInstruction(): string {
     'Return exactly one statement. Cite every native fact needed to answer the question and every material limitation.',
     'For every material limitation, cite every relatedFactReference supplied with that limitation.',
     'For every material limitation, cite every relatedActionReference supplied with that limitation.',
-    'For every material limitation, copy every relatedSourceReference supplied with that limitation.',
-    'The JSON object has exactly locale and statements. statements has exactly one object with exactly text, factReferences, sourceReferences, limitationReferences, and actionReferences. Every reference field is an array of unique copied native reference strings with no duplicates.',
-    'For each statement, sourceReferences must be exactly the set union of sourceReferences on every cited fact, limitation, and action. Copy every required source and no other source.',
+    'For every material limitation, select every related source supplied with that limitation.',
+    'The JSON object has exactly locale and statements. statements has exactly one object with exactly text, factSelections, sourceSelections, limitationSelections, and actionSelections. Each selection array has one boolean per entry in its corresponding current native collection, in selectionIndex order starting at zero. True cites that entry; false omits it. Never return reference strings.',
+    'Select sources exactly covering the sourceReferences on every selected fact, limitation, and action. A shared source occupies one position. Select every required source and no other source.',
     'Reference every material limitation. Do not place numbers, dates, identifiers, statuses, source labels, limitation labels, or action labels in statement text. WorkLedger renders those values from native references.',
   ].join(' ');
 }
@@ -325,10 +346,10 @@ function finalResponseInstruction(locale: SupportedLocale): string {
   return [
     'Return the final answer now as one JSON object and nothing else.',
     'Do not add a wrapper, schema, explanation, or Markdown fence.',
-    `Use this exact property structure: {"locale":"${locale}","statements":[{"actionReferences":[],"factReferences":[],"limitationReferences":[],"sourceReferences":[],"text":""}]}.`,
-    'Replace the empty arrays with copied native references required for the statement. Keep every property and add no properties.',
-    'For each material limitation, copy its reference to limitationReferences, all of its relatedFactReferences to factReferences, all of its relatedActionReferences to actionReferences, and all of its relatedSourceReferences to sourceReferences.',
-    'Add source references only when another cited fact or action requires them. Never copy an uncited source.',
+    `Use this exact property structure: {"locale":"${locale}","statements":[{"actionSelections":[],"factSelections":[],"limitationSelections":[],"sourceSelections":[],"text":""}]}.`,
+    'Replace each empty array with exactly one boolean per current entry in that collection, ordered by selectionIndex. Use an empty array only for an empty collection. Keep every property and add no properties.',
+    'Select every material limitation and its related facts, actions and sources using their positions in the corresponding collections.',
+    'Select a source if and only if a selected fact, action or limitation requires it. Do not select unrelated sources.',
     `Set text to exactly this sentence, including punctuation: ${proseExample}`,
   ].join(' ');
 }
@@ -402,76 +423,23 @@ function requireEmployeeInterpretationRequest(
   return Object.freeze({ ...request, insight: request.insight });
 }
 
-function createInterpretationOutputSchema(
-  locale: SupportedLocale,
-  result: InsightNativeResult,
-): Readonly<Record<string, unknown>> {
-  const base = INSIGHT_INTERPRETATION_OUTPUT_JSON_SCHEMA;
-  const statement = base.properties.statements.items;
-  const properties = statement.properties;
-  return Object.freeze({
-    ...base,
-    properties: Object.freeze({
-      ...base.properties,
-      locale: Object.freeze({ ...base.properties.locale, enum: Object.freeze([locale]) }),
-      statements: Object.freeze({
-        ...base.properties.statements,
-        items: Object.freeze({
-          ...statement,
-          properties: Object.freeze({
-            ...properties,
-            actionReferences: constrainReferenceSchema(
-              properties.actionReferences,
-              result.actions.map(({ reference }) => reference),
-            ),
-            factReferences: constrainReferenceSchema(
-              properties.factReferences,
-              result.facts.map(({ reference }) => reference),
-            ),
-            limitationReferences: constrainReferenceSchema(
-              properties.limitationReferences,
-              result.limitations.map(({ reference }) => reference),
-            ),
-            sourceReferences: constrainReferenceSchema(
-              properties.sourceReferences,
-              result.sources.map(({ reference }) => reference),
-            ),
-            text: Object.freeze({
-              ...properties.text,
-              const: EMPLOYEE_INSIGHT_SAFE_PROSE[locale],
-            }),
-          }),
-        }),
-      }),
-    }),
-  });
-}
-
-function constrainReferenceSchema<
-  Schema extends Readonly<{ items: Readonly<Record<string, unknown>> }>,
->(schema: Schema, references: readonly string[]): Readonly<Record<string, unknown>> {
-  if (references.length === 0) return Object.freeze({ ...schema, maxItems: 0 });
-  return Object.freeze({
-    ...schema,
-    items: Object.freeze({ ...schema.items, enum: Object.freeze([...references]) }),
-  });
-}
-
 function minimizeNativeResultForModel(result: InsightNativeResult) {
   return Object.freeze({
-    actions: result.actions.map((action) => ({
+    actions: result.actions.map((action, selectionIndex) => ({
+      selectionIndex,
       code: action.code,
       destination: action.destination,
       reference: action.reference,
       sourceReferences: action.sourceReferences,
     })),
-    facts: result.facts.map((fact) => ({
+    facts: result.facts.map((fact, selectionIndex) => ({
+      selectionIndex,
       code: fact.code,
       reference: fact.reference,
       sourceReferences: fact.sourceReferences,
     })),
     kind: result.kind,
-    limitations: result.limitations.map((limitation) => {
+    limitations: result.limitations.map((limitation, selectionIndex) => {
       const relatedActions = result.actions.filter((action) =>
         action.sourceReferences.some((reference) =>
           limitation.sourceReferences.includes(reference),
@@ -481,6 +449,7 @@ function minimizeNativeResultForModel(result: InsightNativeResult) {
         fact.sourceReferences.some((reference) => limitation.sourceReferences.includes(reference)),
       );
       return {
+        selectionIndex,
         code: limitation.code,
         material: limitation.material,
         reference: limitation.reference,
@@ -496,7 +465,8 @@ function minimizeNativeResultForModel(result: InsightNativeResult) {
         sourceReferences: limitation.sourceReferences,
       };
     }),
-    sources: result.sources.map((source) => ({
+    sources: result.sources.map((source, selectionIndex) => ({
+      selectionIndex,
       destination: source.destination,
       kind: source.kind,
       reference: source.reference,
@@ -531,7 +501,11 @@ export function validateGroundedInterpretation(
 ): InsightInterpretation {
   const parsed = insightInterpretationSchema.safeParse(candidate);
   if (!parsed.success) {
-    throw invalidProviderOutput(classifyInterpretationSchemaFailure(candidate, locale));
+    const code = classifyInterpretationSchemaFailure(candidate, locale);
+    throw invalidProviderOutput(
+      code,
+      code === 'FINAL_SCHEMA_REFERENCES_DUPLICATE' ? duplicateReferenceDetail(candidate) : null,
+    );
   }
   if (parsed.data.locale !== locale) {
     throw invalidProviderOutput('FINAL_SCHEMA_LOCALE_INVALID');
@@ -647,6 +621,36 @@ function classifyInterpretationSchemaFailure(
   return 'FINAL_SCHEMA_OR_LOCALE_INVALID';
 }
 
+function duplicateReferenceDetail(candidate: unknown): InsightValidationDetail | null {
+  if (!isRecord(candidate) || !Array.isArray(candidate['statements'])) return null;
+  const statement: unknown = candidate['statements'][0];
+  if (!isRecord(statement)) return null;
+  for (const field of [
+    'actionReferences',
+    'factReferences',
+    'limitationReferences',
+    'sourceReferences',
+  ] as const) {
+    const items = statement[field];
+    if (
+      !Array.isArray(items) ||
+      items.length > 20 ||
+      items.some((item) => typeof item !== 'string')
+    )
+      return null;
+    const distinctCount = new Set(items).size;
+    if (distinctCount < items.length)
+      return {
+        kind: 'REFERENCE_DUPLICATE',
+        field,
+        itemCount: items.length,
+        distinctCount,
+        duplicateCount: items.length - distinctCount,
+      };
+  }
+  return null;
+}
+
 function hasReferenceCardinality(value: unknown, minimum = 0): boolean {
   return Array.isArray(value) && value.length >= minimum && value.length <= 20;
 }
@@ -728,17 +732,24 @@ function normalizeGroundingToken(value: string): string {
 class InsightInterpretationValidationError extends AiProviderError {
   readonly validationFailureCode: Exclude<EmployeeInsightValidationFailureCode, null>;
 
-  constructor(validationFailureCode: Exclude<EmployeeInsightValidationFailureCode, null>) {
+  readonly validationDetail: InsightValidationDetail | null;
+
+  constructor(
+    validationFailureCode: Exclude<EmployeeInsightValidationFailureCode, null>,
+    detail: InsightValidationDetail | null = null,
+  ) {
     super('INVALID_RESPONSE');
     this.name = 'InsightInterpretationValidationError';
     this.validationFailureCode = validationFailureCode;
+    this.validationDetail = sanitizeInsightValidationDetail(detail, validationFailureCode);
   }
 }
 
 function invalidProviderOutput(
   validationFailureCode: Exclude<EmployeeInsightValidationFailureCode, null>,
+  detail: InsightValidationDetail | null = null,
 ): AiProviderError {
-  return new InsightInterpretationValidationError(validationFailureCode);
+  return new InsightInterpretationValidationError(validationFailureCode, detail);
 }
 
 function unavailable(): WorkLedgerApiError {

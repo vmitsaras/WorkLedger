@@ -868,3 +868,79 @@ regression contract for `WL-1008`.
   Manager, HR aggregate, and System work may proceed from the completed foundation through their
   revised gates, while Manager model interpretation, natural-language reports, and MCP are removed
   from Phase 15. The inactive provider boundary remains unchanged.
+
+### D-510 — Reopen the bounded employee AI evaluation backlog
+
+**Status:** Resolved by explicit user instruction on 2026-09-06; planning only, no tests now.
+
+The user requested review of unfinished AI-pilot TODOs and reopening for a new future test, while
+explicitly prohibiting test execution in this task. This supersedes the 2026-08-28 closure ban in
+WL-1508G and the evaluation record only for the bounded employee pilot backlog.
+
+- Reopen WL-1508 and B/C/D without marking any failed or unexecuted work complete.
+- Add WL-1508H for fresh candidate qualification, implementation/evidence drift review, Windows
+  invocation preparation, and preservation of separate content-free screen artifacts. Existing
+  A/E/F remain completed historical evidence; qualification must be reconfirmed for a future run.
+- Assumption: reopening requests scheduling readiness, not immediate tests, model selection,
+  installation, runtime changes, prompt/schema tuning, or provider enablement.
+- Preserve the completed deterministic WL-1516 gate and 0.16.0 milestone. No new phase or version
+  bump is needed for reevaluating the existing employee contract.
+- WL-1510 (Manager interpretation), WL-1511 (natural-language reports), and WL-1515 (MCP) remain
+  obsolete. Broader capabilities require a separately accepted roadmap and applicable ADR gates.
+- Preserve ADR 0014 privacy/security rules, zero-tolerance thresholds, and disabled defaults.
+  Sequence H → B (18/18) → C (216/216 uninterrupted) → D; failure blocks advancement.
+
+No tests, model probes, installations, or configuration changes were performed for this decision.
+
+**D-510 execution clarification:** The user subsequently authorized the synthetic health probe
+only. It passed in 29.265 seconds on the recorded qwen3.6 digest; zero employee cases ran. This
+authorization does not cover the screen, full matrix, or provider configuration changes. H remains
+open pending operator cloud-denial/network-isolation evidence (startup OLLAMA_NO_CLOUD=false).
+
+**D-510 operator continuation:** The subsequent task continuation applied reversible Ollama-only
+outbound firewall rules, per-user cloud-disable/loopback settings, and disabled desktop network
+exposure. Effective listener/log/firewall metadata is verified in the H report. H is complete;
+zero employee cases ran and WorkLedger deployment remains provider-disabled. B still requires an
+employee-test instruction. Rollback invalidates the isolation evidence.
+
+**D-510 bounded-screen continuation:** The user continued after H completion and identification of
+B as the next employee test task. B ran submission-actions (9/9), then today-posted (9/9), using
+the unchanged pinned candidate and evaluation controls. The initial empty run-limit launch failed
+before any semantic case; only the invocation was corrected. B is complete; C/D and deployment
+enablement were not executed by this continuation.
+
+**D-510 full-matrix continuation:** The user continued after B completed and C was identified as
+the next task. One unfiltered uninterrupted 216-case run completed with 213 passes and three
+Spanish balance-summary duplicate-reference failures. C remains open; D is blocked. No retry,
+tuning, model switch, or weakening of the contract follows automatically. The next proposed work
+is a separately scoped diagnosis; the full result is recorded in the WL-1508C report.
+
+### D-511 — Duplicate-safe provider representation and diagnostic detail
+
+**Status:** Implemented in WL-1508I on subsequent explicit user instruction, 2026-09-06.
+
+Following the completed diagnosis, the user requested a design for duplicate-safe generation and
+content-free field diagnostics. Spec 0002 selects fixed boolean positions over the current authorized
+reference collections. Strict decoding constructs the existing public interpretation, which still
+passes all unchanged reference, source-union, limitation, prose and golden acceptance checks.
+
+This explicitly amends spec 0001's direct provider/public-format equivalence and original closed
+trace-field list for the future implementation only. A nullable strict diagnostic union adds either
+an allowlisted failing field and bounded duplicate counts, or a selection-field failure reason.
+No native identifiers, selection bits, prompts, prose or arbitrary parser paths may be retained.
+The logger sink must validate nested detail; the existing operational retention class remains.
+
+Assumption: the request authorizes a concrete design and implementation backlog, not implementation,
+tests or model execution in this task. No domain or public API rule changes, duplicate normalization,
+threshold relaxation, provider enablement, additional phase or version bump is selected. I precedes
+fresh B and C evidence for selection-v1; historical evidence remains unchanged and D stays blocked.
+
+Design and acceptance criteria: `docs/specs/_root/0002-duplicate-safe-insight-generation/index.md`.
+
+**D-511 implementation continuation:** The user explicitly requested WL-1508I implementation.
+Selection-v1, strict decoding, bounded diagnostic detail, logger-sink sanitization and versioned
+artifact review are implemented. Final public validators remain unchanged; exact prose validation
+stays in that existing final path to preserve specific failure codes. The deterministic evidence and
+baseline formatting/skipped-integration limits are recorded in report 170. B is reopened for the
+new format; prior evidence remains historical. No model call, browser E2E or provider enablement
+occurred. This is a bounded employee recovery, not a new phase or version milestone.

@@ -1,14 +1,61 @@
 # WorkLedger Project Status
 
-**Current phase:** Phase 15 — WorkLedger Insights (local AI pilot closed)
+**Current phase:** Phase 15 — WorkLedger Insights (employee pilot reopened for future evaluation)
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** None; no later numbered roadmap task is assigned
-**Status:** `WL-1516` complete; provider mode remains disabled and no model is approved
+**Active task:** WL-1508B — fresh selection-v1 screen pending; I complete, C failed and D blocked
+**Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
+
+WL-1508I is implemented and verified: `docs/170-wl-1508i-duplicate-safe-generation.md` records
+fixed boolean reference selections, unchanged final grounding validators, bounded field diagnostics,
+logger enforcement and versioned artifact validation. Typecheck, lint, build, 55 script tests,
+530 unit/component tests and 13 integration tests passed; 52 gated integration tests were skipped.
+Repository-wide formatting remains limited by baseline CRLF/user-settings issues; scoped formatting
+is checked. No model or browser E2E run occurred. B is reopened for fresh selection-v1 evidence;
+its old 18/18 remains historical. C remains failed and D blocked. Provider stays disabled at 0.16.0.
+
+The requested duplicate-reference diagnosis is complete in
+`docs/169-wl-1508c-duplicate-reference-diagnosis.md`. WorkLedger sends uniqueItems and correctly
+rejects duplicates; Ollama 0.24.0's array grammar does not enforce that keyword. No duplicate native
+fixture identifiers or Spanish-only reference construction were found. The exact repeated array
+cannot be recovered from content-free traces. The completed recovery design specifies safe field/count
+diagnostics and duplicate-safe generation, preserving strict validators. No tests or model calls ran
+during diagnosis, and no new phase is needed. C remains failed and D blocked.
+
+`WL-1508C` completed one uninterrupted matrix but failed the zero-tolerance gate: 213/216.
+`docs/168-wl-1508c-qwen36-full-evaluation.md` records all three Spanish balance-summary failures
+with FINAL_SCHEMA_REFERENCES_DUPLICATE, exact pinned controls, full artifact verification, and
+normal termination. No retry or tuning followed. C remains open; D and the parent pilot are blocked.
+
+
+`WL-1508B` is complete: `docs/167-wl-1508b-qwen36-regression-screen.md` records 18/18 strict
+qwen3.6 cases (9 submission-actions, then 9 today-posted), unchanged controls, preserved content-free
+artifacts, and the zero-case Windows launch correction. The subsequent C run failed 213/216. Deployment
+provider mode remains disabled; the parent pilot is not complete.
+
+
+`WL-1508H` is complete: `docs/166-wl-1508h-employee-pilot-rerun-preparation.md` records source drift, local
+manifest inventory, a provisional qwen3.6 digest, and a Windows runbook. On recheck, loopback Ollama
+0.24.0 is reachable, the served candidate digest matches, and no model is loaded. System Node
+24.18.0 and Corepack pnpm 11.20.0 are now verified using the system launcher. The static workspace
+and phase guards pass after a CRLF-only portability fix. The explicitly authorized synthetic
+cold-start probe passed in 29.265 seconds with CHAT, STRUCTURED_OUTPUT, and TOOLS. H itself ran
+no employee cases; the subsequent B screen now records 18/18. Operator isolation is now verified: cloud disabled, no outbound proxy, loopback-only
+listener, and two enabled executable-scoped outbound firewall blocks on every profile. The system
+settings and rollback are recorded in the preparation report. H and B are complete. C has failed
+and requires new passing evidence; D remains unexecuted.
+
+
+**Reopening, 2026-09-06 (D-510):** The user reopened the employee pilot for a future test.
+The earlier closure remains historical failed evidence. `WL-1508H` prepares and requalifies one
+exact candidate before reopened `WL-1508B`, then gated `WL-1508C` and `WL-1508D`. No tests or
+model probes run in this planning task. Provider mode remains disabled; no model is approved.
+The completed deterministic Phase 15 gate, version `0.16.0`, and obsolete Manager interpretation,
+natural-language reports, and MCP proposals remain unchanged. This bounded rerun needs no new phase.
 
 Phase 15 is complete at internal milestone `0.16.0`. `WL-1516` reconciles the accepted
 deterministic Employee, Manager, privacy-suppressed HR aggregate, and isolated System paths; closes
@@ -73,10 +120,10 @@ all three Spanish `submission-actions` repetitions, while all six English and Ge
 omitted the required pending request action reference. Every provider response and runtime
 validation succeeded, every trace recorded one registry execution owned by the server and zero
 model tool rounds, and the stop rule prevented `today-posted` and the full matrix from running.
-The user then closed the optional model pilot without passing it. `WL-1508B` is closed after the
-failed screen; `WL-1508C` and `WL-1508D` are closed without execution. No further candidate
-qualification, evaluation, prompt, schema, validator, or provider work is authorized in the
-current Phase 15 scope.
+The user then closed the optional model pilot without passing it. `WL-1508B` was closed after the
+failed screen; `WL-1508C` and `WL-1508D` were closed without execution. That closure prohibited
+further model work at the time. Decision `D-510` now reopens only the bounded employee evaluation
+backlog; this planning task executes no tests.
 Completed `WL-1508G` reconciles the remaining phase around deterministic, provider-independent
 Insights. Completed `WL-1509` adds strict deterministic Manager action summaries and neutral team
 coverage for current direct reports through a multilingual accessible Manager route, native source
@@ -3348,7 +3395,11 @@ belongs only to the unnumbered portfolio draft.
 
 ## Next task
 
-No later numbered roadmap task is assigned. The portfolio presentation scope remains preserved in
+Next: scope diagnosis of the Spanish balance-summary duplicate-reference failure before any C
+retry. `WL-1508H` and `WL-1508B` are complete; C is open and D is blocked.
+The bounded screen passed 18/18 on 2026-09-06; the full matrix then failed at 213/216. H health,
+static guards, compilation, and operator isolation evidence are recorded separately.
+The portfolio presentation scope remains preserved in
 `docs/drafts/portfolio-presentation.md` as a separate unnumbered draft and requires an explicit
 scheduling decision before implementation begins.
 

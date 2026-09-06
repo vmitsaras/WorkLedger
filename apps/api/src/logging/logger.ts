@@ -11,6 +11,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import pino from 'pino';
+import { sanitizeInsightValidationDetail } from './insight-validation-detail.js';
 import { createSafeRequestSummary, redactError } from './redaction.js';
 
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
@@ -63,6 +64,7 @@ const ALLOWLISTED_LOG_FIELDS = new Set([
   'outputTokens',
   'providerFailureCode',
   'validationFailureCode',
+  'validationDetail',
 ]);
 
 export function createWorkLedgerLogger(options: {
@@ -134,6 +136,7 @@ function createLogger(pinoLogger: pino.Logger): WorkLedgerLogger {
   return {
     child(bindings: Record<string, unknown>): WorkLedgerLogger {
       const allowlistedBindings = filterAllowlistedFields(bindings);
+      delete allowlistedBindings['validationDetail'];
       return createLogger(pinoLogger.child(allowlistedBindings));
     },
 
@@ -201,7 +204,13 @@ function filterAllowlistedFields(data: Record<string, unknown>): Record<string, 
   const filtered: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     if (ALLOWLISTED_LOG_FIELDS.has(key)) {
-      filtered[key] = value;
+      filtered[key] =
+        key === 'validationDetail'
+          ? sanitizeInsightValidationDetail(
+              value,
+              data['outcome'] === 'PROVIDER_INVALID_OUTPUT' ? data['validationFailureCode'] : null,
+            )
+          : value;
     }
   }
   return filtered;
