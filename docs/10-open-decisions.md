@@ -1085,3 +1085,11 @@ deadline expired. Zero employee cases ran, no fresh evaluation artifact exists, 
 0/9 D-515 semantic result. No retry, tuning, today-posted or C followed. The owned portable processes
 were stopped and final isolation checks passed. Diagnose the health timeout before another attempt;
 B remains open and deployment disabled.
+
+**Health diagnosis outcome:** Report 190 confirms the shared deadline expired during the second
+model load after an approximately 80-second capability request. Both probes request immediate
+unloading. Cancellation and readiness behavior match spec 0003; memory snapshots do not establish
+a single host-level cause. Next is a bounded design for finite synthetic health residency and
+cleanup, preserving a cold first probe, both validations, one slot and the unchanged deadline.
+This is a proposal, not an accepted control change or model-run authorization. No tests or inference
+ran; B remains open without D-515 semantic evidence and deployment stays disabled at 0.16.0.
