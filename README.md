@@ -34,7 +34,8 @@ provider-disabled milestone is `0.16.0`.
 
 ## Current status
 
-- **Next task: WL-1508L.** The [bounded execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md)
+- **Next task: WL-1508M.** WL-1508L is complete with [full local verification evidence](docs/197-wl-1508l-reproducible-verification.md).
+  The [bounded execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md)
   separates verification tooling, one fact/action recovery, acceptance screens and pilot closure.
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) records the completed milestone, verified decisions, and residuals.
 - [TODO.md](TODO.md) and [docs/08-task-board.md](docs/08-task-board.md) define dependency-ordered
@@ -52,8 +53,8 @@ conformance for future workflows.
 - Git.
 - Node.js `24.18.x`; `.node-version`, workspace settings, and the managed development runtime pin
   `24.18.0`.
-- pnpm with support for `pnpm with`; repository commands execute pnpm `11.20.0` exactly.
-- Chromium installed through Playwright for browser tests.
+- Corepack or pnpm `11.20.0`; Corepack selects the manifest-pinned version.
+- Chromium, Firefox and WebKit installed through the pinned Playwright version.
 - Docker with Docker Compose only for the local PostgreSQL lifecycle checks.
 
 The install guard rejects a project command executed with a different Node or pnpm version. The
@@ -66,11 +67,11 @@ workflow.
 ```sh
 git clone https://github.com/vmitsaras/WorkLedger.git
 cd WorkLedger
-pnpm with 11.20.0 install --frozen-lockfile
-pnpm with 11.20.0 exec node --version
-pnpm with 11.20.0 --version
-pnpm with 11.20.0 exec playwright install chromium
-pnpm with 11.20.0 run verify
+corepack pnpm install --frozen-lockfile
+corepack pnpm exec node --version
+corepack pnpm --version
+corepack pnpm exec playwright install chromium firefox webkit
+corepack pnpm run verify
 ```
 
 The expected version output is Node `v24.18.x` and pnpm `11.20.0`. `pnpm run verify` uses safe
@@ -106,11 +107,11 @@ The local Compose service uses explicit non-production credentials and binds to
 when the explicit development-seed command is run.
 
 ```sh
-pnpm with 11.20.0 run db:up
-pnpm with 11.20.0 run db:seed:development
-pnpm with 11.20.0 run db:verify
-WORKLEDGER_TEST_DATABASE_URL=postgres://workledger_test:workledger_test_password@127.0.0.1:54329/workledger_test pnpm with 11.20.0 run verify
-pnpm with 11.20.0 run db:down
+corepack pnpm run db:up
+corepack pnpm run db:seed:development
+corepack pnpm run db:verify
+WORKLEDGER_TEST_DATABASE_URL=postgres://workledger_test:workledger_test_password@127.0.0.1:54329/workledger_test corepack pnpm run verify
+corepack pnpm run db:down
 ```
 
 `db:down` preserves the local volume. `pnpm run db:reset` removes that development volume and its
@@ -125,7 +126,7 @@ for variables, approved asset formats, fallbacks, and the optional read-only Com
 
 ## Root scripts
 
-The table uses compact `pnpm run ...` forms. Execute them through `pnpm with 11.20.0 run ...`
+The table uses compact `pnpm run ...` forms. Execute them through `corepack pnpm run ...`
 unless pnpm `11.20.0` is already the active package manager.
 
 | Command | Purpose |
@@ -153,10 +154,10 @@ unless pnpm `11.20.0` is already the active package manager.
 | `pnpm run openapi:generate` | Build the API and regenerate the tracked OpenAPI 3.1 artifact from selected route schemas. |
 | `pnpm run openapi:check` | Reject drift between the tracked artifact and a fresh in-process OpenAPI document. |
 
-The documented CI workflow is currently missing from the checkout and tracked files. WL-1508L
-owns restoring a reproducible verification entry point, including CI configuration. Until that
-is resolved, use the local commands above; the historical gate reports are not evidence of a
-currently running CI job. See [the execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md).
+The [CI workflow](.github/workflows/ci.yml) runs the same pinned deterministic verification with
+PostgreSQL and the browser matrix. It is restored configuration; no remote CI pass is claimed.
+See [the Windows verification and pilot runbook](docs/197-wl-1508l-reproducible-verification.md)
+for exact commands, process isolation, artifact interpretation and explicit model stages.
 
 ## Workspace boundaries
 

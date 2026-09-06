@@ -30,7 +30,7 @@ Phases 0–15 have passed their accepted exit gates; the workspace version is `0
 [Report 165](165-wl-1516-phase-15-gate-review.md) records the deterministic Phase 15 release.
 The optional employee AI pilot has not passed and provider deployment remains disabled.
 
-**Next task: WL-1508L.** Follow [the bounded execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md)
+**Next task: WL-1508M.** Follow [the bounded execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md)
 and the task board. Historical evaluation attempts do not reopen completed product phases.
 
 ---
@@ -634,8 +634,8 @@ D-517 replaces the accumulated rerun instructions with one ordered queue:
 
 | Order | Task | Required outcome |
 | --- | --- | --- |
-| 1 | WL-1508L | Reproducible Windows verification and staged pilot invocation, verified without a real model |
-| 2 | WL-1508M | One complete, evidence-supported fact/action recovery with deterministic regressions, or an explicit blocker/defer decision |
+| 1 — Done | WL-1508L | [Report 197](197-wl-1508l-reproducible-verification.md): reproducible Windows verification, restored CI configuration and staged pilot invocation; full local verification passed without a real model |
+| 2 — Ready; next | WL-1508M | One complete, evidence-supported fact/action recovery with deterministic regressions, or an explicit blocker/defer decision |
 | 3 | WL-1508B | submission-actions 9/9, then today-posted 9/9, on one frozen qualified configuration |
 | 4 | WL-1508C | Historical full-matrix failure preflight 27/27, then one uninterrupted unfiltered 216/216 gate |
 | 5 | WL-1508D | Required non-model evidence and exact candidate reviewed before parent WL-1508 closes |

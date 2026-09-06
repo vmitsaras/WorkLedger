@@ -1,6 +1,6 @@
 # WorkLedger Detailed Task Board
 
-**Next task: WL-1508L.** The Phase 15 optional queue below is the current execution order.
+**Next task: WL-1508M.** The Phase 15 optional queue below is the current execution order.
 Completed phases and excluded proposals are not pending assignments.
 
 ## Status values
@@ -291,15 +291,14 @@ disabled, with no model approved.
 ### Optional employee pilot — execution order
 
 [The execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md) defines the concrete
-files, entry criteria, verification, evidence reuse and failure exits for these tasks. Only L is
-ready. B/C/D retain their task IDs and original acceptance boundaries; C adds a historical
+files, entry criteria, verification, evidence reuse and failure exits for these tasks. L is complete
+with report 197; only M is ready. B/C/D retain their task IDs and original acceptance boundaries; C adds a historical
 regression preflight before its unchanged full matrix. A failed attempt does not automatically
 reopen completed work or authorize another attempt.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 | --- | --- | --- | --- | --- |
-| WL-1508L | Make local verification and pilot invocation reproducible on Windows | WL-1508J; implemented D-515/D-516 | Checked-in workflow; pinned tools propagated to children; deterministic mode disables real-model flags; repository formatting gate resolved; bounded worker scheduling; stage/filter validation; isolated content-free artifacts; truthful child exits/coverage; mocked failure/stop tests and documented commands; no inference | Ready |
-| WL-1508M | Resolve report-195 fact/action completeness in one bounded implementation slice | WL-1508L | Reuse prior diagnosis; trace both failures across all locales/reordered tables; implement one evidence-supported recovery with meaningful regressions and applicable deterministic checks; preserve D-515, grounding, privacy and fallback; record qualification impact. No supported fix means blocked/deferred, not a completed recovery | Blocked |
+| WL-1508M | Resolve report-195 fact/action completeness in one bounded implementation slice | WL-1508L (Done) | Reuse prior diagnosis; trace both failures across all locales/reordered tables; implement one evidence-supported recovery with meaningful regressions and applicable deterministic checks; preserve D-515, grounding, privacy and fallback; record qualification impact. No supported fix means blocked/deferred, not a completed recovery | Ready |
 | WL-1508B | Pass the existing two-group employee acceptance screen once | WL-1508L, WL-1508M; valid exact qualification | Fresh submission-actions 9/9, then today-posted 9/9; mandatory health, frozen sources/configuration, verified artifacts and cleanup. Report 195 is the latest failed attempt: 3/9; no second group | Blocked |
 | WL-1508C | Pass historical regression preflight and the uninterrupted full evaluation | WL-1508B on the same frozen configuration | balance-summary, balance-projection and balance-closing each pass 9/9, then one unfiltered 216/216 full artifact under existing per-question acceptance. No stitched results or tuning. Reports 168/172 remain historical failures | Blocked |
 | WL-1508D | Review evidence and close the optional employee pilot | WL-1508C | Exact passing candidate; applicable quality checks, privacy/security, degraded-provider native fallback, traces, localization and accessibility evidence reviewed; required skips resolved; project memory synchronized; deployment disabled | Blocked |
@@ -323,6 +322,7 @@ implemented (reports 188/192), and report 194 qualifies the latter lifecycle.
 | WL-1508I | Implement duplicate-safe generation and bounded field diagnostics | WL-1508F, D-511 | Spec 0002; report 170: strict selection codec, bounded diagnostics, preserved grounding and deterministic verification | Done |
 | WL-1508J | Implement schema-enforcement admission and material completeness | WL-1508I, D-512 | Spec 0003; report 177: schema admission, qualification tooling, material completeness, qualifiers and deterministic verification | Done |
 | WL-1508K | Qualify an exact schema-enforcing provider | WL-1508J | Report 178: exact 0.33.3/qwen3.6 candidate qualified for the recorded lifecycle; report 194 supplies newer D-516 cold-health/schema evidence | Done |
+| WL-1508L | Make Windows verification and staged pilot invocation reproducible; restore CI configuration | WL-1508J; implemented D-515/D-516 | [Report 197](197-wl-1508l-reproducible-verification.md): pinned children, model-disabled verification, LF checkout, bounded workers, strict stages/provenance, immutable exits and mocked stops; full local command passed 69 script, 598 unit/component, 64 integration and 52 browser tests plus build. Database repairs include authorized atomic retention. Two integration and one browser skips recorded; remote CI not run; no inference | Done |
 
 ### Excluded proposals — not queued
 

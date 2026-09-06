@@ -2892,7 +2892,7 @@ class PostgresPersonalRequestRepository implements PersonalRequestRepository {
             where ${appliedCorrections.organizationId} = ${input.organizationId}
               and ${appliedCorrections.correctionRequestId} = ${correctionRequests.id}
           ) then 'APPLIED'
-          else ${correctionRequests.status}
+          else ${correctionRequests.status}::text
         end`.as('status'),
         submittedAt: sql<string>`${correctionRequests.createdAt}`.as('submitted_at'),
         version: sql<number>`${correctionRequests.version}`.as('version'),
@@ -2920,7 +2920,7 @@ class PostgresPersonalRequestRepository implements PersonalRequestRepository {
             then 'IN_PROGRESS'
           else 'COMPLETED'
         end`.as('progress'),
-        status: sql<PersonalRequestListItemRecord['status']>`${absenceRequests.status}`.as(
+        status: sql<PersonalRequestListItemRecord['status']>`${absenceRequests.status}::text`.as(
           'status',
         ),
         submittedAt: sql<string>`${absenceRequests.submittedAt}`.as('submitted_at'),
@@ -2962,9 +2962,9 @@ class PostgresPersonalRequestRepository implements PersonalRequestRepository {
             then 'IN_PROGRESS'
           else 'COMPLETED'
         end`.as('progress'),
-        status: sql<PersonalRequestListItemRecord['status']>`${absenceCancellations.status}`.as(
-          'status',
-        ),
+        status: sql<
+          PersonalRequestListItemRecord['status']
+        >`${absenceCancellations.status}::text`.as('status'),
         submittedAt: sql<string>`${absenceCancellations.submittedAt}`.as('submitted_at'),
         version: sql<number>`${absenceCancellations.version}`.as('version'),
       })

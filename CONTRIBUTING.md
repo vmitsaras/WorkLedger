@@ -1,8 +1,7 @@
 # Contributing to WorkLedger
 
-Thank you for considering a contribution. WorkLedger is beginning its first authenticated employee
-attendance vertical slice; it is not a supported time-recording application or a production-ready
-deployment. Proposals should match the active roadmap task and the accepted product, domain,
+WorkLedger records completed deterministic release gates through Phase 15; the optional employee
+AI pilot remains incomplete. See PROJECT_STATUS.md for the current implementation task. Proposals should match the active roadmap task and the accepted product, domain,
 accessibility, security, and architecture contracts.
 
 Review and merge are not guaranteed. A small, evidence-backed change that completes one accepted
@@ -30,22 +29,25 @@ mismatched project commands.
 ```sh
 git clone https://github.com/vmitsaras/WorkLedger.git
 cd WorkLedger
-pnpm with 11.20.0 install --frozen-lockfile
-pnpm with 11.20.0 exec playwright install chromium
-pnpm with 11.20.0 run verify
+corepack pnpm install --frozen-lockfile
+corepack pnpm exec playwright install chromium firefox webkit
+corepack pnpm run verify
 ```
 
 Docker is needed only for the local PostgreSQL lifecycle path:
 
 ```sh
-pnpm with 11.20.0 run db:up
-pnpm with 11.20.0 run db:seed:development
-pnpm with 11.20.0 run db:verify
-pnpm with 11.20.0 run db:down
+corepack pnpm run db:up
+corepack pnpm run db:seed:development
+corepack pnpm run db:verify
+corepack pnpm run db:down
 ```
 
 The default database credentials are development-only and the service binds to loopback. It has no
 product schema or seed data. `pnpm run db:reset` deletes the local PostgreSQL volume.
+
+See [the reproducible verification runbook](docs/197-wl-1508l-reproducible-verification.md) for
+Windows toolchain selection, deterministic defaults, CI, formatting and explicit pilot stages.
 
 ## Choose a bounded change
 
@@ -99,7 +101,7 @@ negative fixtures.
 ## Tests and documentation
 
 Run focused checks while developing and the applicable root checks before requesting review. The
-intended full local gate is shown in compact form below; use the `pnpm with 11.20.0 run ...` prefix
+intended full local gate is shown in compact form below; use the `corepack pnpm run ...` prefix
 when pnpm `11.20.0` is not already active.
 
 ```sh

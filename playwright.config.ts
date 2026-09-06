@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
 
 const configuredPort = process.env.WORKLEDGER_E2E_PORT ?? '4173';
 const e2ePort = Number(configuredPort);
@@ -17,7 +18,8 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
   webServer: {
-    command: `pnpm --filter @workledger/web dev --port ${e2ePort}`,
+    command: `"${process.execPath}" "${fileURLToPath(new URL('./apps/web/node_modules/vite/bin/vite.js', import.meta.url))}" --host 127.0.0.1 --port ${e2ePort}`,
+    cwd: fileURLToPath(new URL('./apps/web', import.meta.url)),
     reuseExistingServer: !process.env.CI,
     url: e2eBaseUrl,
   },

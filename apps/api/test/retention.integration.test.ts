@@ -97,7 +97,7 @@ describe('Retention job execution', () => {
     if (!databaseHarness.enabled) return;
     fixture = await createPostgresSchemaFixture({
       connectionString: databaseHarness.url!,
-      label: 'retention-jobs',
+      label: 'retention_jobs',
       migrationFiles: allMigrationFiles,
     });
     database = createWorkLedgerDatabase({
@@ -211,7 +211,9 @@ describe('Retention job execution', () => {
       );
       const employeeId = empRows[0].id;
 
-      await executeRetentionJob(database, testConfig);
+      const result = await executeRetentionJob(database, testConfig);
+      expect(result.errors).toBeUndefined();
+      expect(result.recordsAffected).toBe(1);
 
       const { rows } = await fixture.client.query(
         `SELECT id, display_name FROM employees WHERE id = $1`,
@@ -221,6 +223,88 @@ describe('Retention job execution', () => {
       expect(rows.length).toBe(1);
       expect(rows[0].id).toBe(employeeId); // UUID preserved for foreign keys
       expect(rows[0].display_name).toBe('Former Employee');
+      const audit = await fixture.client.query(
+        `SELECT j.records_affected, a.records_minimized, a.fields_cleared
+         FROM retention_job_executions j JOIN minimization_audit_facts a
+         ON a.retention_job_execution_id = j.id WHERE j.id = $1`,
+        [result.jobId],
+      );
+      expect(audit.rows).toEqual([
+        { records_affected: 1, records_minimized: 1, fields_cleared: ['display_name'] },
+      ]);
+      const repeated = await executeRetentionJob(database, testConfig);
+      expect(repeated.errors).toBeUndefined();
+      expect(repeated.recordsAffected).toBe(0);
+      expect(
+        (await fixture.client.query('SELECT * FROM minimization_audit_facts')).rows,
+      ).toHaveLength(1);
+    },
+  );
+
+  integrationTest(
+    'rolls back minimization and its job when audit persistence fails, then safely retries',
+    async () => {
+      const config = getRetentionConfig(DEFAULT_RETENTION_PROFILE, 'DOMAIN_HISTORY');
+      if (config === null) throw new Error('Config not found');
+      const testConfig = {
+        ...config,
+        durationDays: 1,
+        operator: 'test-operator',
+        jurisdictionOwner: 'Test Org',
+      };
+      const organization = await fixture.client.query<{ id: string }>(
+        "INSERT INTO organizations (name, time_zone) VALUES ('Rollback test', 'UTC') RETURNING id",
+      );
+      const employee = await fixture.client.query<{ id: string }>(
+        "INSERT INTO employees (organization_id, employee_number, display_name, status, created_at) VALUES ($1, 'ROLLBACK', 'Preserved identity', 'INACTIVE', NOW() - INTERVAL '400 days') RETURNING id",
+        [organization.rows[0]?.id],
+      );
+      await fixture.client
+        .query(`CREATE FUNCTION reject_minimization_audit() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN RAISE EXCEPTION 'private fixture content must not be retained'; END; $$;
+      CREATE TRIGGER reject_minimization_audit BEFORE INSERT ON minimization_audit_facts
+      FOR EACH ROW EXECUTE FUNCTION reject_minimization_audit();`);
+      const failed = await executeRetentionJob(database, testConfig);
+      expect(failed.recordsAffected).toBe(0);
+      expect(failed.errors).toEqual(['RETENTION_JOB_FAILED']);
+      expect(
+        (
+          await fixture.client.query('SELECT display_name FROM employees WHERE id = $1', [
+            employee.rows[0]?.id,
+          ])
+        ).rows,
+      ).toEqual([{ display_name: 'Preserved identity' }]);
+      expect((await fixture.client.query('SELECT * FROM minimization_audit_facts')).rows).toEqual(
+        [],
+      );
+      expect(
+        (
+          await fixture.client.query(
+            'SELECT records_affected, error_summary FROM retention_job_executions WHERE id = $1',
+            [failed.jobId],
+          )
+        ).rows,
+      ).toEqual([{ records_affected: 0, error_summary: 'RETENTION_JOB_FAILED' }]);
+      await fixture.client.query(
+        'DROP TRIGGER reject_minimization_audit ON minimization_audit_facts',
+      );
+      const retried = await executeRetentionJob(database, testConfig);
+      expect(retried.errors).toBeUndefined();
+      expect(retried.recordsAffected).toBe(1);
+      expect(
+        (
+          await fixture.client.query('SELECT display_name FROM employees WHERE id = $1', [
+            employee.rows[0]?.id,
+          ])
+        ).rows,
+      ).toEqual([{ display_name: 'Former Employee' }]);
+      expect(
+        (
+          await fixture.client.query(
+            'SELECT retention_job_execution_id FROM minimization_audit_facts',
+          )
+        ).rows,
+      ).toEqual([{ retention_job_execution_id: retried.jobId }]);
     },
   );
 });

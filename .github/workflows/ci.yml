@@ -1,0 +1,50 @@
+name: Deterministic verification
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WORKLEDGER_RUN_AI_EVALUATION: '0'
+      WORKLEDGER_RUN_SCHEMA_QUALIFICATION: '0'
+      WORKLEDGER_AI_PROVIDER_MODE: disabled
+      WORKLEDGER_TEST_DATABASE_URL: postgres://workledger_test:workledger_test_password@127.0.0.1:54329/workledger_test
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: pnpm/action-setup@f520eceda224fe1a4aed5a2a27a194379a409996 # v6
+        with:
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm run db:up
+      - run: pnpm run db:check
+      - run: pnpm run verify
+      - name: Preserve check results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: verification-results
+          path: |
+            output/verification/
+            playwright-report/
+            test-results/
+      - name: Stop test database
+        if: always()
+        run: pnpm run db:down

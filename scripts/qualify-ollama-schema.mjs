@@ -9,7 +9,9 @@ try {
   }
   const config = createRuntimeConfig(process.env).aiProvider;
   if (config.mode !== 'ollama') throw new Error('No candidate configured.');
-  const output = await createSchemaQualificationOutput('output/insights');
+  const output = await createSchemaQualificationOutput(
+    process.env.WORKLEDGER_QUALIFICATION_OUTPUT_ROOT ?? 'output/insights',
+  );
   process.stdout.write(`${JSON.stringify({ checkpointDirectory: output.directory })}\n`);
   const controller = new AbortController();
   const cancel = () => controller.abort();

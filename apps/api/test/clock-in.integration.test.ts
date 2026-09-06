@@ -25,6 +25,21 @@ const migrationFiles = [
   '0004_audit_foundation.sql',
   '0005_idempotency_foundation.sql',
   '0006_zero_daily_delta.sql',
+  '0007_correction_request_snapshots.sql',
+  '0008_nappy_bromley.sql',
+  '0009_married_justin_hammer.sql',
+  '0010_broad_sunfire.sql',
+  '0011_nasty_red_hulk.sql',
+  '0012_silly_magik.sql',
+  '0013_brave_bulldozer.sql',
+  '0014_adorable_piledriver.sql',
+  '0015_rainy_nightshade.sql',
+  '0016_flimsy_oracle.sql',
+  '0017_boring_aaron_stack.sql',
+  '0018_bored_medusa.sql',
+  '0019_stale_loners.sql',
+  '0020_chemical_micromacro.sql',
+  '0021_retention_tracking.sql',
   '0022_account_locale.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
@@ -303,7 +318,9 @@ integrationTest(
       );
       const revokedSessionReplay = await clockInRequest(app, cookie, csrf, idempotencyKey, 0);
       expect(revokedSessionReplay.statusCode).toBe(401);
-      expect(revokedSessionReplay.json()).toMatchObject({ error: { code: 'AUTH_REQUIRED' } });
+      expect(revokedSessionReplay.json()).toMatchObject({
+        error: { code: 'AUTH_SESSION_EXPIRED' },
+      });
 
       const afterRevokedReplay = await fixture.client.query<{ idempotency_count: string }>(
         `select count(*)::text as idempotency_count

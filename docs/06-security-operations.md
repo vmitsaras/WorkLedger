@@ -416,6 +416,10 @@ The profile records the duration/expiry rule, deletion versus minimization behav
 - Expired sessions, grants, rate-limit records, notification delivery attempts, and operational logs may be purged independently when no longer needed.
 - Punches, decisions, ledger entries, approved snapshots, linked adjustments, and audit evidence required for explainability are not cascade-deleted by ordinary account/employee/request operations. End users use correction, cancellation, export, and deactivation controls.
 - When the configured domain retention period ends, the `WL-1007` process minimizes/anonymizes personal identity and sensitive free text where permitted while preserving referential, ledger, snapshot, and audit integrity. It records the action without copying removed content into audit.
+- Retention data changes, the completed job and linked minimization audit commit atomically; the
+  job exists before its audit reference is inserted. Any failure rolls all effects back and records
+  a separate zero-effect `RETENTION_JOB_FAILED` outcome without database error text. Repeating a
+  completed minimization changes no already-minimized record. See [D-518 verification](197-wl-1508l-reproducible-verification.md).
 - Backup copies retain removed data only until their configured expiry; restore procedures must reapply retention jobs before any restored environment becomes active.
 - Legal-hold/case-management automation is not an MVP feature. A deployment that requires it must define an operational procedure and later product work rather than assuming WorkLedger provides legal compliance.
 - Phase 15 creates no prompt, conversation, registry trace, native result, or model output retention

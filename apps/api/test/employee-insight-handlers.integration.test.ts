@@ -27,7 +27,6 @@ const AUTH_SECRET = 'employee-insight-route-secret-with-thirty-two-bytes';
 const EMAIL = 'insight-employee@example.test';
 const ORIGIN = 'https://ledger.example.test';
 const PASSWORD = 'safe employee insight passphrase 2026';
-const LOCAL_MODEL_DIGEST = 'a'.repeat(64);
 const repositoryDirectory = fileURLToPath(new URL('../../..', import.meta.url));
 const migrationFiles = [
   '0000_initial_schema.sql',
@@ -157,10 +156,16 @@ integrationTest(
             locale: 'en-GB',
             statements: [
               {
-                actionReferences: [],
-                factReferences: [interpretationFact.reference],
-                limitationReferences: materialLimitations.map(({ reference }) => reference),
-                sourceReferences: interpretationSources,
+                actionSelections: balance.actions.map(() => false),
+                factSelections: balance.facts.map(
+                  ({ reference }) => reference === interpretationFact.reference,
+                ),
+                limitationSelections: balance.limitations.map(({ reference }) =>
+                  materialLimitations.some((limitation) => limitation.reference === reference),
+                ),
+                sourceSelections: balance.sources.map(({ reference }) =>
+                  interpretationSources.includes(reference),
+                ),
                 text: EMPLOYEE_INSIGHT_SAFE_PROSE['en-GB'],
               },
             ],
@@ -174,10 +179,6 @@ integrationTest(
           WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
           WORKLEDGER_ENVIRONMENT: 'test',
           WORKLEDGER_ORIGIN: ORIGIN,
-          WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
-          WORKLEDGER_OLLAMA_ORIGIN: 'http://127.0.0.1:1',
-          WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
-          WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
         }),
         { aiProvider: providerHarness.provider, now: () => '2026-02-03T10:30:45Z' },
       );
@@ -283,11 +284,15 @@ integrationTest(
               statements: {
                 items: {
                   properties: {
-                    factReferences: {
-                      items: { enum: balance.facts.map(({ reference }) => reference) },
+                    factSelections: {
+                      items: { type: 'boolean' },
+                      minItems: balance.facts.length,
+                      maxItems: balance.facts.length,
                     },
-                    sourceReferences: {
-                      items: { enum: balance.sources.map(({ reference }) => reference) },
+                    sourceSelections: {
+                      items: { type: 'boolean' },
+                      minItems: balance.sources.length,
+                      maxItems: balance.sources.length,
                     },
                   },
                 },

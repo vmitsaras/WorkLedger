@@ -2,7 +2,7 @@
 
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
-**Next task: WL-1508L.** Phases 0–15 are complete at `0.16.0`; the remaining optional
+**Next task: WL-1508M.** Phases 0–15 are complete at `0.16.0`; the remaining optional
 employee pilot is listed in execution order under Phase 15. Excluded proposals are not queued.
 
 ## Phase-completion version rule
@@ -214,12 +214,12 @@ remaining sequence. Keep failed attempts in reports, not in task titles.
 
 ### Optional employee pilot — execution order
 
-Only L is ready. Complete each task's entry and exit criteria in the task board and execution plan.
+Only M is ready. L is complete with the full local verification evidence in report 197.
+Complete each task's entry and exit criteria in the task board and execution plan.
 Planning these tasks does not start inference, authorize deployment, or claim a fix.
 
-- [ ] `WL-1508L` Make local verification and pilot invocation reproducible on Windows, including toolchain propagation, formatting, bounded workers, isolated artifacts and truthful exit/coverage reporting. **Ready; next task.** Mocked/deterministic verification only.
-- [ ] `WL-1508M` Resolve report-195 fact/action completeness in one bounded slice: focused diagnosis, one evidence-supported recovery, meaningful regressions and documentation. **Blocked on L.** If no defensible fix fits the accepted contract, record the blocker/defer decision instead of another experiment.
-- [ ] `WL-1508B` Run one fresh submission-actions 9/9 screen, then today-posted 9/9 only after the first group passes. **Blocked on L/M and current qualification.** Latest attempt failed 3/9 in report 195.
+- [ ] `WL-1508M` Resolve report-195 fact/action completeness in one bounded slice: focused diagnosis, one evidence-supported recovery, meaningful regressions and documentation. **Ready; next task.** If no defensible fix fits the accepted contract, record the blocker/defer decision instead of another experiment.
+- [ ] `WL-1508B` Run one fresh submission-actions 9/9 screen, then today-posted 9/9 only after the first group passes. **Blocked on M and current qualification.** Latest attempt failed 3/9 in report 195.
 - [ ] `WL-1508C` Pass balance-summary, balance-projection and balance-closing preflight (27 cases), then one unfiltered uninterrupted 216-case evaluation on the frozen configuration. **Blocked on fresh B.** Historical full runs failed; no combined partial passes.
 - [ ] `WL-1508D` Reconfirm applicable non-model privacy, security, fallback, localization and accessibility evidence and close the pilot. **Blocked on fresh C.** Deployment remains disabled.
 - [ ] `WL-1508` Pass the optional employee local AI pilot sub-gate. **Parent milestone; blocked on D**, not a separate implementation task.
@@ -239,9 +239,10 @@ B/C, and their completion is not a reason to repeat them automatically.
 - [x] `WL-1508I` Implement duplicate-safe selections and bounded diagnostics; report 170.
 - [x] `WL-1508J` Implement schema admission, material completeness and deterministic checks; report 177.
 - [x] `WL-1508K` Qualify the exact schema-enforcing candidate for its recorded lifecycle; report 178.
+- [x] `WL-1508L` Make Windows verification and staged pilot invocation reproducible, restore CI configuration, and repair the discovered database/fixture defects including authorized retention atomicity. Full local verification passed; mocked pilot stop/provenance checks passed; no inference. [Report 197](docs/197-wl-1508l-reproducible-verification.md).
 
 D-515 evidence acceptance and D-516 health residency are also implemented (reports 188/192).
-Report 194 contains the newer lifecycle qualification. L/M must assess evidence validity by inputs,
+Report 194 contains the newer lifecycle qualification. M/B must assess evidence validity by inputs,
 not reopen completed tasks or infer qualification from a historical checkbox.
 
 ### Excluded proposals — not queued

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
@@ -30,7 +31,7 @@ const preMonthlyActorMigrations = [
   '0014_adorable_piledriver.sql',
   '0015_rainy_nightshade.sql',
   '0016_flimsy_oracle.sql',
-].map((file) => (file.startsWith('/') ? file : `${packageDirectory}/migrations/${file}`));
+].map((file) => (isAbsolute(file) ? file : `${packageDirectory}/migrations/${file}`));
 const preLocaleMigrations = [
   '0000_initial_schema.sql',
   '0001_integrity_constraints.sql',

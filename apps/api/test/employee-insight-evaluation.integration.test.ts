@@ -2,6 +2,7 @@ import { parseEmployeeInsightEvaluationArtifact } from '../src/insights/employee
 import { sanitizeInsightValidationDetail } from '../src/logging/insight-validation-detail.js';
 import { EMPLOYEE_INSIGHT_PROVIDER_OUTPUT_FORMAT } from '../src/insights/employee-insight-selection.js';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 
 import { SUPPORTED_LOCALES, type SupportedLocale } from '@workledger/contracts';
@@ -35,14 +36,7 @@ test.skipIf(!RUN_EVALUATION)(
     if (runtime.aiProvider.mode !== 'ollama') {
       throw new Error('The employee AI evaluation requires WORKLEDGER_AI_PROVIDER_MODE=ollama.');
     }
-    const provider = createOllamaAiProvider(runtime.aiProvider);
-    const health = await provider.checkHealth();
-    expect(health).toMatchObject({
-      status: 'ready',
-      capabilities: ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
-      reasonCode: null,
-    });
-
+    const providerConfig = runtime.aiProvider;
     const records: EvaluationRecord[] = [];
     const failures: string[] = [];
     const totalRuns =
@@ -60,12 +54,64 @@ test.skipIf(!RUN_EVALUATION)(
       ),
     );
     const runLimit = evaluationRunLimit(plannedRuns.length);
+    const outputDirectory = path.resolve(
+      process.env['WORKLEDGER_AI_EVALUATION_OUTPUT_DIRECTORY'] ??
+        path.join('output/insights', `employee-${randomUUID()}`),
+    );
+    await mkdir(outputDirectory, { recursive: true });
+    const persist = async (name: string, value: unknown) =>
+      writeFile(path.join(outputDirectory, name), `${JSON.stringify(value, null, 2)}\n`, {
+        flag: 'wx',
+      });
+    await persist('reservation.json', {
+      plannedRuns: runLimit,
+      fullMatrix: plannedRuns.length === totalRuns && runLimit === totalRuns,
+    });
+    const provider = createOllamaAiProvider(runtime.aiProvider);
+    const health = await provider.checkHealth();
+    await persist('health.json', {
+      healthPassed: health.status === 'ready',
+      reasonCode: health.reasonCode,
+      identityPassed: false,
+    });
+    expect(health).toMatchObject({
+      status: 'ready',
+      capabilities: ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
+      reasonCode: null,
+    });
+
+    const snapshot = () =>
+      parseEmployeeInsightEvaluationArtifact({
+        artifactVersion: 2,
+        providerOutputFormat: EMPLOYEE_INSIGHT_PROVIDER_OUTPUT_FORMAT,
+        evaluatedAt: new Date().toISOString(),
+        inference: {
+          concurrencyLimit: providerConfig.concurrencyLimit,
+          maximumGeneratedTokens: OLLAMA_MAX_GENERATED_TOKENS,
+          temperature: 0,
+          think: false,
+          timeoutMs: providerConfig.timeoutMs,
+        },
+        model: providerConfig.model,
+        modelDigest: providerConfig.modelDigest,
+        repetitions: EMPLOYEE_INSIGHT_GOLDEN_REPETITIONS,
+        runs: records.length,
+        complete:
+          records.length === totalRuns &&
+          plannedRuns.length === totalRuns &&
+          runLimit === totalRuns,
+        semanticQuestions: EMPLOYEE_INSIGHT_GOLDEN_SET.length,
+        supportedLocales: SUPPORTED_LOCALES,
+        failures: failures.length,
+        results: records,
+      });
     for (const { locale, question, repetition } of plannedRuns.slice(0, runLimit)) {
       const record = await evaluateQuestion(question, locale, repetition, provider);
       records.push(record);
       if (record.errors.length > 0) {
         failures.push(`${record.semanticId}:${record.locale}:${record.repetition}`);
       }
+      await persist(`checkpoint-${String(records.length).padStart(3, '0')}.json`, snapshot());
       if (records.length % EMPLOYEE_INSIGHT_GOLDEN_REPETITIONS === 0) {
         process.stdout.write(
           `Employee AI evaluation progress: ${records.length}/${runLimit} content free runs complete.\n`,
@@ -73,40 +119,14 @@ test.skipIf(!RUN_EVALUATION)(
       }
     }
 
-    const summary = Object.freeze({
-      artifactVersion: 2,
-      providerOutputFormat: EMPLOYEE_INSIGHT_PROVIDER_OUTPUT_FORMAT,
-      evaluatedAt: new Date().toISOString(),
-      inference: Object.freeze({
-        concurrencyLimit: runtime.aiProvider.concurrencyLimit,
-        maximumGeneratedTokens: OLLAMA_MAX_GENERATED_TOKENS,
-        temperature: 0,
-        think: false,
-        timeoutMs: runtime.aiProvider.timeoutMs,
-      }),
-      model: runtime.aiProvider.model,
-      modelDigest: runtime.aiProvider.modelDigest,
-      repetitions: EMPLOYEE_INSIGHT_GOLDEN_REPETITIONS,
-      runs: records.length,
-      complete: plannedRuns.length === totalRuns && runLimit === totalRuns,
-      semanticQuestions: EMPLOYEE_INSIGHT_GOLDEN_SET.length,
-      supportedLocales: SUPPORTED_LOCALES,
-      failures: failures.length,
-      results: records,
-    });
-    const outputDirectory = path.resolve('output/insights');
-    await mkdir(outputDirectory, { recursive: true });
-    await writeFile(
-      path.join(
-        outputDirectory,
-        plannedRuns.length === totalRuns && runLimit === totalRuns
-          ? 'wl1508-employee-local-ai-evaluation.json'
-          : 'wl1508-employee-local-ai-smoke.json',
-      ),
-      `${JSON.stringify(parseEmployeeInsightEvaluationArtifact(summary), null, 2)}\n`,
-      'utf8',
-    );
-
+    await persist('artifact.json', snapshot());
+    let identityPassed = false;
+    try {
+      await provider.checkIdentity();
+      identityPassed = true;
+    } finally {
+      await persist('identity.json', { identityPassed });
+    }
     expect(failures, `Golden evaluation failures: ${failures.join(', ')}`).toEqual([]);
     expect(records).toHaveLength(runLimit);
   },
@@ -228,7 +248,7 @@ function evaluationQuestions(): readonly EmployeeInsightGoldenQuestion[] {
 
 function domainId<Entity extends string>(value: string) {
   const parsed = parseDomainId<Entity>(value);
-  if (!parsed.ok) throw new Error(`Invalid ${Entity} fixture ID.`);
+  if (!parsed.ok) throw new Error('Invalid fixture ID.');
   return parsed.value;
 }
 

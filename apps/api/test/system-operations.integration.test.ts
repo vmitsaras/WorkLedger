@@ -4,8 +4,8 @@
 
 import { fileURLToPath } from 'node:url';
 
-import { parseDomainId, type DomainId } from '@workledger/domain';
-import { createWorkLedgerDatabase } from '@workledger/database';
+import { hashPassword } from 'better-auth/crypto';
+import type pg from 'pg';
 import { createDatabaseHarnessState, createPostgresSchemaFixture } from '@workledger/test-utils';
 
 import { createRuntimeConfig } from '../src/config.js';
@@ -21,21 +21,35 @@ const migrationFiles = [
   '0001_integrity_constraints.sql',
   '0002_auth_foundation.sql',
   '0003_authorization_foundation.sql',
+  '0004_audit_foundation.sql',
+  '0005_idempotency_foundation.sql',
+  '0006_zero_daily_delta.sql',
+  '0007_correction_request_snapshots.sql',
+  '0008_nappy_bromley.sql',
+  '0009_married_justin_hammer.sql',
+  '0010_broad_sunfire.sql',
+  '0011_nasty_red_hulk.sql',
+  '0012_silly_magik.sql',
+  '0013_brave_bulldozer.sql',
+  '0014_adorable_piledriver.sql',
+  '0015_rainy_nightshade.sql',
+  '0016_flimsy_oracle.sql',
+  '0017_boring_aaron_stack.sql',
+  '0018_bored_medusa.sql',
+  '0019_stale_loners.sql',
+  '0020_chemical_micromacro.sql',
+  '0021_retention_tracking.sql',
   '0022_account_locale.sql',
 ].map((file) => `${repositoryDirectory}/packages/database/migrations/${file}`);
 
 integrationTest(
   `system operations diagnostics requires system administrator authorization (${databaseHarness.safeLabel})`,
   async () => {
+    if (databaseHarness.url === undefined) throw new Error('Test database is required.');
     const fixture = await createPostgresSchemaFixture({
       connectionString: databaseHarness.url,
-      label: 'system-operations',
+      label: 'system_operations',
       migrationFiles,
-    });
-
-    const database = createWorkLedgerDatabase({
-      applicationName: 'workledger-system-operations-test',
-      connectionString: fixture.databaseUrl,
     });
 
     const logger = createWorkLedgerLogger({
@@ -47,7 +61,7 @@ integrationTest(
 
     const config = createRuntimeConfig({
       WORKLEDGER_ENVIRONMENT: 'test',
-      WORKLEDGER_ORIGIN: 'http://localhost:3000',
+      WORKLEDGER_ORIGIN: 'https://ledger.example.test',
       WORKLEDGER_TRUSTED_PROXY_ADDRESSES: '',
       WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
       WORKLEDGER_AUTH_SECRET: 'test-secret-for-integration-testing-only',
@@ -58,42 +72,17 @@ integrationTest(
     try {
       const organizationId = await createOrganization(fixture.client);
 
-      const systemAdmin = await createTechnicalAccount(
-        fixture.client,
-        organizationId,
-        'system-admin',
-        ['SYSTEM_ADMINISTRATOR'],
-      );
-
-      const hrAdmin = await createEmployeeAccount(fixture.client, organizationId, 'hr-admin', [
-        'HR_ADMINISTRATOR',
+      await createTechnicalAccount(fixture.client, organizationId, 'system-admin', [
+        'SYSTEM_ADMINISTRATOR',
       ]);
 
-      const regularEmployee = await createEmployeeAccount(
-        fixture.client,
-        organizationId,
-        'employee',
-        ['EMPLOYEE'],
-      );
+      await createEmployeeAccount(fixture.client, organizationId, 'hr-admin', ['HR_ADMINISTRATOR']);
 
-      const systemSession = await createSession(
-        fixture.client,
-        systemAdmin,
-        fixture.databaseUrl,
-        config,
-      );
-      const hrSession = await createSession(
-        fixture.client,
-        hrAdmin.accountId,
-        fixture.databaseUrl,
-        config,
-      );
-      const employeeSession = await createSession(
-        fixture.client,
-        regularEmployee.accountId,
-        fixture.databaseUrl,
-        config,
-      );
+      await createEmployeeAccount(fixture.client, organizationId, 'employee', ['EMPLOYEE']);
+
+      const systemSession = await createSession(app, 'system-admin');
+      const hrSession = await createSession(app, 'hr-admin');
+      const employeeSession = await createSession(app, 'employee');
 
       // System administrator can access diagnostics
       const systemDiagnostics = await app.inject({
@@ -161,7 +150,8 @@ integrationTest(
 
       expect(unauthenticated.statusCode).toBe(401);
     } finally {
-      await Promise.all([app.close(), database.close(), fixture.cleanup()]);
+      await app.close();
+      await fixture.cleanup();
     }
   },
   30000,
@@ -170,15 +160,11 @@ integrationTest(
 integrationTest(
   `detailed readiness requires system administrator authorization (${databaseHarness.safeLabel})`,
   async () => {
+    if (databaseHarness.url === undefined) throw new Error('Test database is required.');
     const fixture = await createPostgresSchemaFixture({
       connectionString: databaseHarness.url,
-      label: 'system-readiness',
+      label: 'system_readiness',
       migrationFiles,
-    });
-
-    const database = createWorkLedgerDatabase({
-      applicationName: 'workledger-system-readiness-test',
-      connectionString: fixture.databaseUrl,
     });
 
     const logger = createWorkLedgerLogger({
@@ -190,7 +176,7 @@ integrationTest(
 
     const config = createRuntimeConfig({
       WORKLEDGER_ENVIRONMENT: 'test',
-      WORKLEDGER_ORIGIN: 'http://localhost:3000',
+      WORKLEDGER_ORIGIN: 'https://ledger.example.test',
       WORKLEDGER_TRUSTED_PROXY_ADDRESSES: '',
       WORKLEDGER_DATABASE_URL: fixture.databaseUrl,
       WORKLEDGER_AUTH_SECRET: 'test-secret-for-integration-testing-only',
@@ -201,19 +187,11 @@ integrationTest(
     try {
       const organizationId = await createOrganization(fixture.client);
 
-      const systemAdmin = await createTechnicalAccount(
-        fixture.client,
-        organizationId,
-        'system-admin',
-        ['SYSTEM_ADMINISTRATOR'],
-      );
+      await createTechnicalAccount(fixture.client, organizationId, 'system-admin', [
+        'SYSTEM_ADMINISTRATOR',
+      ]);
 
-      const systemSession = await createSession(
-        fixture.client,
-        systemAdmin,
-        fixture.databaseUrl,
-        config,
-      );
+      const systemSession = await createSession(app, 'system-admin');
 
       // System administrator can access detailed readiness
       const readinessResponse = await app.inject({
@@ -242,105 +220,98 @@ integrationTest(
       expect(unauthenticated.json()).toMatchObject({
         status: 'not_ready',
       });
+      await fixture.client.query(
+        'ALTER TABLE retention_job_executions RENAME TO unavailable_retention_jobs',
+      );
+      const unmigrated = await app.inject({
+        method: 'GET',
+        url: '/v1/system/readiness',
+        cookies: { [systemSession.cookieName]: systemSession.cookieValue },
+      });
+      expect(unmigrated.statusCode).toBe(503);
+      expect(unmigrated.json()).toMatchObject({
+        status: 'not_ready',
+        details: { database: 'not_ready', migrations: 'not_ready' },
+      });
     } finally {
-      await Promise.all([app.close(), database.close(), fixture.cleanup()]);
+      await app.close();
+      await fixture.cleanup();
     }
   },
   30000,
 );
 
-async function createOrganization(client: {
-  query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
-}): Promise<DomainId> {
-  const result = await client.query(`
-    insert into organizations (display_name, timezone)
-    values ('System Operations Test Organization', 'Europe/Berlin')
-    returning id
-  `);
-  return parseDomainId((result.rows[0] as { id: string }).id);
+const PASSWORD = 'safe system operations passphrase 2026';
+
+async function createOrganization(client: pg.ClientBase) {
+  const result = await client.query<{ id: string }>(
+    "insert into organizations (name, time_zone) values ('System Operations Test Organization', 'Europe/Berlin') returning id",
+  );
+  const id = result.rows[0]?.id;
+  if (id === undefined) throw new Error('Expected organization ID.');
+  return id;
 }
 
 async function createTechnicalAccount(
-  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
-  organizationId: DomainId,
-  email: string,
+  client: pg.ClientBase,
+  organizationId: string,
+  identifier: string,
   roles: string[],
-  active: boolean = true,
-): Promise<DomainId> {
-  const accountResult = await client.query(
-    `insert into accounts (organization_id, email, active) values ($1, $2, $3) returning id`,
-    [organizationId, `${email}@example.com`, active],
+) {
+  const account = await client.query<{ id: string }>(
+    'insert into auth_users (name, email, email_verified, active) values ($1, $2, true, true) returning id',
+    [identifier, identifier + '@example.test'],
   );
-  const accountId = parseDomainId((accountResult.rows[0] as { id: string }).id);
-
-  for (const role of roles) {
+  const id = account.rows[0]?.id;
+  if (id === undefined) throw new Error('Expected account ID.');
+  await client.query(
+    "insert into auth_accounts (user_id, account_id, provider_id, password) values ($1::uuid, $1::text, 'credential', $2)",
+    [id, await hashPassword(PASSWORD)],
+  );
+  for (const role of new Set(roles)) {
     await client.query(
-      `insert into account_roles (organization_id, account_id, role) values ($1, $2, $3)`,
-      [organizationId, accountId, role],
+      "insert into account_role_assignments (organization_id, user_id, role, assigned_at) values ($1, $2, $3, '2025-01-01T00:00:00Z')",
+      [organizationId, id, role],
     );
   }
-
-  return accountId;
+  return id;
 }
 
 async function createEmployeeAccount(
-  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
-  organizationId: DomainId,
+  client: pg.ClientBase,
+  organizationId: string,
   identifier: string,
   roles: string[],
-): Promise<{ accountId: DomainId; employeeId: DomainId }> {
-  const accountResult = await client.query(
-    `insert into accounts (organization_id, email, active) values ($1, $2, true) returning id`,
-    [organizationId, `${identifier}@example.com`],
+) {
+  const accountId = await createTechnicalAccount(client, organizationId, identifier, [
+    'EMPLOYEE',
+    ...roles,
+  ]);
+  const employee = await client.query<{ id: string }>(
+    "insert into employees (organization_id, employee_number, display_name, status) values ($1, $2, $2, 'ACTIVE') returning id",
+    [organizationId, identifier],
   );
-  const accountId = parseDomainId((accountResult.rows[0] as { id: string }).id);
-
-  const employeeResult = await client.query(
-    `insert into employees (organization_id, family_name, given_name, status)
-     values ($1, $2, $3, 'ACTIVE') returning id`,
-    [organizationId, identifier, identifier],
-  );
-  const employeeId = parseDomainId((employeeResult.rows[0] as { id: string }).id);
-
+  const employeeId = employee.rows[0]?.id;
+  if (employeeId === undefined) throw new Error('Expected employee ID.');
   await client.query(
-    `insert into account_employee_links (organization_id, account_id, employee_id, starts_on)
-     values ($1, $2, $3, '2026-01-01')`,
+    "insert into employment_periods (organization_id, employee_id, starts_on) values ($1, $2, '2025-01-01')",
+    [organizationId, employeeId],
+  );
+  await client.query(
+    'insert into account_employee_links (organization_id, user_id, employee_id) values ($1, $2, $3)',
     [organizationId, accountId, employeeId],
   );
-
-  for (const role of roles) {
-    await client.query(
-      `insert into account_roles (organization_id, account_id, role) values ($1, $2, $3)`,
-      [organizationId, accountId, role],
-    );
-  }
-
-  return { accountId, employeeId };
 }
 
-async function createSession(
-  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
-  accountId: DomainId,
-  databaseUrl: string,
-  config: ReturnType<typeof createRuntimeConfig>,
-): Promise<{ cookieName: string; cookieValue: string }> {
-  const { BetterAuthClient } = await import('better-auth/client');
-  const authClient = new BetterAuthClient({
-    baseURL: 'http://localhost:3000',
+async function createSession(app: ReturnType<typeof createApiServer>, identifier: string) {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/api/auth/sign-in/email',
+    headers: { origin: 'https://ledger.example.test', 'content-type': 'application/json' },
+    payload: { email: identifier + '@example.test', password: PASSWORD, rememberMe: false },
   });
-
-  // For testing, we'll use a simpler approach - just create a session directly
-  const sessionToken = `test-session-${accountId}-${Date.now()}`;
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-  await client.query(
-    `insert into sessions (id, account_id, user_agent, expires_at)
-     values ($1, $2, 'test-agent', $3)`,
-    [sessionToken, accountId, expiresAt],
-  );
-
-  return {
-    cookieName: 'better-auth.session_token',
-    cookieValue: sessionToken,
-  };
+  expect(response.statusCode).toBe(200);
+  const cookie = response.cookies.find(({ name }) => name === '__Host-workledger.session');
+  if (cookie === undefined) throw new Error('Expected authenticated session cookie.');
+  return { cookieName: cookie.name, cookieValue: cookie.value };
 }

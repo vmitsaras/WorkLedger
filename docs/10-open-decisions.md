@@ -1161,3 +1161,36 @@ The old project-status journal is preserved intact in
 Obsolete WL-1510/WL-1511/WL-1515 remain excluded without executable checkboxes. Portfolio scope
 remains an unscheduled draft. No new phase, version, runtime implementation or model pass results
 from this decision.
+
+## D-518 — Reproducible verification and exposed deterministic regressions
+
+**Status:** Accepted implementation within D-517, with explicit user authorization for the bounded
+retention transaction repair on 2026-09-06. Evidence and commands:
+[WL-1508L report/runbook](197-wl-1508l-reproducible-verification.md).
+
+The global Windows pnpm is 9.15.1 while the repository requires 11.20.0. Corepack selects the
+manifest version; the checked-in runner verifies real executables and invokes child tools through
+the pinned Node. Ordinary checks disable real-model gates, cap worker scheduling, preserve true
+child results and stop on failure. Repository LF attributes reconcile Git checkout behavior with
+existing EditorConfig/Prettier. Restored CI uses the same commands; local evidence is not a remote
+CI pass. No version/dependency policy is relaxed.
+
+Enabling actual PostgreSQL integration exposed previously skipped fixtures and defects. Correct
+fixtures use complete applicable migrations, portable absolute paths, valid schema labels, actual
+authentication tables/signed sessions, the current expired-cookie error and injected selection-v1
+model responses. The fixture mock does not require enabling provider configuration. Application
+readiness follows the connection schema used by ordinary queries, and personal request history
+projects stored enum statuses as text to include its existing derived APPLIED state. Public schemas,
+authorization, privacy filtering and API status meanings remain unchanged.
+
+The user explicitly requested the retention repair after its foreign-key ordering failure was
+identified. All retention data effects, job metadata and linked minimization facts now share one
+transaction; the completed parent is inserted before its audit child. Failed work rolls back and
+records a content-free zero-effect failure separately. Existing retention periods, minimized fields,
+identity/ledger/history preservation and deployment configuration remain authoritative. Database
+regressions must establish linked audit, idempotent repetition, rollback and later successful retry.
+
+L implements verification and these bounded deterministic repairs. It does not recover report-195
+model semantics or start any health, qualification or employee model run. L's complete local
+verification passed with the documented skips; M is the next ready pilot implementation.
+B/C/D still require fresh evidence, and the restored CI has not run remotely.

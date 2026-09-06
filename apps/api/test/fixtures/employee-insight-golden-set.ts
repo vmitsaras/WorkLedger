@@ -803,12 +803,13 @@ export function createEmployeeInsightGoldenFactAcceptance(
   nativeResult: InsightNativeResult,
   input: readonly string[] | EmployeeInsightGoldenFactAcceptance,
 ): EmployeeInsightGoldenFactAcceptance {
-  const acceptance = Array.isArray(input)
-    ? {
-        allowedReferences: null,
-        requiredGroups: input.map((reference) => [reference]),
-      }
-    : input;
+  const acceptance: EmployeeInsightGoldenFactAcceptance =
+    'requiredGroups' in input
+      ? input
+      : {
+          allowedReferences: null,
+          requiredGroups: input.map((reference) => [reference]),
+        };
   const allowedReferences = acceptance.allowedReferences;
   const requiredGroups = acceptance.requiredGroups;
   const nativeReferences = new Set(nativeResult.facts.map(({ reference }) => reference));

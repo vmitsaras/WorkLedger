@@ -6,6 +6,10 @@
 
 **Scope:** Planning repair requested by the user; no runtime implementation or model execution.
 
+**Implementation update:** WL-1508L is complete with [report 197](197-wl-1508l-reproducible-verification.md).
+WL-1508M is now the single ready task. Findings and planning-only verification below retain their
+original audit scope; current status and observed implementation results are in the task board and report 197.
+
 ## Findings
 
 | Finding | Repository evidence | Correction |

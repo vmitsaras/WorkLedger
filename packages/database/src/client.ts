@@ -73,7 +73,7 @@ export function createWorkLedgerDatabase(
         // The latest expected application table is the migration-state marker. The restricted
         // runtime role intentionally has no access to the migrator-owned Drizzle metadata schema.
         const schemaCheck = await pool.query<{ schema_ready: boolean }>(
-          "select to_regclass('public.retention_job_executions') is not null as schema_ready",
+          "select to_regclass('retention_job_executions') is not null as schema_ready",
         );
         if (schemaCheck.rows[0]?.schema_ready !== true) return false;
 

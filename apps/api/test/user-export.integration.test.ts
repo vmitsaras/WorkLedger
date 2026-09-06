@@ -52,7 +52,7 @@ describe('User data export', () => {
     if (!databaseHarness.enabled) return;
     fixture = await createPostgresSchemaFixture({
       connectionString: databaseHarness.url!,
-      label: 'user-export',
+      label: 'user_export',
       migrationFiles: allMigrationFiles,
     });
     database = createWorkLedgerDatabase({
