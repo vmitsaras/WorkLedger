@@ -1,7 +1,7 @@
 # 0003. Employee Insight schema enforcement and completeness
 
 **Date:** 2026-09-06  
-**Status:** Implemented in J; deterministic test execution and K qualification pending
+**Status:** J implementation/deterministic verification complete; K qualification pending
 **Decision:** D-512  
 **Evidence:** `docs/173-wl-1508c-selection-failure-diagnosis.md`
 

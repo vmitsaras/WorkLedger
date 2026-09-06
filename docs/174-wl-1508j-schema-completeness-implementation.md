@@ -57,6 +57,10 @@ The fixture helper source hash changes, so future B/C provenance must use fresh 
 
 ## Verification
 
+**Subsequent execution:** Report 177 closes J with deterministic test evidence and documents the
+count-assertion repair, worker/timeouts and successful bounded-worker reruns. The bullets below
+retain the earlier implementation-only verification history. No real-model call followed.
+
 - TypeScript workspace compilation passed during implementation.
 - Repository lint, toolchain/workspace/phase guards, source boundaries and CSS contract passed.
   The repository ESLint configuration covers JavaScript; TypeScript is checked by its compiler.

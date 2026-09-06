@@ -4,40 +4,27 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508J — pretest fixtures/coverage repaired; deterministic execution pending
+**Active task:** WL-1508K — J verified; qualification preparation and candidate review next
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
 
-Report 176 records repairs to both stale fixtures and the missing mock coverage from report 175.
-All six changed unit-test files pass static typechecking; no tests or inference ran. J remains open
-pending deterministic execution. K still needs qualification output preparation and an eligible
-source-reviewed profile before any real-model run.
+WL-1508J is complete: report 177 records 125 focused passes, 55 script passes, 566 unit/component
+passes and 13 integration passes with 52 gated skips. Broad worker/timeouts were resolved by
+sequential two-worker runs without changing timeouts or assertions. No real-model call ran. K is
+next: repair qualification output preparation and select/review an eligible exact provider profile
+before qualification. B/C/D remain gated and deployment disabled at 0.16.0.
 
-Pretest review in `docs/175-wl-1508j-pretest-review.md` found a stale no-profile configuration
-success case and a concurrency fixture omitting a now-required material fact. Correct these and
-complete targeted mock coverage before J verification. Qualification output writability should be
-checked before inference in K. No tests, probes or code changes ran in this review.
-
-WL-1508J implementation is recorded in `docs/174-wl-1508j-schema-completeness-implementation.md`.
-Exact profile/version admission, stronger schema health, synthetic qualification tooling, material
-dependency rejection, semantic qualifiers and bounded failure vocabularies are implemented. Static
-checks are recorded in the report; no tests or inference ran. J remains unchecked pending required
-deterministic execution; K/B/C/D remain gated. No real compatibility profile is admitted.
-
-D-512 recovery design is specified in `docs/specs/_root/0003-insight-schema-enforcement-completeness/index.md`.
-WL-1508J owns compatibility admission, a stronger synthetic health check, shared material dependency
-validation and four allowlisted semantic qualifiers. WL-1508K separately selects and qualifies an
-exact source-reviewed provider before fresh B/C. No fixed release is assumed or installed. The design
-ran no tests or inference; deployment stays disabled and C/D remain open at version 0.16.0.
+Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
+The accepted recovery contract remains spec 0003/D-512.
 
 Diagnosis is complete in `docs/173-wl-1508c-selection-failure-diagnosis.md`: pinned Ollama source
 bypasses the output schema for the installed qwen3.5 parser with thinking disabled; local metadata
 matches that path. Separately, runtime grounding does not enforce material fact/action dependencies,
 and minimized facts omit posted/projected qualifiers. Exact historical output remains unavailable.
 Only documentation and read-only inspection were performed; no tests or inference ran. Next is a
-bounded deterministic verification under spec 0003, not a new phase.
+bounded K preparation under spec 0003, not a new phase.
 
 Selection-v1 C finished one uninterrupted matrix but failed: 210/216 accepted (207 grounded plus
 3 permitted safe rejections), with 6 failures. `docs/172-wl-1508c-selection-v1-full-evaluation.md`

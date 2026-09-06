@@ -33,6 +33,10 @@ golden questions, required references, provider profiles, qualification tooling 
 
 ## Verification and limits
 
+**Subsequent execution:** Report 177 records successful deterministic verification and closes J.
+The statements below describe this earlier no-test repair task. K output preparation and candidate
+qualification remain outstanding.
+
 The pinned TypeScript compiler statically checked all six changed test files and their imported
 source/fixture dependencies successfully. The command used --ignoreConfig --noEmit, strict NodeNext
 resolution and vitest/globals. Scoped formatting was applied and checked. No unit, integration,

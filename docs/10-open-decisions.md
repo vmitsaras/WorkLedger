@@ -1002,3 +1002,9 @@ Explicit failure vocabularies constrain v2 artifacts and logger fields. The real
 empty; no candidate or installation is qualified. Report 174 records static verification and prepared
 regressions. No tests or inference ran under the earlier execution restriction, so J remains unchecked
 pending deterministic execution; K/B/C/D remain gated. This is not a passing pilot or phase change.
+
+**D-512 deterministic-verification continuation:** On continuation after pretest repairs, J passed
+focused and full non-model verification (report 177). A stale boundary-count assertion was updated;
+worker/test timeouts in broad overlapping runs were resolved with sequential two-worker invocations,
+without weakening timeouts or assertions. J is complete; K output preparation and exact candidate
+qualification remain open. Model execution flags stayed disabled; B/C/D and deployment remain gated.
