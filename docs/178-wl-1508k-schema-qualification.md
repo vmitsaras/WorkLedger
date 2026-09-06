@@ -2,14 +2,72 @@
 
 **Date:** 2026-09-06
 
-**Status:** Prepared; qualification blocked before startup by canceled Windows administrator consent.
+**Status:** Complete; cold-start health and 18/18 synthetic challenges passed on continuation.
 
 ## Scope and result
 
 The user's explicit next task was WL-1508K. This work repairs qualification persistence and selects
-an exact source-reviewed stable candidate for isolated synthetic qualification. No candidate server
-was started, no health/inference request ran, and no B/C employee evaluation ran. K remains open;
-provider deployment remains disabled and workspace versions stay at 0.16.0.
+an exact source-reviewed stable candidate for isolated synthetic qualification. Initial preparation
+stopped at canceled Windows administrator consent. On the user's continuation, consent succeeded,
+the isolation preflight passed, and one uninterrupted K qualification passed. No B/C employee
+evaluation ran. K is complete; deployment remains disabled and workspace versions stay at 0.16.0.
+
+## Qualification evidence
+
+Windows administrator consent succeeded on continuation, and all three candidate rules were
+verified in ActiveStore: enabled, outbound, block, all profiles, exact executable paths and Any
+remote address. Domain, Private and Public firewall profiles were enabled. Before startup, exact
+server/runner and model manifest/config hashes matched the table below; the old server's /api/ps
+was empty and port 11435 was free. The portable server started hidden with a cleaned OLLAMA/proxy
+environment, OLLAMA_NO_CLOUD=1, OLLAMA_DEBUG=false, OLLAMA_NUM_PARALLEL=1, the existing model
+directory and OLLAMA_HOST=127.0.0.1:11435. Logs confirmed cloud disabled, request debug false,
+empty proxies, CUDA on RTX 4090, and the runtime's default 32768 context. No inference tuning ran.
+
+The candidate API confirmed 0.33.3, the exact model digest and an empty loaded-model list before
+the cold probe. The API and runner listeners remained on loopback, and observed established
+connections were loopback. The first model load took about 47.56 seconds. Both health chats shared
+the unchanged 120-second deadline; the existing keep_alive=0 behavior was retained. Health and
+case requests used the unchanged application adapter, not manual substitute requests.
+
+| Gate | Result |
+|---|---|
+| Cold health, including capability and compact schema probe | Passed; 96,650 ms including checkpoint overhead |
+| Empty collection | 3/3 passed |
+| Singleton | 3/3 passed |
+| Compact envelope | 3/3 passed |
+| Types and keys | 3/3 passed |
+| Locale and prose | 3/3 passed |
+| Native maximum, 190 boolean positions | 3/3 passed |
+| Final version/model identity | Passed |
+| Overall run | Complete; 181,612 ms including health and persistence |
+
+Qualification artifact:
+`output/insights/schema-qualification-583914e3-66d3-485c-8f4b-679b2de3c301/artifact.json`.
+SHA-256: `20f61e789bb627f8e07ed9ff603114e353fd1b5ac132f0a2a53003f62db944f9`.
+It records healthPassed=true, identityPassed=true, complete=true and 18 ordered results with null
+failure categories. All 21 immutable checkpoints and the final artifact passed independent strict
+parsing; the last checkpoint's results match the final artifact. The challenge requests total
+594 input and 4,470 output tokens, excluding health. Per-case latencies range from 291 to 20,676 ms;
+the first empty case includes another model load. No retries, prompt/schema edits or threshold
+changes occurred. WORKLEDGER_RUN_AI_EVALUATION remained 0 throughout.
+
+Source hashes were recorded during the run and verified unchanged afterward in
+`output/insights/wl1508k-runtime/session-d710547e-64bd-4e39-8bc7-8544d6b1362f/source-hashes.json`.
+This covers the adapter, profile, challenge definitions, runner, CLI and output helper. The same
+session directory contains process metadata and ordinary server logs; debug/trace was disabled.
+The qualification evidence retains technical metadata only, with no raw model output, thinking,
+selection values or employee data. No employee context was sent.
+
+Post-run API version, model manifest and active firewall rules remained unchanged. The owned
+portable server PID 52336 and its final runner PID 57236 were stopped after listener/path checks;
+the pre-existing installed server PID 42664 was left running. The three scoped outbound rules and
+portable files remain available for the next isolated run. No service installation, .env update,
+deployment enablement, model mutation, commit or phase/version bump occurred.
+
+K closes for this exact profile and installation evidence only. Fresh B is next, followed by C
+only if B passes. Schema qualification does not establish employee semantic completeness or
+overwrite the earlier failed C evidence. Preserve the same runtime/environment controls for B/C;
+reconfiguration requires qualification review.
 
 ## Candidate and source review
 
@@ -37,7 +95,7 @@ before extraction. The executable's Authenticode signature is valid, signed by O
 Portable location: `output/insights/wl1508k-runtime/0.33.3`.
 Archive: `output/insights/wl1508k-runtime/ollama-windows-amd64-0.33.3.zip`.
 Model manifest/config metadata were inspected locally without changing the model or downloading
-weights. The candidate server has not yet independently confirmed these identities through its API.
+weights. The continuation also confirmed the candidate's model digest through its API.
 
 The pinned [chat route](https://github.com/ollama/ollama/blob/v0.33.3/server/routes.go#L2587)
 sets immediate schema enforcement for a thinking-capable built-in parser when thinking is explicitly
@@ -93,7 +151,7 @@ Verification on Node 24.18.0 / pnpm 11.20.0:
 - No broad unit/integration rerun or browser test was needed for these bounded script/profile changes.
   Report 177 retains J's full deterministic evidence; it is not K model evidence.
 
-## Isolation blocker and continuation
+## Initial isolation blocker and operational reference
 
 All Windows firewall profiles were enabled. The reviewed helper
 `scripts/ollama-schema-firewall.ps1` manages only three named outbound-block rules for this exact
@@ -103,7 +161,8 @@ matching rules. It does not touch the installed runtime's H rules or global fire
 
 The Windows RunAs request ended with: "The operation was canceled by the user." No K rule was
 observed afterward. This was Windows administrator consent, not an automatic approval-review
-rejection. Do not start the candidate until the helper succeeds and the effective rules are verified.
+rejection. The later user continuation resolved it as recorded above. Future starts still require
+the effective isolation rules to be verified.
 
 From an administrator PowerShell, the prepared operation is:
 
