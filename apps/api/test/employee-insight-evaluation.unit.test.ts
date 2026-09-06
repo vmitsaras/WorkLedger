@@ -8,6 +8,7 @@ import {
 import {
   EMPLOYEE_INSIGHT_GOLDEN_SEMANTIC_COUNT,
   EMPLOYEE_INSIGHT_GOLDEN_SET,
+  createEmployeeInsightGoldenFactAcceptance,
   evaluateGoldenInterpretation,
 } from './fixtures/employee-insight-golden-set.js';
 
@@ -39,6 +40,89 @@ test('defines exactly twenty four synthetic questions across every locale and em
       expect(Array.from(question.questions[locale]).length).toBeLessThanOrEqual(500);
     }
   }
+});
+
+test('preserves singleton requirements and bounds submission navigation alternatives', () => {
+  const summary = EMPLOYEE_INSIGHT_GOLDEN_SET.find(({ id }) => id === 'balance-summary');
+  const navigation = EMPLOYEE_INSIGHT_GOLDEN_SET.find(({ id }) => id === 'submission-actions');
+  const safeRejection = EMPLOYEE_INSIGHT_GOLDEN_SET.find(({ id }) => id === 'balance-injection');
+  if (summary === undefined || navigation === undefined || safeRejection === undefined) {
+    throw new Error('Missing synthetic acceptance fixture.');
+  }
+
+  expect(summary.factAcceptance).toEqual({
+    allowedReferences: null,
+    requiredGroups: [
+      ['fact_balance_opening'],
+      ['fact_balance_posted_change'],
+      ['fact_balance_closing'],
+    ],
+  });
+  expect(navigation.factAcceptance).toEqual({
+    allowedReferences: ['fact_submission_count', 'fact_submission_pending'],
+    requiredGroups: [['fact_submission_count', 'fact_submission_pending']],
+  });
+  expect(safeRejection.factAcceptance).toEqual({
+    allowedReferences: null,
+    requiredGroups: [],
+  });
+  expect(Object.isFrozen(navigation.factAcceptance)).toBe(true);
+  expect(Object.isFrozen(navigation.factAcceptance.allowedReferences)).toBe(true);
+  expect(Object.isFrozen(navigation.factAcceptance.requiredGroups)).toBe(true);
+  expect(Object.isFrozen(navigation.factAcceptance.requiredGroups[0])).toBe(true);
+});
+
+test.each([
+  {
+    acceptance: { allowedReferences: [], requiredGroups: [] },
+    message: 'Golden fact allowlist must not be empty.',
+    name: 'empty allowlist',
+  },
+  {
+    acceptance: {
+      allowedReferences: ['fact_submission_count', 'fact_submission_count'],
+      requiredGroups: [],
+    },
+    message: 'Golden fact allowlist contains duplicate references.',
+    name: 'duplicate allowlist reference',
+  },
+  {
+    acceptance: { allowedReferences: ['fact_unknown'], requiredGroups: [] },
+    message: 'Golden fact allowlist references an unknown native fact.',
+    name: 'unknown allowlist reference',
+  },
+  {
+    acceptance: { allowedReferences: null, requiredGroups: [[]] },
+    message: 'Golden required fact group must not be empty.',
+    name: 'empty required group',
+  },
+  {
+    acceptance: {
+      allowedReferences: null,
+      requiredGroups: [['fact_submission_count', 'fact_submission_count']],
+    },
+    message: 'Golden required fact group contains duplicate references.',
+    name: 'duplicate required group reference',
+  },
+  {
+    acceptance: { allowedReferences: null, requiredGroups: [['fact_unknown']] },
+    message: 'Golden required fact group references an unknown native fact.',
+    name: 'unknown required group reference',
+  },
+  {
+    acceptance: {
+      allowedReferences: ['fact_submission_count'],
+      requiredGroups: [['fact_submission_pending']],
+    },
+    message: 'Golden required fact group falls outside the allowlist.',
+    name: 'required group outside allowlist',
+  },
+] as const)('rejects $name in a golden fact acceptance fixture', ({ acceptance, message }) => {
+  const navigation = EMPLOYEE_INSIGHT_GOLDEN_SET.find(({ id }) => id === 'submission-actions');
+  if (navigation === undefined) throw new Error('Missing navigation fixture.');
+  expect(() =>
+    createEmployeeInsightGoldenFactAcceptance(navigation.nativeResult, acceptance),
+  ).toThrowError(message);
 });
 
 test('covers ambiguity, incomplete evidence, injection, prohibited use, and scope change', () => {

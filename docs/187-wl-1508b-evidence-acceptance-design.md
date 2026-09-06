@@ -5,6 +5,9 @@
 **Decision:** D-515  
 **Contract:** `docs/specs/_root/0004-insight-evidence-acceptance/index.md`
 
+**Implementation follow-up:** Report 188 records the completed implementation and deterministic
+verification. The design status below is retained as the pre-implementation decision record.
+
 ## Selected decision
 
 Keep `submission-actions` focused on navigation. Rewriting it to request the blocker count would

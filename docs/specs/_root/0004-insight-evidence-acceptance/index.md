@@ -1,9 +1,9 @@
 # 0004. Employee Insight evidence acceptance alignment
 
 **Date:** 2026-09-06  
-**Status:** Design accepted for bounded implementation; deterministic verification and fresh B pending  
+**Status:** Implemented and deterministically verified; fresh B pending
 **Decision:** D-515  
-**Evidence:** `docs/186-wl-1508b-evidence-selection-diagnosis.md`
+**Evidence:** `docs/186-wl-1508b-evidence-selection-diagnosis.md`; `docs/188-wl-1508b-evidence-acceptance-implementation.md`
 
 ## Scope and selected approach
 

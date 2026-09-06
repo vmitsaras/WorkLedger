@@ -69,6 +69,92 @@ test.each(SUPPORTED_LOCALES)(
   },
 );
 
+test.each(SUPPORTED_LOCALES)(
+  'accepts only destination-related navigation facts across reordered tables in %s',
+  (locale) => {
+    const navigation = EMPLOYEE_INSIGHT_GOLDEN_SET.find(({ id }) => id === 'submission-actions');
+    if (navigation === undefined) throw new Error('Missing navigation fixture.');
+    const scenarios: readonly {
+      errors: readonly string[];
+      references: readonly string[];
+    }[] = [
+      { errors: [], references: ['fact_submission_count'] },
+      { errors: [], references: ['fact_submission_pending'] },
+      { errors: [], references: ['fact_submission_count', 'fact_submission_pending'] },
+      {
+        errors: [
+          'Missing required fact reference alternative (fact_submission_count | fact_submission_pending).',
+          'Unexpected fact reference fact_submission_schedule.',
+        ],
+        references: ['fact_submission_schedule'],
+      },
+      {
+        errors: [
+          'Missing required fact reference alternative (fact_submission_count | fact_submission_pending).',
+          'Unexpected fact reference fact_submission_ledger.',
+        ],
+        references: ['fact_submission_ledger'],
+      },
+      {
+        errors: ['Unexpected fact reference fact_submission_schedule.'],
+        references: ['fact_submission_pending', 'fact_submission_schedule'],
+      },
+    ];
+
+    for (const reversed of [false, true]) {
+      const native = structuredClone(navigation.nativeResult);
+      if (reversed) {
+        native.facts.reverse();
+        native.actions.reverse();
+      }
+      const localized = createEmployeeInsightSelectionCodec(
+        native,
+        locale,
+        EMPLOYEE_INSIGHT_SAFE_PROSE[locale],
+      );
+
+      for (const scenario of scenarios) {
+        const selectedReferences = new Set(scenario.references);
+        const selectedFacts = native.facts.filter(({ reference }) =>
+          selectedReferences.has(reference),
+        );
+        const selectedSources = new Set(
+          [...selectedFacts, ...native.actions].flatMap((item) => item.sourceReferences),
+        );
+        const decoded = localized.decode({
+          locale,
+          statements: [
+            {
+              actionSelections: native.actions.map(() => true),
+              factSelections: native.facts.map(({ reference }) =>
+                selectedReferences.has(reference),
+              ),
+              limitationSelections: [],
+              sourceSelections: native.sources.map(({ reference }) =>
+                selectedSources.has(reference),
+              ),
+              text: EMPLOYEE_INSIGHT_SAFE_PROSE[locale],
+            },
+          ],
+        });
+        if (!decoded.ok) throw new Error('Expected valid navigation selections.');
+        const grounded = validateGroundedInterpretation(decoded.candidate, native, locale);
+
+        expect(grounded.statements[0]).toMatchObject({
+          actionReferences: native.actions.map(({ reference }) => reference),
+          factReferences: selectedFacts.map(({ reference }) => reference),
+          sourceReferences: native.sources
+            .filter(({ reference }) => selectedSources.has(reference))
+            .map(({ reference }) => reference),
+        });
+        expect(
+          evaluateGoldenInterpretation({ ...navigation, nativeResult: native }, grounded),
+        ).toEqual(scenario.errors);
+      }
+    }
+  },
+);
+
 test.each([
   'factReferences',
   'sourceReferences',

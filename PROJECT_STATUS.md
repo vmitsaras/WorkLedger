@@ -4,21 +4,22 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — implement acceptance-aligned evidence recovery
+**Active task:** WL-1508B — run the fresh acceptance-aligned regression screen
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-09-06
 
 ## Current objective
 
-D-515/spec 0004 and report 187 now define the acceptance-aligned recovery. Keep
-`submission-actions` navigation-only and both destination actions mandatory. Accept only a nonempty
-subset of the count fact tied to the month and the pending fact tied to the named request; schedule
-and ledger facts do not pass this fixture. A fixture-only required-group/allowlist contract and
-generic source-overlap navigation guidance preserve runtime grounding, public minima, privacy and
-the separate count question. This design changed documentation only; no tests or inference ran.
-Next: implement and deterministically verify D-515 with both model flags disabled before any fresh B
-screen. B/C/D stay open, K complete, deployment disabled at 0.16.0. Reports 185–186 retain the failed
-screen and diagnosis.
+D-515/spec 0004 is implemented and deterministically verified in report 188. `submission-actions`
+remains navigation-only with both destination actions mandatory; count only, pending only or both
+facts pass, while schedule/ledger facts do not. The fixture-only required-group/allowlist contract,
+generic source-overlap guidance and focused locale/reordering/source-closure regressions pass. So do
+typecheck, lint, 57 script tests, 592 unit/component tests, 13 available integration tests and build;
+52 gated integrations skipped, and repository formatting retains its 457-file CRLF baseline. No
+health probe, schema qualification or model inference ran. Next: on a separate continuation, recheck
+the exact K candidate/isolation and run submission-actions 9/9 first; only a pass permits today-posted
+9/9. B/C/D stay open, K complete, deployment disabled at 0.16.0. Reports 185–187 retain the failed
+screen, diagnosis and design.
 
 Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
 The accepted recovery contracts are spec 0003/D-512 and its bounded spec 0004/D-515 amendment.

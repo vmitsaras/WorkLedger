@@ -143,7 +143,15 @@ test('orchestrates the exact employee tool and returns grounded current sources'
   for (const instruction of instructions ?? []) {
     expect(instruction.content).toContain('at least one supplied fact that supports the answer');
     expect(instruction.content).toContain('at least one supplied source');
+    expect(instruction.content).toContain(
+      'sourceReferences overlap the sourceReferences of a selected action or identify a selected source for a destination actually requested by the question',
+    );
+    expect(instruction.content).toContain('may support the navigation statement as a whole');
+    expect(instruction.content).toContain('do not manufacture one fact per destination');
+    expect(instruction.content).toContain('use the safe unavailable path');
     expect(instruction.content).toContain('exact union of sources');
+    expect(instruction.content).not.toContain('fact_submission_');
+    expect(instruction.content).not.toContain('action_submission_');
   }
   expect(providerRequest?.outputSchema).toMatchObject({
     additionalProperties: false,
