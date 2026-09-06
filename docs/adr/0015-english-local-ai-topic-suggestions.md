@@ -54,7 +54,7 @@ The old interpretation endpoint returns unavailable, including with an enabled p
 implementation and evaluation fixtures remain for historical reproducibility. Provider deployment
 is not authorized by this decision. Default configuration stays disabled.
 
-## Acceptance and consequences
+## Original acceptance and consequences
 
 WL-1508N owns this bounded implementation and evaluation. It does not complete or lower the
 legacy M/B/C/D/parent criteria, change a phase gate, or bump `0.16.0`.
@@ -71,16 +71,52 @@ Contract/service, authenticated PostgreSQL, keyboard/axe, narrow-screen, forced-
 reduced-motion, privacy, cancellation and disabled-provider checks accompany model evidence.
 Semantic pass, implementation pass and deployment approval are distinct.
 
+## Best-effort acceptance amendment — 2026-09-06
+
+The user's instruction to continue after the recommendation in report 200 is interpreted as
+accepting that recommended smaller support contract, consistent with the stated goal of keeping
+a useful English-only AI enhancement. D-520 records this interpretation explicitly.
+
+Supported use is one clear English question about one of the four Employee topics. Suggestions
+are best-effort and require review. Ambiguous, multiple-topic, non-English, mixed-language and
+otherwise unsupported questions remain outside supported use. The prompt still requests UNKNOWN
+for them, but abstention is a measured diagnostic rather than a completion requirement. English
+copy and the `language: "en"` field do not detect or enforce the language of the submitted text.
+No input-language detector, translation layer or confidence-based approval is introduced.
+
+Acceptance version `english-topics-best-effort-v2` retains the same ordered 60 cases and expected
+answers, two repetitions, all-output validation, stop-on-provider/validation-failure behavior,
+at least 36/40 supported suggestions, at least 8/10 per topic, p95 at most 10 seconds, and
+identity/source/isolation checks. All 20 UNKNOWN cases still run and their correctness is
+reported. Only their 20/20 requirement is removed. New reports include `strictAcceptancePassed`
+under the original rule alongside the versioned `passed` result. This is an explicit support
+scope amendment after observing failures, not evidence of improved model abstention or a new
+independent accuracy measurement.
+
+Report 200's complete immutable run may be assessed under this amendment because the question
+matrix, prompt, output contract, provider implementation and measured candidate configuration
+are unchanged. Preserve its original `passed: false` artifact and all eight UNKNOWN misses;
+record any reassessment separately with source evidence hashes. Do not use it to qualify another
+model, host configuration or the legacy interpreter. No model replay is needed solely for UI copy
+and acceptance-reporting changes. The 20.754-second cold first suggestion and automatic memory
+placement remain operational limitations; the p95 sample does not promise every request is fast.
+
+UI descriptions must disclose possible incorrect suggestions, unsupported languages/ambiguity,
+explicit confirmation and manual selection. All authority, privacy, independent native execution,
+strict schema, health, isolation, cancellation and default-disabled controls above remain required.
+Implementation verification accompanies the amendment; deployment requires separate authorization.
+See [report 201](../201-wl-1508n-best-effort-english-suggestions.md).
+
 ## Recorded outcome
 
 [Report 199](../199-english-local-ai-topic-suggestions.md) records passing implementation checks
 and the incomplete model attempt: 32 correct valid responses, then a 120-second deadline stop;
-27 cases unrun and partial p95 102.172 seconds. The accepted English-only feature contract remains,
-but the candidate has not passed its evaluation. No threshold is relaxed and no deployment follows.
+27 cases unrun and partial p95 102.172 seconds. The candidate failed that evaluation; no threshold
+was relaxed for that run and no deployment followed.
 
 The subsequent context-size experiment in [report 200](../200-wl-1508n-runtime-performance-recovery.md)
 completed the unchanged 60-case matrix with context 8192: 40/40 supported English suggestions
 correct and p95 510 ms, but UNKNOWN only 12/20. The cold first suggestion took 20.754 seconds.
 This supersedes the incomplete run as current evaluation evidence while preserving it historically.
-The candidate still fails this ADR's strict acceptance criteria. A documented best-effort
-English-only support contract is proposed in report 200; no such amendment is accepted yet.
+The candidate still fails the original strict acceptance criteria. Report 201 records the
+subsequent best-effort amendment and separate assessment without rewriting that failed result.

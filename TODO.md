@@ -2,8 +2,8 @@
 
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
-**Current status: WL-1508N implemented and verified; full evaluation passes English topics/latency but fails UNKNOWN acceptance.** Phases 0–15 are complete at `0.16.0`; the remaining optional
-employee pilot is listed in execution order under Phase 15. Excluded proposals are not queued.
+**Current status: WL-1508N complete under the best-effort English support amendment; full local verification passed.** Phases 0–15 are complete at `0.16.0`. No implementation task is ready;
+the legacy optional pilot remains deferred. Excluded proposals are not queued.
 
 ## Phase-completion version rule
 
@@ -214,7 +214,7 @@ remaining sequence. Keep failed attempts in reports, not in task titles.
 
 ### English-only optional AI enhancement
 
-- [ ] `WL-1508N` Implement and evaluate optional local AI topic suggestions for Employee Insights. **Implementation verified; acceptance blocked on UNKNOWN behavior.** The fresh context-8192 run completed all 60 cases: 40/40 supported English correct, p95 510 ms, but UNKNOWN only 12/20. Ambiguous, German, Spanish and mixed-language cases failed both repetitions. Cold first request took 20.754 seconds. D-520 / ADR 0015 retain strict acceptance, confirmation and independent native execution. Next: resolve the abstention contract; no unchanged replay or deployment. [Report 200](docs/200-wl-1508n-runtime-performance-recovery.md) preserves the result and options; [report 199](docs/199-english-local-ai-topic-suggestions.md) retains earlier failures and full implementation verification.
+- [x] `WL-1508N` Implement and evaluate optional local AI topic suggestions for Employee Insights. **Complete under D-520 / ADR 0015's best-effort English amendment.** [Report 201](docs/201-wl-1508n-best-effort-english-suggestions.md): truthful English copy, confirmation/native authority, 71 script, 619 unit/component, 64 PostgreSQL integration and 52 browser tests passed; build/budgets passed. Separate assessment of report 200's unchanged 60 responses passes the amended criteria: English 40/40, p95 510 ms; UNKNOWN 12/20 remains an explicit strict failure. Cold first request 20.754 seconds. No fresh inference or deployment; original failures preserved in reports 199–200. No implementation task is ready; controlled provider enablement is an unscheduled operator decision.
 
 ### Legacy optional employee interpretation pilot — deferred
 

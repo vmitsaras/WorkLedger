@@ -30,8 +30,8 @@ Phases 0–15 have passed their accepted exit gates; the workspace version is `0
 [Report 165](165-wl-1516-phase-15-gate-review.md) records the deterministic Phase 15 release.
 The optional employee AI pilot has not passed and provider deployment remains disabled.
 
-**Current status: WL-1508N implemented and verified; full evaluation passes English topics/latency but fails UNKNOWN acceptance (D-520 / ADR 0015).** Follow [report 200](200-wl-1508n-runtime-performance-recovery.md)
-and the task board. The earlier execution plan governs only the deferred legacy interpreter.
+**Current status: WL-1508N complete under the best-effort English support amendment (D-520 / ADR 0015); full local verification passed.** See [report 201](201-wl-1508n-best-effort-english-suggestions.md)
+and the task board. No implementation task is ready; the earlier execution plan governs only the deferred legacy interpreter.
 Historical evaluation attempts do not reopen completed product phases.
 
 ---
@@ -635,10 +635,13 @@ or change a phase gate or version. Deployment stays disabled.
 The full local quality gate passed. [Report 200](200-wl-1508n-runtime-performance-recovery.md)
 records a fresh context-8192 evaluation: all 60 responses valid, all 40 supported English cases
 correct and p95 510 ms. UNKNOWN was only 12/20, with ambiguity and three non-English input
-classes failing. The first cold suggestion took 20.754 seconds. N remains unchecked under the
-accepted strict criteria. The next step is the explicit abstention-contract decision in report 200;
-no unchanged replay, threshold amendment, model switch or deployment is queued. Earlier latency
-failures remain in report 199.
+classes failing. The first cold suggestion took 20.754 seconds. That original strict result remains
+failed. The user's continuation of the recommended best-effort scope is recorded in D-520 and
+[report 201](201-wl-1508n-best-effort-english-suggestions.md). A separate assessment of the same
+60 responses passes the amended criteria; all cases and misses remain visible, with no fresh
+inference or improved abstention claim. Updated copy, confirmation/manual recovery and the full
+local quality gate passed, completing N. No implementation task is ready; controlled local provider
+enablement remains an unscheduled operator decision. Earlier failures remain in reports 199–200.
 
 ## Legacy employee interpretation pilot sub gate
 

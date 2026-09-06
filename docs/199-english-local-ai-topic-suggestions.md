@@ -5,9 +5,11 @@
 **Status at this report's run:** Implementation verified; model acceptance blocked by latency and a deadline stop
 
 **Current follow-up:** [Report 200](200-wl-1508n-runtime-performance-recovery.md) records a fresh,
-complete context-8192 matrix: English 40/40 and p95 510 ms pass; UNKNOWN 12/20 fails. Its current
-disposition supersedes this report's next-performance-diagnosis scheduling statement. All results
-and thresholds below remain historical evidence without modification.
+complete context-8192 matrix: English 40/40 and p95 510 ms pass; UNKNOWN 12/20 fails.
+[Report 201](201-wl-1508n-best-effort-english-suggestions.md) records the subsequent best-effort
+contract amendment and separate reuse assessment. These follow-ups supersede this report's
+next-performance-diagnosis scheduling statement. All results and thresholds below remain
+historical evidence without modification.
 
 The user approved English-only AI interaction and the smaller topic-suggestion feature. The
 latest legacy screen's German and Spanish failures do not establish that language alone caused

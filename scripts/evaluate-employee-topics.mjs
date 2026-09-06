@@ -11,6 +11,7 @@ import {
 import {
   topicCases,
   TOPIC_EVALUATION_REPETITIONS,
+  TOPIC_EVALUATION_ACCEPTANCE_VERSION,
   reviewTopicEvaluation,
 } from './fixtures/employee-topic-evaluation.mjs';
 import { readReference, sha256, sourceHashes } from './pilot-workflow.mjs';
@@ -40,6 +41,7 @@ try {
     startedAt: new Date().toISOString(),
     config,
     promptVersion: EMPLOYEE_TOPIC_PROMPT_VERSION,
+    acceptanceVersion: TOPIC_EVALUATION_ACCEPTANCE_VERSION,
     schemaHealthPurpose,
     isolationReference,
     sourceHashes: initialHashes,
@@ -94,13 +96,21 @@ try {
   const artifact = {
     ...review,
     passed: review.passed && identityPassed && sourcesUnchanged,
+    strictAcceptancePassed: review.strictAcceptancePassed && identityPassed && sourcesUnchanged,
     identityPassed,
     sourcesUnchanged,
     results,
     finishedAt: new Date().toISOString(),
   };
   await record('result.json', artifact);
-  process.stdout.write(JSON.stringify({ ...review, passed: artifact.passed, directory }) + '\n');
+  process.stdout.write(
+    JSON.stringify({
+      ...review,
+      passed: artifact.passed,
+      strictAcceptancePassed: artifact.strictAcceptancePassed,
+      directory,
+    }) + '\n',
+  );
   if (!artifact.passed) process.exitCode = 1;
 } catch {
   process.stderr.write(

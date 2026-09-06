@@ -1,8 +1,13 @@
 # WL-1508N — Bounded runtime performance recovery
 
 **Date:** 2026-09-06  
-**Status:** Full matrix complete; responsiveness and supported English cases pass;
+**Status at this report's run:** Full matrix complete; responsiveness and supported English cases pass;
 UNKNOWN acceptance fails
+
+**Current follow-up:** [Report 201](201-wl-1508n-best-effort-english-suggestions.md) records the
+subsequent best-effort contract amendment and a separate assessment of this existing evidence.
+It supersedes the pending decision below. This report's protocol, results and original failure
+are preserved; no fresh model run or improved abstention is implied.
 
 The user explicitly continued WL-1508N after report 199's latency/deadline failure.
 This slice investigates the existing exact candidate. It changes no product scope,

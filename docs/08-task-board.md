@@ -1,6 +1,6 @@
 # WorkLedger Detailed Task Board
 
-**Current status: WL-1508N implemented and verified; full evaluation passes English topics/latency but fails UNKNOWN acceptance.** D-520 authorizes this separate enhancement. Legacy M/B/C/D remain deferred.
+**Current status: WL-1508N complete under the best-effort English support amendment; full local verification passed.** No implementation task is ready. Legacy M/B/C/D remain deferred; provider enablement is an unscheduled operator decision.
 Completed phases and excluded proposals are not pending assignments.
 
 ## Status values
@@ -270,7 +270,7 @@ The accepted deterministic product passed WL-1516 at `0.16.0` (report 165). The 
 employee AI pilot has not passed and is not a release prerequisite. D-517 repairs the execution
 order without reopening completed phase gates. ADR 0014 and the accepted specifications retain
 the authority, privacy, grounding, isolation and evaluation contracts. Provider deployment remains
-disabled, with no model approved.
+disabled, with no model approved for deployment.
 
 ### Completed deterministic product
 
@@ -292,7 +292,7 @@ disabled, with no model approved.
 
 | ID | Task | Depends on | Acceptance evidence | Status |
 | --- | --- | --- | --- | --- |
-| WL-1508N | Implement and evaluate optional local AI topic suggestions for Employee Insights | User-approved D-520 / ADR 0015; completed deterministic Insights and provider controls | [Report 200](200-wl-1508n-runtime-performance-recovery.md): context-8192 matrix 60/60 valid; 40/40 supported English; p95 510 ms; UNKNOWN 12/20 fails. Cold first request 20.754 seconds. Identity/source/cleanup pass. Earlier implementation verification and failures retained in report 199 | Blocked — implementation verified; strict abstention remains required pending the explicit contract decision |
+| WL-1508N | Implement and evaluate optional local AI topic suggestions for Employee Insights | D-520 / ADR 0015 best-effort English amendment; completed deterministic Insights and provider controls | [Report 201](201-wl-1508n-best-effort-english-suggestions.md): full local verification passed, truthful English copy and mandatory confirmation/native execution. Separate assessment of report 200's existing 60 responses passes amended criteria: English 40/40, p95 510 ms. UNKNOWN 12/20 remains a strict failure; cold first request 20.754 seconds. Original artifacts preserved, no fresh inference or deployment | Done — bounded best-effort English support |
 
 ### Legacy optional employee interpretation pilot — deferred
 

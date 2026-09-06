@@ -630,4 +630,8 @@ changes the native form until Use this topic is activated; confirmation clears o
 and focuses the topic field. The user chooses a period and separately runs the native Insight.
 One polite region reports progress, unknown, cancellation or failure; no tokens stream. Labels,
 linked field errors, cancellation focus and clear controls are keyboard complete. Late results
-after cancel, clear, scope change or unmount are discarded. See ADR 0015 and report 199.
+after cancel, clear, scope change or unmount are discarded. The input's linked English description
+states that suggestions are best-effort and may be wrong, especially for unclear questions or
+other languages. Confirmation asks the person to check that the topic matches the question;
+pending text acknowledges local startup delay without promising a time. See ADR 0015 and
+[report 201](201-wl-1508n-best-effort-english-suggestions.md).

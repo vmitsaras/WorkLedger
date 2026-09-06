@@ -28,15 +28,15 @@ preferences, descriptor-driven presentation, localized workflows and generated o
 fluent-human German and Spanish approval, completed multilingual product-quality and database
 upgrade gates, and the signed `0.15.0` release milestone. Phase 15 adds deterministic, read-only,
 role-scoped Employee, Manager, privacy-suppressed HR aggregate, and isolated System Insights. The
-optional private model pilot was reopened for bounded recovery and has not passed; provider mode
-remains disabled, no model is approved, and every accepted Insight route is complete without Ollama. The signed
-provider-disabled milestone is `0.16.0`.
+legacy model interpretation pilot remains deferred. The separate WL-1508N enhancement is complete
+as best-effort English topic suggestions with explicit confirmation. Provider mode remains disabled,
+no model is approved for deployment, and every accepted Insight route is complete without Ollama.
+The signed provider-disabled milestone is `0.16.0`.
 
 ## Current status
 
-- **No implementation task is ready.** The optional pilot is deferred after [M's bounded review](docs/198-wl-1508m-fact-action-recovery-disposition.md); resumption needs an accepted question-intent amendment or new causal defect evidence. WL-1508L is complete with [full local verification evidence](docs/197-wl-1508l-reproducible-verification.md).
-  The [bounded execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md)
-  separates verification tooling, one fact/action recovery, acceptance screens and pilot closure.
+- **WL-1508N is complete; no implementation task is ready.** [Report 201](docs/201-wl-1508n-best-effort-english-suggestions.md) records the best-effort English amendment, observed limitations and full local verification. Controlled provider enablement is an unscheduled operator decision.
+- The legacy interpreter remains deferred after [M's bounded review](docs/198-wl-1508m-fact-action-recovery-disposition.md); resumption needs an accepted question-intent amendment or new causal defect evidence. Its [bounded execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md) retains the original acceptance screens and closure requirements.
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) records the completed milestone, verified decisions, and residuals.
 - [TODO.md](TODO.md) and [docs/08-task-board.md](docs/08-task-board.md) define dependency-ordered
   work.
@@ -245,20 +245,24 @@ versions and makes no response-time or production-support promise.
 
 ## Optional local AI
 
-Employee Insights includes an optional **English-only topic-suggestion** flow. Describe a question
+Employee Insights includes optional **best-effort English-only topic suggestions**. Describe a question
 in English, review the suggested topic, then choose the period and run the normal Insight. The
 AI does not calculate balances or write answers; WorkLedger supplies the complete factual result.
 The application and native results retain English, German and Spanish localization.
 
 The feature uses the existing private, operator-controlled Ollama adapter and stays disabled by
-default. It is experimental: a fresh 60-request evaluation with a smaller context window returned
+default. A 60-request evaluation with a smaller context window returned
 40/40 correct supported English suggestions with 0.51-second p95 latency, but only 12/20 expected
 UNKNOWN responses. Ambiguous and non-English inputs can still receive a topic suggestion; the
-first cold suggestion took 20.8 seconds. The candidate has not passed the full acceptance criteria.
+first cold suggestion took 20.8 seconds. Supported use is one clear English question about a single
+Employee topic. English-only support does not enforce input language or guarantee a correct topic.
+The evidence meets the amended best-effort criteria; its original strict abstention result remains
+failed. This is reuse of the recorded run under an explicit scope amendment, not a new model test.
 The earlier multilingual answer-generation pilot remains deferred. See
-[the current runtime and evaluation report](docs/200-wl-1508n-runtime-performance-recovery.md) and
-[the feature report](docs/199-english-local-ai-topic-suggestions.md) for exact candidate results,
-limitations and the distinction between evaluation and deployment approval.
+[the best-effort support and evidence report](docs/201-wl-1508n-best-effort-english-suggestions.md),
+[the runtime evaluation](docs/200-wl-1508n-runtime-performance-recovery.md) and
+[the feature report](docs/199-english-local-ai-topic-suggestions.md) for exact candidate results
+and limits. Enabling local AI remains a separate operator decision.
 
 ## License
 

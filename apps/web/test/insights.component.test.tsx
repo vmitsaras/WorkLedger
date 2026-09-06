@@ -389,6 +389,37 @@ test('suggests only after submit and requires confirmation and a fresh period be
   await expectNoAxeViolations(rendered.container);
 });
 
+test('discards a mistaken topic when the employee chooses a native topic manually', async () => {
+  const requests: string[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const path = requestUrl(input).pathname;
+      if (path === '/v1/me/csrf') return successResponse({ token: 'c'.repeat(64) });
+      requests.push(path);
+      if (path === '/v1/insights/suggest-topic')
+        return successResponse({ topic: 'leave-projection' });
+      throw new Error('Unexpected request');
+    }),
+  );
+  const user = userEvent.setup();
+  renderInsights('/insights');
+  await user.type(
+    await screen.findByLabelText('What would you like to find? (English)'),
+    'How was my working time calculated?',
+  );
+  await user.click(screen.getByRole('button', { name: 'Suggest a topic' }));
+  await screen.findByRole('button', { name: 'Use this topic' });
+  const nativeTopic = screen.getByLabelText('What would you like to understand?');
+  expect(nativeTopic).toHaveValue('');
+  await user.selectOptions(nativeTopic, 'today-explanation');
+  expect(nativeTopic).toHaveValue('today-explanation');
+  expect(screen.queryByRole('button', { name: 'Use this topic' })).not.toBeInTheDocument();
+  expect(screen.getByLabelText('What would you like to find? (English)')).toHaveValue('');
+  expect(screen.getByLabelText('Date')).toHaveValue('');
+  expect(requests).toEqual(['/v1/insights/suggest-topic']);
+});
+
 test('cancels and ignores a late response while preserving native evidence', async () => {
   let finish: ((response: Response) => void) | undefined;
   let signal: AbortSignal | null | undefined;
@@ -471,6 +502,10 @@ test('keeps the optional interaction explicitly English in every account locale'
     const rendered = renderInsights('/insights', localized);
     const question = await screen.findByLabelText('What would you like to find? (English)');
     expect(question.closest('[lang]')).toHaveAttribute('lang', 'en');
+    expect(question).toHaveAccessibleDescription(/best-effort topic suggestion/);
+    expect(question).toHaveAccessibleDescription(
+      /wrong topic, especially for unclear questions or other languages/,
+    );
     await expectNoAxeViolations(rendered.container);
     rendered.unmount();
   }

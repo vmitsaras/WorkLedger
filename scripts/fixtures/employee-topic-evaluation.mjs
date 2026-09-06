@@ -53,6 +53,8 @@ export const topicCases = [
 ].map(([id, question, expected]) => Object.freeze({ id, question, expected }));
 
 export const TOPIC_EVALUATION_REPETITIONS = 2;
+// ADR 0015 amendment: UNKNOWN is still measured; only supported English use gates acceptance.
+export const TOPIC_EVALUATION_ACCEPTANCE_VERSION = 'english-topics-best-effort-v2';
 
 export function reviewTopicEvaluation(results) {
   const expectedIds = topicCases.flatMap(({ id }) =>
@@ -73,7 +75,14 @@ export function reviewTopicEvaluation(results) {
   }));
   const latency = results.map(({ latencyMs }) => latencyMs).sort((a, b) => a - b);
   const p95Ms = latency[Math.ceil(latency.length * 0.95) - 1] ?? null;
+  const passed =
+    complete &&
+    results.every(({ failure }) => failure === null) &&
+    correct >= 36 &&
+    perTopic.every(({ correct }) => correct >= 8) &&
+    p95Ms <= 10000;
   return {
+    acceptanceVersion: TOPIC_EVALUATION_ACCEPTANCE_VERSION,
     complete,
     runs: results.length,
     supportedCorrect: correct,
@@ -82,12 +91,7 @@ export function reviewTopicEvaluation(results) {
     unsupportedRuns: unsupported.length,
     perTopic,
     p95Ms,
-    passed:
-      complete &&
-      results.every(({ failure }) => failure === null) &&
-      correct >= 36 &&
-      perTopic.every(({ correct }) => correct >= 8) &&
-      unsupported.every(({ correct }) => correct) &&
-      p95Ms <= 10000,
+    strictAcceptancePassed: passed && unsupported.every(({ correct }) => correct),
+    passed,
   };
 }

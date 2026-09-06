@@ -1267,9 +1267,20 @@ experiment in [report 200](200-wl-1508n-runtime-performance-recovery.md). With p
 Ollama also changed automatic memory placement; this run does not isolate context size as the sole
 cause of the speed improvement. No persistent setting or application source changed.
 
-Strict abstention is now the unmet N criterion: ambiguous, German, Spanish and mixed-language
-questions failed both repetitions. N stays unchecked. Report 200 proposes a user decision between
+At report 200's close, strict abstention was the unmet N criterion: ambiguous, German, Spanish and
+mixed-language questions failed both repetitions. N stayed unchecked. Report 200 proposed a decision between
 retaining strict UNKNOWN acceptance and explicitly accepting best-effort suggestions supported in
-English, with unsupported/ambiguous behavior measured and disclosed. The latter is **not accepted**;
-the async preference question is pending. No elapsed time or default answer changes this ADR,
-thresholds or deployment state. No supported semantic repair or unchanged replay is queued.
+English, with unsupported/ambiguous behavior measured and disclosed. The latter was not accepted
+at report 200's close; the async preference question was pending. No elapsed time or default
+answer changed the ADR, thresholds or deployment state. No semantic repair or replay was queued.
+
+The user then instructed **continue** after the recommendation to adopt best-effort English
+suggestions. This is interpreted as proceeding with that recommendation, consistent with the
+earlier request for a small useful English-only AI enhancement. This interpretation was stated
+before editing; it is not inferred from the old question's preselected option or elapsed time.
+The ADR 0015 amendment explicitly removes only the 20/20 abstention completion requirement.
+All 60 cases and expected answers remain, unsupported misses stay visible, and the original
+strict result remains failed. Confirmation, native authority, privacy, output validation,
+supported-topic accuracy, latency and provider controls are unchanged. [Report 201](201-wl-1508n-best-effort-english-suggestions.md)
+records the copy changes, separate assessment of existing evidence and verification. No new model
+run, deployment or legacy pilot closure is authorized by this continuation.
