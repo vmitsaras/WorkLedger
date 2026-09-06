@@ -1042,3 +1042,30 @@ C/D remain gated, K complete, and deployment disabled. Historical failed evidenc
 and Spanish each omit the golden-required submission-count fact in three runtime-valid answers;
 German fails all three with factReferences/EMPTY_REQUIRED. No retry, today-posted or C followed.
 The owned runtime is stopped. Diagnose evidence selection next; B remains open and deployment disabled.
+
+**D-514 diagnosis outcome:** Report 186 confirms that the navigation-only question does not ask for
+the exact blocker-count fact required by its golden fixture, while D-514 prohibits unrelated minimum
+filler. English/Spanish selected other grounded evidence and both requested actions; German selected
+no facts. Runtime cannot enforce question-specific relevance because it receives no trusted required
+fact intent. No schema, decoder, locale-fixture or authorization defect was found. Before another
+screen, a separate bounded decision must align the question and accepted supporting evidence; no
+tests, inference or implementation change occurred in the diagnosis.
+
+### D-515 — Acceptance-aligned navigation evidence
+
+Keep `submission-actions` as a navigation-only question and keep both requested actions mandatory.
+Do not rewrite it to request the blocker count because `submission-count` already covers that
+semantic obligation. Accept only a nonempty subset of the month-count and pending-request facts;
+schedule and ledger blocker facts cannot pass this question. Actions and their exact sources cover
+each requested destination, while facts support the statement as a whole.
+
+Implement this as a fixture-only required-group/optional-allowlist contract. Existing exact fact
+requirements become singleton groups, preserving all other golden semantics. Add generic model
+guidance that navigation evidence must share a source relationship with an action/source for a
+requested destination. Do not pass golden metadata into production, infer trusted intent from free
+text, repair output or change runtime grounding.
+
+Spec 0004 and report 187 define the implementation and deterministic cases. This design changes
+documentation only and authorizes no model run. K remains complete because provider/schema controls
+do not change. B stays open; today-posted, C and D remain gated; deployment stays disabled at
+`0.16.0`.

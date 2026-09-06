@@ -7,6 +7,10 @@
 
 Implementation evidence and outstanding checks: `docs/174-wl-1508j-schema-completeness-implementation.md`.
 
+**Subsequent amendment:** D-515/spec 0004 changes only the `submission-actions` golden
+fact-acceptance rule and generic navigation evidence guidance. The provider, runtime material
+completeness, qualifier and public-contract decisions below remain unchanged.
+
 ## Scope and selected approach
 
 Recover the optional employee pilot through two independent boundaries: qualified constrained

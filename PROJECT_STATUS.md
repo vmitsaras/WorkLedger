@@ -4,21 +4,24 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — diagnose failed D-514 evidence selection
+**Active task:** WL-1508B — implement acceptance-aligned evidence recovery
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
-**Last verified:** 2026-08-29
+**Last verified:** 2026-09-06
 
 ## Current objective
 
-Report 185 records the fresh D-514 B screen: submission-actions failed 0/9. English and
-Spanish omit the golden-required submission-count fact (runtime valid); German selects no facts
-(REFERENCE_CARDINALITY / factReferences / EMPTY_REQUIRED). Health and artifact integrity checks
-passed. No retry, today-posted or C followed; the owned candidate is stopped. Next: diagnose
-evidence selection before another recovery. B/C/D open, K complete, deployment disabled at 0.16.0.
-Report 184 retains the passing deterministic implementation checks.
+D-515/spec 0004 and report 187 now define the acceptance-aligned recovery. Keep
+`submission-actions` navigation-only and both destination actions mandatory. Accept only a nonempty
+subset of the count fact tied to the month and the pending fact tied to the named request; schedule
+and ledger facts do not pass this fixture. A fixture-only required-group/allowlist contract and
+generic source-overlap navigation guidance preserve runtime grounding, public minima, privacy and
+the separate count question. This design changed documentation only; no tests or inference ran.
+Next: implement and deterministically verify D-515 with both model flags disabled before any fresh B
+screen. B/C/D stay open, K complete, deployment disabled at 0.16.0. Reports 185–186 retain the failed
+screen and diagnosis.
 
 Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
-The accepted recovery contract remains spec 0003/D-512.
+The accepted recovery contracts are spec 0003/D-512 and its bounded spec 0004/D-515 amendment.
 
 Diagnosis is complete in `docs/173-wl-1508c-selection-failure-diagnosis.md`: pinned Ollama source
 bypasses the output schema for the installed qwen3.5 parser with thinking disabled; local metadata
