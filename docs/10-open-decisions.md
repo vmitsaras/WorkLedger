@@ -1023,3 +1023,12 @@ The failed screen stays preserved; a fresh bounded B assesses the new instructio
 screen failing 0/9 with FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID after successful health. No
 retry or second group followed. The instruction change remains unvalidated pending diagnosis and
 revision/withdrawal review; B is not complete. Candidate stopped, deployment disabled.
+
+### D-514 — Minimum evidence and closed cardinality diagnostics
+
+Design specified on continuation in report 183. Revise navigation guidance to preserve relevant
+supporting facts and their exact source union, retaining the current schema and public minima.
+Add only REFERENCE_CARDINALITY with closed field/reason vocabulary, fixed first-violation order
+and matched logger/artifact enforcement. No counts or content are retained. Historical null details
+remain unchanged. Implementation and verification are next; this design runs no tests or inference.
+This extends D-513 diagnostics scope without changing golden acceptance or provider qualification.
