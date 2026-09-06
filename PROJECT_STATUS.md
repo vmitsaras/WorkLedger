@@ -4,22 +4,23 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — run the fresh acceptance-aligned regression screen
+**Active task:** WL-1508B — diagnose the acceptance-aligned pre-screen health timeout
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-09-06
 
 ## Current objective
 
-D-515/spec 0004 is implemented and deterministically verified in report 188. `submission-actions`
-remains navigation-only with both destination actions mandatory; count only, pending only or both
-facts pass, while schedule/ledger facts do not. The fixture-only required-group/allowlist contract,
-generic source-overlap guidance and focused locale/reordering/source-closure regressions pass. So do
-typecheck, lint, 57 script tests, 592 unit/component tests, 13 available integration tests and build;
-52 gated integrations skipped, and repository formatting retains its 457-file CRLF baseline. No
-health probe, schema qualification or model inference ran. Next: on a separate continuation, recheck
-the exact K candidate/isolation and run submission-actions 9/9 first; only a pass permits today-posted
-9/9. B/C/D stay open, K complete, deployment disabled at 0.16.0. Reports 185–187 retain the failed
-screen, diagnosis and design.
+D-515/spec 0004 is implemented and deterministically verified in report 188. The separately
+continued acceptance-aligned B attempt in report 189 passed exact candidate, isolation, toolchain
+and source-drift preflight, but stopped at mandatory provider health: the capability chat completed
+after about 80 seconds and the compact-schema chat was canceled during model loading when their
+shared unchanged 120-second health deadline expired. Health returned unavailable/TIMEOUT before the
+golden-set loop, so zero employee cases ran, no fresh evaluation artifact exists, and this is not a
+0/9 semantic result. No retry, tuning, today-posted or C followed. The exact owned portable processes
+were stopped; final process, listener, old-server and firewall checks pass. Next: diagnose the
+pre-screen health timeout and decide a bounded next step before any new model attempt. B/C/D stay
+open, K remains complete as historical qualification evidence, and deployment stays disabled at
+0.16.0.
 
 Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
 The accepted recovery contracts are spec 0003/D-512 and its bounded spec 0004/D-515 amendment.

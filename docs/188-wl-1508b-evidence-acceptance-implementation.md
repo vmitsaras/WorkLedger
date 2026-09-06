@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-06
 
-**Status:** D-515 implementation and deterministic verification complete; fresh B not run
+**Status:** D-515 implementation and deterministic verification complete; later fresh B stopped at health before employee cases
 
 **Decision:** D-515
 
@@ -82,3 +82,8 @@ A separately continued B screen must recheck the exact K candidate and isolation
 group permits the 9/9 `today-posted` group. C still requires a complete passing B; D and the parent
 pilot remain open. Provider deployment remains disabled and no phase, version, dependency, migration,
 branch or commit changed.
+
+The separately continued attempt is recorded in report 189. Exact candidate, isolation, toolchain
+and source-drift preflight passed, but provider health returned unavailable/TIMEOUT before the
+golden-set loop. Zero employee cases ran, no evaluation artifact was created, and the stop rule
+prevented retry, `today-posted` and C. D-515 therefore still has no real-model semantic evidence.

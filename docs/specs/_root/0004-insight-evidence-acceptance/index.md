@@ -1,9 +1,9 @@
 # 0004. Employee Insight evidence acceptance alignment
 
 **Date:** 2026-09-06  
-**Status:** Implemented and deterministically verified; fresh B pending
+**Status:** Implemented and deterministically verified; fresh B stopped at health before employee cases
 **Decision:** D-515  
-**Evidence:** `docs/186-wl-1508b-evidence-selection-diagnosis.md`; `docs/188-wl-1508b-evidence-acceptance-implementation.md`
+**Evidence:** `docs/186-wl-1508b-evidence-selection-diagnosis.md`; `docs/188-wl-1508b-evidence-acceptance-implementation.md`; `docs/189-wl-1508b-acceptance-screen-health-timeout.md`
 
 ## Scope and selected approach
 
@@ -129,3 +129,10 @@ After deterministic implementation evidence passes, one separately continued B s
 `submission-actions` 9/9 first. Only a passing first group permits `today-posted` 9/9. Any failure
 stops without retry or tuning. C still requires a complete passing B; D still requires 216/216 C.
 Provider deployment remains disabled throughout.
+
+The separately continued attempt in report 189 passed exact candidate, isolation and source-drift
+preflight but returned unavailable/TIMEOUT from the mandatory shared-deadline health operation
+before the golden-set loop. Zero employee cases ran and no fresh evaluation artifact exists. The
+stop rule prevented retry, `today-posted` and C. This does not change the D-515 acceptance contract;
+it leaves its real-model B evidence pending and requires health-timeout diagnosis before another
+attempt.

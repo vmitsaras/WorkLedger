@@ -1076,3 +1076,12 @@ unit/component tests, 13 available integration tests and build pass; 52 gated in
 Repository-wide formatting retains the known CRLF baseline, while scoped formatting passes. No
 health probe, schema qualification or model inference ran. A separately continued B screen is next;
 its first group remains the 9/9 stop gate.
+
+**Fresh-screen outcome:** Report 189 records that the exact candidate, isolation, toolchain and
+eleven fresh source hashes passed preflight, but the mandatory provider health operation returned
+unavailable/TIMEOUT before the evaluator entered the golden-set loop. Its first chat completed after
+about 80 seconds; the second was canceled during model loading when the shared unchanged 120-second
+deadline expired. Zero employee cases ran, no fresh evaluation artifact exists, and this is not a
+0/9 D-515 semantic result. No retry, tuning, today-posted or C followed. The owned portable processes
+were stopped and final isolation checks passed. Diagnose the health timeout before another attempt;
+B remains open and deployment disabled.
