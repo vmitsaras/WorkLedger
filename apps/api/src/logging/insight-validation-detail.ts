@@ -16,6 +16,11 @@ const detailSchema = z.discriminatedUnion('kind', [
     duplicateCount: z.number().int().min(1).max(19),
   }),
   z.strictObject({
+    kind: z.literal('REFERENCE_CARDINALITY'),
+    field: referenceFieldSchema,
+    reason: z.enum(['EMPTY_REQUIRED', 'EXCEEDS_LIMIT']),
+  }),
+  z.strictObject({
     kind: z.literal('SELECTION_INVALID'),
     field: referenceFieldSchema,
     reason: z.enum(['NOT_ARRAY', 'LENGTH', 'ITEM_TYPE']),
@@ -36,6 +41,14 @@ export function sanitizeInsightValidationDetail(
     if (
       failureCode !== 'FINAL_SCHEMA_REFERENCES_DUPLICATE' ||
       detail.itemCount - detail.distinctCount !== detail.duplicateCount
+    )
+      return null;
+  } else if (detail.kind === 'REFERENCE_CARDINALITY') {
+    if (
+      failureCode !== 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID' ||
+      (detail.reason === 'EMPTY_REQUIRED' &&
+        detail.field !== 'factReferences' &&
+        detail.field !== 'sourceReferences')
     )
       return null;
   } else if (failureCode !== 'FINAL_SELECTION_INVALID') return null;

@@ -138,6 +138,13 @@ test('orchestrates the exact employee tool and returns grounded current sources'
   expect(provider.generate).toHaveBeenCalledOnce();
   const providerRequest = vi.mocked(provider.generate).mock.calls[0]?.[0];
   expect(providerRequest?.tools).toEqual([]);
+  const instructions = providerRequest?.messages.filter(({ role }) => role === 'system');
+  expect(instructions).toHaveLength(2);
+  for (const instruction of instructions ?? []) {
+    expect(instruction.content).toContain('at least one supplied fact that supports the answer');
+    expect(instruction.content).toContain('at least one supplied source');
+    expect(instruction.content).toContain('exact union of sources');
+  }
   expect(providerRequest?.outputSchema).toMatchObject({
     additionalProperties: false,
     properties: {
@@ -819,3 +826,42 @@ function instant(value: string) {
   if (!parsed.ok) throw new Error('Invalid instant fixture.');
   return parsed.value;
 }
+
+test('empty evidence produces closed trace detail after one generation without retry or repair', async () => {
+  const insightService = createInsightServiceStub();
+  const provider = createProvider([
+    {
+      content: JSON.stringify({
+        ...WIRE,
+        statements: [{ ...WIRE.statements[0], factSelections: [false] }],
+      }),
+      toolCalls: [],
+    },
+  ]);
+  const traces: unknown[] = [];
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+  await expect(
+    service.interpret(identity(), REQUEST, CAPTURED_AT, {
+      recordTrace: (trace) => traces.push(trace),
+    }),
+  ).rejects.toMatchObject({ code: 'INTERNAL_ERROR', statusCode: 503 });
+  expect(provider.generate).toHaveBeenCalledOnce();
+  expect(insightService.run).toHaveBeenCalledOnce();
+  expect(traces).toEqual([
+    expect.objectContaining({
+      outcome: 'PROVIDER_INVALID_OUTPUT',
+      providerFailureCode: 'INVALID_RESPONSE',
+      validationFailureCode: 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID',
+      validationDetail: {
+        kind: 'REFERENCE_CARDINALITY',
+        field: 'factReferences',
+        reason: 'EMPTY_REQUIRED',
+      },
+    }),
+  ]);
+});

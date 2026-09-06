@@ -304,13 +304,13 @@ function systemInstruction(): string {
     'Use only facts in the supplied current Insight. Never calculate, infer a missing rule, give legal or health advice, rank, score, recommend a decision, or propose a write action.',
     'Return only the required JSON object in the requested locale.',
     'Return exactly one statement. Cite every native fact needed to answer the question and every material limitation.',
-    'When the question asks where to view or review information, select the supplied read-only navigation action for each requested destination. Cover every requested destination, including questions asking about more than one. Use the action code, destination and source relationships to identify the relevant entries.',
-    'Keep actions unrelated to the question unselected unless required by a material limitation. If no supplied action matches a requested destination, do not invent one. Navigation actions do not authorize a write or an approval.',
+    'Every answer, including a navigation answer, must select at least one supplied fact that supports the answer and at least one supplied source. Navigation actions supplement this evidence; an action is not a substitute for a fact. Never select an unrelated fact merely to satisfy the minimum or invent evidence when no supplied fact supports the answer.',
+    'For navigation questions, select each supplied read-only action needed for every requested destination, including multiple destinations. Use action codes, destinations and source relationships to identify relevant entries. Leave unrelated actions unselected unless required by a material limitation. Never invent an action. Navigation actions do not authorize a write or an approval.',
     'For every material limitation, cite every relatedFactReference supplied with that limitation.',
     'For every material limitation, cite every relatedActionReference supplied with that limitation.',
     'For every material limitation, select every related source supplied with that limitation.',
     'The JSON object has exactly locale and statements. statements has exactly one object with exactly text, factSelections, sourceSelections, limitationSelections, and actionSelections. Each selection array has one boolean per entry in its corresponding current native collection, in selectionIndex order starting at zero. True cites that entry; false omits it. Never return reference strings.',
-    'Select sources exactly covering the sourceReferences on every selected fact, limitation, and action. A shared source occupies one position. Select every required source and no other source.',
+    'Select the exact union of sources required by selected facts, limitations and actions. A shared source occupies one position. Never select an unrelated source merely to satisfy the minimum; a source is not interchangeable with a fact.',
     'Reference every material limitation. Do not place numbers, dates, identifiers, statuses, source labels, limitation labels, or action labels in statement text. WorkLedger renders those values from native references.',
   ].join(' ');
 }
@@ -324,8 +324,9 @@ function finalResponseInstruction(locale: SupportedLocale): string {
     `Use this exact property structure: {"locale":"${locale}","statements":[{"actionSelections":[],"factSelections":[],"limitationSelections":[],"sourceSelections":[],"text":""}]}.`,
     'Replace each empty array with exactly one boolean per current entry in that collection, ordered by selectionIndex. Use an empty array only for an empty collection. Keep every property and add no properties.',
     'Select every material limitation and its related facts, actions and sources using their positions in the corresponding collections.',
-    'For navigation questions, select an available action for every destination requested in the question, even when there are no material limitations. Leave unrelated optional actions unselected; never invent an action or select all actions merely because they are available.',
-    'Select a source if and only if a selected fact, action or limitation requires it. Do not select unrelated sources.',
+    'Every answer, including a navigation answer, must select at least one supplied fact that supports the answer and at least one supplied source. Navigation actions supplement this evidence and never replace facts. Do not select unrelated facts merely to satisfy the minimum or invent evidence when no supplied fact supports the answer.',
+    'For navigation questions, select each supplied read-only action needed for every requested destination, including multiple destinations even without material limitations. Leave unrelated optional actions unselected unless required by a material limitation. Never invent an action; navigation does not authorize a write or an approval.',
+    'Select the exact union of sources required by selected facts, actions and limitations. Do not select unrelated sources merely to satisfy the minimum; a source is not interchangeable with a fact.',
     `Set text to exactly this sentence, including punctuation: ${proseExample}`,
   ].join(' ');
 }
@@ -467,7 +468,11 @@ export function validateGroundedInterpretation(
     const code = classifyInterpretationSchemaFailure(candidate, locale);
     throw invalidProviderOutput(
       code,
-      code === 'FINAL_SCHEMA_REFERENCES_DUPLICATE' ? duplicateReferenceDetail(candidate) : null,
+      code === 'FINAL_SCHEMA_REFERENCES_DUPLICATE'
+        ? duplicateReferenceDetail(candidate)
+        : code === 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID'
+          ? referenceCardinalityDetail(candidate)
+          : null,
     );
   }
   if (parsed.data.locale !== locale) {
@@ -632,6 +637,30 @@ function duplicateReferenceDetail(candidate: unknown): InsightValidationDetail |
         itemCount: items.length,
         distinctCount,
         duplicateCount: items.length - distinctCount,
+      };
+  }
+  return null;
+}
+
+function referenceCardinalityDetail(candidate: unknown): InsightValidationDetail | null {
+  if (!isRecord(candidate) || !Array.isArray(candidate['statements'])) return null;
+  if (candidate['statements'].length !== 1) return null;
+  const statement: unknown = candidate['statements'][0];
+  if (!isRecord(statement)) return null;
+  for (const field of [
+    'factReferences',
+    'sourceReferences',
+    'actionReferences',
+    'limitationReferences',
+  ] as const) {
+    const items = statement[field];
+    if (!Array.isArray(items) || items.some((item) => typeof item !== 'string')) return null;
+    const minimum = field === 'factReferences' || field === 'sourceReferences' ? 1 : 0;
+    if (!hasReferenceCardinality(items, minimum))
+      return {
+        kind: 'REFERENCE_CARDINALITY',
+        field,
+        reason: items.length === 0 ? 'EMPTY_REQUIRED' : 'EXCEEDS_LIMIT',
       };
   }
   return null;

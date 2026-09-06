@@ -411,6 +411,12 @@ The profile records the duration/expiry rule, deletion versus minimization behav
   registry execution and model tool-round counts, validation outcome, cancellation, and safe
   failure facts use `OPERATIONAL_LOGS`. Synthetic evaluation fixtures are repository artifacts and
   may not contain copied production records.
+- D-514 cardinality diagnostics retain only a closed reference field and EMPTY_REQUIRED or
+  EXCEEDS_LIMIT reason under FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID. No counts, references,
+  selection bits or content enter this detail. The logger drops malformed detail to null; the
+  evaluation reader rejects malformed non-null detail. Historical null records remain valid.
+  Employee artifact v2 readers must include this diagnostic extension before reviewing new runs;
+  the first recorded violation does not imply that later grounding or golden checks passed.
 
 ## 20. Verification and release controls
 

@@ -25,6 +25,105 @@ const wire = { locale: 'en-GB', statements: [selection] };
 const codec = createEmployeeInsightSelectionCodec(result, 'en-GB', text);
 
 test.each(SUPPORTED_LOCALES)(
+  'reports first empty required evidence without repairing %s',
+  (locale) => {
+    const navigation = EMPLOYEE_INSIGHT_GOLDEN_SET.find(({ id }) => id === 'submission-actions');
+    if (!navigation) throw new Error('Missing navigation fixture.');
+    for (const reversed of [false, true]) {
+      const native = structuredClone(navigation.nativeResult);
+      if (reversed) native.actions.reverse();
+      const localized = createEmployeeInsightSelectionCodec(
+        native,
+        locale,
+        EMPLOYEE_INSIGHT_SAFE_PROSE[locale],
+      );
+      for (const empty of ['facts', 'sources', 'both'] as const) {
+        const decoded = localized.decode({
+          locale,
+          statements: [
+            {
+              ...selection,
+              text: EMPLOYEE_INSIGHT_SAFE_PROSE[locale],
+              actionSelections: native.actions.map(() => true),
+              limitationSelections: [],
+              factSelections: native.facts.map(() => empty === 'sources'),
+              sourceSelections: native.sources.map(() => empty === 'facts'),
+            },
+          ],
+        });
+        if (!decoded.ok) throw new Error('Expected full-length selections.');
+        expect(() =>
+          validateGroundedInterpretation(decoded.candidate, native, locale),
+        ).toThrowError(
+          expect.objectContaining({
+            validationFailureCode: 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID',
+            validationDetail: {
+              kind: 'REFERENCE_CARDINALITY',
+              field: empty === 'sources' ? 'sourceReferences' : 'factReferences',
+              reason: 'EMPTY_REQUIRED',
+            },
+          }),
+        );
+      }
+    }
+  },
+);
+
+test.each([
+  'factReferences',
+  'sourceReferences',
+  'actionReferences',
+  'limitationReferences',
+] as const)('preserves the 20/21 final boundary and earlier type precedence for %s', (field) => {
+  const decoded = codec.decode(wire);
+  if (!decoded.ok) throw new Error('Expected valid selections.');
+  const valid = validateGroundedInterpretation(decoded.candidate, result, 'en-GB');
+  const statement = valid.statements[0];
+  if (!statement) throw new Error('Missing statement.');
+  for (const count of [20, 21]) {
+    const candidate = {
+      ...valid,
+      statements: [
+        {
+          ...statement,
+          [field]: Array.from({ length: count }, (_, i) => `synthetic_reference_${i}`),
+        },
+      ],
+    };
+    // At 20 the schema admits the array and grounding rejects the unknown synthetic IDs.
+    expect(() => validateGroundedInterpretation(candidate, result, 'en-GB')).toThrowError(
+      expect.objectContaining({
+        validationFailureCode:
+          count === 20 ? 'FINAL_REFERENCE_UNKNOWN' : 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID',
+        validationDetail:
+          count === 20 ? null : { kind: 'REFERENCE_CARDINALITY', field, reason: 'EXCEEDS_LIMIT' },
+      }),
+    );
+  }
+  expect(() =>
+    validateGroundedInterpretation(
+      {
+        ...valid,
+        statements: [
+          {
+            ...statement,
+            factReferences: [],
+            [field]: [null],
+          },
+        ],
+      },
+      result,
+      'en-GB',
+    ),
+  ).toThrowError(
+    expect.objectContaining({
+      validationFailureCode: 'FINAL_SCHEMA_REFERENCES_INVALID',
+      validationDetail: null,
+    }),
+  );
+});
+
+test.each(SUPPORTED_LOCALES)(
   'preserves optional navigation and exposes question-action omissions to golden acceptance in %s',
   (locale) => {
     const navigation = EMPLOYEE_INSIGHT_GOLDEN_SET.find(({ id }) => id === 'submission-actions');

@@ -116,3 +116,51 @@ test('logger accepts new provider codes and drops unknown code strings at every 
   });
   expect(JSON.stringify(sink.rows)).not.toContain('PRIVATE_CODE_CANARY');
 });
+
+test('cardinality diagnostics admit only closed field/reason/code combinations at the logger sink', () => {
+  sink.rows.length = 0;
+  const logger = createWorkLedgerLogger({ environment: 'test', service: 'api', version: 'test' });
+  const cardinalityCode = 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID';
+  for (const field of [
+    'factReferences',
+    'sourceReferences',
+    'actionReferences',
+    'limitationReferences',
+  ]) {
+    for (const reason of ['EMPTY_REQUIRED', 'EXCEEDS_LIMIT']) {
+      const value = { kind: 'REFERENCE_CARDINALITY', field, reason };
+      const valid =
+        reason === 'EXCEEDS_LIMIT' || field === 'factReferences' || field === 'sourceReferences';
+      expect(sanitizeInsightValidationDetail(value, cardinalityCode)).toEqual(valid ? value : null);
+      logger.info('Synthetic cardinality', {
+        outcome: 'PROVIDER_INVALID_OUTPUT',
+        validationFailureCode: cardinalityCode,
+        validationDetail: value,
+      });
+      expect(sink.rows.at(-1)?.['validationDetail']).toEqual(valid ? value : null);
+      expect(sanitizeInsightValidationDetail(value, code)).toBeNull();
+    }
+  }
+  const valid = {
+    kind: 'REFERENCE_CARDINALITY',
+    field: 'factReferences',
+    reason: 'EMPTY_REQUIRED',
+  };
+  for (const value of [
+    { ...valid, raw: 'private-canary' },
+    { ...valid, reason: 'private-canary' },
+    { ...valid, field: 'private-canary' },
+    { ...valid, factSelections: [true, false] },
+    { ...valid, itemCount: 0 },
+  ]) {
+    expect(sanitizeInsightValidationDetail(value, cardinalityCode)).toBeNull();
+    logger.info('Synthetic invalid detail', {
+      outcome: 'PROVIDER_INVALID_OUTPUT',
+      validationFailureCode: cardinalityCode,
+      validationDetail: value,
+    });
+    expect(sink.rows.at(-1)?.['validationDetail']).toBeNull();
+  }
+  expect(JSON.stringify(sink.rows)).not.toContain('private-canary');
+  expect(JSON.stringify(sink.rows)).not.toContain('factSelections');
+});

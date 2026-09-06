@@ -132,3 +132,46 @@ test.each([
     'Invalid employee Insight evaluation artifact.',
   );
 });
+
+test('v2 reads closed cardinality details and historical nulls but rejects malformed non-null details', () => {
+  const validationFailureCode = 'FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID';
+  const artifact = (validationDetail: unknown, failureCode = validationFailureCode) => ({
+    ...current,
+    results: [{ ...record, validationFailureCode: failureCode, validationDetail }],
+  });
+  expect(parseEmployeeInsightEvaluationArtifact(artifact(null))).toEqual(artifact(null));
+  for (const field of [
+    'factReferences',
+    'sourceReferences',
+    'actionReferences',
+    'limitationReferences',
+  ]) {
+    for (const reason of ['EMPTY_REQUIRED', 'EXCEEDS_LIMIT']) {
+      const value = { kind: 'REFERENCE_CARDINALITY', field, reason };
+      if (reason === 'EXCEEDS_LIMIT' || field === 'factReferences' || field === 'sourceReferences')
+        expect(parseEmployeeInsightEvaluationArtifact(artifact(value))).toEqual(artifact(value));
+      else
+        expect(() => parseEmployeeInsightEvaluationArtifact(artifact(value))).toThrow(
+          'Invalid employee Insight evaluation artifact.',
+        );
+      expect(() =>
+        parseEmployeeInsightEvaluationArtifact(artifact(value, 'FINAL_SOURCE_MISMATCH')),
+      ).toThrow('Invalid employee Insight evaluation artifact.');
+    }
+  }
+  const valid = {
+    kind: 'REFERENCE_CARDINALITY',
+    field: 'factReferences',
+    reason: 'EMPTY_REQUIRED',
+  };
+  for (const value of [
+    { ...valid, raw: 'private-canary' },
+    { ...valid, field: 'private-canary' },
+    { ...valid, reason: 'private-canary' },
+    { ...valid, factSelections: [false] },
+    { ...valid, itemCount: 0 },
+  ])
+    expect(() => parseEmployeeInsightEvaluationArtifact(artifact(value))).toThrow(
+      'Invalid employee Insight evaluation artifact.',
+    );
+});

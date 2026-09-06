@@ -1032,3 +1032,13 @@ Add only REFERENCE_CARDINALITY with closed field/reason vocabulary, fixed first-
 and matched logger/artifact enforcement. No counts or content are retained. Historical null details
 remain unchanged. Implementation and verification are next; this design runs no tests or inference.
 This extends D-513 diagnostics scope without changing golden acceptance or provider qualification.
+
+**D-514 implementation outcome:** Report 184 implements the specified prompts and closed diagnostics.
+Compile, lint, scoped formatting, 581 unit/component tests and 13 integration tests pass; 52 gated
+integration tests skipped. No inference ran. B remains open pending a separately continued screen;
+C/D remain gated, K complete, and deployment disabled. Historical failed evidence is unchanged.
+
+**D-514 fresh screen outcome:** Report 185 records 0/9 accepted after successful health. English
+and Spanish each omit the golden-required submission-count fact in three runtime-valid answers;
+German fails all three with factReferences/EMPTY_REQUIRED. No retry, today-posted or C followed.
+The owned runtime is stopped. Diagnose evidence selection next; B remains open and deployment disabled.

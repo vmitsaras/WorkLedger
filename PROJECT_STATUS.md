@@ -4,18 +4,18 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — implement D-514 minimum-evidence guidance and cardinality diagnostics
+**Active task:** WL-1508B — diagnose failed D-514 evidence selection
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
 
-Report 183/D-514 specifies the next bounded B recovery: coherent navigation instructions that
-retain relevant supporting facts/sources, plus closed first-violation cardinality field/reason
-diagnostics. Schema, public minima, privacy context and golden acceptance stay unchanged. No
-implementation, tests or inference ran in this design. Next: implement and deterministically
-verify D-514 before a separately continued screen. Reports 179/181 remain failed evidence;
-B/C/D open, K complete and deployment disabled at 0.16.0.
+Report 185 records the fresh D-514 B screen: submission-actions failed 0/9. English and
+Spanish omit the golden-required submission-count fact (runtime valid); German selects no facts
+(REFERENCE_CARDINALITY / factReferences / EMPTY_REQUIRED). Health and artifact integrity checks
+passed. No retry, today-posted or C followed; the owned candidate is stopped. Next: diagnose
+evidence selection before another recovery. B/C/D open, K complete, deployment disabled at 0.16.0.
+Report 184 retains the passing deterministic implementation checks.
 
 Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
 The accepted recovery contract remains spec 0003/D-512.
