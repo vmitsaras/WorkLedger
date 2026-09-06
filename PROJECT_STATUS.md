@@ -4,16 +4,23 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508C — selection-v1 B passed 18/18; fresh full matrix pending; D blocked
+**Active task:** WL-1508C — selection-v1 failed 210/216; scoped diagnosis next; D blocked
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
 
+Selection-v1 C finished one uninterrupted matrix but failed: 210/216 accepted (207 grounded plus
+3 permitted safe rejections), with 6 failures. `docs/172-wl-1508c-selection-v1-full-evaluation.md`
+records de-DE balance-projection required-citation omissions and en-GB balance-closing fact-array
+length failures, three repetitions each. The former balance-summary duplicate cases now pass 9/9,
+but the zero-tolerance gate still fails. No retry/tuning followed. C stays open, D blocked and
+provider deployment disabled. Next is bounded diagnosis of these two failure modes.
+
 Fresh selection-v1 B passed 18/18 in `docs/171-wl-1508b-selection-v1-screen.md`: submission-actions
 9/9 followed by today-posted 9/9. Exact model/isolation preflight, v2 artifacts, locale/repetition
 coverage, null diagnostics and unchanged source hashes passed review. No retry or tuning occurred.
-C's new full matrix has not run; the old 213/216 remains failed evidence. D and the parent pilot
+C's subsequent full matrix failed 210/216; the old 213/216 remains failed evidence. D and the parent pilot
 remain open. Provider deployment remains disabled and no phase/version changed.
 
 WL-1508I is implemented and verified: `docs/170-wl-1508i-duplicate-safe-generation.md` records

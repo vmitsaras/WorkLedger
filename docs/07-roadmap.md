@@ -665,7 +665,7 @@ decision and the applicable ADR, privacy, security, evaluation, and threat gates
 
 **Employee pilot recovery design (D-511, 2026-09-06):** WL-1508I now specifies fixed boolean
 reference selections and bounded content-free diagnostics in spec 0002. Implementation is complete in WL-1508I (report 170);
-fresh B passed 18/18 (report 171); fresh C evidence is still required. Historical B remains complete for its
+fresh B passed 18/18 (report 171); C failed 210/216 (report 172). Historical B remains complete for its
 original configuration; selection-v1 B now passes 18/18, legacy C remains failed, and D remains blocked. No new phase or release gate changes.
 
 The release gate follows only the accepted deterministic continuation. It cannot advance the

@@ -949,3 +949,9 @@ occurred. This is a bounded employee recovery, not a new phase or version milest
 as the next task. Selection-v1 submission-actions passed 9/9, then today-posted passed 9/9, with
 unchanged pinned controls and validated v2 artifacts. B is complete; fresh C and D were not run.
 Report 171 preserves exact provenance, isolation checks, artifact paths and the remaining gate.
+
+**D-511 full-matrix continuation:** The user continued after fresh B passed and C was identified
+as next. One uninterrupted selection-v1 matrix finished with 207 grounded answers, three permitted
+safe rejections and six failed cases (210/216 accepted). Report 172 records the two failure modes,
+exact configuration and complete artifact review. C remains open and D blocked; no retry, tuning,
+model switch, threshold relaxation or deployment enablement followed. Next is scoped diagnosis.
