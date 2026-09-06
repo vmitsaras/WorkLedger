@@ -249,3 +249,63 @@ test.each(['success', 'health', 'provider', 'identity'] as const)(
     }
   },
 );
+
+test.each([0, 2])(
+  'checkpoint failure at write %i stops before subsequent inference',
+  async (failAt) => {
+    const profile = {
+      id: 'fixture-only',
+      model: 'fixture',
+      modelDigest: 'a'.repeat(64),
+      modelConfigDigest: 'b'.repeat(64),
+      serverVersion: '1.2.3',
+      parser: 'fixture',
+      schemaSuiteRevision: 'schema-v1' as const,
+      sourceReviewReferences: [],
+    };
+    const spy = vi.spyOn(compatibility, 'findOllamaCompatibilityProfile').mockReturnValue(profile);
+    const checkHealth = vi.fn<AiProvider['checkHealth']>(async () => ({
+      mode: 'ollama',
+      status: 'ready',
+      capabilities: ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
+      checkedAt: '2026-09-06T12:00:00.000Z',
+      reasonCode: null,
+    }));
+    const generate = vi.fn<AiProvider['generate']>(async () => ({
+      content: '{"selections":[]}',
+      toolCalls: [],
+    }));
+    const checkIdentity = vi.fn(async () => undefined);
+    const snapshots: unknown[] = [];
+    try {
+      await expect(
+        runOllamaSchemaQualification(
+          {
+            mode: 'ollama',
+            origin: 'http://127.0.0.1:11434',
+            model: profile.model,
+            modelDigest: profile.modelDigest,
+            compatibilityProfile: profile.id,
+            timeoutMs: 120000,
+            concurrencyLimit: 1,
+            requiredCapabilities: ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
+          },
+          { generate, checkHealth, checkIdentity },
+          {
+            checkpoint: async (artifact) => {
+              if (snapshots.length === failAt) throw new Error('Persistence unavailable.');
+              snapshots.push(artifact);
+            },
+          },
+        ),
+      ).rejects.toThrow('Persistence unavailable.');
+      expect(checkHealth).toHaveBeenCalledTimes(failAt === 0 ? 0 : 1);
+      expect(generate).toHaveBeenCalledTimes(failAt === 0 ? 0 : 1);
+      expect(checkIdentity).not.toHaveBeenCalled();
+      if (failAt !== 0)
+        expect(snapshots[0]).toMatchObject({ complete: false, healthPassed: false, results: [] });
+    } finally {
+      spy.mockRestore();
+    }
+  },
+);

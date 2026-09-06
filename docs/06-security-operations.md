@@ -4,7 +4,9 @@
 
 **Optional Employee Insight recovery, D-512/J:** Provider configuration now requires a reviewed
 compatibility profile matching the exact model/digest; health and generation check server version
-through the private adapter. No real profile is currently admitted. Material dependency omissions
+through the private adapter. K admits the source-reviewed 0.33.3/qwen3.6 profile for evaluation only;
+report 178 records verified portable provenance and the pending Windows firewall-consent blocker.
+No candidate startup or qualification has run. Material dependency omissions
 are rejected without repair; only POSTED, PROJECTED, PROVISIONAL and INCOMPLETE fact qualifiers
 are added to authorized request-memory model context. They are not retained diagnostic fields.
 New completeness failures have null detail, and provider/validation log codes use closed allowlists.

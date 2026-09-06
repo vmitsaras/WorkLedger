@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
-import type { AiProvider, OllamaAiProviderConfig } from './contracts.js';
+import type { AiProvider, AiProviderRequestOptions, OllamaAiProviderConfig } from './contracts.js';
 import { findOllamaCompatibilityProfile } from './ollama-compatibility.js';
 import {
   OLLAMA_SCHEMA_CHALLENGE_IDS,
@@ -74,7 +74,12 @@ export function parseOllamaSchemaQualificationArtifact(
 /** Explicit runner only: never invoked from application startup or ordinary employee requests. */
 export async function runOllamaSchemaQualification(
   config: OllamaAiProviderConfig,
-  provider: Pick<AiProvider, 'checkHealth' | 'generate'> & { checkIdentity(): Promise<void> },
+  provider: Pick<AiProvider, 'checkHealth' | 'generate'> & {
+    checkIdentity(options?: AiProviderRequestOptions): Promise<void>;
+  },
+  options: AiProviderRequestOptions & {
+    checkpoint?: (artifact: OllamaSchemaQualificationArtifact) => Promise<void>;
+  } = {},
 ): Promise<OllamaSchemaQualificationArtifact> {
   const profile = findOllamaCompatibilityProfile(config.compatibilityProfile);
   if (
@@ -87,7 +92,42 @@ export async function runOllamaSchemaQualification(
     throw new Error('Schema qualification requires a reviewed profile and pinned controls.');
   }
   const results: OllamaSchemaQualificationArtifact['results'] = [];
-  const healthPassed = (await provider.checkHealth()).status === 'ready';
+  let healthPassed = false;
+  let identityPassed = false;
+  const snapshot = (): OllamaSchemaQualificationArtifact => {
+    return parseOllamaSchemaQualificationArtifact({
+      artifactVersion: 1,
+      suiteRevision: OLLAMA_SCHEMA_SUITE_REVISION,
+      profileId: profile.id,
+      serverVersion: profile.serverVersion,
+      modelDigest: profile.modelDigest,
+      modelConfigDigest: profile.modelConfigDigest,
+      evaluatedAt: new Date().toISOString(),
+      inference: {
+        timeoutMs: 120000,
+        concurrencyLimit: 1,
+        maximumGeneratedTokens: 1024,
+        think: false,
+        temperature: 0,
+      },
+      healthPassed,
+      identityPassed,
+      complete:
+        healthPassed &&
+        identityPassed &&
+        results.length === 18 &&
+        results.every((result) => result.failure === null),
+      results,
+    });
+  };
+  async function checkpoint(): Promise<void> {
+    await options.checkpoint?.(snapshot());
+  }
+  const requestOptions = options.signal === undefined ? {} : { signal: options.signal };
+  // Persistence must succeed before any health or model operation.
+  await checkpoint();
+  healthPassed = (await provider.checkHealth(requestOptions)).status === 'ready';
+  await checkpoint();
   if (healthPassed) {
     challengeLoop: for (const caseId of OLLAMA_SCHEMA_CHALLENGE_IDS) {
       for (let repetition = 1; repetition <= 3; repetition += 1) {
@@ -96,7 +136,10 @@ export async function runOllamaSchemaQualification(
         let outputTokens: number | null = null;
         let failure: 'SCHEMA_INVALID' | 'PROVIDER_FAILURE' | null = null;
         try {
-          const response = await provider.generate(createOllamaSchemaChallenge(caseId));
+          const response = await provider.generate(
+            createOllamaSchemaChallenge(caseId),
+            requestOptions,
+          );
           inputTokens = response.usage?.inputTokens ?? null;
           outputTokens = response.usage?.outputTokens ?? null;
           if (
@@ -115,42 +158,20 @@ export async function runOllamaSchemaQualification(
           outputTokens,
           failure,
         });
+        await checkpoint();
         if (failure !== null) break challengeLoop;
       }
     }
   }
-  let identityPassed = false;
   if (healthPassed) {
     try {
-      await provider.checkIdentity();
+      await provider.checkIdentity(requestOptions);
       identityPassed = true;
     } catch {
       // The boolean records failure; provider error contents are never retained.
       identityPassed = false;
     }
   }
-  return parseOllamaSchemaQualificationArtifact({
-    artifactVersion: 1,
-    suiteRevision: OLLAMA_SCHEMA_SUITE_REVISION,
-    profileId: profile.id,
-    serverVersion: profile.serverVersion,
-    modelDigest: profile.modelDigest,
-    modelConfigDigest: profile.modelConfigDigest,
-    evaluatedAt: new Date().toISOString(),
-    inference: {
-      timeoutMs: 120000,
-      concurrencyLimit: 1,
-      maximumGeneratedTokens: 1024,
-      think: false,
-      temperature: 0,
-    },
-    healthPassed,
-    identityPassed,
-    complete:
-      healthPassed &&
-      identityPassed &&
-      results.length === 18 &&
-      results.every((result) => result.failure === null),
-    results,
-  });
+  await checkpoint();
+  return snapshot();
 }

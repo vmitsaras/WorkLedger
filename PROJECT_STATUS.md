@@ -4,17 +4,20 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508K — J verified; qualification preparation and candidate review next
+**Active task:** WL-1508K — candidate prepared; Windows firewall consent required before qualification
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
 
-WL-1508J is complete: report 177 records 125 focused passes, 55 script passes, 566 unit/component
-passes and 13 integration passes with 52 gated skips. Broad worker/timeouts were resolved by
-sequential two-worker runs without changing timeouts or assertions. No real-model call ran. K is
-next: repair qualification output preparation and select/review an eligible exact provider profile
-before qualification. B/C/D remain gated and deployment disabled at 0.16.0.
+WL-1508K preparation is recorded in report 178: output reservation and immutable checkpoints are
+implemented; a source-reviewed Ollama 0.33.3/qwen3.6 profile is admitted for evaluation only. The
+official portable archive digest and executable signature were verified. TypeScript, repository
+lint/guards, 44 focused unit tests and 57 script tests (including two persistence tests) passed. Windows administrator consent
+for the three scoped outbound rules was canceled; no candidate startup, health or inference ran.
+Apply and verify the prepared firewall helper before continuing K's cold health and 18 synthetic
+challenges. K remains open, B/C/D gated and deployment disabled at 0.16.0. J's complete deterministic
+evidence remains in report 177.
 
 Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
 The accepted recovery contract remains spec 0003/D-512.

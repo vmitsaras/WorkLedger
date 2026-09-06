@@ -1,5 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { createSchemaQualificationOutput } from './schema-qualification-output.mjs';
 import { createRuntimeConfig } from '../apps/api/dist/config.js';
 import { createOllamaAiProvider } from '../apps/api/dist/ai/ollama-adapter.js';
 import { runOllamaSchemaQualification } from '../apps/api/dist/ai/ollama-schema-qualification.js';
@@ -10,10 +9,24 @@ try {
   }
   const config = createRuntimeConfig(process.env).aiProvider;
   if (config.mode !== 'ollama') throw new Error('No candidate configured.');
-  const artifact = await runOllamaSchemaQualification(config, createOllamaAiProvider(config));
-  await mkdir('output/insights', { recursive: true });
-  const path = `output/insights/schema-qualification-${randomUUID()}.json`;
-  await writeFile(path, `${JSON.stringify(artifact, null, 2)}\n`, { flag: 'wx' });
+  const output = await createSchemaQualificationOutput('output/insights');
+  process.stdout.write(`${JSON.stringify({ checkpointDirectory: output.directory })}\n`);
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  process.once('SIGINT', cancel);
+  process.once('SIGTERM', cancel);
+  let artifact;
+  try {
+    artifact = await runOllamaSchemaQualification(config, createOllamaAiProvider(config), {
+      signal: controller.signal,
+      checkpoint: output.checkpoint,
+    });
+    await output.finish(artifact);
+  } finally {
+    process.removeListener('SIGINT', cancel);
+    process.removeListener('SIGTERM', cancel);
+  }
+  const path = `${output.directory}/artifact.json`;
   process.stdout.write(
     `${JSON.stringify({ artifactPath: path, complete: artifact.complete, runs: artifact.results.length })}\n`,
   );

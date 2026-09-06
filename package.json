@@ -44,7 +44,7 @@
     "lint": "pnpm run workspace:check && eslint . --max-warnings 0 && node scripts/check-boundaries.mjs && pnpm run css:check",
     "typecheck": "pnpm run workspace:check && tsc --build --pretty false --force",
     "test:build": "tsc --build --pretty false --force",
-    "test": "pnpm run workspace:check && pnpm run test:build && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs scripts/check-phase-version.test.mjs scripts/check-css-contract.test.mjs scripts/check-i18n.test.mjs scripts/check-web-bundle-budget.test.mjs scripts/backup-crypto.test.mjs scripts/backup-restore-contract.test.mjs && vitest run --project unit --project component",
+    "test": "pnpm run workspace:check && pnpm run test:build && node --test scripts/check-workspace.test.mjs scripts/check-boundaries.test.mjs scripts/check-phase-version.test.mjs scripts/check-css-contract.test.mjs scripts/check-i18n.test.mjs scripts/check-web-bundle-budget.test.mjs scripts/backup-crypto.test.mjs scripts/backup-restore-contract.test.mjs scripts/schema-qualification-output.test.mjs && vitest run --project unit --project component",
     "test:integration": "pnpm run workspace:check && pnpm run test:build && vitest run --project integration",
     "test:ai:employee": "pnpm run workspace:check && pnpm run test:build && WORKLEDGER_RUN_AI_EVALUATION=1 vitest run apps/api/test/employee-insight-evaluation.integration.test.ts --project integration",
     "test:e2e": "pnpm run workspace:check && pnpm run test:build && playwright test",
