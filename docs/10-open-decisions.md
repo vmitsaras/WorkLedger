@@ -1093,3 +1093,16 @@ a single host-level cause. Next is a bounded design for finite synthetic health 
 cleanup, preserving a cold first probe, both validations, one slot and the unchanged deadline.
 This is a proposal, not an accepted control change or model-run authorization. No tests or inference
 ran; B remains open without D-515 semantic evidence and deployment stays disabled at 0.16.0.
+
+### D-516 — Bounded synthetic health residency
+
+Spec 0005 and report 191 select `keep_alive: '120s'` for the first synthetic health probe and retain
+`keep_alive: 0` for the compact challenge. Both retain the existing single deadline and concurrency
+slot. No extra cleanup request, warm-up, retry or ordinary-generation retention change is introduced.
+If the second request never acquires the runner, finite idle expiry is the fallback; it is not an
+immediate-erasure guarantee. Failed isolated pilot attempts retain exact-owned-process cleanup.
+
+This accepts the design for implementation, not inference or deployment. Implement and verify
+deterministically first. Separately authorized cold health-only evidence, then fresh schema
+qualification under this lifecycle, are required before B. Historical K remains complete for the
+old lifecycle. B/C/D remain open; provider deployment stays disabled at `0.16.0`.
