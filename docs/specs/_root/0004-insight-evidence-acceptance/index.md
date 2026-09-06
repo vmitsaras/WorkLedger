@@ -1,7 +1,7 @@
 # 0004. Employee Insight evidence acceptance alignment
 
 **Date:** 2026-09-06  
-**Status:** Implemented and deterministically verified; fresh B stopped at health before employee cases
+**Status:** Implemented and deterministically verified; fresh qualified B failed 3/9 in report 195 after health passed
 **Decision:** D-515  
 **Evidence:** `docs/186-wl-1508b-evidence-selection-diagnosis.md`; `docs/188-wl-1508b-evidence-acceptance-implementation.md`; `docs/189-wl-1508b-acceptance-screen-health-timeout.md`
 
@@ -136,3 +136,7 @@ before the golden-set loop. Zero employee cases ran and no fresh evaluation arti
 stop rule prevented retry, `today-posted` and C. This does not change the D-515 acceptance contract;
 it leaves its real-model B evidence pending and requires health-timeout diagnosis before another
 attempt.
+
+Report 195 records fresh D-516-qualified B: health passed but submission-actions failed 3/9.
+German cases have empty required facts; Spanish cases omit the pending-request action. No second
+group or retry followed. The contract remains unchanged; bounded diagnosis is next.
