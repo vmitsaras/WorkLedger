@@ -659,7 +659,12 @@ test('does not retry malformed selections or carry failure detail into a later s
 test('concurrent employees decode against their own authorized collection order', async () => {
   const fact = RESULT.facts[0];
   if (!fact) throw new Error('Missing fact.');
-  const first = { ...RESULT, facts: [fact, { ...fact, reference: 'fact_second' }] };
+  // This case isolates positional decoding; material closure has separate regressions.
+  const first = {
+    ...RESULT,
+    limitations: RESULT.limitations.map((item) => ({ ...item, material: false })),
+    facts: [fact, { ...fact, reference: 'fact_second' }],
+  };
   const second = { ...first, facts: [...first.facts].reverse() };
   const insightService = createInsightServiceStub();
   vi.mocked(insightService.run).mockImplementation(async (actor) =>
@@ -699,6 +704,71 @@ test('concurrent employees decode against their own authorized collection order'
   expect(one.interpretation.statements[0]?.factReferences).toEqual(['fact_worked']);
   expect(two.interpretation.statements[0]?.factReferences).toEqual(['fact_second']);
   expect(provider.generate).toHaveBeenCalledTimes(2);
+});
+
+test.each<{
+  qualifiers: InsightNativeResult['facts'][number]['qualifiers'];
+  expected: readonly string[];
+}>([
+  { qualifiers: ['POSTED'], expected: ['POSTED'] },
+  { qualifiers: ['PROJECTED'], expected: ['PROJECTED'] },
+  { qualifiers: ['PROVISIONAL'], expected: ['PROVISIONAL'] },
+  { qualifiers: ['INCOMPLETE', 'PROJECTED'], expected: ['PROJECTED', 'INCOMPLETE'] },
+  { qualifiers: ['CURRENT'], expected: [] },
+  { qualifiers: ['RESERVED'], expected: [] },
+  { qualifiers: ['SUPPRESSED'], expected: [] },
+  { qualifiers: ['UNAVAILABLE'], expected: [] },
+])('model context limits qualifier metadata for $qualifiers', async ({ qualifiers, expected }) => {
+  const original = RESULT.facts[0];
+  if (original === undefined) throw new Error('Missing native fixture fact.');
+  const terminal = qualifiers.includes('SUPPRESSED') || qualifiers.includes('UNAVAILABLE');
+  const result: InsightNativeResult = {
+    ...RESULT,
+    facts: [
+      { ...original, qualifiers, value: terminal ? null : { kind: 'MINUTES', value: 987654 } },
+    ],
+  };
+  const insightService = createInsightServiceStub();
+  vi.mocked(insightService.run).mockResolvedValue(result);
+  vi.mocked(insightService.runWithLocale).mockResolvedValue({
+    locale: 'en-GB',
+    nativeResult: result,
+  });
+  const provider = createProvider([{ content: JSON.stringify(WIRE), toolCalls: [] }]);
+  const service = createEmployeeInsightInterpretationService(
+    insightService,
+    createInsightToolRegistry(insightService),
+    provider,
+    async () => ({ allowed: true, retryAfter: null }),
+  );
+  await service.interpret(identity(), REQUEST, CAPTURED_AT);
+  const request = vi.mocked(provider.generate).mock.calls[0]?.[0];
+  const context = request?.messages.find(
+    (message) => message.role === 'user' && message.content.startsWith('{'),
+  )?.content;
+  if (context === undefined) throw new Error('Missing minimized context.');
+  expect(JSON.parse(context) as unknown).toMatchObject({
+    currentInsight: {
+      facts: [
+        {
+          selectionIndex: 0,
+          code: original.code,
+          reference: original.reference,
+          qualifiers: expected,
+        },
+      ],
+    },
+  });
+  for (const excluded of [
+    '"value"',
+    '987654',
+    '"CURRENT"',
+    '"RESERVED"',
+    '"SUPPRESSED"',
+    '"UNAVAILABLE"',
+  ])
+    expect(context).not.toContain(excluded);
+  expect(provider.generate).toHaveBeenCalledOnce();
 });
 
 function createInsightServiceStub(): EmployeeInsightInterpretationSource {

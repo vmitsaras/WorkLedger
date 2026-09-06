@@ -4,6 +4,9 @@
 
 **Status:** Review complete; two deterministic test defects found; tests remain stopped
 
+**Repair follow-up:** Report 176 records the subsequent user-requested fixture and coverage repairs,
+with successful static typechecking but no test execution. The K output-persistence issue remains open.
+
 ## Scope
 
 The user requested blocker/failure inspection before continuing with tests. Reviewed current source,

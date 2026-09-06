@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+import * as compatibility from '../src/ai/ollama-compatibility.js';
 import {
   RuntimeConfigError,
   createRuntimeConfig,
@@ -237,12 +239,39 @@ test('rejects public literal provider addresses and applies safe provider bounds
     }),
   ).toThrow('loopback or private network address');
 
-  const config = createRuntimeConfig({
+  const candidate = {
     WORKLEDGER_ENVIRONMENT: 'test',
     WORKLEDGER_AI_PROVIDER_MODE: 'ollama',
     WORKLEDGER_OLLAMA_ORIGIN: 'http://ollama.internal:11434',
     WORKLEDGER_OLLAMA_MODEL: 'workledger-insights:local',
     WORKLEDGER_OLLAMA_MODEL_DIGEST: LOCAL_MODEL_DIGEST,
-  });
-  expect(config.aiProvider).toMatchObject({ timeoutMs: 30_000, concurrencyLimit: 2 });
+    WORKLEDGER_OLLAMA_COMPATIBILITY_PROFILE: 'fixture-only',
+  };
+  expect(() => createRuntimeConfig(candidate)).toThrow('WORKLEDGER_OLLAMA_COMPATIBILITY_PROFILE');
+  const spy = vi.spyOn(compatibility, 'findOllamaCompatibilityProfile').mockImplementation((id) =>
+    id === 'fixture-only'
+      ? {
+          id,
+          model: candidate.WORKLEDGER_OLLAMA_MODEL,
+          modelDigest: LOCAL_MODEL_DIGEST,
+          serverVersion: '1.2.3',
+          modelConfigDigest: 'b'.repeat(64),
+          parser: 'fixture',
+          schemaSuiteRevision: 'schema-v1',
+          sourceReviewReferences: [],
+        }
+      : undefined,
+  );
+  try {
+    expect(createRuntimeConfig(candidate).aiProvider).toMatchObject({
+      timeoutMs: 30_000,
+      concurrencyLimit: 2,
+    });
+    expect(() =>
+      createRuntimeConfig({ ...candidate, WORKLEDGER_OLLAMA_MODEL_DIGEST: 'c'.repeat(64) }),
+    ).toThrow('WORKLEDGER_OLLAMA_COMPATIBILITY_PROFILE');
+  } finally {
+    spy.mockRestore();
+  }
+  expect(() => createRuntimeConfig(candidate)).toThrow('WORKLEDGER_OLLAMA_COMPATIBILITY_PROFILE');
 });

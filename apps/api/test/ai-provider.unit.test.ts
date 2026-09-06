@@ -647,6 +647,73 @@ test('server version drift invalidates readiness before employee generation', as
   }
 });
 
+test('both health probes share one deadline and hold the same concurrency slot', async () => {
+  let releaseCapability: (() => void) | undefined;
+  let capabilityArrived: (() => void) | undefined;
+  let schemaArrived: (() => void) | undefined;
+  const capabilityStarted = new Promise<void>((resolve) => {
+    capabilityArrived = resolve;
+  });
+  const schemaStarted = new Promise<void>((resolve) => {
+    schemaArrived = resolve;
+  });
+  let chats = 0;
+  const fake = await startFakeOllama((request, response, body) => {
+    if (request.url === '/api/chat') {
+      chats += 1;
+      if (chats === 1) {
+        releaseCapability = () => respondWithHealthyOllama(request, response, body);
+        capabilityArrived?.();
+      } else {
+        schemaArrived?.();
+      }
+      return;
+    }
+    respondWithHealthyOllama(request, response, body);
+  });
+  const controller = new AbortController();
+  // Fake only deadline timers, leaving real loopback I/O and promise scheduling intact.
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  const provider = createOllamaAiProvider({
+    ...createConfig(fake.origin),
+    concurrencyLimit: 1,
+    timeoutMs: 20_000,
+  });
+  const health = provider.checkHealth({ signal: controller.signal });
+  try {
+    await capabilityStarted;
+    await expect(provider.checkHealth()).resolves.toMatchObject({
+      reasonCode: 'CONCURRENCY_LIMIT',
+    });
+    await vi.advanceTimersByTimeAsync(12_000);
+    if (releaseCapability === undefined) throw new Error('Capability request did not arrive.');
+    releaseCapability();
+    await schemaStarted;
+    await expect(provider.checkHealth()).resolves.toMatchObject({
+      reasonCode: 'CONCURRENCY_LIMIT',
+    });
+    await vi.advanceTimersByTimeAsync(7_999);
+    let settled = false;
+    void health.then(() => {
+      settled = true;
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    // Expire the original budget, not a fresh 20 seconds from the second chat.
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(health).resolves.toMatchObject({ status: 'unavailable', reasonCode: 'TIMEOUT' });
+    expect(chats).toBe(2);
+    await expect(provider.generate(GENERATE_REQUEST)).rejects.toMatchObject({
+      code: 'PROVIDER_NOT_READY',
+    });
+  } finally {
+    controller.abort();
+    await health;
+    vi.useRealTimers();
+    await fake.close();
+  }
+});
+
 test.each([
   { content: '{"locale":"en-GB","statements":[]}' },
   { content: '{}', thinking: 'SECRET' },

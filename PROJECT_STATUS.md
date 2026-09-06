@@ -4,11 +4,16 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508J — pretest review found two fixture defects; repair before tests
+**Active task:** WL-1508J — pretest fixtures/coverage repaired; deterministic execution pending
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
+
+Report 176 records repairs to both stale fixtures and the missing mock coverage from report 175.
+All six changed unit-test files pass static typechecking; no tests or inference ran. J remains open
+pending deterministic execution. K still needs qualification output preparation and an eligible
+source-reviewed profile before any real-model run.
 
 Pretest review in `docs/175-wl-1508j-pretest-review.md` found a stale no-profile configuration
 success case and a concurrency fixture omitting a now-required material fact. Correct these and

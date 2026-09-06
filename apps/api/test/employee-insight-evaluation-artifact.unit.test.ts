@@ -54,6 +54,54 @@ test('accepts distinct legacy and v2 artifact shapes without upgrading historica
   expect(parseEmployeeInsightEvaluationArtifact(current)).toEqual(current);
 });
 
+test.each(['FINAL_MATERIAL_FACT_MISSING', 'FINAL_MATERIAL_ACTION_MISSING'])(
+  'v2 accepts %s only with null detail',
+  (validationFailureCode) => {
+    const valid = {
+      ...current,
+      results: [{ ...record, validationFailureCode, validationDetail: null }],
+    };
+    expect(parseEmployeeInsightEvaluationArtifact(valid)).toEqual(valid);
+    expect(() =>
+      parseEmployeeInsightEvaluationArtifact({
+        ...valid,
+        results: [{ ...valid.results[0], validationDetail: detail }],
+      }),
+    ).toThrow('Invalid employee Insight evaluation artifact.');
+  },
+);
+
+test.each(['PROVIDER_PROFILE_MISMATCH', 'SCHEMA_PROBE_FAILED'])(
+  'v2 accepts provider failure %s without adding diagnostics',
+  (providerFailureCode) => {
+    const valid = {
+      ...current,
+      results: [
+        {
+          ...record,
+          outcome: 'PROVIDER_FAILURE',
+          providerFailureCode,
+          validationFailureCode: null,
+          validationDetail: null,
+        },
+      ],
+    };
+    expect(parseEmployeeInsightEvaluationArtifact(valid)).toEqual(valid);
+  },
+);
+
+test.each(['providerFailureCode', 'validationFailureCode'])(
+  'v2 rejects arbitrary uppercase %s values',
+  (field) => {
+    expect(() =>
+      parseEmployeeInsightEvaluationArtifact({
+        ...current,
+        results: [{ ...record, [field]: 'PRIVATE_CODE_CANARY', validationDetail: null }],
+      }),
+    ).toThrow('Invalid employee Insight evaluation artifact.');
+  },
+);
+
 test.each([
   { ...current, prompt: 'private-canary' },
   { ...current, artifactVersion: 3 },

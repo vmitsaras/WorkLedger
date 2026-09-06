@@ -37,6 +37,9 @@ detail. Public response DTOs, domain calculations, authorization and database sc
 
 ## Regression coverage prepared
 
+**Repair continuation:** Report 176 corrects the stale fixtures and expands the mock coverage
+identified in report 175. Static typechecking passes; deterministic execution remains pending.
+
 **Subsequent pretest review:** Report 175 found two stale fixtures that should fail under the new
 contracts, plus missing mock coverage. The cases below are prepared coverage, not verified passing
 evidence. Correct the identified issues before executing the deterministic suite.

@@ -9,6 +9,7 @@ import {
   runOllamaSchemaQualification,
 } from '../src/ai/ollama-schema-qualification.js';
 import * as compatibility from '../src/ai/ollama-compatibility.js';
+import type { AiProvider } from '../src/ai/contracts.js';
 
 function envelope(actions = 1, facts = 5, limitations = 1, sources = 2) {
   return {
@@ -160,3 +161,91 @@ test('runner stops at the first failure, performs identity review and retains no
     spy.mockRestore();
   }
 });
+
+test.each(['success', 'health', 'provider', 'identity'] as const)(
+  'runner preserves ordered qualification and safe evidence for %s',
+  async (scenario) => {
+    const profile = {
+      id: 'fixture-only',
+      model: 'fixture',
+      modelDigest: 'a'.repeat(64),
+      modelConfigDigest: 'b'.repeat(64),
+      serverVersion: '1.2.3',
+      parser: 'fixture',
+      schemaSuiteRevision: 'schema-v1' as const,
+      sourceReviewReferences: [],
+    };
+    const spy = vi.spyOn(compatibility, 'findOllamaCompatibilityProfile').mockReturnValue(profile);
+    const expectedIds = OLLAMA_SCHEMA_CHALLENGE_IDS.flatMap((id) => [id, id, id]);
+    let next = 0;
+    const generate = vi.fn<AiProvider['generate']>(async (request) => {
+      const id = expectedIds[next++];
+      if (id === undefined) throw new Error('Unexpected extra generation.');
+      expect(request).toEqual(createOllamaSchemaChallenge(id));
+      if (scenario === 'provider') throw new Error('PRIVATE_EXCEPTION_CANARY');
+      const value =
+        id === 'empty'
+          ? { selections: [] }
+          : id === 'singleton'
+            ? { selections: [false] }
+            : id === 'maximum'
+              ? envelope(20, 100, 20, 50)
+              : envelope();
+      return {
+        content: JSON.stringify(value),
+        toolCalls: [],
+        usage: { inputTokens: 2, outputTokens: 3 },
+      };
+    });
+    const checkHealth = vi.fn<AiProvider['checkHealth']>(async () => ({
+      mode: 'ollama',
+      status: scenario === 'health' ? 'misconfigured' : 'ready',
+      capabilities: scenario === 'health' ? [] : ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
+      checkedAt: '2026-09-06T12:00:00.000Z',
+      reasonCode: scenario === 'health' ? 'SCHEMA_PROBE_FAILED' : null,
+    }));
+    const checkIdentity = vi.fn(async () => {
+      if (scenario === 'identity') throw new Error('PRIVATE_IDENTITY_CANARY');
+    });
+    try {
+      const result = await runOllamaSchemaQualification(
+        {
+          mode: 'ollama',
+          origin: 'http://127.0.0.1:11434',
+          model: profile.model,
+          modelDigest: profile.modelDigest,
+          compatibilityProfile: profile.id,
+          timeoutMs: 120000,
+          concurrencyLimit: 1,
+          requiredCapabilities: ['CHAT', 'STRUCTURED_OUTPUT', 'TOOLS'],
+        },
+        { generate, checkHealth, checkIdentity },
+      );
+      const runs = scenario === 'health' ? 0 : scenario === 'provider' ? 1 : 18;
+      expect(checkHealth).toHaveBeenCalledOnce();
+      expect(generate).toHaveBeenCalledTimes(runs);
+      expect(checkIdentity).toHaveBeenCalledTimes(scenario === 'health' ? 0 : 1);
+      expect(result).toMatchObject({
+        complete: scenario === 'success',
+        healthPassed: scenario !== 'health',
+        identityPassed: scenario !== 'health' && scenario !== 'identity',
+      });
+      expect(result.results.map(({ caseId, repetition }) => ({ caseId, repetition }))).toEqual(
+        expectedIds
+          .slice(0, runs)
+          .map((caseId, index) => ({ caseId, repetition: (index % 3) + 1 })),
+      );
+      expect(result.results.map(({ failure }) => failure)).toEqual(
+        Array.from({ length: runs }, () => (scenario === 'provider' ? 'PROVIDER_FAILURE' : null)),
+      );
+      if (scenario === 'success')
+        expect(result.results.every((row) => row.inputTokens === 2 && row.outputTokens === 3)).toBe(
+          true,
+        );
+      expect(JSON.stringify(result)).not.toMatch(/PRIVATE_|selection|Synthetic schema check/u);
+      expect(parseOllamaSchemaQualificationArtifact(result)).toEqual(result);
+    } finally {
+      spy.mockRestore();
+    }
+  },
+);
