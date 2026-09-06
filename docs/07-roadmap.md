@@ -23,11 +23,15 @@ ready to release.
 | 2 of 5 | Foundation | Phase 1 | Repository, tooling, test, data-service, configuration, UI-foundation, and contributor-documentation work passes its gate |
 | 3 of 5 | Core engine and platform | Phases 2–3 | Domain engine, persistence, authentication, authorization, audit, and API foundations pass their gates |
 | 4 of 5 | Product workflows | Phases 4–9 | Employee, manager, absence, closure, reporting, and administration workflows pass their gates |
-| 5 of 5 | Production and release | Phases 10–11 | Production hardening, self-hosting, accessibility, operations, public documentation, and release gates pass |
+| 5 of 5 | Production and release | Phases 10–15 | Production hardening, self-hosting, accessibility, operations, public documentation, and release gates pass |
 
-The current label is **Stage 5 of 5 — Production and release in progress**. Phases 0–9 have passed
-their gates and Phase 10 has **0 of 9 tasks complete**. The project is not release-ready; the shared
-workspace version is `0.10.0` under the phase-completion rule above.
+The current label is **Stage 5 of 5 — Recorded production and UI release gates complete**.
+Phases 0–15 have passed their accepted exit gates; the workspace version is `0.16.0`.
+[Report 165](165-wl-1516-phase-15-gate-review.md) records the deterministic Phase 15 release.
+The optional employee AI pilot has not passed and provider deployment remains disabled.
+
+**Next task: WL-1508L.** Follow [the bounded execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md)
+and the task board. Historical evaluation attempts do not reopen completed product phases.
 
 ---
 
@@ -224,12 +228,16 @@ Let employees understand historical records and correct errors through an audita
 
 ## Exit gate
 
-- [ ] Normal and incomplete days are understandable.
-- [ ] Correction approval changes calculated results without altering raw history.
-- [ ] Rejection leaves results unchanged and preserves decision history.
-- [ ] Unauthorized managers cannot review the request.
-- [ ] Locked-period corrections follow the adjustment path.
-- [ ] Focus, errors, comparison semantics, and decision feedback pass accessibility review.
+- [x] Normal and incomplete days are understandable.
+- [x] Correction approval changes calculated results without altering raw history.
+- [x] Rejection leaves results unchanged and preserves decision history.
+- [x] Unauthorized managers cannot review the request.
+- [x] Locked-period corrections follow the adjustment path.
+- [x] Focus, errors, comparison semantics, and decision feedback pass accessibility review.
+
+**Recorded gate evidence:** [Phase 5 review](65-phase-5-gate-review.md); locked ordinary edits were rejected there,
+and [Phase 8 review](87-phase-8-gate-review.md) supplies the completed post-lock adjustment path.
+These checks reconcile already completed work; they do not record a new test run or version gate.
 
 ---
 
@@ -252,12 +260,15 @@ Implement vacation, sickness, unpaid leave, entitlement accounting, and cancella
 
 ## Exit gate
 
-- [ ] Weekends, holidays, zero-hour weekdays, and partial days calculate correctly.
-- [ ] Pending, approved, cancelled, and rejected requests affect balances correctly.
-- [ ] Sickness data is minimized in manager and team views.
-- [ ] Overlap and insufficient-balance policies return explicit results.
-- [ ] Calendar workflow is keyboard usable and has an equivalent agenda/list.
-- [ ] Ledger history explains the current balance.
+- [x] Weekends, holidays, zero-hour weekdays, and partial days calculate correctly.
+- [x] Pending, approved, cancelled, and rejected requests affect balances correctly.
+- [x] Sickness data is minimized in manager and team views.
+- [x] Overlap and insufficient-balance policies return explicit results.
+- [x] Calendar workflow is keyboard usable and has an equivalent agenda/list.
+- [x] Ledger history explains the current balance.
+
+**Recorded gate evidence:** [Phase 6 review](73-phase-6-gate-review.md).
+These checks reconcile already completed work; they do not record a new test run or version gate.
 
 ---
 
@@ -279,12 +290,15 @@ Give managers one accessible, permission-safe place to resolve work without expo
 
 ## Exit gate
 
-- [ ] Manager sees only authorized reports.
-- [ ] Every decision has enough context and an audit event.
-- [ ] Self-approval is impossible.
-- [ ] Team views use privacy-safe labels.
-- [ ] Filters are shareable/restorable and keyboard usable.
-- [ ] Email failure does not roll back a successful domain decision.
+- [x] Manager sees only authorized reports.
+- [x] Every decision has enough context and an audit event.
+- [x] Self-approval is impossible.
+- [x] Team views use privacy-safe labels.
+- [x] Filters are shareable/restorable and keyboard usable.
+- [x] Email failure does not roll back a successful domain decision.
+
+**Recorded gate evidence:** [Phase 7 review](80-phase-7-gate-review.md).
+These checks reconcile already completed work; they do not record a new test run or version gate.
 
 ---
 
@@ -364,17 +378,21 @@ Make WorkLedger safe and operable outside the developer laptop.
 
 ## Production release gate
 
-- [ ] Clean production-style deployment works with documented configuration.
-- [ ] Direct API/database access and forged forwarded headers are denied; canonical HTTPS origin, cookies, CSRF, and health/readiness behave as specified.
-- [ ] Backup and isolated restore have been executed successfully with new secrets, revoked restored sessions/grants, disabled outbound mail, and ledger/snapshot/audit integrity evidence.
-- [ ] Upgrade from the previous test release works.
-- [ ] Every `T-001`–`T-020` control has evidence and no known Critical/High security issue remains.
-- [ ] No known critical accessibility blocker remains in core workflows.
-- [ ] Permission matrix tests pass.
-- [ ] Load/concurrency targets for expected organization size pass.
-- [ ] Logs, audit, URLs, browser storage/cache, notifications, clipboard, print, and exports respect the data inventory/privacy matrix.
-- [ ] A non-placeholder retention profile covers every required class and its backup behavior.
-- [ ] Failure modes are documented.
+- [x] Clean production-style deployment works with documented configuration.
+- [x] Direct API/database access and forged forwarded headers are denied; canonical HTTPS origin, cookies, CSRF, and health/readiness behave as specified.
+- [x] Backup and isolated restore have been executed successfully with new secrets, revoked restored sessions/grants, disabled outbound mail, and ledger/snapshot/audit integrity evidence.
+- [x] Upgrade from the previous test release works.
+- [x] Every `T-001`–`T-020` control has evidence and no known Critical/High security issue remains.
+- [x] No known critical accessibility blocker remains in core workflows.
+- [x] Permission matrix tests pass.
+- [x] Load/concurrency targets for expected organization size pass.
+- [x] Logs, audit, URLs, browser storage/cache, notifications, clipboard, print, and exports respect the data inventory/privacy matrix.
+- [x] A non-placeholder retention profile covers every required class and its backup behavior.
+- [x] Failure modes are documented.
+
+**Recorded gate evidence:** [Phase 10 review](98-phase-10-gate-review.md). The D-502 assistive-technology
+limitation and deployment-specific operator responsibilities remain explicit.
+These checks reconcile already completed work; they do not record a new test run or version gate.
 
 ---
 
@@ -556,7 +574,7 @@ the same product-quality gate.
 
 ---
 
-# Phase 15 — WorkLedger Insights (employee pilot reopened for future evaluation)
+# Phase 15 — WorkLedger Insights (deterministic release complete)
 
 ## Objective
 
@@ -567,14 +585,15 @@ and operations evidence. The optional employee pilot is reopened for future eval
 
 ## Dependencies
 
-- Phase 14 is complete and every workspace manifest is at `0.15.0`.
+- Entry prerequisite, already satisfied: Phase 14 passed at `0.15.0`. Phase 15 completion has
+  since advanced the workspace to `0.16.0`.
 - ADR 0014 and `docs/151-phase-15-insights-architecture-privacy-evaluation.md` define the accepted
   authority, scope, data flow, egress, retention, grounding, accessibility, evaluation, and staged
   gate contracts.
 - Existing domain, immutable history, ledger, permission, privacy, localization, route state,
   accessibility, operations, and self hosting contracts remain authoritative.
-- `WL-1508G` and `docs/160-wl-1508g-phase-15-deterministic-continuation.md` define the current
-  accepted sequence after the optional model pilot closed.
+- `WL-1508G` and `docs/160-wl-1508g-phase-15-deterministic-continuation.md` define the accepted
+  deterministic product sequence. D-517 defines the remaining optional pilot sequence separately.
 - No Manager, HR, System, or release task may bypass its revised deterministic prerequisite gate.
 
 ## Deliverables
@@ -590,7 +609,7 @@ and operations evidence. The optional employee pilot is reopened for future eval
 - Deterministic isolated System diagnostics with no employee or HR data.
 - A provider-disabled Phase 15 release path in which no accepted route depends on Ollama.
 - Retained inactive provider, orchestration, failure, privacy, and evaluation evidence from the
-  closed optional employee pilot.
+  optional employee pilot, reopened but not passed.
 
 ## Insights foundation sub gate
 
@@ -606,47 +625,50 @@ and operations evidence. The optional employee pilot is reopened for future eval
 
 ## Employee local AI pilot sub gate
 
-H preparation is complete; `docs/166-wl-1508h-employee-pilot-rerun-preparation.md` records
-source review, provisional candidate inventory, the Windows invocation, and outstanding runtime
-qualification. The pinned toolchain and static workspace guards now pass after a Windows CRLF
-checker fix. The separately authorized synthetic health probe passed in 29.265 seconds; no employee
-cases ran. Cloud-disabled/proxy-free operation, loopback-only listening, and executable-scoped
-outbound firewall isolation are verified. H is complete. B subsequently passed 18/18 strict cases;
-`docs/167-wl-1508b-qwen36-regression-screen.md` records both groups. C then ran one complete
-216-case matrix and failed 213/216: all three Spanish balance-summary repetitions were rejected
-for duplicate references. `docs/168-wl-1508c-qwen36-full-evaluation.md` records the stop decision.
-C remains open, D is blocked, and no automatic remediation or rerun is authorized by that failure.
+**Current state:** Optional and not passed. The deterministic release is complete independently.
+Report 195 is the latest B attempt: health passed, submission-actions accepted 3/9, German selected
+no facts, and Spanish omitted the pending-request action. Today-posted and C did not run. Report
+194's cold health and 18/18 schema qualification are separate evidence, not semantic acceptance.
 
+D-517 replaces the accumulated rerun instructions with one ordered queue:
 
-**Reopening, 2026-09-06 (D-510):** The user reopened the employee pilot for a future test.
-The earlier closure remains historical failed evidence. `WL-1508H` prepares and requalifies one
-exact candidate before reopened `WL-1508B`, then gated `WL-1508C` and `WL-1508D`. No tests or
-model probes run in this planning task. Provider mode remains disabled; no model is approved.
-The completed deterministic Phase 15 gate, version `0.16.0`, and obsolete Manager interpretation,
-natural-language reports, and MCP proposals remain unchanged. This bounded rerun needs no new phase.
+| Order | Task | Required outcome |
+| --- | --- | --- |
+| 1 | WL-1508L | Reproducible Windows verification and staged pilot invocation, verified without a real model |
+| 2 | WL-1508M | One complete, evidence-supported fact/action recovery with deterministic regressions, or an explicit blocker/defer decision |
+| 3 | WL-1508B | submission-actions 9/9, then today-posted 9/9, on one frozen qualified configuration |
+| 4 | WL-1508C | Historical full-matrix failure preflight 27/27, then one uninterrupted unfiltered 216/216 gate |
+| 5 | WL-1508D | Required non-model evidence and exact candidate reviewed before parent WL-1508 closes |
 
-**Historical outcome:** Closed without passing on 2026-08-28. No qualified model met the zero-tolerance gate,
-provider mode remains disabled, and no model is approved for deployment. The unchecked criteria
-remain unmet and do not count as completed work.
+See [the execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md) for files,
+dependencies, qualification invalidation rules, verification and stop conditions. Completed
+A/E/F/G/H/I/J/K remain historical evidence; they are not the next queue. D-515/D-516 are already
+implemented. Fresh execution must check whether qualification still matches the affected inputs
+and always retain mandatory health. No automatic prompt tuning, model switching or repeated
+attempt follows a failure. If no defensible recovery is supported, leave the optional pilot
+blocked/deferred with the decision needed to resume.
 
-- [ ] `WL-1505` through `WL-1508` are complete after the foundation sub gate.
-- [x] The provider remains disabled by default and uses only one exact private operator controlled
-  Ollama origin plus one pinned local model digest when enabled.
-- [x] Every tool is purpose specific, read only, schema validated, and reauthorized from current
-  employee self scope on every call.
-- [x] Questions and bounded prior turns remain session only. Prompt, tool, result, output, and
-  reasoning content is absent from storage, logs, audit, backup, and analytics.
-- [ ] The 24 question, three locale, three repetition golden set meets every zero tolerance
-  correctness, scope, source, action, unsupported claim, and leakage threshold in ADR 0014.
-- [x] Timeout, cancellation, invalid output, model drift, and provider failure leave the native
-  result usable and accessible.
-- [x] `WL-1508F` replaces redundant model tool selection without changing the endpoint, native
-  authority, provider security controls, runtime validators, or zero-tolerance gate, before the
-  bounded model screen resumes.
+The user reopened this pilot under D-510 after its historical 2026-08-28 closure without passing.
+Historical B passes (reports 167/171) and C failures (reports 168/172) keep their original
+configuration and outcome; they cannot pass the current candidate. D-517 changes scheduling and
+adds regression coverage, not golden expectations or the provider/grounding/privacy contract.
 
-The historical closure did not satisfy `WL-1508`. Decision `D-510` reopens only the employee
-evaluation backlog in the order `WL-1508H` → `WL-1508B` → `WL-1508C` → `WL-1508D`. Completed `WL-1508G` replaces the downstream dependencies for accepted
-deterministic work only.
+- [ ] `WL-1505` through `WL-1508` satisfy the complete employee pilot gate.
+- [x] Provider deployment remains disabled; qualification permits only the exact recorded private
+  origin, runtime, model digest, inference controls and isolation for evaluation.
+- [x] Every tool is purpose-specific, read-only, schema-validated and reauthorized against current
+  employee self scope.
+- [x] Question, prompt, native result, output and reasoning content is not retained in logs,
+  audit, backup or analytics; model context remains request memory only.
+- [ ] The full 24-question, three-locale, three-repetition matrix passes the existing zero-tolerance
+  correctness, scope, source, action, unsupported-claim and leakage contract.
+- [x] Timeout, cancellation, invalid output, drift and provider failure preserve the usable native
+  result; changed paths must retain the applicable accessibility evidence.
+- [x] Server-owned registry orchestration, duplicate-safe selections, material completeness and
+  bounded health residency are implemented; implementation is distinct from model acceptance.
+
+The full matrix retains only its already permitted safe-rejection cases. A collection of short
+passes, successful schema qualification, or completed implementation tasks cannot replace it.
 
 ## Deterministic continuation gate
 
@@ -663,13 +685,9 @@ decision and the applicable ADR, privacy, security, evaluation, and threat gates
 
 ## Phase 15 release gate
 
-**Employee pilot recovery design (D-511, 2026-09-06):** WL-1508I now specifies fixed boolean
-reference selections and bounded content-free diagnostics in spec 0002. Implementation is complete in WL-1508I (report 170);
-fresh B passed 18/18 (report 171); C failed 210/216 (report 172). Historical B remains complete for its
-original configuration; selection-v1 B now passes 18/18, legacy C remains failed, and D remains blocked. No new phase or release gate changes.
-
-The release gate follows only the accepted deterministic continuation. It cannot advance the
-workspace version until `WL-1509`, `WL-1512`, `WL-1513`, and `WL-1514` pass.
+**Complete:** WL-1516 and report 165 close the accepted deterministic release at `0.16.0`.
+The optional employee pilot is not a prerequisite and does not reopen this gate. These checkboxes
+record the completed release evidence; they are not fresh verification of the current checkout.
 
 - [x] Every accepted Phase 15 role and provider-disabled path passes its named prerequisite
   and evidence gate.

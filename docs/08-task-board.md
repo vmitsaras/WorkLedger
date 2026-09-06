@@ -1,5 +1,8 @@
 # WorkLedger Detailed Task Board
 
+**Next task: WL-1508L.** The Phase 15 optional queue below is the current execution order.
+Completed phases and excluded proposals are not pending assignments.
+
 ## Status values
 
 - `Not started`
@@ -7,7 +10,13 @@
 - `In progress`
 - `Blocked`
 - `In review`
-- `Done`
+- `Done` (older rows may use `Complete`)
+- `Deferred` (out of the execution queue until an explicit scheduling decision)
+- `Obsolete` (excluded proposal; not an incomplete deliverable)
+
+A failed attempt is recorded as evidence. Its task is `Blocked` until a specific prerequisite
+is resolved; it is not silently reset to `Ready`. The optional pilot parent is a milestone,
+not a task to execute before its children.
 
 A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A completed phase exit-gate additionally requires the matching internal minor-version bump and a passing `pnpm run phase:check`; this does not authorize publication or deployment.
 
@@ -255,54 +264,72 @@ A task is `Done` only when `docs/09-definition-of-done.md` is satisfied. A compl
 
 ---
 
-## Phase 15 — WorkLedger Insights (employee pilot reopened for future evaluation)
+## Phase 15 — WorkLedger Insights (deterministic release complete)
 
-**Reopening, 2026-09-06 (D-510):** The user reopened the employee pilot for a future test.
-The earlier closure remains historical failed evidence. `WL-1508H` prepares and requalifies one
-exact candidate before reopened `WL-1508B`, then gated `WL-1508C` and `WL-1508D`. No tests or
-model probes run in this planning task. Provider mode remains disabled; no model is approved.
-The completed deterministic Phase 15 gate, version `0.16.0`, and obsolete Manager interpretation,
-natural-language reports, and MCP proposals remain unchanged. This bounded rerun needs no new phase.
+The accepted deterministic product passed WL-1516 at `0.16.0` (report 165). The optional
+employee AI pilot has not passed and is not a release prerequisite. D-517 repairs the execution
+order without reopening completed phase gates. ADR 0014 and the accepted specifications retain
+the authority, privacy, grounding, isolation and evaluation contracts. Provider deployment remains
+disabled, with no model approved.
 
-Phase 15 is staged so the deterministic product value does not depend on an LLM. `WL-1500`–`WL-1504`
-form the complete Insights foundation sub-gate. `WL-1505`–`WL-1508` record the historical
-employee-only local AI pilot, which closed without passing. `WL-1508G` owns the revised deterministic
-continuation dependencies. ADR 0014 and `docs/151-phase-15-insights-architecture-privacy-evaluation.md`
-fix the accepted authority, active-workspace, prohibited-use, egress, retention, grounding,
-accessibility, evaluation, operations, and staged-gate boundary.
-
-The employee local AI pilot closed without passing on 2026-08-28 after no qualified candidate met
-the zero-tolerance regression screen. Provider mode remains disabled and no model is approved for
-deployment. Completed `WL-1508G` now accepts only deterministic Manager, HR aggregate, and System
-continuation plus a provider-disabled release gate. The closure does not satisfy `WL-1508`.
+### Completed deterministic product
 
 | ID | Task | Depends on | Acceptance evidence | Status |
-|---|---|---|---|---|
-| WL-1500 | Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts | WL-1410 | ADR 0014; `docs/151-phase-15-insights-architecture-privacy-evaluation.md`; synchronized product, permission, architecture, accessibility, security, retention, evaluation, operations, roadmap, and project-memory contracts | Complete |
-| WL-1501 | Implement the deterministic Insight Service and typed native-result contracts | WL-1500 | `docs/152-wl-1501-deterministic-insight-service-contracts.md`; strict contract, current-scope authorization, safe-omission, invalid-result, and PostgreSQL permission-loss evidence | Complete |
-| WL-1502 | Implement employee balance-change, submission-blocker, leave-projection, and Today-explanation insights | WL-1501 | `docs/153-wl-1502-employee-insight-computations.md`; exact integer-minute/date fixtures, posted-versus-provisional semantics, source links, permission tests, and no invented policy | Complete |
-| WL-1503 | Build the accessible, role-scoped Insights route and native result presentation | WL-1501, WL-1502 | `docs/154-wl-1503-accessible-native-insights-route.md`; native results remain primary; authenticated no-store transport, keyboard and focus behavior, announcements, unavailable and error states, 320 pixel reflow, forced colors, reduced motion, and all supported locales pass | Complete |
-| WL-1504 | Add bounded contextual entry points from Today, My Time, My Balances, Requests, and Reports, then execute the Insights foundation sub-gate | WL-1502, WL-1503 | `docs/155-wl-1504-insights-foundation-gate.md`; visible removable context, no DOM/data dump, safe URL/session state, deterministic operation without Ollama, and signed foundation evidence | Complete |
-| WL-1505 | Implement a reusable read-only Insight tool registry with independent authorization and active-workspace scope | WL-1504 | `docs/156-wl-1505-read-only-insight-tool-registry.md`; narrow purpose-specific tools; deny-by-default policy metadata; current employee/manager scope; combined-role isolation; no generic query/SQL capability | Complete |
-| WL-1506 | Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks | WL-1505 | `docs/157-wl-1506-ai-provider-private-ollama-adapter.md`; disabled by default, exact private origin and address pinning, local digest and capability proof, no redirects or proxy routing, bounded timeout and concurrency, cancellation, safe health, and deterministic fallback evidence | Complete |
-| WL-1507 | Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution | WL-1506 | `docs/158-wl-1507-employee-ask-my-ledger-interpretation.md`; session-only context, current self-scoped tools, exact visible scope, bounded cancellation and rate controls, strict grounded references, native value rendering, and attributed sources | Complete |
-| WL-1508 | Add the employee golden-question evaluation set, bounded traces, privacy/security tests, model-failure handling, and accessibility verification, then execute the local AI pilot sub-gate | WL-1507, WL-1508H, WL-1508B–WL-1508D | `docs/159-wl-1508-employee-local-ai-pilot-evaluation.md`; evaluation infrastructure and non-model evidence complete; no candidate passed the zero-tolerance screen and the parent did not complete | Open; H/I/J/K complete; D-515 B stopped at health before employee cases; historical C failed 210/216 and D blocked |
-| WL-1508A | Qualify one replacement private model name and exact digest | WL-1507 | Cold-start WorkLedger health passed in 4.623 seconds for `qwen2.5-coder:14b` digest `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` with chat, structured-output, and tool capabilities; existing provider controls remained unchanged | Complete |
-| WL-1508B | Pass a fresh screen after schema/completeness recovery | WL-1508J, WL-1508K | 9/9 submission-actions then 9/9 today-posted under the recovered exact configuration; report 171 preserves the earlier 18/18 | Open; D-514 recovery failed 0/9 in report 185; reports 186–188 diagnose, design and verify D-515; report 189 records exact candidate/isolation/source preflight followed by health unavailable/TIMEOUT before the golden loop, zero employee cases and no evaluation artifact; no retry or second group; report 190 completes deadline/reload diagnosis; report 191/D-516/spec 0005 complete residency design; report 192 implements and deterministically verifies residency; report 193 cold health passed in 25,828 ms with verified cleanup; report 194 fresh cold health and 18/18 schema challenges passed with verified cleanup; report 195 fresh B failed 3/9 after health passed: German empty facts, Spanish missing pending-request action; no today-posted/C or retry, cleanup passed; bounded diagnosis next |
-| WL-1508E | Qualify the remaining installed `qwen3-coder:30b` digest before resuming the regression screen | WL-1508A | Cold-start WorkLedger health passed in 45.570 seconds for exact digest `06c1097efce0431c2045fe7b2e5108366e43bee1b4603a7aded8f21689e90bca` with chat, structured-output, and tool capabilities; synthetic probe only and existing provider controls unchanged | Complete |
-| WL-1508F | Make Employee Insight registry execution server-owned and constrain the single provider response with the existing structured-output contract | WL-1508A, WL-1508E | `docs/specs/_root/0001-server-owned-insight-orchestration/index.md`; implementation and deterministic evidence complete; exact registry reauthorization before provider context; one tool-free schema-constrained generation; unchanged runtime validators, provider controls, endpoint, UI, and data model; no real model case | Complete |
-| WL-1508G | Reconcile Phase 15 around deterministic provider-independent Insights after the employee model pilot closes | WL-1508 closure | `docs/160-wl-1508g-phase-15-deterministic-continuation.md`; accepted remaining tasks, obsolete tasks, replacement dependencies, release evidence, non-goals, and no runtime or version change | Complete |
-| WL-1508H | Prepare the employee pilot rerun and requalify one exact private candidate | WL-1508F, D-510 | Fresh candidate/runtime provenance, drift review, cold-start capability evidence, Windows-compatible invocation, separate content-free screen artifacts; no tests in the planning task | Complete; `docs/166-wl-1508h-employee-pilot-rerun-preparation.md`; pinned toolchain, 29.265-second health pass, cloud-disabled/proxy-free/loopback-only metadata and active outbound blocks verified; zero employee cases |
-| WL-1508C | Execute the complete strict replacement-model evaluation | WL-1508B | One uninterrupted 24-question × 3-locale × 3-repetition run records 216/216 for the exact qualified configuration; any failure prevents closure | Failed 210/216 for selection-v1; de-DE balance-projection golden omissions and en-GB balance-closing fact-selection length failures; `docs/173-wl-1508c-selection-failure-diagnosis.md`; diagnosis complete: provider schema bypass and completeness gap; D-512/spec 0003 designed; J/K complete; fresh B/C required |
-| WL-1508I | Implement duplicate-safe generation and bounded field diagnostics | WL-1508F, D-511 | Spec 0002 and `docs/170-wl-1508i-duplicate-safe-generation.md`; strict selections, preserved final grounding, safe diagnostics and artifact review; deterministic verification documented | Complete; fresh B/C model evidence pending |
-| WL-1508J | Implement schema-enforcement admission and material completeness | WL-1508I, D-512 | Spec 0003: profile/version checks, synthetic qualification tooling, shared dependencies, four qualifiers, safe failure codes and deterministic verification; no model execution | Complete; report 177: 55 script, 566 unit/component, 13 integration passes; 52 gated skips; no model execution |
-| WL-1508K | Qualify an exact schema-enforcing provider | WL-1508J | Source-reviewed stable runtime/model, isolation and installation provenance, cold-start health, 18/18 synthetic challenges; fresh B/C afterward | Complete; report 178: 0.33.3/qwen3.6 cold health and 18/18 synthetic passes; identity/isolation/checkpoints verified; candidate stopped |
-| WL-1508D | Reconfirm evidence and close the employee local AI pilot sub-gate | WL-1508C | Applicable quality gates and unchanged privacy, security, degraded-provider, trace, and accessibility evidence pass; evaluation and project-memory documents name the exact passing digest; WL-1508 closes while provider mode remains disabled by default | Reopened; blocked on WL-1508C |
-| WL-1509 | Implement deterministic manager action-summary and team-coverage insights | WL-1504, WL-1508G | `docs/161-wl-1509-manager-insights.md`; current-direct-report scope, neutral `UNAVAILABLE`, factual counts, native source actions, timezone/date boundaries, multilingual accessible Manager route, and zero provider calls | Complete |
-| WL-1510 | Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations | Closed employee model pilot | Historical proposal only; any revival requires a new roadmap and model gate | Obsolete; removed from Phase 15 |
-| WL-1511 | Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions | Closed employee model pilot | Historical proposal only; any replacement must be separately scoped as deterministic product work | Obsolete; removed from Phase 15 |
-| WL-1512 | Define purpose-specific deterministic HR aggregate contracts, value sources, privacy thresholds, cohort and complement suppression, and repeated-query controls | WL-1509, WL-1508G | `docs/162-wl-1512-hr-aggregate-privacy-contract.md`; accepted ADR/data-flow review; suppression occurs before result construction; no free text, diagnosis, note, attachment, row-level sickness data, or model context | Complete |
-| WL-1513 | Add deterministic HR aggregate Insights only after the dedicated privacy and authorization gate passes | WL-1512 | `docs/163-wl-1513-hr-aggregate-insights.md`; purpose-specific metrics distinguish employees, cases, days, and minutes; cohort, complement, repeated-query, and scope tests prevent inference and leakage; no model, decision, or prediction output | Complete |
-| WL-1514 | Add deterministic isolated System Insights using allowlisted technical diagnostics only and no employee or HR data | WL-1504, WL-1508G | `docs/164-wl-1514-system-insights.md`; strict technical fact and source allowlists; honest host-owned backup limitation; current System authorization; multilingual accessible `/system/insights`; public diagnostic minimization remains intact; zero provider calls | Complete |
-| WL-1515 | Evaluate an optional MCP adapter over explicitly allowlisted Insight tools | Closed employee model pilot | Historical proposal only; any revival requires a separate roadmap, ADR, exposure allowlist, and threat review | Obsolete; removed from Phase 15 |
-| WL-1516 | Execute deterministic multilingual, accessibility, security, privacy, usability, provider-disabled, upgrade, and Phase 15 release gates | WL-1509, WL-1512–WL-1514 | `docs/165-wl-1516-phase-15-gate-review.md`; signed deterministic Phase 15 checklist; no accepted route depends on Ollama; provider remains disabled; no open P0/P1 defect; synchronized documentation; ten manifests at `0.16.0` | Complete |
+| --- | --- | --- | --- | --- |
+| WL-1500 | Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts | WL-1410 | ADR 0014; `docs/151-phase-15-insights-architecture-privacy-evaluation.md`; synchronized product, permission, architecture, accessibility, security, retention, evaluation, operations, roadmap, and project-memory contracts | Done |
+| WL-1501 | Implement the deterministic Insight Service and typed native-result contracts | WL-1500 | `docs/152-wl-1501-deterministic-insight-service-contracts.md`; strict contract, current-scope authorization, safe-omission, invalid-result, and PostgreSQL permission-loss evidence | Done |
+| WL-1502 | Implement employee balance-change, submission-blocker, leave-projection, and Today-explanation insights | WL-1501 | `docs/153-wl-1502-employee-insight-computations.md`; exact integer-minute/date fixtures, posted-versus-provisional semantics, source links, permission tests, and no invented policy | Done |
+| WL-1503 | Build the accessible, role-scoped Insights route and native result presentation | WL-1501, WL-1502 | `docs/154-wl-1503-accessible-native-insights-route.md`; native results remain primary; authenticated no-store transport, keyboard and focus behavior, announcements, unavailable and error states, 320 pixel reflow, forced colors, reduced motion, and all supported locales pass | Done |
+| WL-1504 | Add bounded contextual entry points from Today, My Time, My Balances, Requests, and Reports, then execute the Insights foundation sub-gate | WL-1502, WL-1503 | `docs/155-wl-1504-insights-foundation-gate.md`; visible removable context, no DOM/data dump, safe URL/session state, deterministic operation without Ollama, and signed foundation evidence | Done |
+| WL-1508G | Reconcile Phase 15 around deterministic provider-independent Insights after the employee model pilot closes | Historical pilot closure decision; WL-1504 (not parent success) | `docs/160-wl-1508g-phase-15-deterministic-continuation.md`; accepted remaining tasks, obsolete tasks, replacement dependencies, release evidence, non-goals, and no runtime or version change | Done |
+| WL-1509 | Implement deterministic manager action-summary and team-coverage insights | WL-1504, WL-1508G | `docs/161-wl-1509-manager-insights.md`; current-direct-report scope, neutral `UNAVAILABLE`, factual counts, native source actions, timezone/date boundaries, multilingual accessible Manager route, and zero provider calls | Done |
+| WL-1512 | Define purpose-specific deterministic HR aggregate contracts, value sources, privacy thresholds, cohort and complement suppression, and repeated-query controls | WL-1509, WL-1508G | `docs/162-wl-1512-hr-aggregate-privacy-contract.md`; accepted ADR/data-flow review; suppression occurs before result construction; no free text, diagnosis, note, attachment, row-level sickness data, or model context | Done |
+| WL-1513 | Add deterministic HR aggregate Insights only after the dedicated privacy and authorization gate passes | WL-1512 | `docs/163-wl-1513-hr-aggregate-insights.md`; purpose-specific metrics distinguish employees, cases, days, and minutes; cohort, complement, repeated-query, and scope tests prevent inference and leakage; no model, decision, or prediction output | Done |
+| WL-1514 | Add deterministic isolated System Insights using allowlisted technical diagnostics only and no employee or HR data | WL-1504, WL-1508G | `docs/164-wl-1514-system-insights.md`; strict technical fact and source allowlists; honest host-owned backup limitation; current System authorization; multilingual accessible `/system/insights`; public diagnostic minimization remains intact; zero provider calls | Done |
+| WL-1516 | Execute deterministic multilingual, accessibility, security, privacy, usability, provider-disabled, upgrade, and Phase 15 release gates | WL-1509, WL-1512–WL-1514 | `docs/165-wl-1516-phase-15-gate-review.md`; signed deterministic Phase 15 checklist; no accepted route depends on Ollama; provider remains disabled; no open P0/P1 defect; synchronized documentation; ten manifests at `0.16.0` | Done |
+
+### Optional employee pilot — execution order
+
+[The execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md) defines the concrete
+files, entry criteria, verification, evidence reuse and failure exits for these tasks. Only L is
+ready. B/C/D retain their task IDs and original acceptance boundaries; C adds a historical
+regression preflight before its unchanged full matrix. A failed attempt does not automatically
+reopen completed work or authorize another attempt.
+
+| ID | Task | Depends on | Acceptance evidence | Status |
+| --- | --- | --- | --- | --- |
+| WL-1508L | Make local verification and pilot invocation reproducible on Windows | WL-1508J; implemented D-515/D-516 | Checked-in workflow; pinned tools propagated to children; deterministic mode disables real-model flags; repository formatting gate resolved; bounded worker scheduling; stage/filter validation; isolated content-free artifacts; truthful child exits/coverage; mocked failure/stop tests and documented commands; no inference | Ready |
+| WL-1508M | Resolve report-195 fact/action completeness in one bounded implementation slice | WL-1508L | Reuse prior diagnosis; trace both failures across all locales/reordered tables; implement one evidence-supported recovery with meaningful regressions and applicable deterministic checks; preserve D-515, grounding, privacy and fallback; record qualification impact. No supported fix means blocked/deferred, not a completed recovery | Blocked |
+| WL-1508B | Pass the existing two-group employee acceptance screen once | WL-1508L, WL-1508M; valid exact qualification | Fresh submission-actions 9/9, then today-posted 9/9; mandatory health, frozen sources/configuration, verified artifacts and cleanup. Report 195 is the latest failed attempt: 3/9; no second group | Blocked |
+| WL-1508C | Pass historical regression preflight and the uninterrupted full evaluation | WL-1508B on the same frozen configuration | balance-summary, balance-projection and balance-closing each pass 9/9, then one unfiltered 216/216 full artifact under existing per-question acceptance. No stitched results or tuning. Reports 168/172 remain historical failures | Blocked |
+| WL-1508D | Review evidence and close the optional employee pilot | WL-1508C | Exact passing candidate; applicable quality checks, privacy/security, degraded-provider native fallback, traces, localization and accessibility evidence reviewed; required skips resolved; project memory synchronized; deployment disabled | Blocked |
+| WL-1508 | Pass the optional employee local AI pilot sub-gate | WL-1507, WL-1508D | Parent milestone only; evaluation infrastructure exists but all fresh acceptance and closure evidence must pass. No extra execution after D and no phase/version/deployment change | Blocked |
+
+### Completed pilot infrastructure and historical qualification
+
+These tasks remain done for their recorded scope. Assess relevant qualification inputs before
+fresh evaluation; do not replay the history. D-515 acceptance and D-516 health residency are also
+implemented (reports 188/192), and report 194 qualifies the latter lifecycle.
+
+| ID | Task | Depends on | Acceptance evidence | Status |
+| --- | --- | --- | --- | --- |
+| WL-1505 | Implement a reusable read-only Insight tool registry with independent authorization and active-workspace scope | WL-1504 | `docs/156-wl-1505-read-only-insight-tool-registry.md`; narrow purpose-specific tools; deny-by-default policy metadata; current employee/manager scope; combined-role isolation; no generic query/SQL capability | Done |
+| WL-1506 | Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks | WL-1505 | `docs/157-wl-1506-ai-provider-private-ollama-adapter.md`; disabled by default, exact private origin and address pinning, local digest and capability proof, no redirects or proxy routing, bounded timeout and concurrency, cancellation, safe health, and deterministic fallback evidence | Done |
+| WL-1507 | Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution | WL-1506 | `docs/158-wl-1507-employee-ask-my-ledger-interpretation.md`; session-only context, current self-scoped tools, exact visible scope, bounded cancellation and rate controls, strict grounded references, native value rendering, and attributed sources | Done |
+| WL-1508A | Qualify one replacement private model name and exact digest | WL-1507 | Cold-start WorkLedger health passed in 4.623 seconds for `qwen2.5-coder:14b` digest `9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` with chat, structured-output, and tool capabilities; existing provider controls remained unchanged | Done |
+| WL-1508E | Qualify the remaining installed `qwen3-coder:30b` digest before resuming the regression screen | WL-1508A | Cold-start WorkLedger health passed in 45.570 seconds for exact digest `06c1097efce0431c2045fe7b2e5108366e43bee1b4603a7aded8f21689e90bca` with chat, structured-output, and tool capabilities; synthetic probe only and existing provider controls unchanged | Done |
+| WL-1508F | Make Employee Insight registry execution server-owned and constrain the single provider response with the existing structured-output contract | WL-1508A, WL-1508E | `docs/specs/_root/0001-server-owned-insight-orchestration/index.md`; implementation and deterministic evidence complete; exact registry reauthorization before provider context; one tool-free schema-constrained generation; unchanged runtime validators, provider controls, endpoint, UI, and data model; no real model case | Done |
+| WL-1508H | Prepare the employee pilot rerun and requalify one exact private candidate | WL-1508F, D-510 | Report 166: Windows preparation, pinned toolchain, cold health and verified isolation for the recorded tuple; zero employee cases | Done |
+| WL-1508I | Implement duplicate-safe generation and bounded field diagnostics | WL-1508F, D-511 | Spec 0002; report 170: strict selection codec, bounded diagnostics, preserved grounding and deterministic verification | Done |
+| WL-1508J | Implement schema-enforcement admission and material completeness | WL-1508I, D-512 | Spec 0003; report 177: schema admission, qualification tooling, material completeness, qualifiers and deterministic verification | Done |
+| WL-1508K | Qualify an exact schema-enforcing provider | WL-1508J | Report 178: exact 0.33.3/qwen3.6 candidate qualified for the recorded lifecycle; report 194 supplies newer D-516 cold-health/schema evidence | Done |
+
+### Excluded proposals — not queued
+
+| ID | Proposal | Status | Requirement before scheduling |
+| --- | --- | --- | --- |
+| WL-1510 | Manager model interpretation | Obsolete | New scope and applicable model/privacy gates |
+| WL-1511 | Natural-language report generation | Obsolete | Separately scoped product proposal |
+| WL-1515 | Optional MCP adapter | Obsolete | Separate roadmap, ADR, exposure allowlist and threat review |
+
+Portfolio presentation remains an unscheduled draft; no later phase is started by this plan.

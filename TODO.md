@@ -2,6 +2,9 @@
 
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
+**Next task: WL-1508L.** Phases 0–15 are complete at `0.16.0`; the remaining optional
+employee pilot is listed in execution order under Phase 15. Excluded proposals are not queued.
+
 ## Phase-completion version rule
 
 When an exit-gate task is checked complete, bump the root and every workspace manifest to `0.<completed phase-gate count>.0` in the same change. Phase 0 maps to `0.1.0`, Phase 1 to `0.2.0`, and so on. `pnpm run phase:check` enforces this rule; the version does not authorize publishing, tagging, releasing, or deployment.
@@ -188,38 +191,63 @@ When an exit-gate task is checked complete, bump the root and every workspace ma
 - [x] `WL-1409` Execute multilingual integration, accessibility, responsive, visual, usability, security, and upgrade verification.
 - [x] `WL-1410` Pass the Phase 14 release gate, update evidence and documentation, and bump all workspace manifests to `0.15.0`.
 
-## Phase 15 — WorkLedger Insights (employee pilot reopened for future evaluation)
+## Phase 15 — WorkLedger Insights (deterministic release complete)
 
-- [x] `WL-1500` Ratify Insights product boundaries, role scopes, prohibited uses, retention, egress, privacy, evaluation, and staged-gate contracts.
+The accepted deterministic release is complete at `0.16.0`. The optional employee AI pilot has
+not passed and does not block that release. D-517 and
+[the execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md) define the
+remaining sequence. Keep failed attempts in reports, not in task titles.
+
+### Completed deterministic product
+
+- [x] `WL-1500` Ratify Insights product, authority, privacy and staged-gate contracts.
 - [x] `WL-1501` Implement the deterministic Insight Service and typed native-result contracts.
-- [x] `WL-1502` Implement employee balance-change, submission-blocker, leave-projection, and Today-explanation insights.
-- [x] `WL-1503` Build the accessible, role-scoped Insights route and native result presentation.
-- [x] `WL-1504` Add bounded contextual entry points from Today, My Time, My Balances, Requests, and Reports, then pass the Insights foundation sub-gate.
-- [x] `WL-1505` Implement a reusable read-only Insight tool registry with independent authorization and active-workspace scope.
-- [x] `WL-1506` Implement an AI-provider abstraction and optional local Ollama adapter with configuration, capability, and health checks.
-- [x] `WL-1507` Implement employee-only Ask My Ledger interpretation, tool orchestration, structured output, cancellation, and source attribution.
-- [ ] `WL-1508` Pass the employee local AI pilot sub-gate. Reopened on 2026-09-06 for a future evaluation; historical failures remain valid; selection-v1 B passed 18/18 after completed I; selection-v1 C failed 210/216; the D-515 B attempt stopped at provider health before employee cases, and D remains blocked and unexecuted. Depends on `WL-1508H`, `WL-1508I`, `WL-1508J`, `WL-1508K`, `WL-1508B`, `WL-1508C`, and `WL-1508D`.
-- [x] `WL-1508A` Qualify one replacement private model name and exact digest against the accepted startup-health, capability, privacy, and deployment boundaries.
-- [ ] `WL-1508B` Pass a fresh submission-actions and today-posted screen after J/K. Reopened for specs 0003/0004; J/K complete. Report 179: fresh submission-actions failed 6/9, all three Spanish cases missing the required pending-request action; today-posted and C not run. Report 180 diagnoses the action gap. D-513 instruction recovery (report 181) passed deterministic checks but its fresh first group failed 0/9 with reference-cardinality errors. Report 182 narrows failure to empty selected facts/sources; report 183/D-514 specifies minimum-evidence guidance and closed cardinality diagnostics. Report 184 implements and verifies D-514: 581 unit/component and 13 integration passes, 52 gated skips; compile/lint/scoped formatting pass. Fresh D-514 screen failed 0/9 in report 185: English/Spanish omit required count fact, German selects no facts; no today-posted/C or retry. Report 186 diagnoses a question-to-evidence acceptance mismatch. Report 187/D-515 and spec 0004 keep the question navigation-only, require both actions, accept only a nonempty subset of the month-count and pending-request facts, and specify generic source-overlap guidance plus a fixture-only required-group/allowlist contract. Report 188 implements and deterministically verifies D-515: 57 script, 592 unit/component and 13 integration tests pass; 52 gated integrations skip; typecheck, lint, build and scoped formatting pass. Report 189 records the separately continued D-515 attempt: exact candidate/isolation and source checks passed, but mandatory health returned unavailable/TIMEOUT before the golden loop, so zero employee cases ran, no fresh evaluation artifact exists, and no retry, today-posted or C followed. Report 190 diagnoses repeated model loading within the shared deadline; host-level latency causes remain unproven. Report 191/D-516 and spec 0005 select a finite 120-second idle residency for the first synthetic probe, zero for the second, and expiry fallback on failure, preserving cold qualification and the single deadline. Report 192 implements and deterministically verifies D-516; next is separately continued cold synthetic health-only evidence, then separately gated fresh schema qualification before B. Report 193 records cold synthetic health passed in 25,828 ms with verified cleanup; no employee cases or standalone challenges ran. Report 194 passes fresh cold health in 23,508 ms and 18/18 schema challenges with identity/source checks and verified cleanup. Report 195 fresh B passed health but failed submission-actions 3/9: German empty facts and Spanish pending-request action omission, three each. No today-posted/C or retry; cleanup passed. Next is bounded diagnosis before recovery or another attempt. Historical selection-v1 screen passed 9/9 then 9/9 on 2026-09-06 with unchanged controls/source hashes; preserved in `docs/171-wl-1508b-selection-v1-screen.md`.
-- [x] `WL-1508E` Qualify the remaining installed `qwen3-coder:30b` digest against the unchanged cold-start health, capability, privacy, and deployment boundaries before resuming `WL-1508B`.
-- [x] `WL-1508F` Replace model-selected Employee tool invocation with one server-owned, currently authorized registry execution and one schema-constrained provider response; run no real model case in this task.
-- [x] `WL-1508G` Reconcile the remaining Phase 15 roadmap around deterministic, provider-independent Insights after the employee local AI pilot closed without passing.
-- [x] `WL-1508H` Prepare and qualify the pinned qwen3.6 candidate. Completed: source review, Windows runbook, pinned toolchain/static guards, 29.265-second synthetic health probe, and verified cloud-disabled, proxy-free, loopback-only, executable-scoped outbound isolation. Evidence and rollback: `docs/166-wl-1508h-employee-pilot-rerun-preparation.md`. Zero employee cases ran.
-- [ ] `WL-1508C` Pass one uninterrupted 24-question, three-locale, three-repetition zero-tolerance evaluation. Selection-v1 run completed 2026-09-06: 210/216 accepted (207 grounded, 3 permitted safe rejections); three de-DE balance-projection golden omissions and three en-GB balance-closing fact-selection length failures. Stopped without retry/tuning. Diagnosis complete in `docs/173-wl-1508c-selection-failure-diagnosis.md`: provider schema bypass and runtime completeness gap; recovery designed under D-512/spec 0003; J/K then fresh B/C required. Evidence: `docs/172-wl-1508c-selection-v1-full-evaluation.md`. Legacy 213/216 remains historical failed evidence.
-- [x] `WL-1508I` Implement duplicate-safe provider selections and content-free field diagnostics under D-511/spec 0002. Completed: strict codec, unchanged final validators, safe logging/artifact validation, deterministic tests and build. Evidence and baseline formatting/integration limits: `docs/170-wl-1508i-duplicate-safe-generation.md`. No real model run; fresh B then C required.
-- [x] `WL-1508J` Implement spec 0003 schema-enforcement admission and completeness checks. Implementation and repairs: reports 174–176. Deterministic verification complete in `docs/177-wl-1508j-deterministic-verification.md`: 55 script, 566 unit/component and 13 integration passes; 52 gated skips. No real-model run; K remains required.
-- [x] `WL-1508K` Qualify exact installation/model/isolation under spec 0003. Report 178: source-reviewed Ollama 0.33.3/qwen3.6 portable candidate passed cold health (96.65 seconds), 18/18 synthetic challenges and final identity checks after firewall consent succeeded. All 21 checkpoints/final artifact validate; sources and isolation unchanged; owned candidate stopped. Fresh B then C remain required; deployment disabled.
-- [ ] `WL-1508D` Reconfirm non-model privacy, security, degraded-provider, trace, and accessibility evidence, synchronize project memory, and close `WL-1508` only after `WL-1508C` records 216/216. Reopened; blocked on `WL-1508C`.
+- [x] `WL-1502` Implement employee balance, submission, leave and Today insights.
+- [x] `WL-1503` Build the accessible role-scoped native Insights route.
+- [x] `WL-1504` Add bounded contextual entry points and pass the deterministic foundation gate.
+- [x] `WL-1508G` Reconcile provider-independent continuation after the historical pilot closure.
+- [x] `WL-1509` Implement deterministic Manager action summaries and team coverage.
+- [x] `WL-1512` Define fixed HR aggregate purposes and privacy/suppression contracts.
+- [x] `WL-1513` Implement privacy-suppressed deterministic HR aggregate Insights.
+- [x] `WL-1514` Implement isolated deterministic System Insights.
+- [x] `WL-1516` Pass the deterministic Phase 15 release gate and synchronize manifests at `0.16.0`.
 
-The employee pilot is reopened for future evaluation under decision `D-510`. No tests run in this
-planning task. Provider mode remains disabled and no model is approved for deployment. The completed
-deterministic `WL-1516` gate and `0.16.0` milestone remain intact. No new phase is needed for this
-bounded rerun; `WL-1510`, `WL-1511`, and `WL-1515` remain obsolete and excluded.
-- [x] `WL-1509` Implement deterministic manager action-summary and team-coverage insights.
-- [ ] `WL-1510` Extend AI interpretation to manager Insights with neutral availability semantics and no employment-decision recommendations. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
-- [ ] `WL-1511` Implement validated natural-language report/filter generation and native Open report, Apply filters, and Save view actions. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
-- [x] `WL-1512` Define purpose-specific deterministic HR aggregate contracts, value sources, privacy thresholds, cohort and complement suppression, and repeated-query controls.
-- [x] `WL-1513` Add HR aggregate Insights only after the dedicated privacy and authorization gate passes.
-- [x] `WL-1514` Add deterministic isolated System Insights using allowlisted technical diagnostics only and no employee or HR data.
-- [ ] `WL-1515` Evaluate an optional MCP adapter over explicitly allowlisted Insight tools; do not expose HR aggregate tools by default. Obsolete after the employee local AI pilot closed; removed from the accepted Phase 15 scope.
-- [x] `WL-1516` Pass the deterministic multilingual, accessibility, security, privacy, usability, provider-disabled, upgrade, and release gates and bump all workspace manifests to `0.16.0`.
+### Optional employee pilot — execution order
+
+Only L is ready. Complete each task's entry and exit criteria in the task board and execution plan.
+Planning these tasks does not start inference, authorize deployment, or claim a fix.
+
+- [ ] `WL-1508L` Make local verification and pilot invocation reproducible on Windows, including toolchain propagation, formatting, bounded workers, isolated artifacts and truthful exit/coverage reporting. **Ready; next task.** Mocked/deterministic verification only.
+- [ ] `WL-1508M` Resolve report-195 fact/action completeness in one bounded slice: focused diagnosis, one evidence-supported recovery, meaningful regressions and documentation. **Blocked on L.** If no defensible fix fits the accepted contract, record the blocker/defer decision instead of another experiment.
+- [ ] `WL-1508B` Run one fresh submission-actions 9/9 screen, then today-posted 9/9 only after the first group passes. **Blocked on L/M and current qualification.** Latest attempt failed 3/9 in report 195.
+- [ ] `WL-1508C` Pass balance-summary, balance-projection and balance-closing preflight (27 cases), then one unfiltered uninterrupted 216-case evaluation on the frozen configuration. **Blocked on fresh B.** Historical full runs failed; no combined partial passes.
+- [ ] `WL-1508D` Reconfirm applicable non-model privacy, security, fallback, localization and accessibility evidence and close the pilot. **Blocked on fresh C.** Deployment remains disabled.
+- [ ] `WL-1508` Pass the optional employee local AI pilot sub-gate. **Parent milestone; blocked on D**, not a separate implementation task.
+
+### Completed pilot infrastructure and historical qualification
+
+These checked tasks retain their recorded scope; they are not proof that the current model passes
+B/C, and their completion is not a reason to repeat them automatically.
+
+- [x] `WL-1505` Implement read-only Insight tools with current authorization and workspace scope.
+- [x] `WL-1506` Implement the disabled-by-default private provider adapter and health controls.
+- [x] `WL-1507` Implement optional employee interpretation, cancellation and grounded sources.
+- [x] `WL-1508A` Qualify the historical replacement candidate; evidence in report 159.
+- [x] `WL-1508E` Qualify the historical qwen3-coder candidate; evidence in report 159.
+- [x] `WL-1508F` Implement server-owned registry execution and constrained generation; spec 0001.
+- [x] `WL-1508H` Prepare the Windows pilot and qualify its recorded candidate; report 166.
+- [x] `WL-1508I` Implement duplicate-safe selections and bounded diagnostics; report 170.
+- [x] `WL-1508J` Implement schema admission, material completeness and deterministic checks; report 177.
+- [x] `WL-1508K` Qualify the exact schema-enforcing candidate for its recorded lifecycle; report 178.
+
+D-515 evidence acceptance and D-516 health residency are also implemented (reports 188/192).
+Report 194 contains the newer lifecycle qualification. L/M must assess evidence validity by inputs,
+not reopen completed tasks or infer qualification from a historical checkbox.
+
+### Excluded proposals — not queued
+
+- `WL-1510` Manager model interpretation — obsolete; requires a new scope decision.
+- `WL-1511` Natural-language report generation — obsolete; requires a separately scoped proposal.
+- `WL-1515` MCP adapter evaluation — obsolete; requires its own roadmap and threat review.
+
+Portfolio presentation remains an unscheduled draft. No new phase or version bump is introduced.

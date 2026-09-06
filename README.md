@@ -28,12 +28,14 @@ preferences, descriptor-driven presentation, localized workflows and generated o
 fluent-human German and Spanish approval, completed multilingual product-quality and database
 upgrade gates, and the signed `0.15.0` release milestone. Phase 15 adds deterministic, read-only,
 role-scoped Employee, Manager, privacy-suppressed HR aggregate, and isolated System Insights. The
-optional private model pilot closed without passing; provider mode remains disabled, no model is
-approved, and every accepted Insight route remains complete without Ollama. The signed
+optional private model pilot was reopened for bounded recovery and has not passed; provider mode
+remains disabled, no model is approved, and every accepted Insight route is complete without Ollama. The signed
 provider-disabled milestone is `0.16.0`.
 
 ## Current status
 
+- **Next task: WL-1508L.** The [bounded execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md)
+  separates verification tooling, one fact/action recovery, acceptance screens and pilot closure.
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) records the completed milestone, verified decisions, and residuals.
 - [TODO.md](TODO.md) and [docs/08-task-board.md](docs/08-task-board.md) define dependency-ordered
   work.
@@ -151,8 +153,10 @@ unless pnpm `11.20.0` is already the active package manager.
 | `pnpm run openapi:generate` | Build the API and regenerate the tracked OpenAPI 3.1 artifact from selected route schemas. |
 | `pnpm run openapi:check` | Reject drift between the tracked artifact and a fresh in-process OpenAPI document. |
 
-CI performs a frozen install, installs Chromium, starts the same PostgreSQL service, verifies the
-database lifecycle, and runs `pnpm run verify`. See [.github/workflows/ci.yml](.github/workflows/ci.yml).
+The documented CI workflow is currently missing from the checkout and tracked files. WL-1508L
+owns restoring a reproducible verification entry point, including CI configuration. Until that
+is resolved, use the local commands above; the historical gate reports are not evidence of a
+currently running CI job. See [the execution plan](docs/196-roadmap-reconciliation-and-pilot-execution-plan.md).
 
 ## Workspace boundaries
 

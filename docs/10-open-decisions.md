@@ -1,5 +1,8 @@
 # Open Decisions and Accepted Defaults
 
+**Current scheduling decision:** [D-517](#d-517--reconcile-the-roadmap-and-bound-further-pilot-work).
+Earlier next-step and authorization notes below are historical unless reaffirmed by current scope.
+
 ### 2026-08-28 — WL-1512 accepts two fixed HR aggregate purposes
 
 `docs/162-wl-1512-hr-aggregate-privacy-contract.md` is accepted as the HR aggregate addendum to ADR
@@ -1112,3 +1115,49 @@ updates synthetic mock routing and lifecycle failure coverage. Deterministic ver
 recorded there; no model attempt ran. Next is separately continued cold health-only evidence,
 followed by separately gated fresh schema qualification before B. The deadline and deployment
 boundary remain unchanged.
+
+### D-517 — Reconcile the roadmap and bound further pilot work
+
+**Date:** 2026-09-06
+
+**Status:** Accepted planning correction on the user's request to stop circular work and make tasks logical.
+
+Roadmap criteria for Phases 5/6/7/10 also remained unchecked despite their passing reports
+65/73/80/98 and canonical gate completion. Reconcile those historical lists with evidence,
+including report 87 for the completed post-lock correction path; no new gate is being passed.
+
+The planning files contradicted one another: the roadmap readiness paragraph still described
+Phase 10 at `0.10.0`; current status described the latest failed B at the top, a closed pilot in
+blockers, and report-168 diagnosis as Next task. B also accumulated several different implementation
+and evaluation scopes. The assumption used is that completed gate evidence and the latest scoped
+attempt determine current state; old report instructions describe history. Phase 15 is complete at
+`0.16.0` (report 165); report 195 is the current failed B attempt, and deployment stays disabled.
+
+Accept [the reconciled execution plan](196-roadmap-reconciliation-and-pilot-execution-plan.md):
+L makes local verification/invocation reproducible; M owns one complete fact/action recovery;
+B owns only its existing 9/9 then 9/9 screen; C adds 27 historical-failure regression cases before
+its unchanged uninterrupted 216-case gate; D owns evidence closure. The parent depends on D,
+and completed G depends on the historical closure decision, not parent success. The task board
+owns current dependencies; TODO mirrors it; the short status file identifies one next task.
+
+This supersedes historical next-step/reopening prose for scheduling only, including the B-to-C
+sequence in specs 0003/0004. It does not amend the B counts, golden fixtures, allowed safe
+rejections, full-matrix threshold, provider controls, source grounding, retention, permissions or
+deployment boundary. Prior qualification remains evidence for its exact inputs; requalification
+depends on actual input changes, with mandatory health still required for each invocation.
+
+Diagnosis, bounded design, implementation, meaningful deterministic tests and documentation belong
+to M as one slice within the accepted contract. Do not manufacture new approval stops between
+these steps based on an old report's authorization scope. A contract-changing proposal must still
+identify its amendment; the planning change itself authorizes no model run or system alteration.
+
+A failed next attempt does not automatically send work back to M. Preserve the evidence, identify
+what new fact could justify another recovery, and otherwise mark the optional pilot blocked or
+deferred without claiming completion. Do not replace failed evidence, lower acceptance, hardcode
+golden references or switch candidates until a separately bounded scope is established.
+
+The old project-status journal is preserved intact in
+[the historical snapshot](history/project-status-before-2026-09-06-roadmap-reconciliation.md).
+Obsolete WL-1510/WL-1511/WL-1515 remain excluded without executable checkboxes. Portfolio scope
+remains an unscheduled draft. No new phase, version, runtime implementation or model pass results
+from this decision.

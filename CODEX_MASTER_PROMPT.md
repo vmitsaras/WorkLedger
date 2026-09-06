@@ -1,5 +1,10 @@
 # Codex Master Prompt — Start WorkLedger Correctly
 
+**Historical bootstrap prompt:** Phase 0 and the later accepted phase gates are complete.
+The first-run instructions below are preserved for context, not the current task assignment.
+For ongoing work, use [PROJECT_STATUS.md](PROJECT_STATUS.md), [TODO.md](TODO.md), and
+[the task board](docs/08-task-board.md); do not restart bootstrap planning or its approval stops.
+
 Use Plan mode first.
 
 You are working in the WorkLedger repository. Treat the root `AGENTS.md`, `PROJECT_STATUS.md`, `TODO.md`, accepted ADRs, and the files under `docs/` as the project contract.
