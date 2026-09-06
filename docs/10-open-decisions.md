@@ -1008,3 +1008,18 @@ focused and full non-model verification (report 177). A stale boundary-count ass
 worker/test timeouts in broad overlapping runs were resolved with sequential two-worker invocations,
 without weakening timeouts or assertions. J is complete; K output preparation and exact candidate
 qualification remain open. Model execution flags stayed disabled; B/C/D and deployment remain gated.
+
+### D-513 — Question-relevant navigation coverage within B recovery
+
+On the user's request to start B after report 180, implement the bounded instruction recovery
+in report 181. Explicitly request each available navigation destination needed by the question,
+including multiple destinations without material limitations. Keep unrelated actions optional and
+retain all privacy/grounding/golden boundaries. This improves model instructions without claiming
+a trusted free-text intent classifier or deterministic semantic enforcement. No schema, runtime
+validation, context allowlist, golden expectation or inference control changes are accepted here.
+The failed screen stays preserved; a fresh bounded B assesses the new instruction before C.
+
+**D-513 execution outcome:** Report 181 records 52 deterministic passes and a single new first-group
+screen failing 0/9 with FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID after successful health. No
+retry or second group followed. The instruction change remains unvalidated pending diagnosis and
+revision/withdrawal review; B is not complete. Candidate stopped, deployment disabled.

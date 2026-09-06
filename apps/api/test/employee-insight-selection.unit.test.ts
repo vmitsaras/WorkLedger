@@ -24,6 +24,85 @@ const selection = {
 const wire = { locale: 'en-GB', statements: [selection] };
 const codec = createEmployeeInsightSelectionCodec(result, 'en-GB', text);
 
+test.each(SUPPORTED_LOCALES)(
+  'preserves optional navigation and exposes question-action omissions to golden acceptance in %s',
+  (locale) => {
+    const navigation = EMPLOYEE_INSIGHT_GOLDEN_SET.find(({ id }) => id === 'submission-actions');
+    if (navigation === undefined) throw new Error('Missing navigation fixture.');
+    const unrelated = result.actions[0];
+    if (unrelated === undefined) throw new Error('Missing optional navigation fixture.');
+    for (const reversed of [false, true]) {
+      for (const scenario of ['both', 'omitted', 'single', 'none'] as const) {
+        const required =
+          scenario === 'none'
+            ? []
+            : scenario === 'single'
+              ? ['action_submission_review']
+              : navigation.requiredActionReferences;
+        const selected =
+          scenario === 'both'
+            ? navigation.requiredActionReferences
+            : scenario === 'none'
+              ? []
+              : ['action_submission_review'];
+        const actions = scenario === 'none' ? [] : [...navigation.nativeResult.actions, unrelated];
+        if (reversed) actions.reverse();
+        const native = insightNativeResultSchema.parse({
+          ...navigation.nativeResult,
+          actions,
+          sources: [...navigation.nativeResult.sources, ...result.sources],
+        });
+        expect(native.limitations).toEqual([]);
+        const selectedFacts = native.facts.filter(
+          ({ reference }) => reference === 'fact_submission_count',
+        );
+        const selectedActions = native.actions.filter(({ reference }) =>
+          selected.includes(reference),
+        );
+        const sourceReferences = new Set(
+          [...selectedFacts, ...selectedActions].flatMap((item) => item.sourceReferences),
+        );
+        const localized = createEmployeeInsightSelectionCodec(
+          native,
+          locale,
+          EMPLOYEE_INSIGHT_SAFE_PROSE[locale],
+        );
+        const decoded = localized.decode({
+          locale,
+          statements: [
+            {
+              text: EMPLOYEE_INSIGHT_SAFE_PROSE[locale],
+              actionSelections: native.actions.map(({ reference }) => selected.includes(reference)),
+              factSelections: native.facts.map(
+                ({ reference }) => reference === 'fact_submission_count',
+              ),
+              limitationSelections: [],
+              sourceSelections: native.sources.map(({ reference }) =>
+                sourceReferences.has(reference),
+              ),
+            },
+          ],
+        });
+        if (!decoded.ok) throw new Error('Expected valid navigation structure.');
+        const grounded = validateGroundedInterpretation(decoded.candidate, native, locale);
+        expect(grounded.statements[0]?.actionReferences).toEqual(
+          selectedActions.map((item) => item.reference),
+        );
+        expect(grounded.statements[0]?.actionReferences).not.toContain(unrelated.reference);
+        const errors = evaluateGoldenInterpretation(
+          { ...navigation, requiredActionReferences: required },
+          grounded,
+        );
+        expect(errors).toEqual(
+          scenario === 'omitted'
+            ? ['Missing required action reference action_submission_requests.']
+            : [],
+        );
+      }
+    }
+  },
+);
+
 test.each(SUPPORTED_LOCALES)('preserves golden acceptance and shared sources in %s', (locale) => {
   const localized = createEmployeeInsightSelectionCodec(
     result,

@@ -304,6 +304,8 @@ function systemInstruction(): string {
     'Use only facts in the supplied current Insight. Never calculate, infer a missing rule, give legal or health advice, rank, score, recommend a decision, or propose a write action.',
     'Return only the required JSON object in the requested locale.',
     'Return exactly one statement. Cite every native fact needed to answer the question and every material limitation.',
+    'When the question asks where to view or review information, select the supplied read-only navigation action for each requested destination. Cover every requested destination, including questions asking about more than one. Use the action code, destination and source relationships to identify the relevant entries.',
+    'Keep actions unrelated to the question unselected unless required by a material limitation. If no supplied action matches a requested destination, do not invent one. Navigation actions do not authorize a write or an approval.',
     'For every material limitation, cite every relatedFactReference supplied with that limitation.',
     'For every material limitation, cite every relatedActionReference supplied with that limitation.',
     'For every material limitation, select every related source supplied with that limitation.',
@@ -322,6 +324,7 @@ function finalResponseInstruction(locale: SupportedLocale): string {
     `Use this exact property structure: {"locale":"${locale}","statements":[{"actionSelections":[],"factSelections":[],"limitationSelections":[],"sourceSelections":[],"text":""}]}.`,
     'Replace each empty array with exactly one boolean per current entry in that collection, ordered by selectionIndex. Use an empty array only for an empty collection. Keep every property and add no properties.',
     'Select every material limitation and its related facts, actions and sources using their positions in the corresponding collections.',
+    'For navigation questions, select an available action for every destination requested in the question, even when there are no material limitations. Leave unrelated optional actions unselected; never invent an action or select all actions merely because they are available.',
     'Select a source if and only if a selected fact, action or limitation requires it. Do not select unrelated sources.',
     `Set text to exactly this sentence, including punctuation: ${proseExample}`,
   ].join(' ');

@@ -4,20 +4,19 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — action omission diagnosed; question-relevant action coverage design next
+**Active task:** WL-1508B — navigation recovery failed; reference-cardinality diagnosis next
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
 
-Report 180 completes the action-omission diagnosis: both navigation actions reach the model and
-positional decoding preserves them. The no-limitation fixture activates no material-action checks,
-while the prompt explicitly requires question-relevant facts but actions only through material
-limitations. The Spanish pending-request omission therefore passes runtime grounding and fails
-independent golden acceptance. Its locale-specific model cause is not established. No tests or
-inference ran during diagnosis. Next: design question-relevant action coverage without weakening
-privacy, optional-action semantics or golden checks. B stays failed/open at 6/9; today-posted/C/D
-remain gated, K complete and deployment disabled at 0.16.0.
+Report 181 records D-513 navigation-coverage instruction changes and deterministic checks:
+52 focused tests, compilation and repository lint/guards passed. One fresh B submission-actions
+group then failed 0/9 across all locales with FINAL_SCHEMA_REFERENCE_CARDINALITY_INVALID after
+successful health. No retry, today-posted or C followed; candidate stopped. This instruction is
+an unvalidated working change, not a recovered B. Diagnose the cardinality regression and decide
+whether to revise or withdraw it before another model run. Report 179's earlier 6/9 failure and
+report 180 diagnosis remain preserved. B/C/D stay open, K complete and deployment disabled at 0.16.0.
 
 Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
 The accepted recovery contract remains spec 0003/D-512.
