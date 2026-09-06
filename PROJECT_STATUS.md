@@ -4,19 +4,19 @@
 **Project readiness:** Stage 5 of 5 — Production and UI release gates complete
 **Phase progress:** Phase 15 complete — 10 of 10 accepted deterministic tasks complete
 **Current milestone:** Phase 15 deterministic provider-disabled gate complete at `0.16.0`
-**Active task:** WL-1508B — fresh employee screen next after completed K qualification
+**Active task:** WL-1508B — diagnose failed Spanish submission-actions completeness
 **Status:** `WL-1516` complete; optional employee pilot reopened for future evaluation; provider disabled
 **Last verified:** 2026-08-29
 
 ## Current objective
 
-WL-1508K is complete in report 178. Windows firewall consent succeeded on continuation, and the
-exact source-reviewed Ollama 0.33.3/qwen3.6 portable candidate passed cold health in 96.65 seconds,
-18/18 synthetic schema challenges and final identity checks. All 21 checkpoints and the final
-artifact validate; source hashes and isolation remained unchanged. The owned candidate was stopped
-afterward. Fresh B is next; no employee B/C run occurred, D remains gated, and deployment stays
-disabled at 0.16.0. Preparation passed 44 focused unit and 57 script tests plus compilation/lint;
-J's complete deterministic evidence remains in report 177.
+Fresh WL-1508B failed its first group in report 179: submission-actions passed 6/9, with all
+three Spanish cases omitting the required pending-request action. Runtime outcomes were SUCCESS
+with null provider/validation failure codes; independent golden acceptance rejected the omission.
+No retry, today-posted group or C run followed. Exact K-qualified controls, source hashes and
+isolation were unchanged; the owned candidate was stopped. B remains open for diagnosis, C/D
+gated and deployment disabled at 0.16.0. K remains complete in report 178; J's deterministic
+evidence remains in report 177.
 
 Implementation, pretest review and fixture-repair history are preserved in reports 174–176.
 The accepted recovery contract remains spec 0003/D-512.
