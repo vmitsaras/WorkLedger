@@ -3,7 +3,9 @@
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
 **Current status: WL-1508N complete under the best-effort English support amendment; full local verification passed.** Phases 0–15 are complete at `0.16.0`. No implementation task is ready;
-the legacy optional pilot remains deferred. Excluded proposals are not queued.
+the legacy optional pilot remains deferred. Excluded proposals are not queued. The next recommended
+slice is a decision/readiness slice for controlled local provider enablement only if the operator
+chooses to use the English suggestion feature locally; it is not deployment authorization.
 
 ## Phase-completion version rule
 
@@ -215,6 +217,19 @@ remaining sequence. Keep failed attempts in reports, not in task titles.
 ### English-only optional AI enhancement
 
 - [x] `WL-1508N` Implement and evaluate optional local AI topic suggestions for Employee Insights. **Complete under D-520 / ADR 0015's best-effort English amendment.** [Report 201](docs/201-wl-1508n-best-effort-english-suggestions.md): truthful English copy, confirmation/native authority, 71 script, 619 unit/component, 64 PostgreSQL integration and 52 browser tests passed; build/budgets passed. Separate assessment of report 200's unchanged 60 responses passes the amended criteria: English 40/40, p95 510 ms; UNKNOWN 12/20 remains an explicit strict failure. Cold first request 20.754 seconds. No fresh inference or deployment; original failures preserved in reports 199–200. No implementation task is ready; controlled provider enablement is an unscheduled operator decision.
+
+### Follow-up register — not queued
+
+- Controlled local provider enablement/readiness — recommended next slice only after explicit
+  operator scheduling. Depends on current source identity, provider-disabled default, private local
+  origin, exact runtime/model tuple, health/isolation checks, rollback/support wording and no
+  deployment claim.
+- Legacy interpreter resumption — blocked on an accepted bounded question-intent amendment or new
+  causal defect evidence; do not replay the same prompt/model attempt.
+- Remote CI verification — local WL-1508N evidence passed, but no remote CI run is recorded.
+- Broader D-502 assistive-technology/browser coverage and unrecorded authoritative partial-day
+  overlap signals — remain limitations until separately scoped.
+- Portfolio presentation — remains an unscheduled draft and has no active task ID.
 
 ### Legacy optional employee interpretation pilot — deferred
 

@@ -34,6 +34,39 @@ The optional employee AI pilot has not passed and provider deployment remains di
 and the task board. No implementation task is ready; the earlier execution plan governs only the deferred legacy interpreter.
 Historical evaluation attempts do not reopen completed product phases.
 
+## Current roadmap update — 2026-09-21
+
+Completed work:
+
+- Phases 0–15 remain complete at `0.16.0`.
+- The accepted deterministic Insights release remains provider-disabled and complete.
+- WL-1508N is complete as a bounded best-effort English topic-suggestion enhancement. It preserves
+  confirmation, manual native execution and localized native results; unsupported and ambiguous
+  misses remain disclosed rather than hidden.
+
+Newly discovered or confirmed follow-up work:
+
+- Controlled local provider enablement is useful only as a separate operator decision/readiness
+  slice. It must verify the current source identity, private local origin, exact runtime/model
+  tuple, health/isolation, rollback/support wording and the provider-disabled default. It does not
+  authorize deployment.
+- Legacy interpreter resumption remains blocked unless the product accepts a bounded
+  user-selected question-intent contract or new causal defect evidence appears inside the current
+  contract.
+- Remote CI has not run for the WL-1508N closure; local evidence is current, remote evidence is not.
+- Broader D-502 manual assistive-technology/browser coverage, exact partial-day overlap signals
+  and other unrecorded authoritative facts remain limitations until separately scoped.
+- Portfolio presentation remains a draft with no active task ID.
+
+Dependencies and next recommended slice:
+
+The next recommended slice is **controlled local provider enablement readiness**, only if the
+operator wants to activate English suggestions locally. Treat it as a decision and evidence slice:
+confirm current provider-disabled behavior, local-only runtime identity, health and isolation,
+support copy, rollback and no deployment claim before changing runtime configuration. If the
+operator does not choose that slice, the roadmap should stay closed with no ready implementation
+task.
+
 ---
 
 # Phase 0 — Product and Domain Contract

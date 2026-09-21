@@ -3,15 +3,16 @@
 **Current phase:** Phase 15 — deterministic WorkLedger Insights complete
 **Project readiness:** Stage 5 of 5 — recorded production and UI release gates complete
 **Current milestone:** `0.16.0`; all 16 phase gates complete
-**Current task:** WL-1508N complete — best-effort English-only local AI topic suggestions
+**Current task:** Roadmap synchronized after WL-1508N closure
 **Execution state:** Amended contract and implementation verified; no ready implementation task
 **Legacy interpretation pilot:** Deferred; M and parent unchecked; B/C/D blocked
 **Provider deployment:** Disabled
-**Last verified update:** 2026-09-06
+**Last verified update:** 2026-09-21
 
 ## Current objective
 
-The English-only topic-suggestion enhancement is complete under D-520 / ADR 0015's best-effort amendment.
+Keep the roadmap current after the English-only topic-suggestion enhancement completed under D-520 /
+ADR 0015's best-effort amendment.
 An English question suggests one of four employee topics. The person confirms the topic, chooses
 its period, and explicitly runs the independently authorized native Insight. AI receives no native
 records and cannot write an answer, calculate a balance or execute a tool. Native results and the
@@ -70,9 +71,27 @@ push, release or provider deployment was performed.
 - Portfolio presentation remains an unscheduled [draft](docs/drafts/portfolio-presentation.md).
   Obsolete WL-1510/WL-1511/WL-1515 are excluded from the executable queue.
 
+## Roadmap follow-up register
+
+These items are not ready implementation tasks. They are the current dependencies discovered or
+confirmed while reconciling the roadmap after WL-1508N:
+
+- Controlled local provider enablement remains the recommended next slice only if the operator
+  explicitly wants to use the English suggestion feature locally. It must be a readiness/decision
+  slice first: confirm provider-disabled default, current source identity, private local origin,
+  exact runtime/model tuple, health/isolation, rollback, support wording and no deployment claim.
+- Legacy interpreter resumption is blocked unless a new product decision accepts a bounded
+  user-selected question-intent contract, or new causal defect evidence appears inside the current
+  contract. Replaying prompt experiments is not a dependency or a task.
+- Remote CI has not run for the WL-1508N closure; local verification is the current evidence.
+- Broader D-502 manual assistive-technology/browser coverage, exact partial-day overlap signals
+  and other unrecorded authoritative facts remain limitations, not hidden defects.
+- Portfolio presentation remains draft-only and requires a separate scheduling decision.
+
 ## Project memory
 
-TODO, the task board, roadmap, D-520, ADR 0015 and reports 199–201 track the English-only slice.
+TODO, the task board, roadmap, D-520, ADR 0015 and reports 199–201 track the English-only slice
+and the unscheduled follow-up register.
 Completed provider infrastructure A/E/F/G/H/I/J/K/L retains its historical scope. Earlier source,
 model and lifecycle qualification results do not automatically qualify a changed purpose.
 Detailed reports retain failed and stopped attempts; only current evidence establishes a pass.

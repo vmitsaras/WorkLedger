@@ -2,6 +2,8 @@
 
 **Current status: WL-1508N complete under the best-effort English support amendment; full local verification passed.** No implementation task is ready. Legacy M/B/C/D remain deferred; provider enablement is an unscheduled operator decision.
 Completed phases and excluded proposals are not pending assignments.
+The next recommended slice is a controlled local provider enablement readiness decision only if
+the operator wants to use the English suggestion feature locally; it is not deployment approval.
 
 ## Status values
 
@@ -293,6 +295,16 @@ disabled, with no model approved for deployment.
 | ID | Task | Depends on | Acceptance evidence | Status |
 | --- | --- | --- | --- | --- |
 | WL-1508N | Implement and evaluate optional local AI topic suggestions for Employee Insights | D-520 / ADR 0015 best-effort English amendment; completed deterministic Insights and provider controls | [Report 201](201-wl-1508n-best-effort-english-suggestions.md): full local verification passed, truthful English copy and mandatory confirmation/native execution. Separate assessment of report 200's existing 60 responses passes amended criteria: English 40/40, p95 510 ms. UNKNOWN 12/20 remains a strict failure; cold first request 20.754 seconds. Original artifacts preserved, no fresh inference or deployment | Done — bounded best-effort English support |
+
+### Follow-up register — not queued
+
+| Item | Dependency before scheduling | Current status |
+| --- | --- | --- |
+| Controlled local provider enablement/readiness | Explicit operator decision, provider-disabled default, current source identity, private local origin, exact runtime/model tuple, health/isolation checks, rollback/support wording, and no deployment claim | Recommended next slice if the operator wants local English suggestions active |
+| Legacy interpreter resumption | Accepted bounded question-intent amendment or new causal defect evidence inside the current contract | Blocked; do not replay the same prompt/model attempt |
+| Remote CI verification | Remote workflow run on the current checkout | Not recorded; local WL-1508N evidence remains current |
+| Broader manual assistive-technology/browser coverage and unrecorded partial-day overlap signals | Separate scope and authoritative facts | Limitation, not a hidden ready task |
+| Portfolio presentation | Separate scheduling decision | Draft only |
 
 ### Legacy optional employee interpretation pilot — deferred
 
