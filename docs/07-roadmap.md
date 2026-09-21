@@ -31,7 +31,7 @@ Phases 0–15 have passed their accepted exit gates; the workspace version is `0
 The optional employee AI pilot has not passed and provider deployment remains disabled.
 
 **Current status: WL-1508N complete under the best-effort English support amendment (D-520 / ADR 0015); full local verification passed.** See [report 201](201-wl-1508n-best-effort-english-suggestions.md)
-and the task board. No implementation task is ready; the earlier execution plan governs only the deferred legacy interpreter.
+and the task board. WL-1508O readiness is complete with a no-go; WL-1508P diagnosis and startup-policy review are complete; no next task is queued. The earlier execution plan governs only the deferred legacy interpreter.
 Historical evaluation attempts do not reopen completed product phases.
 
 ## Current roadmap update — 2026-09-21
@@ -46,10 +46,9 @@ Completed work:
 
 Newly discovered or confirmed follow-up work:
 
-- Controlled local provider enablement is useful only as a separate operator decision/readiness
-  slice. It must verify the current source identity, private local origin, exact runtime/model
-  tuple, health/isolation, rollback/support wording and the provider-disabled default. It does not
-  authorize deployment.
+- WL-1508O verified identity/isolation and prepared rollback/support configuration, but cold
+  topic health timed out at 30 seconds. [Report 202](202-local-provider-readiness.md) records
+  the no-go and successful cleanup. Provider remains disabled.
 - Legacy interpreter resumption remains blocked unless the product accepts a bounded
   user-selected question-intent contract or new causal defect evidence appears inside the current
   contract.
@@ -60,12 +59,9 @@ Newly discovered or confirmed follow-up work:
 
 Dependencies and next recommended slice:
 
-The next recommended slice is **controlled local provider enablement readiness**, only if the
-operator wants to activate English suggestions locally. Treat it as a decision and evidence slice:
-confirm current provider-disabled behavior, local-only runtime identity, health and isolation,
-support copy, rollback and no deployment claim before changing runtime configuration. If the
-operator does not choose that slice, the roadmap should stay closed with no ready implementation
-task.
+[Report 203](203-cold-health-startup-policy.md) completes WL-1508P by diagnosis and explicit
+disposition. Retain the bounded startup policy; no new task is queued. Separate startup-budget
+design and qualification is proposed before any later activation decision.
 
 ---
 
@@ -673,8 +669,8 @@ failed. The user's continuation of the recommended best-effort scope is recorded
 [report 201](201-wl-1508n-best-effort-english-suggestions.md). A separate assessment of the same
 60 responses passes the amended criteria; all cases and misses remain visible, with no fresh
 inference or improved abstention claim. Updated copy, confirmation/manual recovery and the full
-local quality gate passed, completing N. No implementation task is ready; controlled local provider
-enablement remains an unscheduled operator decision. Earlier failures remain in reports 199–200.
+local quality gate passed, completing N. Report 202 subsequently completed local readiness with
+a cold-health no-go; WL-1508P diagnosis/policy is complete in report 203; no next task is queued. Earlier failures remain in reports 199–200.
 
 ## Legacy employee interpretation pilot sub gate
 

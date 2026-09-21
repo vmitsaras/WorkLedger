@@ -1,9 +1,8 @@
 # WorkLedger Detailed Task Board
 
-**Current status: WL-1508N complete under the best-effort English support amendment; full local verification passed.** No implementation task is ready. Legacy M/B/C/D remain deferred; provider enablement is an unscheduled operator decision.
+**Current status: WL-1508N complete under the best-effort English support amendment; full local verification passed.** WL-1508O readiness is complete with a no-go; WL-1508P diagnosis and startup-policy review are complete; no next task is queued. Legacy M/B/C/D remain deferred; provider stays disabled.
 Completed phases and excluded proposals are not pending assignments.
-The next recommended slice is a controlled local provider enablement readiness decision only if
-the operator wants to use the English suggestion feature locally; it is not deployment approval.
+Report 203 records the diagnosis and retained startup policy; enablement remains NO-GO.
 
 ## Status values
 
@@ -296,11 +295,18 @@ disabled, with no model approved for deployment.
 | --- | --- | --- | --- | --- |
 | WL-1508N | Implement and evaluate optional local AI topic suggestions for Employee Insights | D-520 / ADR 0015 best-effort English amendment; completed deterministic Insights and provider controls | [Report 201](201-wl-1508n-best-effort-english-suggestions.md): full local verification passed, truthful English copy and mandatory confirmation/native execution. Separate assessment of report 200's existing 60 responses passes amended criteria: English 40/40, p95 510 ms. UNKNOWN 12/20 remains a strict failure; cold first request 20.754 seconds. Original artifacts preserved, no fresh inference or deployment | Done — bounded best-effort English support |
 
-### Follow-up register — not queued
+### Local readiness follow-up
+
+| ID | Task | Depends on | Acceptance evidence | Status |
+| --- | --- | --- | --- | --- |
+| WL-1508O | Review controlled local provider readiness | WL-1508N; explicit user scheduling | [Report 202](202-local-provider-readiness.md): identity/isolation checks; cold health TIMEOUT at 30 seconds; zero cases; verified cleanup; build and 56 tests passed; rollback/support proposal | Done — enablement NO-GO |
+| WL-1508P | Diagnose cold-health deadline failure and define supported startup policy | WL-1508O | [Report 203](203-cold-health-startup-policy.md): first-probe timeout after 25.82-second runner startup; bounded policy retained; 56 tests passed; explicit no-go disposition | Done — enablement NO-GO |
+
+### Other follow-up register — not queued
 
 | Item | Dependency before scheduling | Current status |
 | --- | --- | --- |
-| Controlled local provider enablement/readiness | Explicit operator decision, provider-disabled default, current source identity, private local origin, exact runtime/model tuple, health/isolation checks, rollback/support wording, and no deployment claim | Recommended next slice if the operator wants local English suggestions active |
+| Controlled local provider enablement | Resolve report 202 cold-health failure; explicit enablement authorization; fresh identity/isolation and rollback | NO-GO; readiness review complete |
 | Legacy interpreter resumption | Accepted bounded question-intent amendment or new causal defect evidence inside the current contract | Blocked; do not replay the same prompt/model attempt |
 | Remote CI verification | Remote workflow run on the current checkout | Not recorded; local WL-1508N evidence remains current |
 | Broader manual assistive-technology/browser coverage and unrecorded partial-day overlap signals | Separate scope and authoritative facts | Limitation, not a hidden ready task |

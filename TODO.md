@@ -2,10 +2,8 @@
 
 This compact list mirrors `docs/08-task-board.md`. Keep task IDs stable.
 
-**Current status: WL-1508N complete under the best-effort English support amendment; full local verification passed.** Phases 0–15 are complete at `0.16.0`. No implementation task is ready;
-the legacy optional pilot remains deferred. Excluded proposals are not queued. The next recommended
-slice is a decision/readiness slice for controlled local provider enablement only if the operator
-chooses to use the English suggestion feature locally; it is not deployment authorization.
+**Current status: WL-1508N complete under the best-effort English support amendment; full local verification passed.** Phases 0–15 are complete at `0.16.0`. WL-1508O readiness is complete with a no-go at the 30-second cold-health deadline.
+WL-1508P diagnosis and startup-policy review are complete; no next task is queued. Legacy work stays deferred and provider disabled.
 
 ## Phase-completion version rule
 
@@ -216,14 +214,17 @@ remaining sequence. Keep failed attempts in reports, not in task titles.
 
 ### English-only optional AI enhancement
 
-- [x] `WL-1508N` Implement and evaluate optional local AI topic suggestions for Employee Insights. **Complete under D-520 / ADR 0015's best-effort English amendment.** [Report 201](docs/201-wl-1508n-best-effort-english-suggestions.md): truthful English copy, confirmation/native authority, 71 script, 619 unit/component, 64 PostgreSQL integration and 52 browser tests passed; build/budgets passed. Separate assessment of report 200's unchanged 60 responses passes the amended criteria: English 40/40, p95 510 ms; UNKNOWN 12/20 remains an explicit strict failure. Cold first request 20.754 seconds. No fresh inference or deployment; original failures preserved in reports 199–200. No implementation task is ready; controlled provider enablement is an unscheduled operator decision.
+- [x] `WL-1508N` Implement and evaluate optional local AI topic suggestions for Employee Insights. **Complete under D-520 / ADR 0015's best-effort English amendment.** [Report 201](docs/201-wl-1508n-best-effort-english-suggestions.md): truthful English copy, confirmation/native authority, 71 script, 619 unit/component, 64 PostgreSQL integration and 52 browser tests passed; build/budgets passed. Separate assessment of report 200's unchanged 60 responses passes the amended criteria: English 40/40, p95 510 ms; UNKNOWN 12/20 remains an explicit strict failure. Cold first request 20.754 seconds. No fresh inference or deployment; original failures preserved in reports 199–200. Report 202 records the later readiness no-go; application enablement remains unauthorized.
 
-### Follow-up register — not queued
+### Local readiness follow-up
 
-- Controlled local provider enablement/readiness — recommended next slice only after explicit
-  operator scheduling. Depends on current source identity, provider-disabled default, private local
-  origin, exact runtime/model tuple, health/isolation checks, rollback/support wording and no
-  deployment claim.
+- [x] `WL-1508O` Review controlled local provider readiness. [Report 202](docs/202-local-provider-readiness.md): identity/isolation verified, cold health TIMEOUT at 30 seconds, cleanup passed; build and 56 focused tests passed. Readiness decision complete, enablement NO-GO.
+- [x] `WL-1508P` Diagnose the recorded cold-health deadline failure and define a supported startup policy. [Report 203](docs/203-cold-health-startup-policy.md): first capability probe timed out after runner startup consumed most of the budget; existing bounded policy retained, 56 tests passed. Complete by explicit disposition; enablement remains NO-GO. Separate startup-budget design/qualification is proposed, not queued.
+
+### Other follow-up register — not queued
+
+- Controlled local provider enablement — blocked by report 202's cold-health failure; readiness
+  review is complete. Requires resolved startup behavior and separate enablement authorization.
 - Legacy interpreter resumption — blocked on an accepted bounded question-intent amendment or new
   causal defect evidence; do not replay the same prompt/model attempt.
 - Remote CI verification — local WL-1508N evidence passed, but no remote CI run is recorded.

@@ -3,13 +3,23 @@
 **Current phase:** Phase 15 — deterministic WorkLedger Insights complete
 **Project readiness:** Stage 5 of 5 — recorded production and UI release gates complete
 **Current milestone:** `0.16.0`; all 16 phase gates complete
-**Current task:** Roadmap synchronized after WL-1508N closure
-**Execution state:** Amended contract and implementation verified; no ready implementation task
+**Current task:** WL-1508P diagnosis and startup-policy review complete
+**Execution state:** Local enablement NO-GO: cold health timed out at the application deadline
 **Legacy interpretation pilot:** Deferred; M and parent unchecked; B/C/D blocked
 **Provider deployment:** Disabled
 **Last verified update:** 2026-09-21
 
-## Current objective
+## Current readiness decision
+
+[Report 202](docs/202-local-provider-readiness.md) completes WL-1508O. Exact portable
+binary/model identity and isolation checks passed, but fresh cold topic health timed out
+after 30,026 ms at the application's 30-second deadline. Zero topic cases ran; owned
+process/listener cleanup passed. The pinned build and 56 focused tests passed. Provider
+enablement remains disabled. [Report 203](docs/203-cold-health-startup-policy.md) completes
+WL-1508P: the first capability probe timed out after runner startup consumed most of the
+budget. Existing bounded policy is retained; no next task is queued.
+
+## Completed enhancement
 
 Keep the roadmap current after the English-only topic-suggestion enhancement completed under D-520 /
 ADR 0015's best-effort amendment.
@@ -55,9 +65,9 @@ push, release or provider deployment was performed.
   scope amendment; guaranteed abstention was explicitly removed from completion criteria, with
   all 60 cases and observed misses retained. Manual selection, confirmation and native authority
   remain mandatory. Cold startup remains a measured limitation, not a promised response time.
-- No implementation task is ready. A controlled local provider enablement is a possible next
-  operator decision, not an authorized deployment or queued model replay. The provider stays
-  disabled; the 8192 context override applied only to the isolated evaluation.
+- WL-1508O readiness and WL-1508P diagnosis/policy review are complete with a no-go decision.
+  No next task is queued. Provider stays disabled; context 8192 was process-local in
+  the evaluation and readiness check, never a persistent application setting.
 - The legacy M/B/C/D queue is deferred under D-519. N is a separate, smaller accepted contract;
   it does not relabel old semantic failures or close parent WL-1508. Reports 196–198 retain the
   old resumption criteria and dependency order.
@@ -73,13 +83,10 @@ push, release or provider deployment was performed.
 
 ## Roadmap follow-up register
 
-These items are not ready implementation tasks. They are the current dependencies discovered or
-confirmed while reconciling the roadmap after WL-1508N:
+WL-1508P is complete. Follow-ups remain unscheduled or blocked:
 
-- Controlled local provider enablement remains the recommended next slice only if the operator
-  explicitly wants to use the English suggestion feature locally. It must be a readiness/decision
-  slice first: confirm provider-disabled default, current source identity, private local origin,
-  exact runtime/model tuple, health/isolation, rollback, support wording and no deployment claim.
+- WL-1508P: completed in report 203; retained bounded startup and an explicit no-go disposition. A separate startup-budget design and qualification is proposed but unscheduled.
+  Local enablement depends on resolving that prerequisite and explicit enablement authorization.
 - Legacy interpreter resumption is blocked unless a new product decision accepts a bounded
   user-selected question-intent contract, or new causal defect evidence appears inside the current
   contract. Replaying prompt experiments is not a dependency or a task.
@@ -90,8 +97,7 @@ confirmed while reconciling the roadmap after WL-1508N:
 
 ## Project memory
 
-TODO, the task board, roadmap, D-520, ADR 0015 and reports 199–201 track the English-only slice
-and the unscheduled follow-up register.
+TODO, the task board, roadmap, D-520, ADR 0015 and reports 199–203 track the English-only slice, readiness no-go and completed startup-policy review.
 Completed provider infrastructure A/E/F/G/H/I/J/K/L retains its historical scope. Earlier source,
 model and lifecycle qualification results do not automatically qualify a changed purpose.
 Detailed reports retain failed and stopped attempts; only current evidence establishes a pass.

@@ -1284,3 +1284,31 @@ strict result remains failed. Confirmation, native authority, privacy, output va
 supported-topic accuracy, latency and provider controls are unchanged. [Report 201](201-wl-1508n-best-effort-english-suggestions.md)
 records the copy changes, separate assessment of existing evidence and verification. No new model
 run, deployment or legacy pilot closure is authorized by this continuation.
+
+## D-521 — Local provider readiness disposition
+
+**2026-09-21 — Readiness review complete; enablement NO-GO.** The user explicitly continued
+the recommended local readiness slice. WL-1508O covers identity, private origin, isolation,
+purpose-specific health, support wording and rollback; it does not authorize application
+activation. [Report 202](202-local-provider-readiness.md) records the single isolated attempt:
+cold health TIMEOUT at 30 seconds, zero topic cases and verified owned-process cleanup.
+
+The historical evaluator's 120-second deadline and successful sample do not prove readiness
+at the application's unchanged 30-second limit. Preserve that distinction, the original
+semantic evidence and the failure. WL-1508P is the single ready next task: diagnose recorded
+cold-start evidence and define a supported startup policy. No automatic retry, deadline
+increase, model change, prewarming, semantic matrix replay or enablement is selected.
+This reconciles the former unscheduled-readiness entries with the user's explicit scheduling;
+it changes no accepted domain rule, phase gate or version.
+
+## D-522 — Cold-health diagnosis and retained startup policy
+
+**2026-09-21 — WL-1508P complete by explicit disposition.** The user scheduled WL-1508P.
+[Report 203](203-cold-health-startup-policy.md) reviews preserved logs and source: runner
+startup took 25.82 seconds, the first capability chat timed out and the schema probe never ran.
+This locates budget consumption without proving a performance root cause or replacement limit.
+Retain the existing shared deadline, asynchronous optional-provider startup, generation gate,
+manual fallback and no automatic retry. Local enablement stays NO-GO. Successful health unloads
+the model, so prewarming alone is insufficient as a lifecycle policy. No runtime or timeout
+change is accepted. Separate startup-budget design and cold/first-use/idle qualification is a
+proposed unscheduled follow-up; no new task is queued. Historical failure artifacts remain intact.

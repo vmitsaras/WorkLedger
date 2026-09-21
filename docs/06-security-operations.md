@@ -511,3 +511,28 @@ or tools are included. Typed questions can themselves contain sensitive informat
 request-memory, egress and no-content-logging restrictions apply. Topic IDs are untrusted suggestions;
 explicit user selection and a separate authorized native run own the result. The legacy interpret
 endpoint is unavailable even when the provider is configured. Default deployment stays disabled.
+
+### Local readiness and rollback
+
+[Report 202](202-local-provider-readiness.md) records the 2026-09-21 local readiness review.
+The exact isolated candidate passed identity/isolation checks but failed cold topic health
+at the application's 30-second deadline. Local enablement is NO-GO pending a supported
+startup policy; the 120-second historical evaluator does not qualify that application limit.
+The installed wildcard listener on port 11434 is not the proposed private endpoint.
+
+For a later explicitly enabled session, rollback requires provider mode `disabled` **and**
+removing or blanking every `WORKLEDGER_OLLAMA_*` value before API restart. Disabled mode
+rejects populated provider-specific fields. Verify disabled health and native manual Insights,
+then stop only the verified session-owned runtime and check process/listener cleanup.
+Retain outbound blocks and leave unrelated services untouched. Report 202 contains the exact
+candidate proposal and support wording; no persistent runtime configuration is enabled.
+
+### Startup policy after WL-1508P
+
+[Report 203](203-cold-health-startup-policy.md) locates the recorded timeout in the first
+capability probe, after 25.82 seconds of runner startup. Retain the 30-second local proposal:
+identity and both probes share one budget; no automatic retries or prewarming. The API listens
+before asynchronous health; unready suggestions remain unavailable while native Insights work.
+Successful health requests model unload, so first-use and idle-reload behavior also require
+qualification. A startup-only budget is an unscheduled design proposal, not an enabled setting.
+The performance root cause remains unresolved and this candidate remains NO-GO.
